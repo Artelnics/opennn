@@ -1,0 +1,5 @@
+var searchData=
+[
+  ['quasinewtonmethod',['QuasiNewtonMethod',['../class_open_n_n_1_1_quasi_newton_method.html#abe6c235cd8bc6bdb950540df3fdd98a2',1,'OpenNN::QuasiNewtonMethod::QuasiNewtonMethod(void)'],['../class_open_n_n_1_1_quasi_newton_method.html#a2c3908593e1df0fcda4d20b2da1adf3e',1,'OpenNN::QuasiNewtonMethod::QuasiNewtonMethod(PerformanceFunctional *)'],['../class_open_n_n_1_1_quasi_newton_method.html#ab4ac3a57c1c249211ed35c78565d7563',1,'OpenNN::QuasiNewtonMethod::QuasiNewtonMethod(const tinyxml2::XMLDocument &amp;)']]],
+  ['quasinewtonmethodresults',['QuasiNewtonMethodResults',['../struct_open_n_n_1_1_quasi_newton_method_1_1_quasi_newton_method_results.html#abd092c0d95f949ae5ceb867d10976cca',1,'OpenNN::QuasiNewtonMethod::QuasiNewtonMethodResults::QuasiNewtonMethodResults(void)'],['../struct_open_n_n_1_1_quasi_newton_method_1_1_quasi_newton_method_results.html#a95e592e7ea36695c98d3b735c3ac2c08',1,'OpenNN::QuasiNewtonMethod::QuasiNewtonMethodResults::QuasiNewtonMethodResults(QuasiNewtonMethod *new_quasi_Newton_method_pointer)']]]
+];

@@ -1,0 +1,87 @@
+<NeuralNetwork>
+    <Inputs>
+        <InputsNumber>4</InputsNumber>
+        <Item Index="1">
+            <Name>sepal_length</Name>
+            <Units>centimeters</Units>
+            <Description></Description>
+        </Item>
+        <Item Index="2">
+            <Name>sepal_width</Name>
+            <Units>centimeters</Units>
+            <Description></Description>
+        </Item>
+        <Item Index="3">
+            <Name>petal_length</Name>
+            <Units>centimeters</Units>
+            <Description></Description>
+        </Item>
+        <Item Index="4">
+            <Name>petal_width</Name>
+            <Units>centimeters</Units>
+            <Description></Description>
+        </Item>
+        <Display>1</Display>
+    </Inputs>
+    <ScalingLayer>
+        <ScalingNeuronsNumber>4</ScalingNeuronsNumber>
+        <Statistics Index="1">
+            <Minimum>4.3</Minimum>
+            <Maximum>7.9</Maximum>
+            <Mean>5.84333</Mean>
+            <StandardDeviation>0.828066</StandardDeviation>
+        </Statistics>
+        <Statistics Index="2">
+            <Minimum>2</Minimum>
+            <Maximum>4.4</Maximum>
+            <Mean>3.05733</Mean>
+            <StandardDeviation>0.435866</StandardDeviation>
+        </Statistics>
+        <Statistics Index="3">
+            <Minimum>1</Minimum>
+            <Maximum>6.9</Maximum>
+            <Mean>3.758</Mean>
+            <StandardDeviation>1.7653</StandardDeviation>
+        </Statistics>
+        <Statistics Index="4">
+            <Minimum>0.1</Minimum>
+            <Maximum>2.5</Maximum>
+            <Mean>1.19933</Mean>
+            <StandardDeviation>0.762238</StandardDeviation>
+        </Statistics>
+        <ScalingMethod>MinimumMaximum</ScalingMethod>
+        <Display>1</Display>
+    </ScalingLayer>
+    <MultilayerPerceptron>
+        <Architecture>4 4 3</Architecture>
+        <LayersActivationFunction>HyperbolicTangent Linear</LayersActivationFunction>
+        <Parameters>-2027.73 1326.29 379.266 4495.87 2312.01 60.1925 -684.106 1407.43 -378.142 -398.329 492.276 196.063 935.499 -174.523 -360.885 -66.6988 962.623 426.011 133.165 -89.2059 0.500015 8.17059e-06 0.500022 -1.68288e-05 1.69101e-05 -0.0207155 -0.433834 -0.506791 0.0449918 -0.0525716 0.520698 0.433828 0.00676824 -0.0449753 0.0525553</Parameters>
+        <Display>1</Display>
+    </MultilayerPerceptron>
+    <ProbabilisticLayer>
+        <ProbabilisticNeuronsNumber>3</ProbabilisticNeuronsNumber>
+        <ProbabilisticMethod>Softmax</ProbabilisticMethod>
+        <DecisionThreshold>0.5</DecisionThreshold>
+        <Display>1</Display>
+    </ProbabilisticLayer>
+    <Outputs>
+        <OutputsNumber>3</OutputsNumber>
+        <Item Index="1">
+            <Name>iris_setosa</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="2">
+            <Name>iris_versicolour</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="3">
+            <Name>iris_virginica</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Display>1</Display>
+    </Outputs>
+    <Display>1</Display>
+</NeuralNetwork>

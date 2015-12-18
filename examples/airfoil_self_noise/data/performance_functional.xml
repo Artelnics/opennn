@@ -1,0 +1,10 @@
+<PerformanceFunctional>
+    <Objective Type="NORMALIZED_SQUARED_ERROR_OBJECTIVE">
+        <Display>1</Display>
+    </Objective>
+    <Regularization Type="NEURAL_PARAMETERS_NORM_REGULARIZATION">
+        <NeuralParametersNormWeight>0.001</NeuralParametersNormWeight>
+        <Display>1</Display>
+    </Regularization>
+    <Display>1</Display>
+</PerformanceFunctional>

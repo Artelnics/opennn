@@ -1,0 +1,84 @@
+<DataSet>
+    <DataFile>
+        <DataFileName>../data/logical_operations.dat</DataFileName>
+        <HeaderLine>0</HeaderLine>
+        <Separator>Space</Separator>
+        <MissingValuesLabel>?</MissingValuesLabel>
+    </DataFile>
+    <Variables>
+        <VariablesNumber>8</VariablesNumber>
+        <Item Index="1">
+            <Name>X</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="2">
+            <Name>Y</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="3">
+            <Name>AND</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Item Index="4">
+            <Name>OR</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Item Index="5">
+            <Name>NAND</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Item Index="6">
+            <Name>NOR</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Item Index="7">
+            <Name>XNOR</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Item Index="8">
+            <Name>XNOR</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Display>1</Display>
+    </Variables>
+    <Instances>
+        <InstancesNumber>4</InstancesNumber>
+        <Item Index="1">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="2">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="3">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="4">
+            <Use>Training</Use>
+        </Item>
+        <Display>1</Display>
+    </Instances>
+    <MissingValues>
+        <InstancesNumber>4</InstancesNumber>
+        <VariablesNumber>8</VariablesNumber>
+        <ScrubbingMethod>Unuse</ScrubbingMethod>
+        <MissingValuesNumber>0</MissingValuesNumber>
+        <Display>1</Display>
+    </MissingValues>
+    <Display>1</Display>
+</DataSet>

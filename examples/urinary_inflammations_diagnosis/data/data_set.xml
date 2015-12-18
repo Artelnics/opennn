@@ -1,0 +1,436 @@
+<DataSet>
+    <DataFile>
+        <DataFileName>../../../../data/urinary_inflammations_diagnosis.dat</DataFileName>
+        <FileType>txt</FileType>
+        <LagsNumber>0</LagsNumber>
+        <StepsAhead>0</StepsAhead>
+        <ColumnsName>0</ColumnsName>
+        <RowsLabel>0</RowsLabel>
+        <Separator>Space</Separator>
+        <MissingValuesLabel>?</MissingValuesLabel>
+    </DataFile>
+    <Variables>
+        <VariablesNumber>8</VariablesNumber>
+        <Item Index="1">
+            <Name>temperature</Name>
+            <Units>degree_celsius</Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="2">
+            <Name>nausea</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Unused</Use>
+        </Item>
+        <Item Index="3">
+            <Name>lumbar_pain</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="4">
+            <Name>urine_pushing</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="5">
+            <Name>micturition_pain</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="6">
+            <Name>urethra_pain</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="7">
+            <Name>urinary_inflammation</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Unused</Use>
+        </Item>
+        <Item Index="8">
+            <Name>nephritis_renal_pelvis_origin</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Display>1</Display>
+    </Variables>
+    <Instances>
+        <InstancesNumber>120</InstancesNumber>
+        <Item Index="1">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="2">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="3">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="4">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="5">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="6">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="7">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="8">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="9">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="10">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="11">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="12">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="13">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="14">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="15">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="16">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="17">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="18">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="19">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="20">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="21">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="22">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="23">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="24">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="25">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="26">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="27">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="28">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="29">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="30">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="31">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="32">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="33">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="34">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="35">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="36">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="37">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="38">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="39">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="40">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="41">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="42">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="43">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="44">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="45">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="46">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="47">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="48">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="49">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="50">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="51">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="52">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="53">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="54">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="55">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="56">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="57">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="58">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="59">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="60">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="61">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="62">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="63">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="64">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="65">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="66">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="67">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="68">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="69">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="70">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="71">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="72">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="73">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="74">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="75">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="76">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="77">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="78">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="79">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="80">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="81">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="82">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="83">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="84">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="85">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="86">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="87">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="88">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="89">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="90">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="91">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="92">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="93">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="94">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="95">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="96">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="97">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="98">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="99">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="100">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="101">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="102">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="103">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="104">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="105">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="106">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="107">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="108">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="109">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="110">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="111">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="112">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="113">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="114">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="115">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="116">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="117">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="118">
+            <Use>Generalization</Use>
+        </Item>
+        <Item Index="119">
+            <Use>Training</Use>
+        </Item>
+        <Item Index="120">
+            <Use>Training</Use>
+        </Item>
+        <Display>1</Display>
+    </Instances>
+    <MissingValues>
+        <InstancesNumber>120</InstancesNumber>
+        <VariablesNumber>8</VariablesNumber>
+        <ScrubbingMethod>Unuse</ScrubbingMethod>
+        <MissingValuesNumber>0</MissingValuesNumber>
+        <Display>1</Display>
+    </MissingValues>
+    <Display>1</Display>
+</DataSet>

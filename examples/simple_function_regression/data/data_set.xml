@@ -1,0 +1,69 @@
+<DataSet>
+    <DataFile>
+        <DataFileName>../data/simplefunctionregression.dat</DataFileName>
+        <HeaderLine>0</HeaderLine>
+        <Separator>Space</Separator>
+        <MissingValuesLabel>?</MissingValuesLabel>
+    </DataFile>
+    <Variables>
+        <VariablesNumber>2</VariablesNumber>
+        <Item Index="1">
+            <Name>x</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Input</Use>
+        </Item>
+        <Item Index="2">
+            <Name>y</Name>
+            <Units></Units>
+            <Description></Description>
+            <Use>Target</Use>
+        </Item>
+        <Display>1</Display>
+    </Variables>
+    <Instances>
+        <InstancesNumber>11</InstancesNumber>
+        <Item Index="1">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="2">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="3">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="4">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="5">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="6">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="7">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="8">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="9">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="10">
+            <Use>Testing</Use>
+        </Item>
+        <Item Index="11">
+            <Use>Testing</Use>
+        </Item>
+        <Display>1</Display>
+    </Instances>
+    <MissingValues>
+        <InstancesNumber>11</InstancesNumber>
+        <VariablesNumber>2</VariablesNumber>
+        <ScrubbingMethod>Unuse</ScrubbingMethod>
+        <MissingValuesNumber>0</MissingValuesNumber>
+        <Display>1</Display>
+    </MissingValues>
+    <Display>1</Display>
+</DataSet>

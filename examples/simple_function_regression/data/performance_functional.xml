@@ -1,0 +1,7 @@
+<PerformanceFunctional>
+    <Objective Type="NORMALIZED_SQUARED_ERROR_OBJECTIVE">
+        <Display>1</Display>
+    </Objective>
+    <Regularization Type="NO_REGULARIZATION"/>
+    <Display>1</Display>
+</PerformanceFunctional>

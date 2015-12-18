@@ -1,0 +1,43 @@
+<TrainingStrategy>
+    <Initialization Type="NO_INITIALIZATION"/>
+    <Main Type="QUASI_NEWTON_METHOD">
+        <InverseHessianApproximationMethod>BFGS</InverseHessianApproximationMethod>
+        <TrainingRateAlgorithm>
+            <TrainingRateMethod>BrentMethod</TrainingRateMethod>
+            <BracketingFactor>1.5</BracketingFactor>
+            <TrainingRateTolerance>1e-006</TrainingRateTolerance>
+            <WarningTrainingRate>1000</WarningTrainingRate>
+            <ErrorTrainingRate>1e+006</ErrorTrainingRate>
+            <Display>1</Display>
+        </TrainingRateAlgorithm>
+        <WarningParametersNorm>1000</WarningParametersNorm>
+        <WarningGradientNorm>1000</WarningGradientNorm>
+        <WarningTrainingRate>1000</WarningTrainingRate>
+        <ErrorParametersNorm>1e+006</ErrorParametersNorm>
+        <ErrorGradientNorm>1e+006</ErrorGradientNorm>
+        <ErrorTrainingRate>1e+006</ErrorTrainingRate>
+        <MinimumParametersIncrementNorm>0</MinimumParametersIncrementNorm>
+        <MinimumPerformanceIncrease>0.0001</MinimumPerformanceIncrease>
+        <PerformanceGoal>-1e+099</PerformanceGoal>
+        <GradientNormGoal>0</GradientNormGoal>
+        <MaximumGeneralizationPerformanceDecreases>1000000</MaximumGeneralizationPerformanceDecreases>
+        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
+        <MaximumTime>1000</MaximumTime>
+        <ReserveParametersHistory>0</ReserveParametersHistory>
+        <ReserveParametersNormHistory>0</ReserveParametersNormHistory>
+        <ReservePerformanceHistory>1</ReservePerformanceHistory>
+        <ReserveGeneralizationPerformanceHistory>0</ReserveGeneralizationPerformanceHistory>
+        <ReserveGradientHistory>0</ReserveGradientHistory>
+        <ReserveGradientNormHistory>0</ReserveGradientNormHistory>
+        <ReserveInverseHessianHistory>0</ReserveInverseHessianHistory>
+        <ReserveTrainingDirectionHistory>0</ReserveTrainingDirectionHistory>
+        <ReserveTrainingRateHistory>0</ReserveTrainingRateHistory>
+        <ReserveElapsedTimeHistory>0</ReserveElapsedTimeHistory>
+        <ReserveGeneralizationPerformanceHistory>0</ReserveGeneralizationPerformanceHistory>
+        <DisplayPeriod>10</DisplayPeriod>
+        <SavePeriod>4294967295</SavePeriod>
+        <NeuralNetworkFileName>neural_network.xml</NeuralNetworkFileName>
+        <Display>1</Display>
+    </Main>
+    <Display>1</Display>
+</TrainingStrategy>

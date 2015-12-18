@@ -1,0 +1,132 @@
+<NeuralNetwork>
+    <Inputs>
+        <InputsNumber>9</InputsNumber>
+        <Item Index="1">
+            <Name>clump_thickness</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="2">
+            <Name>cell_size_uniformity</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="3">
+            <Name>cell_shape_uniformity</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="4">
+            <Name>marginal_adhesion</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="5">
+            <Name>single_epithelial_cell_size</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="6">
+            <Name>bare_nuclei</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="7">
+            <Name>bland_chromatin</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="8">
+            <Name>normal_nucleoli</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="9">
+            <Name>mitoses</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Display>1</Display>
+    </Inputs>
+    <ScalingLayer>
+        <ScalingNeuronsNumber>9</ScalingNeuronsNumber>
+        <Statistics Index="1">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>4.44217</Mean>
+            <StandardDeviation>2.82076</StandardDeviation>
+        </Statistics>
+        <Statistics Index="2">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.15081</Mean>
+            <StandardDeviation>3.06514</StandardDeviation>
+        </Statistics>
+        <Statistics Index="3">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.21523</Mean>
+            <StandardDeviation>2.98858</StandardDeviation>
+        </Statistics>
+        <Statistics Index="4">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>2.83016</Mean>
+            <StandardDeviation>2.86456</StandardDeviation>
+        </Statistics>
+        <Statistics Index="5">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.23426</Mean>
+            <StandardDeviation>2.22309</StandardDeviation>
+        </Statistics>
+        <Statistics Index="6">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.54466</Mean>
+            <StandardDeviation>3.64386</StandardDeviation>
+        </Statistics>
+        <Statistics Index="7">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>3.4451</Mean>
+            <StandardDeviation>2.4497</StandardDeviation>
+        </Statistics>
+        <Statistics Index="8">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>2.86969</Mean>
+            <StandardDeviation>3.05267</StandardDeviation>
+        </Statistics>
+        <Statistics Index="9">
+            <Minimum>1</Minimum>
+            <Maximum>10</Maximum>
+            <Mean>1.60322</Mean>
+            <StandardDeviation>1.73267</StandardDeviation>
+        </Statistics>
+        <ScalingMethod>MinimumMaximum</ScalingMethod>
+        <Display>1</Display>
+    </ScalingLayer>
+    <MultilayerPerceptron>
+        <Architecture>9 5 1</Architecture>
+        <LayersActivationFunction>HyperbolicTangent Linear</LayersActivationFunction>
+        <Parameters>552.918 365.423 17.3287 185.99 233.358 -28.7229 320.593 -50.1154 24.0484 99.683 -314.415 -163.442 -94.0531 -16.6578 -89.1555 -23.5663 -117.263 -12.9569 -104.717 -75.2606 -162.99 -183.529 -4.84587 -201.575 -175.92 -102.228 -57.9343 -16.3855 -99.8228 267.299 32.7316 -82.7981 -26.6368 -20.5306 -11.3703 2.21081 -55.6592 4.94112 -50.3013 -68.1016 36.9691 -43.271 35.9239 18.3645 35.582 45.413 127.295 98.3211 129.397 71.449 0.508168 0.294245 -0.162776 0.0134284 -0.0256536 0.0396534</Parameters>
+        <Display>1</Display>
+    </MultilayerPerceptron>
+    <ProbabilisticLayer>
+        <ProbabilisticNeuronsNumber>1</ProbabilisticNeuronsNumber>
+        <ProbabilisticMethod>Softmax</ProbabilisticMethod>
+        <DecisionThreshold>0.5</DecisionThreshold>
+        <Display>1</Display>
+    </ProbabilisticLayer>
+    <Outputs>
+        <OutputsNumber>1</OutputsNumber>
+        <Item Index="1">
+            <Name>diagnose</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Display>1</Display>
+    </Outputs>
+    <Display>1</Display>
+</NeuralNetwork>

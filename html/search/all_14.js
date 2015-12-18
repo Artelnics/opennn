@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['variable_5findex',['variable_index',['../struct_open_n_n_1_1_missing_values_1_1_item.html#abd2677f6f744245dad43f233e40ccffb',1,'OpenNN::MissingValues::Item']]],
+  ['variables',['Variables',['../class_open_n_n_1_1_variables.html',1,'OpenNN']]],
+  ['variables',['Variables',['../class_open_n_n_1_1_variables.html#ac3c367200c9cfceb41678a83c251c5fe',1,'OpenNN::Variables::Variables(void)'],['../class_open_n_n_1_1_variables.html#aa273cbc3fc73214009b0fffcbf60289f',1,'OpenNN::Variables::Variables(const size_t &amp;)'],['../class_open_n_n_1_1_variables.html#af93148f36cf730d7cf41519b9d8093dc',1,'OpenNN::Variables::Variables(const size_t &amp;, const size_t &amp;)'],['../class_open_n_n_1_1_variables.html#a93337e991869ac301d1df505772aaf79',1,'OpenNN::Variables::Variables(const tinyxml2::XMLDocument &amp;)'],['../class_open_n_n_1_1_variables.html#a0901abdc0a486afc05b9dd6802e92bb7',1,'OpenNN::Variables::Variables(const Variables &amp;)'],['../class_open_n_n_1_1_data_set.html#a310e4b50f80f0217a2c9a4af84636dc5',1,'OpenNN::DataSet::variables()']]],
+  ['variables_5fnumber',['variables_number',['../class_open_n_n_1_1_missing_values.html#a5e27b9063730a0f5594120a590f10f2c',1,'OpenNN::MissingValues']]],
+  ['vector',['Vector',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector',['Vector',['../class_open_n_n_1_1_vector.html#aa63d978805cf591f3485394698fe9e78',1,'OpenNN::Vector::Vector(void)'],['../class_open_n_n_1_1_vector.html#a6f8cda50c565fd4c50c7720ca4a8f914',1,'OpenNN::Vector::Vector(const size_t &amp;)'],['../class_open_n_n_1_1_vector.html#a50fdf26be6129468d3607f2d9b3e717c',1,'OpenNN::Vector::Vector(const size_t &amp;, const T &amp;)'],['../class_open_n_n_1_1_vector.html#ada9453c9f0aae36cbcfdba45d00a8faa',1,'OpenNN::Vector::Vector(const std::string &amp;)'],['../class_open_n_n_1_1_vector.html#a2722bf0765af877748f334a7b334947e',1,'OpenNN::Vector::Vector(const T &amp;, const double &amp;, const T &amp;)'],['../class_open_n_n_1_1_vector.html#ab00e1f862ec050b4684d549126204c53',1,'OpenNN::Vector::Vector(InputIterator, InputIterator)'],['../class_open_n_n_1_1_vector.html#a0f4fd76e49f692aefdf10e6432c56cce',1,'OpenNN::Vector::Vector(const Vector&lt; T &gt; &amp;)']]],
+  ['vector_3c_20bool_20_3e',['Vector&lt; bool &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20double_20_3e',['Vector&lt; double &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3ainputs_3a_3aitem_20_3e',['Vector&lt; OpenNN::Inputs::Item &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3ainstances_3a_3aitem_20_3e',['Vector&lt; OpenNN::Instances::Item &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3alinearregressionparameters_3c_20double_20_3e_20_3e',['Vector&lt; OpenNN::LinearRegressionParameters&lt; double &gt; &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3amatrix_3c_20double_20_3e_20_3e',['Vector&lt; OpenNN::Matrix&lt; double &gt; &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3amissingvalues_3a_3aitem_20_3e',['Vector&lt; OpenNN::MissingValues::Item &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3aoutputs_3a_3aitem_20_3e',['Vector&lt; OpenNN::Outputs::Item &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3aperceptron_20_3e',['Vector&lt; OpenNN::Perceptron &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3aperceptronlayer_20_3e',['Vector&lt; OpenNN::PerceptronLayer &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3astatistics_3c_20double_20_3e_20_3e',['Vector&lt; OpenNN::Statistics&lt; double &gt; &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3avariables_3a_3aitem_20_3e',['Vector&lt; OpenNN::Variables::Item &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3avariables_3a_3ause_20_3e',['Vector&lt; OpenNN::Variables::Use &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20opennn_3a_3avector_3c_20double_20_3e_20_3e',['Vector&lt; OpenNN::Vector&lt; double &gt; &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20size_5ft_20_3e',['Vector&lt; size_t &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]],
+  ['vector_3c_20std_3a_3astring_20_3e',['Vector&lt; std::string &gt;',['../class_open_n_n_1_1_vector.html',1,'OpenNN']]]
+];

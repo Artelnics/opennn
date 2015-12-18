@@ -1,0 +1,36 @@
+<ModelSelection>
+    <OrderSelection Type="INCREMENTAL_SELECTION">
+        <MinimumOrder>1</MinimumOrder>
+        <MaximumOrder>0</MaximumOrder>
+        <TrialsNumber>1</TrialsNumber>
+        <PerformanceCalculationMethod>Minimum</PerformanceCalculationMethod>
+        <Step>1</Step>
+        <ReserveParametersData>1</ReserveParametersData>
+        <ReservePerformanceData>1</ReservePerformanceData>
+        <ReserveGeneralizationPerformanceData>1</ReserveGeneralizationPerformanceData>
+        <ReserveMinimalParameters>1</ReserveMinimalParameters>
+        <Display>1</Display>
+        <GeneralizationPerformanceGoal>0</GeneralizationPerformanceGoal>
+        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
+        <MaximumTime>10000</MaximumTime>
+        <Tolerance>0.001</Tolerance>
+        <MaximumGeneralizationFailures>3</MaximumGeneralizationFailures>
+    </OrderSelection>
+    <InputsSelection Type="GROWING_SELECTION">
+        <Regression>0</Regression>
+        <TrialsNumber>1</TrialsNumber>
+        <PerformanceCalculationMethod>Minimum</PerformanceCalculationMethod>
+        <ReserveParametersData>1</ReserveParametersData>
+        <ReservePerformanceData>1</ReservePerformanceData>
+        <ReserveGeneralizationPerformanceData>1</ReserveGeneralizationPerformanceData>
+        <ReserveMinimalParameters>1</ReserveMinimalParameters>
+        <Display>1</Display>
+        <GeneralizationPerformanceGoal>0</GeneralizationPerformanceGoal>
+        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
+        <MaximumCorrelation>1e+20</MaximumCorrelation>
+        <MinimumCorrelation>0</MinimumCorrelation>
+        <MaximumTime>10000</MaximumTime>
+        <Tolerance>0.001</Tolerance>
+        <MaximumGeneralizationFailures>3</MaximumGeneralizationFailures>
+    </InputsSelection>
+</ModelSelection>

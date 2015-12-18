@@ -1,0 +1,28 @@
+<DataSet>
+    <DataFile>
+        <DataFileName></DataFileName>
+        <FileType>txt</FileType>
+        <LagsNumber>0</LagsNumber>
+        <StepsAhead>0</StepsAhead>
+        <ColumnsName>0</ColumnsName>
+        <RowsLabel>1</RowsLabel>
+        <Separator>Space</Separator>
+        <MissingValuesLabel>?</MissingValuesLabel>
+    </DataFile>
+    <Variables>
+        <VariablesNumber>0</VariablesNumber>
+        <Display>1</Display>
+    </Variables>
+    <Instances>
+        <InstancesNumber>0</InstancesNumber>
+        <Display>1</Display>
+    </Instances>
+    <MissingValues>
+        <InstancesNumber>0</InstancesNumber>
+        <VariablesNumber>0</VariablesNumber>
+        <ScrubbingMethod>Unuse</ScrubbingMethod>
+        <MissingValuesNumber>0</MissingValuesNumber>
+        <Display>1</Display>
+    </MissingValues>
+    <Display>1</Display>
+</DataSet>

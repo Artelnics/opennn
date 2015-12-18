@@ -1,0 +1,21 @@
+scaled_sepal_length=2*(sepal_length-4.3)/(7.9-4.3)-1;
+scaled_sepal_width=2*(sepal_width-2)/(4.4-2)-1;
+scaled_petal_length=2*(petal_length-1)/(6.9-1)-1;
+scaled_petal_width=2*(petal_width-0.1)/(2.5-0.1)-1;
+y_1_1=tanh(-2027.73
++1326.29*scaled_sepal_length+379.266*scaled_sepal_width+4495.87*scaled_petal_length+2312.01*scaled_petal_width);
+y_1_2=tanh(60.1925
+-684.106*scaled_sepal_length+1407.43*scaled_sepal_width-378.142*scaled_petal_length-398.329*scaled_petal_width);
+y_1_3=tanh(492.276
++196.063*scaled_sepal_length+935.499*scaled_sepal_width-174.523*scaled_petal_length-360.885*scaled_petal_width);
+y_1_4=tanh(-66.6988
++962.623*scaled_sepal_length+426.011*scaled_sepal_width+133.165*scaled_petal_length-89.2059*scaled_petal_width);
+non_probabilistic_iris_setosa=(0.500015
++8.17059e-06*y_1_1+0.500022*y_1_2-1.68288e-05*y_1_3+1.69101e-05*y_1_4);
+non_probabilistic_iris_versicolour=(-0.0207155
+-0.433834*y_1_1-0.506791*y_1_2+0.0449918*y_1_3-0.0525716*y_1_4);
+non_probabilistic_iris_virginica=(0.520698
++0.433828*y_1_1+0.00676824*y_1_2-0.0449753*y_1_3+0.0525553*y_1_4);
+iris_setosa= Softmax(non_probabilistic_iris_setosa,non_probabilistic_iris_versicolour,non_probabilistic_iris_virginica);
+iris_versicolour= Softmax(non_probabilistic_iris_setosa,non_probabilistic_iris_versicolour,non_probabilistic_iris_virginica);
+iris_virginica= Softmax(non_probabilistic_iris_setosa,non_probabilistic_iris_versicolour,non_probabilistic_iris_virginica);

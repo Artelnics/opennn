@@ -1,0 +1,16 @@
+var searchData=
+[
+  ['name',['name',['../struct_open_n_n_1_1_inputs_1_1_item.html#a9527cd8d4dadb331db43eff5e3ccbdcf',1,'OpenNN::Inputs::Item::name()'],['../struct_open_n_n_1_1_outputs_1_1_item.html#a82f7c76f6af07d813d4990dfcd7b1c59',1,'OpenNN::Outputs::Item::name()'],['../struct_open_n_n_1_1_variables_1_1_item.html#aa9d1d119440bbf99becc21fa0d63b215',1,'OpenNN::Variables::Item::name()']]],
+  ['names',['names',['../class_open_n_n_1_1_independent_parameters.html#a670766748eda0bc6faab0f5debaf39b1',1,'OpenNN::IndependentParameters']]],
+  ['neural_5fnetwork_5ffile_5fname',['neural_network_file_name',['../class_open_n_n_1_1_training_algorithm.html#ae494fe51c0d4e2a73ab10eb720a36a59',1,'OpenNN::TrainingAlgorithm']]],
+  ['neural_5fnetwork_5fpointer',['neural_network_pointer',['../class_open_n_n_1_1_performance_functional.html#ae63affe1cc7e8ba1adf5569d25453479',1,'OpenNN::PerformanceFunctional::neural_network_pointer()'],['../class_open_n_n_1_1_performance_term.html#ac2c505369e5fa09208e91ca525f7a2f3',1,'OpenNN::PerformanceTerm::neural_network_pointer()'],['../class_open_n_n_1_1_testing_analysis.html#a1ff9cd55c25ba4564fe803a4142657e8',1,'OpenNN::TestingAnalysis::neural_network_pointer()']]],
+  ['neural_5fparameters_5fnorm_5fregularization_5fpointer',['neural_parameters_norm_regularization_pointer',['../class_open_n_n_1_1_performance_functional.html#a15d41adcb22455249434d4f915b10b8f',1,'OpenNN::PerformanceFunctional']]],
+  ['neural_5fparameters_5fnorm_5fweight',['neural_parameters_norm_weight',['../class_open_n_n_1_1_neural_parameters_norm.html#ac03ec8567ad48b3e79d75f682c26aee2',1,'OpenNN::NeuralParametersNorm']]],
+  ['newton_5fmethod_5fpointer',['Newton_method_pointer',['../struct_open_n_n_1_1_newton_method_1_1_newton_method_results.html#a8bd3f7b68339412fdf0706e1117917f7',1,'OpenNN::NewtonMethod::NewtonMethodResults::Newton_method_pointer()'],['../class_open_n_n_1_1_training_strategy.html#a148ad232aa0811cf964ae544dbb02666',1,'OpenNN::TrainingStrategy::Newton_method_pointer()']]],
+  ['newton_5fmethod_5fresults_5fpointer',['Newton_method_results_pointer',['../struct_open_n_n_1_1_training_strategy_1_1_results.html#ac9d11b13126e1511c0bd1d22cc43a774',1,'OpenNN::TrainingStrategy::Results']]],
+  ['normalized_5fsquared_5ferror_5fobjective_5fpointer',['normalized_squared_error_objective_pointer',['../class_open_n_n_1_1_performance_functional.html#ab5e5b93c5e3e2c5250abf31fd468264e',1,'OpenNN::PerformanceFunctional']]],
+  ['numerical_5fdifferentiation_5fmethod',['numerical_differentiation_method',['../class_open_n_n_1_1_numerical_differentiation.html#a9c1221ad0cbe605332f15680a9c809cc',1,'OpenNN::NumericalDifferentiation']]],
+  ['numerical_5fdifferentiation_5fpointer',['numerical_differentiation_pointer',['../class_open_n_n_1_1_performance_term.html#a097f4c51a9acdf5edccf4f0a599a7484',1,'OpenNN::PerformanceTerm']]],
+  ['numerical_5fintegration',['numerical_integration',['../class_open_n_n_1_1_outputs_integrals.html#a1e3004f587ed746ec2f95a550ab3f742',1,'OpenNN::OutputsIntegrals::numerical_integration()'],['../class_open_n_n_1_1_solutions_error.html#ae307abc437b4b80709280c20cb0770fc',1,'OpenNN::SolutionsError::numerical_integration()']]],
+  ['numerical_5fintegration_5fmethod',['numerical_integration_method',['../class_open_n_n_1_1_numerical_integration.html#a9ed4a68deaaf34052a261f6f6f3b882d',1,'OpenNN::NumericalIntegration']]]
+];

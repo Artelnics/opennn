@@ -1,0 +1,6 @@
+scaled_variable_0=2*(variable_0-0)/(1-0)-1;
+y_1_1=tanh(-1.9664
+-6.10465*scaled_variable_0);
+non_probabilistic_variable_1=(0.500756
++0.513317*y_1_1);
+variable_1= Probability(non_probabilistic_variable_1);

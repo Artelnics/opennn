@@ -1,0 +1,82 @@
+<NeuralNetwork>
+    <Inputs>
+        <InputsNumber>5</InputsNumber>
+        <Item Index="1">
+            <Name>temperature</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="2">
+            <Name>lumbar_pain</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="3">
+            <Name>urine_pushing</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="4">
+            <Name>micturition_pain</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Item Index="5">
+            <Name>urethra_pain</Name>
+            <Units></Units>
+            <Description></Description>
+        </Item>
+        <Display>1</Display>
+    </Inputs>
+    <ScalingLayer>
+        <ScalingNeuronsNumber>5</ScalingNeuronsNumber>
+        <Statistics Index="1">
+            <Minimum>35.5</Minimum>
+            <Maximum>41.5</Maximum>
+            <Mean>38.7242</Mean>
+            <StandardDeviation>1.81913</StandardDeviation>
+        </Statistics>
+        <Statistics Index="2">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.583333</Mean>
+            <StandardDeviation>0.495074</StandardDeviation>
+        </Statistics>
+        <Statistics Index="3">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.666667</Mean>
+            <StandardDeviation>0.473381</StandardDeviation>
+        </Statistics>
+        <Statistics Index="4">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.491667</Mean>
+            <StandardDeviation>0.502027</StandardDeviation>
+        </Statistics>
+        <Statistics Index="5">
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.416667</Mean>
+            <StandardDeviation>0.495074</StandardDeviation>
+        </Statistics>
+        <ScalingMethod>NoScaling</ScalingMethod>
+        <Display>1</Display>
+    </ScalingLayer>
+    <MultilayerPerceptron>
+        <Architecture>5 6 1</Architecture>
+        <LayersActivationFunction>HyperbolicTangent Linear</LayersActivationFunction>
+        <Parameters>-11.2533 3.09192 -0.894214 0.550584 0.0320288 0.0390727 26.8301 36.0202 3.21264 1.49679 -0.387309 0.467553 0.532218 -0.00436282 -2.98844 -1.36937 -1.1738 -0.342067 0.406713 -0.00390081 -2.13929 -0.712273 -1.00009 -0.343252 -1.26233 0.000130418 -0.0429994 0.215832 0.0470645 0.0865285 1.32776 0.00230689 -0.0311879 0.258485 0.0760019 0.666157 2.90037 -2.08693 -0.000222451 -4.00175 3.49036 4.40867 -1.25442</Parameters>
+        <Display>1</Display>
+    </MultilayerPerceptron>
+    <Outputs>
+        <OutputsNumber>1</OutputsNumber>
+        <Item Index="1">
+            <Name>nephritis_renal_pelvis_origin</Name>
+            <Units>boolean</Units>
+            <Description></Description>
+        </Item>
+        <Display>1</Display>
+    </Outputs>
+    <Display>1</Display>
+</NeuralNetwork>
