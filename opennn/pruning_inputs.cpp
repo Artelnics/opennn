@@ -1,4 +1,4 @@
-/****************************************************************************************************************/
+2/****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.artelnics.com/opennn                                                                                   */
@@ -819,7 +819,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_iterations_number = atoi(element->GetText());
+           const size_t new_maximum_iterations_number = atoi(element->GetText());
 
            try
            {
@@ -914,7 +914,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_generalization_failures = atof(element->GetText());
+           const size_t new_maximum_generalization_failures = atoi(element->GetText());
 
            try
            {

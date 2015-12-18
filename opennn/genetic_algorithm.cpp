@@ -938,8 +938,6 @@ void GeneticAlgorithm::initialize_random_population(void)
 
     size_t zero_ocurrences;
 
-    srand(time(NULL));
-
     for (size_t i = 0; i < population_size; i++)
     {
         zero_ocurrences = 0;
@@ -979,8 +977,6 @@ void GeneticAlgorithm::initialize_weighted_population(void)
     size_t zero_ocurrences;
 
     double random;
-
-    srand(time(NULL));
 
     for(size_t i = 0; i < final_correlations.size(); i++)
     {
@@ -1275,8 +1271,6 @@ void GeneticAlgorithm::perform_selection(void)
         fitness_copy[selected_index] = -1;
     }
 
-    srand(time(NULL));
-
     while (population_copy.get_rows_number() != selected_population_size+1)
     {
         random = calculate_random_uniform(0.,sum);
@@ -1334,8 +1328,6 @@ void GeneticAlgorithm::perform_crossover(void)
     }
 
 #endif
-
-    srand(time(NULL));
 
     switch (crossover_method)
     {
@@ -1589,8 +1581,6 @@ void GeneticAlgorithm::perform_mutation(void)
     const size_t selected_population_size = (size_t)(population_size/2);
 
     double random;
-
-    srand(time(NULL));
 
     for (size_t i = selected_population_size; i < population.get_rows_number(); i++)
         for (size_t j = 0; j < population.get_columns_number(); j++)
@@ -2639,7 +2629,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_maximum_iterations_number = atoi(element->GetText());
+            const size_t new_maximum_iterations_number = atoi(element->GetText());
 
             try
             {
@@ -2734,7 +2724,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_maximum_generalization_failures = atof(element->GetText());
+            const size_t new_maximum_generalization_failures = atoi(element->GetText());
 
             try
             {

@@ -120,14 +120,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if (reserve_performance_data)
     {
-        history_row[0] = mu;
+        history_row[0] = (double)mu;
         history_row[1] = current_training_performance;
         results->performance_data.push_back(history_row);
     }
 
     if (reserve_generalization_performance_data)
     {
-        history_row[0] = mu;
+        history_row[0] = (double)mu;
         history_row[1] = current_generalization_performance;
         results->generalization_performance_data.push_back(history_row);
     }
@@ -135,7 +135,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     if (reserve_parameters_data)
     {
         parameters_history_row = get_parameters_order(mu);
-        parameters_history_row.insert(parameters_history_row.begin(),mu);
+        parameters_history_row.insert(parameters_history_row.begin(),(double)mu);
         results->parameters_data.push_back(parameters_history_row);
     }
 
@@ -146,14 +146,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if (reserve_performance_data)
     {
-        history_row[0] = ln;
+        history_row[0] = (double)ln;
         history_row[1] = current_training_performance;
         results->performance_data.push_back(history_row);
     }
 
     if (reserve_generalization_performance_data)
     {
-        history_row[0] = ln;
+        history_row[0] = (double)ln;
         history_row[1] = current_generalization_performance;
         results->generalization_performance_data.push_back(history_row);
     }
@@ -161,7 +161,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     if (reserve_parameters_data)
     {
         parameters_history_row = get_parameters_order(ln);
-        parameters_history_row.insert(parameters_history_row.begin(),ln);
+        parameters_history_row.insert(parameters_history_row.begin(),(double)ln);
         results->parameters_data.push_back(parameters_history_row);
     }
 
@@ -204,14 +204,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             if (reserve_performance_data)
             {
-                history_row[0] = ln;
+                history_row[0] = (double)ln;
                 history_row[1] = current_training_performance;
                 results->performance_data.push_back(history_row);
             }
 
             if (reserve_generalization_performance_data)
             {
-                history_row[0] = ln;
+                history_row[0] = (double)ln;
                 history_row[1] = current_generalization_performance;
                 results->generalization_performance_data.push_back(history_row);
             }
@@ -219,7 +219,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             if (reserve_parameters_data)
             {
                 parameters_history_row = get_parameters_order(ln);
-                parameters_history_row.insert(parameters_history_row.begin(),ln);
+                parameters_history_row.insert(parameters_history_row.begin(),(double)ln);
                 results->parameters_data.push_back(parameters_history_row);
             }
 
@@ -237,14 +237,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             if (reserve_performance_data)
             {
-                history_row[0] = mu;
+                history_row[0] = (double)mu;
                 history_row[1] = current_training_performance;
                 results->performance_data.push_back(history_row);
             }
 
             if (reserve_generalization_performance_data)
             {
-                history_row[0] = mu;
+                history_row[0] = (double)mu;
                 history_row[1] = current_generalization_performance;
                 results->generalization_performance_data.push_back(history_row);
             }
@@ -252,7 +252,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             if (reserve_parameters_data)
             {
                 parameters_history_row = get_parameters_order(mu);
-                parameters_history_row.insert(parameters_history_row.begin(),mu);
+                parameters_history_row.insert(parameters_history_row.begin(),(double)mu);
                 results->parameters_data.push_back(parameters_history_row);
             }
 
@@ -796,7 +796,7 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_iterations_number = atoi(element->GetText());
+           const size_t new_maximum_iterations_number = atoi(element->GetText());
 
            try
            {

@@ -329,7 +329,7 @@ void OrderSelectionAlgorithm::set_default(void)
 
     generalization_performance_goal = 0.0;
 
-    maximum_iterations_number = 1000.0;
+    maximum_iterations_number = 1000;
     maximum_time = 10000.0;
 
     tolerance = 1.0e-3;
@@ -711,7 +711,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
-        final_parameters.insert(final_parameters.begin(),order_number);
+        final_parameters.insert(final_parameters.begin(),(double)order_number);
         final = get_final_performances(training_strategy_results);
     }else
     {
@@ -721,7 +721,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
-        final_parameters.insert(final_parameters.begin(),order_number);
+        final_parameters.insert(final_parameters.begin(),(double)order_number);
         final = get_final_performances(training_strategy_results);
     }
 
@@ -738,7 +738,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
             final[0] = current_performance[0];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),order_number);
+            final_parameters.insert(final_parameters.begin(),(double)order_number);
         }
 
         if (!flag_generalization && final[1] > current_performance[1])
@@ -746,19 +746,19 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),order_number);
+            final_parameters.insert(final_parameters.begin(),(double)order_number);
         }
 
     }
 
 
-    history_row[0] = order_number;
+    history_row[0] = (double)order_number;
     history_row[1] = final[0];
     performance_history.push_back(history_row);
 
 
 
-    history_row[0] = order_number;
+    history_row[0] = (double)order_number;
     history_row[1] = final[1];
     generalization_performance_history.push_back(history_row);
 
@@ -852,7 +852,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
-        final_parameters.insert(final_parameters.begin(),order_number);
+        final_parameters.insert(final_parameters.begin(),(double)order_number);
         final = get_final_performances(training_strategy_results);
     }else
     {
@@ -863,7 +863,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
-        final_parameters.insert(final_parameters.begin(),order_number);
+        final_parameters.insert(final_parameters.begin(),(double)order_number);
         final = get_final_performances(training_strategy_results);
     }
 
@@ -880,7 +880,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
             final[0] = current_performance[0];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),order_number);
+            final_parameters.insert(final_parameters.begin(),(double)order_number);
         }
 
         if (!flag_generalization && final[1] < current_performance[1])
@@ -888,17 +888,17 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),order_number);
+            final_parameters.insert(final_parameters.begin(),(double)order_number);
         }
 
     }
 
-    history_row[0] = order_number;
+    history_row[0] = (double)order_number;
     history_row[1] = final[0];
     performance_history.push_back(history_row);
 
 
-    history_row[0] = order_number;
+    history_row[0] = (double)order_number;
     history_row[1] = final[1];
     generalization_performance_history.push_back(history_row);
 
@@ -993,7 +993,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
-        final_parameters.insert(final_parameters.begin(),order_number);
+        final_parameters.insert(final_parameters.begin(),(double)order_number);
         mean_final = get_final_performances(training_strategy_results);
     }else
     {
@@ -1003,7 +1003,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
-        final_parameters.insert(final_parameters.begin(),order_number);
+        final_parameters.insert(final_parameters.begin(),(double)order_number);
         mean_final = get_final_performances(training_strategy_results);
     }
 
@@ -1022,13 +1022,13 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
     }
 
-    history_row[0] = order_number;
+    history_row[0] = (double)order_number;
     history_row[1] = mean_final[0];
     performance_history.push_back(history_row);
 
 
 
-    history_row[0] = order_number;
+    history_row[0] = (double)order_number;
     history_row[1] = mean_final[1];
     generalization_performance_history.push_back(history_row);
 

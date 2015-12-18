@@ -333,7 +333,7 @@ void InputsSelectionAlgorithm::set_default(void)
 
     generalization_performance_goal = 0.0;
 
-    maximum_iterations_number = 1000.0;
+    maximum_iterations_number = 1000;
 
     maximum_correlation = 1e20;
     minimum_correlation = 0;
@@ -499,21 +499,6 @@ void InputsSelectionAlgorithm::set_generalization_performance_goal(const double&
 
 void InputsSelectionAlgorithm::set_maximum_iterations_number(const size_t& new_maximum_iterations_number)
 {
-#ifdef NDEBUG
-
-    if (new_generalization_performance_goal <= 0)
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
-               << "void set_maximum_iterations_number(const size_t&) method.\n"
-               << "Maximum iterations number must be greater than 0.\n";
-
-        throw std::logic_error(buffer.str());
-    }
-
-#endif
-
     maximum_iterations_number = new_maximum_iterations_number;
 }
 

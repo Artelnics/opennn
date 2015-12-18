@@ -253,14 +253,14 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     if (reserve_performance_data)
     {
-        history_row[0] = optimal_order;
+        history_row[0] = (double)optimal_order;
         history_row[1] = current_training_performance;
         results->performance_data.push_back(history_row);
     }
 
     if (reserve_generalization_performance_data)
     {
-        history_row[0] = optimal_order;
+        history_row[0] = (double)optimal_order;
         history_row[1] = current_generalization_performance;
         results->generalization_performance_data.push_back(history_row);
     }
@@ -268,7 +268,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
     if (reserve_parameters_data)
     {
         parameters_history_row = get_parameters_order(optimal_order);
-        parameters_history_row.insert(parameters_history_row.begin(),optimal_order);
+        parameters_history_row.insert(parameters_history_row.begin(),(double)optimal_order);
         results->parameters_data.push_back(parameters_history_row);
     }
 
@@ -287,7 +287,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     while (!end){
 
-        upper_bound = fmin(maximum_order, optimal_order + (maximum_order-minimum_order)/3);
+        upper_bound = std::min(maximum_order, optimal_order + (maximum_order-minimum_order)/3);
         if (optimal_order <= (maximum_order-minimum_order)/3)
             lower_bound = minimum_order;
         else
@@ -332,14 +332,14 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
         if (reserve_performance_data)
         {
-            history_row[0] = current_order;
+            history_row[0] = (double)current_order;
             history_row[1] = current_order_performance[0];
             results->performance_data.push_back(history_row);
         }
 
         if (reserve_generalization_performance_data)
         {
-            history_row[0] = current_order;
+            history_row[0] = (double)current_order;
             history_row[1] = current_order_performance[1];
             results->generalization_performance_data.push_back(history_row);
         }
@@ -347,7 +347,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         if (reserve_parameters_data)
         {
             parameters_history_row = get_parameters_order(current_order);
-            parameters_history_row.insert(parameters_history_row.begin(),current_order);
+            parameters_history_row.insert(parameters_history_row.begin(),(double)current_order);
             results->parameters_data.push_back(parameters_history_row);
         }
 
@@ -866,7 +866,7 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_iterations_number = atoi(element->GetText());
+           const size_t new_maximum_iterations_number = atoi(element->GetText());
 
            try
            {
@@ -923,7 +923,7 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_generalization_failures = atoi(element->GetText());
+           const size_t new_maximum_generalization_failures = atoi(element->GetText());
 
            try
            {

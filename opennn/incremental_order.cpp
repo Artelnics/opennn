@@ -214,14 +214,14 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
         if (reserve_performance_data)
         {
-            history_row[0] = order;
+            history_row[0] = (double)order;
             history_row[1] = current_training_performance;
             results->performance_data.push_back(history_row);
         }
 
         if (reserve_generalization_performance_data)
         {
-            history_row[0] = order;
+            history_row[0] = (double)order;
             history_row[1] = current_generalization_performance;
             results->generalization_performance_data.push_back(history_row);
         }
@@ -229,7 +229,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         if (reserve_parameters_data)
         {
             parameters_history_row = get_parameters_order(order);
-            parameters_history_row.insert(parameters_history_row.begin(),order);
+            parameters_history_row.insert(parameters_history_row.begin(),(double)order);
             results->parameters_data.push_back(parameters_history_row);
         }
 
@@ -290,7 +290,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         }
 
         if (!end)
-            order = fmin(maximum_order, order+step);
+            order = std::min(maximum_order, order+step);
     }
 
     if (display)
@@ -747,7 +747,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_iterations_number = atoi(element->GetText());
+           const size_t new_maximum_iterations_number = atoi(element->GetText());
 
            try
            {
@@ -804,7 +804,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_maximum_generalization_failures = atoi(element->GetText());
+           const size_t new_maximum_generalization_failures = atoi(element->GetText());
 
            try
            {
