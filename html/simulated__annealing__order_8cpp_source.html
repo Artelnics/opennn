@@ -327,14 +327,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;</div>
 <div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a7c4b51d4d1ce43da8ff8822c7d335ccc">reserve_performance_data</a>)</div>
 <div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;    {</div>
-<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;        history_row[0] = optimal_order;</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;        history_row[0] = (double)optimal_order;</div>
 <div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;        history_row[1] = current_training_performance;</div>
 <div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;        results-&gt;<a class="code" href="struct_open_n_n_1_1_order_selection_algorithm_1_1_order_selection_results.html#af2e4a8f8af597cfe3180dee4ddf4711c">performance_data</a>.push_back(history_row);</div>
 <div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;    }</div>
 <div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;</div>
 <div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a1b54424139de2a9f990b1563b4bd08c4">reserve_generalization_performance_data</a>)</div>
 <div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;    {</div>
-<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;        history_row[0] = optimal_order;</div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;        history_row[0] = (double)optimal_order;</div>
 <div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;        history_row[1] = current_generalization_performance;</div>
 <div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;        results-&gt;<a class="code" href="struct_open_n_n_1_1_order_selection_algorithm_1_1_order_selection_results.html#a9465ca8ae61fdd546c0be395531b33a3">generalization_performance_data</a>.push_back(history_row);</div>
 <div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;    }</div>
@@ -342,7 +342,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#ad92f1fb7f20a3c8a31fd3d79f98c74cf">reserve_parameters_data</a>)</div>
 <div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;    {</div>
 <div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;        parameters_history_row = <a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a3206f68f6899818edc829377bd6c5a4b">get_parameters_order</a>(optimal_order);</div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;        parameters_history_row.insert(parameters_history_row.begin(),optimal_order);</div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;        parameters_history_row.insert(parameters_history_row.begin(),(double)optimal_order);</div>
 <div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;        results-&gt;<a class="code" href="struct_open_n_n_1_1_order_selection_algorithm_1_1_order_selection_results.html#a7e8316cb5e261e775ffce26e6d211d8a">parameters_data</a>.push_back(parameters_history_row);</div>
 <div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;    }</div>
 <div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;</div>
@@ -361,7 +361,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;</div>
 <div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;    <span class="keywordflow">while</span> (!end){</div>
 <div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;</div>
-<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;        upper_bound = fmin(<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a21509f4f5f4b3ca859c5cb0b064bc49a">maximum_order</a>, optimal_order + (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a21509f4f5f4b3ca859c5cb0b064bc49a">maximum_order</a>-<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a3852b987540d01482bb524b62df3f772">minimum_order</a>)/3);</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;        upper_bound = std::min(<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a21509f4f5f4b3ca859c5cb0b064bc49a">maximum_order</a>, optimal_order + (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a21509f4f5f4b3ca859c5cb0b064bc49a">maximum_order</a>-<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a3852b987540d01482bb524b62df3f772">minimum_order</a>)/3);</div>
 <div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;        <span class="keywordflow">if</span> (optimal_order &lt;= (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a21509f4f5f4b3ca859c5cb0b064bc49a">maximum_order</a>-<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a3852b987540d01482bb524b62df3f772">minimum_order</a>)/3)</div>
 <div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;            lower_bound = <a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a3852b987540d01482bb524b62df3f772">minimum_order</a>;</div>
 <div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;        <span class="keywordflow">else</span></div>
@@ -406,14 +406,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00332"></a><span class="lineno">  332</span>&#160;</div>
 <div class="line"><a name="l00333"></a><span class="lineno">  333</span>&#160;        <span class="keywordflow">if</span> (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a7c4b51d4d1ce43da8ff8822c7d335ccc">reserve_performance_data</a>)</div>
 <div class="line"><a name="l00334"></a><span class="lineno">  334</span>&#160;        {</div>
-<div class="line"><a name="l00335"></a><span class="lineno">  335</span>&#160;            history_row[0] = current_order;</div>
+<div class="line"><a name="l00335"></a><span class="lineno">  335</span>&#160;            history_row[0] = (double)current_order;</div>
 <div class="line"><a name="l00336"></a><span class="lineno">  336</span>&#160;            history_row[1] = current_order_performance[0];</div>
 <div class="line"><a name="l00337"></a><span class="lineno">  337</span>&#160;            results-&gt;<a class="code" href="struct_open_n_n_1_1_order_selection_algorithm_1_1_order_selection_results.html#af2e4a8f8af597cfe3180dee4ddf4711c">performance_data</a>.push_back(history_row);</div>
 <div class="line"><a name="l00338"></a><span class="lineno">  338</span>&#160;        }</div>
 <div class="line"><a name="l00339"></a><span class="lineno">  339</span>&#160;</div>
 <div class="line"><a name="l00340"></a><span class="lineno">  340</span>&#160;        <span class="keywordflow">if</span> (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a1b54424139de2a9f990b1563b4bd08c4">reserve_generalization_performance_data</a>)</div>
 <div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;        {</div>
-<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;            history_row[0] = current_order;</div>
+<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;            history_row[0] = (double)current_order;</div>
 <div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160;            history_row[1] = current_order_performance[1];</div>
 <div class="line"><a name="l00344"></a><span class="lineno">  344</span>&#160;            results-&gt;<a class="code" href="struct_open_n_n_1_1_order_selection_algorithm_1_1_order_selection_results.html#a9465ca8ae61fdd546c0be395531b33a3">generalization_performance_data</a>.push_back(history_row);</div>
 <div class="line"><a name="l00345"></a><span class="lineno">  345</span>&#160;        }</div>
@@ -421,7 +421,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160;        <span class="keywordflow">if</span> (<a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#ad92f1fb7f20a3c8a31fd3d79f98c74cf">reserve_parameters_data</a>)</div>
 <div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;        {</div>
 <div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;            parameters_history_row = <a class="code" href="class_open_n_n_1_1_order_selection_algorithm.html#a3206f68f6899818edc829377bd6c5a4b">get_parameters_order</a>(current_order);</div>
-<div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;            parameters_history_row.insert(parameters_history_row.begin(),current_order);</div>
+<div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;            parameters_history_row.insert(parameters_history_row.begin(),(double)current_order);</div>
 <div class="line"><a name="l00351"></a><span class="lineno">  351</span>&#160;            results-&gt;<a class="code" href="struct_open_n_n_1_1_order_selection_algorithm_1_1_order_selection_results.html#a7e8316cb5e261e775ffce26e6d211d8a">parameters_data</a>.push_back(parameters_history_row);</div>
 <div class="line"><a name="l00352"></a><span class="lineno">  352</span>&#160;        }</div>
 <div class="line"><a name="l00353"></a><span class="lineno">  353</span>&#160;</div>
@@ -936,7 +936,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00866"></a><span class="lineno">  866</span>&#160;</div>
 <div class="line"><a name="l00867"></a><span class="lineno">  867</span>&#160;        <span class="keywordflow">if</span>(element)</div>
 <div class="line"><a name="l00868"></a><span class="lineno">  868</span>&#160;        {</div>
-<div class="line"><a name="l00869"></a><span class="lineno">  869</span>&#160;           <span class="keyword">const</span> <span class="keywordtype">double</span> new_maximum_iterations_number = atoi(element-&gt;GetText());</div>
+<div class="line"><a name="l00869"></a><span class="lineno">  869</span>&#160;           <span class="keyword">const</span> <span class="keywordtype">size_t</span> new_maximum_iterations_number = atoi(element-&gt;GetText());</div>
 <div class="line"><a name="l00870"></a><span class="lineno">  870</span>&#160;</div>
 <div class="line"><a name="l00871"></a><span class="lineno">  871</span>&#160;           <span class="keywordflow">try</span></div>
 <div class="line"><a name="l00872"></a><span class="lineno">  872</span>&#160;           {</div>
@@ -993,7 +993,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00923"></a><span class="lineno">  923</span>&#160;</div>
 <div class="line"><a name="l00924"></a><span class="lineno">  924</span>&#160;        <span class="keywordflow">if</span>(element)</div>
 <div class="line"><a name="l00925"></a><span class="lineno">  925</span>&#160;        {</div>
-<div class="line"><a name="l00926"></a><span class="lineno">  926</span>&#160;           <span class="keyword">const</span> <span class="keywordtype">double</span> new_maximum_generalization_failures = atoi(element-&gt;GetText());</div>
+<div class="line"><a name="l00926"></a><span class="lineno">  926</span>&#160;           <span class="keyword">const</span> <span class="keywordtype">size_t</span> new_maximum_generalization_failures = atoi(element-&gt;GetText());</div>
 <div class="line"><a name="l00927"></a><span class="lineno">  927</span>&#160;</div>
 <div class="line"><a name="l00928"></a><span class="lineno">  928</span>&#160;           <span class="keywordflow">try</span></div>
 <div class="line"><a name="l00929"></a><span class="lineno">  929</span>&#160;           {</div>
@@ -1135,7 +1135,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Dec 18 2015 17:07:20 for OpenNN by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Dec 21 2015 12:17:40 for OpenNN by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.10
 </small></address>
