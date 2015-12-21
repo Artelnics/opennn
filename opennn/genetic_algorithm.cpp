@@ -20,7 +20,7 @@ namespace OpenNN {
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor.
-
+asdasd
 GeneticAlgorithm::GeneticAlgorithm(void)
     : InputsSelectionAlgorithm()
 {
