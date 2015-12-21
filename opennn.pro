@@ -24,5 +24,5 @@ DEFINES += NDEBUG
 SUBDIRS += tinyxml2
 SUBDIRS += opennn
 SUBDIRS += examples
-#SUBDIRS += blank
-#SUBDIRS += tests
+SUBDIRS += blank
+SUBDIRS += tests
