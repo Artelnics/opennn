@@ -702,11 +702,12 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
         return(final);
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(0)->get_perceptrons_number();
+    const size_t last_layer = multilayer_perceptron->get_layers_number();
+    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_layer-1)->get_perceptrons_number();
 
     if (order_number > perceptrons_number)
     {
-        multilayer_perceptron->grow_layer_perceptron(0,order_number-perceptrons_number);
+        multilayer_perceptron->grow_layer_perceptron(last_layer-1,order_number-perceptrons_number);
         neural_network->perturbate_parameters(0.5);
         training_strategy_results = training_strategy_pointer->perform_training();
 
@@ -716,7 +717,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
     }else
     {
         for (size_t i = 0; i < (perceptrons_number-order_number); i++)
-            multilayer_perceptron->prune_layer_perceptron(0,0);
+            multilayer_perceptron->prune_layer_perceptron(last_layer-1,0);
         neural_network->perturbate_parameters(0.5);
         training_strategy_results = training_strategy_pointer->perform_training();
 
@@ -843,11 +844,12 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
         return(final);
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
+    const size_t last_layer = multilayer_perceptron->get_layers_number();
     const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(0)->get_perceptrons_number();
 
     if (order_number > perceptrons_number)
     {
-        multilayer_perceptron->grow_layer_perceptron(0,order_number-perceptrons_number);
+        multilayer_perceptron->grow_layer_perceptron(last_layer-1,order_number-perceptrons_number);
         neural_network->perturbate_parameters(0.5);
         training_strategy_results = training_strategy_pointer->perform_training();
 
@@ -858,7 +860,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
     {
         training_strategy_pointer->get_quasi_Newton_method_pointer()->set_maximum_generalization_performance_decreases(training_strategy_pointer->get_quasi_Newton_method_pointer()->get_maximum_iterations_number());
         for (size_t i = 0; i < (perceptrons_number-order_number); i++)
-            multilayer_perceptron->prune_layer_perceptron(0,0);
+            multilayer_perceptron->prune_layer_perceptron(last_layer-1,0);
         neural_network->perturbate_parameters(0.5);
         training_strategy_results = training_strategy_pointer->perform_training();
 
@@ -984,11 +986,12 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
+    const size_t last_layer = multilayer_perceptron->get_layers_number();
     const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(0)->get_perceptrons_number();
 
     if (order_number > perceptrons_number)
     {
-        multilayer_perceptron->grow_layer_perceptron(0,order_number-perceptrons_number);
+        multilayer_perceptron->grow_layer_perceptron(last_layer-1,order_number-perceptrons_number);
         neural_network->perturbate_parameters(0.5);
         training_strategy_results = training_strategy_pointer->perform_training();
 
@@ -998,7 +1001,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
     }else
     {
         for (size_t i = 0; i < (perceptrons_number-order_number); i++)
-            multilayer_perceptron->prune_layer_perceptron(0,0);
+            multilayer_perceptron->prune_layer_perceptron(last_layer-1,0);
         neural_network->perturbate_parameters(0.5);
         training_strategy_results = training_strategy_pointer->perform_training();
 
@@ -1265,17 +1268,6 @@ void OrderSelectionAlgorithm::check(void) const
 
         throw std::logic_error(buffer.str());
     }
-
-    /*
-   if(multilayer_perceptron_pointer->get_layers_number() != 2)
-   {
-      buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-             << "void check(void) const method.\n"
-             << "Number of layers in multilayer perceptron (" << multilayer_perceptron_pointer->get_layers_number() << ") must be 2.\n";
-
-      throw std::logic_error(buffer.str());
-   }*/
-
 
     // Data set stuff
 
