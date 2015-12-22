@@ -43,10 +43,10 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
 INCLUDEPATH += eigen
 
 # OpenMP library
-win32-msvc:{
+win32:!win32-g++{
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS   += -openmp
-}else:{
+}else{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }

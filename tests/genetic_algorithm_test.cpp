@@ -347,9 +347,9 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     for (size_t i = 0; i < 20; i++)
     {
-        data(i,0) = i;
-        data(i,1) = 10;
-        data(i,2) = i;
+        data(i,0) = (double)i;
+        data(i,1) = 10.0;
+        data(i,2) = (double)i;
     }
 
     ds.set(data);
@@ -381,16 +381,16 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     for (size_t i = 0; i < 10; i++)
     {
-        data(i,0) = j;
-        data(i,1) = 10;
-        data(i,2) = 1;
+        data(i,0) = (double)j;
+        data(i,1) = 10.0;
+        data(i,2) = 1.0;
         j+=1;
     }
     for (size_t i = 10; i < 20; i++)
     {
-        data(i,0) = i;
-        data(i,1) = 10;
-        data(i,2) = 0;
+        data(i,0) = (double)i;
+        data(i,1) = 10.0;
+        data(i,2) = 0.0;
     }
 
     ds.set(data);
