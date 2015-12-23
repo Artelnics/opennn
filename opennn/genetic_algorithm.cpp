@@ -1593,7 +1593,7 @@ void GeneticAlgorithm::perform_mutation(void)
 
             if (random <= mutation_rate)
             {
-                population[i][j] = ~population[i][j];
+                population[i][j] = !population[i][j];
             }
         }
 }
