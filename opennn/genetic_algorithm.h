@@ -120,7 +120,7 @@ public:
 
     // Get methods
 
-    const Matrix<double>& get_population(void) const;
+    const Vector< Vector<bool> >& get_population(void) const;
 
     const Matrix<double>& get_performance(void) const;
 
@@ -162,7 +162,7 @@ public:
 
     void set_default(void);
 
-    void set_population(const Matrix<double>&);
+    void set_population(const Vector< Vector<bool> >&);
 
     void set_performance(const Matrix<double>&);
 
@@ -258,7 +258,7 @@ private:
 
     /// Population matrix.
 
-    Matrix<double> population;
+    Vector< Vector<bool> > population;
 
     /// Performance of population.
 

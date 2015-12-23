@@ -137,6 +137,8 @@ int main(void)
 
         ModelSelection model_selection(&training_strategy);
 
+        ModelSelection::ModelSelectionResults model_selection_results;
+
         model_selection.set_inputs_selection_type(ModelSelection::GENETIC_SELECTION);
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
@@ -147,7 +149,7 @@ int main(void)
 
         genetic_algorithm_pointer->set_display(true);
 
-        ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_inputs_selection();
+        model_selection_results = model_selection.perform_inputs_selection();
 
         // Testing analysis
 

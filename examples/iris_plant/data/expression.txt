@@ -2,22 +2,20 @@ scaled_sepal_length=2*(sepal_length-4.3)/(7.9-4.3)-1;
 scaled_sepal_width=2*(sepal_width-2)/(4.4-2)-1;
 scaled_petal_length=2*(petal_length-1)/(6.9-1)-1;
 scaled_petal_width=2*(petal_width-0.1)/(2.5-0.1)-1;
-y_1_1=tanh(-54.3678
-+20.0741*scaled_sepal_length+40.1068*scaled_sepal_width+1.2328*scaled_petal_length-4.93902*scaled_petal_width);
-y_1_2=tanh(145.463
-+79.2851*scaled_sepal_length+58.4915*scaled_sepal_width-307.896*scaled_petal_length-109.655*scaled_petal_width);
-y_1_3=tanh(-43.1626
--18.2014*scaled_sepal_length-17.4301*scaled_sepal_width+17.7994*scaled_petal_length+1.72543*scaled_petal_width);
-y_1_4=tanh(21.8581
-+0.0578736*scaled_sepal_length-4.63155*scaled_sepal_width+3.07294*scaled_petal_length+7.92189*scaled_petal_width);
-y_1_5=tanh(23.431
--63.1567*scaled_sepal_length-18.5092*scaled_sepal_width+47.0349*scaled_petal_length+72.5317*scaled_petal_width);
-non_probabilistic_iris_setosa=(-2.28764
--4.88394*y_1_1+0.000177987*y_1_2-7.4915*y_1_3-9.58796*y_1_4-0.499807*y_1_5);
-non_probabilistic_iris_versicolour=(11.1929
-+1.6641*y_1_1+0.500186*y_1_2+5.18878*y_1_3-4.33997*y_1_4+0.500127*y_1_5);
-non_probabilistic_iris_virginica=(15.1144
--14.4819*y_1_1-0.500559*y_1_2+18.818*y_1_3-10.2781*y_1_4-0.00052986*y_1_5);
+y_1_1=tanh(12.7533
++1.81684*scaled_sepal_length+5.88903*scaled_sepal_width-0.112285*scaled_petal_length-5.75725*scaled_petal_width);
+y_1_2=tanh(-11.2343
+-0.187227*scaled_sepal_length+1.58738*scaled_sepal_width-17.0687*scaled_petal_length-20.2866*scaled_petal_width);
+y_1_3=tanh(-6.43591
+-10.1445*scaled_sepal_length-11.8384*scaled_sepal_width-17.9084*scaled_petal_length-23.6355*scaled_petal_width);
+y_1_4=tanh(11.1582
++4.33244*scaled_sepal_length+6.26879*scaled_sepal_width-15.7767*scaled_petal_length-13.6529*scaled_petal_width);
+non_probabilistic_iris_setosa=(4.68007
+-4.17993*y_1_1+0.500424*y_1_2-0.000245442*y_1_3-0.00013261*y_1_4);
+non_probabilistic_iris_versicolour=(0.627537
+-0.630338*y_1_1-0.499683*y_1_2-0.00655977*y_1_3+0.50942*y_1_4);
+non_probabilistic_iris_virginica=(2.55781
+-2.05438*y_1_1+0.000224513*y_1_2+0.00672902*y_1_3-0.510173*y_1_4);
 iris_setosa= Softmax(non_probabilistic_iris_setosa,non_probabilistic_iris_versicolour,non_probabilistic_iris_virginica);
 iris_versicolour= Softmax(non_probabilistic_iris_setosa,non_probabilistic_iris_versicolour,non_probabilistic_iris_virginica);
 iris_virginica= Softmax(non_probabilistic_iris_setosa,non_probabilistic_iris_versicolour,non_probabilistic_iris_virginica);

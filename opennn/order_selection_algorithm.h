@@ -97,17 +97,21 @@ public:
 
        std::string to_string(void) const;
 
+       /// Order of the diferent neural networks.
+
+       Vector<size_t> order_data;
+
        /// Parameters of the different neural networks.
 
        Vector< Vector<double> > parameters_data;
 
        /// Performance of the different neural networks.
 
-       Vector< Vector<double> > performance_data;
+       Vector<double> performance_data;
 
        /// Generalization performance of the different neural networks.
 
-       Vector< Vector<double> > generalization_performance_data;
+       Vector<double> generalization_performance_data;
 
        /// Vector of parameters for the neural network with minimum generalization performance.
 
@@ -222,13 +226,17 @@ protected:
 
     TrainingStrategy* training_strategy_pointer;
 
+    /// Order of all the neural networks trained.
+
+    Vector<size_t> order_history;
+
     /// Generalization performance of all the neural networks trained.
 
-    Vector< Vector<double> > generalization_performance_history;
+    Vector<double> generalization_performance_history;
 
     /// Performance of all the neural networks trained.
 
-    Vector< Vector<double> > performance_history;
+    Vector<double> performance_history;
 
     /// Parameters of all the neural network trained.
 

@@ -98,17 +98,21 @@ public:
 
        std::string to_string(void) const;
 
+       /// Inputs of the different neural networks.
+
+       Vector< Vector<bool> > inputs_data;
+
        /// Parameters of the different neural networks.
 
        Vector< Vector<double> > parameters_data;
 
        /// Performance of the different neural networks.
 
-       Vector< Vector<double> > performance_data;
+       Vector<double> performance_data;
 
        /// Generalization performance of the different neural networks.
 
-       Vector< Vector<double> > generalization_performance_data;
+       Vector<double> generalization_performance_data;
 
        /// Vector of parameters for the neural network with minimum generalization performance.
 
@@ -124,7 +128,7 @@ public:
 
        /// Inputs of the neural network with minimum generalization performance.
 
-       Vector<double> optimal_inputs;
+       Vector<bool> optimal_inputs;
 
        /// Number of iterations to perform the inputs selection.
 
@@ -204,17 +208,17 @@ public:
 
     // Performances calculation methods
 
-    void set_neural_inputs(const Vector<double>&);
+    void set_neural_inputs(const Vector<bool>&);
 
-    Vector<double> calculate_minimum_final_performances(const Vector<double>&);
-    Vector<double> calculate_maximum_final_performances(const Vector<double>&);
-    Vector<double> calculate_mean_final_performances(const Vector<double>&);
+    Vector<double> calculate_minimum_final_performances(const Vector<bool>&);
+    Vector<double> calculate_maximum_final_performances(const Vector<bool>&);
+    Vector<double> calculate_mean_final_performances(const Vector<bool>&);
 
     Vector<double> get_final_performances(const TrainingStrategy::Results&);
 
-    Vector<double> calculate_performances(const Vector<double>&);
+    Vector<double> calculate_performances(const Vector<bool>&);
 
-    Vector<double> get_parameters_inputs(const Vector<double>&);
+    Vector<double> get_parameters_inputs(const Vector<bool>&);
 
     // inputs selection methods
 
@@ -242,13 +246,17 @@ protected:
 
     TrainingStrategy* training_strategy_pointer;
 
+    /// Inputs of all the neural networks trained.
+
+    Vector< Vector<bool> > inputs_history;
+
     /// Generalization performance of all the neural networks trained.
 
-    Vector< Vector<double> > generalization_performance_history;
+    Vector<double> generalization_performance_history;
 
     /// Performance of all the neural networks trained.
 
-    Vector< Vector<double> > performance_history;
+    Vector<double> performance_history;
 
     /// Parameters of all the neural network trained.
 

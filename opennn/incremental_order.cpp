@@ -185,7 +185,6 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     Vector<double> optimum_parameters;
     double optimum_generalization_performance;
 
-    Vector<double> history_row(2);
     Vector<double> parameters_history_row;
     double current_training_performance, current_generalization_performance;
 
@@ -212,24 +211,21 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
+        results->order_data.push_back(order);
+
         if (reserve_performance_data)
         {
-            history_row[0] = (double)order;
-            history_row[1] = current_training_performance;
-            results->performance_data.push_back(history_row);
+            results->performance_data.push_back(current_training_performance);
         }
 
         if (reserve_generalization_performance_data)
         {
-            history_row[0] = (double)order;
-            history_row[1] = current_generalization_performance;
-            results->generalization_performance_data.push_back(history_row);
+            results->generalization_performance_data.push_back(current_generalization_performance);
         }
 
         if (reserve_parameters_data)
         {
             parameters_history_row = get_parameters_order(order);
-            parameters_history_row.insert(parameters_history_row.begin(),(double)order);
             results->parameters_data.push_back(parameters_history_row);
         }
 

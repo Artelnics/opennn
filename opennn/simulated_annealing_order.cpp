@@ -218,8 +218,6 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
     Vector<double> current_order_performance(2);
     Vector<double> optimum_parameters, current_parameters;
 
-    Vector<double> history_row(2);
-    Vector<double> parameters_history_row;
     double current_training_performance, current_generalization_performance;
 
     bool end = false;
@@ -251,25 +249,21 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     temperature = current_generalization_performance;
 
+    results->order_data.push_back(optimal_order);
+
     if (reserve_performance_data)
     {
-        history_row[0] = (double)optimal_order;
-        history_row[1] = current_training_performance;
-        results->performance_data.push_back(history_row);
+        results->performance_data.push_back(current_training_performance);
     }
 
     if (reserve_generalization_performance_data)
     {
-        history_row[0] = (double)optimal_order;
-        history_row[1] = current_generalization_performance;
-        results->generalization_performance_data.push_back(history_row);
+        results->generalization_performance_data.push_back(current_generalization_performance);
     }
 
     if (reserve_parameters_data)
     {
-        parameters_history_row = get_parameters_order(optimal_order);
-        parameters_history_row.insert(parameters_history_row.begin(),(double)optimal_order);
-        results->parameters_data.push_back(parameters_history_row);
+        results->parameters_data.push_back(optimum_parameters);
     }
 
     time(&current_time);
@@ -308,7 +302,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         current_order_performance = calculate_performances(current_order);
         current_training_performance = current_order_performance[0];
         current_generalization_performance = current_order_performance[1];
-        current_parameters = get_parameters_order(optimal_order);
+        current_parameters = get_parameters_order(current_order);
 
         boltzmann_probability = fmin(1, exp(-(current_generalization_performance-optimum_performance[1])/temperature));
         random_uniform = calculate_random_uniform(0.,1.);
@@ -330,25 +324,21 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
+        results->order_data.push_back(optimal_order);
+
         if (reserve_performance_data)
         {
-            history_row[0] = (double)current_order;
-            history_row[1] = current_order_performance[0];
-            results->performance_data.push_back(history_row);
+            results->performance_data.push_back(current_training_performance);
         }
 
         if (reserve_generalization_performance_data)
         {
-            history_row[0] = (double)current_order;
-            history_row[1] = current_order_performance[1];
-            results->generalization_performance_data.push_back(history_row);
+            results->generalization_performance_data.push_back(current_generalization_performance);
         }
 
         if (reserve_parameters_data)
         {
-            parameters_history_row = get_parameters_order(current_order);
-            parameters_history_row.insert(parameters_history_row.begin(),(double)current_order);
-            results->parameters_data.push_back(parameters_history_row);
+            results->parameters_data.push_back(current_parameters);
         }
 
         temperature = cooling_rate*temperature;

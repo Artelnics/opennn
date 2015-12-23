@@ -170,14 +170,14 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         original_scaling_method = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_method();
     }
 
-    Vector<double> current_inputs(inputs_number, 1);
+    Vector<bool> current_inputs(inputs_number, true);
 
     Vector<Variables::Use> current_uses = variables->arrange_uses();
     const Vector<Variables::Use> original_uses = current_uses;
 
     double optimum_generalization_error = 1e10;
     double optimum_performance_error;
-    Vector<double> optimal_inputs;
+    Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
 
     Vector<double> final_correlations;
@@ -228,7 +228,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         if(current_uses[i] == Variables::Input)
             current_uses[i] = Variables::Unused;
 
-    current_inputs.set(inputs_number, 0);
+    current_inputs.set(inputs_number, false);
 
     time(&beginning_time);
 
@@ -240,7 +240,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
         current_uses[original_index] = Variables::Input;
 
-        current_inputs[index] = 1;
+        current_inputs[index] = true;
 
         variables->set_uses(current_uses);
 
@@ -257,25 +257,21 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         optimum_performance_error = final[1];
         optimal_parameters = get_parameters_inputs(current_inputs);
 
+        results->inputs_data.push_back(current_inputs);
+
         if (reserve_performance_data)
         {
-            history_row = current_inputs;
-            history_row.push_back(final[0]);
-            results->performance_data.push_back(history_row);
+            results->performance_data.push_back(optimum_generalization_error);
         }
 
         if (reserve_generalization_performance_data)
         {
-            history_row = current_inputs;
-            history_row.push_back(final[1]);
-            results->generalization_performance_data.push_back(history_row);
+            results->generalization_performance_data.push_back(optimum_performance_error);
         }
 
         if (reserve_parameters_data)
         {
-            history_row = get_parameters_inputs(current_inputs);
-            history_row.insert(history_row.begin(),current_inputs.begin(),current_inputs.begin()+current_inputs.size());
-            results->parameters_data.push_back(history_row);
+            results->parameters_data.push_back(optimal_parameters);
         }
 
         results->stopping_condition = InputsSelectionAlgorithm::AlgorithmFinished;
@@ -292,7 +288,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
                 current_uses[original_index] = Variables::Input;
 
-                current_inputs[i] = 1;
+                current_inputs[i] = true;
 
                 variables->set_uses(current_uses);
 
@@ -329,7 +325,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
                 current_uses[original_index] = Variables::Input;
 
-                current_inputs[index] = 1;
+                current_inputs[index] = true;
 
                 variables->set_uses(current_uses);
 
@@ -360,24 +356,21 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         previous_generalization_performance = current_generalization_performance;
         iterations++;
 
+        results->inputs_data.push_back(current_inputs);
+
         if (reserve_performance_data)
         {
-            history_row = current_inputs;
-            history_row.push_back(final[0]);
-            results->performance_data.push_back(history_row);
+            results->performance_data.push_back(current_training_performance);
         }
 
         if (reserve_generalization_performance_data)
         {
-            history_row = current_inputs;
-            history_row.push_back(final[1]);
-            results->generalization_performance_data.push_back(history_row);
+            results->generalization_performance_data.push_back(current_generalization_performance);
         }
 
         if (reserve_parameters_data)
         {
             history_row = get_parameters_inputs(current_inputs);
-            history_row.insert(history_row.begin(),current_inputs.begin(),current_inputs.begin()+current_inputs.size());
             results->parameters_data.push_back(history_row);
         }
 
@@ -407,7 +400,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             if (display)
                 std::cout << "Maximum generalization performance failures("<<generalization_failures<<") reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::MaximumGeneralizationFailures;
-        }else if (current_inputs.count_occurrences(1) == current_inputs.size())
+        }else if (current_inputs.count_occurrences(true) == current_inputs.size())
         {
             end = true;
             if (display)
@@ -421,7 +414,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             if(!flag_input)
                 std::cout << "Add input : " << variables->arrange_names()[original_index] << std::endl;
             std::cout << "Current inputs : " <<  variables->arrange_inputs_name().to_string() << std::endl;
-            std::cout << "Number of inputs : " << current_inputs.count_occurrences(1) << std::endl;
+            std::cout << "Number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
             std::cout << "Training performance : " << final[0] << std::endl;
             std::cout << "Generalization error : " << final[1] << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
@@ -438,7 +431,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     results->optimal_inputs = optimal_inputs;
     results->final_generalization_performance = optimum_generalization_error;
-    results->final_performance = calculate_performances(optimal_inputs)[0];
+    results->final_performance = optimum_performance_error;
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
 
@@ -476,7 +469,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     if (display)
     {
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
-        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(1) << std::endl;
+        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
         std::cout << "Optimum generalization error : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;

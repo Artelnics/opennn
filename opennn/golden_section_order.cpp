@@ -92,8 +92,6 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     Vector<double> b_parameters;
 
     bool end = false;
-    Vector<double> history_row(2);
-    Vector<double> parameters_history_row;
     Vector<double> minimums(4);
     double minimum;
     size_t iterations = 0;
@@ -118,25 +116,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     current_generalization_performance = mu_performance[1];
     mu_parameters = get_parameters_order(mu);
 
+    results->order_data.push_back(mu);
+
     if (reserve_performance_data)
     {
-        history_row[0] = (double)mu;
-        history_row[1] = current_training_performance;
-        results->performance_data.push_back(history_row);
+        results->performance_data.push_back(current_training_performance);
     }
 
     if (reserve_generalization_performance_data)
     {
-        history_row[0] = (double)mu;
-        history_row[1] = current_generalization_performance;
-        results->generalization_performance_data.push_back(history_row);
+        results->generalization_performance_data.push_back(current_generalization_performance);
     }
 
     if (reserve_parameters_data)
     {
-        parameters_history_row = get_parameters_order(mu);
-        parameters_history_row.insert(parameters_history_row.begin(),(double)mu);
-        results->parameters_data.push_back(parameters_history_row);
+        results->parameters_data.push_back(mu_parameters);
     }
 
     ln_performance = calculate_performances(ln);
@@ -144,25 +138,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     current_generalization_performance = ln_performance[1];
     ln_parameters = get_parameters_order(ln);
 
+    results->order_data.push_back(ln);
+
     if (reserve_performance_data)
     {
-        history_row[0] = (double)ln;
-        history_row[1] = current_training_performance;
-        results->performance_data.push_back(history_row);
+        results->performance_data.push_back(current_training_performance);
     }
 
     if (reserve_generalization_performance_data)
     {
-        history_row[0] = (double)ln;
-        history_row[1] = current_generalization_performance;
-        results->generalization_performance_data.push_back(history_row);
+        results->generalization_performance_data.push_back(current_generalization_performance);
     }
 
     if (reserve_parameters_data)
     {
-        parameters_history_row = get_parameters_order(ln);
-        parameters_history_row.insert(parameters_history_row.begin(),(double)ln);
-        results->parameters_data.push_back(parameters_history_row);
+        results->parameters_data.push_back(ln_parameters);
     }
 
     time(&current_time);
@@ -202,25 +192,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             current_generalization_performance = ln_performance[1];
             ln_parameters = get_parameters_order(ln);
 
+            results->order_data.push_back(ln);
+
             if (reserve_performance_data)
             {
-                history_row[0] = (double)ln;
-                history_row[1] = current_training_performance;
-                results->performance_data.push_back(history_row);
+                results->performance_data.push_back(current_training_performance);
             }
 
             if (reserve_generalization_performance_data)
             {
-                history_row[0] = (double)ln;
-                history_row[1] = current_generalization_performance;
-                results->generalization_performance_data.push_back(history_row);
+                results->generalization_performance_data.push_back(current_generalization_performance);
             }
 
             if (reserve_parameters_data)
             {
-                parameters_history_row = get_parameters_order(ln);
-                parameters_history_row.insert(parameters_history_row.begin(),(double)ln);
-                results->parameters_data.push_back(parameters_history_row);
+                results->parameters_data.push_back(ln_parameters);
             }
 
         }else
@@ -235,25 +221,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             current_generalization_performance = mu_performance[1];
             mu_parameters = get_parameters_order(mu);
 
+            results->order_data.push_back(mu);
+
             if (reserve_performance_data)
             {
-                history_row[0] = (double)mu;
-                history_row[1] = current_training_performance;
-                results->performance_data.push_back(history_row);
+                results->performance_data.push_back(current_training_performance);
             }
 
             if (reserve_generalization_performance_data)
             {
-                history_row[0] = (double)mu;
-                history_row[1] = current_generalization_performance;
-                results->generalization_performance_data.push_back(history_row);
+                results->generalization_performance_data.push_back(current_generalization_performance);
             }
 
             if (reserve_parameters_data)
             {
-                parameters_history_row = get_parameters_order(mu);
-                parameters_history_row.insert(parameters_history_row.begin(),(double)mu);
-                results->parameters_data.push_back(parameters_history_row);
+                results->parameters_data.push_back(mu_parameters);
             }
 
         }

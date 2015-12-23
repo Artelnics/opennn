@@ -2,7 +2,7 @@
     <Inputs>
         <InputsNumber>5</InputsNumber>
         <Item Index="1">
-            <Name>temperature</Name>
+            <Name>nausea</Name>
             <Units></Units>
             <Description></Description>
         </Item>
@@ -31,10 +31,10 @@
     <ScalingLayer>
         <ScalingNeuronsNumber>5</ScalingNeuronsNumber>
         <Statistics Index="1">
-            <Minimum>35.5</Minimum>
-            <Maximum>41.5</Maximum>
-            <Mean>38.7242</Mean>
-            <StandardDeviation>1.81913</StandardDeviation>
+            <Minimum>0</Minimum>
+            <Maximum>1</Maximum>
+            <Mean>0.241667</Mean>
+            <StandardDeviation>0.429888</StandardDeviation>
         </Statistics>
         <Statistics Index="2">
             <Minimum>0</Minimum>
@@ -66,7 +66,7 @@
     <MultilayerPerceptron>
         <Architecture>5 6 1</Architecture>
         <LayersActivationFunction>HyperbolicTangent Linear</LayersActivationFunction>
-        <Parameters>-11.2533 3.09192 -0.894214 0.550584 0.0320288 0.0390727 26.8301 36.0202 3.21264 1.49679 -0.387309 0.467553 0.532218 -0.00436282 -2.98844 -1.36937 -1.1738 -0.342067 0.406713 -0.00390081 -2.13929 -0.712273 -1.00009 -0.343252 -1.26233 0.000130418 -0.0429994 0.215832 0.0470645 0.0865285 1.32776 0.00230689 -0.0311879 0.258485 0.0760019 0.666157 2.90037 -2.08693 -0.000222451 -4.00175 3.49036 4.40867 -1.25442</Parameters>
+        <Parameters>35.4981 205.689 133.387 130.153 -0.848502 0.226741 25.7665 -1.3621 -0.253885 -0.348613 0.223061 -0.0119165 97.2595 -6.44536 1.28176 1.13216 -0.515669 0.151945 -16.7858 1.34463 -0.551991 1.15906 -0.262784 0.38873 -34.8626 0.365117 0.991149 0.42995 -0.171394 0.381771 64.8212 -9.36339 -1.07218 1.60586 -0.347504 0.507936 -7.27412 0.5 0.0184112 -0.469279 1.657 -10.8307 -0.948682</Parameters>
         <Display>1</Display>
     </MultilayerPerceptron>
     <Outputs>

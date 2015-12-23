@@ -58,16 +58,16 @@
     <Instances>
         <InstancesNumber>150</InstancesNumber>
         <Item Index="1">
-            <Use>Testing</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="2">
             <Use>Training</Use>
         </Item>
         <Item Index="3">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="4">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="5">
             <Use>Training</Use>
@@ -76,7 +76,7 @@
             <Use>Training</Use>
         </Item>
         <Item Index="7">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="8">
             <Use>Training</Use>
@@ -97,43 +97,43 @@
             <Use>Training</Use>
         </Item>
         <Item Index="14">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="15">
             <Use>Training</Use>
         </Item>
         <Item Index="16">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="17">
             <Use>Training</Use>
         </Item>
         <Item Index="18">
-            <Use>Generalization</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="19">
             <Use>Testing</Use>
         </Item>
         <Item Index="20">
-            <Use>Generalization</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="21">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="22">
             <Use>Training</Use>
         </Item>
         <Item Index="23">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="24">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="25">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="26">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="27">
             <Use>Training</Use>
@@ -142,7 +142,7 @@
             <Use>Training</Use>
         </Item>
         <Item Index="29">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="30">
             <Use>Training</Use>
@@ -151,25 +151,25 @@
             <Use>Testing</Use>
         </Item>
         <Item Index="32">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="33">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="34">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="35">
             <Use>Training</Use>
         </Item>
         <Item Index="36">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="37">
             <Use>Training</Use>
         </Item>
         <Item Index="38">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="39">
             <Use>Training</Use>
@@ -181,22 +181,22 @@
             <Use>Testing</Use>
         </Item>
         <Item Index="42">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="43">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="44">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="45">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="46">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="47">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="48">
             <Use>Generalization</Use>
@@ -205,19 +205,19 @@
             <Use>Testing</Use>
         </Item>
         <Item Index="50">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="51">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="52">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="53">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="54">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="55">
             <Use>Training</Use>
@@ -226,10 +226,10 @@
             <Use>Training</Use>
         </Item>
         <Item Index="57">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="58">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="59">
             <Use>Training</Use>
@@ -238,22 +238,22 @@
             <Use>Testing</Use>
         </Item>
         <Item Index="61">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="62">
             <Use>Training</Use>
         </Item>
         <Item Index="63">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="64">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="65">
-            <Use>Testing</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="66">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="67">
             <Use>Training</Use>
@@ -265,16 +265,16 @@
             <Use>Training</Use>
         </Item>
         <Item Index="70">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="71">
             <Use>Training</Use>
         </Item>
         <Item Index="72">
-            <Use>Generalization</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="73">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="74">
             <Use>Training</Use>
@@ -286,7 +286,7 @@
             <Use>Training</Use>
         </Item>
         <Item Index="77">
-            <Use>Generalization</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="78">
             <Use>Training</Use>
@@ -298,49 +298,49 @@
             <Use>Testing</Use>
         </Item>
         <Item Index="81">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="82">
             <Use>Generalization</Use>
         </Item>
         <Item Index="83">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="84">
-            <Use>Generalization</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="85">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="86">
             <Use>Training</Use>
         </Item>
         <Item Index="87">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="88">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="89">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="90">
             <Use>Generalization</Use>
         </Item>
         <Item Index="91">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="92">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="93">
             <Use>Training</Use>
         </Item>
         <Item Index="94">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="95">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="96">
             <Use>Training</Use>
@@ -361,22 +361,22 @@
             <Use>Training</Use>
         </Item>
         <Item Index="102">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="103">
             <Use>Training</Use>
         </Item>
         <Item Index="104">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="105">
             <Use>Training</Use>
         </Item>
         <Item Index="106">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="107">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="108">
             <Use>Testing</Use>
@@ -391,7 +391,7 @@
             <Use>Testing</Use>
         </Item>
         <Item Index="112">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="113">
             <Use>Generalization</Use>
@@ -400,16 +400,16 @@
             <Use>Training</Use>
         </Item>
         <Item Index="115">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="116">
             <Use>Training</Use>
         </Item>
         <Item Index="117">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="118">
-            <Use>Generalization</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="119">
             <Use>Training</Use>
@@ -418,55 +418,55 @@
             <Use>Training</Use>
         </Item>
         <Item Index="121">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="122">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="123">
             <Use>Training</Use>
         </Item>
         <Item Index="124">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="125">
-            <Use>Training</Use>
-        </Item>
-        <Item Index="126">
             <Use>Generalization</Use>
         </Item>
-        <Item Index="127">
+        <Item Index="126">
             <Use>Training</Use>
         </Item>
-        <Item Index="128">
+        <Item Index="127">
             <Use>Testing</Use>
+        </Item>
+        <Item Index="128">
+            <Use>Generalization</Use>
         </Item>
         <Item Index="129">
             <Use>Training</Use>
         </Item>
         <Item Index="130">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="131">
             <Use>Training</Use>
         </Item>
         <Item Index="132">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="133">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="134">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="135">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="136">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="137">
-            <Use>Training</Use>
+            <Use>Testing</Use>
         </Item>
         <Item Index="138">
             <Use>Training</Use>
@@ -475,37 +475,37 @@
             <Use>Training</Use>
         </Item>
         <Item Index="140">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="141">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="142">
-            <Use>Generalization</Use>
-        </Item>
-        <Item Index="143">
             <Use>Training</Use>
         </Item>
-        <Item Index="144">
+        <Item Index="143">
             <Use>Generalization</Use>
+        </Item>
+        <Item Index="144">
+            <Use>Training</Use>
         </Item>
         <Item Index="145">
             <Use>Training</Use>
         </Item>
         <Item Index="146">
-            <Use>Testing</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="147">
-            <Use>Training</Use>
+            <Use>Generalization</Use>
         </Item>
         <Item Index="148">
             <Use>Training</Use>
         </Item>
         <Item Index="149">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Item Index="150">
-            <Use>Generalization</Use>
+            <Use>Training</Use>
         </Item>
         <Display>1</Display>
     </Instances>

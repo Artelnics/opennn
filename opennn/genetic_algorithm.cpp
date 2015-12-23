@@ -74,11 +74,11 @@ GeneticAlgorithm::~GeneticAlgorithm(void)
 
 // METHODS
 
-// const Matrix<double>& get_population(void) const method
+// const Vector< Vector<bool> >& get_population(void) const method
 
 /// Returns the population matrix.
 
-const Matrix<double>& GeneticAlgorithm::get_population(void) const
+const Vector< Vector<bool> >& GeneticAlgorithm::get_population(void) const
 {
     return(population);
 }
@@ -380,12 +380,12 @@ void GeneticAlgorithm::set_default(void)
 
 }
 
-// void set_population(const Matrix<double>&) method
+// void set_population(const Vector< Vector<bool> >&) method
 
 /// Sets a new popualtion.
 /// @param new_population New population matrix.
 
-void GeneticAlgorithm::set_population(const Matrix<double>& new_population)
+void GeneticAlgorithm::set_population(const Vector< Vector<bool> >& new_population)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -430,24 +430,24 @@ void GeneticAlgorithm::set_population(const Matrix<double>& new_population)
 
     const size_t inputs_number = neural_network_pointer->get_inputs_number();
 
-    if (new_population.get_columns_number() != inputs_number)
+    if (new_population[0].size() != inputs_number)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_population(const Matrix<double>&) method.\n"
-               << "Population columns("<<new_population.get_columns_number()<< ") must be equal to inputs number("<<inputs_number<<").\n";
+               << "Population columns("<<new_population[0].size()<< ") must be equal to inputs number("<<inputs_number<<").\n";
 
         throw std::logic_error(buffer.str());
     }
 
-    if (new_population.get_rows_number() != population_size)
+    if (new_population.size() != population_size)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_population(const Matrix<double>&) method.\n"
-               << "Population rows("<<new_population.get_rows_number()<< ") must be equal to population size("<<population_size<<").\n";
+               << "Population rows("<<new_population.size()<< ") must be equal to population size("<<population_size<<").\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -890,13 +890,7 @@ void GeneticAlgorithm::initialize_population(void)
 
 #endif
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
-
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
-
-    const size_t inputs_number = neural_network_pointer->get_inputs_number();
-
-    population.set(population_size,inputs_number);
+    population.set(population_size);
 
     switch (initialization_method)
     {
@@ -934,9 +928,11 @@ void GeneticAlgorithm::initialize_random_population(void)
 
     const size_t inputs_number = neural_network_pointer->get_inputs_number();
 
-    Vector<double> inputs(inputs_number);
+    Vector<bool> inputs(inputs_number,true);
 
     size_t zero_ocurrences;
+
+    size_t random;
 
     for (size_t i = 0; i < population_size; i++)
     {
@@ -944,15 +940,23 @@ void GeneticAlgorithm::initialize_random_population(void)
 
         for (size_t j = 0; j < inputs_number; j++)
         {
-            inputs[j] = rand()%2;
-            if (inputs[j] == 0)
+            random = rand()%2;
+
+            if (random == 0)
+            {
+                inputs[j] = false;
+
                 zero_ocurrences++;
+            }else
+            {
+                inputs[j] = true;
+            }
         }
 
         if (zero_ocurrences == inputs_number)
-            inputs[rand()%inputs_number] = 1;
+            inputs[rand()%inputs_number] = true;
 
-        population.set_row(i,inputs);
+        population[i] = inputs;
     }
 }
 
@@ -967,7 +971,7 @@ void GeneticAlgorithm::initialize_weighted_population(void)
 
     const size_t inputs_number = neural_network_pointer->get_inputs_number();
 
-    Vector<double> inputs(inputs_number, 0);
+    Vector<bool> inputs(inputs_number, false);
 
     Vector<double> final_correlations = calculate_final_correlations();
 
@@ -992,7 +996,7 @@ void GeneticAlgorithm::initialize_weighted_population(void)
 
         zero_ocurrences = 0;
 
-        inputs.set(inputs_number,0);
+        inputs.set(inputs_number,false);
 
         for (size_t j = 0; j < inputs_number; j++)
         {
@@ -1002,23 +1006,25 @@ void GeneticAlgorithm::initialize_weighted_population(void)
             {
                 if (k == 0 && random < correlations_sum[0])
                 {
-                    inputs[k] = 1;
+                    inputs[k] = true;
+
                     k = correlations_sum.size();
                 }else if(random < correlations_sum[k] && random >= correlations_sum[k-1])
                 {
-                    inputs[k] = 1;
+                    inputs[k] = true;
+
                     k = correlations_sum.size();
                 }
             }
 
-            if (inputs[j] == 0)
+            if (inputs[j] == false)
                 zero_ocurrences++;
         }
 
         if (zero_ocurrences == inputs_number)
-            inputs[rand()%inputs_number] = 1;
+            inputs[rand()%inputs_number] = false;
 
-        population.set_row(i,inputs);
+        population[i] = inputs;
     }
 }
 
@@ -1033,7 +1039,7 @@ void GeneticAlgorithm::evaluate_population(void)
 
     check();
 
-    if (population.get_rows_number() == 0)
+    if (population.size() == 0)
     {
         std::ostringstream buffer;
 
@@ -1051,7 +1057,7 @@ void GeneticAlgorithm::evaluate_population(void)
     Variables* variables_pointer = data_set_pointer->get_variables_pointer();
     Vector<Variables::Use> current_uses(original_uses);
 
-    Vector<double> current_inputs;
+    Vector<bool> current_inputs;
     size_t current_inputs_number;
 
     size_t index;
@@ -1061,14 +1067,14 @@ void GeneticAlgorithm::evaluate_population(void)
 
     for (size_t i = 0; i < population_size; i++)
     {
-        current_inputs = population.arrange_row(i);
-        current_inputs_number = current_inputs.count_occurrences(1);
+        current_inputs = population[i];
+        current_inputs_number = current_inputs.count_occurrences(true);
 
         for (size_t j = 0; j < current_inputs.size(); j++)
         {
             index = get_input_index(original_uses,j);
 
-            if (current_inputs[j] == 0)
+            if (current_inputs[j] == false)
             {
                 current_uses[index] = Variables::Unused;
             }else
@@ -1081,7 +1087,7 @@ void GeneticAlgorithm::evaluate_population(void)
 
         set_neural_inputs(current_inputs);
 
-        errors = calculate_performances(population.arrange_row(i));
+        errors = calculate_performances(population[i]);
 
         performance.set_row(i, errors);
     }
@@ -1180,17 +1186,17 @@ void GeneticAlgorithm::evolve_population(void)
 
     perform_mutation();
 
-    for(size_t i = 0; i < population.get_rows_number(); i++)
+    for(size_t i = 0; i < population.size(); i++)
     {
         zero_ocurrences = 0;
-        for(size_t j = 0; j < population.get_columns_number(); j++)
+        for(size_t j = 0; j < population[i].size(); j++)
         {
-            if (population(i,j) == 0)
+            if (population[i][j] == false)
                 zero_ocurrences++;
         }
 
-        if (zero_ocurrences == population.get_columns_number())
-            population(i,rand()%population.get_columns_number()) = 1;
+        if (zero_ocurrences == population[i].size())
+            population[i][rand()%population[i].size()] = true;
     }
 
 }
@@ -1205,7 +1211,7 @@ void GeneticAlgorithm::perform_selection(void)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (population.get_rows_number() == 0)
+    if (population.size() == 0)
     {
         std::ostringstream buffer;
 
@@ -1231,9 +1237,9 @@ void GeneticAlgorithm::perform_selection(void)
 
     const size_t selected_population_size = (size_t)(population_size/2);
 
-    Matrix<double> population_copy;
+    Vector< Vector<bool> > population_copy;
 
-    Vector<bool> selected_population(population.get_rows_number(),false);
+    Vector<bool> selected_population(population.size(),false);
 
     size_t selected_index;
 
@@ -1247,7 +1253,7 @@ void GeneticAlgorithm::perform_selection(void)
 
     Vector<double> fitness_copy(fitness);
 
-    population_copy.set(1,population.get_columns_number());
+    population_copy.set();
 
     if (elitism_size >= 1)
     {
@@ -1255,7 +1261,7 @@ void GeneticAlgorithm::perform_selection(void)
 
         selected_population[selected_index] = true;
 
-        population_copy.append_row(population.arrange_row(selected_index));
+        population_copy.push_back(population[selected_index]);
 
         fitness_copy[selected_index] = -1;
     }
@@ -1266,12 +1272,12 @@ void GeneticAlgorithm::perform_selection(void)
 
         selected_population[selected_index] = true;
 
-        population_copy.append_row(population.arrange_row(selected_index));
+        population_copy.push_back(population[selected_index]);
 
         fitness_copy[selected_index] = -1;
     }
 
-    while (population_copy.get_rows_number() != selected_population_size+1)
+    while (population_copy.size() != selected_population_size)
     {
         random = calculate_random_uniform(0.,sum);
 
@@ -1292,7 +1298,7 @@ void GeneticAlgorithm::perform_selection(void)
         {
             selected_population[selected_index] = true;
 
-            population_copy.append_row(population.arrange_row(selected_index));
+            population_copy.push_back(population[selected_index]);
 
             random_loops = 0;
         }else
@@ -1300,8 +1306,6 @@ void GeneticAlgorithm::perform_selection(void)
             random_loops++;
         }
     }
-
-    population_copy.subtract_row(0);
 
     population.set(population_copy);
 }
@@ -1316,7 +1320,7 @@ void GeneticAlgorithm::perform_crossover(void)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (population.get_rows_number() <= 1)
+    if (population.size() <= 1)
     {
         std::ostringstream buffer;
 
@@ -1365,22 +1369,22 @@ void GeneticAlgorithm::perform_crossover(void)
 
 void GeneticAlgorithm::perform_1point_crossover(void)
 {
-    const size_t inputs_number = population.get_columns_number();
-    const size_t selected_population = population.get_rows_number();
+    const size_t inputs_number = population[0].size();
+    const size_t selected_population = population.size();
 
     size_t parent1_index;
-    Vector<double> parent1(inputs_number);
+    Vector<bool> parent1(inputs_number);
     size_t parent2_index;
-    Vector<double> parent2(inputs_number);
+    Vector<bool> parent2(inputs_number);
 
-    Vector<double> offspring1(inputs_number);
-    Vector<double> offspring2(inputs_number);
+    Vector<bool> offspring1(inputs_number);
+    Vector<bool> offspring2(inputs_number);
 
     size_t random_loops = 0;
 
     size_t first_point = crossover_first_point;
 
-    while(population.get_rows_number() < population_size)
+    while(population.size() < population_size)
     {
         parent1_index = rand()%selected_population;
         parent2_index = rand()%selected_population;
@@ -1397,8 +1401,8 @@ void GeneticAlgorithm::perform_1point_crossover(void)
                 parent2_index = parent1_index-1;
         }
 
-        parent1 = population.arrange_row(parent1_index);
-        parent2 = population.arrange_row(parent2_index);
+        parent1 = population[parent1_index];
+        parent2 = population[parent2_index];
 
         if (crossover_first_point == 0)
             first_point = 1 + rand()%(inputs_number-1);
@@ -1416,9 +1420,9 @@ void GeneticAlgorithm::perform_1point_crossover(void)
             }
         }
 
-        population.append_row(offspring1);
-        if (population.get_rows_number() != population_size)
-            population.append_row(offspring2);
+        population.push_back(offspring1);
+        if (population.size() != population_size)
+            population.push_back(offspring2);
     }
 }
 
@@ -1428,23 +1432,23 @@ void GeneticAlgorithm::perform_1point_crossover(void)
 
 void GeneticAlgorithm::perform_2point_crossover(void)
 {
-    const size_t inputs_number = population.get_columns_number();
-    const size_t selected_population = population.get_rows_number();
+    const size_t inputs_number = population[0].size();
+    const size_t selected_population = population.size();
 
     size_t parent1_index;
-    Vector<double> parent1(inputs_number);
+    Vector<bool> parent1(inputs_number);
     size_t parent2_index;
-    Vector<double> parent2(inputs_number);
+    Vector<bool> parent2(inputs_number);
 
-    Vector<double> offspring1(inputs_number);
-    Vector<double> offspring2(inputs_number);
+    Vector<bool> offspring1(inputs_number);
+    Vector<bool> offspring2(inputs_number);
 
     size_t random_loops = 0;
 
     size_t first_point = crossover_first_point;
     size_t second_point = crossover_second_point;
 
-    while(population.get_rows_number() < population_size)
+    while(population.size() < population_size)
     {
         parent1_index = rand()%selected_population;
         parent2_index = rand()%selected_population;
@@ -1461,8 +1465,8 @@ void GeneticAlgorithm::perform_2point_crossover(void)
                 parent2_index = parent1_index-1;
         }
 
-        parent1 = population.arrange_row(parent1_index);
-        parent2 = population.arrange_row(parent2_index);
+        parent1 = population[parent1_index];
+        parent2 = population[parent2_index];
 
         if (crossover_first_point == 0)
             first_point = 1 + rand()%(inputs_number-2);
@@ -1487,9 +1491,9 @@ void GeneticAlgorithm::perform_2point_crossover(void)
             }
         }
 
-        population.append_row(offspring1);
-        if (population.get_rows_number() != population_size)
-            population.append_row(offspring2);
+        population.push_back(offspring1);
+        if (population.size() != population_size)
+            population.push_back(offspring2);
     }
 }
 
@@ -1500,21 +1504,21 @@ void GeneticAlgorithm::perform_2point_crossover(void)
 
 void GeneticAlgorithm::perform_uniform_crossover(void)
 {
-    const size_t inputs_number = population.get_columns_number();
-    const size_t selected_population = population.get_rows_number();
+    const size_t inputs_number = population[0].size();
+    const size_t selected_population = population.size();
 
     size_t parent1_index;
-    Vector<double> parent1(inputs_number);
+    Vector<bool> parent1(inputs_number);
     size_t parent2_index;
-    Vector<double> parent2(inputs_number);
+    Vector<bool> parent2(inputs_number);
 
-    Vector<double> offspring1(inputs_number);
-    Vector<double> offspring2(inputs_number);
+    Vector<bool> offspring1(inputs_number);
+    Vector<bool> offspring2(inputs_number);
 
     double random_uniform;
     size_t random_loops = 0;
 
-    while(population.get_rows_number() < population_size)
+    while(population.size() < population_size)
     {
         parent1_index = rand()%selected_population;
         parent2_index = rand()%selected_population;
@@ -1531,8 +1535,8 @@ void GeneticAlgorithm::perform_uniform_crossover(void)
                 parent2_index = parent1_index-1;
         }
 
-        parent1 = population.arrange_row(parent1_index);
-        parent2 = population.arrange_row(parent2_index);
+        parent1 = population[parent1_index];
+        parent2 = population[parent2_index];
 
         for (size_t i = 0; i < inputs_number; i++)
         {
@@ -1549,9 +1553,9 @@ void GeneticAlgorithm::perform_uniform_crossover(void)
             }
         }
 
-        population.append_row(offspring1);
-        if (population.get_rows_number() != population_size)
-            population.append_row(offspring2);
+        population.push_back(offspring1);
+        if (population.size() != population_size)
+            population.push_back(offspring2);
     }
 }
 
@@ -1565,7 +1569,7 @@ void GeneticAlgorithm::perform_mutation(void)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (population.get_rows_number() != population_size)
+    if (population.size() != population_size)
     {
         std::ostringstream buffer;
 
@@ -1582,14 +1586,14 @@ void GeneticAlgorithm::perform_mutation(void)
 
     double random;
 
-    for (size_t i = selected_population_size; i < population.get_rows_number(); i++)
-        for (size_t j = 0; j < population.get_columns_number(); j++)
+    for (size_t i = selected_population_size; i < population.size(); i++)
+        for (size_t j = 0; j < population[i].size(); j++)
         {
             random = calculate_random_uniform(0.,1.);
 
             if (random <= mutation_rate)
             {
-                population(i,j) = ((size_t)population(i,j) + 1)%2;
+                population[i][j] = ~population[i][j];
             }
         }
 }
@@ -1602,21 +1606,21 @@ size_t GeneticAlgorithm::get_optimal_individual_index(void) const
 {
     size_t index = 0;
 
-    Vector<double> optimal_inputs = population.arrange_row(0);
+    Vector<bool> optimal_inputs = population[0];
 
     double optimum_error = performance(0,1);
 
-    Vector<double> current_inputs;
+    Vector<bool> current_inputs;
 
     double current_error;
 
     for (size_t i = 1; i < population_size; i++)
     {
-        current_inputs = population.arrange_row(i);
+        current_inputs = population[i];
         current_error = performance(i,1);
 
         if ((fabs(optimum_error-current_error) < tolerance &&
-             current_inputs.count_occurrences(1) > optimal_inputs.count_occurrences(1)) ||
+             current_inputs.count_occurrences(true) > optimal_inputs.count_occurrences(true)) ||
             (fabs(optimum_error-current_error) >= tolerance &&
              current_error < optimum_error)   )
         {
@@ -1667,7 +1671,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     size_t current_minimal_generalization_error_index;
     double current_minimum_performance_error;
     double current_minimum_generalization_error;
-    Vector<double> current_inputs;
+    Vector<bool> current_inputs;
     double current_mean;
     double current_standard_deviation;
 
@@ -1675,7 +1679,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     double optimum_generalization_error = 1e10;
     double optimum_performance_error;
-    Vector<double> optimal_inputs;
+    Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
 
     bool end = false;
@@ -1711,7 +1715,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         current_standard_deviation = performance.arrange_column(1).calculate_standard_deviation();
 
-        current_inputs = population.arrange_row(current_minimal_generalization_error_index);
+        current_inputs = population[current_minimal_generalization_error_index];
 
         current_minimum_generalization_error = performance(current_minimal_generalization_error_index,1);
 
@@ -1720,7 +1724,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if ((fabs(optimum_generalization_error - current_minimum_generalization_error) >= tolerance &&
              optimum_generalization_error > current_minimum_generalization_error) ||
                 (fabs(optimum_generalization_error - current_minimum_generalization_error) < tolerance &&
-                 optimal_inputs.count_occurrences(1) < current_inputs.count_occurrences(1)))
+                 optimal_inputs.count_occurrences(true) < current_inputs.count_occurrences(true)))
         {
             optimal_inputs = current_inputs;
             optimum_performance_error = current_minimum_performance_error;
@@ -1785,7 +1789,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         {
             std::cout << "Generation : " << iterations << std::endl;
             std::cout << "Generation optimal inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
-            std::cout << "Generation optimal number of inputs : " << current_inputs.count_occurrences(1) << std::endl;
+            std::cout << "Generation optimal number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
             std::cout << "Generation optimum training performance : " << current_minimum_performance_error << std::endl;
             std::cout << "Generation optimum generalization error : " << current_minimum_generalization_error << std::endl;
             std::cout << "Generation generalization mean = " << performance.arrange_column(1).calculate_mean() << std::endl;
@@ -1797,6 +1801,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
 
     }
+
+    results->inputs_data.set(inputs_history);
 
     if (reserve_performance_data)
     {
@@ -1860,7 +1866,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     if (display)
     {
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
-        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(1) << std::endl;
+        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
         std::cout << "Optimum generalization error : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;

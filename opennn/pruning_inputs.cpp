@@ -168,14 +168,14 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
         original_scaling_method = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_method();
     }
 
-    Vector<double> current_inputs(inputs_number, 1);
+    Vector<bool> current_inputs(inputs_number, true);
 
     Vector<Variables::Use> current_uses = variables->arrange_uses();
     const Vector<Variables::Use> original_uses = current_uses;
 
     double optimum_generalization_error = 1e10;
     double optimum_performance_error;
-    Vector<double> optimal_inputs;
+    Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
 
     Vector<double> final_correlations;
@@ -220,14 +220,14 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
 
     set_neural_inputs(current_inputs);
 
-    current_inputs.set(inputs_number, 1);
+    current_inputs.set(inputs_number, true);
 
     time(&beginning_time);
 
     for(size_t i = 0; i < final_correlations.size(); i++)
     {
         if(final_correlations[i] <= minimum_correlation*targets_number &&
-           current_inputs.count_occurrences(1) > 1)
+           current_inputs.count_occurrences(true) > 1)
         {
             final_correlations[i] = 1e20;
 
@@ -235,7 +235,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
 
             current_uses[original_index] = Variables::Unused;
 
-            current_inputs[i] = 0;
+            current_inputs[i] = false;
 
             variables->set_uses(current_uses);
 
@@ -267,7 +267,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
 
             current_uses[original_index] = Variables::Unused;
 
-            current_inputs[index] = 0;
+            current_inputs[index] = false;
 
             variables->set_uses(current_uses);
 
@@ -297,24 +297,21 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
             previous_generalization_performance = current_generalization_performance;
             iterations++;
 
+            results->inputs_data.push_back(current_inputs);
+
             if (reserve_performance_data)
             {
-                history_row = current_inputs;
-                history_row.push_back(final[0]);
-                results->performance_data.push_back(history_row);
+                results->performance_data.push_back(current_training_performance);
             }
 
             if (reserve_generalization_performance_data)
             {
-                history_row = current_inputs;
-                history_row.push_back(final[1]);
-                results->generalization_performance_data.push_back(history_row);
+                results->generalization_performance_data.push_back(current_generalization_performance);
             }
 
             if (reserve_parameters_data)
             {
                 history_row = get_parameters_inputs(current_inputs);
-                history_row.insert(history_row.begin(),current_inputs.begin(),current_inputs.begin()+current_inputs.size());
                 results->parameters_data.push_back(history_row);
             }
 
@@ -344,7 +341,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
                 if (display)
                     std::cout << "Maximum generalization performance failures("<<generalization_failures<<") reached." << std::endl;
                 results->stopping_condition = InputsSelectionAlgorithm::MaximumGeneralizationFailures;
-            }else if (current_inputs.count_occurrences(1) == 1)
+            }else if (current_inputs.count_occurrences(true) == 1)
             {
                 end = true;
                 if (display)
@@ -358,7 +355,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
                 if (iterations != 1)
                     std::cout << "Remove input : " << variables->arrange_names()[original_index] << std::endl;
                 std::cout << "Current inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
-                std::cout << "Number of inputs : " << current_inputs.count_occurrences(1) << std::endl;
+                std::cout << "Number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
                 std::cout << "Training performance : " << final[0] << std::endl;
                 std::cout << "Generalization error : " << final[1] << std::endl;
                 std::cout << "Elapsed time : " << elapsed_time << std::endl;
@@ -413,7 +410,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
     if (display)
     {
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
-        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(1) << std::endl;
+        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
         std::cout << "Optimum generalization error : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;

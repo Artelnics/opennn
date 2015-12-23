@@ -727,18 +727,18 @@ Vector<double> InputsSelectionAlgorithm::calculate_final_correlations(void) cons
 // Performances calculation methods
 
 
-// void set_neural_inputs(const Vector<double>&) method
+// void set_neural_inputs(const Vector<bool>&) method
 
 /// Sets the neural network with the number of inputs encoded in the vector.
 /// This method used the grow and prune inputs methods.
 /// @param inputs Vector with the inputs to be set.
 
-void InputsSelectionAlgorithm::set_neural_inputs(const Vector<double>& inputs)
+void InputsSelectionAlgorithm::set_neural_inputs(const Vector<bool>& inputs)
 {
     const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
     NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
 
-    const size_t current_inputs_number = inputs.count_occurrences(1);
+    const size_t current_inputs_number = inputs.count_occurrences(true);
     const size_t neural_network_inputs_number = neural_network_pointer->get_inputs_number();
 
     if (current_inputs_number < neural_network_inputs_number)
@@ -755,16 +755,16 @@ void InputsSelectionAlgorithm::set_neural_inputs(const Vector<double>& inputs)
 }
 
 
-// Vector<double> calculate_minimum_final_performances(const Vector<double>&) method
+// Vector<double> calculate_minimum_final_performances(const Vector<bool>&) method
 
 /// Returns the minimum of the performance and generalization performance in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(const Vector<double>& inputs)
+Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(const Vector<bool>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(inputs.count_occurrences(1) <= 0)
+    if(inputs.count_occurrences(true) <= 0)
     {
         std::ostringstream buffer;
 
@@ -798,26 +798,25 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
 
     Vector<double> current_performance(2);
 
-    Vector<double> history_row;
     Vector<double> final_parameters;
 
     bool flag_performance = false;
     bool flag_generalization = false;
 
-    for (size_t i = 0; i < performance_history.size(); i++)
+    for (size_t i = 0; i < inputs_history.size(); i++)
     {
-        if (performance_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            final[0] = performance_history[i][performance_history[i].size()-1];
+            final[0] = performance_history[i];
             flag_performance = true;
         }
     }
 
-    for (size_t i = 0; i < generalization_performance_history.size(); i++)
+    for (size_t i = 0; i < inputs_history.size(); i++)
     {
-        if (generalization_performance_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            final[1] = generalization_performance_history[i][performance_history[i].size()-1];
+            final[1] = generalization_performance_history[i];
             flag_generalization = true;
         }
     }
@@ -834,7 +833,6 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
     final[1] = current_performance[1];
 
     final_parameters.set(neural_network->arrange_parameters());
-    final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
 
     for (size_t i = 1; i < trials_number; i++)
     {
@@ -849,7 +847,6 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
             final[0] = current_performance[0];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
         }
 
         if (!flag_generalization && final[1] > current_performance[1])
@@ -857,19 +854,16 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
         }
 
     }
 
 
-    history_row = inputs;
-    history_row.push_back(final[0]);
-    performance_history.push_back(history_row);
+    inputs_history.push_back(inputs);
 
-    history_row = inputs;
-    history_row.push_back(final[1]);
-    generalization_performance_history.push_back(history_row);
+    performance_history.push_back(final[0]);
+
+    generalization_performance_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -878,16 +872,16 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
 }
 
 
-// Vector<double> calculate_maximum_final_performances(const Vector<double>&) const method
+// Vector<double> calculate_maximum_final_performances(const Vector<bool>&) const method
 
 /// Returns the maximum of the performance and generalization performance in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(const Vector<double>& inputs)
+Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(const Vector<bool>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(inputs.count_occurrences(1) <= 0)
+    if(inputs.count_occurrences(true) <= 0)
     {
         std::ostringstream buffer;
 
@@ -921,26 +915,25 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
 
     Vector<double> current_performance(2);
 
-    Vector<double> history_row(2);
     Vector<double> final_parameters;
 
     bool flag_performance = false;
     bool flag_generalization = false;
 
-    for (size_t i = 0; i < performance_history.size(); i++)
+    for (size_t i = 0; i < inputs_history.size(); i++)
     {
-        if (performance_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            final[0] = performance_history[i][performance_history[i].size()-1];
+            final[0] = performance_history[i];
             flag_performance = true;
         }
     }
 
-    for (size_t i = 0; i < generalization_performance_history.size(); i++)
+    for (size_t i = 0; i < inputs_history.size(); i++)
     {
-        if (generalization_performance_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            final[1] = generalization_performance_history[i][performance_history[i].size()-1];
+            final[1] = generalization_performance_history[i];
             flag_generalization = true;
         }
     }
@@ -957,7 +950,6 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
     final[1] = current_performance[1];
 
     final_parameters.set(neural_network->arrange_parameters());
-    final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
 
     for (size_t i = 1; i < trials_number; i++)
     {
@@ -972,7 +964,6 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
             final[0] = current_performance[0];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
         }
 
         if (!flag_generalization && final[1] < current_performance[1])
@@ -980,18 +971,15 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
-            final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
         }
 
     }
 
-    history_row = inputs;
-    history_row.push_back(final[0]);
-    performance_history.push_back(history_row);
+    inputs_history.push_back(inputs);
 
-    history_row = inputs;
-    history_row.push_back(final[1]);
-    generalization_performance_history.push_back(history_row);
+    performance_history.push_back(final[0]);
+
+    generalization_performance_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -999,16 +987,16 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
 }
 
 
-// Vector<double> calculate_mean_final_performances(const Vector<double>&) method
+// Vector<double> calculate_mean_final_performances(const Vector<bool>&) method
 
 /// Returns the mean of the performance and generalization performance in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
-Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const Vector<double> &inputs)
+Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const Vector<bool> &inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(inputs.count_occurrences(1) <= 0)
+    if(inputs.count_occurrences(true) <= 0)
     {
         std::ostringstream buffer;
 
@@ -1042,26 +1030,25 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
 
     Vector<double> current_performance(2);
 
-    Vector<double> history_row(2);
     Vector<double> final_parameters;
 
     bool flag_performance = false;
     bool flag_generalization = false;
 
-    for (size_t i = 0; i < performance_history.size(); i++)
+    for (size_t i = 0; i < inputs_history.size(); i++)
     {
-        if (performance_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            mean_final[0] = performance_history[i][performance_history[i].size()-1];
+            mean_final[0] = performance_history[i];
             flag_performance = true;
         }
     }
 
-    for (size_t i = 0; i < generalization_performance_history.size(); i++)
+    for (size_t i = 0; i < inputs_history.size(); i++)
     {
-        if (generalization_performance_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            mean_final[1] = generalization_performance_history[i][performance_history[i].size()-1];
+            mean_final[1] = generalization_performance_history[i];
             flag_generalization = true;
         }
     }
@@ -1078,7 +1065,6 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
     mean_final[1] = current_performance[1];
 
     final_parameters.set(neural_network->arrange_parameters());
-    final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
 
     for (size_t i = 1; i < trials_number; i++)
     {
@@ -1095,16 +1081,11 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
 
     }
 
-    final_parameters.set(neural_network->arrange_parameters());
-    final_parameters.insert(final_parameters.begin(),inputs.begin(),inputs.begin()+inputs.size());
+    inputs_history.push_back(inputs);
 
-    history_row = inputs;
-    history_row.push_back(mean_final[0]);
-    performance_history.push_back(history_row);
+    performance_history.push_back(mean_final[0]);
 
-    history_row = inputs;
-    history_row.push_back(mean_final[1]);
-    generalization_performance_history.push_back(history_row);
+    generalization_performance_history.push_back(mean_final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -1172,12 +1153,12 @@ Vector<double> InputsSelectionAlgorithm::get_final_performances(const TrainingSt
     return(performances);
 }
 
-// Vector<double> calculate_performances(const Vector<double>&) method
+// Vector<double> calculate_performances(const Vector<bool>&) method
 
 /// Return performance and generalization depending on the performance calculation method.
 /// @param inputs Vector of inputs to be trained with.
 
-Vector<double> InputsSelectionAlgorithm::calculate_performances(const Vector<double>& inputs)
+Vector<double> InputsSelectionAlgorithm::calculate_performances(const Vector<bool>& inputs)
 {
     switch (performance_calculation_method)
     {
@@ -1201,16 +1182,16 @@ Vector<double> InputsSelectionAlgorithm::calculate_performances(const Vector<dou
 }
 
 
-// Vector<double> get_parameters_inputs(const Vector<double>&) method
+// Vector<double> get_parameters_inputs(const Vector<bool>&) method
 
 /// Returns the parameters of the neural network if the inputs is in the history.
 /// @param inputs Vector of inputs to be trained with.
 
-Vector<double> InputsSelectionAlgorithm::get_parameters_inputs(const Vector<double>& inputs)
+Vector<double> InputsSelectionAlgorithm::get_parameters_inputs(const Vector<bool>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (inputs.count_occurrences(1) <= 0)
+    if (inputs.count_occurrences(true) <= 0)
     {
         std::ostringstream buffer;
 
@@ -1226,16 +1207,16 @@ Vector<double> InputsSelectionAlgorithm::get_parameters_inputs(const Vector<doub
     size_t i;
     Vector<double> parameters;
 
-    for (i = 0; i < parameters_history.size(); i++)
+    for (i = 0; i < inputs_history.size(); i++)
     {
-        if (parameters_history[i].arrange_subvector_first(inputs.size()) == inputs)
+        if (inputs_history[i] == inputs)
         {
-            parameters = parameters_history[i].arrange_subvector_last(parameters_history[i].size() - inputs.size());
+            parameters = parameters_history[i];
             break;
         }
     }
 
-    if (i == parameters_history.size())
+    if (i == inputs_history.size())
     {
         std::ostringstream buffer;
 

@@ -618,7 +618,6 @@ inline T& Matrix<T>::operator () (const size_t& row, const size_t& column)
    return((*this)[rows_number*column+row]);
 }
 
-
 /// Reference operator.
 
 /// Returns the element (i,j) of the matrix.
