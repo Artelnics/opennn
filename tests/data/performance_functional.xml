@@ -1,0 +1,11 @@
+<PerformanceFunctional>
+    <Objective Type="MINKOWSKI_ERROR_OBJECTIVE">
+        <MinkowskiParameter>1.5</MinkowskiParameter>
+        <Display>1</Display>
+    </Objective>
+    <Regularization Type="NEURAL_PARAMETERS_NORM_REGULARIZATION">
+        <NeuralParametersNormWeight>0.001</NeuralParametersNormWeight>
+        <Display>1</Display>
+    </Regularization>
+    <Display>1</Display>
+</PerformanceFunctional>

@@ -35,7 +35,11 @@ void VectorTest::test_constructor(void)
 {
    message += "test_constructor\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/vector.dat";
+#else
    std::string file_name = "../data/vector.dat";
+#endif
 
    // Default 
 
@@ -511,7 +515,11 @@ void VectorTest::test_set(void)
 {
    message += "test_set\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/vector.dat";
+#else
    std::string file_name = "../data/vector.dat";
+#endif
 
    Vector<int> v(3, 0);
 
@@ -1964,7 +1972,11 @@ void VectorTest::test_load(void)
 {
    message += "test_load\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/vector.dat";
+#else
    std::string file_name = "../data/vector.dat";
+#endif
 
    Vector<int> v;
       
@@ -1998,7 +2010,11 @@ void VectorTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/vector.dat";
+#else
    std::string file_name = "../data/vector.dat";
+#endif
 
    Vector<int> v(2, 0);
    Vector<int> w(v);

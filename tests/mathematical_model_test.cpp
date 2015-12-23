@@ -84,7 +84,11 @@ void MathematicalModelTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/mathematical_model.xml";
+#else
    std::string file_name = "../data/mathematical_model.xml";
+#endif
 
    MathematicalModel mm;
 
@@ -98,7 +102,11 @@ void MathematicalModelTest::test_load(void)
 {
    message += "test_load\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/mathematical_model.xml";
+#else
    std::string file_name = "../data/mathematical_model.xml";
+#endif
 
    MathematicalModel mm;
 

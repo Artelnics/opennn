@@ -71,7 +71,11 @@ void DataSetTest::test_constructor(void)
 
    // File constructor
 
+#ifdef __APPLE__
+   const std::string file_name = "../../../../data/data_set.xml";
+#else
    const std::string file_name = "../data/data_set.xml";
+#endif
 
    ds1.save(file_name);
 
@@ -1516,7 +1520,11 @@ void DataSetTest::test_save(void)
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/data_set.xml";
+#ifdef __APPLE__
+   const std::string file_name = "../../../../data/data_set.xml";
+#else
+   const std::string file_name = "../data/data_set.xml";
+#endif
 
    DataSet ds;
 
@@ -1530,8 +1538,17 @@ void DataSetTest::test_load(void)
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/data_set.xml";
-   std::string data_file_name = "../data/data.dat";
+#ifdef __APPLE__
+   const std::string file_name = "../../../../data/data_set.xml";
+#else
+   const std::string file_name = "../data/data_set.xml";
+#endif
+
+#ifdef __APPLE__
+   const std::string data_file_name = "../../../../data/data.dat";
+#else
+   const std::string data_file_name = "../data/data.dat";
+#endif
 
    DataSet ds;
    DataSet ds_copy;
@@ -1591,7 +1608,11 @@ void DataSetTest::test_save_data(void)
 {
    message += "test_save_data\n";
 
-   std::string data_file_name = "../data/data.dat";   
+#ifdef __APPLE__
+   const std::string data_file_name = "../../../../data/data.dat";
+#else
+   const std::string data_file_name = "../data/data.dat";
+#endif
 
    DataSet ds(2,2,2);
 
@@ -1607,7 +1628,11 @@ void DataSetTest::test_load_data(void)
 {
    message += "test_load_data\n";
 
+#ifdef __APPLE__
+   const std::string data_file_name = "../../../../data/data.dat";
+#else
    const std::string data_file_name = "../data/data.dat";
+#endif
 
    std::ofstream file;
 
@@ -1931,9 +1956,17 @@ void DataSetTest::test_load_data(void)
    variables_pointer->set_name(0, "x");
    variables_pointer->set_name(1, "y");
 
+#ifdef __APPLE__
+   ds.save("../../../../data/data_set.xml");
+#else
    ds.save("../data/data_set.xml");
+#endif
 
+#ifdef __APPLE__
+   ds.load("../../../../data/data_set.xml");
+#else
    ds.load("../data/data_set.xml");
+#endif
 
    assert_true(ds.get_variables().get_name(0) == "x", LOG);
    assert_true(ds.get_variables().get_name(1) == "y", LOG);
@@ -2277,7 +2310,11 @@ void DataSetTest::test_scrub_missing_values(void)
 {
     message += "test_scrub_missing_values\n";
 
+#ifdef __APPLE__
+   const std::string data_file_name = "../../../../data/data.dat";
+#else
     const std::string data_file_name = "../data/data.dat";
+#endif
 
     std::ofstream file;
 

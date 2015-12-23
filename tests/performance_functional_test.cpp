@@ -625,7 +625,11 @@ void PerformanceFunctionalTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/performance_functional.xml";
+#else
    std::string file_name = "../data/performance_functional.xml";
+#endif
 
    PerformanceFunctional pf;
 
@@ -640,7 +644,11 @@ void PerformanceFunctionalTest::test_load(void)
 {
    message += "test_load\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/performance_functional.xml";
+#else
    std::string file_name = "../data/performance_functional.xml";
+#endif
 
    PerformanceFunctional pf1;
    PerformanceFunctional pf2;

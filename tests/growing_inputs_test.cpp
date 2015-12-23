@@ -125,7 +125,7 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
     for (size_t i = 0; i < 10; i++)
     {
-        data(i,0) = (double)j;
+        data(i,0) = (double)i;
         data(i,1) = 10.0;
         data(i,2) = 1.0;
         j+=1;

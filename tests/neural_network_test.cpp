@@ -41,7 +41,12 @@ void NeuralNetworkTest::test_constructor(void)
    message += "test_constructor\n";
 
    Vector<size_t> multilayer_perceptron_architecture;
+
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/neural_network.xml";
+#else
    std::string file_name = "../data/neural_network.xml";
+#endif
 
    // Default constructor
 
@@ -1091,7 +1096,11 @@ void NeuralNetworkTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/neural_network.xml";
+#else
    std::string file_name = "../data/neural_network.xml";
+#endif
 
    NeuralNetwork nn;
 
@@ -1128,7 +1137,11 @@ void NeuralNetworkTest::test_load(void)
 {
    message += "test_load\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/neural_network.xml";
+#else
    std::string file_name = "../data/neural_network.xml";
+#endif
 
    // Empty neural network
 

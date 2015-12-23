@@ -144,7 +144,11 @@ void TrainingAlgorithmTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/training_algorithm.xml";
+#else
    std::string file_name = "../data/training_algorithm.xml";
+#endif
 
    MockTrainingAlgorithm mta;
    mta.save(file_name);
@@ -155,7 +159,11 @@ void TrainingAlgorithmTest::test_load(void)
 {
    message += "test_load\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/training_algorithm.xml";
+#else
    std::string file_name = "../data/training_algorithm.xml";
+#endif
 
    MockTrainingAlgorithm mta;
    mta.save(file_name);

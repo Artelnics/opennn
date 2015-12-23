@@ -120,8 +120,16 @@ void PlugInTest::test_write_input_file(void)
    //nn.get_independent_parameters_pointer()->set_parameter(1, 3.0);
    //nn.get_independent_parameters_pointer()->set_parameter(2, 5.0);
 
-   //pi.set_template_file_name("../data/opennn_tests/template.dat");
-   //pi.set_input_file_name("../data/opennn_tests/input.dat");
+//#ifdef __APPLE__
+//   pi.set_template_file_name("../../../../data/opennn_tests/template.dat");
+//#else
+//   pi.set_template_file_name("../data/opennn_tests/template.dat");
+//#endif
+//#ifdef __APPLE__
+//   pi.set_input_file_name("../../../../data/opennn_tests/input.dat");
+//#else
+//   pi.set_input_file_name("../data/opennn_tests/input.dat");
+//#endif
 
    //input_flags.set(3);
    //input_flags[0] = "input_flag_1";
@@ -143,7 +151,11 @@ void PlugInTest::test_run_script(void)
 
    // Test
 
+//#ifdef __APPLE__
+//   pi.set_script_file_name("../../../../data/script");
+//#else
 //   pi.set_script_file_name("../data/script");
+//#endif
 
 //   pi.run_script();
 
@@ -159,8 +171,12 @@ void PlugInTest::test_read_output_file(void)
    std::string output_file_name;
 
    // Test
-
+#ifdef __APPLE__
+   output_file_name = "../../../../data/output.dat";
+#else
    output_file_name = "../data/output.dat";
+#endif
+
    pi.set_output_file_name(output_file_name);
 }
 
@@ -193,11 +209,17 @@ void PlugInTest::test_calculate_output_data(void)
 
    // Test
 
+#ifdef __APPLE__
+   template_file_name = "../../../../data/template.dat";
+   input_file_name = "../../../../data/input.dat";
+   script_file_name = "../../../../data/batch.dat";
+   output_file_name = "../../../../data/output.dat";
+#else
    template_file_name = "../data/template.dat";
    input_file_name = "../data/input.dat";
    script_file_name = "../data/batch.dat";
    output_file_name = "../data/output.dat";
-   
+#endif
 
    pi.set_template_file_name(template_file_name);
    pi.set_input_file_name(input_file_name);
@@ -231,7 +253,11 @@ void PlugInTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/plug_in.xml";
+#else
    std::string file_name = "../data/plug_in.xml";
+#endif
 
    PlugIn pi;
 

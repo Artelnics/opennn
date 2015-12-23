@@ -1,7 +1,11 @@
 <DataSet>
     <DataFile>
         <DataFileName></DataFileName>
-        <HeaderLine>0</HeaderLine>
+        <FileType>txt</FileType>
+        <LagsNumber>0</LagsNumber>
+        <StepsAhead>0</StepsAhead>
+        <ColumnsName>0</ColumnsName>
+        <RowsLabel>1</RowsLabel>
         <Separator>Space</Separator>
         <MissingValuesLabel>?</MissingValuesLabel>
     </DataFile>

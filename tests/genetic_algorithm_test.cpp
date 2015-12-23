@@ -86,7 +86,7 @@ void GeneticAlgorithmTest::test_initialize_population(void)
 
     GeneticAlgorithm ga(&ts);
 
-    Matrix<double> population;
+    Vector< Vector<bool> > population;
 
     ga.set_population_size(10);
 
@@ -96,8 +96,8 @@ void GeneticAlgorithmTest::test_initialize_population(void)
 
     population = ga.get_population();
 
-    assert_true(population.get_rows_number() == 10, LOG);
-    assert_true(population.get_columns_number() == 3, LOG);
+    assert_true(population.size() == 10, LOG);
+    assert_true(population[0].size() == 3, LOG);
 
 }
 
@@ -164,11 +164,13 @@ void GeneticAlgorithmTest::test_perform_selection(void)
 
     GeneticAlgorithm ga(&ts);
 
-    Matrix<double> population;
+    Vector< Vector<bool> > population;
 
-    Matrix<double> selected_population;
+    Vector< Vector<bool> > selected_population;
 
     Vector<double> fitness(4);
+
+    Matrix<double> performance(4,2);
 
     ga.set_population_size(4);
 
@@ -177,11 +179,18 @@ void GeneticAlgorithmTest::test_perform_selection(void)
     fitness[2] = 3;
     fitness[3] = 4;
 
+    performance(0,0) = 0.0; performance(0,1) = 0.4;
+    performance(1,0) = 0.0; performance(1,1) = 0.3;
+    performance(2,0) = 0.0; performance(2,1) = 0.2;
+    performance(3,0) = 0.0; performance(3,1) = 0.1;
+
     ga.set_inicialization_method(GeneticAlgorithm::Random);
 
     ga.initialize_population();
 
     ga.set_fitness(fitness);
+
+    ga.set_performance(performance);
 
     ga.set_elitism_size(2);
 
@@ -191,8 +200,8 @@ void GeneticAlgorithmTest::test_perform_selection(void)
 
     selected_population = ga.get_population();
 
-    assert_true(selected_population.arrange_row(0) == population.arrange_row(3), LOG);
-    assert_true(selected_population.arrange_row(1) == population.arrange_row(2), LOG);
+    assert_true(selected_population[0] == population[3], LOG);
+    assert_true(selected_population[1] == population[2], LOG);
 }
 
 // Crossover methods
@@ -211,27 +220,40 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     GeneticAlgorithm ga(&ts);
 
-    Matrix<double> population(4,2);
+    Vector< Vector<bool> > population(4);
+    Vector<bool> individual(2);
 
-    Matrix<double> crossover_population;
+    Vector< Vector<bool> > crossover_population;
 
     Vector<double> fitness(4);
 
-    population(0,0) = 1; population(0,1) = 1;
-    population(1,0) = 1; population(1,1) = 1;
-    population(2,0) = 0; population(2,1) = 1;
-    population(3,0) = 0; population(3,1) = 1;
+    Matrix<double> performance(4,2);
+
+    individual[0] = true; individual[1] = true;
+    population[0] = individual;
+    population[1] = individual;
+
+    individual[0] = false; individual[1] = true;
+    population[2] = individual;
+    population[3] = individual;
 
     fitness[0] = 1;
     fitness[1] = 2;
     fitness[2] = 3;
     fitness[3] = 4;
 
+    performance(0,0) = 0.0; performance(0,1) = 0.4;
+    performance(1,0) = 0.0; performance(1,1) = 0.3;
+    performance(2,0) = 0.0; performance(2,1) = 0.2;
+    performance(3,0) = 0.0; performance(3,1) = 0.1;
+
     ga.set_population_size(4);
 
     ga.set_population(population);
 
     ga.set_fitness(fitness);
+
+    ga.set_performance(performance);
 
     ga.set_elitism_size(2);
 
@@ -243,12 +265,14 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     crossover_population = ga.get_population();
 
-    assert_true(crossover_population.arrange_row(2) == population.arrange_row(2), LOG);
-    assert_true(crossover_population.arrange_row(3) == population.arrange_row(2), LOG);
+    assert_true(crossover_population[2] == population[2], LOG);
+    assert_true(crossover_population[3] == population[2], LOG);
 
     ga.set_population(population);
 
     ga.set_fitness(fitness);
+
+    ga.set_performance(performance);
 
     ga.set_elitism_size(2);
 
@@ -262,8 +286,8 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     crossover_population = ga.get_population();
 
-    assert_true(crossover_population.arrange_row(2) == population.arrange_row(2), LOG);
-    assert_true(crossover_population.arrange_row(3) == population.arrange_row(2), LOG);
+    assert_true(crossover_population[2] == population[2], LOG);
+    assert_true(crossover_population[3] == population[2], LOG);
 }
 
 // Mutation methods
@@ -282,14 +306,18 @@ void GeneticAlgorithmTest::test_perform_mutation(void)
 
     GeneticAlgorithm ga(&ts);
 
-    Matrix<double> population(4,1);
+    Vector< Vector<bool> > population(4);
+    Vector<bool> individual(1);
 
-    Matrix<double> mutated_population;
+    Vector< Vector<bool> > mutated_population;
 
-    population(0,0) = 1;
-    population(1,0) = 1;
-    population(2,0) = 0;
-    population(3,0) = 0;
+    individual[0] = 1;
+    population[0] = individual;
+    population[1] = individual;
+
+    individual[0] = 0;
+    population[2] = individual;
+    population[3] = individual;
 
     ga.set_population_size(4);
 
@@ -301,10 +329,10 @@ void GeneticAlgorithmTest::test_perform_mutation(void)
 
     mutated_population = ga.get_population();
 
-    assert_true(mutated_population(0,0) == 1, LOG);
-    assert_true(mutated_population(1,0) == 1, LOG);
-    assert_true(mutated_population(2,0) == 1, LOG);
-    assert_true(mutated_population(3,0) == 1, LOG);
+    assert_true(mutated_population[0][0] == 1, LOG);
+    assert_true(mutated_population[1][0] == 1, LOG);
+    assert_true(mutated_population[2][0] == 1, LOG);
+    assert_true(mutated_population[3][0] == 1, LOG);
 
     ga.set_population(population);
 
@@ -314,10 +342,10 @@ void GeneticAlgorithmTest::test_perform_mutation(void)
 
     mutated_population = ga.get_population();
 
-    assert_true(mutated_population(0,0) == 1, LOG);
-    assert_true(mutated_population(1,0) == 1, LOG);
-    assert_true(mutated_population(2,0) == 0, LOG);
-    assert_true(mutated_population(3,0) == 0, LOG);
+    assert_true(mutated_population[0][0] == 1, LOG);
+    assert_true(mutated_population[1][0] == 1, LOG);
+    assert_true(mutated_population[2][0] == 0, LOG);
+    assert_true(mutated_population[3][0] == 0, LOG);
 
 }
 

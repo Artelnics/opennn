@@ -187,7 +187,11 @@ void TrainingStrategyTest::test_save(void)
 {
    message += "test_save\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/training_strategy.xml";
+#else
    std::string file_name = "../data/training_strategy.xml";
+#endif
 
    TrainingStrategy ts;
 
@@ -204,7 +208,11 @@ void TrainingStrategyTest::test_load(void)
 {
    message += "test_load\n";
 
+#ifdef __APPLE__
+   std::string file_name = "../../../../data/training_strategy.xml";
+#else
    std::string file_name = "../data/training_strategy.xml";
+#endif
 
    TrainingStrategy ts;
 

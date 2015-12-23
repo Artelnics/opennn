@@ -142,10 +142,10 @@ void InputsSelectionAlgorithmTest::test_set_neural_inputs(void)
 
     GrowingInputs gi(&ts);
 
-    Vector<double> inputs(2);
+    Vector<bool> inputs(2);
 
-    inputs[0] = 0;
-    inputs[1] = 1;
+    inputs[0] = false;
+    inputs[1] = true;
 
     gi.set_neural_inputs(inputs);
 
