@@ -561,6 +561,65 @@ public:
    }
 
 
+   // Matrix<double> calculate_second_derivative(const T& , double (T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& , const Vector<double>& ) const
+
+   template<class T>
+   Matrix<double> calculate_forward_differences_second_derivative(const T& t, double (T::*f)(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const, const size_t& dummy_1, const Vector<double>& x1, const size_t& dummy_2,const Vector<double>& x2) const
+   {
+       const size_t n = x1.size();
+       const size_t m = x2.size();
+
+      Matrix<double> M(n, m);
+
+      double y = (t.*f)(dummy_1, x1, dummy_2, x2);
+
+      double h1, h2;
+
+      Vector<double> x1_forward(x1);
+      Vector<double> x1_forward_2(x1);
+
+      Vector<double> x2_forward(x2);
+      Vector<double> x2_forward_2(x2);
+
+      double y_forward, y_forward_2;
+
+      for(size_t i = 0; i < n; i++)
+      {
+          h1 = calculate_h(x1[i]);
+
+          x1_forward[i] += h1;
+
+          x1_forward_2[i] += 2.0*h1;
+
+          for(size_t j = 0; j < m; j++)
+          {
+              h2 = calculate_h(x2[j]);
+
+              x2_forward[j] += h2;
+
+              x2_forward_2[j] += 2.0*h2;
+
+              y_forward = (t.*f)(dummy_1, x1_forward, dummy_2, x2_forward);
+
+              y_forward_2 = (t.*f)(dummy_1, x1_forward_2, dummy_2, x2_forward_2);
+
+              M(i,j) = (y_forward_2 - 2*y_forward + y)/(h1*h2);
+
+              x2_forward[j] -= h2;
+
+              x2_forward_2[j] -= 2.0*h2;
+        }
+
+      x1_forward[i] -= h1;
+
+      x1_forward_2[i] -= 2.0*h1;
+
+     }
+
+      return(M);
+   }
+
+
    // Vector<double> calculate_forward_differences_second_derivative(const T&, Vector<double> (T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the second derivatives of a vector function using the forward differences method. 
@@ -3511,6 +3570,133 @@ public:
 	     }
 	     break;
       }
+   }
+
+
+   // Matrix< Matrix <double> > calculate_central_differences_Hessian_form
+   // (const T&, Vector<double> (T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
+
+   /// Returns the Hessian matrices, as a matrix of matrices, of a function of many inputs and many outputs using the central differences method.
+   /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&, const Vector<double>&) const.
+   /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy_int: Dummy integer for the method prototype.
+   /// @param dummy_vector: Dummy vector for the method prototype.
+   /// @param x: Input vector.
+
+   template<class T>
+   Matrix< Matrix <double> > calculate_central_differences_Hessian_matrices
+   (const T& t, Vector<double> (T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t& dummy_int, const Vector<double>& dummy_vector, const Vector<double>& x) const
+   {
+       const Vector<double> y = (t.*f)(dummy_int, dummy_vector, x);
+
+       size_t s = y.size();
+       size_t n = x.size();
+
+       double h_j;
+       double h_k;
+
+       Vector<double> x_backward_2j(x);
+       Vector<double> x_backward_j(x);
+
+       Vector<double> x_forward_j(x);
+       Vector<double> x_forward_2j(x);
+
+       Vector<double> x_backward_jk(x);
+       Vector<double> x_forward_jk(x);
+
+       Vector<double> x_backward_j_forward_k(x);
+       Vector<double> x_forward_j_backward_k(x);
+
+       Vector<double> y_backward_2j;
+       Vector<double> y_backward_j;
+
+       Vector<double> y_forward_j;
+       Vector<double> y_forward_2j;
+
+       Vector<double> y_backward_jk;
+       Vector<double> y_forward_jk;
+
+       Vector<double> y_backward_j_forward_k;
+       Vector<double> y_forward_j_backward_k;
+
+       Matrix< Matrix<double> > H;
+
+       H.set(n,s);
+
+       for(size_t i = 0; i < s; i++)
+       {
+           for(size_t t = 0; t < n; t++)
+           {
+               H(i,t).set(n,s);
+
+               for(size_t j = 0; j < n; j++)
+               {
+                   h_j = calculate_h(x[j]);
+
+                   x_backward_2j[j] -= 2.0*h_j;
+                   y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
+                   x_backward_2j[j] += 2.0*h_j;
+
+                   x_backward_j[j] -= h_j;
+                   y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
+                   x_backward_j[j] += h_j;
+
+                   x_forward_j[j] += h_j;
+                   y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
+                   x_forward_j[j] -= h_j;
+
+                   x_forward_2j[j] += 2.0*h_j;
+                   y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
+                   x_forward_2j[j] -= 2.0*h_j;
+
+                   H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+
+                   for(size_t k = j; k < s; k++)
+                   {
+                       h_k = calculate_h(x[k]);
+
+                       x_backward_jk[j] -= h_j;
+                       x_backward_jk[k] -= h_k;
+                       y_backward_jk = (t.*f)(dummy_int, dummy_vector, x_backward_jk);
+                       x_backward_jk[j] += h_j;
+                       x_backward_jk[k] += h_k;
+
+                       x_forward_jk[j] += h_j;
+                       x_forward_jk[k] += h_k;
+                       y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);
+                       x_forward_jk[j] -= h_j;
+                       x_forward_jk[k] -= h_k;
+
+                       x_backward_j_forward_k[j] -= h_j;
+                       x_backward_j_forward_k[k] += h_k;
+                       y_backward_j_forward_k = (t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);
+                       x_backward_j_forward_k[j] += h_j;
+                       x_backward_j_forward_k[k] -= h_k;
+
+                       x_forward_j_backward_k[j] += h_j;
+                       x_forward_j_backward_k[k] -= h_k;
+                       y_forward_j_backward_k = (t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);
+                       x_forward_j_backward_k[j] -= h_j;
+                       x_forward_j_backward_k[k] += h_k;
+
+                       H(i,t)(j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+                   }
+               }
+
+
+               for(size_t j = 0; j < n; j++)
+               {
+                   for(size_t k = 0; k < j; k++)
+                   {
+                       H(i,t)(j,k) = H[i](k,j);
+                   }
+               }
+           }
+       }
+
+       return(H);
    }
 
 

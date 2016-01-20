@@ -36,7 +36,7 @@ namespace OpenNN
 {
 
 /// This class is used to store some information about the output variables of a neural network.
-/// That information basically consists on the names, units and descriptions of the output variables.
+/// That information basically consists of the names, units and descriptions of the output variables.
 
 class Outputs
 {

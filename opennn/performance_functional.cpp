@@ -2981,7 +2981,7 @@ double PerformanceFunctional::calculate_objective(const Vector<double>& paramete
 
          case CROSS_ENTROPY_ERROR_OBJECTIVE:
          {
-             //objective = cross_entropy_error_objective_pointer->calculate_performance(parameters);
+             objective = cross_entropy_error_objective_pointer->calculate_performance(parameters);
          }
          break;
 

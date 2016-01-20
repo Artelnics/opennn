@@ -354,29 +354,6 @@ void ProbabilisticLayer::set_default(void)
 
 void ProbabilisticLayer::set_probabilistic_method(const ProbabilisticMethod& new_probabilistic_method)
 {
-   if ( (new_probabilistic_method == Competitive ||
-         new_probabilistic_method == Softmax ) &&
-         probabilistic_neurons_number == 1)
-   {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "void set_probabilistic_method(const ProbabilisticMethod&) method.\n"
-              << "Competitive and Softmax methods must have more than one probabilistic neuron.\n";
-
-       throw std::logic_error(buffer.str());
-   }else if ((new_probabilistic_method == Binary ||
-              new_probabilistic_method == Probability ) &&
-              probabilistic_neurons_number != 1)
-   {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "void set_probabilistic_method(const ProbabilisticMethod&) method.\n"
-              << "Binary and Probability methods must have one probabilistic neuron.\n";
-
-       throw std::logic_error(buffer.str());
-   }
    probabilistic_method = new_probabilistic_method;
 }
 
@@ -962,9 +939,46 @@ Matrix<double> ProbabilisticLayer::calculate_softmax_Jacobian(const Vector<doubl
 /// in the so called Hessian form. 
 /// @todo
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_softmax_Hessian_form(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_softmax_Hessian_form(const Vector<double>& inputs) const
 {
-   Vector< Matrix<double> > Hessian_form;
+   Vector< Matrix<double> > Hessian_form(probabilistic_neurons_number);
+
+   for(size_t i = 0; i < probabilistic_neurons_number; i++)
+   {
+       Hessian_form[i].set(probabilistic_neurons_number, probabilistic_neurons_number);
+   }
+
+   const Vector<double> outputs = inputs.calculate_softmax();
+
+   for(size_t i = 0; i < probabilistic_neurons_number; i++)
+   {
+       for(size_t j = 0; j < probabilistic_neurons_number; j++)
+       {
+           for(size_t k = 0; k < probabilistic_neurons_number; k++)
+           {
+                if(j == i && j == k && i == k)
+                {
+                    Hessian_form[i](j, k) = outputs[i]*(1 - outputs[i] - 2*outputs[i]*(1 - outputs[i]));
+                }
+                else if(j == i && j != k && i != k)
+                {
+                    Hessian_form[i](j, k) = -outputs[i]*outputs[k]*(1 - 2*outputs[i]);
+                }
+                else if(j != i && j == k && i != k)
+                {
+                    Hessian_form[i](j, k) = outputs[i]*outputs[j]*outputs[k] - outputs[i]*outputs[j]*(1 - outputs[j]);
+                }
+                else if(j != i && i == k && j != k)
+                {
+                    Hessian_form[i](j, k) = outputs[i]*outputs[j]*outputs[k] - outputs[i]*outputs[j]*(1 - outputs[i]);
+                }
+                else if(j != i && i != k && j != k)
+                {
+                    Hessian_form[i](j, k) = 2*outputs[i]*outputs[j]*outputs[k];
+                }
+           }
+       }
+   }
 
    return(Hessian_form);
 }

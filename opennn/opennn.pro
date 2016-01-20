@@ -51,6 +51,15 @@ QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }
 
+#QMAKE_CXXFLAGS += -funroll-all-loops
+#QMAKE_LFLAGS   += -funroll-all-loops
+
+#QMAKE_CXXFLAGS_RELEASE -= -O2
+#QMAKE_CXXFLAGS_RELEASE += -O3
+#QMAKE_LFLAGS_RELEASE   -= -O1
+
+
+
 HEADERS += \
     variables.h \
     instances.h \

@@ -192,7 +192,7 @@ const PerceptronLayer& MultilayerPerceptron::get_layer(const size_t& i) const
 
       buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
              << "const PerceptronLayer get_layer(const size_t&) const method.\n"
-             << "Index of layer must be less than number of layers.\n";
+             << "Index of layer (" << i << ") must be less than number of layers (" << layers_number << ").\n";
 
 	  throw std::logic_error(buffer.str());
    }
@@ -222,7 +222,7 @@ PerceptronLayer* MultilayerPerceptron::get_layer_pointer(const size_t& i)
 
       buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
              << "PerceptronLayer* get_layer_pointer(const size_t&) const method.\n"
-             << "Index of layer must be less than number of layers.\n";
+             << "Index of layer (" << i << ") must be less than number of layers (" << layers_number << ").\n";
 
 	  throw std::logic_error(buffer.str());
    }
@@ -363,7 +363,7 @@ Vector< Matrix<double> > MultilayerPerceptron::arrange_layers_synaptic_weights(v
 
 /// Returns the neural parameter values (biases and synaptic weights) from the neurons in all 
 /// the layers. 
-/// The format is a vector of matrices of real values. 
+/// The format is a vector of vector of real values.
 /// The size of this vector is the number of layers.
 /// The number of rows of each sub_matrix is the number of neurons in the corresponding layer. 
 /// The number of columns of each sub_matrix is the number of parameters (inputs + 1) to the corresponding layer. 
@@ -525,7 +525,7 @@ size_t MultilayerPerceptron::get_layer_bias_index(const size_t& layer_index, con
 
       buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
              << "size_t get_layer_bias_index(const size_t&, const size_t&) const method.\n"
-             << "Index of layer must be less than number of layers.\n";
+             << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
 
 	  throw std::logic_error(buffer.str());
    }
@@ -587,7 +587,7 @@ size_t MultilayerPerceptron::get_layer_synaptic_weight_index
 
       buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
              << "size_t get_layer_synaptic_weight_index(const size_t&, const size_t&, const size_t&) method.\n"
-             << "Index of layer must be less than number of layers.\n";
+             << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
 
 	  throw std::logic_error(buffer.str());
    }
@@ -1145,10 +1145,22 @@ void MultilayerPerceptron::set_layers_synaptic_weights(const Vector< Matrix<doub
 
 }
 
+// void set_layers_parameters(const Vector< Vector<double> >&) method
+
+/// Sets the parameters of a single layer.
+/// @param i Index of layer.
+/// @param new_layer_parameters Parameters of corresponding layer.
+
+void MultilayerPerceptron::set_layer_parameters(const size_t i, const Vector<double>& new_layer_parameters)
+{
+   layers[i].set_parameters(new_layer_parameters);
+}
+
+
 
 // void set_layers_parameters(const Vector< Vector<double> >&) method
 
-/// Sets the multilayer perceptron parameters of all layers in the multilayer perceptron
+/// Sets the multilayer perceptron parameters of all layers.
 /// The argument is a vector of vectors of real numbers. 
 /// The number of elements is the number of layers. 
 /// Each element contains the vector of parameters of a single layer
@@ -1533,8 +1545,6 @@ void MultilayerPerceptron::prune_layer_perceptron(const size_t& layer_index, con
     layers[layer_index].prune_perceptron(perceptron_index);
     layers[layer_index+1].prune_input(perceptron_index);
 }
-
-
 
 // void initialize_random(void) method
 
@@ -2082,7 +2092,7 @@ Vector<double> MultilayerPerceptron::calculate_layer_combination_combination(con
 
       buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
              << "Matrix<double> calculate_layer_combination_combination(const size_t&, const Vector<double>&) const.\n"
-             << "Index of layer must be less than numnber of layers.\n";
+             << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
 
 	  throw std::logic_error(buffer.str());
    }
@@ -2147,7 +2157,7 @@ Matrix<double> MultilayerPerceptron::calculate_layer_combination_combination_Jac
 
       buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
              << "Matrix<double> calculate_layer_combination_combination_Jacobian(const size_t&, const Vector<double>&) const.\n"
-             << "Index of layer must be less than numnber of layers.\n";
+             << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
 
 	  throw std::logic_error(buffer.str());
    }
@@ -2240,7 +2250,7 @@ Matrix<double> MultilayerPerceptron::calculate_interlayer_combination_combinatio
       {
          layers_combination_combination[i] = calculate_layer_combination_combination(domain_layer_index+i+1, layers_combination_combination[i-1]);
 
-         layers_combination_combination_Jacobian[i] = calculate_layer_combination_combination_Jacobian(domain_layer_index+i+1, layers_combination_combination[i-1]); 
+         layers_combination_combination_Jacobian[i] = calculate_layer_combination_combination_Jacobian(domain_layer_index+i+1, layers_combination_combination[i-1]);
       }
 
       interlayer_combination_combination_Jacobian = layers_combination_combination_Jacobian[size-1];
@@ -2746,8 +2756,7 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_Hessian_form(const Vect
                  output_layers_delta[layer_k](i,neuron_k)
 			     *layers_activation_derivative[layer_k-1][parameter_k-1]
                  *interlayers_combination_combination_Jacobian(layer_k-1,layer_j)(parameter_k-1,neuron_j)
-   			     *perceptrons_combination_parameters_gradient[layer_j][neuron_j][parameter_j]
-			     ;		   
+   			     *perceptrons_combination_parameters_gradient[layer_j][neuron_j][parameter_j]			     ;		   
 			   }  
 
                parameters_Hessian_form[i](k,j) = parameters_Hessian_form[i](j,k);
@@ -3327,7 +3336,8 @@ Matrix< Matrix<double> > MultilayerPerceptron::calculate_interlayers_combination
 
 // Matrix <Matrix<double> > calculate_interlayers_combination_combination_Jacobian(const Vector< Vector<double> >&) const method
 
-/// Returns the partial derivatives of the combination of one neuron with respect to the combination of another neuron for all layers in the multilayer perceptron
+/// Returns the partial derivatives of the combination of one neuron with respect to the combination of
+/// another neuron for all layers in the multilayer perceptron.
 /// This quantity is a Jacobian form, and it is represented as a matrix of matrices. 
 /// @param layers_combination Vector vectors representing the combinations of all layers. 
 

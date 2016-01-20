@@ -121,6 +121,18 @@ public:
            }
        }
 
+       inline bool is_constant(void) const
+       {
+           if(A[1] == B[1])
+           {
+              return(true);
+           }
+           else
+           {
+              return(false);
+           }
+       }
+
        /// Writes a string with the values of A, U and B.
 
        inline std::string to_string(void) const

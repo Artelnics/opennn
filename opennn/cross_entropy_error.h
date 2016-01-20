@@ -77,7 +77,6 @@ public:
 
    bool operator == (const CrossEntropyError&) const;
 
-
    // METHODS
 
    // Checking methods
@@ -89,10 +88,10 @@ public:
    double calculate_performance(void) const;
    double calculate_performance(const Vector<double>&) const;
 
-   double calculate_minimum_performance(void);
+   double calculate_minimum_performance(void) const;
 
    double calculate_generalization_performance(void) const;
-   double calculate_minimum_generalization_performance(void);
+   double calculate_minimum_generalization_performance(void) const;
 
    Vector<double> calculate_gradient(void) const;
    Matrix<double> calculate_Hessian(void) const;
@@ -102,8 +101,7 @@ public:
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML(void) const;   
-   void from_XML(const tinyxml2::XMLDocument&);   
-
+   void from_XML(const tinyxml2::XMLDocument&);
 };
 
 }

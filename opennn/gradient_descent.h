@@ -280,6 +280,8 @@ public:
 
    // Training methods
 
+   void train_layers(void);
+
    Vector<double> calculate_training_direction(const Vector<double>&) const;
 
    GradientDescentResults* perform_training(void);

@@ -190,13 +190,13 @@ const bool& InputsSelectionAlgorithm::get_display(void) const
     return(display);
 }
 
-// const double& get_generalization_performance_goal(void) const method
+// const double& get_selection_performance_goal(void) const method
 
 /// Returns the goal for the generalization performance in the inputs selection algorithm.
 
-const double& InputsSelectionAlgorithm::get_generalization_performance_goal(void) const
+const double& InputsSelectionAlgorithm::get_selection_performance_goal(void) const
 {
-    return(generalization_performance_goal);
+    return(selection_performance_goal);
 }
 
 
@@ -331,7 +331,7 @@ void InputsSelectionAlgorithm::set_default(void)
 
     // STOPPING CRITERIA
 
-    generalization_performance_goal = 0.0;
+    selection_performance_goal = 0.0;
 
     maximum_iterations_number = 1000;
 
@@ -466,29 +466,29 @@ void InputsSelectionAlgorithm::set_display(const bool& new_display)
     display = new_display;
 }
 
-// void set_generalization_performance_goal(const double&) method
+// void set_selection_performance_goal(const double&) method
 
-/// Sets the generalization performance goal for the inputs selection algorithm.
-/// @param new_generalization_performance_goal Goal of the generalization performance.
+/// Sets the Selection performance goal for the inputs selection algorithm.
+/// @param new_selection_performance_goal Goal of the generalization performance.
 
-void InputsSelectionAlgorithm::set_generalization_performance_goal(const double& new_generalization_performance_goal)
+void InputsSelectionAlgorithm::set_selection_performance_goal(const double& new_selection_performance_goal)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_generalization_performance_goal < 0)
+    if (new_selection_performance_goal < 0)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
-               << "void set_generalization_performance_goal(const double&) method.\n"
-               << "Generalization performance goal must be greater or equal than 0.\n";
+               << "void set_selection_performance_goal(const double&) method.\n"
+               << "Selection performance goal must be greater or equal than 0.\n";
 
         throw std::logic_error(buffer.str());
     }
 
 #endif
 
-    generalization_performance_goal = new_generalization_performance_goal;
+    selection_performance_goal = new_selection_performance_goal;
 }
 
 
@@ -535,6 +535,20 @@ void InputsSelectionAlgorithm::set_maximum_time(const double& new_maximum_time)
 
 void InputsSelectionAlgorithm::set_maximum_correlation(const double& new_maximum_correlation)
 {
+#ifdef __OPENNN_DEBUG__
+
+    if (new_maximum_correlation < 0 || new_maximum_correlation > 1)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
+               << "void set_maximum_correlation(const double&) method.\n"
+               << "Maximum correlation must be comprised between 0 and 1.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+#endif
     maximum_correlation = new_maximum_correlation;
 }
 
@@ -545,6 +559,21 @@ void InputsSelectionAlgorithm::set_maximum_correlation(const double& new_maximum
 
 void InputsSelectionAlgorithm::set_minimum_correlation(const double& new_minimum_correlation)
 {
+#ifdef __OPENNN_DEBUG__
+
+    if (new_minimum_correlation < 0 || new_minimum_correlation > 1)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
+               << "void set_minimum_correlation(const double&) method.\n"
+               << "Minimum correaltion must be comprised between 0 and 1.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+#endif
+
     minimum_correlation = new_minimum_correlation;
 }
 
@@ -1525,17 +1554,17 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::write_stopping_con
     {
         return ("MaximumTime");
     }
-    case GeneralizationPerformanceGoal:
+    case SelectionPerformanceGoal:
     {
-        return("GeneralizationPerformanceGoal");
+        return("SelectionPerformanceGoal");
     }
     case MaximumIterations:
     {
         return("MaximumIterations");
     }
-    case MaximumGeneralizationFailures:
+    case MaximumSelectionFailures:
     {
-        return("MaximumGeneralizationFailures");
+        return("MaximumSelectionFailures");
     }
     case CorrelationGoal:
     {
@@ -1569,6 +1598,15 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::write_stopping_con
 std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) const
 {
    std::ostringstream buffer;
+
+   // Inputs history
+
+   if(!inputs_data.empty())
+   {
+     buffer << "% Inputs history:\n"
+            << inputs_data.to_row_matrix() << "\n";
+   }
+
 
    // Parameters history
 

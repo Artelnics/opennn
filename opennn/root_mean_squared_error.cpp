@@ -211,6 +211,8 @@ double RootMeanSquaredError::calculate_performance(void) const
 
    // Data set stuff
 
+   const Matrix<double>& data = data_set_pointer->get_data();
+
    const Instances& instances = data_set_pointer->get_instances();
 
    const size_t training_instances_number = instances.count_training_instances_number();
@@ -257,11 +259,13 @@ double RootMeanSquaredError::calculate_performance(void) const
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
+//      targets = data_set_pointer->get_instance(training_index, targets_indices);
 
       // Sum squaresd error
 
-	  sum_squared_error += outputs.calculate_sum_squared_error(targets);           
+//	  sum_squared_error += outputs.calculate_sum_squared_error(targets);
+      sum_squared_error += outputs.calculate_sum_squared_error(data, training_index, targets_indices);
+
    }
 
    return(sqrt(sum_squared_error/(double)training_instances_number));

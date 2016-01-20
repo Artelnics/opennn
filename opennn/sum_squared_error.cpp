@@ -188,7 +188,7 @@ void SumSquaredError::check(void) const
 
 double SumSquaredError::calculate_performance(void) const
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -269,7 +269,7 @@ double SumSquaredError::calculate_performance(const Vector<double>& parameters) 
 {
    // Neural network stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -277,7 +277,7 @@ double SumSquaredError::calculate_performance(const Vector<double>& parameters) 
 
    // Sum squared error stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -362,13 +362,55 @@ double SumSquaredError::calculate_performance(const Vector<double>& parameters) 
 }
 
 
+// Test combination
+
+double SumSquaredError::calculate_performance_combinations(const size_t& index, const Vector<double>& combinations) const
+{
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+    const Vector<double> targets = data_set_pointer->get_instance(0, targets_indices);
+
+    const Vector<double> activations = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(index).calculate_activations(combinations);
+
+    return activations.calculate_sum_squared_error(targets);
+}
+
+
+double SumSquaredError::calculate_performance_combinations(const size_t& index_1, const Vector<double>& combinations_1, const size_t& index_2, const Vector<double>& combinations_2) const
+{
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const size_t layers_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layers_number();
+
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+    const Vector<double> targets = data_set_pointer->get_instance(0, targets_indices);
+
+//    const Vector<double> activations_1 = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(index_1).calculate_activations(combinations_1);
+//    const Vector<double> activations_2 = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(index_2).calculate_activations(combinations_2);
+
+    Vector<double> outputs;
+
+    for(size_t i = index_2; i < layers_number; i++)
+    {
+        outputs = multilayer_perceptron_pointer->get_layer(index_2).calculate_activations(combinations_2);
+    }
+
+    return outputs.calculate_sum_squared_error(targets);
+}
+
+
 // double calculate_generalization_performance(void) const method
 
 /// Returns the sum squared error of the neural network measured on the generalization instances of the data set.
 
 double SumSquaredError::calculate_generalization_performance(void) const
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -439,6 +481,16 @@ double SumSquaredError::calculate_generalization_performance(void) const
 }
 
 
+// Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const method
+
+Vector<double> SumSquaredError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
+{
+    const Vector<double> output_gradient = (output-target)*2.0;
+
+    return(output_gradient);
+}
+
+
 // Vector<double> calculate_gradient(void) const method
 
 /// Calculates the performance term gradient by means of the back-propagation algorithm, 
@@ -446,7 +498,7 @@ double SumSquaredError::calculate_generalization_performance(void) const
 
 Vector<double> SumSquaredError::calculate_gradient(void) const
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -536,9 +588,9 @@ Vector<double> SumSquaredError::calculate_gradient(void) const
 
       if(!has_conditions_layer)
       {
-         output_gradient = (layers_activation[layers_number-1]-targets)*2.0;
+          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
 
-         layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
       }
       else
       {
@@ -560,6 +612,19 @@ Vector<double> SumSquaredError::calculate_gradient(void) const
 }
 
 
+// Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const method
+
+Matrix<double> SumSquaredError::calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const
+{
+    const size_t outputs_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_outputs_number();
+
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+    output_Hessian.initialize_diagonal(2.0);
+
+    return(output_Hessian);
+}
+
+
 // Matrix<double> calculate_Hessian(void) const method
 
 /// Calculates the Hessian by means of the back-propagation algorithm,
@@ -567,7 +632,7 @@ Vector<double> SumSquaredError::calculate_gradient(void) const
 
 Matrix<double> SumSquaredError::calculate_Hessian(void) const
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -643,9 +708,9 @@ Matrix<double> SumSquaredError::calculate_Hessian(void) const
 
       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
 	  
-	  Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
-	  Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
-	  Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
+      const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
+      const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
+      const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
 
 	  Vector< Vector<double> > layers_inputs(layers_number);
 
@@ -654,7 +719,7 @@ Matrix<double> SumSquaredError::calculate_Hessian(void) const
       for(size_t j = 1; j < layers_number; j++)
 	  {
 	     layers_inputs[j] = layers_activation[j-1];
-	  }
+      }
 
 	  perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
 
@@ -662,8 +727,9 @@ Matrix<double> SumSquaredError::calculate_Hessian(void) const
 
       if(!has_conditions_layer)
       {
-         output_gradient = (layers_activation[layers_number-1] - targets)*2.0;
-         output_Hessian.initialize_diagonal(2.0);
+         output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
+
+         output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
 
          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
          interlayers_Delta = calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
@@ -684,6 +750,311 @@ Matrix<double> SumSquaredError::calculate_Hessian(void) const
    return(Hessian);
 }
 
+// Matrix<double> calculate_single_hidden_layer_hessian(void) const
+
+/// Calculates de Hessian matrix for a neural network with just one hidden layer
+
+Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian(void) const
+{
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+    // Neural network stuff
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    const size_t layers_number = 2;
+
+    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
+
+    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
+
+    Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
+
+    Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
+    Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
+
+    Vector<double> particular_solution;
+    Vector<double> homogeneous_solution;
+
+    // Data set stuff
+
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    size_t training_index;
+
+    const MissingValues& missing_values = data_set_pointer->get_missing_values();
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+    Vector<double> inputs(inputs_number);
+    Vector<double> targets(outputs_number);
+
+    // Sum squared error stuff
+
+    Vector< Vector<double> > layers_delta(layers_number);
+    //Matrix< Matrix<double> > interlayers_Delta(layers_number, layers_number);
+
+    Vector<double> output_gradient(outputs_number);
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+
+    Vector<double> parameters = neural_network_pointer->arrange_parameters();
+
+    Matrix<double> single_hidden_layer_Hessian(parameters_number, parameters_number, 0.0);
+
+    const size_t i = 0;
+//    for(size_t i = 0; i < training_instances_number; i++)
+//    {
+        training_index = training_indices[i];
+
+       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+
+       targets = data_set_pointer->get_instance(training_index, targets_indices);
+
+       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
+
+       const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
+       const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
+       const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
+
+       Vector< Vector<double> > layers_inputs(layers_number);
+
+       layers_inputs[0] = inputs;
+
+       for(size_t j = 1; j < layers_number; j++)
+       {
+          layers_inputs[j] = layers_activation[j-1];
+       }
+
+       perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
+
+       interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
+
+       output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
+
+       output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
+
+       layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+
+       const size_t first_layer_perceptrons_number = multilayer_perceptron_pointer->get_layer(0).get_perceptrons().size();
+       const size_t second_layer_perceptrons_number = multilayer_perceptron_pointer->get_layer(1).get_perceptrons().size();
+       const size_t first_layer_parameters_number = multilayer_perceptron_pointer->get_layer(0).arrange_parameters().size();
+       const size_t second_layer_parameters_number = multilayer_perceptron_pointer->get_layer(1).arrange_parameters().size();
+       // Inputs number
+       // Outputs number
+       // Layers number
+
+       Vector<size_t> parameter_indices(3);
+
+       size_t layer_index_i;
+       size_t neuron_index_i;
+       size_t parameter_index_i;
+
+       size_t layer_index_j;
+       size_t neuron_index_j;
+       size_t parameter_index_j;
+
+       const Matrix<double> output_interlayers_Delta = (output_Hessian
+                                                        * layers_activation_derivative[layers_number-1]
+                                                        * layers_activation_derivative[layers_number-1]
+                                                        + output_gradient
+                                                        * layers_activation_second_derivative[layers_number-1]);
+
+       // Both weights in the second layer
+
+       for(size_t i = first_layer_parameters_number; i < second_layer_parameters_number + first_layer_parameters_number; i++)
+       {
+           parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
+           layer_index_i = parameter_indices[0];
+           neuron_index_i = parameter_indices[1];
+           parameter_index_i = parameter_indices[2];
+
+           for(size_t j = first_layer_parameters_number; j < second_layer_parameters_number + first_layer_parameters_number; j++)
+           {
+               parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
+               layer_index_j = parameter_indices[0];
+               neuron_index_j = parameter_indices[1];
+               parameter_index_j = parameter_indices[2];
+
+               single_hidden_layer_Hessian(i,j) =
+                       perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                       *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                       *output_interlayers_Delta(neuron_index_j,neuron_index_i)
+                       *calculate_Kronecker_delta(neuron_index_i,neuron_index_j);
+           }
+       }
+
+       // One weght in each layer
+
+       Matrix<double> first_layer_weights = multilayer_perceptron_pointer->get_layer(0).arrange_synaptic_weights();
+       Vector<double> first_layer_biases = multilayer_perceptron_pointer->get_layer(0).arrange_biases();
+       Matrix<double> second_layer_weights = multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights();
+       Vector<double> second_layer_biases = multilayer_perceptron_pointer->get_layer(1).arrange_biases();
+
+
+       for(size_t i = 0; i < first_layer_parameters_number; i++)
+       {
+           parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
+           layer_index_i = parameter_indices[0];
+           neuron_index_i = parameter_indices[1];
+           parameter_index_i = parameter_indices[2];
+
+           for(size_t j = first_layer_parameters_number; j < first_layer_parameters_number + second_layer_parameters_number ; j++)
+           {
+               parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
+               layer_index_j = parameter_indices[0];
+               neuron_index_j = parameter_indices[1];
+               parameter_index_j = parameter_indices[2];
+
+               single_hidden_layer_Hessian(i,j) =
+                       (layers_activation_derivative[layer_index_i][neuron_index_i]
+                       *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                       *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                       *second_layer_weights(neuron_index_j, neuron_index_i)
+                       *output_interlayers_Delta(neuron_index_j, neuron_index_i)
+                       +layers_activation_derivative[layer_index_i][neuron_index_i]
+                       *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                       *layers_delta[layer_index_j][neuron_index_j]
+                       *calculate_Kronecker_delta(j-first_layer_parameters_number, 1));
+           }
+       }
+
+       // Both weights in the first layer
+
+       double first_term_sum = layers_delta[1].dot(second_layer_weights.arrange_row(0));// (layers_delta[1][0]*second_layer_weights(0,0));
+
+
+       double second_term_sum = second_layer_weights(0,0)*second_layer_weights(0,0)*(output_Hessian*layers_activation_derivative[1]*layers_activation_derivative[1]).sum_diagonal(output_gradient*layers_activation_second_derivative[1])(0,0);
+
+       for(size_t i = 0; i < first_layer_parameters_number; i++)
+       {
+           parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
+           layer_index_i = parameter_indices[0];
+           neuron_index_i = parameter_indices[1];
+           parameter_index_i = parameter_indices[2];
+
+           std::cout << "--" << std::endl;
+           std::cout << layer_index_i << "|" << neuron_index_i << "|" << parameter_index_i << std::endl;
+           std::cout << "--" << std::endl;
+
+           for(size_t j = 0; j < first_layer_parameters_number; j++)
+           {
+               parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
+               layer_index_j = parameter_indices[0];
+               neuron_index_j = parameter_indices[1];
+               parameter_index_j = parameter_indices[2];
+
+               std::cout << layer_index_j << "|" << neuron_index_j << "|" << parameter_index_j << std::endl;
+
+               single_hidden_layer_Hessian(i, j) =
+                       perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                      *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_j]
+                      *layers_activation_second_derivative[layer_index_i][neuron_index_i]
+                      *calculate_Kronecker_delta(neuron_index_i, neuron_index_j)
+                      *first_term_sum// sumar aparte
+                      + perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                      *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_j]
+                      *layers_activation_derivative[layer_index_i][neuron_index_i]
+                      *layers_activation_derivative[layer_index_i][neuron_index_i]
+                      *second_term_sum;
+           }
+       }
+
+       // Hessian
+
+       for(size_t i = 0; i < parameters_number; i++)
+       {
+           for(size_t j = 0; j < parameters_number; j++)
+           {
+                single_hidden_layer_Hessian(j, i) = single_hidden_layer_Hessian(i, j);
+           }
+       }
+
+
+
+       std::cout << "-------------------------------------------------------------" << std::endl;
+
+       // Both weights in the first layer
+
+       std::cout << "Both weights in the second layer: " << std::endl;
+       std::cout << "----------------------------------" << std::endl;
+
+       std::cout << "Value 1: " <<
+                  perceptrons_combination_parameters_gradient[0][0][1]
+                 *perceptrons_combination_parameters_gradient[0][0][1]
+                 *layers_activation_second_derivative[0][0]
+                 *(layers_delta[1][0]*second_layer_weights(0,0))
+                 +
+                 perceptrons_combination_parameters_gradient[0][0][1]
+                 *perceptrons_combination_parameters_gradient[0][0][1]
+                 *layers_activation_derivative[0][0]
+                 *layers_activation_derivative[0][0]
+                 *(second_layer_weights(0,0)*second_layer_weights(0,0)*(output_Hessian*layers_activation_derivative[1]*layers_activation_derivative[1]).sum_diagonal(output_gradient*layers_activation_second_derivative[1])(0,0))
+                 << std::endl;
+
+       std::cout << "Value 2: " <<
+                  perceptrons_combination_parameters_gradient[0][0][0]
+                 *perceptrons_combination_parameters_gradient[0][0][1]
+                 *layers_activation_second_derivative[0][0]
+                 *(layers_delta[1][0]*second_layer_weights[0])
+                 +
+                 perceptrons_combination_parameters_gradient[0][0][0]
+                 *perceptrons_combination_parameters_gradient[0][0][1]
+                 *layers_activation_derivative[0][0]
+                 *layers_activation_derivative[0][0]
+                 *(second_layer_weights[0]*second_layer_weights[0]*(output_Hessian*layers_activation_derivative[1]*layers_activation_derivative[1]).sum_diagonal(output_gradient*layers_activation_second_derivative[1])(0,0))
+                 << std::endl;
+
+       std::cout << "Value 3: " <<
+                  perceptrons_combination_parameters_gradient[0][0][1]
+                 *perceptrons_combination_parameters_gradient[0][0][0]
+                 *layers_activation_second_derivative[0][0]
+                 *(layers_delta[1][0]*second_layer_weights[0])
+                 +
+                 perceptrons_combination_parameters_gradient[0][0][1]
+                 *perceptrons_combination_parameters_gradient[0][0][0]
+                 *layers_activation_derivative[0][0]
+                 *layers_activation_derivative[0][0]
+                 *(second_layer_weights[0]*second_layer_weights[0]*(output_Hessian*layers_activation_derivative[1]*layers_activation_derivative[1]).sum_diagonal(output_gradient*layers_activation_second_derivative[1])(0,0))
+                 << std::endl;
+
+       std::cout << "Value 4: " <<
+                  perceptrons_combination_parameters_gradient[0][0][0]
+                 *perceptrons_combination_parameters_gradient[0][0][0]
+                 *layers_activation_second_derivative[0][0]
+                 *(layers_delta[1][0]*second_layer_weights[0])
+                 +
+                 perceptrons_combination_parameters_gradient[0][0][0]
+                 *perceptrons_combination_parameters_gradient[0][0][0]
+                 *layers_activation_derivative[0][0]
+                 *layers_activation_derivative[0][0]
+                 *(second_layer_weights[0]*second_layer_weights[0]*(output_Hessian*layers_activation_derivative[1]*layers_activation_derivative[1]).sum_diagonal(output_gradient*layers_activation_second_derivative[1])(0,0))
+                 << std::endl;
+
+       std::cout << "-----------------------------------------" << std::endl;
+/*
+       //interlayers_Delta = calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
+
+       //single_hidden_layer_Hessian += calculate_point_Hessian(layers_activation_derivative, perceptrons_combination_parameters_gradient, interlayers_combination_combination_Jacobian, layers_delta, interlayers_Delta);
+//    }*/
+
+    return single_hidden_layer_Hessian;
+}
+
 
 // Vector<double> calculate_terms(void) const method
 
@@ -693,7 +1064,7 @@ Vector<double> SumSquaredError::calculate_terms(void) const
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -774,14 +1145,14 @@ Vector<double> SumSquaredError::calculate_terms(const Vector<double>& parameters
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
    
    check();
 
    #endif
 
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t size = parameters.size();
 
@@ -820,7 +1191,7 @@ Vector<double> SumSquaredError::calculate_terms(const Vector<double>& parameters
 
 Matrix<double> SumSquaredError::calculate_terms_Jacobian(void) const
 {
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -980,7 +1351,7 @@ Vector<double> SumSquaredError::calculate_squared_errors(void) const
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -1071,6 +1442,7 @@ Vector<double> SumSquaredError::calculate_gradient(const Vector<double>&) const
 Matrix<double> SumSquaredError::calculate_Hessian(const Vector<double>&) const
 {
     Matrix<double> Hessian;
+
 
     return(Hessian);
 }

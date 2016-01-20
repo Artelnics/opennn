@@ -502,7 +502,8 @@ Vector<size_t> Variables::arrange_used_indices(void) const
 
     for(size_t i = 0; i < variables_number; i++)
     {
-        if(!(items[i].use == Unused))
+        if(items[i].use == Input
+        || items[i].use == Target)
         {
             used_indices[index] = i;
             index++;
@@ -562,6 +563,32 @@ Vector<size_t> Variables::arrange_targets_indices(void) const
    }
 
    return(targets_indices);
+}
+
+
+// Vector<size_t> arrange_unused_indices(void) const method
+
+/// Returns the indices of the unused variables.
+
+Vector<size_t> Variables::arrange_unused_indices(void) const
+{
+   const size_t variables_number = get_variables_number();
+   const size_t unused_number = count_unused_variables_number();
+
+   Vector<size_t> unused_indices(unused_number);
+
+   size_t index = 0;
+
+   for(size_t i = 0; i < variables_number; i++)
+   {
+      if(items[i].use == Unused)
+      {
+         unused_indices[index] = i;
+         index++;
+      }
+   }
+
+   return(unused_indices);
 }
 
 

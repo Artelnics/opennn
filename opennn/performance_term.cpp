@@ -628,15 +628,15 @@ void PerformanceTerm::check(void) const
 /// Returns the delta vector for all the layers in the multilayer perceptron
 /// The format of this quantity is a vector of vectors. 
 /// @param layers_activation_derivative Forward propagation activation derivative. 
-/// @param output_objective_gradient Gradient of the outputs objective function. 
+/// @param output_gradient Gradient of the outputs objective function.
 
 Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 (const Vector< Vector<double> >& layers_activation_derivative, 
- const Vector<double>& output_objective_gradient) const
+ const Vector<double>& output_gradient) const
 {
    // Neural network stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
    
    check();
 
@@ -644,7 +644,7 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -664,7 +664,7 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    // Forward propagation activation derivative size
 
@@ -681,13 +681,13 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 
    if(layers_number > 0)
    {
-      const size_t output_objective_gradient_size = output_objective_gradient.size();
+      const size_t output_gradient_size = output_gradient.size();
 
-      if(output_objective_gradient_size != layers_perceptrons_number[layers_number-1])
+      if(output_gradient_size != layers_perceptrons_number[layers_number-1])
       {
          buffer << "OpenNN Exception: PerformanceTerm class.\n"
                 << "Vector<double> calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) method.\n"
-                << "Size of outputs objective gradient (" << output_objective_gradient_size << ") must be equal to "               
+                << "Size of outputs objective gradient (" << output_gradient_size << ") must be equal to "
                 << "number of outputs (" << layers_perceptrons_number[layers_number-1] << ").\n";
 
          throw std::logic_error(buffer.str());	     
@@ -708,16 +708,16 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 
    if(layers_number > 0)
    {
-      layers_delta[layers_number-1] = layers_activation_derivative[layers_number-1]*output_objective_gradient;
+      layers_delta[layers_number-1] = layers_activation_derivative[layers_number-1]*output_gradient;
 
       // Rest of hidden layers
 
       for(int i = (int)layers_number-2; i >= 0; i--)
-      {   
-		 layer_synaptic_weights = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i+1).arrange_synaptic_weights();
+      {
+         layer_synaptic_weights = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i+1).arrange_synaptic_weights();
 
-		 layers_delta[i] = layers_activation_derivative[i]*(layers_delta[i+1].dot(layer_synaptic_weights));
-	  }
+         layers_delta[i] = layers_activation_derivative[i]*(layers_delta[i+1].dot(layer_synaptic_weights));
+      }
    }
 
    return(layers_delta);
@@ -730,12 +730,12 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 /// The format of this quantity is a vector of vectors. 
 /// @param layers_activation_derivative Forward propagation activation derivative. 
 /// @param homogeneous_solution Homogeneous solution for calculating the conditioned outputs. 
-/// @param output_objective_gradient Gradient of the outputs objective function. 
+/// @param output_gradient Gradient of the outputs objective function.
 
 Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 (const Vector< Vector<double> >& layers_activation_derivative, 
  const Vector<double>& homogeneous_solution,
- const Vector<double>& output_objective_gradient) const
+ const Vector<double>& output_gradient) const
 {
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
@@ -744,7 +744,7 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    // Forward propagation activation derivative size
 
@@ -761,7 +761,7 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
       throw std::logic_error(buffer.str());	  
    }
       
-   const size_t objective_function_output_gradient_size = output_objective_gradient.size();
+   const size_t objective_function_output_gradient_size = output_gradient.size();
 
    if(objective_function_output_gradient_size != layers_perceptrons_number[layers_number-1])
    {
@@ -794,7 +794,7 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 
    // Output layer
 
-   layers_delta[layers_number-1] = layers_activation_derivative[layers_number-1]*homogeneous_solution*output_objective_gradient;
+   layers_delta[layers_number-1] = layers_activation_derivative[layers_number-1]*homogeneous_solution*output_gradient;
 
    // Rest of hidden layers
 
@@ -819,6 +819,7 @@ Vector< Vector<double> > PerformanceTerm::calculate_layers_delta
 }
 
 
+
 // Vector<double> calculate_point_gradient(const Vector<double>&, const Vector< Vector<double> >&, const Vector<double>&) const method
 
 /// Returns the gradient of the performance term function at some input point.
@@ -833,7 +834,7 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -841,7 +842,7 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -862,7 +863,7 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
  
    // Input size
 
@@ -989,7 +990,7 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -999,7 +1000,7 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -1019,7 +1020,7 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
  
    // Input size
 
@@ -1066,15 +1067,72 @@ Vector<double> PerformanceTerm::calculate_point_gradient
 }
 
 
-// Matrix< Matrix<double> > calculate_interlayers_Delta(const Vector< Vector<double> >&, const Vector< Vector<double> >&, const Vector<double>&, const Matrix<double>&, const Vector< Vector<double> >&) method
+double PerformanceTerm::calculate_performance_output_combinations(const Vector<double>& combinations) const
+{
+    const size_t outputs_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_outputs_number();
+
+    Vector<double> targets(outputs_number, 1.0);
+
+//    const Instances& instances = data_set_pointer->get_instances();
+
+//    const Variables& variables = data_set_pointer->get_variables();
+
+//    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+//    targets = data_set_pointer->get_instance(0, targets_indices);
+
+    Vector<double> activations = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(0).calculate_activations(combinations);
+
+    return activations.calculate_sum_squared_error(targets);
+}
+
+
+Matrix<double> PerformanceTerm::calculate_output_interlayers_Delta(const Vector<double>& activation_derivative,
+                                                                   const Vector<double>& activation_second_derivative,
+                                                                   const Vector<double>& output_gradient,
+                                                                   const Matrix<double>& output_Hessian) const
+{
+    const Matrix<double> interlayers_Delta =
+    (output_Hessian*activation_derivative*activation_derivative).sum_diagonal(output_gradient*activation_second_derivative);
+
+    return(interlayers_Delta);
+}
+
+
+Matrix<double> PerformanceTerm::calculate_interlayers_Delta(
+        const size_t& index_1,
+        const size_t& index_2,
+        const Vector<double>& layer_1_activation_derivative,
+        const Vector<double>& layer_1_activation_second_derivative,
+        const Vector<double>& layer_1_delta,
+        const Matrix<double>& previous_interlayers_Delta,
+        const Matrix<double>& interlayers_combination_combination_Jacobian) const
+{
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const Matrix<double> layer_2_synaptic_weights = multilayer_perceptron_pointer->get_layer(index_2+1).arrange_synaptic_weights();
+
+    const Matrix<double> first_term =
+    (interlayers_combination_combination_Jacobian.calculate_transpose()*layer_1_activation_second_derivative)
+    *layer_1_delta.dot(layer_2_synaptic_weights);
+
+    const Matrix<double> second_term =
+    layer_1_activation_derivative*previous_interlayers_Delta;
+    //(previous_interlayers_Delta*layer_2_synaptic_weights);
+
+    return(first_term);
+}
+
+
+// Matrix< Matrix<double> > calculate_interlayers_Delta(const Vector< Vector<double> >&, const Vector< Vector<double> >&, const Vector<double>&, const Matrix<double>&, const Vector< Vector<double> >&) const method
 
 /// Returns the second partial derivatives of the outputs objective function with respect to the combinations of two layers.
 /// That quantity is called interlayers Delta, and it is represented as a matrix of matrices. 
 /// @param layers_activation_derivative Activation derivatives of all layers in the multilayer perceptron
 /// @param layers_activation_second_derivative Activation second derivatives of all layers in the multilayer perceptron
 /// @param interlayers_combination_combination_Jacobian_form Matrix of matrices containing the partial derivatives of all layers combinations with respect to all layers combinations. 
-/// @param output_objective_gradient Gradient vector of the outputs objective function. 
-/// @param output_objective_Hessian Hessian matrix of the outputs objective function. 
+/// @param output_gradient Gradient vector of the outputs objective function.
+/// @param output_Hessian Hessian matrix of the outputs objective function.
 /// @param layers_delta Vector of vectors containing the partial derivatives of the outputs objective function with respect to the combinations of all layers. 
 /// @todo
 
@@ -1082,13 +1140,13 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
 (const Vector< Vector<double> >& layers_activation_derivative,
  const Vector< Vector<double> >& layers_activation_second_derivative,
  const Matrix< Matrix<double> >& interlayers_combination_combination_Jacobian_form, 
- const Vector<double>& output_objective_gradient,
- const Matrix<double>& output_objective_Hessian,
+ const Vector<double>& output_gradient,
+ const Matrix<double>& output_Hessian,
  const Vector< Vector<double> >& layers_delta) const
 {
    // Neural network stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -1096,7 +1154,7 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -1116,40 +1174,40 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    if(layers_number != 0)
    {
-      const size_t output_objective_gradient_size = output_objective_gradient.size();
+      const size_t output_gradient_size = output_gradient.size();
 
-      if(output_objective_gradient_size != layers_size[layers_number-1])
+      if(output_gradient_size != layers_size[layers_number-1])
       {
          buffer << "OpenNN Exception: PerformanceTerm class.\n"
                 << "Vector<double> calculate_interlayers_Delta() method.\n"
-                << "Size of layer " << layers_number-1 << " must be equal to size of output objective gradient (" << output_objective_gradient_size << ")."
+                << "Size of layer " << layers_number-1 << " must be equal to size of output objective gradient (" << output_gradient_size << ")."
                 << std::endl;
 
          throw std::logic_error(buffer.str());
       }
 
-      const size_t output_objective_Hessian_rows_number = output_objective_Hessian.get_rows_number();
-      const size_t output_objective_Hessian_columns_number = output_objective_Hessian.get_columns_number();
+      const size_t output_Hessian_rows_number = output_Hessian.get_rows_number();
+      const size_t output_Hessian_columns_number = output_Hessian.get_columns_number();
 
-      if(output_objective_Hessian_rows_number != layers_size[layers_number-1])
+      if(output_Hessian_rows_number != layers_size[layers_number-1])
       {
          buffer << "OpenNN Exception: PerformanceTerm class.\n"
                 << "Vector<double> calculate_interlayers_Delta() method.\n"
-                << "Size of layer " << layers_number-1 << " must be equal to number of rows in output objective Hessian (" << output_objective_Hessian_rows_number << ")."
+                << "Size of layer " << layers_number-1 << " must be equal to number of rows in output objective Hessian (" << output_Hessian_rows_number << ")."
                 << std::endl;
 
          throw std::logic_error(buffer.str());
       }
 
-      if(output_objective_Hessian_columns_number != layers_size[layers_number-1])
+      if(output_Hessian_columns_number != layers_size[layers_number-1])
       {
          buffer << "OpenNN Exception: PerformanceTerm class.\n"
                 << "Vector<double> calculate_interlayers_Delta() method.\n"
-                << "Size of layer " << layers_number-1 << ") must be equal to number of columns in output objective Hessian (" << output_objective_Hessian_columns_number << ")."
+                << "Size of layer " << layers_number-1 << ") must be equal to number of columns in output objective Hessian (" << output_Hessian_columns_number << ")."
                 << std::endl;
 
          throw std::logic_error(buffer.str());
@@ -1168,38 +1226,98 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
    {
       for(size_t j = 0; j < layers_number; j++)
       {
-         interlayers_Delta(i,j).set(layers_size[i], layers_size[j]);
+         interlayers_Delta(i,j).set(layers_size[i], layers_size[j], 0.0);
       }
    }
 
-   // @todo
-
-   if(layers_number > 0)
+   if(layers_number == 0)
    {
-      // Output-outputs layer 
+        return(interlayers_Delta);
+   }
 
-      interlayers_Delta(layers_number-1,layers_number-1) = (output_objective_Hessian*(layers_activation_derivative[layers_number-1]*layers_activation_derivative[layers_number-1])).sum_diagonal(output_objective_gradient*layers_activation_second_derivative[layers_number-1]);
+   // Output-outputs layer
+
+      interlayers_Delta(layers_number-1,layers_number-1) =
+              (output_Hessian
+              * layers_activation_derivative[layers_number-1]
+              * layers_activation_derivative[layers_number-1]
+              + output_gradient
+              * layers_activation_second_derivative[layers_number-1]);
+
+//              interlayers_combination_combination_Jacobian_form(0,0)
+//              * layers_activation_second_derivative[0]
+//              * (layers_delta[0].dot(layers_synaptic_weights[1]))
+//              + layers_activation_derivative[0]
+//              * (interlayers_Delta(1,1).dot(layers_synaptic_weights[1]));
+  /*
+      interlayers_Delta(1,0) =
+               layers_activation_second_derivative[1]
+              * interlayers_combination_combination_Jacobian_form(1,0)
+              * (layers_delta[0]/layers_activation_derivative[0])
+              + layers_activation_derivative[0]
+              * (interlayers_Delta(1,1).dot(layers_synaptic_weights[0]));
+
+      interlayers_Delta(0,1) =
+               layers_activation_second_derivative[0]
+              * interlayers_combination_combination_Jacobian_form(0,1)
+              * (layers_delta[0]/layers_activation_derivative[1])
+              + layers_activation_derivative[1]
+              * (interlayers_Delta(1,1).dot(layers_synaptic_weights[0]));
+
+   interlayers_Delta(0,0) =
+               layers_activation_second_derivative[0]
+              * interlayers_combination_combination_Jacobian_form(0,1)
+              * (layers_delta[0]/layers_activation_derivative[1])
+              + layers_activation_derivative[1]
+              * (interlayers_Delta(0,0).dot(layers_synaptic_weights[1]));*/
+
+
 
       // Rest of hidden layers
 
-      for(int i = (int)layers_number-1; i >= 0; i--)
-      {   
+  /*    for(int i = (int)layers_number-1; i >= 0; i--)
+      {
          for(int j = (int)layers_number-1; j >= 0; j--)
-         {   
+         {
             if((int)i != (int)layers_number-1 && (int)j != (int)layers_number-1)
             {
-               interlayers_Delta(i,j)
-               = layers_activation_second_derivative[j]
-                *interlayers_combination_combination_Jacobian_form(i,j)
-                *(layers_delta[j+1].dot(layers_synaptic_weights[j+1]))
-               + layers_activation_second_derivative[j]
-                *(interlayers_Delta(i,j+1).dot(layers_synaptic_weights[j+1]));
-            }
-		 }
-	  }
-   }
 
-   return(interlayers_Delta);
+//                interlayers_Delta(i,j)
+//                        = layers_activation_second_derivative[j]
+//                        *interlayers_combination_combination_Jacobian_form(i,j)
+//                        *(layers_delta[j+1].dot(layers_synaptic_weights[j+1]))
+//                        + layers_activation_derivative[j]
+//                        *(interlayers_Delta(i+1,j+1).dot(layers_synaptic_weights[j+1]));
+
+                interlayers_Delta(i,j)
+                = layers_activation_second_derivative[j]
+                *interlayers_combination_combination_Jacobian_form(i,j)
+                *(layers_delta[j].dot(layers_synaptic_weights[j]))
+                + layers_activation_derivative[j]
+                *(interlayers_Delta(i+1,j).dot(layers_synaptic_weights[j]));
+            }
+            else if(((int)i != (int)layers_number-1 && (int)j == (int)layers_number-1))
+            {
+                    interlayers_Delta(i,j)
+                    = layers_activation_second_derivative[j]
+                    *interlayers_combination_combination_Jacobian_form(i,j)
+                    *(layers_delta[j].dot(layers_synaptic_weights[j]))
+                    + layers_activation_derivative[j]
+                    *(interlayers_Delta(i+1,j).dot(layers_synaptic_weights[j]));
+            }
+            else if(((int)i == (int)layers_number-1 && (int)j != (int)layers_number-1))
+            {
+                interlayers_Delta(i,j)
+                        = layers_activation_second_derivative[j]
+                        *interlayers_combination_combination_Jacobian_form(i,j)
+                        *(layers_delta[j+1].dot(layers_synaptic_weights[j+1]))
+                        + layers_activation_derivative[j]
+                        *(interlayers_Delta(i,j+1).dot(layers_synaptic_weights[j+1]));
+            }
+         }
+      }*/
+
+      return(interlayers_Delta);
 }
 
 
@@ -1222,7 +1340,7 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
 {
    // Neural network stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -1230,7 +1348,7 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -1249,7 +1367,10 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
 
    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
 
-   #ifdef __OPENNN_DEBUG__ 
+   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+
+   #ifdef __OPENNN_DEBUG__
 
    const size_t layers_activation_derivative_size = layers_activation_derivative.size();
 
@@ -1290,15 +1411,22 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
 
     // @todo
 
+   size_t column_count = 0;
+   size_t auxiliar_count = 1;
 
    if(layers_number > 0)
    {
-      for(size_t i = 0; i < parameters_number; i++)
+     for(size_t i = 0; i < parameters_number; i++)
 	  {
          parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
          layer_index_i = parameter_indices[0];
          neuron_index_i = parameter_indices[1];
          parameter_index_i = parameter_indices[2];
+
+         if(i!= 0 && i == auxiliar_count*(inputs_number+1))
+         {
+             auxiliar_count++;
+         }
 
          for(size_t j = 0; j < parameters_number; j++)
 		 {
@@ -1306,16 +1434,23 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
             layer_index_j = parameter_indices[0];
             neuron_index_j = parameter_indices[1];
             parameter_index_j = parameter_indices[2];
-           
-            point_Hessian(i,j) 
-            = perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
-             *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
-             *interlayers_Delta(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i)
-            + perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
-             *layers_delta[layer_index_j][neuron_index_j]
-             *layers_activation_derivative[layer_index_j][neuron_index_j]
-             *interlayers_combination_combination_Jacobian(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i);
+
+//            if(column_count >= (inputs_number + 1)*auxiliar_count)
+//            {
+//                point_Hessian(i,j) = 0.0;
+//            }
+//           else
+//            {
+                point_Hessian(i,j)
+                        = perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                        *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                        *interlayers_Delta(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i);/*
+                        + perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                        *layers_delta[layer_index_j][neuron_index_j]*layers_activation_derivative[layer_index_j][neuron_index_j]*interlayers_combination_combination_Jacobian(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i);*/
+            column_count++;
          }
+
+         column_count = 0;
 	  }
 
       for(size_t i = 0; i < parameters_number; i++)
@@ -1325,7 +1460,7 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
             point_Hessian(i,j) = point_Hessian(j,i);
          }
       }
-   } 
+  }
 
    return(point_Hessian);
 }
@@ -1340,7 +1475,7 @@ Vector<double> PerformanceTerm::calculate_gradient(void) const
 {
    // Neural network stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -1348,7 +1483,7 @@ Vector<double> PerformanceTerm::calculate_gradient(void) const
 
    // Performance functional stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -1413,7 +1548,7 @@ Matrix<double> PerformanceTerm::calculate_Hessian(void) const
 {
    // Neural network stuff
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 

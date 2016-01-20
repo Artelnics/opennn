@@ -479,7 +479,7 @@ Vector< LinearRegressionParameters<double> > TestingAnalysis::calculate_linear_r
 // TestingAnalysis::LinearRegressionResults TestingAnalysis::perform_linear_regression_analysis(void) const
 
 /// Performs a linear regression analysis of a neural network on the testing indices of a data set.
-/// It returns a linear regression analysis results structure, which consists on:
+/// It returns a linear regression analysis results structure, which consists of:
 /// <ul>
 /// <li> Linear regression parameters.
 /// <li> Scaled target and output data.
@@ -825,7 +825,7 @@ Matrix<size_t> TestingAnalysis::calculate_confusion_multiple_classification(cons
 
 /// Returns a vector containing the number of total positives and the number of total negatives
 /// instances of a data set.
-/// The size of the vector is two and consists on:
+/// The size of the vector is two and consists of:
 /// <ul>
 /// <li> Total positives
 /// <li> Total negatives
@@ -854,17 +854,6 @@ Matrix<size_t> TestingAnalysis::calculate_confusion(void) const
    #ifdef __OPENNN_DEBUG__
 
     check();
-
-    if (data_set_pointer->get_instances().count_testing_instances_number() == 0)
-    {
-        std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-              << "Matrix<size_t> calculate_confusion(void) const method.\n"
-              << "Number of testing instances must be greater than 0.\n";
-
-      throw std::logic_error(buffer.str());
-    }
 
    #endif
 
@@ -928,7 +917,7 @@ Matrix<size_t> TestingAnalysis::calculate_confusion(void) const
     {
         double decision_threshold;
 
-        if(neural_network_pointer->has_probabilistic_layer())
+        if(neural_network_pointer->get_probabilistic_layer_pointer() != NULL)
         {
             decision_threshold = neural_network_pointer->get_probabilistic_layer_pointer()->get_decision_threshold();
         }
@@ -949,7 +938,7 @@ Matrix<size_t> TestingAnalysis::calculate_confusion(void) const
 //TestingAnalysis::RocCurveResults perform_roc_analysis (void) const
 
 /// Performs a ROC curve analysis.
-/// It returns a ROC curve analysis results structure, which consists on:
+/// It returns a ROC curve analysis results structure, which consists of:
 /// <ul>
 /// <li> ROC curve
 /// <li> Area under the ROC curve

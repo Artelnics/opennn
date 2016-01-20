@@ -220,6 +220,7 @@ double NormalizedSquaredError::calculate_performance(void) const
 
    // Data set stuff
 
+
    const Instances& instances = data_set_pointer->get_instances();
 
    const size_t training_instances_number = instances.count_training_instances_number();
@@ -275,7 +276,7 @@ double NormalizedSquaredError::calculate_performance(void) const
 
       // Sum squared error
 
-	  sum_squared_error += outputs.calculate_sum_squared_error(targets);
+      sum_squared_error += outputs.calculate_sum_squared_error(targets);
 
 	  // Normalization coefficient
 

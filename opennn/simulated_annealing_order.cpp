@@ -85,13 +85,13 @@ const double& SimulatedAnnealingOrder::get_cooling_rate(void) const
     return(cooling_rate);
 }
 
-// const size_t& get_maximum_generalization_failures(void) const method
+// const size_t& get_maximum_selection_failures(void) const method
 
 /// Returns the maximum number of generalization failures in the model order selection algorithm.
 
-const size_t& SimulatedAnnealingOrder::get_maximum_generalization_failures(void) const
+const size_t& SimulatedAnnealingOrder::get_maximum_selection_failures(void) const
 {
-    return(maximum_generalization_failures);
+    return(maximum_selection_failures);
 }
 
 // const double& get_minimum_temperature(void) const method
@@ -111,7 +111,7 @@ void SimulatedAnnealingOrder::set_default(void)
 {
     cooling_rate = 0.5;
 
-    maximum_generalization_failures = 3;
+    maximum_selection_failures = 3;
     minimum_temperature = 1.0e-3;
 }
 
@@ -149,12 +149,12 @@ void SimulatedAnnealingOrder::set_cooling_rate(const double& new_cooling_rate)
     cooling_rate = new_cooling_rate;
 }
 
-// void set_maximum_generalization_failures(const size_t&) method
+// void set_maximum_selection_failures(const size_t&) method
 
 /// Sets the maximum generalization failures for the simulated annealing order selection algorithm.
 /// @param new_maximum_performance_failures Maximum number of generalization failures in the simulated annealing order selection algorithm.
 
-void SimulatedAnnealingOrder::set_maximum_generalization_failures(const size_t& new_maximum_performance_failures)
+void SimulatedAnnealingOrder::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -163,7 +163,7 @@ void SimulatedAnnealingOrder::set_maximum_generalization_failures(const size_t& 
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: SimulatedAnnealingOrder class.\n"
-               << "void set_maximum_generalization_failures(const size_t&) method.\n"
+               << "void set_maximum_selection_failures(const size_t&) method.\n"
                << "Maximum generalization failures must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -171,7 +171,7 @@ void SimulatedAnnealingOrder::set_maximum_generalization_failures(const size_t& 
 
 #endif
 
-    maximum_generalization_failures = new_maximum_performance_failures;
+    maximum_selection_failures = new_maximum_performance_failures;
 }
 
 // void set_minimum_temperature(const double&) method
@@ -199,6 +199,43 @@ void SimulatedAnnealingOrder::set_minimum_temperature(const double& new_minimum_
     minimum_temperature = new_minimum_temperature;
 }
 
+
+// size_t get_optimal_generalization_performance_index(void) const method
+
+/// Return the index of the optimal individual of the history considering the tolerance.
+
+size_t SimulatedAnnealingOrder::get_optimal_generalization_performance_index(void) const
+{
+    size_t index = 0;
+
+    size_t optimal_order = order_history[0];
+
+    double optimum_error = generalization_performance_history[0];
+
+    size_t current_order;
+
+    double current_error;
+
+    for (size_t i = 1; i < order_history.size(); i++)
+    {
+        current_order = order_history[i];
+        current_error = generalization_performance_history[i];
+
+        if ((fabs(optimum_error-current_error) < tolerance &&
+             optimal_order > current_order) ||
+            (fabs(optimum_error-current_error) >= tolerance &&
+             current_error < optimum_error)   )
+        {
+            optimal_order = current_order;
+            optimum_error = current_error;
+
+            index = i;
+        }
+    }
+
+    return(index);
+}
+
 // SimulatedAnnealingOrderResults* perform_order_selection(void) method
 
 /// Perform the order selection with the simulated annealing method.
@@ -222,7 +259,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     bool end = false;
     size_t iterations = 0;
-    size_t generalization_failures = 0;
+    size_t selection_failures = 0;
     size_t random_failures = 0;
     size_t upper_bound;
     size_t lower_bound;
@@ -312,7 +349,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
                 && current_order >= optimal_order))
             // Generalization failures
         {
-            generalization_failures++;
+            selection_failures++;
         }else
             // Generalization success
         {
@@ -324,7 +361,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        results->order_data.push_back(optimal_order);
+        results->order_data.push_back(current_order);
 
         if (reserve_performance_data)
         {
@@ -359,18 +396,18 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = SimulatedAnnealingOrder::MaximumTime;
-        }else if (optimum_performance[1] < generalization_performance_goal)
+        }else if (optimum_performance[1] < selection_performance_goal)
         {
             end = true;
             if (display)
                 std::cout << "Generalization performance reached." << std::endl;
-            results->stopping_condition = SimulatedAnnealingOrder::GeneralizationPerformanceGoal;
-        }else if (generalization_failures >= maximum_generalization_failures)
+            results->stopping_condition = SimulatedAnnealingOrder::SelectionPerformanceGoal;
+        }else if (selection_failures >= maximum_selection_failures)
         {
             end = true;
             if (display)
-                std::cout << "Maximum generalization performance failures("<<generalization_failures<<") reached." << std::endl;
-            results->stopping_condition = SimulatedAnnealingOrder::MaximumGeneralizationFailures;
+                std::cout << "Maximum generalization performance failures("<<selection_failures<<") reached." << std::endl;
+            results->stopping_condition = SimulatedAnnealingOrder::MaximumSelectionFailures;
         }else if (iterations >= maximum_iterations_number)
         {
             end = true;
@@ -391,8 +428,19 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     }
 
+    size_t optimal_index = get_optimal_generalization_performance_index();
+
+    optimal_order = order_history[optimal_index] ;
+    optimum_performance[0] = performance_history[optimal_index];
+    optimum_performance[1] = generalization_performance_history[optimal_index];
+    optimum_parameters = get_parameters_order(optimal_order);
+
     if (display)
-        std::cout << "Optimal order : " << optimal_order << std:: endl;
+    {
+        std::cout << "Optimal order : " << optimal_order << std::endl;
+        std::cout << "Optimum training Performance : " << optimum_performance[0] << std::endl;
+        std::cout << "Optimum generalization performance : " << optimum_performance[1] << std::endl;
+    }
 
     multilayer_perceptron_pointer->set(inputs_number, optimal_order, outputs_number);
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
@@ -407,6 +455,136 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
     results->iterations_number = iterations;
 
     return(results);
+}
+
+// Matrix<std::string> to_string_matrix(void) const method
+
+// the most representative
+
+Matrix<std::string> SimulatedAnnealingOrder::to_string_matrix(void) const
+{
+    std::ostringstream buffer;
+
+    Vector<std::string> labels;
+    Vector<std::string> values;
+
+   // Minimum order
+
+   labels.push_back("Minimum order");
+
+   buffer.str("");
+   buffer << minimum_order;
+
+   values.push_back(buffer.str());
+
+   // Maximum order
+
+   labels.push_back("Maximum order");
+
+   buffer.str("");
+   buffer << maximum_order;
+
+   values.push_back(buffer.str());
+
+   // Step
+
+   labels.push_back("Cooling Rate");
+
+   buffer.str("");
+   buffer << cooling_rate;
+
+   values.push_back(buffer.str());
+
+   // Trials number
+
+   labels.push_back("Trials number");
+
+   buffer.str("");
+   buffer << trials_number;
+
+   values.push_back(buffer.str());
+
+   // Tolerance
+
+   labels.push_back("Tolerance");
+
+   buffer.str("");
+   buffer << tolerance;
+
+   values.push_back(buffer.str());
+
+   // Selection performance goal
+
+   labels.push_back("Selection performance goal");
+
+   buffer.str("");
+   buffer << selection_performance_goal;
+
+   values.push_back(buffer.str());
+
+   // Maximum generalization failures
+
+   labels.push_back("Maximum generalization failures");
+
+   buffer.str("");
+   buffer << maximum_selection_failures;
+
+   values.push_back(buffer.str());
+
+   // Minimum temperature
+
+   labels.push_back("Minimum temperature");
+
+   buffer.str("");
+   buffer << minimum_temperature;
+
+   values.push_back(buffer.str());
+
+   // Maximum iterations number
+
+   labels.push_back("Maximum iterations number");
+
+   buffer.str("");
+   buffer << maximum_iterations_number;
+
+   values.push_back(buffer.str());
+
+   // Maximum time
+
+   labels.push_back("Maximum time");
+
+   buffer.str("");
+   buffer << maximum_time;
+
+   values.push_back(buffer.str());
+
+   // Plot training performance history
+
+   labels.push_back("Plot training performance history");
+
+   buffer.str("");
+   buffer << reserve_performance_data;
+
+   values.push_back(buffer.str());
+
+   // Plot selection performance history
+
+   labels.push_back("Plot selection performance history");
+
+   buffer.str("");
+   buffer << reserve_generalization_performance_data;
+
+   values.push_back(buffer.str());
+
+   const size_t rows_number = labels.size();
+   const size_t columns_number = 2;
+
+   Matrix<std::string> string_matrix(rows_number, columns_number);
+
+   string_matrix.set_column(0, labels);
+   string_matrix.set_column(1, values);
+
+    return(string_matrix);
 }
 
 // tinyxml2::XMLDocument* to_XML(void) const method
@@ -546,13 +724,13 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Generalization performance goal
+   // Selection performance goal
    {
-   element = document->NewElement("GeneralizationPerformanceGoal");
+   element = document->NewElement("SelectionPerformanceGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << generalization_performance_goal;
+   buffer << selection_performance_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -596,11 +774,11 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
 
    // Maximum generalization failures
    {
-   element = document->NewElement("MaximumGeneralizationFailures");
+   element = document->NewElement("MaximumSelectionFailures");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_generalization_failures;
+   buffer << maximum_selection_failures;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -831,17 +1009,17 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Generalization performance goal
+    // Selection performance goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GeneralizationPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
 
         if(element)
         {
-           const double new_generalization_performance_goal = atof(element->GetText());
+           const double new_selection_performance_goal = atof(element->GetText());
 
            try
            {
-              set_generalization_performance_goal(new_generalization_performance_goal);
+              set_selection_performance_goal(new_selection_performance_goal);
            }
            catch(const std::logic_error& e)
            {
@@ -909,15 +1087,15 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Maximum generalization failures
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumGeneralizationFailures");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
         if(element)
         {
-           const size_t new_maximum_generalization_failures = atoi(element->GetText());
+           const size_t new_maximum_selection_failures = atoi(element->GetText());
 
            try
            {
-              set_maximum_generalization_failures(new_maximum_generalization_failures);
+              set_maximum_selection_failures(new_maximum_selection_failures);
            }
            catch(const std::logic_error& e)
            {
@@ -988,3 +1166,19 @@ void SimulatedAnnealingOrder::load(const std::string& file_name)
 
 }
 
+// OpenNN: Open Neural Networks Library.
+// Copyright (c) 2005-2015 Roberto Lopez.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

@@ -1209,6 +1209,89 @@ void TrainingStrategy::destruct_refinement(void)
 }
 
 
+// void initialize_layers_autoencoding(void) method
+
+void TrainingStrategy::initialize_layers_autoencoding(void)
+{
+    // Data set
+
+    DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+
+    Instances* instances_pointer = data_set_pointer->get_instances_pointer();
+
+    const size_t training_instances_number = instances_pointer->count_training_instances_number();
+
+    // Neural network
+
+    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+
+    MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const Vector<size_t> architecture = multilayer_perceptron_pointer->arrange_architecture();
+
+    // Autoencoding
+
+    Matrix<double> input_data;
+
+    DataSet data_set;
+
+    NeuralNetwork neural_network;
+
+    size_t inputs_number;
+    size_t layer_size;
+
+    Vector<double> parameters;
+
+    PerformanceFunctional performance_functional(&neural_network, &data_set);
+
+    QuasiNewtonMethod quasi_Newton_method(&performance_functional);
+    quasi_Newton_method.set_performance_goal(1.0e-3);
+    quasi_Newton_method.set_gradient_norm_goal(1.0e-3);
+
+    quasi_Newton_method.set_display_period(1000);
+
+    std::cout << "Layers number: " << architecture.size() - 1 << std::endl;
+
+    for(size_t i = 1; i < architecture.size()-1; i++)
+    {
+        std::cout << "Layer: " << i-1 << std::endl;
+        std::cout << "Size: " << architecture[i-1] << std::endl;
+
+        // Neural network
+
+        inputs_number = architecture[i-1];
+        layer_size = architecture[i];
+
+        neural_network.set(inputs_number, layer_size, inputs_number);
+
+        // Data set
+
+        input_data.set(training_instances_number, inputs_number);
+        input_data.randomize_normal();
+
+        data_set.set(training_instances_number, inputs_number, inputs_number);
+        data_set.set_data(input_data.assemble_columns(input_data));
+
+        Vector<Variables::Use> inputs(inputs_number, Variables::Input);
+        Vector<Variables::Use> targets(inputs_number, Variables::Target);
+
+        data_set.get_variables_pointer()->set_uses(inputs.assemble(targets));
+
+        data_set.get_instances_pointer()->set_training();
+
+        // Training strategy
+
+        quasi_Newton_method.perform_training();
+
+        // Set parameters
+
+        parameters = neural_network.get_multilayer_perceptron_pointer()->get_layer(0).arrange_parameters();
+
+        multilayer_perceptron_pointer->set_layer_parameters(i-1, parameters);
+    }
+}
+
+
 // Results perform_training(void) method
 
 /// This is the most important method of this class. 
@@ -1225,6 +1308,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
     check_training_algorithms();
 
    #endif
+
+//   initialize_layers_autoencoding();
 
    Results training_strategy_results;
 

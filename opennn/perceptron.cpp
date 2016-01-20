@@ -723,6 +723,7 @@ double Perceptron::calculate_combination(const Vector<double>& inputs) const
        combination += synaptic_weights[i]*inputs[i];
    }
 
+
    return(combination);
 }
 
@@ -831,8 +832,8 @@ double Perceptron::calculate_activation(const double& combination) const
       break;
 
       case Perceptron::Linear:
-      {
-         return(combination);        
+      {       
+         return(combination);
       }
       break;
       
@@ -864,8 +865,10 @@ double Perceptron::calculate_activation_derivative(const double& combination) co
       case Perceptron::Logistic:
       {
          const double exponent = exp(-combination);
+         const double logistic_function = 1.0/(1.0+exponent);
 
-         return(exponent/((1.0+exponent)*(1.0+exponent)));
+         return (logistic_function*(1.0-logistic_function));
+         //return(exponent/((1.0+exponent)*(1.0+exponent)));
       }
       break;
                                      
@@ -948,9 +951,11 @@ double Perceptron::calculate_activation_second_derivative(const double& combinat
    {
       case Perceptron::Logistic:
       {
-         const double exponent = exp(combination);
+         const double exponent = exp(-combination);
+         const double logistic_function = 1.0/(1.0 + exponent);
 
-         return(-exponent*(exponent-1.0)/((exponent+1.0)*(exponent+1.0)*(exponent+1.0)));
+         return (logistic_function*(1.0-logistic_function)*(1.0-2*logistic_function));
+         //return(-exponent*(exponent-1.0)/((exponent+1.0)*(exponent+1.0)*(exponent+1.0)));
       }
       break;
                                      

@@ -75,7 +75,7 @@ public:
 
     /// Enumeration of available methods for the crossover of the population.
 
-    enum CrossoverMethod{Point1, Points2, UniformCrossover};
+    enum CrossoverMethod{OnePoint, TwoPoint, Uniform};
 
     /// Enumeration of available methods for the fitness assignement of the population.
 
@@ -102,6 +102,10 @@ public:
         }
 
         std::string to_string(void) const;
+
+        /// Values of the minimum performance in each generation.
+
+        Vector<double> generation_optimum_performance_history;
 
         /// Values of the minimum generalization performance in each generation.
 
@@ -144,13 +148,15 @@ public:
 
     const double& get_selective_pressure(void) const;
 
-    const size_t& get_maximum_generalization_failures(void) const;
+    const size_t& get_maximum_selection_failures(void) const;
 
     const bool& get_reserve_generation_mean(void) const;
 
     const bool& get_reserve_generation_standard_deviation(void) const;
 
-    const bool& get_reserve_generation_minimum(void) const;
+    const bool& get_reserve_generation_minimum_generalization(void) const;
+
+    const bool& get_reserve_generation_optimum_performance(void) const;
 
     std::string write_initialization_method(void) const;
 
@@ -188,14 +194,15 @@ public:
 
     void set_selective_pressure(const double&);
 
-    void set_maximum_generalization_failures(const size_t&);
+    void set_maximum_selection_failures(const size_t&);
 
     void set_reserve_generation_mean(const bool&);
 
     void set_reserve_generation_standard_deviation(const bool&);
 
-    void set_reserve_generation_minimum(const bool&);
+    void set_reserve_generation_minimum_generalization(const bool&);
 
+    void set_reserve_generation_optimum_performance(const bool&);
 
     // GENETIC METHODS
 
@@ -243,6 +250,8 @@ public:
 
     // Serialization methods
 
+    Matrix<std::string> to_string_matrix(void) const;
+
     tinyxml2::XMLDocument* to_XML(void) const;
 
     void from_XML(const tinyxml2::XMLDocument&);
@@ -278,7 +287,7 @@ private:
 
     CrossoverMethod crossover_method;
 
-    /// Fitness assignemet method used in the algorithm.
+    /// Fitness assignment method used in the algorithm.
 
     FitnessAssignment fitness_assignment_method;
 
@@ -302,12 +311,12 @@ private:
 
     size_t elitism_size;
 
-    /// First point used in the one-point crossover method.
+    /// First point used in the OnePoint and TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
     size_t crossover_first_point;
 
-    /// First point used in the two-point crossover method.
+    /// Second point used in the TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
     size_t crossover_second_point;
@@ -329,13 +338,17 @@ private:
 
     /// True if the minimum of generalization performance are to be reserved in each generation.
 
-    bool reserve_generation_minimum;
+    bool reserve_generation_minimum_generalization;
+
+    /// True if the optimum of performance are to be reserved in each generation.
+
+    bool reserve_generation_optimum_performance;
 
     // STOPPING CRITERIA
 
     /// Maximum number of iterations at which the generalization performance increases.
 
-    size_t maximum_generalization_failures;
+    size_t maximum_selection_failures;
 };
 
 }

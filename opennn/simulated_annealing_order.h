@@ -96,7 +96,7 @@ public:
 
     const double& get_cooling_rate(void) const;
 
-    const size_t& get_maximum_generalization_failures(void) const;
+    const size_t& get_maximum_selection_failures(void) const;
     const double& get_minimum_temperature(void) const;
 
     // Set methods
@@ -105,14 +105,18 @@ public:
 
     void set_cooling_rate(const double&);
 
-    void set_maximum_generalization_failures(const size_t&);
+    void set_maximum_selection_failures(const size_t&);
     void set_minimum_temperature(const double&);
 
     // Order selection methods
 
+    size_t get_optimal_generalization_performance_index(void) const;
+
     SimulatedAnnealingOrderResults* perform_order_selection(void);
 
     // Serialization methods
+
+    Matrix<std::string> to_string_matrix(void) const;
 
     tinyxml2::XMLDocument* to_XML(void) const;
 
@@ -133,7 +137,7 @@ private:
 
    /// Maximum number of iterations at which the generalization performance increases.
 
-   size_t maximum_generalization_failures;
+   size_t maximum_selection_failures;
 
    /// Minimum temperature reached in the simulated annealing algorithm.
 
@@ -144,3 +148,20 @@ private:
 }
 
 #endif
+
+// OpenNN: Open Neural Networks Library.
+// Copyright (c) 2005-2015 Roberto Lopez.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

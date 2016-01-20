@@ -74,13 +74,13 @@ GrowingInputs::~GrowingInputs(void)
 
 // METHODS
 
-// const size_t& get_maximum_generalization_failures(void) const method
+// const size_t& get_maximum_selection_failures(void) const method
 
 /// Returns the maximum number of generalization failures in the growing inputs selection algorithm.
 
-const size_t& GrowingInputs::get_maximum_generalization_failures(void) const
+const size_t& GrowingInputs::get_maximum_selection_failures(void) const
 {
-    return(maximum_generalization_failures);
+    return(maximum_selection_failures);
 }
 
 // void set_default(void) method
@@ -94,21 +94,21 @@ void GrowingInputs::set_default(void)
     if (training_strategy_pointer == NULL
             || !training_strategy_pointer->has_performance_functional())
     {
-        maximum_generalization_failures = 3;
+        maximum_selection_failures = 3;
     }else
     {
         inputs_number = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer()->get_inputs_number();
-        maximum_generalization_failures = (size_t)std::max(3.,inputs_number/5.);
+        maximum_selection_failures = (size_t)std::max(3.,inputs_number/5.);
     }
 }
 
 
-// void set_maximum_generalization_failures(const size_t&) method
+// void set_maximum_selection_failures(const size_t&) method
 
 /// Sets the maximum generalization failures for the growing inputs selection algorithm.
 /// @param new_maximum_performance_failures Maximum number of generalization failures in the growing inputs selection algorithm.
 
-void GrowingInputs::set_maximum_generalization_failures(const size_t& new_maximum_performance_failures)
+void GrowingInputs::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -117,7 +117,7 @@ void GrowingInputs::set_maximum_generalization_failures(const size_t& new_maximu
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_maximum_generalization_failures(const size_t&) method.\n"
+               << "void set_maximum_selection_failures(const size_t&) method.\n"
                << "Maximum generalization failures must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -125,7 +125,7 @@ void GrowingInputs::set_maximum_generalization_failures(const size_t& new_maximu
 
 #endif
 
-    maximum_generalization_failures = new_maximum_performance_failures;
+    maximum_selection_failures = new_maximum_performance_failures;
 }
 
 // GrowingInputsResults* perform_inputs_selection(void) method
@@ -194,7 +194,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     size_t iterations = 0;
 
-    size_t generalization_failures = 0;
+    size_t selection_failures = 0;
 
     time_t beginning_time, current_time;
     double elapsed_time;
@@ -348,7 +348,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         }
         else if (optimum_generalization_error < current_generalization_performance)
                  //previous_generalization_performance < current_generalization_performance)
-            generalization_failures++;
+            selection_failures++;
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
@@ -382,24 +382,24 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
-        }else if (final[1] < generalization_performance_goal)
+        }else if (final[1] < selection_performance_goal)
         {
             end = true;
             if (display)
                 std::cout << "Generalization performance reached." << std::endl;
-            results->stopping_condition = InputsSelectionAlgorithm::GeneralizationPerformanceGoal;
+            results->stopping_condition = InputsSelectionAlgorithm::SelectionPerformanceGoal;
         }else if (iterations > maximum_iterations_number)
         {
             end = true;
             if (display)
                 std::cout << "Maximum number of iterations reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::MaximumIterations;
-        }else if (generalization_failures >= maximum_generalization_failures)
+        }else if (selection_failures >= maximum_selection_failures)
         {
             end = true;
             if (display)
-                std::cout << "Maximum generalization performance failures("<<generalization_failures<<") reached." << std::endl;
-            results->stopping_condition = InputsSelectionAlgorithm::MaximumGeneralizationFailures;
+                std::cout << "Maximum generalization performance failures("<<selection_failures<<") reached." << std::endl;
+            results->stopping_condition = InputsSelectionAlgorithm::MaximumSelectionFailures;
         }else if (current_inputs.count_occurrences(true) == current_inputs.size())
         {
             end = true;
@@ -478,6 +478,117 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     return results;
 }
 
+// Matrix<std::string> to_string_matrix(void) const method
+
+// the most representative
+
+Matrix<std::string> GrowingInputs::to_string_matrix(void) const
+{
+    std::ostringstream buffer;
+
+    Vector<std::string> labels;
+    Vector<std::string> values;
+
+   // Trials number
+
+   labels.push_back("Trials number");
+
+   buffer.str("");
+   buffer << trials_number;
+
+   values.push_back(buffer.str());
+
+   // Tolerance
+
+   labels.push_back("Tolerance");
+
+   buffer.str("");
+   buffer << tolerance;
+
+   values.push_back(buffer.str());
+
+   // Selection performance goal
+
+   labels.push_back("Selection performance goal");
+
+   buffer.str("");
+   buffer << selection_performance_goal;
+
+   values.push_back(buffer.str());
+
+   // Maximum generalization failures
+
+   labels.push_back("Maximum generalization failures");
+
+   buffer.str("");
+   buffer << maximum_selection_failures;
+
+   values.push_back(buffer.str());
+
+   // Minimum correlation
+
+   labels.push_back("Minimum correlation");
+
+   buffer.str("");
+   buffer << minimum_correlation;
+
+   values.push_back(buffer.str());
+
+   // Maximum correlation
+
+   labels.push_back("Maximum correlation");
+
+   buffer.str("");
+   buffer << maximum_correlation;
+
+   values.push_back(buffer.str());
+
+   // Maximum iterations number
+
+   labels.push_back("Maximum iterations number");
+
+   buffer.str("");
+   buffer << maximum_iterations_number;
+
+   values.push_back(buffer.str());
+
+   // Maximum time
+
+   labels.push_back("Maximum time");
+
+   buffer.str("");
+   buffer << maximum_time;
+
+   values.push_back(buffer.str());
+
+   // Plot training performance history
+
+   labels.push_back("Plot training performance history");
+
+   buffer.str("");
+   buffer << reserve_performance_data;
+
+   values.push_back(buffer.str());
+
+   // Plot selection performance history
+
+   labels.push_back("Plot selection performance history");
+
+   buffer.str("");
+   buffer << reserve_generalization_performance_data;
+
+   values.push_back(buffer.str());
+
+   const size_t rows_number = labels.size();
+   const size_t columns_number = 2;
+
+   Matrix<std::string> string_matrix(rows_number, columns_number);
+
+   string_matrix.set_column(0, labels);
+   string_matrix.set_column(1, values);
+
+    return(string_matrix);
+}
 
 // tinyxml2::XMLDocument* to_XML(void) const method
 
@@ -592,13 +703,13 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Generalization performance goal
+    // Selection performance goal
     {
-        element = document->NewElement("GeneralizationPerformanceGoal");
+        element = document->NewElement("SelectionPerformanceGoal");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << generalization_performance_goal;
+        buffer << selection_performance_goal;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -666,11 +777,11 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
 
     // Maximum Generalization Failures
     {
-        element = document->NewElement("MaximumGeneralizationFailures");
+        element = document->NewElement("MaximumSelectionFailures");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << maximum_generalization_failures;
+        buffer << maximum_selection_failures;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -851,17 +962,17 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Generalization performance goal
+    // Selection performance goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GeneralizationPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
 
         if(element)
         {
-            const double new_generalization_performance_goal = atof(element->GetText());
+            const double new_selection_performance_goal = atof(element->GetText());
 
             try
             {
-                set_generalization_performance_goal(new_generalization_performance_goal);
+                set_selection_performance_goal(new_selection_performance_goal);
             }
             catch(const std::logic_error& e)
             {
@@ -967,15 +1078,15 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
     // Maximum generalization failures
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumGeneralizationFailures");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
         if(element)
         {
-            const size_t new_maximum_generalization_failures = atoi(element->GetText());
+            const size_t new_maximum_selection_failures = atoi(element->GetText());
 
             try
             {
-                set_maximum_generalization_failures(new_maximum_generalization_failures);
+                set_maximum_selection_failures(new_maximum_selection_failures);
             }
             catch(const std::logic_error& e)
             {
@@ -1028,4 +1139,19 @@ void GrowingInputs::load(const std::string& file_name)
 
 }
 
+// OpenNN: Open Neural Networks Library.
+// Copyright (c) 2005-2015 Roberto Lopez.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

@@ -88,13 +88,22 @@ public:
 
    double calculate_generalization_performance(void) const;
 
+   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
+
    Vector<double> calculate_gradient(void) const;
 
    Matrix<double> calculate_Hessian(void) const;
 
-   double calculate_performance(const Vector<double>&) const;  
+   Matrix<double> calculate_single_hidden_layer_Hessian(void) const;
+
+   double calculate_performance(const Vector<double>&) const;
+
+   double calculate_performance_combinations(const size_t&, const Vector<double>&) const;
+   double calculate_performance_combinations(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
 
    Vector<double> calculate_gradient(const Vector<double>&) const;
+
+   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
 

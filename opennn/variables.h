@@ -150,6 +150,7 @@ public:
    Vector<size_t> arrange_used_indices(void) const;
    Vector<size_t> arrange_inputs_indices(void) const;
    Vector<size_t> arrange_targets_indices(void) const;
+   Vector<size_t> arrange_unused_indices(void) const;
 
    // Information methods
 

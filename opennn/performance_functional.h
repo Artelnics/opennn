@@ -471,47 +471,47 @@ private:
 
    // Objective terms
 
-   /// Pointer to the sum squared error object wich can be used as objective term.
+   /// Pointer to the sum squared error object wich can be used as the objective term.
 
    SumSquaredError* sum_squared_error_objective_pointer;
 
-   /// Pointer to the mean squared error object wich can be used as objective term.
+   /// Pointer to the mean squared error object wich can be used as the objective term.
 
    MeanSquaredError* mean_squared_error_objective_pointer;
 
-   /// Pointer to the root mean squared error object wich can be used as objective term.
+   /// Pointer to the root mean squared error object wich can be used as the objective term.
 
    RootMeanSquaredError* root_mean_squared_error_objective_pointer;
 
-   /// Pointer to the normalized squared error object wich can be used as objective term.
+   /// Pointer to the normalized squared error object wich can be used as the objective term.
 
    NormalizedSquaredError* normalized_squared_error_objective_pointer;
 
-   /// Pointer to the Mikowski error object wich can be used as objective term.
+   /// Pointer to the Mikowski error object wich can be used as the objective term.
 
    MinkowskiError* Minkowski_error_objective_pointer;
 
-   /// Pointer to the cross entropy error object wich can be used as objective term.
+   /// Pointer to the cross entropy error object wich can be used as the objective term.
 
    CrossEntropyError* cross_entropy_error_objective_pointer;
 
-   /// Pointer to the outputs integrals object wich can be used as objective term.
+   /// Pointer to the outputs integrals object wich can be used as the objective term.
 
    OutputsIntegrals* outputs_integrals_objective_pointer;
 
-   /// Pointer to the solutions error object wich can be used as objective term.
+   /// Pointer to the solutions error object wich can be used as the objective term.
 
    SolutionsError* solutions_error_objective_pointer;
 
-   /// Pointer to the final solutions error object wich can be used as objective term.
+   /// Pointer to the final solutions error object wich can be used as the objective term.
 
    FinalSolutionsError* final_solutions_error_objective_pointer;
 
-   /// Pointer to the independent parameters error object wich can be used as objective term.
+   /// Pointer to the independent parameters error object wich can be used as the objective term.
 
    IndependentParametersError* independent_parameters_error_objective_pointer;
 
-   /// Pointer to the inverse sum squared error object wich can be used as objective term.
+   /// Pointer to the inverse sum squared error object wich can be used as the objective term.
 
    InverseSumSquaredError* inverse_sum_squared_error_objective_pointer;
 
@@ -521,11 +521,11 @@ private:
 
    // Regularization terms
 
-   /// Pointer to the neural parameters norm object wich can be used as regularization term.
+   /// Pointer to the neural parameters norm object wich can be used as the regularization term.
 
    NeuralParametersNorm* neural_parameters_norm_regularization_pointer;
 
-   /// Pointer to the sum outputs integrals object wich can be used as regularization term.
+   /// Pointer to the sum outputs integrals object wich can be used as the regularization term.
 
    OutputsIntegrals* outputs_integrals_regularization_pointer;
 

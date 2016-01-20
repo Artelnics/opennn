@@ -108,7 +108,7 @@ public:
 
    /// Enumeration of the file types
 
-   enum FileType{TXT, DAT, CSV, ODS, XLS, XLSX, ARFF};
+   enum FileType{TXT, DAT, DATA, CSV, ODS, XLSX, ARFF};
 
    /// Enumeration of the learning tasks
 
@@ -120,6 +120,10 @@ public:
 
    FileType get_file_type(void) const;
    std::string write_file_type(void) const;
+
+   std::string write_first_cell(void) const;
+   std::string write_last_cell(void) const;
+   size_t write_sheet_number(void) const;
 
    LearningTask get_learning_task(void) const;
    std::string write_learning_task(void) const;
@@ -456,6 +460,18 @@ private:
    /// File type.
 
    FileType file_type;
+
+   /// First cell.
+
+   std::string first_cell;
+
+   /// Last cell.
+
+   std::string last_cell;
+
+   /// Sheet number.
+
+   size_t sheet_number;
 
    /// Data file name.
 

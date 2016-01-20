@@ -258,12 +258,12 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = GoldenSectionOrder::MaximumTime;
-        }else if (fmin(ln_performance[1],mu_performance[1]) < generalization_performance_goal)
+        }else if (fmin(ln_performance[1],mu_performance[1]) < selection_performance_goal)
         {
             end = true;
             if (display)
                 std::cout << "Generalization performance reached." << std::endl;
-            results->stopping_condition = GoldenSectionOrder::GeneralizationPerformanceGoal;
+            results->stopping_condition = GoldenSectionOrder::SelectionPerformanceGoal;
         }else if (iterations > maximum_iterations_number)
         {
             end = true;
@@ -511,13 +511,13 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Generalization performance goal
+   // Selection performance goal
    {
-   element = document->NewElement("GeneralizationPerformanceGoal");
+   element = document->NewElement("SelectionPerformanceGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << generalization_performance_goal;
+   buffer << selection_performance_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -753,17 +753,17 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Generalization performance goal
+    // Selection performance goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GeneralizationPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
 
         if(element)
         {
-           const double new_generalization_performance_goal = atof(element->GetText());
+           const double new_selection_performance_goal = atof(element->GetText());
 
            try
            {
-              set_generalization_performance_goal(new_generalization_performance_goal);
+              set_selection_performance_goal(new_selection_performance_goal);
            }
            catch(const std::logic_error& e)
            {
@@ -873,4 +873,19 @@ void GoldenSectionOrder::load(const std::string& file_name)
 
 }
 
+// OpenNN: Open Neural Networks Library.
+// Copyright (c) 2005-2015 Roberto Lopez.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

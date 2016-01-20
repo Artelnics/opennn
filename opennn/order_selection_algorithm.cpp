@@ -202,13 +202,13 @@ const bool& OrderSelectionAlgorithm::get_display(void) const
     return(display);
 }
 
-// const double& get_generalization_performance_goal(void) const method
+// const double& get_selection_performance_goal(void) const method
 
 /// Returns the goal for the generalization performance in the order selection algorithm.
 
-const double& OrderSelectionAlgorithm::get_generalization_performance_goal(void) const
+const double& OrderSelectionAlgorithm::get_selection_performance_goal(void) const
 {
-    return(generalization_performance_goal);
+    return(selection_performance_goal);
 }
 
 
@@ -327,7 +327,7 @@ void OrderSelectionAlgorithm::set_default(void)
 
     // STOPPING CRITERIA
 
-    generalization_performance_goal = 0.0;
+    selection_performance_goal = 0.0;
 
     maximum_iterations_number = 1000;
     maximum_time = 10000.0;
@@ -528,29 +528,29 @@ void OrderSelectionAlgorithm::set_display(const bool& new_display)
     display = new_display;
 }
 
-// void set_generalization_performance_goal(const double&) method
+// void set_selection_performance_goal(const double&) method
 
-/// Sets the generalization performance goal for the order selection algorithm.
-/// @param new_generalization_performance_goal Goal of the generalization performance.
+/// Sets the Selection performance goal for the order selection algorithm.
+/// @param new_selection_performance_goal Goal of the generalization performance.
 
-void OrderSelectionAlgorithm::set_generalization_performance_goal(const double& new_generalization_performance_goal)
+void OrderSelectionAlgorithm::set_selection_performance_goal(const double& new_selection_performance_goal)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_generalization_performance_goal < 0)
+    if (new_selection_performance_goal < 0)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "void set_generalization_performance_goal(const double&) method.\n"
-               << "Generalization performance goal must be greater or equal than 0.\n";
+               << "void set_selection_performance_goal(const double&) method.\n"
+               << "Selection performance goal must be greater or equal than 0.\n";
 
         throw std::logic_error(buffer.str());
     }
 
 #endif
 
-    generalization_performance_goal = new_generalization_performance_goal;
+    selection_performance_goal = new_selection_performance_goal;
 }
 
 
@@ -1296,17 +1296,17 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::write_stopping_condi
     {
         return ("MaximumTime");
     }
-    case GeneralizationPerformanceGoal:
+    case SelectionPerformanceGoal:
     {
-        return("GeneralizationPerformanceGoal");
+        return("SelectionPerformanceGoal");
     }
     case MaximumIterations:
     {
         return("MaximumIterations");
     }
-    case MaximumGeneralizationFailures:
+    case MaximumSelectionFailures:
     {
-        return("MaximumGeneralizationFailures");
+        return("MaximumSelectionFailures");
     }
     case MinimumTemperature:
     {
@@ -1341,12 +1341,20 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
 {
    std::ostringstream buffer;
 
+   // Order history
+
+   if(!order_data.empty())
+   {
+     buffer << "% Order history:\n"
+            << order_data.to_row_matrix() << "\n";
+   }
+
    // Parameters history
 
    if(!parameters_data.empty())
    {
      buffer << "% Parameters history:\n"
-            << parameters_data.to_string() << "\n";
+            << parameters_data.to_row_matrix() << "\n";
    }
 
    // Performance history
@@ -1354,7 +1362,7 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
    if(!performance_data.empty())
    {
        buffer << "% Performance history:\n"
-              << performance_data.to_string() << "\n";
+              << performance_data.to_row_matrix() << "\n";
    }
 
    // Generalization performance history
@@ -1362,7 +1370,7 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
    if(!generalization_performance_data.empty())
    {
        buffer << "% Generalization performance history:\n"
-              << generalization_performance_data.to_string() << "\n";
+              << generalization_performance_data.to_row_matrix() << "\n";
    }
 
    // Minimal parameters
@@ -1420,5 +1428,19 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
 }
 }
 
+// OpenNN: Open Neural Networks Library.
+// Copyright (c) 2005-2015 Roberto Lopez.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 
-
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

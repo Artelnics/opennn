@@ -285,6 +285,7 @@ public:
    void set_layers_biases(const Vector< Vector<double> >&);
    void set_layers_synaptic_weights(const Vector< Matrix<double> >&);
 
+   void set_layer_parameters(const size_t, const Vector<double>&);
    void set_layers_parameters(const Vector< Vector<double> >&);
 
    void set_parameters(const Vector<double>&);

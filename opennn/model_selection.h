@@ -75,10 +75,10 @@ public:
 
     enum InputsSelectionType
     {
-        NO_INPUT_SELECTION,
-        GROWING_SELECTION,
-        PRUNING_SELECTION,
-        GENETIC_SELECTION
+        NO_INPUTS_SELECTION,
+        GROWING_INPUTS,
+        PRUNING_INPUTS,
+        GENETIC_ALGORITHM
     };
 
     /// Enumeration of all the available types of order selection algorithms.
@@ -86,7 +86,7 @@ public:
     enum OrderSelectionType
     {
         NO_ORDER_SELECTION,
-        INCREMENTAL_SELECTION,
+        INCREMENTAL_ORDER,
         GOLDEN_SECTION,
         SIMULATED_ANNEALING
     };
@@ -160,6 +160,8 @@ public:
 
     void set_inputs_selection_type(const InputsSelectionType&);
     void set_inputs_selection_type(const std::string&);
+
+    void set_regression(const bool&);
 
     // Pointer methods
 

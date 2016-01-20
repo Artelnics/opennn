@@ -307,9 +307,16 @@ public:
    // Layers delta methods
    
    Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) const;
-   Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&, const Vector<double>&) const;
+   Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&, const Vector<double>&) const;   
 
    // Interlayers Delta methods
+
+   double calculate_performance_output_combinations(const Vector<double>& combinations) const;
+
+   //Matrix< Matrix <double> > calculate_interlayers_Delta(void) const;
+
+   Matrix<double> calculate_output_interlayers_Delta(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
+   Matrix<double> calculate_interlayers_Delta(const size_t& ,const size_t& , const Vector<double>& , const Vector<double>& , const Vector<double>& , const Matrix<double>&, const Matrix<double>&) const;
 
    Matrix< Matrix <double> > calculate_interlayers_Delta(const Vector< Vector<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&, const Vector<double>&, const Matrix<double>&, const Vector< Vector<double> >&) const;
 
@@ -339,11 +346,23 @@ public:
 
    /// Returns the performance term gradient.
 
+   virtual Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const
+   {
+        Vector<double> output_gradient;
+        return(output_gradient);
+   }
+
    virtual Vector<double> calculate_gradient(void) const; 
 
    virtual Vector<double> calculate_gradient(const Vector<double>&) const;
 
    /// Returns the performance term Hessian.
+
+   virtual Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const
+   {
+         Matrix<double> output_Hessian;
+         return(output_Hessian);
+   }
 
    virtual Matrix<double> calculate_Hessian(void) const; 
 

@@ -106,7 +106,6 @@ DataSet::DataSet(const std::string& file_name)
    set_default();
 
    load(file_name);
-
 }
 
 
@@ -308,9 +307,6 @@ std::string DataSet::write_file_type(void) const
         case ODS:
         return "ods";
 
-        case XLS:
-        return "xls";
-
         case XLSX:
         return "xlsx";
 
@@ -328,6 +324,36 @@ std::string DataSet::write_file_type(void) const
            throw std::logic_error(buffer.str());
         }
     }
+}
+
+
+// std::string write_first_cell(void) const
+
+/// Returns a string with the first cell for excel files.
+
+std::string DataSet::write_first_cell(void) const
+{
+   return first_cell;
+}
+
+
+// std::string write_last_cell(void) const
+
+/// Returns a string with the last cell for excel files.
+
+std::string DataSet::write_last_cell(void) const
+{
+   return last_cell;
+}
+
+
+// int write_sheet_number(void) const
+
+/// Returns a string with the sheet number for excel files.
+
+size_t DataSet::write_sheet_number(void) const
+{
+   return sheet_number;
 }
 
 
@@ -812,7 +838,7 @@ Vector<double> DataSet::get_instance(const size_t& i) const
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t instances_number = instances.get_instances_number();
 
@@ -877,7 +903,7 @@ Vector<double> DataSet::get_variable(const size_t& i) const
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t variables_number = variables.get_variables_number();
 
@@ -949,6 +975,8 @@ void DataSet::set(void)
    missing_values.set();
 
    display = true;
+
+   file_type = DAT;
 }
 
 
@@ -969,6 +997,8 @@ void DataSet::set(const Matrix<double>& new_data)
    data = new_data;
 
    display = true;
+
+   file_type = DAT;
 }
 
 
@@ -1019,6 +1049,8 @@ void DataSet::set(const size_t& new_instances_number, const size_t& new_variable
    missing_values.set(new_instances_number, new_variables_number);
 
    display = true;
+
+   file_type = DAT;
 }
 
 
@@ -1045,6 +1077,8 @@ void DataSet::set(const size_t& new_instances_number, const size_t& new_inputs_n
    missing_values.set(new_instances_number, new_variables_number);
 
    display = true;
+
+   file_type = DAT;
 }
 
 
@@ -1072,6 +1106,8 @@ void DataSet::set(const DataSet& other_data_set)
    missing_values = other_data_set.missing_values;
 
    display = other_data_set.display;
+
+   file_type = other_data_set.file_type;
 }
 
 
@@ -1123,8 +1159,6 @@ void DataSet::set_default(void)
 {
     header_line = false;
 
-    file_type = TXT;
-
     separator = Space;
 
     missing_values_label = "?";
@@ -1138,6 +1172,8 @@ void DataSet::set_default(void)
     angular_units = Degrees;
 
     display = true;
+
+    file_type = DAT;
 }
 
 
@@ -1153,7 +1189,7 @@ void DataSet::set_data(const Matrix<double>& new_data)
 {
    // Control sentence (if debug)
 /*
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t rows_number = new_data.get_rows_number();
    const size_t instances_number = instances.get_instances_number();
@@ -1239,10 +1275,6 @@ void DataSet::set_file_type(const std::string& new_file_type)
     else if(new_file_type == "ods")
     {
         file_type = ODS;
-    }
-    else if(new_file_type == "xls")
-    {
-        file_type = XLS;
     }
     else if(new_file_type == "xlsx")
     {
@@ -1512,7 +1544,7 @@ void DataSet::set_instance(const size_t& instance_index, const Vector<double>& i
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t instances_number = instances.get_instances_number();
 
@@ -1561,7 +1593,7 @@ void DataSet::add_instance(const Vector<double>& instance)
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t size = instance.size();
    const size_t variables_number = variables.get_variables_number();
@@ -1600,7 +1632,7 @@ void DataSet::subtract_instance(const size_t& instance_index)
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    if(instance_index >= instances_number)
    {
@@ -1631,7 +1663,7 @@ void DataSet::append_variable(const Vector<double>& variable)
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    const size_t size = variable.size();
    const size_t instances_number = instances.get_instances_number();
@@ -1674,7 +1706,7 @@ void DataSet::subtract_variable(const size_t& variable_index)
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    if(variable_index >= variables_number)
    {
@@ -1727,11 +1759,13 @@ Vector<size_t> DataSet::unuse_constant_variables(void)
 
    #endif
 
+   const Vector< Statistics<double> > statistics = data.calculate_statistics();
+
    Vector<size_t> constant_variables;
 
    for(size_t i = 0; i < variables_number; i++)
    {
-      if(variables.is_used(i) && data.arrange_column(i).is_constant(1.0e-6))
+      if(variables.is_used(i) && statistics[i].standard_deviation < 1.0e-6)
       {
          variables.set_use(i, Variables::Unused);
          constant_variables.push_back(i);
@@ -1960,6 +1994,8 @@ Matrix<double> DataSet::calculate_data_statistics_matrix(void) const
 
     const Vector< Statistics<double> > data_statistics = used_data.calculate_statistics_missing_values(used_missing_indices);
 
+   // std::cout << used_missing_indices << std::endl;
+
     const size_t variables_number = used_variables_indices.size();//variables.count_used_variables_number();
 
     Matrix<double> data_statistics_matrix(variables_number, 4);
@@ -1998,7 +2034,7 @@ Matrix<double> DataSet::calculate_data_shape_parameters_matrix(void) const
 
     for(size_t i = 0; i < variables_number; i++)
     {
-        data_shape_parameters_matrix.set_row(i, shape_parameters[i]);;
+        data_shape_parameters_matrix.set_row(i, shape_parameters[i]);
     }
 
     return(data_shape_parameters_matrix);
@@ -2274,7 +2310,7 @@ void DataSet::scale_data_mean_standard_deviation(const Vector< Statistics<double
 {
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -2355,7 +2391,7 @@ void DataSet::scale_data_minimum_maximum(const Vector< Statistics<double> >& dat
 
    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    std::ostringstream buffer;
 
@@ -2970,6 +3006,36 @@ tinyxml2::XMLDocument* DataSet::to_XML(void) const
        element->LinkEndChild(text);
    }
 
+   //First cell
+   {
+       element = document->NewElement("FirstCell");
+       data_file_element->LinkEndChild(element);
+
+       text = document->NewText(write_first_cell().c_str());
+       element->LinkEndChild(text);
+   }
+
+   //Last cell
+   {
+       element = document->NewElement("LastCell");
+       data_file_element->LinkEndChild(element);
+
+       text = document->NewText(write_last_cell().c_str());
+       element->LinkEndChild(text);
+   }
+
+   //Sheet number
+   {
+       element = document->NewElement("SheetNumber");
+       data_file_element->LinkEndChild(element);
+
+       buffer.str("");
+       buffer << write_sheet_number();
+
+       text = document->NewText(buffer.str().c_str());
+       element->LinkEndChild(text);
+   }
+
    // Lags Number
    {
        element = document->NewElement("LagsNumber");
@@ -3214,6 +3280,69 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             const std::string new_file_type = file_type_element->GetText();
 
             set_file_type(new_file_type);
+       }
+    }
+
+    // First Cell
+    {
+       const tinyxml2::XMLElement* first_cell_element = data_file_element->FirstChildElement("FirstCell");
+
+       if(!first_cell_element)
+       {
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                  << "First Cell element is NULL.\n";
+
+           throw std::logic_error(buffer.str());
+       }
+
+       if(first_cell_element->GetText())
+       {
+            const std::string new_first_cell = first_cell_element->GetText();
+
+            first_cell = new_first_cell;
+       }
+    }
+
+    // Last Cell
+    {
+       const tinyxml2::XMLElement* last_cell_element = data_file_element->FirstChildElement("LastCell");
+
+       if(!last_cell_element)
+       {
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                  << "Last Cell element is NULL.\n";
+
+           throw std::logic_error(buffer.str());
+       }
+
+       if(last_cell_element->GetText())
+       {
+            const std::string new_last_cell = last_cell_element->GetText();
+
+            last_cell = new_last_cell;
+       }
+    }
+
+    // Sheet number
+    {
+       const tinyxml2::XMLElement* sheet_number_element = data_file_element->FirstChildElement("SheetNumber");
+
+       if(!sheet_number_element)
+       {
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                  << "Sheet Number element is NULL.\n";
+
+           throw std::logic_error(buffer.str());
+       }
+
+       if(sheet_number_element->GetText())
+       {
+            const size_t new_sheet_number = atoi(sheet_number_element->GetText());
+
+            sheet_number = new_sheet_number;
        }
     }
 
@@ -3672,6 +3801,8 @@ size_t DataSet::count_data_file_columns_number(void) const
         check_separator(line);
 
         columns_number = count_tokens(line);
+
+        break;
     }
 
     file.close();
@@ -4360,6 +4491,11 @@ void DataSet::load_data_binary(void)
         data[i] = value;
     }
 
+    if(get_missing_values().has_missing_values())
+    {
+        scrub_missing_values();
+    }
+
     file.close();
 }
 
@@ -4404,6 +4540,11 @@ void DataSet::load_time_series_data_binary(void)
         data[i] = value;
     }
 
+    if(get_missing_values().has_missing_values())
+    {
+        scrub_missing_values();
+    }
+
     size = sizeof(size_t);
 
     size_t time_series_instances_number;
@@ -4421,7 +4562,7 @@ void DataSet::load_time_series_data_binary(void)
         file.read(reinterpret_cast<char*>(&value), size);
 
         time_series_data[i] = value;
-    }
+    }    
 
     file.close();
 }
@@ -4514,6 +4655,11 @@ Vector<size_t> DataSet::calculate_target_distribution(void) const
 
       for(size_t instance_index = 0; instance_index < instances_number; instance_index++)
       {
+          if(data(instance_index, target_index) == -123.456)
+          {
+              continue;
+          }
+
           if(instances.get_use(instance_index) != Instances::Unused)
           {
              if(data(instance_index,target_index) < 0.5)
@@ -4532,11 +4678,16 @@ Vector<size_t> DataSet::calculate_target_distribution(void) const
       class_distribution.set(targets_number, 0);
    
       for(size_t i = 0; i < instances_number; i++)
-      {
+      {          
           if(instances.get_use(i) != Instances::Unused)
           {
              for(size_t j = 0; j < targets_number; j++)
              {
+                 if(data(i,targets_indices[j]) == -123.456)
+                 {
+                    continue;
+                 }
+
                 if(data(i,targets_indices[j]) > 0.5)
                 {
                    class_distribution[j]++;
@@ -4548,19 +4699,19 @@ Vector<size_t> DataSet::calculate_target_distribution(void) const
 
    // Check data consistency
 
-   const size_t used_instances_number = instances.count_used_instances_number();
+//   const size_t used_instances_number = instances.count_used_instances_number();
 
-   if(class_distribution.calculate_sum() != used_instances_number)
-   {
-      std::ostringstream buffer;
+//   if(class_distribution.calculate_sum() != used_instances_number)
+//   {
+//      std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: DataSet class.\n" 
-             << "Vector<size_t> calculate_target_distribution(void) const method.\n"
-             << "Sum of class distributions (" << class_distribution << ") is not equal to "
-             << "number of used instances (" << used_instances_number << ")." << std::endl;
+//      buffer << "OpenNN Exception: DataSet class.\n"
+//             << "Vector<size_t> calculate_target_distribution(void) const method.\n"
+//             << "Sum of class distributions (" << class_distribution << ") is not equal to "
+//             << "number of used instances (" << used_instances_number << ")." << std::endl;
 
-      throw std::logic_error(buffer.str());   
-   }
+//      throw std::logic_error(buffer.str());
+//   }
 
    return(class_distribution);
 }
@@ -4630,7 +4781,7 @@ Vector<size_t> DataSet::balance_binary_targets_distribution(void)
     {
         if(total_unbalanced_instances_number < instances_number/10)
         {
-            unbalanced_instances_number = 1;
+           unbalanced_instances_number = 1;
         }
 
         actual_unused_instances = unuse_most_populated_target(unbalanced_instances_number);
@@ -4640,6 +4791,8 @@ Vector<size_t> DataSet::balance_binary_targets_distribution(void)
         unused_instances = unused_instances.assemble(actual_unused_instances);
 
         total_unbalanced_instances_number = total_unbalanced_instances_number - actual_unused_instances_number;
+
+        actual_unused_instances.clear();
     }
 
     return (unused_instances);
@@ -4661,9 +4814,9 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
     const Vector<size_t> target_class_distribution = calculate_target_distribution();
 
     const size_t targets_number = variables.count_targets_number();
-    const size_t inputs_number = variables.count_inputs_number();
 
     const Vector<size_t> inputs_variables_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> targets_variables_indices = variables.arrange_targets_indices();
 
     Vector<size_t> maximal_target_class_indices = target_class_distribution.calculate_maximal_indices(targets_number);
 
@@ -4700,8 +4853,13 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
 
     while(!target_class_differences.is_in(0, 0))
     {
-        instances_number = instances.count_used_instances_number();
+        unbalanced_instances_indices.clear();
+        instances_indices.clear();
+
         instances_indices = instances.arrange_used_indices();
+
+        instances_number = instances_indices.size();
+
 
         maximal_difference_index = target_class_differences.calculate_maximal_index();
 
@@ -4714,6 +4872,8 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
 
         data_histograms = calculate_data_histograms(bins_number);
 
+        total_frequencies.clear();
+
         total_frequencies.set(instances_number, 2);
 
         count_instances = 0;
@@ -4721,9 +4881,10 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
         for(size_t i = 0; i < instances_number; i++)
         {
             instance_index = instances_indices[i];
+
             instance = get_instance(instance_index);
 
-            instance_target_index = inputs_number + maximal_difference_index;
+            instance_target_index = targets_variables_indices[maximal_difference_index];
 
             if(instance[instance_target_index] == 1.0)
             {
@@ -4751,7 +4912,7 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
 
 // Vector<size_t> unuse_most_populated_target(const size_t&)
 
-/// This method unses a given number of instances of the most populated target.
+/// This method unuses a given number of instances of the most populated target.
 /// If the given number is greater than the number of used instances which belongs to that target,
 /// it unuses all the instances in that target.
 /// If the given number is lower than 1, it unuses 1 instance.
@@ -4765,6 +4926,7 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
 
     const Vector<size_t> targets_indices = variables.arrange_targets_indices();
     const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> unused_indices = variables.arrange_unused_indices();
     const Vector<size_t> instances_indices = instances.arrange_used_indices();
 
     const size_t targets_number = variables.count_targets_number();
@@ -4774,12 +4936,16 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
 
     size_t actual_frequency = 0;
     size_t maximum_frequency = 0;
+    size_t actual_unused_number;
+    size_t unused_number;
     size_t most_populated_target_index;
     size_t maximal_frequency_target_index;
 
     for(size_t i = 0; i < targets_number; i++)
     {
-        actual_frequency = data_histograms[targets_indices[i]].calculate_maximum_frequency();
+        actual_unused_number = unused_indices.count_less_than(targets_indices[i]);
+
+        actual_frequency = data_histograms[targets_indices[i] - actual_unused_number].calculate_maximum_frequency();
 
         if(actual_frequency > maximum_frequency)
         {
@@ -4787,11 +4953,13 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
 
             most_populated_target_index = targets_indices[i];
 
-            maximal_frequency_target_index = data_histograms[most_populated_target_index].frequencies.calculate_maximal_index();
+            unused_number = actual_unused_number;
+
+            maximal_frequency_target_index = data_histograms[most_populated_target_index - unused_number].frequencies.calculate_maximal_index();
         }
     }
 
-    // Calculates frequencies of the instances which belong to the most populated target
+   // Calculates frequencies of the instances which belong to the most populated target
 
     size_t instance_index;
     size_t instance_bin;
@@ -4799,6 +4967,7 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
     Vector<double> instance;
 
     Vector<size_t> instance_frequencies;
+
     Matrix<size_t> total_instances_frequencies(maximum_frequency, 2);
 
     size_t count_instances = 0;
@@ -4809,7 +4978,7 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
         instance = get_instance(instance_index);
 
         instance_value = instance[most_populated_target_index];
-        instance_bin = data_histograms[most_populated_target_index].calculate_bin(instance_value);
+        instance_bin = data_histograms[most_populated_target_index - unused_number].calculate_bin(instance_value);
 
         if(instance_bin == maximal_frequency_target_index)
         {
@@ -5178,16 +5347,6 @@ Vector<size_t> DataSet::clean_Tukey_outliers(const double& cleaning_parameter)
 
 Matrix<double> DataSet::calculate_autocorrelation(const size_t& maximum_lags_number) const
 {
-    if(time_series_data.get_columns_number() == 0)
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Matrix<double> calculate_autocorrelation(const size_t&) method.\n"
-               << "Times series data must not be empty.\n";
-
-        throw std::logic_error(buffer.str());
-    }
     if(lags_number > instances.count_used_instances_number())
     {
         std::ostringstream buffer;
@@ -5221,16 +5380,6 @@ Matrix<double> DataSet::calculate_autocorrelation(const size_t& maximum_lags_num
 
 Matrix< Vector<double> > DataSet::calculate_cross_correlation(void) const
 {
-    if((lags_number + steps_ahead) == 0)
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Matrix<double> calculate_cross_correlation(void) method.\n"
-               << "Sum of umber of lags and steps ahead must not be equal to 0.\n";
-
-        throw std::logic_error(buffer.str());
-    }
     const size_t variables_number = variables.count_used_variables_number()/(lags_number + steps_ahead);
 
     Matrix< Vector<double> > cross_correlation(variables_number, variables_number);
@@ -5630,9 +5779,11 @@ void DataSet::scrub_missing_values_mean(void)
 {
     const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
 
-    Vector<double> means = data.calculate_mean_missing_values(missing_indices);
+    const Vector<double> means = data.calculate_mean_missing_values(missing_indices);
 
     const size_t variables_number = variables.get_variables_number();
+
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
     size_t instance_index;
 
@@ -5641,7 +5792,16 @@ void DataSet::scrub_missing_values_mean(void)
         for(size_t j = 0; j < missing_indices[i].size(); j++)
         {
             instance_index = missing_indices[i][j];
-            data(instance_index, i) = means[i];
+
+            if(targets_indices.contains(i)
+            && data(instance_index, i) == -123.456)
+            {
+                instances.set_use(i, Instances::Unused);
+            }
+            else
+            {
+                data(instance_index, i) = means[i];
+            }
         }
     }
 }

@@ -220,14 +220,14 @@ GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer(void) const
 
 void ModelSelection::set_default(void)
 {
-    set_order_selection_type(ModelSelection::INCREMENTAL_SELECTION);
-    set_inputs_selection_type(ModelSelection::GROWING_SELECTION);
+    set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
+    set_inputs_selection_type(ModelSelection::GROWING_INPUTS);
 }
 
 // void set_order_selection_type(const OrderSelectionType&) method
 
 /// Sets a new method for selecting the order which have more impact on the targets.
-/// @param new_order_selection_type Method for selecting the order (NO_ORDER_SELECTION, INCREMENTAL_SELECTION, GOLDEN_SECTION, SIMULATED_ANNEALING).
+/// @param new_order_selection_type Method for selecting the order (NO_ORDER_SELECTION, INCREMENTAL_ORDER, GOLDEN_SECTION, SIMULATED_ANNEALING).
 
 void ModelSelection::set_order_selection_type(const ModelSelection::OrderSelectionType& new_order_selection_type)
 {
@@ -243,7 +243,7 @@ void ModelSelection::set_order_selection_type(const ModelSelection::OrderSelecti
 
         break;
     }
-    case INCREMENTAL_SELECTION:
+    case INCREMENTAL_ORDER:
     {
         incremental_order_pointer = new IncrementalOrder(training_strategy_pointer);
 
@@ -289,9 +289,9 @@ void ModelSelection::set_order_selection_type(const std::string& new_order_selec
     {
         set_order_selection_type(NO_ORDER_SELECTION);
     }
-    else if(new_order_selection_type == "INCREMENTAL_SELECTION")
+    else if(new_order_selection_type == "INCREMENTAL_ORDER")
     {
-        set_order_selection_type(INCREMENTAL_SELECTION);
+        set_order_selection_type(INCREMENTAL_ORDER);
     }
     else if(new_order_selection_type == "GOLDEN_SECTION")
     {
@@ -316,7 +316,7 @@ void ModelSelection::set_order_selection_type(const std::string& new_order_selec
 // void set_inputs_selection_type(const InputSelectionType&) method
 
 /// Sets a new method for selecting the inputs which have more impact on the targets.
-/// @param new_inputs_selection_type Method for selecting the inputs (NO_INPUT_SELECTION, GROWING_SELECTION, PRUNING_SELECTION, GENETIC_SELECTION).
+/// @param new_inputs_selection_type Method for selecting the inputs (NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
 
 void ModelSelection::set_inputs_selection_type(const ModelSelection::InputsSelectionType& new_inputs_selection_type)
 {
@@ -326,25 +326,25 @@ void ModelSelection::set_inputs_selection_type(const ModelSelection::InputsSelec
 
     switch (new_inputs_selection_type)
     {
-    case NO_INPUT_SELECTION:
+    case NO_INPUTS_SELECTION:
     {
         // do nothing
 
         break;
     }
-    case GROWING_SELECTION:
+    case GROWING_INPUTS:
     {
         growing_inputs_pointer = new GrowingInputs(training_strategy_pointer);
 
         break;
     }
-    case PRUNING_SELECTION:
+    case PRUNING_INPUTS:
     {
         pruning_inputs_pointer = new PruningInputs(training_strategy_pointer);
 
         break;
     }
-    case GENETIC_SELECTION:
+    case GENETIC_ALGORITHM:
     {
         genetic_algorithm_pointer = new GeneticAlgorithm(training_strategy_pointer);
 
@@ -372,21 +372,21 @@ void ModelSelection::set_inputs_selection_type(const ModelSelection::InputsSelec
 
 void ModelSelection::set_inputs_selection_type(const std::string& new_inputs_selection_type)
 {
-    if(new_inputs_selection_type == "NO_INPUT_SELECTION")
+    if(new_inputs_selection_type == "NO_INPUTS_SELECTION")
     {
-        set_inputs_selection_type(NO_INPUT_SELECTION);
+        set_inputs_selection_type(NO_INPUTS_SELECTION);
     }
-    else if(new_inputs_selection_type == "GROWING_SELECTION")
+    else if(new_inputs_selection_type == "GROWING_INPUTS")
     {
-        set_inputs_selection_type(GROWING_SELECTION);
+        set_inputs_selection_type(GROWING_INPUTS);
     }
-    else if(new_inputs_selection_type == "PRUNING_SELECTION")
+    else if(new_inputs_selection_type == "PRUNING_INPUTS")
     {
-        set_inputs_selection_type(PRUNING_SELECTION);
+        set_inputs_selection_type(PRUNING_INPUTS);
     }
-    else if(new_inputs_selection_type == "GENETIC_SELECTION")
+    else if(new_inputs_selection_type == "GENETIC_ALGORITHM")
     {
-        set_inputs_selection_type(GENETIC_SELECTION);
+        set_inputs_selection_type(GENETIC_ALGORITHM);
     }
     else
     {
@@ -397,6 +397,56 @@ void ModelSelection::set_inputs_selection_type(const std::string& new_inputs_sel
                << "Unknown inputs selection type: " << new_inputs_selection_type << ".\n";
 
         throw std::logic_error(buffer.str());
+    }
+}
+
+// void set_regression(const bool&) method
+
+/// Sets a new regression value.
+/// If it is set to true the problem will be taken as a function regression;
+/// if it is set to false the problem will be taken as a pattern recognition.
+/// @param new_regression Regression value.
+
+void ModelSelection::set_regression(const bool& new_regression)
+{
+    switch (inputs_selection_type)
+    {
+    case NO_INPUTS_SELECTION:
+    {
+        // do nothing
+
+        break;
+    }
+    case GROWING_INPUTS:
+    {
+        growing_inputs_pointer->set_regression(new_regression);
+
+        break;
+    }
+    case PRUNING_INPUTS:
+    {
+        pruning_inputs_pointer->set_regression(new_regression);
+
+        break;
+    }
+    case GENETIC_ALGORITHM:
+    {
+        genetic_algorithm_pointer->set_regression(new_regression);
+
+        break;
+    }
+    default:
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "void set_regression(const bool&) const method.\n"
+               << "Unknow inputs selection method.\n";
+
+        throw std::logic_error(buffer.str());
+
+        break;
+    }
     }
 }
 
@@ -417,7 +467,7 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 
         break;
     }
-    case INCREMENTAL_SELECTION:
+    case INCREMENTAL_ORDER:
     {
         incremental_order_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
         break;
@@ -452,12 +502,12 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
 
         break;
     }
-    case GROWING_SELECTION:
+    case GROWING_INPUTS:
     {
         growing_inputs_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
         break;
     }
-    case PRUNING_SELECTION:
+    case PRUNING_INPUTS:
     {
         pruning_inputs_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
         break;
@@ -506,7 +556,7 @@ void ModelSelection::destruct_inputs_selection(void)
     pruning_inputs_pointer = NULL;
     genetic_algorithm_pointer = NULL;
 
-    inputs_selection_type = NO_INPUT_SELECTION;
+    inputs_selection_type = NO_INPUTS_SELECTION;
 }
 
 
@@ -632,7 +682,7 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(vo
 
     switch(order_selection_type)
     {
-    case INCREMENTAL_SELECTION:
+    case INCREMENTAL_ORDER:
     {
         results.incremental_order_results_pointer = incremental_order_pointer->perform_order_selection();
         break;
@@ -675,7 +725,7 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
 
     std::ostringstream buffer;
 
-    if(inputs_selection_type == NO_INPUT_SELECTION)
+    if(inputs_selection_type == NO_INPUTS_SELECTION)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "ModelSelectionResults perform_inputs_selection(void) const method.\n"
@@ -692,17 +742,17 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
 
     switch(inputs_selection_type)
     {
-    case GROWING_SELECTION:
+    case GROWING_INPUTS:
     {
         results.growing_inputs_results_pointer = growing_inputs_pointer->perform_inputs_selection();
         break;
     }
-    case PRUNING_SELECTION:
+    case PRUNING_INPUTS:
     {
         results.pruning_inputs_results_pointer = pruning_inputs_pointer->perform_inputs_selection();
         break;
     }
-    case GENETIC_SELECTION:
+    case GENETIC_ALGORITHM:
     {
         results.genetic_algorithm_results_pointer = genetic_algorithm_pointer->perform_inputs_selection();
         break;
@@ -769,12 +819,12 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
     }
         break;
 
-    case INCREMENTAL_SELECTION:
+    case INCREMENTAL_ORDER:
     {
         tinyxml2::XMLElement* order_selection_element = document->NewElement("OrderSelection");
         model_selection_element->LinkEndChild(order_selection_element);
 
-        order_selection_element->SetAttribute("Type", "INCREMENTAL_SELECTION");
+        order_selection_element->SetAttribute("Type", "INCREMENTAL_ORDER");
 
         const tinyxml2::XMLDocument* incremental_order_document = incremental_order_pointer->to_XML();
 
@@ -837,21 +887,21 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
     switch(inputs_selection_type)
     {
-    case NO_INPUT_SELECTION:
+    case NO_INPUTS_SELECTION:
     {
         tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
         model_selection_element->LinkEndChild(inputs_selection_element);
 
-        inputs_selection_element->SetAttribute("Type", "NO_INPUT_SELECTION");
+        inputs_selection_element->SetAttribute("Type", "NO_INPUTS_SELECTION");
     }
         break;
 
-    case GROWING_SELECTION:
+    case GROWING_INPUTS:
     {
         tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
         model_selection_element->LinkEndChild(inputs_selection_element);
 
-        inputs_selection_element->SetAttribute("Type", "GROWING_SELECTION");
+        inputs_selection_element->SetAttribute("Type", "GROWING_INPUTS");
 
         const tinyxml2::XMLDocument* growing_inputs_document = growing_inputs_pointer->to_XML();
 
@@ -863,12 +913,12 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
     }
         break;
 
-    case PRUNING_SELECTION:
+    case PRUNING_INPUTS:
     {
         tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
         model_selection_element->LinkEndChild(inputs_selection_element);
 
-        inputs_selection_element->SetAttribute("Type", "PRUNING_SELECTION");
+        inputs_selection_element->SetAttribute("Type", "PRUNING_INPUTS");
 
         const tinyxml2::XMLDocument* pruning_inputs_document = pruning_inputs_pointer->to_XML();
 
@@ -880,12 +930,12 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
     }
         break;
 
-    case GENETIC_SELECTION:
+    case GENETIC_ALGORITHM:
     {
         tinyxml2::XMLElement* inputs_selection_element = document->NewElement("InputsSelection");
         model_selection_element->LinkEndChild(inputs_selection_element);
 
-        inputs_selection_element->SetAttribute("Type", "GENETIC_SELECTION");
+        inputs_selection_element->SetAttribute("Type", "GENETIC_ALGORITHM");
 
         const tinyxml2::XMLDocument* genetic_algorithm_document = genetic_algorithm_pointer->to_XML();
 
@@ -951,7 +1001,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 // do nothing
             }
                 break;
-            case INCREMENTAL_SELECTION:
+            case INCREMENTAL_ORDER:
             {
                 tinyxml2::XMLDocument new_document;
 
@@ -1014,12 +1064,12 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
             switch(inputs_selection_type)
             {
-            case NO_INPUT_SELECTION:
+            case NO_INPUTS_SELECTION:
             {
                 // do nothing
             }
                 break;
-            case GROWING_SELECTION:
+            case GROWING_INPUTS:
             {
                 tinyxml2::XMLDocument new_document;
 
@@ -1031,7 +1081,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 growing_inputs_pointer->from_XML(new_document);
             }
                 break;
-            case PRUNING_SELECTION:
+            case PRUNING_INPUTS:
             {
                 tinyxml2::XMLDocument new_document;
 
@@ -1043,7 +1093,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 pruning_inputs_pointer->from_XML(new_document);
             }
                 break;
-            case GENETIC_SELECTION:
+            case GENETIC_ALGORITHM:
             {
                 tinyxml2::XMLDocument new_document;
 

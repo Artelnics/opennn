@@ -905,7 +905,6 @@ void GradientDescent::set_display_period(const size_t& new_display_period)
 }
 
 
-
 // Vector<double> calculate_training_direction(const Vector<double>&) const method
 
 /// Returns the gradient descent training direction,

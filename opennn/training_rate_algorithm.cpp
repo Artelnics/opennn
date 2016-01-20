@@ -639,7 +639,8 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
 /// and the performance for that training rate. 
 /// @param training_direction Training direction for the directional point.
 /// @param initial_training_rate Training rate for the directional point.
-///
+
+
 Vector<double> TrainingRateAlgorithm::calculate_fixed_directional_point(const double&, const Vector<double>& training_direction, const double& initial_training_rate) const
 {
    Vector<double> directional_point(2);
@@ -770,7 +771,7 @@ Vector<double> TrainingRateAlgorithm::calculate_golden_section_directional_point
 
 Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
 (const double& performance, const Vector<double>& training_direction, const double& initial_training_rate) const 
-{        
+{
    std::ostringstream buffer;
 
    // Bracket minimum
@@ -818,7 +819,7 @@ Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
             triplet.U = V;
 	     }
          else if(V[0] > triplet.U[0] && V[1] >= triplet.U[1])
-	     {
+         {
             //A = A;
             triplet.B = V;
             //U = U;

@@ -538,7 +538,6 @@ void ScalingLayer::set_display(const bool& new_display)
    display = new_display;
 }
 
-
 // void grow_scaling_neuron(const Statistics<double>&) method
 
 /// Add a scaling neuron from the scaling layer and asociate new statistics.
@@ -577,7 +576,6 @@ void ScalingLayer::prune_scaling_neuron(const size_t& index)
 
     statistics.erase(statistics.begin() + index);
 }
-
 
 
 // bool is_empty(void) const method

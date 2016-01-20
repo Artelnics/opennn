@@ -73,7 +73,7 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, GeneralizationPerformanceGoal, MaximumIterations, MaximumGeneralizationFailures, MinimumTemperature, AlgorithmFinished};
+    enum StoppingCondition{MaximumTime, SelectionPerformanceGoal, MaximumIterations, MaximumSelectionFailures, MinimumTemperature, AlgorithmFinished};
 
     // STRUCTURES
 
@@ -163,7 +163,7 @@ public:
 
     const bool& get_display(void) const;
 
-    const double& get_generalization_performance_goal(void) const;
+    const double& get_selection_performance_goal(void) const;
     const size_t& get_maximum_iterations_number(void) const;
     const double& get_maximum_time(void) const;
     const double& get_tolerance(void) const;
@@ -190,7 +190,7 @@ public:
 
     void set_display(const bool&);
 
-    void set_generalization_performance_goal(const double&);
+    void set_selection_performance_goal(const double&);
     void set_maximum_iterations_number(const size_t&);
     void set_maximum_time(const double&);
     void set_tolerance(const double&);
@@ -284,13 +284,13 @@ protected:
 
     /// Goal value for the generalization performance. It is used as a stopping criterion.
 
-    double generalization_performance_goal;
+    double selection_performance_goal;
 
     /// Maximum number of iterations to perform_order_selection. It is used as a stopping criterion.
 
     size_t maximum_iterations_number;
 
-    /// Maximum training time. It is used as a stopping criterion.
+    /// Maximum selection algorithm time. It is used as a stopping criterion.
 
     double maximum_time;
 
@@ -301,3 +301,20 @@ protected:
 }
 
 #endif // ORDERSELECTIONALGORITHM_H
+
+// OpenNN: Open Neural Networks Library.
+// Copyright (c) 2005-2015 Roberto Lopez.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

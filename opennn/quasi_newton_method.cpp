@@ -1785,7 +1785,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
    for(iteration = 0; iteration <= maximum_iterations_number; iteration++)
    {
-
       // Neural network
 
       parameters = neural_network_pointer->arrange_parameters();
@@ -1800,7 +1799,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
       // Performance functional stuff
 
       if(iteration == 0)
-      {      
+      {
          performance = performance_functional_pointer->calculate_performance();
          performance_increase = 0.0; 
       }
@@ -1867,7 +1866,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
       directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, initial_training_rate);
 
-      training_rate = directional_point[0];      
+      training_rate = directional_point[0];
 
       // Reset training direction when training rate is 0
 
@@ -1980,7 +1979,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Gradient norm goal reached.\n";  
+            std::cout << "Iteration " << iteration << ": Gradient norm goal reached.\n";
          }
 
          stop_training = true;

@@ -23,6 +23,7 @@
 #include <string>
 #include <sstream>
 
+
 // OpenNN includes
 
 #include "vector.h"

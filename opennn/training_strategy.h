@@ -230,6 +230,8 @@ public:
 
    // This method trains a neural network which has a performance functional associated. 
 
+   void initialize_layers_autoencoding(void);
+
    Results perform_training(void);
 
    // Serialization methods
