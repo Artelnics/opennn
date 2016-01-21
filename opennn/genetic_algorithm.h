@@ -107,15 +107,15 @@ public:
 
         Vector<double> generation_optimum_performance_history;
 
-        /// Values of the minimum generalization performance in each generation.
+        /// Values of the minimum selection performance in each generation.
 
         Vector<double> generation_minimum_generalization_history;
 
-        /// Mean of the generalization performance in each generation.
+        /// Mean of the selection performance in each generation.
 
         Vector<double> generation_mean_history;
 
-        /// Standard deviation of the generalization performance in each generation.
+        /// Standard deviation of the selection performance in each generation.
 
         Vector<double> generation_standard_deviation_history;
     };
@@ -328,15 +328,15 @@ private:
 
     // Inputs selection results
 
-    /// True if the mean of generalization performance are to be reserved in each generation.
+    /// True if the mean of selection performance are to be reserved in each generation.
 
     bool reserve_generation_mean;
 
-    /// True if the standard deviation of generalization performance are to be reserved in each generation.
+    /// True if the standard deviation of selection performance are to be reserved in each generation.
 
     bool reserve_generation_standard_deviation;
 
-    /// True if the minimum of generalization performance are to be reserved in each generation.
+    /// True if the minimum of selection performance are to be reserved in each generation.
 
     bool reserve_generation_minimum_generalization;
 
@@ -346,7 +346,7 @@ private:
 
     // STOPPING CRITERIA
 
-    /// Maximum number of iterations at which the generalization performance increases.
+    /// Maximum number of iterations at which the selection performance increases.
 
     size_t maximum_selection_failures;
 };

@@ -108,7 +108,7 @@ public:
 
       Vector<double> performance_history;
 
-      /// History of the generalization performance over the training iterations.
+      /// History of the selection performance over the training iterations.
 
       Vector<double> generalization_performance_history;
 
@@ -146,7 +146,7 @@ public:
 
       double final_performance;
 
-      /// Final generalization performance. 
+      /// Final selection performance.
 
       double final_generalization_performance;
 
@@ -348,7 +348,7 @@ private:
 
    double gradient_norm_goal;
 
-   /// Maximum number of iterations at which the generalization performance decreases.
+   /// Maximum number of iterations at which the selection performance decreases.
    /// This is an early stopping method for improving generalization.
 
    size_t maximum_generalization_performance_decreases;
@@ -395,7 +395,7 @@ private:
 
    bool reserve_elapsed_time_history;
 
-   /// True if the Generalization performance history vector is to be reserved, false otherwise. 
+   /// True if the Selection performance history vector is to be reserved, false otherwise.
 
    bool reserve_generalization_performance_history;
 };

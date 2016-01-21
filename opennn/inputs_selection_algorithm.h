@@ -110,23 +110,23 @@ public:
 
        Vector<double> performance_data;
 
-       /// Generalization performance of the different neural networks.
+       /// Selection performance of the different neural networks.
 
        Vector<double> generalization_performance_data;
 
-       /// Vector of parameters for the neural network with minimum generalization performance.
+       /// Vector of parameters for the neural network with minimum selection performance.
 
        Vector<double> minimal_parameters;
 
-       /// Value of minimum generalization performance.
+       /// Value of minimum selection performance.
 
        double final_generalization_performance;
 
-       /// Value of performance for the neural network with minimum generalization performance.
+       /// Value of performance for the neural network with minimum selection performance.
 
        double final_performance;
 
-       /// Inputs of the neural network with minimum generalization performance.
+       /// Inputs of the neural network with minimum selection performance.
 
        Vector<bool> optimal_inputs;
 
@@ -250,7 +250,7 @@ protected:
 
     Vector< Vector<bool> > inputs_history;
 
-    /// Generalization performance of all the neural networks trained.
+    /// Selection performance of all the neural networks trained.
 
     Vector<double> generalization_performance_history;
 
@@ -280,11 +280,11 @@ protected:
 
     bool reserve_performance_data;
 
-    /// True if the generalization performance of all neural networks are to be reserved.
+    /// True if the selection performance of all neural networks are to be reserved.
 
     bool reserve_generalization_performance_data;
 
-    /// True if the vector parameters of the neural network presenting minimum generalization performance is to be reserved.
+    /// True if the vector parameters of the neural network presenting minimum selection performance is to be reserved.
 
     bool reserve_minimal_parameters;
 
@@ -294,7 +294,7 @@ protected:
 
     // STOPPING CRITERIA
 
-    /// Goal value for the generalization performance. It is used as a stopping criterion.
+    /// Goal value for the selection performance. It is used as a stopping criterion.
 
     double selection_performance_goal;
 

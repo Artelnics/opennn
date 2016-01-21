@@ -85,7 +85,7 @@ const Vector< Vector<bool> >& GeneticAlgorithm::get_population(void) const
 
 // const Matrix<double>& get_performance(void) const method
 
-/// Returns the training and generalization errors of the population.
+/// Returns the training and selection errors of the population.
 
 const Matrix<double>& GeneticAlgorithm::get_performance(void) const
 {
@@ -195,7 +195,7 @@ const size_t& GeneticAlgorithm::get_maximum_selection_failures(void) const
 
 // const bool& get_reserve_generation_mean(void) const method
 
-/// Returns true if the generation mean of the generalization errors are to be reserved, and false otherwise.
+/// Returns true if the generation mean of the selection errors are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_mean(void) const
 {
@@ -204,7 +204,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_mean(void) const
 
 // const bool& get_reserve_generation_standard_deviation(void) const method
 
-/// Returns true if the generation standard deviation of the generalization errors are to be reserved, and false otherwise.
+/// Returns true if the generation standard deviation of the selection errors are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation(void) const
 {
@@ -213,7 +213,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation(void) co
 
 // const bool& get_reserve_generation_minimum_generalization(void) const method
 
-/// Returns true if the generation minimum generalization error are to be reserved, and false otherwise.
+/// Returns true if the generation minimum selection error are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_minimum_generalization(void) const
 {
@@ -867,7 +867,7 @@ void GeneticAlgorithm::set_reserve_generation_standard_deviation(const bool& new
 
 // void set_reserve_generation_minimum_generalization(const bool&) method
 
-/// Sets the reserve flag for the generation minimum generalization error history.
+/// Sets the reserve flag for the generation minimum selection error history.
 /// @param new_reserve_generation_minimum_generalization Flag value.
 
 void GeneticAlgorithm::set_reserve_generation_minimum_generalization(const bool& new_reserve_generation_minimum_generalization)
@@ -1693,6 +1693,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double current_minimum_performance_error;
     double current_minimum_generalization_error;
     Vector<bool> current_inputs;
+    Vector<Variables::Use> current_uses;
     double current_mean;
     double current_standard_deviation;
 
@@ -1709,6 +1710,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     size_t selection_failures = 0;
 
+    size_t index = 0;
+
     time_t beginning_time, current_time;
     double elapsed_time;
 
@@ -1716,6 +1719,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         std::cout << "Performing genetic inputs selection..." << std::endl;
 
     original_uses = variables->arrange_uses();
+
+    current_uses = original_uses;
 
     optimal_inputs.set(original_uses.count_occurrences(Variables::Input),0);
 
@@ -1795,7 +1800,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         {
             end = true;
             if (display)
-                std::cout << "Generalization performance reached." << std::endl;
+                std::cout << "Selection performance reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::SelectionPerformanceGoal;
         }else if (iterations >= maximum_iterations_number)
         {
@@ -1807,9 +1812,26 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         {
             end = true;
             if (display)
-                std::cout << "Maximum generalization performance failures("<<selection_failures<<") reached." << std::endl;
+                std::cout << "Maximum selection performance failures("<<selection_failures<<") reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::MaximumSelectionFailures;
         }
+
+        for (size_t j = 0; j < current_inputs.size(); j++)
+        {
+            index = get_input_index(original_uses,j);
+
+            if (current_inputs[j] == false)
+            {
+                current_uses[index] = Variables::Unused;
+            }else
+            {
+                current_uses[index] = Variables::Input;
+            }
+        }
+
+        variables->set_uses(current_uses);
+
+        set_neural_inputs(current_inputs);
 
         if (display)
         {
@@ -1817,7 +1839,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             std::cout << "Generation optimal inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
             std::cout << "Generation optimal number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
             std::cout << "Generation optimum training performance : " << current_minimum_performance_error << std::endl;
-            std::cout << "Generation optimum generalization error : " << current_minimum_generalization_error << std::endl;
+            std::cout << "Generation optimum selection error : " << current_minimum_generalization_error << std::endl;
             std::cout << "Generation generalization mean = " << performance.arrange_column(1).calculate_mean() << std::endl;
             std::cout << "Generation generalization standard deviation = " << performance.arrange_column(1).calculate_standard_deviation() << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
@@ -1894,7 +1916,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
         std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum generalization error : " << optimum_generalization_error << std::endl;
+        std::cout << "Optimum selection error : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
 
@@ -2306,9 +2328,9 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Reserve generalization performance data
+    // Reserve selection performance data
     {
-        element = document->NewElement("ReserveGeneralizationPerformanceData");
+        element = document->NewElement("ReserveSelectionPerformanceData");
         root_element->LinkEndChild(element);
 
         buffer.str("");
@@ -2791,9 +2813,9 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve generalization performance data
+    // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGeneralizationPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
 
         if(element)
         {
@@ -3047,11 +3069,11 @@ std::string GeneticAlgorithm::GeneticAlgorithmResults::to_string(void) const
                << performance_data.to_row_matrix() << "\n";
     }
 
-    // Generalization performance history
+    // Selection performance history
 
     if(!generalization_performance_data.empty())
     {
-        buffer << "% Generalization performance history:\n"
+        buffer << "% Selection performance history:\n"
                << generalization_performance_data.to_row_matrix() << "\n";
     }
 
@@ -3100,11 +3122,11 @@ std::string GeneticAlgorithm::GeneticAlgorithmResults::to_string(void) const
     buffer << "% Stopping condition\n"
            << write_stopping_condition() << "\n";
 
-    // Optimum generalization performance
+    // Optimum selection performance
 
     if (final_generalization_performance != 0)
     {
-        buffer << "% Optimum generalization performance:\n"
+        buffer << "% Optimum selection performance:\n"
                << final_generalization_performance << "\n";
     }
 

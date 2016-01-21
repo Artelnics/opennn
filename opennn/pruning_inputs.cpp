@@ -327,7 +327,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
             {
                 end = true;
                 if (display)
-                    std::cout << "Generalization performance reached." << std::endl;
+                    std::cout << "Selection performance reached." << std::endl;
                 results->stopping_condition = InputsSelectionAlgorithm::SelectionPerformanceGoal;
             }else if (iterations > maximum_iterations_number)
             {
@@ -339,7 +339,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
             {
                 end = true;
                 if (display)
-                    std::cout << "Maximum generalization performance failures("<<selection_failures<<") reached." << std::endl;
+                    std::cout << "Maximum selection performance failures("<<selection_failures<<") reached." << std::endl;
                 results->stopping_condition = InputsSelectionAlgorithm::MaximumSelectionFailures;
             }else if (current_inputs.count_occurrences(true) == 1)
             {
@@ -357,7 +357,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
                 std::cout << "Current inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
                 std::cout << "Number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
                 std::cout << "Training performance : " << final[0] << std::endl;
-                std::cout << "Generalization error : " << final[1] << std::endl;
+                std::cout << "Selection error : " << final[1] << std::endl;
                 std::cout << "Elapsed time : " << elapsed_time << std::endl;
 
                 std::cout << std::endl;
@@ -412,7 +412,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
         std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum generalization error : " << optimum_generalization_error << std::endl;
+        std::cout << "Optimum selection error : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
 
@@ -608,9 +608,9 @@ tinyxml2::XMLDocument* PruningInputs::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve generalization performance data
+   // Reserve selection performance data
    {
-   element = document->NewElement("ReserveGeneralizationPerformanceData");
+   element = document->NewElement("ReserveSelectionPerformanceData");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -846,9 +846,9 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve generalization performance data
+    // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGeneralizationPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
 
         if(element)
         {

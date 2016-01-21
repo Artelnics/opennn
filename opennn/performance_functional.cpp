@@ -5209,7 +5209,7 @@ double PerformanceFunctional::calculate_generalization_constraints(void) const
 
 // double calculate_generalization_performance(void) const method method
 
-/// Calculates the generalization performance,
+/// Calculates the selection performance,
 /// as the sum of the objective and the regularization terms. 
 
 double PerformanceFunctional::calculate_generalization_performance(void) const 

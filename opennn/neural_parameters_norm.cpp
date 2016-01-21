@@ -340,7 +340,7 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian(const Vector<double>& par
 /*
 // double calculate_generalization_performance(void) const method
 
-/// Returns the generalization performance of this peformance term.
+/// Returns the selection performance of this peformance term.
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
 double NeuralParametersNorm::calculate_generalization_performance(void) const

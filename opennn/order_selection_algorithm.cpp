@@ -166,7 +166,7 @@ const bool& OrderSelectionAlgorithm::get_reserve_performance_data(void) const
 
 // const bool& get_reserve_generalization_performance_data(void) const method
 
-/// Returns true if the performance functional generalization performances are to be reserved, and false otherwise.
+/// Returns true if the performance functional selection performances are to be reserved, and false otherwise.
 
 const bool& OrderSelectionAlgorithm::get_reserve_generalization_performance_data(void) const
 {
@@ -176,7 +176,7 @@ const bool& OrderSelectionAlgorithm::get_reserve_generalization_performance_data
 
 // const bool& get_reserve_minimal_parameters(void) const method
 
-/// Returns true if the parameters vector of the neural network with minimum generalization performance is to be reserved, and false otherwise.
+/// Returns true if the parameters vector of the neural network with minimum selection performance is to be reserved, and false otherwise.
 
 const bool& OrderSelectionAlgorithm::get_reserve_minimal_parameters(void) const
 {
@@ -185,7 +185,7 @@ const bool& OrderSelectionAlgorithm::get_reserve_minimal_parameters(void) const
 
 // const PerformanceCalculationMethod& get_performance_calculation_method(void) const method
 
-/// Returns the method for the calculation of the performance and the generalization performance.
+/// Returns the method for the calculation of the performance and the selection performance.
 
 const OrderSelectionAlgorithm::PerformanceCalculationMethod& OrderSelectionAlgorithm::get_performance_calculation_method(void) const
 {
@@ -204,7 +204,7 @@ const bool& OrderSelectionAlgorithm::get_display(void) const
 
 // const double& get_selection_performance_goal(void) const method
 
-/// Returns the goal for the generalization performance in the order selection algorithm.
+/// Returns the goal for the selection performance in the order selection algorithm.
 
 const double& OrderSelectionAlgorithm::get_selection_performance_goal(void) const
 {
@@ -455,7 +455,7 @@ void OrderSelectionAlgorithm::set_reserve_performance_data(const bool& new_reser
 
 // void set_reserve_generalization_performance_data(const bool&) method
 
-/// Sets the reserve flag for the generalization performance data.
+/// Sets the reserve flag for the selection performance data.
 /// @param new_reserve_generalization_performance_data Flag value.
 
 void OrderSelectionAlgorithm::set_reserve_generalization_performance_data(const bool& new_reserve_generalization_performance_data)
@@ -476,7 +476,7 @@ void OrderSelectionAlgorithm::set_reserve_minimal_parameters(const bool& new_res
 
 // void set_performance_calculation_method(const PerformanceCalculationMethod&) method
 
-/// Sets a new method to calculate the performance and the generalization performance.
+/// Sets a new method to calculate the performance and the selection performance.
 /// @param new_performance_calculation_method Method to calculate the performance (Minimum, Maximum or Mean).
 
 void OrderSelectionAlgorithm::set_performance_calculation_method(const OrderSelectionAlgorithm::PerformanceCalculationMethod& new_performance_calculation_method)
@@ -531,7 +531,7 @@ void OrderSelectionAlgorithm::set_display(const bool& new_display)
 // void set_selection_performance_goal(const double&) method
 
 /// Sets the Selection performance goal for the order selection algorithm.
-/// @param new_selection_performance_goal Goal of the generalization performance.
+/// @param new_selection_performance_goal Goal of the selection performance.
 
 void OrderSelectionAlgorithm::set_selection_performance_goal(const double& new_selection_performance_goal)
 {
@@ -633,7 +633,7 @@ void OrderSelectionAlgorithm::set_tolerance(const double& new_tolerance)
 
 // Vector<double> calculate_minimum_final_performances(const size_t&) method
 
-/// Returns the minimum of the performance and generalization performance in trials_number trainings
+/// Returns the minimum of the performance and selection performance in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
 Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(const size_t& order_number)
@@ -702,7 +702,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(0)->get_perceptrons_number();
+    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
     if (order_number > perceptrons_number)
     {
@@ -762,7 +762,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 
 // Vector<double> calculate_maximum_final_performances(const size_t&) const method
 
-/// Returns the maximum of the performance and generalization performance in trials_number trainings
+/// Returns the maximum of the performance and selection performance in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
 Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(const size_t& order_number)
@@ -834,7 +834,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(0)->get_perceptrons_number();
+    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
     if (order_number > perceptrons_number)
     {
@@ -894,7 +894,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 
 // Vector<double> calculate_mean_final_performances(const size_t&) method
 
-/// Returns the mean of the performance and generalization performance in trials_number trainings
+/// Returns the mean of the performance and selection performance in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
 Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const size_t& order_number)
@@ -965,10 +965,9 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
     if (flag_performance && flag_generalization)
         return(mean_final);
 
-
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(0)->get_perceptrons_number();
+    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
     if (order_number > perceptrons_number)
     {
@@ -1017,7 +1016,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
 // Vector<double> get_final_performances(const TrainingStrategy::Results&) method
 
-/// Return final training performance and final generalization performance depending on the training method.
+/// Return final training performance and final selection performance depending on the training method.
 /// @param results Results of the perform_training method.
 
 Vector<double> OrderSelectionAlgorithm::get_final_performances(const TrainingStrategy::Results& results)
@@ -1154,7 +1153,7 @@ Vector<double> OrderSelectionAlgorithm::get_parameters_order(const size_t& order
 
 // void delete_generalization_history(void) method 
 
-/// Delete the history of the generalization performance values.
+/// Delete the history of the selection performance values.
 
 void OrderSelectionAlgorithm::delete_generalization_history(void)
 {
@@ -1365,11 +1364,11 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
               << performance_data.to_row_matrix() << "\n";
    }
 
-   // Generalization performance history
+   // Selection performance history
 
    if(!generalization_performance_data.empty())
    {
-       buffer << "% Generalization performance history:\n"
+       buffer << "% Selection performance history:\n"
               << generalization_performance_data.to_row_matrix() << "\n";
    }
 
@@ -1386,11 +1385,11 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
    buffer << "% Stopping condition\n"
           << write_stopping_condition() << "\n";
 
-   // Optimum generalization performance
+   // Optimum selection performance
 
    if (final_generalization_performance != 0)
    {
-       buffer << "% Optimum generalization performance:\n"
+       buffer << "% Optimum selection performance:\n"
               << final_generalization_performance << "\n";
    }
 

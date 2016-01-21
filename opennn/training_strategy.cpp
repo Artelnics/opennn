@@ -1140,6 +1140,133 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
 void TrainingStrategy::set_display(const bool& new_display)
 {
    display = new_display;
+
+   switch(initialization_type)
+   {
+       case NO_INITIALIZATION:
+       {
+          // do nothing
+       }
+       break;
+
+      case RANDOM_SEARCH:
+      {
+         random_search_pointer->set_display(display);
+      }
+      break;
+
+      case EVOLUTIONARY_ALGORITHM:
+      {
+           evolutionary_algorithm_pointer->set_display(display);
+      }
+      break;
+
+      case USER_INITIALIZATION:
+      {
+         // do nothing
+      }
+      break;
+
+      default:
+      {
+         std::ostringstream buffer;
+
+         buffer << "OpenNN Exception: TrainingStrategy class.\n"
+                << "Results set_display(void) method.\n"
+                << "Unknown initialization type.\n";
+
+         throw std::logic_error(buffer.str());
+      }
+      break;
+   }
+
+   // Main
+
+   switch(main_type)
+   {
+      case NO_MAIN:
+      {
+         // do nothing
+      }
+      break;
+
+      case GRADIENT_DESCENT:
+      {
+         gradient_descent_pointer->set_display(display);
+      }
+      break;
+
+      case CONJUGATE_GRADIENT:
+      {
+           conjugate_gradient_pointer->set_display(display);
+      }
+      break;
+
+      case QUASI_NEWTON_METHOD:
+      {
+           quasi_Newton_method_pointer->set_display(display);
+      }
+      break;
+
+      case LEVENBERG_MARQUARDT_ALGORITHM:
+      {
+           Levenberg_Marquardt_algorithm_pointer->set_display(display);
+      }
+      break;
+
+      case USER_MAIN:
+      {
+         // do nothing
+      }
+      break;
+
+      default:
+      {
+         std::ostringstream buffer;
+
+         buffer << "OpenNN Exception: TrainingStrategy class.\n"
+                << "Results set_display(void) method.\n"
+                << "Unknown main type.\n";
+
+         throw std::logic_error(buffer.str());
+      }
+      break;
+   }
+
+   // Refinement
+
+   switch(refinement_type)
+   {
+      case NO_REFINEMENT:
+      {
+         // do nothing
+      }
+      break;
+
+      case NEWTON_METHOD:
+      {
+           Newton_method_pointer->set_display(display);
+      }
+      break;
+
+      case USER_REFINEMENT:
+      {
+         // do nothing
+      }
+      break;
+
+      default:
+      {
+         std::ostringstream buffer;
+
+         buffer << "OpenNN Exception: TrainingStrategy class.\n"
+                << "Results set_display(void) method.\n"
+                << "Unknown refinement type.\n";
+
+         throw std::logic_error(buffer.str());
+      }
+      break;
+   }
 }
 
 
@@ -1325,6 +1452,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case RANDOM_SEARCH:
       {
+         random_search_pointer->set_display(display);
+
          training_strategy_results.random_search_results_pointer
          = random_search_pointer->perform_training();
       }
@@ -1332,6 +1461,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case EVOLUTIONARY_ALGORITHM:
       {
+           evolutionary_algorithm_pointer->set_display(display);
+
            training_strategy_results.evolutionary_algorithm_results_pointer
            = evolutionary_algorithm_pointer->perform_training();
       }
@@ -1368,6 +1499,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case GRADIENT_DESCENT:
       {
+         gradient_descent_pointer->set_display(display);
+
          training_strategy_results.gradient_descent_results_pointer
          = gradient_descent_pointer->perform_training();
 
@@ -1376,6 +1509,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case CONJUGATE_GRADIENT:
       {
+           conjugate_gradient_pointer->set_display(display);
+
            training_strategy_results.conjugate_gradient_results_pointer
            = conjugate_gradient_pointer->perform_training();
       }
@@ -1383,6 +1518,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case QUASI_NEWTON_METHOD:
       {
+           quasi_Newton_method_pointer->set_display(display);
+
            training_strategy_results.quasi_Newton_method_results_pointer
            = quasi_Newton_method_pointer->perform_training();
       }
@@ -1390,6 +1527,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
+           Levenberg_Marquardt_algorithm_pointer->set_display(display);
+
            training_strategy_results.Levenberg_Marquardt_algorithm_results_pointer
            = Levenberg_Marquardt_algorithm_pointer->perform_training();
       }
@@ -1426,6 +1565,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 
       case NEWTON_METHOD:
       {
+           Newton_method_pointer->set_display(display);
+
            training_strategy_results.Newton_method_results_pointer
            = Newton_method_pointer->perform_training();
       }

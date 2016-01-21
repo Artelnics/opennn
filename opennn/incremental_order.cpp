@@ -175,9 +175,6 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
     Vector<double> performance(2);
     double prev_generalization_performance = 1.0e99;
 
@@ -254,7 +251,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         {
             end = true;
             if (display)
-                std::cout << "Generalization performance reached." << std::endl;
+                std::cout << "Selection performance reached." << std::endl;
             results->stopping_condition = IncrementalOrder::SelectionPerformanceGoal;
         }else if (iterations > maximum_iterations_number)
         {
@@ -266,7 +263,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         {
             end = true;
             if (display)
-                std::cout << "Maximum generalization performance failures("<<selection_failures<<") reached." << std::endl;
+                std::cout << "Maximum selection performance failures("<<selection_failures<<") reached." << std::endl;
             results->stopping_condition = IncrementalOrder::MaximumSelectionFailures;
         }else if (order == maximum_order)
         {
@@ -292,7 +289,18 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     if (display)
         std::cout << "Optimal order : " << optimal_order << std:: endl;
 
-    multilayer_perceptron_pointer->set(inputs_number, optimal_order, outputs_number);
+    const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
+    const size_t perceptrons_number = multilayer_perceptron_pointer->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
+
+    if (optimal_order > perceptrons_number)
+    {
+        multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
+    }else
+    {
+        for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
+            multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
+    }
+
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
     if (reserve_minimal_parameters)
@@ -530,9 +538,9 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve generalization performance data
+   // Reserve selection performance data
    {
-   element = document->NewElement("ReserveGeneralizationPerformanceData");
+   element = document->NewElement("ReserveSelectionPerformanceData");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -794,9 +802,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve generalization performance data
+    // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGeneralizationPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
 
         if(element)
         {

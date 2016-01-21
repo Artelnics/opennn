@@ -132,7 +132,7 @@ private:
 
    // STOPPING CRITERIA
 
-   /// Maximum number of iterations at which the generalization performance increases.
+   /// Maximum number of iterations at which the selection performance increases.
 
    size_t maximum_selection_failures;
 

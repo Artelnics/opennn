@@ -323,7 +323,7 @@ const bool& NewtonMethod::get_reserve_elapsed_time_history(void) const
 
 // const bool& get_reserve_generalization_performance_history(void) const method
 
-/// Returns true if the Generalization performance history vector is to be reserved, and false otherwise.
+/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
 const bool& NewtonMethod::get_reserve_generalization_performance_history(void) const
 {
@@ -838,9 +838,9 @@ void NewtonMethod::set_reserve_elapsed_time_history(const bool& new_reserve_elap
 
 // void set_reserve_generalization_performance_history(bool) method
 
-/// Makes the Generalization performance history to be reserved or not in memory. 
+/// Makes the Selection performance history to be reserved or not in memory. 
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Generalization performance history is to be reserved, false otherwise. 
+/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise. 
 
 void NewtonMethod::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)  
 {
@@ -1045,11 +1045,11 @@ std::string NewtonMethod::NewtonMethodResults::to_string(void) const
               << performance_history << "\n"; 
    }
 
-   // Generalization performance history
+   // Selection performance history
 
    if(!generalization_performance_history.empty())
    {
-       buffer << "% Generalization performance history:\n"
+       buffer << "% Selection performance history:\n"
               << generalization_performance_history << "\n"; 
    }
 
@@ -1141,13 +1141,13 @@ Matrix<std::string> NewtonMethod::NewtonMethodResults::write_final_results(const
 
    values.push_back(buffer.str());
 
-   // Final generalization performance
+   // Final selection performance
 
    const PerformanceFunctional* performance_functional_pointer = Newton_method_pointer->get_performance_functional_pointer();
 
    if(performance_functional_pointer->has_generalization())
    {
-       names.push_back("Final generalization performance");
+       names.push_back("Final selection performance");
 
        buffer.str("");
        buffer << std::setprecision(precision) << final_generalization_performance;
@@ -1477,8 +1477,8 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Generalization performance stopped improving.\n";
-            std::cout << "Generalization performance increment: "<< generalization_performance_increment << std::endl;
+            std::cout << "Iteration " << iteration << ": Selection performance stopped improving.\n";
+            std::cout << "Selection performance increment: "<< generalization_performance_increment << std::endl;
          }
 
          stop_training = true;
@@ -1545,7 +1545,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
             if(generalization_performance != 0)
             {
-               std::cout << "Generalization performance: " << generalization_performance << std::endl;
+               std::cout << "Selection performance: " << generalization_performance << std::endl;
             }
 		 }   
  
@@ -1563,7 +1563,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
          if(generalization_performance != 0)
          {
-            std::cout << "Generalization performance: " << generalization_performance << std::endl;
+            std::cout << "Selection performance: " << generalization_performance << std::endl;
          }
       }
 
@@ -1712,9 +1712,9 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve generalization performance history
+   // Reserve selection performance history
 
-   labels.push_back("Reserve generalization performance history");
+   labels.push_back("Reserve selection performance history");
 
    buffer.str("");
    buffer << reserve_generalization_performance_history;
@@ -1924,9 +1924,9 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Maximum generalization performance decreases
+   // Maximum selection performance decreases
    {
-   element = document->NewElement("MaximumGeneralizationPerformanceDecreases");
+   element = document->NewElement("MaximumSelectionPerformanceDecreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2068,9 +2068,9 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve generalization performance history 
+   // Reserve selection performance history 
    {
-   element = document->NewElement("ReserveGeneralizationPerformanceHistory");
+   element = document->NewElement("ReserveSelectionPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2353,9 +2353,9 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum generalization performance decreases
+   // Maximum selection performance decreases
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumGeneralizationPerformanceDecreases");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
 
        if(element)
        {
@@ -2562,9 +2562,9 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve generalization performance history 
+   // Reserve selection performance history 
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGeneralizationPerformanceHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
        if(element)
        {

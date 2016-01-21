@@ -154,7 +154,7 @@ const bool& InputsSelectionAlgorithm::get_reserve_performance_data(void) const
 
 // const bool& get_reserve_generalization_performance_data(void) const method
 
-/// Returns true if the generalization performances are to be reserved, and false otherwise.
+/// Returns true if the selection performances are to be reserved, and false otherwise.
 
 const bool& InputsSelectionAlgorithm::get_reserve_generalization_performance_data(void) const
 {
@@ -164,7 +164,7 @@ const bool& InputsSelectionAlgorithm::get_reserve_generalization_performance_dat
 
 // const bool& get_reserve_minimal_parameters(void) const method
 
-/// Returns true if the parameters vector of the neural network with minimum generalization performance is to be reserved, and false otherwise.
+/// Returns true if the parameters vector of the neural network with minimum selection performance is to be reserved, and false otherwise.
 
 const bool& InputsSelectionAlgorithm::get_reserve_minimal_parameters(void) const
 {
@@ -173,7 +173,7 @@ const bool& InputsSelectionAlgorithm::get_reserve_minimal_parameters(void) const
 
 // const PerformanceCalculationMethod& get_performance_calculation_method(void) const method
 
-/// Returns the method for the calculation of the performance and the generalization performance.
+/// Returns the method for the calculation of the performance and the selection performance.
 
 const InputsSelectionAlgorithm::PerformanceCalculationMethod& InputsSelectionAlgorithm::get_performance_calculation_method(void) const
 {
@@ -192,7 +192,7 @@ const bool& InputsSelectionAlgorithm::get_display(void) const
 
 // const double& get_selection_performance_goal(void) const method
 
-/// Returns the goal for the generalization performance in the inputs selection algorithm.
+/// Returns the goal for the selection performance in the inputs selection algorithm.
 
 const double& InputsSelectionAlgorithm::get_selection_performance_goal(void) const
 {
@@ -393,7 +393,7 @@ void InputsSelectionAlgorithm::set_reserve_performance_data(const bool& new_rese
 
 // void set_reserve_generalization_performance_data(const bool&) method
 
-/// Sets the reserve flag for the generalization performance data.
+/// Sets the reserve flag for the selection performance data.
 /// @param new_reserve_generalization_performance_data Flag value.
 
 void InputsSelectionAlgorithm::set_reserve_generalization_performance_data(const bool& new_reserve_generalization_performance_data)
@@ -414,7 +414,7 @@ void InputsSelectionAlgorithm::set_reserve_minimal_parameters(const bool& new_re
 
 // void set_performance_calculation_method(const PerformanceCalculationMethod&) method
 
-/// Sets a new method to calculate the performance and the generalization performance.
+/// Sets a new method to calculate the performance and the selection performance.
 /// @param new_performance_calculation_method Method to calculate the performance (Minimum, Maximum or Mean).
 
 void InputsSelectionAlgorithm::set_performance_calculation_method(const InputsSelectionAlgorithm::PerformanceCalculationMethod& new_performance_calculation_method)
@@ -469,7 +469,7 @@ void InputsSelectionAlgorithm::set_display(const bool& new_display)
 // void set_selection_performance_goal(const double&) method
 
 /// Sets the Selection performance goal for the inputs selection algorithm.
-/// @param new_selection_performance_goal Goal of the generalization performance.
+/// @param new_selection_performance_goal Goal of the selection performance.
 
 void InputsSelectionAlgorithm::set_selection_performance_goal(const double& new_selection_performance_goal)
 {
@@ -786,7 +786,7 @@ void InputsSelectionAlgorithm::set_neural_inputs(const Vector<bool>& inputs)
 
 // Vector<double> calculate_minimum_final_performances(const Vector<bool>&) method
 
-/// Returns the minimum of the performance and generalization performance in trials_number trainings.
+/// Returns the minimum of the performance and selection performance in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(const Vector<bool>& inputs)
@@ -903,7 +903,7 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
 
 // Vector<double> calculate_maximum_final_performances(const Vector<bool>&) const method
 
-/// Returns the maximum of the performance and generalization performance in trials_number trainings.
+/// Returns the maximum of the performance and selection performance in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(const Vector<bool>& inputs)
@@ -1018,7 +1018,7 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
 
 // Vector<double> calculate_mean_final_performances(const Vector<bool>&) method
 
-/// Returns the mean of the performance and generalization performance in trials_number trainings.
+/// Returns the mean of the performance and selection performance in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const Vector<bool> &inputs)
@@ -1123,7 +1123,7 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
 
 // Vector<double> get_final_performances(const TrainingStrategy::Results&) method
 
-/// Return final training performance and final generalization performance depending on the training method.
+/// Return final training performance and final selection performance depending on the training method.
 /// @param results Results of the perform_training method.
 
 Vector<double> InputsSelectionAlgorithm::get_final_performances(const TrainingStrategy::Results& results)
@@ -1260,7 +1260,7 @@ Vector<double> InputsSelectionAlgorithm::get_parameters_inputs(const Vector<bool
 
 // void delete_generalization_history(void) method
 
-/// Delete the history of the generalization performance values.
+/// Delete the history of the selection performance values.
 
 void InputsSelectionAlgorithm::delete_generalization_history(void)
 {
@@ -1624,11 +1624,11 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) co
               << performance_data.to_row_matrix() << "\n";
    }
 
-   // Generalization performance history
+   // Selection performance history
 
    if(!generalization_performance_data.empty())
    {
-       buffer << "% Generalization performance history:\n"
+       buffer << "% Selection performance history:\n"
               << generalization_performance_data.to_row_matrix() << "\n";
    }
 
@@ -1645,11 +1645,11 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) co
    buffer << "% Stopping condition\n"
           << write_stopping_condition() << "\n";
 
-   // Optimum generalization performance
+   // Optimum selection performance
 
    if (final_generalization_performance != 0)
    {
-       buffer << "% Optimum generalization performance:\n"
+       buffer << "% Optimum selection performance:\n"
               << final_generalization_performance << "\n";
    }
 

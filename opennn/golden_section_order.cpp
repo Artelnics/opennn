@@ -80,9 +80,6 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
     Vector<double> mu_performance(2);
     Vector<double> ln_performance(2);
 
@@ -90,6 +87,10 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     Vector<double> ln_parameters;
     Vector<double> mu_parameters;
     Vector<double> b_parameters;
+
+    size_t optimal_order;
+    Vector<double> optimum_parameters;
+    Vector<double> optimum_performance(2);
 
     bool end = false;
     Vector<double> minimums(4);
@@ -163,9 +164,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         std::cout << "Initial values : " << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
         std::cout << "ln final training performance : " << ln_performance[0] << std::endl;
-        std::cout << "ln final generalization performance : " << ln_performance[1] << std::endl;
+        std::cout << "ln final selection performance : " << ln_performance[1] << std::endl;
         std::cout << "mu final training performance : " << mu_performance[0] << std::endl;
-        std::cout << "mu final generalization performance : " << mu_performance[1] << std::endl;
+        std::cout << "mu final selection performance : " << mu_performance[1] << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
 
     }
@@ -262,7 +263,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         {
             end = true;
             if (display)
-                std::cout << "Generalization performance reached." << std::endl;
+                std::cout << "Selection performance reached." << std::endl;
             results->stopping_condition = GoldenSectionOrder::SelectionPerformanceGoal;
         }else if (iterations > maximum_iterations_number)
         {
@@ -278,9 +279,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             std::cout << "Iteration : " << iterations << std::endl;
             std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
             std::cout << "ln final training performance : " << ln_performance[0] << std::endl;
-            std::cout << "ln final generalization performance : " << ln_performance[1] << std::endl;
+            std::cout << "ln final selection performance : " << ln_performance[1] << std::endl;
             std::cout << "mu final training performance : " << mu_performance[0] << std::endl;
-            std::cout << "mu final generalization performance : " << mu_performance[1] << std::endl;
+            std::cout << "mu final selection performance : " << mu_performance[1] << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
         }
     }
@@ -305,13 +306,13 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         std::cout << "Iteration : " << iterations << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
         std::cout << "a final training performance : " << calculate_performances(a)[0] << std::endl;
-        std::cout << "a final generalization performance : " << calculate_performances(a)[1] << std::endl;
+        std::cout << "a final selection performance : " << calculate_performances(a)[1] << std::endl;
         std::cout << "ln final training performance : " << ln_performance[0] << std::endl;
-        std::cout << "ln final generalization performance : " << ln_performance[1] << std::endl;
+        std::cout << "ln final selection performance : " << ln_performance[1] << std::endl;
         std::cout << "mu final training performance : " << mu_performance[0] << std::endl;
-        std::cout << "mu final generalization performance : " << mu_performance[1] << std::endl;
+        std::cout << "mu final selection performance : " << mu_performance[1] << std::endl;
         std::cout << "b final training performance : " << calculate_performances(b)[0] << std::endl;
-        std::cout << "b final generalization performance : " << calculate_performances(b)[1] << std::endl;
+        std::cout << "b final selection performance : " << calculate_performances(b)[1] << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
 
@@ -319,66 +320,63 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if (fabs(minimums[0] - minimum) < tolerance)
     {
-        if (display)
-            std::cout << "Optimal order : " << a << std::endl;
+        optimal_order = a;
 
-        multilayer_perceptron_pointer->set(inputs_number, a, outputs_number);
-        multilayer_perceptron_pointer->set_parameters(a_parameters);
+        optimum_parameters = a_parameters;
 
-        if (reserve_minimal_parameters)
-            results->minimal_parameters = a_parameters;
-
-        results->optimal_order = a;
-        results->final_generalization_performance = minimums[0];
-        results->final_performance = calculate_performances(a)[0];
+        optimum_performance[0] = calculate_performances(a)[0];
+        optimum_performance[1] = minimums[0];
 
     }else if (fabs(minimums[1] - minimum) < tolerance)
     {
-        if (display)
-            std::cout << "Optimal order : " << ln << std::endl;
+        optimal_order = ln;
 
-        multilayer_perceptron_pointer->set(inputs_number, ln, outputs_number);
-        multilayer_perceptron_pointer->set_parameters(ln_parameters);
+        optimum_parameters = ln_parameters;
 
-        if (reserve_minimal_parameters)
-            results->minimal_parameters = ln_parameters;
-
-        results->optimal_order = ln;
-        results->final_generalization_performance = minimums[1];
-        results->final_performance = calculate_performances(ln)[0];
+        optimum_performance[0] = calculate_performances(ln)[0];
+        optimum_performance[1] = minimums[1];
 
     }else if(fabs(minimums[2] - minimum) < tolerance)
     {
-        if (display)
-            std::cout << "Optimal order : " << mu << std::endl;
+        optimal_order = mu;
 
-        multilayer_perceptron_pointer->set(inputs_number, mu, outputs_number);
-        multilayer_perceptron_pointer->set_parameters(mu_parameters);
+        optimum_parameters = mu_parameters;
 
-        if (reserve_minimal_parameters)
-            results->minimal_parameters = mu_parameters;
-
-        results->optimal_order = mu;
-        results->final_generalization_performance = minimums[2];
-        results->final_performance = calculate_performances(mu)[0];
-
+        optimum_performance[0] = calculate_performances(mu)[0];
+        optimum_performance[1] = minimums[2];
     }else
     {
-        if (display)
-            std::cout << "Optimal order : " << b << std::endl;
+        optimal_order = b;
 
-        multilayer_perceptron_pointer->set(inputs_number, b, outputs_number);
-        multilayer_perceptron_pointer->set_parameters(b_parameters);
+        optimum_parameters = b_parameters;
 
-        if (reserve_minimal_parameters)
-            results->minimal_parameters = b_parameters;
-
-        results->optimal_order = b;
-        results->final_generalization_performance = minimums[3];
-        results->final_performance = calculate_performances(b)[0];
-
+        optimum_performance[0] = calculate_performances(b)[0];
+        optimum_performance[1] = minimums[3];
     }
 
+    if (display)
+        std::cout << "Optimal order : " << optimal_order << std::endl;
+
+    const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
+    const size_t perceptrons_number = multilayer_perceptron_pointer->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
+
+    if (optimal_order > perceptrons_number)
+    {
+        multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
+    }else
+    {
+        for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
+            multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
+    }
+
+    multilayer_perceptron_pointer->set_parameters(optimum_parameters);
+
+    if (reserve_minimal_parameters)
+        results->minimal_parameters = optimum_parameters;
+
+    results->optimal_order = optimal_order;
+    results->final_performance = optimum_performance[0];
+    results->final_generalization_performance = optimum_performance[1];
     results->elapsed_time = elapsed_time;
     results->iterations_number = iterations;
 
@@ -475,9 +473,9 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve generalization performance data
+   // Reserve selection performance data
    {
-   element = document->NewElement("ReserveGeneralizationPerformanceData");
+   element = document->NewElement("ReserveSelectionPerformanceData");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -696,9 +694,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve generalization performance data
+    // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGeneralizationPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
 
         if(element)
         {

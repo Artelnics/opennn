@@ -148,7 +148,7 @@ public:
 
       Vector<double> best_performance_history;
 
-      /// History of the generalization performance of the best individual over each generations. 
+      /// History of the selection performance of the best individual over each generations. 
 
       Vector<double> generalization_performance_history;
 
@@ -182,7 +182,7 @@ public:
 
       double final_best_performance;
 
-      /// Generalization performance after training.
+      /// Selection performance after training.
 
       double final_generalization_performance;
 
@@ -513,7 +513,7 @@ private:
 
    size_t maximum_generations_number;
 
-   /// Number of generations where the generalization performance decreases.
+   /// Number of generations where the selection performance decreases.
    /// This is an early stopping method for improving generalization.
 
    size_t maximum_generalization_performance_decreases;
@@ -563,7 +563,7 @@ private:
 
    bool reserve_elapsed_time_history;
 
-   /// True if the Generalization performance history vector is to be reserved, false otherwise.
+   /// True if the Selection performance history vector is to be reserved, false otherwise.
 
    bool reserve_generalization_performance_history;
 };

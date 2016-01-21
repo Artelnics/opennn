@@ -271,7 +271,7 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_elapsed_time_history(void) 
 
 // const bool& get_reserve_generalization_performance_history(void) const method
 
-/// Returns true if the Generalization performance history vector is to be reserved, and false otherwise.
+/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_generalization_performance_history(void) const
 {
@@ -884,9 +884,9 @@ void LevenbergMarquardtAlgorithm::set_reserve_elapsed_time_history(const bool& n
 
 // void set_reserve_generalization_performance_history(bool) method
 
-/// Makes the Generalization performance history to be reserved or not in memory.
+/// Makes the Selection performance history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Generalization performance history is to be reserved, false otherwise.
+/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise.
 
 void LevenbergMarquardtAlgorithm::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)
 {
@@ -1160,11 +1160,11 @@ std::string LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::to_
               << performance_history << "\n";
    }
 
-   // Generalization performance history
+   // Selection performance history
 
    if(!generalization_performance_history.empty())
    {
-       buffer << "% Generalization performance history:\n"
+       buffer << "% Selection performance history:\n"
               << generalization_performance_history << "\n";
    }
 
@@ -1245,13 +1245,13 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResu
 
    values.push_back(buffer.str());
 
-   // Final generalization performance
+   // Final selection performance
 
    const PerformanceFunctional* performance_functional_pointer = Levenberg_Marquardt_algorithm_pointer->get_performance_functional_pointer();
 
    if(performance_functional_pointer->has_generalization())
    {
-       names.push_back("Final generalization performance");
+       names.push_back("Final selection performance");
 
        buffer.str("");
        buffer << std::setprecision(precision) << final_generalization_performance;
@@ -1555,8 +1555,8 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Maximum generalization performance decreases reached.\n"
-                      << "Generalization performance decreases: "<< generalization_failures << std::endl;
+            std::cout << "Iteration " << iteration << ": Maximum selection performance decreases reached.\n"
+                      << "Selection performance decreases: "<< generalization_failures << std::endl;
          }
 
          stop_training = true;
@@ -1600,7 +1600,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
              if(generalization_performance != 0)
              {
-                std::cout << "Generalization performance: " << generalization_performance << std::endl;
+                std::cout << "Selection performance: " << generalization_performance << std::endl;
              }
           }
 
@@ -1635,7 +1635,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          if(generalization_performance != 0)
          {
-            std::cout << "Generalization performance: " << generalization_performance << std::endl;
+            std::cout << "Selection performance: " << generalization_performance << std::endl;
          }
 
       }
@@ -1782,9 +1782,9 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve generalization performance history
+   // Reserve selection performance history
 
-   labels.push_back("Reserve generalization performance history");
+   labels.push_back("Reserve selection performance history");
 
    buffer.str("");
    buffer << reserve_generalization_performance_history;
@@ -1976,9 +1976,9 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Maximum generalization performance decreases
+   // Maximum selection performance decreases
 
-   element = document->NewElement("MaximumGeneralizationPerformanceDecreases");
+   element = document->NewElement("MaximumSelectionPerformanceDecreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2042,9 +2042,9 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve generalization performance history
+   // Reserve selection performance history
 
-   element = document->NewElement("ReserveGeneralizationPerformanceHistory");
+   element = document->NewElement("ReserveSelectionPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2097,9 +2097,9 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve generalization performance history
+   // Reserve selection performance history
 
-   element = document->NewElement("ReserveGeneralizationPerformanceHistory");
+   element = document->NewElement("ReserveSelectionPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2393,9 +2393,9 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Maximum generalization performance decreases
+   // Maximum selection performance decreases
 
-   const tinyxml2::XMLElement* maximum_generalization_performance_decreases_element = root_element->FirstChildElement("MaximumGeneralizationPerformanceDecreases");
+   const tinyxml2::XMLElement* maximum_generalization_performance_decreases_element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
 
    if(maximum_generalization_performance_decreases_element)
    {
@@ -2501,9 +2501,9 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Reserve generalization performance history
+   // Reserve selection performance history
 
-   const tinyxml2::XMLElement* reserve_generalization_performance_history_element = root_element->FirstChildElement("ReserveGeneralizationPerformanceHistory");
+   const tinyxml2::XMLElement* reserve_generalization_performance_history_element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
    if(reserve_generalization_performance_history_element)
    {
