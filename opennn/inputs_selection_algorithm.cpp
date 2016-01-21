@@ -702,7 +702,7 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
             training_strategy.set_main_type(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-            training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_display(false);
+            training_strategy.set_display(false);
 
             training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_performance_goal(0.0);
 

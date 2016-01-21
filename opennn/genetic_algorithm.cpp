@@ -85,7 +85,7 @@ const Vector< Vector<bool> >& GeneticAlgorithm::get_population(void) const
 
 // const Matrix<double>& get_performance(void) const method
 
-/// Returns the training and selection errors of the population.
+/// Returns the training and selection performances of the population.
 
 const Matrix<double>& GeneticAlgorithm::get_performance(void) const
 {
@@ -195,7 +195,7 @@ const size_t& GeneticAlgorithm::get_maximum_selection_failures(void) const
 
 // const bool& get_reserve_generation_mean(void) const method
 
-/// Returns true if the generation mean of the selection errors are to be reserved, and false otherwise.
+/// Returns true if the generation mean of the selection performances are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_mean(void) const
 {
@@ -204,7 +204,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_mean(void) const
 
 // const bool& get_reserve_generation_standard_deviation(void) const method
 
-/// Returns true if the generation standard deviation of the selection errors are to be reserved, and false otherwise.
+/// Returns true if the generation standard deviation of the selection performances are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation(void) const
 {
@@ -213,7 +213,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation(void) co
 
 // const bool& get_reserve_generation_minimum_generalization(void) const method
 
-/// Returns true if the generation minimum selection error are to be reserved, and false otherwise.
+/// Returns true if the generation minimum selection performance are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_minimum_generalization(void) const
 {
@@ -867,7 +867,7 @@ void GeneticAlgorithm::set_reserve_generation_standard_deviation(const bool& new
 
 // void set_reserve_generation_minimum_generalization(const bool&) method
 
-/// Sets the reserve flag for the generation minimum selection error history.
+/// Sets the reserve flag for the generation minimum selection performance history.
 /// @param new_reserve_generation_minimum_generalization Flag value.
 
 void GeneticAlgorithm::set_reserve_generation_minimum_generalization(const bool& new_reserve_generation_minimum_generalization)
@@ -1839,7 +1839,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             std::cout << "Generation optimal inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
             std::cout << "Generation optimal number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
             std::cout << "Generation optimum training performance : " << current_minimum_performance_error << std::endl;
-            std::cout << "Generation optimum selection error : " << current_minimum_generalization_error << std::endl;
+            std::cout << "Generation optimum selection performance : " << current_minimum_generalization_error << std::endl;
             std::cout << "Generation generalization mean = " << performance.arrange_column(1).calculate_mean() << std::endl;
             std::cout << "Generation generalization standard deviation = " << performance.arrange_column(1).calculate_standard_deviation() << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
@@ -1916,7 +1916,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
         std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum selection error : " << optimum_generalization_error << std::endl;
+        std::cout << "Optimum selection performance : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
 

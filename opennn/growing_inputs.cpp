@@ -416,7 +416,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             std::cout << "Current inputs : " <<  variables->arrange_inputs_name().to_string() << std::endl;
             std::cout << "Number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
             std::cout << "Training performance : " << final[0] << std::endl;
-            std::cout << "Selection error : " << final[1] << std::endl;
+            std::cout << "selection performance : " << final[1] << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
 
             std::cout << std::endl;
@@ -471,7 +471,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
         std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum selection error : " << optimum_generalization_error << std::endl;
+        std::cout << "Optimum selection performance : " << optimum_generalization_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
 
