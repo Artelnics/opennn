@@ -139,7 +139,7 @@ int main(void)
 
         ModelSelection::ModelSelectionResults model_selection_results;
 
-        model_selection.set_inputs_selection_type(ModelSelection::GENETIC_SELECTION);
+        model_selection.set_inputs_selection_type(ModelSelection::GENETIC_ALGORITHM);
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
 

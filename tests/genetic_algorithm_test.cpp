@@ -259,7 +259,7 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     ga.perform_selection();
 
-    ga.set_crossover_method(GeneticAlgorithm::UniformCrossover);
+    ga.set_crossover_method(GeneticAlgorithm::Uniform);
 
     ga.perform_crossover();
 
@@ -278,7 +278,7 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     ga.perform_selection();
 
-    ga.set_crossover_method(GeneticAlgorithm::Point1);
+    ga.set_crossover_method(GeneticAlgorithm::OnePoint);
 
     ga.set_crossover_first_point(1);
 
@@ -392,12 +392,12 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     ga.set_population_size(10);
 
-    ga.set_generalization_performance_goal(1);
+    ga.set_selection_performance_goal(1);
 
     ga_results = ga.perform_inputs_selection();
 
     assert_true(ga_results->final_generalization_performance < 1, LOG);
-    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::GeneralizationPerformanceGoal, LOG);
+    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::SelectionPerformanceGoal, LOG);
 
     ga.delete_generalization_history();
     ga.delete_parameters_history();
@@ -433,7 +433,7 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     ga.set_population_size(10);
 
-    ga.set_generalization_performance_goal(0.0);
+    ga.set_selection_performance_goal(0.0);
     ga.set_maximum_iterations_number(1);
 
     ga_results = ga.perform_inputs_selection();

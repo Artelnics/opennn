@@ -139,14 +139,14 @@ void IncrementalOrderTest::test_perform_order_selection(void)
 
     io.set_trials_number(1);
     io.set_maximum_order(7);
-    io.set_generalization_performance_goal(1.0e-3);
+    io.set_selection_performance_goal(1.0e-3);
     io.set_display(false);
 
     results = io.perform_order_selection();
 
     assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::GeneralizationPerformanceGoal, LOG);
+                OrderSelectionAlgorithm::SelectionPerformanceGoal, LOG);
 
     // Test
 
@@ -194,8 +194,8 @@ void IncrementalOrderTest::test_perform_order_selection(void)
 
     io.set_trials_number(1);
     io.set_maximum_order(7);
-    io.set_generalization_performance_goal(0.0);
-    io.set_maximum_generalization_failures(1);
+    io.set_selection_performance_goal(0.0);
+    io.set_maximum_selection_failures(1);
     io.set_display(false);
 
 
@@ -203,7 +203,7 @@ void IncrementalOrderTest::test_perform_order_selection(void)
 
     assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::MaximumGeneralizationFailures, LOG);
+                OrderSelectionAlgorithm::MaximumSelectionFailures, LOG);
 
 
 

@@ -114,7 +114,7 @@ void ModelSelectionTest::test_from_XML(void)
     ModelSelection ms1;
     ModelSelection ms2;
 
-    ms1.set_order_selection_type(ModelSelection::INCREMENTAL_SELECTION);
+    ms1.set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
 
     tinyxml2::XMLDocument* document = ms1.to_XML();
 
@@ -122,7 +122,7 @@ void ModelSelectionTest::test_from_XML(void)
 
     delete document;
 
-    assert_true(ms2.get_order_selection_type() == ModelSelection::INCREMENTAL_SELECTION, LOG);
+    assert_true(ms2.get_order_selection_type() == ModelSelection::INCREMENTAL_ORDER, LOG);
 }
 
 void ModelSelectionTest::test_save(void)
@@ -152,7 +152,7 @@ void ModelSelectionTest::test_load(void)
 
     ModelSelection ms;
 
-    ms.set_order_selection_type(ModelSelection::INCREMENTAL_SELECTION);
+    ms.set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
 
     // Test
 

@@ -122,7 +122,7 @@ int main(void)
 
       simulated_annealing_order_pointer->set_cooling_rate(0.9);
 
-      simulated_annealing_order_pointer->set_maximum_generalization_failures(10);
+      simulated_annealing_order_pointer->set_maximum_selection_failures(10);
 
       ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_order_selection();
       

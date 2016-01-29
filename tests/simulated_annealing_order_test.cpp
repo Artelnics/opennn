@@ -139,14 +139,14 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     sa.set_trials_number(1);
     sa.set_maximum_order(7);
-    sa.set_generalization_performance_goal(1.0);
+    sa.set_selection_performance_goal(1.0);
     sa.set_minimum_temperature(0.0);
     sa.set_display(false);
 
     results = sa.perform_order_selection();
 
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::GeneralizationPerformanceGoal, LOG);
+                OrderSelectionAlgorithm::SelectionPerformanceGoal, LOG);
 
     // Test
 
@@ -193,14 +193,14 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     sa.set_trials_number(1);
     sa.set_maximum_order(7);
-    sa.set_generalization_performance_goal(0.0);
+    sa.set_selection_performance_goal(0.0);
     sa.set_minimum_temperature(0.0);
     sa.set_display(false);
 
     results = sa.perform_order_selection();
 
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::MaximumGeneralizationFailures, LOG);
+                OrderSelectionAlgorithm::MaximumSelectionFailures, LOG);
 
 }
 
