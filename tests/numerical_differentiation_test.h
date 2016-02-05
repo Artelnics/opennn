@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N U M E R I C A L   D I F F E R E N T I A T I O N   T E S T   C L A S S   H E A D E R                      */
 /*                                                                                                              */
@@ -100,6 +100,7 @@ private:
    double f1(const double&) const ;
    double f2(const Vector<double>&) const;
    Vector<double> f3(const Vector<double>&) const;
+   double f7(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
 
    // Non constant methods
 
@@ -107,6 +108,7 @@ private:
    double f5(const Vector<double>&);
    Vector<double> f6(const Vector<double>&);
 
+   Vector<double> f8(const size_t&, const size_t&, const Vector<double>&) const;
 
 };
 

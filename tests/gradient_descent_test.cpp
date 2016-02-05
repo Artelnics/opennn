@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G R A D I E N T   D E S C E N T   T E S T   C L A S S                                                      */
 /*                                                                                                              */
@@ -74,7 +74,7 @@ void GradientDescentTest::test_set_reserve_all_training_history(void)
    assert_true(gd.get_reserve_gradient_norm_history() == true, LOG);
    assert_true(gd.get_reserve_training_direction_history() == true, LOG);
    assert_true(gd.get_reserve_training_rate_history() == true, LOG);
-   assert_true(gd.get_reserve_generalization_performance_history() == true, LOG);
+   assert_true(gd.get_reserve_selection_performance_history() == true, LOG);
 }
 
 
@@ -82,7 +82,7 @@ void GradientDescentTest::test_perform_training(void)
 {
    message += "test_perform_training\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
 
    NeuralNetwork nn(1, 1);
@@ -193,7 +193,7 @@ void GradientDescentTest::test_resize_training_history(void)
    assert_true(gdtr.performance_history.size() == 1, LOG);
    assert_true(gdtr.gradient_history.size() == 1, LOG);
    assert_true(gdtr.gradient_norm_history.size() == 1, LOG);
-   assert_true(gdtr.generalization_performance_history.size() == 1, LOG);
+   assert_true(gdtr.selection_performance_history.size() == 1, LOG);
 
    assert_true(gdtr.training_direction_history.size() == 1, LOG);
    assert_true(gdtr.training_rate_history.size() == 1, LOG);

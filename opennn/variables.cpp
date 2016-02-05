@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   V A R I A B L E S   C L A S S                                                                              */
 /*                                                                                                              */ 

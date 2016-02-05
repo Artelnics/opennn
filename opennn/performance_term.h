@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R F O R M A N C E   T E R M   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
@@ -316,7 +316,7 @@ public:
    //Matrix< Matrix <double> > calculate_interlayers_Delta(void) const;
 
    Matrix<double> calculate_output_interlayers_Delta(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
-   Matrix<double> calculate_interlayers_Delta(const size_t& ,const size_t& , const Vector<double>& , const Vector<double>& , const Vector<double>& , const Matrix<double>&, const Matrix<double>&) const;
+   Matrix<double> calculate_interlayers_Delta(const size_t& ,const size_t& , const Vector<double>& , /*const Vector<double>& , const Vector<double>& ,*/ const Matrix<double>&/*, const Matrix<double>&*/) const;
 
    Matrix< Matrix <double> > calculate_interlayers_Delta(const Vector< Vector<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&, const Vector<double>&, const Matrix<double>&, const Vector< Vector<double> >&) const;
 
@@ -337,9 +337,9 @@ public:
 
    virtual double calculate_performance(const Vector<double>&) const = 0;
 
-   /// Returns an performance of the performance term for generalization purposes.  
+   /// Returns an performance of the performance term for selection purposes.  
 
-   virtual double calculate_generalization_performance(void) const
+   virtual double calculate_selection_performance(void) const
    {
       return(0.0);
    }
@@ -416,7 +416,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

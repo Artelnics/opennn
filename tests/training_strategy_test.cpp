@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S                                                    */
 /*                                                                                                              */
@@ -114,6 +114,114 @@ void TrainingStrategyTest::test_set_display(void)
 }
 
 
+void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
+{
+    message += "test_initialize_layers_autoencoding\n";
+
+    DataSet ds;
+    ds.randomize_data_normal();
+
+    Vector<size_t> architecture;
+    NeuralNetwork nn;
+
+    PerformanceFunctional pf(&nn, &ds);
+    TrainingStrategy ts(&pf);
+
+    // Test
+
+    ds.set(2,10,10);
+
+    architecture.set(10,10);
+
+    nn.set(architecture);
+
+    ts.initialize_layers_autoencoding();
+
+    // Test
+/*
+    ds.set(2,3,1);
+    ds.randomize_data_normal();
+
+    nn.set(3,4,1);
+
+    ts.initialize_layers_autoencoding();
+*/
+
+
+//    system("pause");
+
+//    assert_true(performance < old_performance, LOG);
+ /*
+    // Minimum parameters increment norm
+
+    nn.initialize_parameters(3.1415927);
+
+    double minimum_parameters_increment_norm = 0.1;
+
+    qnm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+    qnm.set_performance_goal(0.0);
+    qnm.set_minimum_performance_increase(0.0);
+    qnm.set_gradient_norm_goal(0.0);
+    qnm.set_maximum_iterations_number(10);
+    qnm.set_maximum_time(1000.0);
+
+    qnm.perform_training();
+
+    // Performance goal
+
+    nn.initialize_parameters(3.1415927);
+
+    double performance_goal = 100.0;
+
+    qnm.set_minimum_parameters_increment_norm(0.0);
+    qnm.set_performance_goal(performance_goal);
+    qnm.set_minimum_performance_increase(0.0);
+    qnm.set_gradient_norm_goal(0.0);
+    qnm.set_maximum_iterations_number(10);
+    qnm.set_maximum_time(1000.0);
+
+    qnm.perform_training();
+
+    performance = pf.calculate_performance();
+
+    assert_true(performance < performance_goal, LOG);
+
+    // Minimum evaluation improvement
+
+    nn.initialize_parameters(3.1415927);
+
+    double minimum_performance_increase = 100.0;
+
+    qnm.set_minimum_parameters_increment_norm(0.0);
+    qnm.set_performance_goal(0.0);
+    qnm.set_minimum_performance_increase(minimum_performance_increase);
+    qnm.set_gradient_norm_goal(0.0);
+    qnm.set_maximum_iterations_number(10);
+    qnm.set_maximum_time(1000.0);
+
+    qnm.perform_training();
+
+    // Gradient norm goal
+
+    nn.initialize_parameters(3.1415927);
+
+    double gradient_norm_goal = 100.0;
+
+    qnm.set_minimum_parameters_increment_norm(0.0);
+    qnm.set_performance_goal(0.0);
+    qnm.set_minimum_performance_increase(0.0);
+    qnm.set_gradient_norm_goal(gradient_norm_goal);
+    qnm.set_maximum_iterations_number(10);
+    qnm.set_maximum_time(1000.0);
+
+    qnm.perform_training();
+
+    double gradient_norm = pf.calculate_gradient().calculate_norm();
+    assert_true(gradient_norm < gradient_norm_goal, LOG);
+*/
+}
+
+
 void TrainingStrategyTest::test_perform_training(void)
 {
    message += "test_perform_training\n";
@@ -187,11 +295,7 @@ void TrainingStrategyTest::test_save(void)
 {
    message += "test_save\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/training_strategy.xml";
-#else
    std::string file_name = "../data/training_strategy.xml";
-#endif
 
    TrainingStrategy ts;
 
@@ -208,11 +312,7 @@ void TrainingStrategyTest::test_load(void)
 {
    message += "test_load\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/training_strategy.xml";
-#else
    std::string file_name = "../data/training_strategy.xml";
-#endif
 
    TrainingStrategy ts;
 
@@ -250,7 +350,7 @@ void TrainingStrategyTest::run_test_case(void)
    message += "Running training strategy test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
 
@@ -274,7 +374,9 @@ void TrainingStrategyTest::run_test_case(void)
    test_set_display();
 
    // Training methods
-
+*/
+   test_initialize_layers_autoencoding();
+/*
    test_perform_training();
 
    // Serialization methods
@@ -290,7 +392,7 @@ void TrainingStrategyTest::run_test_case(void)
 
    test_results_constructor();
    test_results_destructor();
-
+*/
    message += "End of training strategy test case.\n";
 }
 

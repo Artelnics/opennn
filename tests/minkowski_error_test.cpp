@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M I N K O W S K I   E R R O R   T E S T   C L A S S                                                        */
 /*                                                                                                              */
@@ -112,16 +112,16 @@ void MinkowskiErrorTest::test_calculate_performance(void)
 
    parameters = nn.arrange_parameters();
 
-   ds.set(2, 1, 1);
+   ds.set(1, 1, 2);
    ds.randomize_data_normal();
 
    assert_true(me.calculate_performance() == me.calculate_performance(parameters), LOG);     
 }
 
 
-void MinkowskiErrorTest::test_calculate_generalization_performance(void)
+void MinkowskiErrorTest::test_calculate_selection_performance(void)
 {
-   message += "test_calculate_generalization_performance\n";  
+   message += "test_calculate_selection_performance\n";  
 }
 
 
@@ -163,7 +163,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    nn.set(3,4,2);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 3, 2);
+   ds.set(3, 2, 5);
    me.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -182,7 +182,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    nn.set(architecture);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 2, 3);
+   ds.set(2, 3, 5);
    me.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -211,7 +211,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    nn.set(3,4,2);
    nn.initialize_parameters(0.0);
 
-   ds.set(5,3,2);
+   ds.set(3,2,5);
    me.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -230,7 +230,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    nn.set(architecture);
    nn.initialize_parameters(0.0);
 
-   ds.set(3,2,2);
+   ds.set(2,2,3);
    me.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -263,7 +263,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
 
    parameters = nn.arrange_parameters();
 
-   ds.set(2,5,3);
+   ds.set(5,3,2);
    ds.randomize_data_normal();
 
    me.set_Minkowski_parameter(1.75);
@@ -339,7 +339,7 @@ void MinkowskiErrorTest::run_test_case(void)
    // Objective methods
 
    test_calculate_performance();   
-   test_calculate_generalization_performance();
+   test_calculate_selection_performance();
    test_calculate_gradient();
 
    // Serialization methods

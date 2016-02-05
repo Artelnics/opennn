@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M A T H E M A T I C A L   M O D E L   C L A S S                                                            */
 /*                                                                                                              */
@@ -516,7 +516,7 @@ void MathematicalModel::save_data(const NeuralNetwork&, const std::string&) cons
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

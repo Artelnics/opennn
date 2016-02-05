@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R F O R M A N C E   F U N C T I O N A L   C L A S S                                                    */
 /*                                                                                                              */
@@ -677,12 +677,12 @@ bool PerformanceFunctional::has_data_set(void) const
 }
 
 
-// bool has_generalization(void) const method
+// bool has_selection(void) const method
 
-/// Returns true if this performance functional has a generalization method defined,
+/// Returns true if this performance functional has a selection method defined,
 /// and false otherwise.
 
-bool PerformanceFunctional::has_generalization(void) const
+bool PerformanceFunctional::has_selection(void) const
 {
     if(!data_set_pointer)
     {
@@ -690,9 +690,9 @@ bool PerformanceFunctional::has_generalization(void) const
     }
     else
     {
-        const size_t generalization_instances_number = data_set_pointer->get_instances().count_generalization_instances_number();
+        const size_t selection_instances_number = data_set_pointer->get_instances().count_selection_instances_number();
 
-        if(generalization_instances_number == 0)
+        if(selection_instances_number == 0)
         {
             return(false);
         }
@@ -2367,6 +2367,10 @@ void PerformanceFunctional::set_objective_type(const std::string& new_objective_
    {
       set_objective_type(MINKOWSKI_ERROR_OBJECTIVE);
    }
+   else if(new_objective_type == "CROSS_ENTROPY_ERROR_OBJECTIVE")
+   {
+      set_objective_type(CROSS_ENTROPY_ERROR_OBJECTIVE);
+   }
    else if(new_objective_type == "OUTPUTS_INTEGRALS_OBJECTIVE")
    {
       set_objective_type(OUTPUTS_INTEGRALS_OBJECTIVE);
@@ -3378,6 +3382,16 @@ Vector<double> PerformanceFunctional::calculate_objective_terms(void) const
          }
          break;
 
+         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         {
+             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+                    << "Vector<double> calculate_objective_terms(void) const method.\n"
+                    << "Cannot calculate performance terms for cross-entropy error objective.\n";
+
+             throw std::logic_error(buffer.str());
+         }
+         break;
+
          case OUTPUTS_INTEGRALS_OBJECTIVE:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
@@ -3661,6 +3675,16 @@ Matrix<double> PerformanceFunctional::calculate_objective_terms_Jacobian(void) c
              throw std::logic_error(buffer.str());
          }
          break;
+
+     case CROSS_ENTROPY_ERROR_OBJECTIVE:
+     {
+         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+                << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
+                << "Cannot calculate performance terms for cross-entropy error objective.\n";
+
+         throw std::logic_error(buffer.str());
+     }
+     break;
 
          case OUTPUTS_INTEGRALS_OBJECTIVE:
          {
@@ -4988,13 +5012,13 @@ double PerformanceFunctional::calculate_performance(const Vector<double>& parame
 }
 
 
-// double calculate_generalization_objective(void) const method
+// double calculate_selection_objective(void) const method
 
-/// Returns the evaluation of the objective term on the generalization instances of the associated data set.
+/// Returns the evaluation of the objective term on the selection instances of the associated data set.
 
-double PerformanceFunctional::calculate_generalization_objective(void) const
+double PerformanceFunctional::calculate_selection_objective(void) const
 {
-    double generalization_objective = 0.0;
+    double selection_objective = 0.0;
 
     switch(objective_type)
     {
@@ -5006,73 +5030,73 @@ double PerformanceFunctional::calculate_generalization_objective(void) const
 
         case SUM_SQUARED_ERROR_OBJECTIVE:
         {
-            generalization_objective += sum_squared_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += sum_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case MEAN_SQUARED_ERROR_OBJECTIVE:
         {
-            generalization_objective += mean_squared_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += mean_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
         {
-            generalization_objective += root_mean_squared_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += root_mean_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
         {
-            generalization_objective += normalized_squared_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += normalized_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case MINKOWSKI_ERROR_OBJECTIVE:
         {
-            generalization_objective += Minkowski_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += Minkowski_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case CROSS_ENTROPY_ERROR_OBJECTIVE:
         {
-            generalization_objective += cross_entropy_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += cross_entropy_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case OUTPUTS_INTEGRALS_OBJECTIVE:
         {
-            generalization_objective += outputs_integrals_objective_pointer->calculate_generalization_performance();
+            selection_objective += outputs_integrals_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case SOLUTIONS_ERROR_OBJECTIVE:
         {
-            generalization_objective += solutions_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += solutions_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
         {
-            generalization_objective += final_solutions_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += final_solutions_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
         {
-            generalization_objective += independent_parameters_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += independent_parameters_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
         {
-            generalization_objective += inverse_sum_squared_error_objective_pointer->calculate_generalization_performance();
+            selection_objective += inverse_sum_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case USER_OBJECTIVE:
         {
-            generalization_objective += user_objective_pointer->calculate_generalization_performance();
+            selection_objective += user_objective_pointer->calculate_selection_performance();
         }
         break;
 
@@ -5081,7 +5105,7 @@ double PerformanceFunctional::calculate_generalization_objective(void) const
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "double calculate_generalization_objective(void) const method.\n"
+                   << "double calculate_selection_objective(void) const method.\n"
                    << "Unknown objective type.\n";
 
             throw std::logic_error(buffer.str());
@@ -5089,17 +5113,17 @@ double PerformanceFunctional::calculate_generalization_objective(void) const
         break;
     }
 
-    return(generalization_objective);
+    return(selection_objective);
 }
 
 
-// double calculate_generalization_regularization(void) const method
+// double calculate_selection_regularization(void) const method
 
-/// Returns the evaluation of the regularization term on the generalization instances of the associated data set.
+/// Returns the evaluation of the regularization term on the selection instances of the associated data set.
 
-double PerformanceFunctional::calculate_generalization_regularization(void) const
+double PerformanceFunctional::calculate_selection_regularization(void) const
 {
-    double generalization_regularization = 0.0;
+    double selection_regularization = 0.0;
 
     switch(regularization_type)
     {
@@ -5111,19 +5135,19 @@ double PerformanceFunctional::calculate_generalization_regularization(void) cons
 
         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
         {
-            generalization_regularization = neural_parameters_norm_regularization_pointer->calculate_generalization_performance();
+            selection_regularization = neural_parameters_norm_regularization_pointer->calculate_selection_performance();
         }
         break;
 
         case OUTPUTS_INTEGRALS_REGULARIZATION:
         {
-            generalization_regularization = outputs_integrals_regularization_pointer->calculate_generalization_performance();
+            selection_regularization = outputs_integrals_regularization_pointer->calculate_selection_performance();
         }
         break;
 
         case USER_REGULARIZATION:
         {
-            generalization_regularization = user_regularization_pointer->calculate_generalization_performance();
+            selection_regularization = user_regularization_pointer->calculate_selection_performance();
         }
         break;
 
@@ -5132,7 +5156,7 @@ double PerformanceFunctional::calculate_generalization_regularization(void) cons
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "double calculate_generalization_regularization(void) const method.\n"
+                   << "double calculate_selection_regularization(void) const method.\n"
                    << "Unknown regularization type.\n";
 
             throw std::logic_error(buffer.str());
@@ -5140,17 +5164,17 @@ double PerformanceFunctional::calculate_generalization_regularization(void) cons
         break;
     }
 
-    return(generalization_regularization);
+    return(selection_regularization);
 }
 
 
-// double calculate_generalization_constraints(void) const
+// double calculate_selection_constraints(void) const
 
-/// Returns the evaluation of the constraints term on the generalization instances of the associated data set.
+/// Returns the evaluation of the constraints term on the selection instances of the associated data set.
 
-double PerformanceFunctional::calculate_generalization_constraints(void) const
+double PerformanceFunctional::calculate_selection_constraints(void) const
 {
-    double generalization_constraints = 0.0;
+    double selection_constraints = 0.0;
 
     switch(constraints_type)
     {
@@ -5162,31 +5186,31 @@ double PerformanceFunctional::calculate_generalization_constraints(void) const
 
         case OUTPUTS_INTEGRALS_CONSTRAINTS:
         {
-            generalization_constraints += outputs_integrals_constraints_pointer->calculate_generalization_performance();
+            selection_constraints += outputs_integrals_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case SOLUTIONS_ERROR_CONSTRAINTS:
         {
-            generalization_constraints += solutions_error_constraints_pointer->calculate_generalization_performance();
+            selection_constraints += solutions_error_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
         {
-            generalization_constraints += final_solutions_error_constraints_pointer->calculate_generalization_performance();
+            selection_constraints += final_solutions_error_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
         {
-            generalization_constraints += independent_parameters_error_constraints_pointer->calculate_generalization_performance();
+            selection_constraints += independent_parameters_error_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case USER_CONSTRAINTS:
         {
-            generalization_constraints += user_constraints_pointer->calculate_generalization_performance();
+            selection_constraints += user_constraints_pointer->calculate_selection_performance();
         }
         break;
 
@@ -5195,7 +5219,7 @@ double PerformanceFunctional::calculate_generalization_constraints(void) const
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "double calculate_generalization_constraints(void) const method.\n"
+                   << "double calculate_selection_constraints(void) const method.\n"
                    << "Unknown constraints type.\n";
 
             throw std::logic_error(buffer.str());
@@ -5203,16 +5227,16 @@ double PerformanceFunctional::calculate_generalization_constraints(void) const
         break;
     }
 
-    return(generalization_constraints);
+    return(selection_constraints);
 }
 
 
-// double calculate_generalization_performance(void) const method method
+// double calculate_selection_performance(void) const method method
 
 /// Calculates the selection performance,
 /// as the sum of the objective and the regularization terms. 
 
-double PerformanceFunctional::calculate_generalization_performance(void) const 
+double PerformanceFunctional::calculate_selection_performance(void) const 
 {
    // Control sentence (if debug)
 
@@ -5224,12 +5248,12 @@ double PerformanceFunctional::calculate_generalization_performance(void) const
 
    #endif
 
-   const double generalization_performance
-    = calculate_generalization_objective()
-    + calculate_generalization_regularization()
-    + calculate_generalization_constraints();
+   const double selection_performance
+    = calculate_selection_objective()
+    + calculate_selection_regularization()
+    + calculate_selection_constraints();
 
-   return(generalization_performance);
+   return(selection_performance);
 }
 
 
@@ -6952,7 +6976,7 @@ void PerformanceFunctional::print(void) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

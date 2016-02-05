@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M U L T I L A Y E R   P E R C E P T R O N   T E S T   C L A S S                                            */
 /*                                                                                                              */
@@ -1895,7 +1895,7 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
 void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination_Jacobian(void)
 {
    message += "test_calculate_interlayer_combination_combination_Jacobian\n";
-/*
+
    NumericalDifferentiation nd;
 
    MultilayerPerceptron n;
@@ -1964,25 +1964,25 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
 
    const PerceptronLayer& hidden_layer = n.get_layer(0);
 
-   hidden_layer_combination = hidden_layer.calculate_combination(inputs);
-   hidden_layer_activation = hidden_layer.calculate_activation(hidden_layer_combination);
+   hidden_layer_combination = hidden_layer.calculate_combinations(inputs);
+   hidden_layer_activation = hidden_layer.calculate_activations(hidden_layer_combination);
 
-   hidden_layer_activation_derivative = hidden_layer.calculate_activation_derivative(hidden_layer_combination);
+   hidden_layer_activation_derivative = hidden_layer.calculate_activations_derivatives(hidden_layer_combination);
 
    const PerceptronLayer& output_layer = n.get_layer(1);
 
-   output_layer_combination = output_layer.calculate_combination(hidden_layer_activation);
+   output_layer_combination = output_layer.calculate_combinations(hidden_layer_activation);
 
    interlayer_combination_combination_Jacobian = n.calculate_interlayer_combination_combination_Jacobian(0, 0, hidden_layer_combination);
    assert_true(interlayer_combination_combination_Jacobian.get_rows_number() == 4, LOG);
    assert_true(interlayer_combination_combination_Jacobian.get_columns_number() == 4, LOG);
    assert_true(interlayer_combination_combination_Jacobian.is_identity(), LOG);
 
-   if(numerical_differentiation_tests)
-   {
+   //if(numerical_differentiation_tests)
+   //{
       numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(n, &MultilayerPerceptron::calculate_interlayer_combination_combination, 0, 0, hidden_layer_combination);
       assert_true((interlayer_combination_combination_Jacobian-numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);			    
-   }
+   //}
 
    interlayer_combination_combination_Jacobian = n.calculate_interlayer_combination_combination_Jacobian(0, 1, hidden_layer_combination);
    assert_true(interlayer_combination_combination_Jacobian.get_rows_number() == 3, LOG);
@@ -1991,11 +1991,11 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
    layer_combination_combination_Jacobian = n.calculate_layer_combination_combination_Jacobian(1, hidden_layer_activation_derivative);
    assert_true((interlayer_combination_combination_Jacobian - layer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
 
-   if(numerical_differentiation_tests)
-   {
+  // if(numerical_differentiation_tests)
+   //{
       numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(n, &MultilayerPerceptron::calculate_interlayer_combination_combination, 0, 1, hidden_layer_combination);
       assert_true((interlayer_combination_combination_Jacobian-numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);			    
-   }
+   //}
 
    interlayer_combination_combination_Jacobian = n.calculate_interlayer_combination_combination_Jacobian(1, 0, hidden_layer_combination);
    assert_true(interlayer_combination_combination_Jacobian.get_rows_number() == 4, LOG);
@@ -2007,11 +2007,11 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
    assert_true(interlayer_combination_combination_Jacobian.get_columns_number() == 3, LOG);
    assert_true(interlayer_combination_combination_Jacobian.is_identity(), LOG);
 
-   if(numerical_differentiation_tests)
-   {
+  // if(numerical_differentiation_tests)
+  // {
       numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(n, &MultilayerPerceptron::calculate_interlayer_combination_combination, 1, 1, output_layer_combination);
       assert_true((interlayer_combination_combination_Jacobian-numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);			    
-   }
+  // }
 
    // Test
 
@@ -2036,11 +2036,11 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
 
 	        if(domain_index <= image_index)
 		    {
-               if(numerical_differentiation_tests)
-               {
-//                  numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(n, &MultilayerPerceptron::calculate_interlayer_combination_combination, domain_index, image_index, layers_combination[domain_index]);
-                  //assert_true((interlayer_combination_combination_Jacobian-numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);			    
-               }                           
+               //if(numerical_differentiation_tests)
+               //{
+                  numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(n, &MultilayerPerceptron::calculate_interlayer_combination_combination, domain_index, image_index, layers_combination[domain_index]);
+                  assert_true((interlayer_combination_combination_Jacobian-numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
+               //}
 			}
 			else
 			{
@@ -2049,7 +2049,7 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
 	     }	     
       }   
    }
-*/
+
 }
 
 
@@ -2059,12 +2059,12 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
 
    NumericalDifferentiation nd;
 
-   MultilayerPerceptron n;
+   MultilayerPerceptron mlp;
 
    size_t inputs_number;
    size_t layers_number;
    Vector<size_t> architecture;
-   
+
    Vector<double> parameters;
 
    Vector<double> inputs;
@@ -2073,23 +2073,23 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    Vector< Vector<double> > layers_combination;
 
    Matrix<double> numerical_interlayer_combination_combination_Jacobian;
+/*
+   // Test
 
-   // Test 
-
-   n.set();
+   mlp.set();
    inputs.set();
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs);
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 0, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 0, LOG);
 
    // Test
 
-   n.set(1, 1);
+   mlp.set(1, 1);
    inputs.set(1, 0.0);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs);
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 1, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 1, LOG);
@@ -2099,10 +2099,10 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
 
    // Test
 
-   n.set(1, 2);
+   mlp.set(1, 2);
    inputs.set(1, 0.0);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs);
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 1, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 1, LOG);
@@ -2112,10 +2112,10 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
 
    // Test
 
-   n.set(2, 2, 2);
+   mlp.set(2, 2, 2);
    inputs.set(2, 0.0);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 2, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 2, LOG);
@@ -2123,21 +2123,21 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
 
    // Test
 
-   n.set(1, 2, 3);
+   mlp.set(1, 2, 3);
    inputs.set(1, 0.0);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 2, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 2, LOG);
 
-   // Test 
+   // Test
 
    architecture.set(4, 1);
-   n.set(architecture);
+   mlp.set(architecture);
    inputs.set(1, 0.0);
-   
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 3, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 3, LOG);
@@ -2149,17 +2149,17 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    architecture[1] = 2;
    architecture[2] = 3;
    architecture[3] = 4;
-   n.set(architecture);
+   mlp.set(architecture);
    inputs.set(1, 0.0);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 3, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 3, LOG);
 
    // Test
 
-   n.set(2, 4, 3);
+   mlp.set(2, 4, 3);
 
    parameters.set(27);
 
@@ -2182,22 +2182,22 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    parameters[16] =  0.96;
    parameters[17] = -0.33;
    parameters[18] =  0.63;
-   parameters[19] = -0.32; 
+   parameters[19] = -0.32;
    parameters[20] =  0.89;
    parameters[21] = -0.80;
-   parameters[22] =  0.80; 
+   parameters[22] =  0.80;
    parameters[23] = -0.03;
    parameters[24] =  0.32;
-   parameters[25] =  0.06; 
+   parameters[25] =  0.06;
    parameters[26] = -0.38;
 
-   n.set_parameters(parameters);   
+   mlp.set_parameters(parameters);
 
    inputs.set(2);
    inputs[0] = -0.88;
    inputs[1] =  0.78;
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 2, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 2, LOG);
@@ -2217,13 +2217,13 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    // Test
 
    architecture.set(4, 1);
-   n.set(architecture);
+   mlp.set(architecture);
 
-   n.initialize_parameters(0.0);
+   mlp.initialize_parameters(0.0);
 
    inputs.set(1, 0.0);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 3, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 3, LOG);
@@ -2243,11 +2243,11 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    // Test
 
    architecture.set(4, 1);
-   n.set(architecture);
+   mlp.set(architecture);
 
    inputs.set(1, 3.1415927);
 
-   interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
    assert_true(interlayers_combination_combination_Jacobian.get_rows_number() == 3, LOG);
    assert_true(interlayers_combination_combination_Jacobian.get_columns_number() == 3, LOG);
@@ -2263,45 +2263,215 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    assert_true(interlayers_combination_combination_Jacobian(2,0) != 0.0, LOG);
    assert_true(interlayers_combination_combination_Jacobian(2,1) != 0.0, LOG);
    assert_true(interlayers_combination_combination_Jacobian(2,2) == 1.0, LOG);
-
+*/
    // Test
 
    for(size_t i = 0; i < random_tests_number; i++)
    {
-      n.initialize_random();
+      mlp.initialize_random();
 
-	  inputs_number = n.get_inputs_number();
+      inputs_number = mlp.get_inputs_number();
 
-      layers_number = n.get_layers_number();
+      layers_number = mlp.get_layers_number();
 
-	  inputs.set(inputs_number);
-	  inputs.randomize_normal();
+      inputs.set(inputs_number);
+      inputs.randomize_normal();
 
-	  layers_combination = n.calculate_layers_combination(inputs);
+      layers_combination = mlp.calculate_layers_combination(inputs);
 
-      interlayers_combination_combination_Jacobian = n.calculate_interlayers_combination_combination_Jacobian(inputs); 
+      interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(inputs);
 
       for(size_t domain_index = 0; domain_index < layers_number; domain_index++)
-	  {
+      {
          for(size_t image_index = 0; image_index < layers_number; image_index++)
-	     {
-            if(domain_index > image_index)
-			{
-			   assert_true(interlayers_combination_combination_Jacobian[image_index][domain_index] == 0.0, LOG);		
-			}
-			else
-			{
-               if(numerical_differentiation_tests)
-               {
-//                  numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(n, &MultilayerPerceptron::calculate_interlayer_combination_combination, domain_index, image_index, layers_combination[domain_index]);
-//    	          assert_true((interlayers_combination_combination_Jacobian[image_index][domain_index] - numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
-               }
-			}            
-	     }	  
-	  }
-   }
-}
+         {
+            if(domain_index < image_index)
+            {
 
+               assert_true(interlayers_combination_combination_Jacobian(domain_index,image_index).calculate_sum() == 0.0, LOG);
+            }
+            else
+            {
+//               if(numerical_differentiation_tests)
+//               {
+                  numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(mlp, &MultilayerPerceptron::calculate_interlayer_combination_combination, image_index, domain_index, layers_combination[image_index]);
+
+                  assert_true((interlayers_combination_combination_Jacobian(domain_index, image_index) - numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
+//               }
+            }
+         }
+      }
+   }
+
+   // Test Linear
+
+   architecture.set(4);
+
+   architecture[0] = 5;
+   architecture[1] = 6;
+   architecture[2] = 8;
+   architecture[3] = 5;
+
+   mlp.set(architecture);
+
+   layers_number = mlp.get_layers_number();
+
+   mlp.set_layer_activation_function(0, Perceptron::Linear);
+   mlp.set_layer_activation_function(1, Perceptron::Linear);
+   mlp.set_layer_activation_function(2, Perceptron::Linear);
+
+   inputs.set(1);
+   inputs.randomize_normal();
+
+   layers_combination = mlp.calculate_layers_combination(inputs);
+
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(layers_combination);
+
+  /* for(size_t domain_index = 0; domain_index < layers_number; domain_index++)
+   {
+      for(size_t image_index = 0; image_index < layers_number; image_index++)
+      {
+          if(domain_index < image_index)
+          {
+             assert_true(interlayers_combination_combination_Jacobian(domain_index, image_index) == 0.0, LOG);
+          }
+          else
+          {
+              numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(mlp, &MultilayerPerceptron::calculate_interlayer_combination_combination, image_index, domain_index, layers_combination[image_index]);
+
+              assert_true((interlayers_combination_combination_Jacobian(domain_index, image_index) - numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
+          }
+      }
+   }*/
+
+   // Test Logistic
+
+   architecture.set(4);
+
+   architecture[0] = 1;
+   architecture[1] = 1;
+   architecture[2] = 1;
+   architecture[3] = 1;
+
+   mlp.set(architecture);
+
+   Vector< Matrix<double> > weights(3);
+
+   for(size_t i = 0; i < 3; i++)
+   {
+       if(i == 0)
+       {
+           Matrix<double> layer_weights(1,1,(double)1.0);
+           weights[i] = layer_weights;
+       }
+       else if(i == 1)
+       {
+           Matrix<double> layer_weights(3,2,(double)2.0);
+           weights[i] = layer_weights;
+       }
+       else
+       {
+           Matrix<double> layer_weights(2,3,(double)3.0);
+           weights[i] = layer_weights;
+       }
+   }
+
+   //mlp.initialize_biases(0.0);
+   //mlp.randomize_parameters_normal();
+   //mlp.set_layers_synaptic_weights(weights);
+
+   layers_number = mlp.get_layers_number();
+
+   mlp.set_layer_activation_function(0, Perceptron::Logistic);
+   mlp.set_layer_activation_function(1, Perceptron::Logistic);
+   mlp.set_layer_activation_function(2, Perceptron::Logistic);
+
+   inputs.set(1);//, 1.0);
+   inputs.randomize_normal();
+
+   layers_combination = mlp.calculate_layers_combination(inputs);
+
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(layers_combination);
+
+ /*  for(size_t domain_index = 0; domain_index < layers_number; domain_index++)
+   {
+      for(size_t image_index = 0; image_index < layers_number; image_index++)
+      {
+          if(domain_index < image_index)
+          {
+             assert_true(interlayers_combination_combination_Jacobian(domain_index, image_index) == 0.0, LOG);
+          }
+          else
+          {
+              numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(mlp, &MultilayerPerceptron::calculate_interlayer_combination_combination, image_index, domain_index, layers_combination[image_index]);
+
+              assert_true((interlayers_combination_combination_Jacobian(domain_index, image_index) - numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
+          }
+      }
+   }*/
+
+   // Test single hidden layer
+
+   architecture.set(3);
+
+   architecture[0] = 1;
+   architecture[1] = 1;
+   architecture[2] = 1;
+
+   mlp.set(architecture);
+
+   weights.set(2);
+
+   for(size_t i = 0; i < 2; i++)
+   {
+       if(i == 0)
+       {
+           Matrix<double> layer_weights(1,1,(double)1.0);
+           weights[i] = layer_weights;
+       }
+       else if(i == 1)
+       {
+           Matrix<double> layer_weights(3,2,(double)2.0);
+           weights[i] = layer_weights;
+       }
+   }
+
+   //mlp.initialize_biases(0.0);
+   //mlp.randomize_parameters_normal();
+   //mlp.set_layers_synaptic_weights(weights);
+
+   layers_number = mlp.get_layers_number();
+
+   mlp.set_layer_activation_function(0, Perceptron::Linear);
+   mlp.set_layer_activation_function(1, Perceptron::Linear);
+
+   inputs.set(1, 1.0);
+   inputs.randomize_normal();
+
+   layers_combination = mlp.calculate_layers_combination(inputs);
+
+   interlayers_combination_combination_Jacobian = mlp.calculate_interlayers_combination_combination_Jacobian(layers_combination);
+
+   std::cout << "Interlayers combination combination Jacobian: \n" << interlayers_combination_combination_Jacobian << std::endl;
+
+   for(size_t domain_index = 0; domain_index < layers_number; domain_index++)
+   {
+      for(size_t image_index = 0; image_index < layers_number; image_index++)
+      {
+          if(domain_index < image_index)
+          {
+             assert_true(interlayers_combination_combination_Jacobian(domain_index, image_index) == 0.0, LOG);
+          }
+          else
+          {
+              numerical_interlayer_combination_combination_Jacobian = nd.calculate_Jacobian(mlp, &MultilayerPerceptron::calculate_interlayer_combination_combination, image_index, domain_index, layers_combination[image_index]);
+
+              assert_true((interlayers_combination_combination_Jacobian(domain_index, image_index) - numerical_interlayer_combination_combination_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
+          }
+      }
+   }
+
+}
 
 void MultilayerPerceptronTest::test_calculate_output_layers_delta(void)
 {
@@ -4078,7 +4248,7 @@ void MultilayerPerceptronTest::test_from_XML(void)
 void MultilayerPerceptronTest::run_test_case(void)
 {
    message += "Running multilayer perceptron test case...\n";
-
+/*
    // Constructor and destructor methods
 
    test_constructor();
@@ -4244,9 +4414,9 @@ void MultilayerPerceptronTest::run_test_case(void)
 
    test_calculate_output_layers_delta();
    test_calculate_output_interlayers_Delta();
-
+*/
    test_calculate_interlayers_combination_combination_Jacobian();
-
+/*
    test_calculate_first_order_forward_propagation();
    test_calculate_second_order_forward_propagation();
 
@@ -4258,7 +4428,7 @@ void MultilayerPerceptronTest::run_test_case(void)
 
    test_to_XML();
    test_from_XML();
-
+*/
    message += "End of multilayer perceptron test case.\n";
 }
 

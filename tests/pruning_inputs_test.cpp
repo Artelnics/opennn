@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P R U N I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
@@ -113,7 +113,7 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     assert_true(pir->optimal_inputs[0] == 1, LOG);
 
-    pi.delete_generalization_history();
+    pi.delete_selection_history();
     pi.delete_parameters_history();
     pi.delete_performance_history();
 
@@ -149,7 +149,7 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     assert_true(pir->optimal_inputs[0] == 1, LOG);
 
-    pi.delete_generalization_history();
+    pi.delete_selection_history();
     pi.delete_parameters_history();
     pi.delete_performance_history();
 

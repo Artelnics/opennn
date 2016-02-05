@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P R U N I N G   I N P U T S   C L A S S                                                                    */
 /*                                                                                                              */
@@ -74,7 +74,7 @@ PruningInputs::~PruningInputs(void)
 
 // const size_t& get_maximum_selection_failures(void) const method
 
-/// Returns the maximum number of generalization failures in the pruning inputs algorithm.
+/// Returns the maximum number of selection failures in the pruning inputs algorithm.
 
 const size_t& PruningInputs::get_maximum_selection_failures(void) const
 {
@@ -103,8 +103,8 @@ void PruningInputs::set_default(void)
 
 // void set_maximum_selection_failures(const size_t&) method
 
-/// Sets the maximum generalization failures for the pruning inputs algorithm.
-/// @param new_maximum_performance_failures Maximum number of generalization failures in the pruning inputs algorithm.
+/// Sets the maximum selection failures for the pruning inputs algorithm.
+/// @param new_maximum_performance_failures Maximum number of selection failures in the pruning inputs algorithm.
 
 void PruningInputs::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
 {
@@ -116,7 +116,7 @@ void PruningInputs::set_maximum_selection_failures(const size_t& new_maximum_per
 
         buffer << "OpenNN Exception: PruningInputs class.\n"
                << "void set_maximum_selection_failures(const size_t&) method.\n"
-               << "Maximum generalization failures must be greater than 0.\n";
+               << "Maximum selection failures must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -173,7 +173,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
     Vector<Variables::Use> current_uses = variables->arrange_uses();
     const Vector<Variables::Use> original_uses = current_uses;
 
-    double optimum_generalization_error = 1e10;
+    double optimum_selection_error = 1e10;
     double optimum_performance_error;
     Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
@@ -183,8 +183,8 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
     Vector<double> final(2);
     Vector<double> history_row;
 
-    double current_training_performance, current_generalization_performance;
-    double previous_generalization_performance;
+    double current_training_performance, current_selection_performance;
+    double previous_selection_performance;
 
     bool end = false;
     size_t iterations = 0;
@@ -195,8 +195,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
 
     if (display)
     {
-        std::cout << "Performing growing inputs selection..." << std::endl;
+        std::cout << "Performing pruning inputs selection..." << std::endl;
         std::cout << std::endl << "Calculating correlations..." << std::endl;
+        std::cout.flush();
     }
 
     final_correlations = calculate_final_correlations();
@@ -279,22 +280,22 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
             final = calculate_performances(current_inputs);
 
             current_training_performance = final[0];
-            current_generalization_performance = final[1];
+            current_selection_performance = final[1];
 
-            if (fabs(optimum_generalization_error - current_generalization_performance) > tolerance &&
-                    optimum_generalization_error > current_generalization_performance)
+            if (fabs(optimum_selection_error - current_selection_performance) > tolerance &&
+                    optimum_selection_error > current_selection_performance)
             {
                 optimal_inputs = current_inputs;
                 optimum_performance_error = current_training_performance;
-                optimum_generalization_error = current_generalization_performance;
+                optimum_selection_error = current_selection_performance;
             }
-            else if (previous_generalization_performance < current_generalization_performance)
+            else if (previous_selection_performance < current_selection_performance)
                 selection_failures++;
 
             time(&current_time);
             elapsed_time = difftime(current_time, beginning_time);
 
-            previous_generalization_performance = current_generalization_performance;
+            previous_selection_performance = current_selection_performance;
             iterations++;
 
             results->inputs_data.push_back(current_inputs);
@@ -304,9 +305,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
                 results->performance_data.push_back(current_training_performance);
             }
 
-            if (reserve_generalization_performance_data)
+            if (reserve_selection_performance_data)
             {
-                results->generalization_performance_data.push_back(current_generalization_performance);
+                results->selection_performance_data.push_back(current_selection_performance);
             }
 
             if (reserve_parameters_data)
@@ -317,7 +318,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
 
             // STOPPING CRITERIA
 
-            if (!end && elapsed_time > maximum_time)
+            if (!end && elapsed_time >= maximum_time)
             {
                 end = true;
                 if (display)
@@ -329,7 +330,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
                 if (display)
                     std::cout << "Selection performance reached." << std::endl;
                 results->stopping_condition = InputsSelectionAlgorithm::SelectionPerformanceGoal;
-            }else if (iterations > maximum_iterations_number)
+            }else if (iterations >= maximum_iterations_number)
             {
                 end = true;
                 if (display)
@@ -357,7 +358,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
                 std::cout << "Current inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
                 std::cout << "Number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
                 std::cout << "Training performance : " << final[0] << std::endl;
-                std::cout << "selection performance : " << final[1] << std::endl;
+                std::cout << "Selection performance : " << final[1] << std::endl;
                 std::cout << "Elapsed time : " << elapsed_time << std::endl;
 
                 std::cout << std::endl;
@@ -371,7 +372,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
 
 
     results->optimal_inputs = optimal_inputs;
-    results->final_generalization_performance = optimum_generalization_error;
+    results->final_selection_performance = optimum_selection_error;
     results->final_performance = calculate_performances(optimal_inputs)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
@@ -412,7 +413,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection(voi
         std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
         std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
         std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum selection performance : " << optimum_generalization_error << std::endl;
+        std::cout << "Optimum selection performance : " << optimum_selection_error << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
 
@@ -457,9 +458,9 @@ Matrix<std::string> PruningInputs::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
    buffer << maximum_selection_failures;
@@ -516,7 +517,7 @@ Matrix<std::string> PruningInputs::to_string_matrix(void) const
    labels.push_back("Plot selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_data;
+   buffer << reserve_selection_performance_data;
 
    values.push_back(buffer.str());
 
@@ -598,7 +599,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML(void) const
 
    // Reserve performance data
    {
-   element = document->NewElement("ReservePerformanceData");
+   element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -610,11 +611,11 @@ tinyxml2::XMLDocument* PruningInputs::to_XML(void) const
 
    // Reserve selection performance data
    {
-   element = document->NewElement("ReserveSelectionPerformanceData");
+   element = document->NewElement("ReserveSelectionPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_data;
+   buffer << reserve_selection_performance_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -716,7 +717,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Maximum Generalization Failures
+   // Maximum Selection Failures
    {
    element = document->NewElement("MaximumSelectionFailures");
    root_element->LinkEndChild(element);
@@ -829,7 +830,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
@@ -848,15 +849,15 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
         if(element)
         {
-           const std::string new_reserve_generalization_performance_data = element->GetText();
+           const std::string new_reserve_selection_performance_data = element->GetText();
 
            try
            {
-              set_reserve_generalization_performance_data(new_reserve_generalization_performance_data != "0");
+              set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -1017,7 +1018,7 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Maximum generalization failures
+    // Maximum selection failures
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
@@ -1080,7 +1081,7 @@ void PruningInputs::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

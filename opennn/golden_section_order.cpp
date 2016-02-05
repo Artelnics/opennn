@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G O L D E N   S E C T I O N    O R D E R   C L A S S                                                       */
 /*                                                                                                              */
@@ -97,7 +97,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     double minimum;
     size_t iterations = 0;
 
-    double current_training_performance, current_generalization_performance;
+    double current_training_performance, current_selection_performance;
 
     time_t beginning_time, current_time;
     double elapsed_time;
@@ -108,13 +108,16 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     size_t mu = (int)(a+0.618*(b-a));
 
     if (display)
+    {
         std::cout << "Performing order selection with golden section method..." << std::endl;
+        std::cout.flush();
+    }
 
     time(&beginning_time);
 
     mu_performance = calculate_performances(mu);
     current_training_performance = mu_performance[0];
-    current_generalization_performance = mu_performance[1];
+    current_selection_performance = mu_performance[1];
     mu_parameters = get_parameters_order(mu);
 
     results->order_data.push_back(mu);
@@ -124,9 +127,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         results->performance_data.push_back(current_training_performance);
     }
 
-    if (reserve_generalization_performance_data)
+    if (reserve_selection_performance_data)
     {
-        results->generalization_performance_data.push_back(current_generalization_performance);
+        results->selection_performance_data.push_back(current_selection_performance);
     }
 
     if (reserve_parameters_data)
@@ -136,7 +139,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     ln_performance = calculate_performances(ln);
     current_training_performance = ln_performance[0];
-    current_generalization_performance = ln_performance[1];
+    current_selection_performance = ln_performance[1];
     ln_parameters = get_parameters_order(ln);
 
     results->order_data.push_back(ln);
@@ -146,9 +149,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         results->performance_data.push_back(current_training_performance);
     }
 
-    if (reserve_generalization_performance_data)
+    if (reserve_selection_performance_data)
     {
-        results->generalization_performance_data.push_back(current_generalization_performance);
+        results->selection_performance_data.push_back(current_selection_performance);
     }
 
     if (reserve_parameters_data)
@@ -161,14 +164,13 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if (display)
     {
-        std::cout << "Initial values : " << std::endl;
+        std::cout << "Initial values: " << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-        std::cout << "ln final training performance : " << ln_performance[0] << std::endl;
-        std::cout << "ln final selection performance : " << ln_performance[1] << std::endl;
-        std::cout << "mu final training performance : " << mu_performance[0] << std::endl;
-        std::cout << "mu final selection performance : " << mu_performance[1] << std::endl;
-        std::cout << "Elapsed time : " << elapsed_time << std::endl;
-
+        std::cout << "ln final training performance: " << ln_performance[0] << std::endl;
+        std::cout << "ln final selection performance: " << ln_performance[1] << std::endl;
+        std::cout << "mu final training performance: " << mu_performance[0] << std::endl;
+        std::cout << "mu final selection performance: " << mu_performance[1] << std::endl;
+        std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
     if ((ln == mu) || (ln > mu) || (mu < ln)){
@@ -190,7 +192,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             ln_performance = calculate_performances(ln);
             current_training_performance = ln_performance[0];
-            current_generalization_performance = ln_performance[1];
+            current_selection_performance = ln_performance[1];
             ln_parameters = get_parameters_order(ln);
 
             results->order_data.push_back(ln);
@@ -200,9 +202,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
                 results->performance_data.push_back(current_training_performance);
             }
 
-            if (reserve_generalization_performance_data)
+            if (reserve_selection_performance_data)
             {
-                results->generalization_performance_data.push_back(current_generalization_performance);
+                results->selection_performance_data.push_back(current_selection_performance);
             }
 
             if (reserve_parameters_data)
@@ -219,7 +221,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             mu_performance = calculate_performances(mu);
             current_training_performance = mu_performance[0];
-            current_generalization_performance = mu_performance[1];
+            current_selection_performance = mu_performance[1];
             mu_parameters = get_parameters_order(mu);
 
             results->order_data.push_back(mu);
@@ -229,9 +231,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
                 results->performance_data.push_back(current_training_performance);
             }
 
-            if (reserve_generalization_performance_data)
+            if (reserve_selection_performance_data)
             {
-                results->generalization_performance_data.push_back(current_generalization_performance);
+                results->selection_performance_data.push_back(current_selection_performance);
             }
 
             if (reserve_parameters_data)
@@ -253,19 +255,19 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             if (display)
                 std::cout << "Algorithm finished " << std::endl;
             results->stopping_condition = GoldenSectionOrder::AlgorithmFinished;
-        }else if (elapsed_time > maximum_time)
+        }else if (elapsed_time >= maximum_time)
         {
             end = true;
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = GoldenSectionOrder::MaximumTime;
-        }else if (fmin(ln_performance[1],mu_performance[1]) < selection_performance_goal)
+        }else if (fmin(ln_performance[1],mu_performance[1]) <= selection_performance_goal)
         {
             end = true;
             if (display)
                 std::cout << "Selection performance reached." << std::endl;
             results->stopping_condition = GoldenSectionOrder::SelectionPerformanceGoal;
-        }else if (iterations > maximum_iterations_number)
+        }else if (iterations >= maximum_iterations_number)
         {
             end = true;
             if (display)
@@ -376,7 +378,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     results->optimal_order = optimal_order;
     results->final_performance = optimum_performance[0];
-    results->final_generalization_performance = optimum_performance[1];
+    results->final_selection_performance = optimum_performance[1];
     results->elapsed_time = elapsed_time;
     results->iterations_number = iterations;
 
@@ -463,7 +465,7 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
 
    // Reserve performance data
    {
-   element = document->NewElement("ReservePerformanceData");
+   element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -475,11 +477,11 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
 
    // Reserve selection performance data
    {
-   element = document->NewElement("ReserveSelectionPerformanceData");
+   element = document->NewElement("ReserveSelectionPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_data;
+   buffer << reserve_selection_performance_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -677,7 +679,7 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
@@ -696,15 +698,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
         if(element)
         {
-           const std::string new_reserve_generalization_performance_data = element->GetText();
+           const std::string new_reserve_selection_performance_data = element->GetText();
 
            try
            {
-              set_reserve_generalization_performance_data(new_reserve_generalization_performance_data != "0");
+              set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -872,7 +874,7 @@ void GoldenSectionOrder::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

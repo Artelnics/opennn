@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E U R A L   P A R A M E T E R S   N O R M   C L A S S                                                    */
 /*                                                                                                              */
@@ -338,12 +338,12 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian(const Vector<double>& par
 }
 
 /*
-// double calculate_generalization_performance(void) const method
+// double calculate_selection_performance(void) const method
 
 /// Returns the selection performance of this peformance term.
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
-double NeuralParametersNorm::calculate_generalization_performance(void) const
+double NeuralParametersNorm::calculate_selection_performance(void) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -490,7 +490,7 @@ void NeuralParametersNorm::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

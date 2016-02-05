@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S   H E A D E R                                      */
 /*                                                                                                              */ 
@@ -68,6 +68,7 @@ public:
 
    // Training methods
 
+   void test_initialize_layers_autoencoding(void);
    void test_perform_training(void);
 
    // Serialization methods

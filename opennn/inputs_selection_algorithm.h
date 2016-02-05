@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N P U T S   S E L E C T I O N   A L G O R I T H M   C L A S S   H E A D E R                              */
 /*                                                                                                              */
@@ -112,7 +112,7 @@ public:
 
        /// Selection performance of the different neural networks.
 
-       Vector<double> generalization_performance_data;
+       Vector<double> selection_performance_data;
 
        /// Vector of parameters for the neural network with minimum selection performance.
 
@@ -120,7 +120,7 @@ public:
 
        /// Value of minimum selection performance.
 
-       double final_generalization_performance;
+       double final_selection_performance;
 
        /// Value of performance for the neural network with minimum selection performance.
 
@@ -157,7 +157,7 @@ public:
 
     const bool& get_reserve_parameters_data(void) const;
     const bool& get_reserve_performance_data(void) const;
-    const bool& get_reserve_generalization_performance_data(void) const;
+    const bool& get_reserve_selection_performance_data(void) const;
     const bool& get_reserve_minimal_parameters(void) const;
 
     const PerformanceCalculationMethod& get_performance_calculation_method(void) const;
@@ -185,7 +185,7 @@ public:
 
     void set_reserve_parameters_data(const bool&);
     void set_reserve_performance_data(const bool&);
-    void set_reserve_generalization_performance_data(const bool&);
+    void set_reserve_selection_performance_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
     void set_performance_calculation_method(const PerformanceCalculationMethod&);
@@ -222,7 +222,7 @@ public:
 
     // inputs selection methods
 
-    void delete_generalization_history(void);
+    void delete_selection_history(void);
     void delete_performance_history(void);
     void delete_parameters_history(void);
     void check(void) const;
@@ -252,7 +252,7 @@ protected:
 
     /// Selection performance of all the neural networks trained.
 
-    Vector<double> generalization_performance_history;
+    Vector<double> selection_performance_history;
 
     /// Performance of all the neural networks trained.
 
@@ -282,7 +282,7 @@ protected:
 
     /// True if the selection performance of all neural networks are to be reserved.
 
-    bool reserve_generalization_performance_data;
+    bool reserve_selection_performance_data;
 
     /// True if the vector parameters of the neural network presenting minimum selection performance is to be reserved.
 
@@ -323,7 +323,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

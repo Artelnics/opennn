@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E U R A L   P A R A M E T E R S   N O R M   T E R M   C L A S S                                          */
 /*                                                                                                              */
@@ -92,15 +92,15 @@ void NeuralParametersNormTest::test_calculate_performance(void)
 }
 
 /*
-void NeuralParametersNormTest::test_calculate_generalization_performance(void)
+void NeuralParametersNormTest::test_calculate_selection_performance(void)
 {
-   message += "test_calculate_generalization_performance\n";
+   message += "test_calculate_selection_performance\n";
 
    NeuralNetwork nn;
 
    NeuralParametersNorm npn(&nn);
 
-   double generalization_performance;
+   double selection_performance;
 
    // Test
 
@@ -108,9 +108,9 @@ void NeuralParametersNormTest::test_calculate_generalization_performance(void)
 
    nn.initialize_parameters(0.0);
 
-   generalization_performance = npn.calculate_generalization_performance();
+   selection_performance = npn.calculate_selection_performance();
    
-   assert_true(generalization_performance == 0.0, LOG);
+   assert_true(selection_performance == 0.0, LOG);
 }
 */
 
@@ -343,7 +343,7 @@ void NeuralParametersNormTest::run_test_case(void)
    // Objective methods
 
    test_calculate_performance();   
-//   test_calculate_generalization_performance();
+//   test_calculate_selection_performance();
 
    test_calculate_gradient();
 

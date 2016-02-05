@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   C O N J U G A T E   G R A D I E N T   T E S T   C L A S S                                                  */
 /*                                                                                                              */
@@ -108,7 +108,7 @@ void ConjugateGradientTest::test_set_reserve_all_training_history(void)
    assert_true(cg.get_reserve_training_direction_history() == true, LOG);
    assert_true(cg.get_reserve_training_rate_history() == true, LOG);
    assert_true(cg.get_reserve_elapsed_time_history() == true, LOG);
-   assert_true(cg.get_reserve_generalization_performance_history() == true, LOG);
+   assert_true(cg.get_reserve_selection_performance_history() == true, LOG);
 }
 
 
@@ -116,7 +116,7 @@ void ConjugateGradientTest::test_calculate_PR_parameter(void)
 {
    message += "test_calculate_PR_parameter\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
 
    NeuralNetwork nn(1 ,1);
@@ -140,7 +140,7 @@ void ConjugateGradientTest::test_calculate_FR_parameter(void)
 {
    message += "test_calculate_FR_parameter\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
    NeuralNetwork nn(1 ,1);
    PerformanceFunctional pf(&nn, &ds);
@@ -163,7 +163,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction(void)
 {
    message += "test_calculate_PR_training_direction\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
    NeuralNetwork nn(1 ,1);
    PerformanceFunctional pf(&nn, &ds);
@@ -189,7 +189,7 @@ void ConjugateGradientTest::test_calculate_FR_training_direction(void)
 {
    message += "test_calculate_FR_training_direction\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
    NeuralNetwork nn(1 ,1);
    PerformanceFunctional pf(&nn, &ds);

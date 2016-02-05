@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E W T O N   M E T H O D   C L A S S                                                                      */
 /*                                                                                                              */
@@ -201,13 +201,13 @@ const double& NewtonMethod::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_generalization_performance_decreases(void) const method
+// const size_t& get_maximum_selection_performance_decreases(void) const method
 
-/// Returns the maximum number of generalization failures during the training process. 
+/// Returns the maximum number of selection failures during the training process. 
 
-const size_t& NewtonMethod::get_maximum_generalization_performance_decreases(void) const
+const size_t& NewtonMethod::get_maximum_selection_performance_decreases(void) const
 {
-   return(maximum_generalization_performance_decreases);
+   return(maximum_selection_performance_decreases);
 }
 
 
@@ -321,13 +321,13 @@ const bool& NewtonMethod::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_generalization_performance_history(void) const method
+// const bool& get_reserve_selection_performance_history(void) const method
 
 /// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
-const bool& NewtonMethod::get_reserve_generalization_performance_history(void) const
+const bool& NewtonMethod::get_reserve_selection_performance_history(void) const
 {
-   return(reserve_generalization_performance_history);
+   return(reserve_selection_performance_history);
 }
 
 
@@ -366,7 +366,7 @@ void NewtonMethod::set_default(void)
    minimum_performance_increase = 0.0;
    performance_goal = -1.0e99;
    gradient_norm_goal = 0.0;
-   maximum_generalization_performance_decreases = 1000000;
+   maximum_selection_performance_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
@@ -379,7 +379,7 @@ void NewtonMethod::set_default(void)
    reserve_performance_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_generalization_performance_history = false;
+   reserve_selection_performance_history = false;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -680,14 +680,14 @@ void NewtonMethod::set_gradient_norm_goal(const double& new_gradient_norm_goal)
 }
 
 
-// void set_maximum_generalization_performance_decreases(const size_t&) method
+// void set_maximum_selection_performance_decreases(const size_t&) method
 
-/// Sets a new maximum number of generalization failures. 
-/// @param new_maximum_generalization_performance_decreases Maximum number of iterations in which the generalization evalutation decreases. 
+/// Sets a new maximum number of selection failures. 
+/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases. 
 
-void NewtonMethod::set_maximum_generalization_performance_decreases(const size_t& new_maximum_generalization_performance_decreases)
+void NewtonMethod::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
 {
-   maximum_generalization_performance_decreases = new_maximum_generalization_performance_decreases;
+   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
 }
 
 
@@ -836,15 +836,15 @@ void NewtonMethod::set_reserve_elapsed_time_history(const bool& new_reserve_elap
 }
 
 
-// void set_reserve_generalization_performance_history(bool) method
+// void set_reserve_selection_performance_history(bool) method
 
 /// Makes the Selection performance history to be reserved or not in memory. 
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
 
-void NewtonMethod::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)  
+void NewtonMethod::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
 {
-   reserve_generalization_performance_history = new_reserve_generalization_performance_history;
+   reserve_selection_performance_history = new_reserve_selection_performance_history;
 }
 
 
@@ -973,9 +973,9 @@ void NewtonMethod::NewtonMethodResults::resize_training_history(const size_t& ne
         performance_history.resize(new_size);
     }
 
-    if(Newton_method_pointer->get_reserve_generalization_performance_history())
+    if(Newton_method_pointer->get_reserve_selection_performance_history())
     {
-        generalization_performance_history.resize(new_size);
+        selection_performance_history.resize(new_size);
     }
 
     if(Newton_method_pointer->get_reserve_gradient_history())
@@ -1047,10 +1047,10 @@ std::string NewtonMethod::NewtonMethodResults::to_string(void) const
 
    // Selection performance history
 
-   if(!generalization_performance_history.empty())
+   if(!selection_performance_history.empty())
    {
        buffer << "% Selection performance history:\n"
-              << generalization_performance_history << "\n"; 
+              << selection_performance_history << "\n"; 
    }
 
    // Gradient history 
@@ -1145,12 +1145,12 @@ Matrix<std::string> NewtonMethod::NewtonMethodResults::write_final_results(const
 
    const PerformanceFunctional* performance_functional_pointer = Newton_method_pointer->get_performance_functional_pointer();
 
-   if(performance_functional_pointer->has_generalization())
+   if(performance_functional_pointer->has_selection())
    {
        names.push_back("Final selection performance");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_generalization_performance;
+       buffer << std::setprecision(precision) << final_selection_performance;
 
        values.push_back(buffer.str());
    }
@@ -1257,9 +1257,9 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
    // Performance functional stuff
 
-   double generalization_performance = 0.0; 
-   double old_generalization_performance = 0.0;
-   double generalization_performance_increment = 0.0;
+   double selection_performance = 0.0; 
+   double old_selection_performance = 0.0;
+   double selection_performance_increment = 0.0;
       
    double performance = 0.0;
    double old_performance = 0.0;
@@ -1318,15 +1318,15 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          performance_increase = old_performance - performance; 
       }
 
-      generalization_performance = performance_functional_pointer->calculate_generalization_performance();
+      selection_performance = performance_functional_pointer->calculate_selection_performance();
 
       if(iteration == 0)
       {
-         generalization_performance_increment = 0.0;
+         selection_performance_increment = 0.0;
       }
       else 
       {
-         generalization_performance_increment = generalization_performance - old_generalization_performance;
+         selection_performance_increment = selection_performance - old_selection_performance;
       }
 
       gradient = performance_functional_pointer->calculate_gradient();
@@ -1402,9 +1402,9 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          Newton_method_results_pointer->performance_history[iteration] = performance;
       }
 
-      if(reserve_generalization_performance_history)
+      if(reserve_selection_performance_history)
       {
-         Newton_method_results_pointer->generalization_performance_history[iteration] = generalization_performance;
+         Newton_method_results_pointer->selection_performance_history[iteration] = selection_performance;
       }
 
       if(reserve_gradient_history)
@@ -1473,12 +1473,12 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          stop_training = true;
       }
 
-      else if(iteration != 0 && generalization_performance_increment < 0.0)
+      else if(iteration != 0 && selection_performance_increment < 0.0)
       {
          if(display)
          {
             std::cout << "Iteration " << iteration << ": Selection performance stopped improving.\n";
-            std::cout << "Selection performance increment: "<< generalization_performance_increment << std::endl;
+            std::cout << "Selection performance increment: "<< selection_performance_increment << std::endl;
          }
 
          stop_training = true;
@@ -1525,7 +1525,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          Newton_method_results_pointer->final_parameters_norm = parameters_norm;
 
          Newton_method_results_pointer->final_performance = performance;
-         Newton_method_results_pointer->final_generalization_performance = generalization_performance;
+         Newton_method_results_pointer->final_selection_performance = selection_performance;
 
          Newton_method_results_pointer->final_gradient = gradient;
          Newton_method_results_pointer->final_gradient_norm = gradient_norm;
@@ -1543,9 +1543,9 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
                       << "Training rate: " << training_rate << "\n"
                       << "Elapsed time: " << elapsed_time << std::endl; 
 
-            if(generalization_performance != 0)
+            if(selection_performance != 0)
             {
-               std::cout << "Selection performance: " << generalization_performance << std::endl;
+               std::cout << "Selection performance: " << selection_performance << std::endl;
             }
 		 }   
  
@@ -1561,9 +1561,9 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl; 
 
-         if(generalization_performance != 0)
+         if(selection_performance != 0)
          {
-            std::cout << "Selection performance: " << generalization_performance << std::endl;
+            std::cout << "Selection performance: " << selection_performance << std::endl;
          }
       }
 
@@ -1576,7 +1576,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
       // Update stuff
 
       old_performance = performance;
-      old_generalization_performance = generalization_performance;
+      old_selection_performance = selection_performance;
    
       //old_training_rate = training_rate;
    } 
@@ -1658,12 +1658,12 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    values.push_back(buffer.str());
 
@@ -1717,7 +1717,7 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    values.push_back(buffer.str());
 
@@ -1930,7 +1930,7 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2074,7 +2074,7 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2359,11 +2359,11 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_generalization_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_generalization_performance_decreases(new_maximum_generalization_performance_decreases);
+             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -2568,11 +2568,11 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_generalization_performance_history = element->GetText();
+          const std::string new_reserve_selection_performance_history = element->GetText();
 
           try
           {
-             set_reserve_generalization_performance_history(new_reserve_generalization_performance_history != "0");
+             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -2675,14 +2675,14 @@ void NewtonMethod::set_reserve_all_training_history(const bool& new_reserve_all_
    reserve_training_rate_history = new_reserve_all_training_history;
    reserve_elapsed_time_history = new_reserve_all_training_history;
 
-   reserve_generalization_performance_history = new_reserve_all_training_history;
+   reserve_selection_performance_history = new_reserve_all_training_history;
 }
 
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

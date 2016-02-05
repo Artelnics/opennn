@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   S I M U L A T E D   A N N E A L I N G   O R D E R   T E S T   C L A S S   H E A D E R                      */
 /*                                                                                                              */
@@ -124,7 +124,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     uses.set(21,Instances::Training);
     for (size_t i = 0; i < 11; i++)
-        uses[2*i+1] = Instances::Generalization;
+        uses[2*i+1] = Instances::Selection;
 
     ds.get_instances_pointer()->set_uses(uses);
 
@@ -178,7 +178,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     uses.set(21,Instances::Training);
     for (size_t i = 0; i < 11; i++)
-        uses[2*i+1] = Instances::Generalization;
+        uses[2*i+1] = Instances::Selection;
 
     ds.get_instances_pointer()->set_uses(uses);
 

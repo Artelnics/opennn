@@ -46,7 +46,6 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
 else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
-
 INCLUDEPATH += $$PWD/../tinyxml2
 DEPENDPATH += $$PWD/../tinyxml2
 

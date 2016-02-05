@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P R O B A B I L I S T I C   L A Y E R   T E S T   C L A S S                                                */
 /*                                                                                                              */
@@ -150,24 +150,24 @@ void ProbabilisticLayerTest::test_calculate_outputs(void)
 
    pl.set(1);
 
-   pl.set_probabilistic_method(ProbabilisticLayer::Binary);
+   pl.set_probabilistic_method(ProbabilisticLayer::Competitive);
 
    inputs.set(1, 0.0);
    outputs = pl.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 1, LOG);
-   //assert_true(outputs == 1.0, LOG);
+   assert_true(outputs == 1.0, LOG);
 
    // Test
 
    pl.set(1);
-   pl.set_probabilistic_method(ProbabilisticLayer::Probability);
+   pl.set_probabilistic_method(ProbabilisticLayer::Softmax);
 
    inputs.set(1, 0.0);
    outputs = pl.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 1, LOG);
-   //assert_true(outputs == 1.0, LOG);
+   assert_true(outputs == 1.0, LOG);
 }
 
 
@@ -199,6 +199,39 @@ void ProbabilisticLayerTest::test_calculate_Jacobian(void)
 
       assert_true((Jacobian-numerical_Jacobian).calculate_absolute_value() < 1.0e-3, LOG);
    }
+}
+
+
+void ProbabilisticLayerTest::test_calculate_Hessian_form(void)
+{
+    message += "test_calculate_Hessian_form\n";
+
+    NumericalDifferentiation nd;
+
+    ProbabilisticLayer pl;
+
+    Vector<double> inputs;
+    Vector<Matrix<double> > Hessian;
+    Vector<Matrix<double> > numerical_Hessian;
+
+    // Test
+
+    if(numerical_differentiation_tests)
+    {
+        pl.set_probabilistic_method(ProbabilisticLayer::Softmax);
+
+        pl.set(3);
+
+        inputs.set(3);
+        inputs.randomize_normal();
+
+        Hessian = pl.calculate_Hessian_form(inputs);
+        numerical_Hessian = nd.calculate_Hessian_form(pl, &ProbabilisticLayer::calculate_outputs, inputs);
+
+        assert_true((Hessian[0]-numerical_Hessian[0]).calculate_absolute_value() < 1.0e-3, LOG);
+        assert_true((Hessian[1]-numerical_Hessian[1]).calculate_absolute_value() < 1.0e-3, LOG);
+        assert_true((Hessian[2]-numerical_Hessian[2]).calculate_absolute_value() < 1.0e-3, LOG);
+    }
 }
 
 
@@ -294,6 +327,7 @@ void ProbabilisticLayerTest::run_test_case(void)
 
    test_calculate_outputs();
    test_calculate_Jacobian();
+   test_calculate_Hessian_form();
 
    // Serialization methods
 

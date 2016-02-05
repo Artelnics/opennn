@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M U L T I L A Y E R   P E R C E P T R O N   T E S T   C L A S S   H E A D E R                              */
 /*                                                                                                              */

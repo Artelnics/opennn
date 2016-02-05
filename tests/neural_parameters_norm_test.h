@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E U R A L   P A R A M E T E R S   N O R M   T E S T   C L A S S   H E A D E R                            */
 /*                                                                                                              */
@@ -55,7 +55,7 @@ public:
    // Objective methods
 
    void test_calculate_performance(void); 
-//   void test_calculate_generalization_performance(void);
+//   void test_calculate_selection_performance(void);
 
    void test_calculate_gradient(void);
 

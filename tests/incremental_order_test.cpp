@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N C R E M E N T A L   O R D E R   T E S T   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
@@ -124,7 +124,7 @@ void IncrementalOrderTest::test_perform_order_selection(void)
 
     uses.set(21,Instances::Training);
     for (size_t i = 0; i < 11; i++)
-        uses[2*i+1] = Instances::Generalization;
+        uses[2*i+1] = Instances::Selection;
 
     ds.get_instances_pointer()->set_uses(uses);
 
@@ -149,7 +149,6 @@ void IncrementalOrderTest::test_perform_order_selection(void)
                 OrderSelectionAlgorithm::SelectionPerformanceGoal, LOG);
 
     // Test
-
 
     str =
             "-1 -1\n"
@@ -179,7 +178,7 @@ void IncrementalOrderTest::test_perform_order_selection(void)
 
     uses.set(21,Instances::Training);
     for (size_t i = 0; i < 11; i++)
-        uses[2*i+1] = Instances::Generalization;
+        uses[2*i+1] = Instances::Selection;
 
     ds.get_instances_pointer()->set_uses(uses);
 

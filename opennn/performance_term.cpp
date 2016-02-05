@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R F O R M A N C E   T E R M   C L A S S                                                                */
 /*                                                                                                              */
@@ -1087,13 +1087,17 @@ double PerformanceTerm::calculate_performance_output_combinations(const Vector<d
 }
 
 
-Matrix<double> PerformanceTerm::calculate_output_interlayers_Delta(const Vector<double>& activation_derivative,
-                                                                   const Vector<double>& activation_second_derivative,
+Matrix<double> PerformanceTerm::calculate_output_interlayers_Delta(const Vector<double>& output_layer_activation_derivative,
+                                                                   const Vector<double>& output_layer_activation_second_derivative,
                                                                    const Vector<double>& output_gradient,
                                                                    const Matrix<double>& output_Hessian) const
 {
     const Matrix<double> interlayers_Delta =
-    (output_Hessian*activation_derivative*activation_derivative).sum_diagonal(output_gradient*activation_second_derivative);
+            (output_Hessian
+            * output_layer_activation_derivative
+            * output_layer_activation_derivative
+            + output_gradient
+            * output_layer_activation_second_derivative);
 
     return(interlayers_Delta);
 }
@@ -1103,24 +1107,83 @@ Matrix<double> PerformanceTerm::calculate_interlayers_Delta(
         const size_t& index_1,
         const size_t& index_2,
         const Vector<double>& layer_1_activation_derivative,
-        const Vector<double>& layer_1_activation_second_derivative,
-        const Vector<double>& layer_1_delta,
-        const Matrix<double>& previous_interlayers_Delta,
-        const Matrix<double>& interlayers_combination_combination_Jacobian) const
+//        const Vector<double>& layer_1_activation_second_derivative,
+//        const Vector<double>& layer_1_delta,
+        const Matrix<double>& previous_interlayers_Delta) const
+//        const Matrix<double>& interlayers_combination_combination_Jacobian) const
 {
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    const Matrix<double> layer_2_synaptic_weights = multilayer_perceptron_pointer->get_layer(index_2+1).arrange_synaptic_weights();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
 
-    const Matrix<double> first_term =
-    (interlayers_combination_combination_Jacobian.calculate_transpose()*layer_1_activation_second_derivative)
-    *layer_1_delta.dot(layer_2_synaptic_weights);
+    Matrix<double> layer_1_weights  = multilayer_perceptron_pointer->get_layer(index_1).arrange_synaptic_weights();
+    Matrix<double> layer_2_weights  = multilayer_perceptron_pointer->get_layer(index_2).arrange_synaptic_weights();
+    Matrix<double> output_layer_weights = multilayer_perceptron_pointer->get_layer(layers_number-1).arrange_synaptic_weights();
 
-    const Matrix<double> second_term =
-    layer_1_activation_derivative*previous_interlayers_Delta;
-    //(previous_interlayers_Delta*layer_2_synaptic_weights);
+    Vector<size_t> parameter_indices(3);
 
-    return(first_term);
+    size_t layer_index_i;
+    size_t neuron_index_i;
+    size_t parameter_index_i;
+
+    size_t layer_index_j;
+    size_t neuron_index_j;
+    size_t parameter_index_j;
+
+//    const size_t layer_1_parameters_number = multilayer_perceptron_pointer->get_layer(index_1).arrange_synaptic_weights().get_rows_number();
+//    const size_t layer_2_parameters_number = multilayer_perceptron_pointer->get_layer(index_2).arrange_synaptic_weights().get_rows_number();
+
+    const size_t layer_2_parameters_number = multilayer_perceptron_pointer->get_layer(index_2).count_parameters_number();
+    const size_t layer_1_parameters_number = multilayer_perceptron_pointer->get_layer(index_1).count_parameters_number();
+
+    Matrix<double> interlayers_Delta(layer_1_parameters_number, layer_2_parameters_number, 0.0);
+
+    for(size_t i = 0; i < layer_1_parameters_number; i++)
+    {
+        parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
+        layer_index_i = parameter_indices[0];
+        neuron_index_i = parameter_indices[1];
+        parameter_index_i = parameter_indices[2];
+
+//        if(parameter_index_i == 1)
+//        {
+//            continue;
+//        }
+
+        for(size_t j = 0; j < layer_2_parameters_number ; j++)
+        {
+            parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
+            layer_index_j = parameter_indices[0];
+            neuron_index_j = parameter_indices[1];
+            parameter_index_j = parameter_indices[2];
+
+//            if(parameter_index_j == 1)
+//            {
+//                continue;
+//            }
+
+            if(index_2 == multilayer_perceptron_pointer->get_layers_number()-1)
+            {
+                interlayers_Delta(i,j) =
+                        layer_2_weights(neuron_index_j, neuron_index_i)
+                        *layer_1_activation_derivative[neuron_index_i]
+                        *previous_interlayers_Delta(neuron_index_j, neuron_index_j);
+            }
+            else
+            {
+                for(size_t k = 0; k < outputs_number; k++)
+                {
+                    interlayers_Delta(i,j) +=
+                            output_layer_weights(k, neuron_index_i)
+                            *output_layer_weights(k, neuron_index_j)
+                            *previous_interlayers_Delta(k,k);
+                }
+            }
+        }
+    }
+
+    return(interlayers_Delta);
 }
 
 
@@ -1221,6 +1284,7 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
    // Objective functional stuff
 
    Matrix< Matrix<double> > interlayers_Delta(layers_number, layers_number);
+   Matrix<double> previous_interalayers_Delta;
 
    for(size_t i = 0; i < layers_number; i++)
    {
@@ -1235,14 +1299,28 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
         return(interlayers_Delta);
    }
 
-   // Output-outputs layer
+    // Rest of hidden layers
 
-      interlayers_Delta(layers_number-1,layers_number-1) =
-              (output_Hessian
-              * layers_activation_derivative[layers_number-1]
-              * layers_activation_derivative[layers_number-1]
-              + output_gradient
-              * layers_activation_second_derivative[layers_number-1]);
+    for(int i = (int)layers_number-1; i >= 0; i--)
+    {
+        for(int j = (int)layers_number-1; j >= i; j--)
+        {
+            if(i == (int)layers_number-1 &&  j == (int)layers_number-1) // Output-outputs layer
+            {
+                interlayers_Delta(i,j) = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
+                                                                            layers_activation_second_derivative[layers_number-1],
+                                                                            output_gradient,
+                                                                            output_Hessian);
+            }
+            else //Rest of hidden layers
+            {
+                interlayers_Delta(i,j) = calculate_interlayers_Delta(i,
+                                                                     j,
+                                                                     layers_activation_derivative[i],
+                                                                     interlayers_Delta(layers_number-1, layers_number-1));
+            }
+        }
+    }
 
 //              interlayers_combination_combination_Jacobian_form(0,0)
 //              * layers_activation_second_derivative[0]
@@ -1326,15 +1404,15 @@ Matrix< Matrix<double> > PerformanceTerm::calculate_interlayers_Delta
 /// Returns the Hessian of the performance term at some input.
 /// @param layers_activation_derivative
 /// @param perceptrons_combination_parameters_gradient
-/// @param interlayers_combination_combination_Jacobian 
+/// @param interlayers_combination_combination_Jacobian
 /// @param layers_delta
 /// @param interlayers_Delta
 /// @todo
 
 Matrix<double> PerformanceTerm::calculate_point_Hessian
 (const Vector< Vector<double> >& layers_activation_derivative,
- const Vector< Vector< Vector<double> > >& perceptrons_combination_parameters_gradient, 
- const Matrix< Matrix<double> >& interlayers_combination_combination_Jacobian, 
+ const Vector< Vector< Vector<double> > >& perceptrons_combination_parameters_gradient,
+ const Matrix< Matrix<double> >& interlayers_combination_combination_Jacobian,
  const Vector< Vector<double> >& layers_delta,
  const Matrix< Matrix<double> >& interlayers_Delta) const
 {
@@ -1358,7 +1436,7 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
              << "Matrix<double> calculate_point_Hessian(const Vector<double>&, const Matrix< Matrix<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&) const method.\n"
              << "Multilayer perceptron pointer is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw std::logic_error(buffer.str());
    }
 
    #endif
@@ -1380,7 +1458,7 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
              << "Matrix<double> calculate_point_Hessian(const Vector<double>&, const Matrix< Matrix<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&) const method.\n"
              << "Size of layers activation derivative must be equal to number of layers in multilayer perceptron.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw std::logic_error(buffer.str());
    }
 
 //   const size_t perceptrons_combination_parameters_gradient_size = perceptrons_combination_parameters_gradient.size();
@@ -1409,49 +1487,250 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
    size_t neuron_index_j;
    size_t parameter_index_j;
 
-    // @todo
+   const size_t last_layer_parameters_number = multilayer_perceptron_pointer->get_layer(layers_number-1).count_parameters_number();
 
-   size_t column_count = 0;
-   size_t auxiliar_count = 1;
+    Matrix<double> second_layer_weights = multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights();
+
+    // @todo
 
    if(layers_number > 0)
    {
-     for(size_t i = 0; i < parameters_number; i++)
-	  {
+       for(size_t i = parameters_number-last_layer_parameters_number; i < parameters_number; i++)
+       {
+           parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
+           layer_index_i = parameter_indices[0];
+           neuron_index_i = parameter_indices[1];
+           parameter_index_i = parameter_indices[2];
+
+           for(size_t j = parameters_number-last_layer_parameters_number; j < parameters_number; j++)
+           {
+               parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
+               layer_index_j = parameter_indices[0];
+               neuron_index_j = parameter_indices[1];
+               parameter_index_j = parameter_indices[2];
+
+               point_Hessian(i,j) =
+                       perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                       *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                       *calculate_Kronecker_delta(neuron_index_i,neuron_index_j)
+                       *interlayers_Delta(layer_index_i, layer_index_j)(neuron_index_j,neuron_index_i);
+           }
+       }
+
+
+      for(size_t i = 0; i < parameters_number-last_layer_parameters_number; i++)
+     {
          parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
          layer_index_i = parameter_indices[0];
          neuron_index_i = parameter_indices[1];
          parameter_index_i = parameter_indices[2];
 
-         if(i!= 0 && i == auxiliar_count*(inputs_number+1))
-         {
-             auxiliar_count++;
-         }
-
          for(size_t j = 0; j < parameters_number; j++)
-		 {
+         {
             parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
             layer_index_j = parameter_indices[0];
             neuron_index_j = parameter_indices[1];
             parameter_index_j = parameter_indices[2];
 
-//            if(column_count >= (inputs_number + 1)*auxiliar_count)
-//            {
-//                point_Hessian(i,j) = 0.0;
-//            }
-//           else
-//            {
-                point_Hessian(i,j)
-                        = perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
-                        *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
-                        *interlayers_Delta(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i);/*
-                        + perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
-                        *layers_delta[layer_index_j][neuron_index_j]*layers_activation_derivative[layer_index_j][neuron_index_j]*interlayers_combination_combination_Jacobian(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i);*/
-            column_count++;
+            point_Hessian(i,j) =
+                    (layers_activation_derivative[layer_index_i][neuron_index_i]
+                    *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                    *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                    *interlayers_Delta(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
+                    +layers_activation_derivative[layer_index_i][neuron_index_i]
+                    *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                    *layers_delta[layer_index_j][neuron_index_j]
+                    *calculate_Kronecker_delta(parameter_index_j,neuron_index_i+1));
+
+            double sum = 0.0;
+
+            for(size_t k = 0; k < outputs_number; k++)
+            {
+                sum += second_layer_weights(k, neuron_index_i)*second_layer_weights(k, neuron_index_j)*interlayers_Delta(layers_number-1, layers_number-1)(k,k);
+            }
+         }
+     }
+   }
+
+
+
+/*
+//   size_t auxiliar_count = 1;
+
+   if(layers_number > 0)
+   {
+     for(size_t i = 0; i < parameters_number; i++)
+      {
+         parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
+         layer_index_i = parameter_indices[0];
+         neuron_index_i = parameter_indices[1];
+         parameter_index_i = parameter_indices[2];
+
+         for(size_t j = 0; j < parameters_number; j++)
+         {
+            parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
+            layer_index_j = parameter_indices[0];
+            neuron_index_j = parameter_indices[1];
+            parameter_index_j = parameter_indices[2];
+//45 45
+            double interlayers_Delta_value4545 =
+                    interlayers_Delta(layers_number-1, layers_number-1)(0,0);
+//23 45
+            double interlayers_Delta_value2345 =
+                    multilayer_perceptron_pointer->get_layer(layers_number-1).arrange_synaptic_weights()(0,0)
+                    *interlayers_Delta_value4545;
+//01 45
+             double interlayers_Delta_value0145 =
+                    multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights()(0,0)
+                    *interlayers_Delta_value2345;
+//23 23
+            double interlayers_Delta_value2323 =
+                    multilayer_perceptron_pointer->get_layer(layers_number-1).arrange_synaptic_weights()(0,0)
+                    *interlayers_Delta_value2345;
+//01 23
+            double interlayers_Delta_value0123 =
+                    multilayer_perceptron_pointer->get_layer(layers_number-1).arrange_synaptic_weights()(0,0)
+                    *interlayers_Delta_value0145;
+//01 01
+            double interlayers_Delta_value0101 =
+                    multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights()(0,0)
+                    *interlayers_Delta_value0123;
+
+            if((i == 2 && j == 4)
+//            ||(i == 3 && j == 5)
+//            ||(i == 2 && j == 5)
+            ||(i == 3 && j == 4))
+            {
+                point_Hessian(i,j) =
+                perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *layers_activation_derivative[layer_index_j][neuron_index_j]
+                *layers_delta[layer_index_j][neuron_index_j]
+                *interlayers_combination_combination_Jacobian(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
+                +
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *interlayers_Delta_value2345;
+            }
+            else if((i == 3 && j == 5)
+                 || (i == 2 && j == 5))
+            {
+                point_Hessian(i,j) =
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *layers_activation_derivative[layer_index_j][neuron_index_j]
+                *layers_delta[layer_index_j][neuron_index_j]
+                //*interlayers_combination_combination_Jacobian(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
+                +
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *interlayers_Delta_value2345;
+            }
+            else if ((i == 2 && j == 2)
+                     ||(i == 2 && j == 3)
+                     ||(i == 3 && j == 2)
+                     ||(i == 3 && j == 3))
+            {
+                point_Hessian(i,j) =
+//                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+//                *layers_activation_derivative[layer_index_j][neuron_index_j]
+//                *layers_delta[layer_index_i][neuron_index_i]
+//                *interlayers_combination_combination_Jacobian(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)*0
+//                +
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *interlayers_Delta_value2323;
+            }
+            else if ((i == 0 && j == 0)
+                       ||(i == 0 && j == 1)
+                       ||(i == 1 && j == 0)
+                       ||(i == 1 && j == 1))
+              {
+                  point_Hessian(i,j) =
+    //                  perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+    //                  *layers_activation_derivative[layer_index_j][neuron_index_j]
+    //                  *layers_delta[layer_index_j][neuron_index_j]
+    //                  *interlayers_combination_combination_Jacobian(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
+    //                  +
+                  perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                  *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                  *interlayers_Delta_value0101;
+              }
+            else if ((i == 0 && j == 2)
+//                       ||(i == 0 && j == 3)
+                       ||(i == 1 && j == 2))
+//                       ||(i == 1 && j == 3))
+              {
+                  point_Hessian(i,j) =
+                  perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                  *layers_activation_derivative[layer_index_j][neuron_index_j]
+                  *layers_delta[layer_index_j][neuron_index_j]
+                  *interlayers_combination_combination_Jacobian(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
+                  +
+                  perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                  *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                  *interlayers_Delta_value0123;
+              }
+            else if((i == 0 && j == 3)
+                 || (i == 1 && j == 3))
+            {
+                point_Hessian(i,j) =
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *layers_activation_derivative[layer_index_j][neuron_index_j]
+                *layers_delta[layer_index_j][neuron_index_j]
+                //*interlayers_combination_combination_Jacobian(layer_index_j, layer_index_i)(neuron_index_j,neuron_index_i)
+                +
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *interlayers_Delta_value0123;
+            }
+            else if ((i == 0 && j == 4)
+//                       ||(i == 0 && j == 5)
+                       ||(i == 1 && j == 4))
+//                       ||(i == 1 && j == 5))
+              {
+                  point_Hessian(i,j) =
+                  perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                  *layers_activation_derivative[layer_index_j][neuron_index_j]
+                  *layers_delta[layer_index_j][neuron_index_j]
+                  *interlayers_combination_combination_Jacobian(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
+                  +
+                  perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                  *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                  *interlayers_Delta_value0145;
+              }
+            else if((i == 0 && j == 5)
+                 || (i == 1 && j == 5))
+            {
+                std::cout << "Interlayers combination combination Jacobian: " << interlayers_combination_combination_Jacobian(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i) << std::endl;
+                std::cout << "Perceptron parameters gradient i: " << perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i] << std::endl;
+                std::cout << "Perceptron parameters gradient j: " << perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j] << std::endl;
+                std::cout << "Layers delta j: " << layers_delta[layer_index_j][neuron_index_j] << std::endl;
+                std::cout << "Layers delta i: " << layers_delta[layer_index_i][neuron_index_i] << std::endl;
+
+                point_Hessian(i,j) =
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *layers_activation_derivative[layer_index_j][neuron_index_j]
+                *layers_delta[layer_index_j][neuron_index_j]
+                *interlayers_combination_combination_Jacobian(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i)
+                +
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *interlayers_Delta_value0145;
+            }
+            else if ((i == 4 && j == 4)
+                     ||(i == 4 && j == 5)
+                     ||(i == 5 && j == 4)
+                     ||(i == 5 && j == 5)) //Last layer
+            {
+                point_Hessian(i,j) =
+                perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
+                *interlayers_Delta_value4545;
+              //  *calculate_Kronecker_delta(neuron_index_i, neuron_index_j);
+              //  *interlayers_Delta(layer_index_j,layer_index_i)(neuron_index_j,neuron_index_i);
+            }
          }
 
-         column_count = 0;
-	  }
+      }*/
 
       for(size_t i = 0; i < parameters_number; i++)
       {
@@ -1460,11 +1739,10 @@ Matrix<double> PerformanceTerm::calculate_point_Hessian
             point_Hessian(i,j) = point_Hessian(j,i);
          }
       }
-  }
+  //}
 
    return(point_Hessian);
 }
-
 
 // Vector<double> calculate_gradient(void) const method
 
@@ -1749,7 +2027,7 @@ size_t PerformanceTerm::calculate_Kronecker_delta(const size_t& a, const size_t&
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

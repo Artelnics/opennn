@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N D E P E N D E N T   P A R A M E T E R S   E R R O R   T E S T   C L A S S   H E A D E R                */
 /*                                                                                                              */

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   E V O L U T I O N A R Y   A L G O R I T H M   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
@@ -150,7 +150,7 @@ public:
 
       /// History of the selection performance of the best individual over each generations. 
 
-      Vector<double> generalization_performance_history;
+      Vector<double> selection_performance_history;
 
       /// History of the elapsed time over the generations.
 
@@ -184,7 +184,7 @@ public:
 
       /// Selection performance after training.
 
-      double final_generalization_performance;
+      double final_selection_performance;
 
       /// Total elapsed time in the training process.
 
@@ -213,14 +213,14 @@ public:
    // Stopping criteria
 
    const double& get_best_performance_goal(void) const;
-   const size_t& get_maximum_generalization_performance_decreases(void) const;
+   const size_t& get_maximum_selection_performance_decreases(void) const;
 
    const size_t& get_maximum_generations_number(void) const;
    const double& get_maximum_time(void) const;
 
    // Reserve training history
 
-   const bool& get_reserve_generalization_performance_history(void) const;
+   const bool& get_reserve_selection_performance_history(void) const;
 
    const bool& get_reserve_elapsed_time_history(void) const;
 
@@ -330,13 +330,13 @@ public:
    // Stopping criteria
 
    void set_best_performance_goal(const double&);
-   void set_maximum_generalization_performance_decreases(const size_t&);
+   void set_maximum_selection_performance_decreases(const size_t&);
 
    void set_maximum_time(const double&);
 
    // Reserve training history
 
-   void set_reserve_generalization_performance_history(const bool&);
+   void set_reserve_selection_performance_history(const bool&);
 
    void set_reserve_elapsed_time_history(const bool&);
 
@@ -514,9 +514,9 @@ private:
    size_t maximum_generations_number;
 
    /// Number of generations where the selection performance decreases.
-   /// This is an early stopping method for improving generalization.
+   /// This is an early stopping method for improving selection.
 
-   size_t maximum_generalization_performance_decreases;
+   size_t maximum_selection_performance_decreases;
 
    /// Maximum training time. It is used as a stopping criterion.
 
@@ -565,7 +565,7 @@ private:
 
    /// True if the Selection performance history vector is to be reserved, false otherwise.
 
-   bool reserve_generalization_performance_history;
+   bool reserve_selection_performance_history;
 };
 
 }
@@ -574,7 +574,7 @@ private:
 
 
 // OpenNN: An Open Source Neural Networks C++ OpenNN.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This OpenNN is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

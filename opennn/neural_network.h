@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E U R A L   N E T W O R K   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */
@@ -266,6 +266,8 @@ public:
    Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&, const Vector<double>&) const;
 
    Matrix<double> calculate_output_data(const Matrix<double>&) const;
+   Matrix<double> calculate_output_data_missing_values(const Matrix<double>&, const double& missing_values_flag = -123.456) const;
+
    Vector< Matrix<double> > calculate_Jacobian_data(const Matrix<double>&) const;
 
    // Serialization methods
@@ -287,8 +289,12 @@ public:
    // Expression methods
 
    std::string write_expression(void) const;
+   std::string write_expression_python(void) const;
+   std::string write_expression_R(void) const;
 
    void save_expression(const std::string&);
+   void save_expression_python(const std::string&);
+   void save_expression_R(const std::string&);
 
 protected:
 
@@ -341,7 +347,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

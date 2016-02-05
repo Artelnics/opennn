@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G R A D I E N T   D E S C E N T   C L A S S                                                                */
 /*                                                                                                              */
@@ -201,13 +201,13 @@ const double& GradientDescent::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_generalization_performance_decreases(void) const method
+// const size_t& get_maximum_selection_performance_decreases(void) const method
 
-/// Returns the maximum number of generalization failures during the training process. 
+/// Returns the maximum number of selection failures during the training process. 
 
-const size_t& GradientDescent::get_maximum_generalization_performance_decreases(void) const
+const size_t& GradientDescent::get_maximum_selection_performance_decreases(void) const
 {
-   return(maximum_generalization_performance_decreases);
+   return(maximum_selection_performance_decreases);
 }
 
 
@@ -311,13 +311,13 @@ const bool& GradientDescent::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_generalization_performance_history(void) const method
+// const bool& get_reserve_selection_performance_history(void) const method
 
 /// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
-const bool& GradientDescent::get_reserve_generalization_performance_history(void) const
+const bool& GradientDescent::get_reserve_selection_performance_history(void) const
 {
-   return(reserve_generalization_performance_history);
+   return(reserve_selection_performance_history);
 }
 
 
@@ -367,7 +367,7 @@ void GradientDescent::set_default(void)
    minimum_performance_increase = 0.0;
    performance_goal = -1.0e99;
    gradient_norm_goal = 0.0;
-   maximum_generalization_performance_decreases = 1000000;
+   maximum_selection_performance_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
@@ -380,7 +380,7 @@ void GradientDescent::set_default(void)
    reserve_performance_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_generalization_performance_history = false;
+   reserve_selection_performance_history = false;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -422,7 +422,7 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
 
-   reserve_generalization_performance_history = new_reserve_all_training_history;
+   reserve_selection_performance_history = new_reserve_all_training_history;
 
    // Training algorithm
 
@@ -720,14 +720,14 @@ void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goa
 }
 
 
-// void set_maximum_generalization_performance_decreases(const size_t&) method
+// void set_maximum_selection_performance_decreases(const size_t&) method
 
-/// Sets a new maximum number of generalization failures. 
-/// @param new_maximum_generalization_performance_decreases Maximum number of iterations in which the generalization evalutation decreases.
+/// Sets a new maximum number of selection failures. 
+/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void GradientDescent::set_maximum_generalization_performance_decreases(const size_t& new_maximum_generalization_performance_decreases)
+void GradientDescent::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
 {
-   maximum_generalization_performance_decreases = new_maximum_generalization_performance_decreases;
+   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
 }
 
 
@@ -864,15 +864,15 @@ void GradientDescent::set_reserve_elapsed_time_history(const bool& new_reserve_e
 }
 
 
-// void set_reserve_generalization_performance_history(bool) method
+// void set_reserve_selection_performance_history(bool) method
 
 /// Makes the Selection performance history to be reserved or not in memory. 
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
 
-void GradientDescent::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)  
+void GradientDescent::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
 {
-   reserve_generalization_performance_history = new_reserve_generalization_performance_history;
+   reserve_selection_performance_history = new_reserve_selection_performance_history;
 }
 
 
@@ -984,10 +984,10 @@ std::string GradientDescent::GradientDescentResults::to_string(void) const
 
    // Selection performance history
 
-   if(!generalization_performance_history.empty())
+   if(!selection_performance_history.empty())
    {
        buffer << "% Selection performance history:\n"
-              << generalization_performance_history << "\n"; 
+              << selection_performance_history << "\n"; 
    }
 
    // Gradient history 
@@ -1079,12 +1079,12 @@ Matrix<std::string> GradientDescent::GradientDescentResults::write_final_results
 
    const PerformanceFunctional* performance_functional_pointer = gradient_descent_pointer->get_performance_functional_pointer();
 
-   if(performance_functional_pointer->has_generalization())
+   if(performance_functional_pointer->has_selection())
    {
        names.push_back("Final selection performance");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_generalization_performance;
+       buffer << std::setprecision(precision) << final_selection_performance;
 
        values.push_back(buffer.str());
     }
@@ -1176,9 +1176,9 @@ void GradientDescent::GradientDescentResults::resize_training_history(const size
         performance_history.resize(new_size);
     }
 
-    if(gradient_descent_pointer->get_reserve_generalization_performance_history())
+    if(gradient_descent_pointer->get_reserve_selection_performance_history())
     {
-        generalization_performance_history.resize(new_size);
+        selection_performance_history.resize(new_size);
     }
 
     if(gradient_descent_pointer->get_reserve_gradient_history())
@@ -1248,8 +1248,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
 
    // Performance functional stuff
 
-   double generalization_performance = 0.0; 
-   double old_generalization_performance = 0.0;
+   double selection_performance = 0.0; 
+   double old_selection_performance = 0.0;
       
    double performance = 0.0;
    double old_performance = 0.0;
@@ -1262,7 +1262,7 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
 
    // Training algorithm stuff 
 
-   size_t generalization_failures = 0;
+   size_t selection_failures = 0;
 
    Vector<double> training_direction(parameters_number);
 
@@ -1319,11 +1319,11 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
 
-      generalization_performance = performance_functional_pointer->calculate_generalization_performance();
+      selection_performance = performance_functional_pointer->calculate_selection_performance();
 
-      if(iteration != 0 && generalization_performance > old_generalization_performance)
+      if(iteration != 0 && selection_performance > old_selection_performance)
 	  {
-         generalization_failures++;
+         selection_failures++;
 	  }
 
       // Training algorithm 
@@ -1380,9 +1380,9 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          results_pointer->gradient_norm_history[iteration] = gradient_norm;
       }
 
-      if(reserve_generalization_performance_history)
+      if(reserve_selection_performance_history)
       {
-         results_pointer->generalization_performance_history[iteration] = generalization_performance;
+         results_pointer->selection_performance_history[iteration] = selection_performance;
       }
 
       // Training history training algorithm
@@ -1436,12 +1436,12 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          stop_training = true;
       }
 
-      else if(generalization_failures >= maximum_generalization_performance_decreases)
+      else if(selection_failures >= maximum_selection_performance_decreases)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Maximum generalization failures reached.\n"
-                      << "Generalization failures: " << generalization_failures << std::endl;
+            std::cout << "Iteration " << iteration << ": Maximum selection failures reached.\n"
+                      << "Selection failures: " << selection_failures << std::endl;
          }
 
          stop_training = true;
@@ -1493,9 +1493,9 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
                       << "Training rate: " << training_rate << "\n"
                       << "Elapsed time: " << elapsed_time << std::endl; 
 
-            if(generalization_performance != 0)
+            if(selection_performance != 0)
             {
-               std::cout << "Selection performance: " << generalization_performance << std::endl;
+               std::cout << "Selection performance: " << selection_performance << std::endl;
             }
 		 }
     
@@ -1507,7 +1507,7 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
 
          results_pointer->final_performance = performance;
 
-         results_pointer->final_generalization_performance = generalization_performance;
+         results_pointer->final_selection_performance = selection_performance;
 
          results_pointer->final_gradient = gradient;
 
@@ -1533,9 +1533,9 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl;
 
-         if(generalization_performance != 0)
+         if(selection_performance != 0)
          {
-            std::cout << "Selection performance: " << generalization_performance << std::endl;
+            std::cout << "Selection performance: " << selection_performance << std::endl;
          }
       }
 
@@ -1548,7 +1548,7 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
       // Update stuff
 
       old_performance = performance;
-      old_generalization_performance = generalization_performance;
+      old_selection_performance = selection_performance;
    
       old_training_rate = training_rate;
    } 
@@ -1629,12 +1629,12 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    values.push_back(buffer.str());
 
@@ -1688,7 +1688,7 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    values.push_back(buffer.str());
 
@@ -1880,7 +1880,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1946,7 +1946,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2012,7 +2012,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2292,11 +2292,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_generalization_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_generalization_performance_decreases(new_maximum_generalization_performance_decreases);
+             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -2406,11 +2406,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_generalization_performance_history = element->GetText();
+           const std::string new_reserve_selection_performance_history = element->GetText();
 
            try
            {
-              set_reserve_generalization_performance_history(new_reserve_generalization_performance_history != "0");
+              set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -2520,11 +2520,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_generalization_performance_history = element->GetText();
+          const std::string new_reserve_selection_performance_history = element->GetText();
 
           try
           {
-             set_reserve_generalization_performance_history(new_reserve_generalization_performance_history != "0");
+             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -2614,7 +2614,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

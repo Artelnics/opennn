@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N P U T S   S E L E C T I O N   A L G O R I T H M   C L A S S                                            */
 /*                                                                                                              */
@@ -152,13 +152,13 @@ const bool& InputsSelectionAlgorithm::get_reserve_performance_data(void) const
 }
 
 
-// const bool& get_reserve_generalization_performance_data(void) const method
+// const bool& get_reserve_selection_performance_data(void) const method
 
 /// Returns true if the selection performances are to be reserved, and false otherwise.
 
-const bool& InputsSelectionAlgorithm::get_reserve_generalization_performance_data(void) const
+const bool& InputsSelectionAlgorithm::get_reserve_selection_performance_data(void) const
 {
-    return(reserve_generalization_performance_data);
+    return(reserve_selection_performance_data);
 }
 
 
@@ -322,7 +322,7 @@ void InputsSelectionAlgorithm::set_default(void)
 
     reserve_parameters_data = true;
     reserve_performance_data = true;
-    reserve_generalization_performance_data = true;
+    reserve_selection_performance_data = true;
     reserve_minimal_parameters = true;
 
     performance_calculation_method = Minimum;
@@ -391,14 +391,14 @@ void InputsSelectionAlgorithm::set_reserve_performance_data(const bool& new_rese
 }
 
 
-// void set_reserve_generalization_performance_data(const bool&) method
+// void set_reserve_selection_performance_data(const bool&) method
 
 /// Sets the reserve flag for the selection performance data.
-/// @param new_reserve_generalization_performance_data Flag value.
+/// @param new_reserve_selection_performance_data Flag value.
 
-void InputsSelectionAlgorithm::set_reserve_generalization_performance_data(const bool& new_reserve_generalization_performance_data)
+void InputsSelectionAlgorithm::set_reserve_selection_performance_data(const bool& new_reserve_selection_performance_data)
 {
-    reserve_generalization_performance_data = new_reserve_generalization_performance_data;
+    reserve_selection_performance_data = new_reserve_selection_performance_data;
 }
 
 
@@ -830,7 +830,7 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
     Vector<double> final_parameters;
 
     bool flag_performance = false;
-    bool flag_generalization = false;
+    bool flag_selection = false;
 
     for (size_t i = 0; i < inputs_history.size(); i++)
     {
@@ -845,12 +845,12 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
     {
         if (inputs_history[i] == inputs)
         {
-            final[1] = generalization_performance_history[i];
-            flag_generalization = true;
+            final[1] = selection_performance_history[i];
+            flag_selection = true;
         }
     }
 
-    if (flag_performance && flag_generalization)
+    if (flag_performance && flag_selection)
         return(final);
 
     neural_network->perturbate_parameters(0.5);
@@ -865,6 +865,13 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
 
     for (size_t i = 1; i < trials_number; i++)
     {
+        if (display)
+        {
+            std::cout << "Trial number : " << i << std::endl;
+            std::cout << "Training performance : " << final[0] << std::endl;
+            std::cout << "Selection performance : " << final[1] << std::endl;
+        }
+
         neural_network->randomize_parameters_normal();
 
         training_strategy_results = training_strategy_pointer->perform_training();
@@ -878,21 +885,26 @@ Vector<double> InputsSelectionAlgorithm::calculate_minimum_final_performances(co
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if (!flag_generalization && final[1] > current_performance[1])
+        if (!flag_selection && final[1] > current_performance[1])
         {
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
+        if (i == trials_number - 1 && display)
+        {
+            std::cout << "Trial number : " << trials_number << std::endl;
+            std::cout << "Training performance : " << final[0] << std::endl;
+            std::cout << "Selection performance : " << final[1] << std::endl;
+        }
     }
-
 
     inputs_history.push_back(inputs);
 
     performance_history.push_back(final[0]);
 
-    generalization_performance_history.push_back(final[1]);
+    selection_performance_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -947,7 +959,7 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
     Vector<double> final_parameters;
 
     bool flag_performance = false;
-    bool flag_generalization = false;
+    bool flag_selection = false;
 
     for (size_t i = 0; i < inputs_history.size(); i++)
     {
@@ -962,12 +974,12 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
     {
         if (inputs_history[i] == inputs)
         {
-            final[1] = generalization_performance_history[i];
-            flag_generalization = true;
+            final[1] = selection_performance_history[i];
+            flag_selection = true;
         }
     }
 
-    if (flag_performance && flag_generalization)
+    if (flag_performance && flag_selection)
         return(final);
 
     neural_network->perturbate_parameters(0.5);
@@ -982,6 +994,13 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
 
     for (size_t i = 1; i < trials_number; i++)
     {
+        if (display)
+        {
+            std::cout << "Trial number : " << i << std::endl;
+            std::cout << "Training performance : " << final[0] << std::endl;
+            std::cout << "Selection performance : " << final[1] << std::endl;
+        }
+
         neural_network->randomize_parameters_normal();
 
         training_strategy_results = training_strategy_pointer->perform_training();
@@ -995,20 +1014,26 @@ Vector<double> InputsSelectionAlgorithm::calculate_maximum_final_performances(co
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if (!flag_generalization && final[1] < current_performance[1])
+        if (!flag_selection && final[1] < current_performance[1])
         {
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
+        if (i == trials_number - 1 && display)
+        {
+            std::cout << "Trial number : " << trials_number << std::endl;
+            std::cout << "Training performance : " << final[0] << std::endl;
+            std::cout << "Selection performance : " << final[1] << std::endl;
+        }
     }
 
     inputs_history.push_back(inputs);
 
     performance_history.push_back(final[0]);
 
-    generalization_performance_history.push_back(final[1]);
+    selection_performance_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -1062,7 +1087,7 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
     Vector<double> final_parameters;
 
     bool flag_performance = false;
-    bool flag_generalization = false;
+    bool flag_selection = false;
 
     for (size_t i = 0; i < inputs_history.size(); i++)
     {
@@ -1077,12 +1102,12 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
     {
         if (inputs_history[i] == inputs)
         {
-            mean_final[1] = generalization_performance_history[i];
-            flag_generalization = true;
+            mean_final[1] = selection_performance_history[i];
+            flag_selection = true;
         }
     }
 
-    if (flag_performance && flag_generalization)
+    if (flag_performance && flag_selection)
         return(mean_final);
 
     neural_network->perturbate_parameters(0.5);
@@ -1097,6 +1122,13 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
 
     for (size_t i = 1; i < trials_number; i++)
     {
+        if (display)
+        {
+            std::cout << "Trial number : " << i << std::endl;
+            std::cout << "Training performance : " << mean_final[0] << std::endl;
+            std::cout << "Selection performance : " << mean_final[1] << std::endl;
+        }
+
         neural_network->randomize_parameters_normal();
 
         training_strategy_results = training_strategy_pointer->perform_training();
@@ -1105,16 +1137,22 @@ Vector<double> InputsSelectionAlgorithm::calculate_mean_final_performances(const
 
         if (!flag_performance)
             mean_final[0] += current_performance[0]/trials_number;
-        if (!flag_generalization)
+        if (!flag_selection)
             mean_final[1] += current_performance[1]/trials_number;
 
+        if (i == trials_number - 1 && display)
+        {
+            std::cout << "Trial number : " << trials_number << std::endl;
+            std::cout << "Training performance : " << mean_final[0] << std::endl;
+            std::cout << "Selection performance : " << mean_final[1] << std::endl;
+        }
     }
 
     inputs_history.push_back(inputs);
 
     performance_history.push_back(mean_final[0]);
 
-    generalization_performance_history.push_back(mean_final[1]);
+    selection_performance_history.push_back(mean_final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -1140,25 +1178,25 @@ Vector<double> InputsSelectionAlgorithm::get_final_performances(const TrainingSt
     case TrainingStrategy::GRADIENT_DESCENT:
     {
         performances[0] = results.gradient_descent_results_pointer->final_performance;
-        performances[1] = results.gradient_descent_results_pointer->final_generalization_performance;
+        performances[1] = results.gradient_descent_results_pointer->final_selection_performance;
         break;
     }
     case TrainingStrategy::CONJUGATE_GRADIENT:
     {
         performances[0] = results.conjugate_gradient_results_pointer->final_performance;
-        performances[1] = results.conjugate_gradient_results_pointer->final_generalization_performance;
+        performances[1] = results.conjugate_gradient_results_pointer->final_selection_performance;
         break;
     }
     case TrainingStrategy::QUASI_NEWTON_METHOD:
     {
         performances[0] = results.quasi_Newton_method_results_pointer->final_performance;
-        performances[1] = results.quasi_Newton_method_results_pointer->final_generalization_performance;
+        performances[1] = results.quasi_Newton_method_results_pointer->final_selection_performance;
         break;
     }
     case TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
     {
         performances[0] = results.Levenberg_Marquardt_algorithm_results_pointer->final_performance;
-        performances[1] = results.Levenberg_Marquardt_algorithm_results_pointer->final_generalization_performance;
+        performances[1] = results.Levenberg_Marquardt_algorithm_results_pointer->final_selection_performance;
         break;
     }
     case TrainingStrategy::USER_MAIN:
@@ -1184,7 +1222,7 @@ Vector<double> InputsSelectionAlgorithm::get_final_performances(const TrainingSt
 
 // Vector<double> calculate_performances(const Vector<bool>&) method
 
-/// Return performance and generalization depending on the performance calculation method.
+/// Return performance and selection depending on the performance calculation method.
 /// @param inputs Vector of inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::calculate_performances(const Vector<bool>& inputs)
@@ -1258,13 +1296,13 @@ Vector<double> InputsSelectionAlgorithm::get_parameters_inputs(const Vector<bool
         return(parameters);
 }
 
-// void delete_generalization_history(void) method
+// void delete_selection_history(void) method
 
 /// Delete the history of the selection performance values.
 
-void InputsSelectionAlgorithm::delete_generalization_history(void)
+void InputsSelectionAlgorithm::delete_selection_history(void)
 {
-    generalization_performance_history.set();
+    selection_performance_history.set();
 }
 
 // void delete_performance_history(void) method
@@ -1379,13 +1417,13 @@ void InputsSelectionAlgorithm::check(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t generalization_instances_number = instances.count_generalization_instances_number();
+    const size_t selection_instances_number = instances.count_selection_instances_number();
 
-    if(generalization_instances_number == 0)
+    if(selection_instances_number == 0)
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
-               << "Number of generalization instances is zero.\n";
+               << "Number of selection instances is zero.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -1626,10 +1664,10 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) co
 
    // Selection performance history
 
-   if(!generalization_performance_data.empty())
+   if(!selection_performance_data.empty())
    {
        buffer << "% Selection performance history:\n"
-              << generalization_performance_data.to_row_matrix() << "\n";
+              << selection_performance_data.to_row_matrix() << "\n";
    }
 
    // Minimal parameters
@@ -1647,10 +1685,10 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) co
 
    // Optimum selection performance
 
-   if (final_generalization_performance != 0)
+   if (final_selection_performance != 0)
    {
        buffer << "% Optimum selection performance:\n"
-              << final_generalization_performance << "\n";
+              << final_selection_performance << "\n";
    }
 
    // Final performance

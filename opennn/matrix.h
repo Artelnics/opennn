@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M A T R I X   C O N T A I N E R                                                                            */
 /*                                                                                                              */
@@ -391,6 +391,7 @@ public:
     void print(void) const;
 
     void load(const std::string&);
+    void load_binary(const std::string&);
 
     void save(const std::string&) const;
 
@@ -2480,6 +2481,13 @@ Matrix<T> Matrix<T>::sort_less_rows(const size_t& column_index) const
 }
 
 
+template <class T>
+bool compare(size_t a, size_t b, const Vector<T>& data)
+{
+    return data[a]<data[b];
+}
+
+
 // Matrix<T> sort_greater_rows(const size_t&) method
 
 /// Sorts the rows of the matrix in ascending order attending to the values of the column with given index.
@@ -2493,17 +2501,28 @@ Matrix<T> Matrix<T>::sort_greater_rows(const size_t& column_index) const
 
     const Vector<T> column = arrange_column(column_index);
 
-    const Vector<size_t> sorted_indices = column.calculate_maximal_indices(rows_number);
+    //  std::sort(std::begin(indices), std::end(indices), [&data](size_t i1, size_t i2) {return data[i1] > data[i2];});
+
+    const Vector<size_t> indices = column.sort_greater_indices();
+
+//    const Vector<size_t> sorted_indices = column.calculate_maximal_indices(rows_number);
+
+    //Vector<T> sorted_indices(*column);
+
+    //std::sort(sorted_vector.begin(), sorted_vector.end(), std::greater<double>());
+
+//    std::sort(column.begin(), column.end(), [](data const &a, data const &b) { return a.number < b.number; });
+
 
     size_t index;
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        index = sorted_indices[i];
+        index = indices[i];
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) = (*this)(index, j) ;
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
@@ -3266,7 +3285,10 @@ Vector<double> Matrix<T>::calculate_mean_missing_values(const Vector<size_t>& ro
          }
       }
 
-      mean[j] /= (double)count[j];
+      if(count[j] != 0)
+      {
+          mean[j] /= (double)count[j];
+      }
    }
 
    return(mean);
@@ -6737,6 +6759,57 @@ void Matrix<T>::load(const std::string& file_name)
 }
 
 
+// void load_binary(const std::string&) method
+
+/// Loads the numbers of rows and columns and the values of the matrix from a binary file.
+/// @param file_name Name of binary file.
+
+template <class T>
+void Matrix<T>::load_binary(const std::string& file_name)
+{
+    std::ifstream file;
+
+    file.open(file_name.c_str(), std::ios::binary);
+
+    if(!file.is_open())
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix template.\n"
+               << "void load_binary(const std::string&) method.\n"
+               << "Cannot open binary file: " << file_name << "\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    std::streamsize size = sizeof(size_t);
+
+    size_t columns_number;
+    size_t rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(double);
+
+    double value;
+
+    this->set(rows_number, columns_number);
+
+    for(size_t i = 0; i < columns_number; i++)
+    {
+        for(size_t j = 0; j < rows_number; j++)
+        {
+            file.read(reinterpret_cast<char*>(&value), size);
+
+            (*this)(j,i) = value;
+        }
+    }
+
+    file.close();
+}
+
+
 // void save(const std::string&) const method
 
 /// Saves the values of the matrix to a data file separated by spaces.
@@ -7119,7 +7192,7 @@ std::ostream& operator << (std::ostream& os, const Matrix< Matrix<T> >& m)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

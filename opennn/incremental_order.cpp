@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N C R E M E N T A L   O R D E R   C L A S S                                                              */
 /*                                                                                                              */
@@ -86,7 +86,7 @@ const size_t& IncrementalOrder::get_step(void) const
 
 // const size_t& get_maximum_selection_failures(void) const method
 
-/// Returns the maximum number of generalization failures in the model order selection algorithm.
+/// Returns the maximum number of selection failures in the model order selection algorithm.
 
 const size_t& IncrementalOrder::get_maximum_selection_failures(void) const
 {
@@ -141,8 +141,8 @@ void IncrementalOrder::set_step(const size_t& new_step)
 
 // void set_maximum_selection_failures(const size_t&) method
 
-/// Sets the maximum generalization failures for the Incremental order selection algorithm.
-/// @param new_maximum_performance_failures Maximum number of generalization failures in the Incremental order selection algorithm.
+/// Sets the maximum selection failures for the Incremental order selection algorithm.
+/// @param new_maximum_performance_failures Maximum number of selection failures in the Incremental order selection algorithm.
 
 void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
 {
@@ -154,7 +154,7 @@ void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_
 
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void set_maximum_selection_failures(const size_t&) method.\n"
-               << "Maximum generalization failures must be greater than 0.\n";
+               << "Maximum selection failures must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -176,14 +176,14 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     Vector<double> performance(2);
-    double prev_generalization_performance = 1.0e99;
+    double prev_selection_performance = 1.0e99;
 
     size_t optimal_order;
     Vector<double> optimum_parameters;
-    double optimum_generalization_performance;
+    double optimum_selection_performance;
 
     Vector<double> parameters_history_row;
-    double current_training_performance, current_generalization_performance;
+    double current_training_performance, current_selection_performance;
 
     size_t order = minimum_order;
     size_t iterations = 0;
@@ -195,7 +195,10 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     double elapsed_time;
 
     if (display)
+    {
         std::cout << "Performing Incremental order selection..." << std::endl;
+        std::cout.flush();
+    }
 
     time(&beginning_time);
 
@@ -203,7 +206,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     {
         performance = calculate_performances(order);
         current_training_performance = performance[0];
-        current_generalization_performance = performance[1];
+        current_selection_performance = performance[1];
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
@@ -215,9 +218,9 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
             results->performance_data.push_back(current_training_performance);
         }
 
-        if (reserve_generalization_performance_data)
+        if (reserve_selection_performance_data)
         {
-            results->generalization_performance_data.push_back(current_generalization_performance);
+            results->selection_performance_data.push_back(current_selection_performance);
         }
 
         if (reserve_parameters_data)
@@ -227,33 +230,33 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         }
 
         if (iterations == 0
-        || (optimum_generalization_performance > current_generalization_performance
-        && fabs(optimum_generalization_performance - current_generalization_performance) > tolerance))
+        || (optimum_selection_performance > current_selection_performance
+        && fabs(optimum_selection_performance - current_selection_performance) > tolerance))
         {
             optimal_order = order;
-            optimum_generalization_performance = current_generalization_performance;
+            optimum_selection_performance = current_selection_performance;
             optimum_parameters = get_parameters_order(optimal_order);
-        }else if (prev_generalization_performance < current_generalization_performance)
+        }else if (prev_selection_performance < current_selection_performance)
             selection_failures++;
 
-        prev_generalization_performance = current_generalization_performance;
+        prev_selection_performance = current_selection_performance;
         iterations++;
 
         // Stopping criteria
 
-        if (elapsed_time > maximum_time)
+        if (elapsed_time >= maximum_time)
         {
             end = true;
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = IncrementalOrder::MaximumTime;
-        }else if (performance[1] < selection_performance_goal)
+        }else if (performance[1] <= selection_performance_goal)
         {
             end = true;
             if (display)
                 std::cout << "Selection performance reached." << std::endl;
             results->stopping_condition = IncrementalOrder::SelectionPerformanceGoal;
-        }else if (iterations > maximum_iterations_number)
+        }else if (iterations >= maximum_iterations_number)
         {
             end = true;
             if (display)
@@ -276,9 +279,9 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         if (display)
         {
             std::cout << "Iteration : " << iterations << std::endl;
-            std::cout << "Hidden Perceptron Number : " << order << std::endl;
-            std::cout << "Final Training Performance : " << performance[0] << std::endl;
-            std::cout << "Final Generalization Performance : " << performance[1] << std::endl;
+            std::cout << "Hidden neurons number : " << order << std::endl;
+            std::cout << "Training performance : " << performance[0] << std::endl;
+            std::cout << "Selection performance : " << performance[1] << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
         }
 
@@ -307,7 +310,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         results->minimal_parameters = optimum_parameters;
 
     results->optimal_order = optimal_order;
-    results->final_generalization_performance = optimum_generalization_performance;
+    results->final_selection_performance = optimum_selection_performance;
     results->final_performance = calculate_performances(optimal_order)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
@@ -380,9 +383,9 @@ Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
    buffer << maximum_selection_failures;
@@ -421,7 +424,7 @@ Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
    labels.push_back("Plot selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_data;
+   buffer << reserve_selection_performance_data;
 
    values.push_back(buffer.str());
 
@@ -528,7 +531,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
 
    // Reserve performance data
    {
-   element = document->NewElement("ReservePerformanceData");
+   element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -540,11 +543,11 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
 
    // Reserve selection performance data
    {
-   element = document->NewElement("ReserveSelectionPerformanceData");
+   element = document->NewElement("ReserveSelectionPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_data;
+   buffer << reserve_selection_performance_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -622,7 +625,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Maximum generalization failures
+   // Maximum selection failures
    {
    element = document->NewElement("MaximumSelectionFailures");
    root_element->LinkEndChild(element);
@@ -634,7 +637,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Maximum generalization failures
+   // Maximum selection failures
    {
    element = document->NewElement("MaximumSelectionFailures");
    root_element->LinkEndChild(element);
@@ -785,7 +788,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
@@ -804,15 +807,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
         if(element)
         {
-           const std::string new_reserve_generalization_performance_data = element->GetText();
+           const std::string new_reserve_selection_performance_data = element->GetText();
 
            try
            {
-              set_reserve_generalization_performance_data(new_reserve_generalization_performance_data != "0");
+              set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -935,7 +938,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Maximum generalization failures
+    // Maximum selection failures
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
@@ -1000,7 +1003,7 @@ void IncrementalOrder::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

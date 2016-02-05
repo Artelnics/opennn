@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S                                      */
 /*                                                                                                              */
@@ -86,7 +86,7 @@ void NormalizedSquaredErrorTest::test_calculate_performance(void)
    mlpp->initialize_biases(0.0);
    mlpp->initialize_synaptic_weights(1.0);
 
-   DataSet ds(2, 1,1);
+   DataSet ds(1,1,2);
 
    Matrix<double> new_data(2, 2);
    new_data(0,0) = -1.0;
@@ -107,16 +107,16 @@ void NormalizedSquaredErrorTest::test_calculate_performance(void)
 
    parameters = nn.arrange_parameters();
 
-   ds.set(2, 1, 1);
+   ds.set(1, 1, 2);
    ds.randomize_data_normal();
 
    assert_true(nse.calculate_performance() == nse.calculate_performance(parameters), LOG);
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_generalization_performance(void)   
+void NormalizedSquaredErrorTest::test_calculate_selection_performance(void)   
 {
-   message += "test_calculate_generalization_performance\n";
+   message += "test_calculate_selection_performance\n";
 
    NeuralNetwork nn;
 
@@ -124,7 +124,7 @@ void NormalizedSquaredErrorTest::test_calculate_generalization_performance(void)
 
    NormalizedSquaredError nse(&nn, &ds);  
 
-   double generalization_performance;
+   double selection_performance;
 
    // Test
 
@@ -132,13 +132,13 @@ void NormalizedSquaredErrorTest::test_calculate_generalization_performance(void)
 
    ds.set(2,2,2);
 
-   ds.get_instances_pointer()->set_generalization();
+   ds.get_instances_pointer()->set_selection();
 
    ds.randomize_data_normal();
 
-   generalization_performance = nse.calculate_generalization_performance();
+   selection_performance = nse.calculate_selection_performance();
 
-   assert_true(generalization_performance != 0.0, LOG);
+   assert_true(selection_performance != 0.0, LOG);
 
 }
 
@@ -182,14 +182,32 @@ void NormalizedSquaredErrorTest::test_calculate_gradient(void)
    assert_true(objective_gradient.size() == nn.count_parameters_number(), LOG);
    assert_true(objective_gradient == 0.0, LOG);
 
-   // Test 
+   // Test
 
-   nn.set(3, 4, 5);
+   nn.set(5, 4, 2);
    nn.randomize_parameters_normal();
 
    network_parameters = nn.arrange_parameters();
 
-   ds.set(2, 3, 5);
+   ds.set(3, 5, 2);
+   ds.randomize_data_normal();
+
+   objective_gradient = nse.calculate_gradient();
+   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_performance, network_parameters);
+
+   assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+
+   // Test
+
+   nn.set(5, 4, 2);
+   nn.randomize_parameters_normal();
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
+
+   network_parameters = nn.arrange_parameters();
+
+   ds.set(3, 5, 2);
    ds.randomize_data_normal();
 
    objective_gradient = nse.calculate_gradient();
@@ -226,7 +244,7 @@ void NormalizedSquaredErrorTest::test_calculate_terms(void)
    nn.set(2, 2);
    nn.randomize_parameters_normal();
 
-   ds.set(3, 2, 2);
+   ds.set(2, 2, 3);
    ds.randomize_data_normal();
 
    objective = nse.calculate_performance();
@@ -264,7 +282,7 @@ void NormalizedSquaredErrorTest::test_calculate_terms_Jacobian(void)
    nn.randomize_parameters_normal();
    network_parameters = nn.arrange_parameters();
 
-   ds.set(2, 1, 1);
+   ds.set(1, 1, 2);
    ds.randomize_data_normal();
 
    terms_Jacobian = nse.calculate_terms_Jacobian();
@@ -321,7 +339,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
     nn.set(1, 1);
     nn.randomize_parameters_normal();
 
-    ds.set(2, 1, 1);
+    ds.set(1, 1, 2);
     ds.randomize_data_normal();
 
     squared_errors = nse.calculate_squared_errors();
@@ -348,7 +366,7 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
     nn.set(1, 1);
     nn.randomize_parameters_normal();
 
-    ds.set(3, 1, 1);
+    ds.set(1, 1, 3);
     ds.randomize_data_normal();
 
     squared_errors = nse.calculate_squared_errors();
@@ -388,7 +406,7 @@ void NormalizedSquaredErrorTest::run_test_case(void)
    // Objective methods
 
    test_calculate_performance();   
-   test_calculate_generalization_performance();
+   test_calculate_selection_performance();
 
    test_calculate_gradient();
 
@@ -405,7 +423,6 @@ void NormalizedSquaredErrorTest::run_test_case(void)
    test_calculate_squared_errors();
 
    test_calculate_maximal_errors();
-
 
    // Serialization methods
 

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R C E P T R O N   L A Y E R   T E S T   C L A S S                                                      */
 /*                                                                                                              */
@@ -363,19 +363,19 @@ void PerceptronLayerTest::test_grow_inputs(void)
 
     // Test
 
-    pl.set();
-    pl.grow_input();
+//    pl.set();
+//    pl.grow_inputs(1);
 
-    assert_true(pl.get_inputs_number() == 0, LOG);
-    assert_true(pl.get_perceptrons_number() == 0, LOG);
+//    assert_true(pl.get_inputs_number() == 0, LOG);
+//    assert_true(pl.get_perceptrons_number() == 0, LOG);
 
-    // Test
+//    // Test
 
-    pl.set(1, 1);
-    pl.grow_input();
+//    pl.set(1, 1);
+//    pl.grow_inputs(1);
 
-    assert_true(pl.get_inputs_number() == 2, LOG);
-    assert_true(pl.get_perceptrons_number() == 1, LOG);
+//    assert_true(pl.get_inputs_number() == 2, LOG);
+//    assert_true(pl.get_perceptrons_number() == 1, LOG);
 }
 
 
@@ -1167,6 +1167,8 @@ void PerceptronLayerTest::test_calculate_activation_derivative(void)
    Vector<double> combination;         
    Vector<double> activation_derivative; 
    Vector<double> numerical_activation_derivative; 
+
+   numerical_differentiation_tests = true;
 
    // Test
 

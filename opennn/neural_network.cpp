@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E U R A L   N E T W O R K   C L A S S                                                                    */
 /*                                                                                                              */
@@ -2559,6 +2559,56 @@ Matrix<double> NeuralNetwork::calculate_output_data(const Matrix<double>& input_
 }
 
 
+// Matrix<double> calculate_output_data_missing_values(const Matrix<double>&, const double& = -123.456) const method
+
+/// Calculates a set of outputs from the neural network in response to a set of inputs containing missing values.
+/// The format is a matrix, where each row contains the output for a single input.
+/// @param input_data Matrix of inputs to the neural network.
+/// @param missing_values_flag Missing values flag.
+
+Matrix<double> NeuralNetwork::calculate_output_data_missing_values(const Matrix<double>& input_data, const double& missing_values_flag) const
+{
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t columns_number = input_data.get_columns_number();
+
+    if(columns_number != inputs_number)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: NeuralNetwork class.\n"
+              << "Matrix<double> calculate_output_data(const Matrix<double>&) const method.\n"
+              << "Number of columns must be equal to number of inputs.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    const size_t input_vectors_number = input_data.get_rows_number();
+
+    Matrix<double> output_data(input_vectors_number, outputs_number);
+
+    Vector<double> inputs(inputs_number);
+    Vector<double> outputs(outputs_number);
+
+    for(size_t i = 0; i < input_vectors_number; i++)
+    {
+       inputs = input_data.arrange_row(i);
+       outputs = calculate_outputs(inputs);
+       output_data.set_row(i, outputs);
+    }
+
+    return(output_data);
+}
+
+
+
 // Matrix<double> calculate_Jacobian(const Vector<double>&) const method
 
 /// Returns the Jacobian Matrix of the neural network for a set of inputs, corresponding to the
@@ -3543,6 +3593,212 @@ std::string NeuralNetwork::write_expression(void) const
    return(expression);
 }
 
+// std::string write_expression_python(void) const method
+
+/// Returns a string with the python function of the expression represented by the neural network.
+
+std::string NeuralNetwork::write_expression_python(void) const
+{
+    std::ostringstream buffer;
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    const Vector<std::string> inputs_name = inputs_pointer->arrange_names();
+    const Vector<std::string> outputs_name = outputs_pointer->arrange_names();
+
+    buffer.str("");
+
+    //buffer << "from math import tanh\n";
+    buffer << "def expression (";
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+       buffer << inputs_name[i];
+
+       if (i != inputs_number - 1)
+           buffer << ", ";
+    }
+
+    buffer << ") : \n\n    ";
+
+    std::string neural_network_expression =  write_expression();
+
+    size_t pos;
+
+    std::string search;
+    std::string replace;
+
+    pos = 0;
+
+    search = "\n-";
+    replace = "-";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = "\n+";
+    replace = "+";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = "\n";
+    replace = "\n    ";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    buffer << neural_network_expression;
+
+    buffer << "\n    return ";
+
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+       buffer << outputs_name[i];
+
+       if (i != outputs_number - 1)
+           buffer << ", ";
+    }
+
+    buffer << " \n";
+    std::string expression = buffer.str();
+
+    pos = 0;
+
+    search = ";";
+    replace = "";
+
+    while((pos = expression.find(search, pos)) != std::string::npos)
+    {
+           expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    return(expression);
+
+}
+
+// std::string write_expression_R(void) const method
+
+/// Returns a string with the R function of the expression represented by the neural network.
+
+std::string NeuralNetwork::write_expression_R(void) const
+{
+    std::ostringstream buffer;
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    const Vector<std::string> inputs_name = inputs_pointer->arrange_names();
+    const Vector<std::string> outputs_name = outputs_pointer->arrange_names();
+
+    buffer.str("");
+
+    buffer << "expression <- function(";
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+       buffer << inputs_name[i];
+
+       if (i != inputs_number - 1)
+           buffer << ", ";
+    }
+
+    buffer << ") {\n\n    ";
+
+    std::string neural_network_expression =  write_expression();
+
+    size_t pos;
+
+    std::string search;
+    std::string replace;
+
+    pos = 0;
+
+    search = "\n-";
+    replace = "-";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = "\n+";
+    replace = "+";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = "\n";
+    replace = "\n    ";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = ";";
+    replace = "";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = "=";
+    replace = "<-";
+
+    while((pos = neural_network_expression.find(search, pos)) != std::string::npos)
+    {
+           neural_network_expression.replace(pos, search.length(), replace);
+           pos += replace.length();
+    }
+
+    buffer << neural_network_expression;
+
+    buffer << "c(";
+
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+       buffer << outputs_name[i];
+
+       if (i != outputs_number - 1)
+           buffer << ", ";
+    }
+
+    buffer << ") \n}\n";
+    std::string expression = buffer.str();
+
+    return(expression);
+}
 
 // void save_expression(const std::string&) method
 
@@ -3569,6 +3825,55 @@ void NeuralNetwork::save_expression(const std::string& file_name)
    file.close();
 }
 
+// void save_expression_python(const std::string&) method
+
+/// Saves the python function of the expression represented by the neural network to a text file.
+/// @param file_name Name of expression text file.
+
+void NeuralNetwork::save_expression_python(const std::string& file_name)
+{
+    std::ofstream file(file_name.c_str());
+
+    if(!file.is_open())
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: NeuralNetwork class.\n"
+              << "void  save_expression_python(const std::string&) method.\n"
+              << "Cannot open expression text file.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    file << write_expression_python();
+
+    file.close();
+}
+
+// void save_expression_R(const std::string&) method
+
+/// Saves the R function of the expression represented by the neural network to a text file.
+/// @param file_name Name of expression text file.
+
+void NeuralNetwork::save_expression_R(const std::string& file_name)
+{
+    std::ofstream file(file_name.c_str());
+
+    if(!file.is_open())
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: NeuralNetwork class.\n"
+              << "void  save_expression_R(const std::string&) method.\n"
+              << "Cannot open expression text file.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    file << write_expression_R();
+
+    file.close();
+}
 
 // void save_data(const std::string&) const method
 
@@ -3664,7 +3969,7 @@ void NeuralNetwork::save_data(const std::string& file_name) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

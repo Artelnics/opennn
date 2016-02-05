@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M O C K   P E R F O R M A N C E   T E R M   C L A S S                                                      */
 /*                                                                                                              */
@@ -43,6 +43,13 @@ MockPerformanceTerm::MockPerformanceTerm(NeuralNetwork* new_neural_network_point
 }
 
 
+MockPerformanceTerm::MockPerformanceTerm(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+: PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+{
+    set_default();
+}
+
+
 // DESTRUCTOR
 
 /// Destructor.
@@ -71,6 +78,25 @@ void MockPerformanceTerm::set_default(void)
     expression = SumSquaredParameters;
 }
 
+/*
+Vector<double> MockPerformanceTerm::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
+{
+    const Vector<double> output_gradient = (output-target)*2.0;
+
+    return(output_gradient);
+}
+
+
+Matrix<double> MockPerformanceTerm::calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const
+{
+    const size_t outputs_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_outputs_number();
+
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+    output_Hessian.initialize_diagonal(2.0);
+
+    return(output_Hessian);
+}
+*/
 
 double MockPerformanceTerm::calculate_sum_squared_parameters(void) const
 {
@@ -184,9 +210,9 @@ Vector<double> MockPerformanceTerm::calculate_output_integral_integrand_gradient
 
    const Vector<double>& output = layers_activation[layers_number-1];
 
-   const Vector<double> output_objective_gradient(1, 2.0*output[0]);
+   const Vector<double> output_gradient(1, 2.0*output[0]);
 
-   const Vector< Vector<double> > layers_delta = calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   const Vector< Vector<double> > layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    const Vector<double> objective_gradient_integrand;// = calculate_point_objective_gradient(input, layers_activation, layers_delta);
 

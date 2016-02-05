@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   E V O L U T I O N A R Y   A L G O R I T H M   C L A S S                                                    */
 /*                                                                                                              */
@@ -320,13 +320,13 @@ const double& EvolutionaryAlgorithm::get_best_performance_goal(void) const
 }
 
 
-// const size_t& get_maximum_generalization_performance_decreases(void) const method
+// const size_t& get_maximum_selection_performance_decreases(void) const method
 
-/// Returns the maximum number of generalization failures during the training process. 
+/// Returns the maximum number of selection failures during the training process. 
 
-const size_t& EvolutionaryAlgorithm::get_maximum_generalization_performance_decreases(void) const
+const size_t& EvolutionaryAlgorithm::get_maximum_selection_performance_decreases(void) const
 {
-   return(maximum_generalization_performance_decreases);
+   return(maximum_selection_performance_decreases);
 }
 
 
@@ -350,13 +350,13 @@ const bool& EvolutionaryAlgorithm::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_generalization_performance_history(void) const method
+// const bool& get_reserve_selection_performance_history(void) const method
 
 /// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
-const bool& EvolutionaryAlgorithm::get_reserve_generalization_performance_history(void) const
+const bool& EvolutionaryAlgorithm::get_reserve_selection_performance_history(void) const
 {
-   return(reserve_generalization_performance_history);
+   return(reserve_selection_performance_history);
 }
 
 
@@ -1246,14 +1246,14 @@ void EvolutionaryAlgorithm::set_best_performance_goal(const double& new_best_per
 }
 
 
-// void set_maximum_generalization_performance_decreases(const size_t&) method
+// void set_maximum_selection_performance_decreases(const size_t&) method
 
-/// Sets a new maximum number of generalization failures. 
-/// @param new_maximum_generalization_performance_decreases Maximum number of iterations in which the generalization evalutation decreases. 
+/// Sets a new maximum number of selection failures. 
+/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases. 
 
-void EvolutionaryAlgorithm::set_maximum_generalization_performance_decreases(const size_t& new_maximum_generalization_performance_decreases)
+void EvolutionaryAlgorithm::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
 {
-   maximum_generalization_performance_decreases = new_maximum_generalization_performance_decreases;
+   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
 }
 
 
@@ -1299,15 +1299,15 @@ void EvolutionaryAlgorithm::set_reserve_elapsed_time_history(const bool& new_res
 }
 
 
-// void set_reserve_generalization_performance_history(const bool&) method
+// void set_reserve_selection_performance_history(const bool&) method
 
 /// Makes the Selection performance history to be reserved or not in memory. 
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
 
-void EvolutionaryAlgorithm::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)  
+void EvolutionaryAlgorithm::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
 {
-   reserve_generalization_performance_history = new_reserve_generalization_performance_history;
+   reserve_selection_performance_history = new_reserve_selection_performance_history;
 }
 
 
@@ -2668,10 +2668,10 @@ std::string EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::to_string(void)
 
    // Selection performance history
 
-   if(!generalization_performance_history.empty())
+   if(!selection_performance_history.empty())
    {
        buffer << "% Selection performance history:\n"
-              << generalization_performance_history << "\n"; 
+              << selection_performance_history << "\n"; 
    }
 
    // Elapsed time history   
@@ -2737,9 +2737,9 @@ void EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::resize_training_histor
         best_performance_history.resize(new_size);
     }
 //
-    if(evolutionary_algorithm_pointer->get_reserve_generalization_performance_history())
+    if(evolutionary_algorithm_pointer->get_reserve_selection_performance_history())
     {
-        generalization_performance_history.resize(new_size);
+        selection_performance_history.resize(new_size);
     }
 
     if(evolutionary_algorithm_pointer->get_reserve_elapsed_time_history())
@@ -2816,12 +2816,12 @@ Matrix<std::string> EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::write_f
 
    const PerformanceFunctional* performance_functional_pointer = evolutionary_algorithm_pointer->get_performance_functional_pointer();
 
-   if(performance_functional_pointer->has_generalization())
+   if(performance_functional_pointer->has_selection())
    {
        names.push_back("Final selection performance");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_generalization_performance;
+       buffer << std::setprecision(precision) << final_selection_performance;
 
        values.push_back(buffer.str());
     }
@@ -2893,7 +2893,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
    results_pointer->resize_training_history(1+maximum_generations_number);
 
-   size_t generalization_failures = 0;
+   size_t selection_failures = 0;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
@@ -2916,8 +2916,8 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
    double best_generation_performance = 1.0e99;
 
-   double generalization_performance = 0.0; 
-//   double old_generalization_performance = 0.0;
+   double selection_performance = 0.0; 
+//   double old_selection_performance = 0.0;
 
     // Neural network stuff
 
@@ -2972,9 +2972,9 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
         best_performance_ever = best_generation_performance;
 
-        //old_generalization_performance = generalization_performance;
+        //old_selection_performance = selection_performance;
 
-        generalization_performance = performance_functional_pointer->calculate_generalization_performance();
+        selection_performance = performance_functional_pointer->calculate_selection_performance();
      }
 
       // Best individual 
@@ -3018,9 +3018,9 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
       // Selection performance
 
-      if(reserve_generalization_performance_history)
+      if(reserve_selection_performance_history)
       {
-         results_pointer->generalization_performance_history[generation] = generalization_performance;
+         results_pointer->selection_performance_history[generation] = selection_performance;
       }
 
       // Elapsed time
@@ -3115,12 +3115,12 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 		 stop_training = true;
       }
 
-      else if(generalization_failures > maximum_generalization_performance_decreases)
+      else if(selection_failures > maximum_selection_performance_decreases)
       {
          if(display)
          {
             std::cout << "Generation " << generation << ": Maximum selection performance decreases reached.\n";
-            std::cout << "Selection performance decreases: "<< generalization_failures << std::endl;
+            std::cout << "Selection performance decreases: "<< selection_failures << std::endl;
          }
 
          stop_training = true;
@@ -3173,7 +3173,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
          results_pointer->final_mean_performance = mean_performance;
          results_pointer->final_standard_deviation_performance = standard_deviation_performance;
          results_pointer->final_best_performance = best_performance_ever;
-         results_pointer->final_generalization_performance = generalization_performance;
+         results_pointer->final_selection_performance = selection_performance;
          results_pointer->elapsed_time = elapsed_time;
          results_pointer->generations_number = generation;
 
@@ -3194,7 +3194,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
       // Update stuff
 
- //     old_generalization_performance = generalization_performance;
+ //     old_selection_performance = selection_performance;
 
       selection.initialize(false);
 
@@ -3308,12 +3308,12 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    values.push_back(buffer.str());
 
@@ -3340,7 +3340,7 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    values.push_back(buffer.str());
 
@@ -3561,7 +3561,7 @@ tinyxml2::XMLDocument* EvolutionaryAlgorithm::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -3660,7 +3660,7 @@ tinyxml2::XMLDocument* EvolutionaryAlgorithm::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -3949,11 +3949,11 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_generalization_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_generalization_performance_decreases(new_maximum_generalization_performance_decreases);
+             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -4072,8 +4072,8 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const bool new_generalization_performance_history = (atoi(element->GetText()) != 0);
-          set_reserve_generalization_performance_history(new_generalization_performance_history);
+          const bool new_selection_performance_history = (atoi(element->GetText()) != 0);
+          set_reserve_selection_performance_history(new_selection_performance_history);
        }
    }
 }
@@ -4158,7 +4158,7 @@ void EvolutionaryAlgorithm::initialize_random(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M E A N   S Q U A R E D   E R R O R   C L A S S                                                            */
 /*                                                                                                              */
@@ -236,8 +236,6 @@ double MeanSquaredError::calculate_performance(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    // Mean squared error stuff
 
    Vector<double> inputs(inputs_number);
@@ -253,11 +251,6 @@ double MeanSquaredError::calculate_performance(void) const
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       // Input vector
 
@@ -337,8 +330,6 @@ double MeanSquaredError::calculate_performance(const Vector<double>& parameters)
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    // Mean squared error stuff
 
    Vector<double> inputs(inputs_number);
@@ -354,11 +345,6 @@ double MeanSquaredError::calculate_performance(const Vector<double>& parameters)
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       // Input vector
 
@@ -381,12 +367,12 @@ double MeanSquaredError::calculate_performance(const Vector<double>& parameters)
 }
 
 
-// double calculate_generalization_performance(void) const method
+// double calculate_selection_performance(void) const method
 
-/// Returns the mean squared error of the multilayer perceptron measured on the generalization instances of the 
+/// Returns the mean squared error of the multilayer perceptron measured on the selection instances of the 
 /// data set.
 
-double MeanSquaredError::calculate_generalization_performance(void) const
+double MeanSquaredError::calculate_selection_performance(void) const
 {
    // Control sentence (if debug)
 
@@ -403,47 +389,40 @@ double MeanSquaredError::calculate_generalization_performance(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t generalization_instances_number = instances.count_generalization_instances_number();
+   const size_t selection_instances_number = instances.count_selection_instances_number();
 
-   if(generalization_instances_number == 0)
+   if(selection_instances_number == 0)
    {
       return(0.0);
    }
 
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-   size_t generalization_index;
+   size_t selection_index;
 
    const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
 
       Vector<double> inputs(inputs_number);
       Vector<double> outputs(outputs_number);
       Vector<double> targets(outputs_number);
 
-      double generalization_performance = 0.0;
+      double selection_performance = 0.0;
 
       int i = 0;
 
-      #pragma omp parallel for private(i, generalization_index, inputs, outputs, targets) reduction(+:generalization_performance)
+      #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+:selection_performance)
 
-      for(i = 0; i < (int)generalization_instances_number; i++)
+      for(i = 0; i < (int)selection_instances_number; i++)
       {
-          generalization_index = generalization_indices[i];
-
-          if(missing_values.has_missing_values(generalization_index))
-          {
-              continue;
-          }
+          selection_index = selection_indices[i];
 
          // Input vector
 
-         inputs = data_set_pointer->get_instance(generalization_index, inputs_indices);
+         inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
          // Output vector
 
@@ -451,14 +430,14 @@ double MeanSquaredError::calculate_generalization_performance(void) const
 
          // Target vector
 
-         targets = data_set_pointer->get_instance(generalization_index, targets_indices);
+         targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
          // Sum of squares error
 
-         generalization_performance += outputs.calculate_sum_squared_error(targets);
+         selection_performance += outputs.calculate_sum_squared_error(targets);
       }
 
-      return(generalization_performance/(double)generalization_instances_number);
+      return(selection_performance/(double)selection_instances_number);
 }
 
 
@@ -512,8 +491,6 @@ Vector<double> MeanSquaredError::calculate_gradient(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    Vector<double> inputs(inputs_number);
    Vector<double> targets(outputs_number);
 
@@ -535,11 +512,6 @@ Vector<double> MeanSquaredError::calculate_gradient(void) const
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
@@ -672,8 +644,6 @@ Vector<double> MeanSquaredError::calculate_terms(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    // Mean squared error stuff
 
    Vector<double> performance_terms(training_instances_number);
@@ -689,11 +659,6 @@ Vector<double> MeanSquaredError::calculate_terms(void) const
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       // Input vector
 
@@ -813,8 +778,6 @@ Matrix<double> MeanSquaredError::calculate_terms_Jacobian(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    Vector<double> inputs(inputs_number);
    Vector<double> targets(outputs_number);
 
@@ -840,11 +803,6 @@ Matrix<double> MeanSquaredError::calculate_terms_Jacobian(void) const
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
@@ -973,7 +931,7 @@ tinyxml2::XMLDocument* MeanSquaredError::to_XML(void) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

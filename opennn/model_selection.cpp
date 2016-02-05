@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M O D E L   S E L E C T I O N   C L A S S                                                                  */
 /*                                                                                                              */ 
@@ -641,13 +641,13 @@ void ModelSelection::check(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t generalization_instances_number = instances.count_generalization_instances_number();
+    const size_t selection_instances_number = instances.count_selection_instances_number();
 
-    if(generalization_instances_number == 0)
+    if(selection_instances_number == 0)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check(void) const method.\n"
-               << "Number of generalization instances is zero.\n";
+               << "Number of selection instances is zero.\n";
 
         throw std::logic_error(buffer.str());
     }

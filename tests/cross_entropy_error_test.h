@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S   H E A D E R                                  */
 /*                                                                                                              */
@@ -49,7 +49,10 @@ public:
    // Objective methods
 
    void test_calculate_performance(void);   
-   void test_calculate_generalization_performance(void);
+   void test_calculate_selection_performance(void);
+
+   void test_calculate_minimum_performance(void);
+   void test_calculate_minimum_selection_performance(void);
 
    void test_calculate_gradient(void);
 

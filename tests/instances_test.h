@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N S T A N C E S   T E S T    C L A S S   H E A D E R                                                     */
 /*                                                                                                              */ 
@@ -57,10 +57,10 @@ public:
    // Instances methods 
 
    void test_count_training_instances_number(void);
-   void test_count_generalization_instances_number(void);
+   void test_count_selection_instances_number(void);
    void test_count_testing_instances_number(void);
 
-   void test_arrange_generalization_indices(void);
+   void test_arrange_selection_indices(void);
    void test_arrange_training_indices(void);
    void test_arrange_testing_indices(void);
    void test_arrange_used_indices(void);
@@ -76,7 +76,7 @@ public:
    // Instances methods
 
    void test_set_training(void);
-   void test_set_generalization(void);
+   void test_set_selection(void);
    void test_set_testing(void);
 
    void test_set_unused(void);

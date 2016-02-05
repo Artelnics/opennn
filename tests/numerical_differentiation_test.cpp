@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N U M E R I C A L   D I F F E R E N T I A T I O N   T E S T   C L A S S                                    */
 /*                                                                                                              */
@@ -103,6 +103,7 @@ void NumericalDifferentiationTest::test_calculate_derivative(void)
    d = nd.calculate_derivative(*this, &NumericalDifferentiationTest::f1, 0.0);
 
    assert_true(d == 1.0, LOG);
+
 }
 
 
@@ -121,6 +122,45 @@ void NumericalDifferentiationTest::test_calculate_forward_differences_second_der
    d2 = nd.calculate_forward_differences_second_derivative(*this, &NumericalDifferentiationTest::f1, x);
 
    assert_true(d2 == 0.0, LOG);
+
+   // Test
+
+   Matrix<double> M;
+
+   Vector<double> x1(5);
+   Vector<double> x2(3);
+
+   const size_t dummy_1 = 0;
+   const size_t dummy_2 = 0;
+
+   x1.randomize_normal();
+   x2.randomize_normal();
+
+   M = nd.calculate_forward_differences_second_derivative(*this, &NumericalDifferentiationTest::f7, dummy_1, x1, dummy_2, x2);
+
+   assert_true(M.get_rows_number() == 5, LOG);
+   assert_true(M.get_columns_number() == 3, LOG);
+
+   // Test
+
+   x1.set(5, 1.0);
+   x2.set(5, 1.0);
+
+   M = nd.calculate_forward_differences_second_derivative(*this, &NumericalDifferentiationTest::f7, dummy_1, x1, dummy_2, x2);
+
+   assert_true(M.get_rows_number() == 5, LOG);
+   assert_true(M.get_columns_number() == 5, LOG);
+   assert_true(M.to_vector().is_constant(), LOG);
+
+   // Test
+
+   x1.set(9);
+   x2.set(15);
+
+   M = nd.calculate_forward_differences_second_derivative(*this, &NumericalDifferentiationTest::f7, dummy_1, x1, dummy_2, x2);
+
+   assert_true(M.get_rows_number() == 9, LOG);
+   assert_true(M.get_columns_number() == 15, LOG);
 }
 
 
@@ -390,10 +430,16 @@ void NumericalDifferentiationTest::test_calculate_Jacobian(void)
 
    NumericalDifferentiation nd;
 
+   size_t dummy;
+
    Vector<double> x;
    Matrix<double> J;
 
    Matrix<double> J_true;
+
+   Matrix<double> J_fd;
+   Matrix<double> J_cd;
+
 
    // Test
 
@@ -418,6 +464,24 @@ void NumericalDifferentiationTest::test_calculate_Jacobian(void)
    J_true.set_identity(2);
 
    assert_true(J == J_true, LOG);
+
+   // Test
+
+   x.set(2, 1.23);
+
+   nd.set_numerical_differentiation_method(NumericalDifferentiation::ForwardDifferences);
+
+   J_fd = nd.calculate_forward_differences_Jacobian(*this, &NumericalDifferentiationTest::f8, dummy, dummy, x);
+
+   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+
+   J_cd = nd.calculate_central_differences_Jacobian(*this, &NumericalDifferentiationTest::f8, dummy, dummy, x);
+
+   assert_true((J_fd-J_cd).calculate_absolute_value().calculate_maximum() < 0.05, LOG);
+
+   std::cout << J_fd << std::endl;
+   std::cout << J_cd << std::endl;
+
 }
 
 
@@ -573,15 +637,11 @@ void NumericalDifferentiationTest::run_test_case(void)
 }
 
 
-// double f1(const double&) const  method
-
 double NumericalDifferentiationTest::f1(const double& x) const 
 {
    return(x);
 }
 
-
-// double f2(const Vector<double>&) const method
 
 double NumericalDifferentiationTest::f2(const Vector<double>& x) const
 {
@@ -589,12 +649,23 @@ double NumericalDifferentiationTest::f2(const Vector<double>& x) const
 }
 
 
-// Vector<double> f3(const Vector<double>&) const method
-
 Vector<double> NumericalDifferentiationTest::f3(const Vector<double>& x) const
 { 
    return(x);
 }
+
+
+double NumericalDifferentiationTest::f7(const size_t& , const Vector<double>& x, const size_t& , const Vector<double>& y) const
+{
+   return(x.assemble(y).calculate_norm());
+}
+
+
+Vector<double> NumericalDifferentiationTest::f8(const size_t&, const size_t&, const Vector<double>& x) const
+{
+    return x*x*(x+1.0);
+}
+
 
 
 // OpenNN: Open Neural Networks Library.

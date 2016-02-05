@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G E N E T I C   A L G O R I T H M   T E S T   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
@@ -396,10 +396,10 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     ga_results = ga.perform_inputs_selection();
 
-    assert_true(ga_results->final_generalization_performance < 1, LOG);
+    assert_true(ga_results->final_selection_performance < 1, LOG);
     assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::SelectionPerformanceGoal, LOG);
 
-    ga.delete_generalization_history();
+    ga.delete_selection_history();
     ga.delete_parameters_history();
     ga.delete_performance_history();
 
@@ -441,7 +441,7 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
     assert_true(ga_results->iterations_number == 1, LOG);
     assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::MaximumIterations, LOG);
 
-    ga.delete_generalization_history();
+    ga.delete_selection_history();
     ga.delete_parameters_history();
     ga.delete_performance_history();
 

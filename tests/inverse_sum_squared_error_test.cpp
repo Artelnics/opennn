@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   S U M   S Q U A R E D   E R R O R   T E S T   C L A S S                                                    */
 /*                                                                                                              */
@@ -76,9 +76,9 @@ void InverseSumSquaredErrorTest::test_calculate_performance(void)
 }
 
 
-void InverseSumSquaredErrorTest::test_calculate_generalization_performance(void)   
+void InverseSumSquaredErrorTest::test_calculate_selection_performance(void)   
 {
-   message += "test_calculate_generalization_performance\n";
+   message += "test_calculate_selection_performance\n";
 }
 
 
@@ -110,7 +110,7 @@ void InverseSumSquaredErrorTest::run_test_case(void)
    // Objective methods
 
    test_calculate_performance();   
-   test_calculate_generalization_performance();
+   test_calculate_selection_performance();
 
    // Serialization methods
 

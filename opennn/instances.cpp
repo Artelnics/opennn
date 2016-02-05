@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N S T A N C E S   C L A S S                                                                              */
 /*                                                                                                              */ 
@@ -169,7 +169,7 @@ bool Instances::empty(void) const
 
 // Vector<Use> arrange_uses(void) const method
 
-/// Returns the use of every instance (training, generalization, testing) in a vector. 
+/// Returns the use of every instance (training, selection, testing) in a vector. 
 
 Vector<Instances::Use> Instances::arrange_uses(void) const
 {
@@ -188,7 +188,7 @@ Vector<Instances::Use> Instances::arrange_uses(void) const
 
 // Vector<std::string> write_uses(void) const method
 
-/// Returns the use of every instance (training, generalization, testing) in a string vector. 
+/// Returns the use of every instance (training, selection, testing) in a string vector. 
 
 Vector<std::string> Instances::write_uses(void) const
 {
@@ -204,9 +204,9 @@ Vector<std::string> Instances::write_uses(void) const
 	  {	  
 	     uses_string[i] = "Training";    	     
 	  }
-      else if(uses[i] == Generalization)
+      else if(uses[i] == Selection)
 	  {	  
-	     uses_string[i] = "Generalization";    
+	     uses_string[i] = "Selection";    
 	  }
       else if(uses[i] == Testing)
 	  {	  
@@ -234,7 +234,7 @@ Vector<std::string> Instances::write_uses(void) const
 
 // Vector<std::string> write_abbreviated_uses(void) const method
 
-/// Returns the use of every instance (training, generalization, testing) in a string vector.
+/// Returns the use of every instance (training, selection, testing) in a string vector.
 
 Vector<std::string> Instances::write_abbreviated_uses(void) const
 {
@@ -250,7 +250,7 @@ Vector<std::string> Instances::write_abbreviated_uses(void) const
       {
          uses_string[i] = "Train.";
       }
-      else if(uses[i] == Generalization)
+      else if(uses[i] == Selection)
       {
          uses_string[i] = "Gen.";
       }
@@ -300,9 +300,9 @@ std::string Instances::write_use(const size_t& i) const
     {
        return("Training");
     }
-    else if(items[i].use == Generalization)
+    else if(items[i].use == Selection)
     {
-       return("Generalization");
+       return("Selection");
     }
     else if(items[i].use == Testing)
     {
@@ -327,7 +327,7 @@ std::string Instances::write_use(const size_t& i) const
 
 // bool is_used(const size_t& i) const method
 
-/// Returns true if a given instance is to be used for training, generalization or testing,
+/// Returns true if a given instance is to be used for training, selection or testing,
 /// and false if it is to be unused.
 
 bool Instances::is_used(const size_t& i) const
@@ -362,7 +362,7 @@ bool Instances::is_unused(const size_t& i) const
 // size_t count_unused_instances_number(void) const method
 
 /// Returns the number of instances in the data set which will neither be used
-/// for training, generalization or testing.
+/// for training, selection or testing.
 
 size_t Instances::count_unused_instances_number(void) const
 {
@@ -384,7 +384,7 @@ size_t Instances::count_unused_instances_number(void) const
 
 // size_t count_used_instances_number(void) const method
 
-/// Returns the total number of training, generalization and testing instances,
+/// Returns the total number of training, selection and testing instances,
 /// i.e. those which are not "Unused".
 
 size_t Instances::count_used_instances_number(void) const
@@ -418,25 +418,25 @@ size_t Instances::count_training_instances_number(void) const
 }
 
 
-// size_t count_generalization_instances_number(void) const method
+// size_t count_selection_instances_number(void) const method
 
-/// Returns the number of instances in the data set which will be used for generalization.
+/// Returns the number of instances in the data set which will be used for selection.
 
-size_t Instances::count_generalization_instances_number(void) const
+size_t Instances::count_selection_instances_number(void) const
 {
     const size_t instances_number = get_instances_number();
 
-    size_t generalization_instances_number = 0;
+    size_t selection_instances_number = 0;
 
     for(size_t i = 0; i < instances_number; i++)
 	{
-       if(items[i].use == Generalization)
+       if(items[i].use == Selection)
 	   {
-	      generalization_instances_number++;
+	      selection_instances_number++;
 	   }
 	}
 
-	return(generalization_instances_number);
+	return(selection_instances_number);
 }
 
 
@@ -464,7 +464,7 @@ size_t Instances::count_testing_instances_number(void) const
 
 // Vector<size_t> count_uses(void) const method
 
-/// Returns a vector with the number of training, generalization, testing
+/// Returns a vector with the number of training, selection, testing
 /// and unused instances.
 /// The size of that vector is therefore four.
 
@@ -480,7 +480,7 @@ Vector<size_t> Instances::count_uses(void) const
         {
            count[0]++;
         }
-        else if(items[i].use == Generalization)
+        else if(items[i].use == Selection)
         {
            count[1]++;
         }
@@ -507,10 +507,10 @@ Vector<size_t> Instances::arrange_used_indices(void) const
     const size_t instances_number = get_instances_number();
 
     const size_t training_instances_number = count_training_instances_number();
-    const size_t generalization_instances_number = count_generalization_instances_number();
+    const size_t selection_instances_number = count_selection_instances_number();
     const size_t testing_instances_number = count_testing_instances_number();
 
-    Vector<size_t> used_indices(training_instances_number + generalization_instances_number + testing_instances_number);
+    Vector<size_t> used_indices(training_instances_number + selection_instances_number + testing_instances_number);
 
     size_t count = 0;
 
@@ -521,7 +521,7 @@ Vector<size_t> Instances::arrange_used_indices(void) const
             used_indices [count] = (size_t)i;
             count++;
         }
-        else if(items[i].use == Generalization)
+        else if(items[i].use == Selection)
         {
             used_indices [count] = (size_t)i;
             count++;
@@ -591,30 +591,30 @@ Vector<size_t> Instances::arrange_training_indices(void) const
 }
 
 
-// Vector<size_t> arrange_generalization_indices(void) const method
+// Vector<size_t> arrange_selection_indices(void) const method
 
-/// Returns the indices of the instances which will be used for generalization.
+/// Returns the indices of the instances which will be used for selection.
 
-Vector<size_t> Instances::arrange_generalization_indices(void) const
+Vector<size_t> Instances::arrange_selection_indices(void) const
 {
    const size_t instances_number = get_instances_number();
 
-   const size_t generalization_instances_number = count_generalization_instances_number();
+   const size_t selection_instances_number = count_selection_instances_number();
 
-   Vector<size_t> generalization_indices(generalization_instances_number);
+   Vector<size_t> selection_indices(selection_instances_number);
 
    size_t count = 0;
 
    for(size_t i = 0; i < instances_number; i++)
    {
-      if(items[i].use == Generalization)
+      if(items[i].use == Selection)
 	  {
-	     generalization_indices[count] = i;
+	     selection_indices[count] = i;
 		 count++;
 	  }
    }
 
-   return(generalization_indices);
+   return(selection_indices);
 }
 
 
@@ -748,7 +748,7 @@ void Instances::set_uses(const Vector<Instances::Use>& new_uses)
 
 /// Sets new uses to all the instances from a single vector of strings.
 /// @param new_uses Vector of use strings.
-/// Possible values for the elements are "Training", "Generalization", "Testing" and "Unused".
+/// Possible values for the elements are "Training", "Selection", "Testing" and "Unused".
 /// The size must be equal to the number of instances.
 
 void Instances::set_uses(const Vector<std::string>& new_uses)
@@ -784,9 +784,9 @@ void Instances::set_uses(const Vector<std::string>& new_uses)
 	  {	  
          items[i].use = Training;
 	  }
-      else if(new_uses[i] == "Generalization")
+      else if(new_uses[i] == "Selection")
 	  {	  
-         items[i].use = Generalization;
+         items[i].use = Selection;
 	  }
       else if(new_uses[i] == "Testing")
 	  {	  
@@ -820,7 +820,7 @@ void Instances::set_use(const size_t& i, const Use& new_use)
 
 /// Sets the use of a single instance from a string.
 /// @param i Index of instance.
-/// @param new_use String with the use name ("Training", "Generalization", "Testing" or "Unused")
+/// @param new_use String with the use name ("Training", "Selection", "Testing" or "Unused")
 
 void Instances::set_use(const size_t& i, const std::string& new_use)
 {
@@ -828,9 +828,9 @@ void Instances::set_use(const size_t& i, const std::string& new_use)
     {
        items[i].use = Training;
     }
-    else if(new_use == "Generalization")
+    else if(new_use == "Selection")
     {
-       items[i].use = Generalization;
+       items[i].use = Selection;
     }
     else if(new_use == "Testing")
     {
@@ -885,17 +885,17 @@ void Instances::set_training(void)
 }
 
 
-// void set_generalization(void) method
+// void set_selection(void) method
 
-/// Sets all the instances in the data set for generalization. 
+/// Sets all the instances in the data set for selection. 
 
-void Instances::set_generalization(void)
+void Instances::set_selection(void)
 {
     const size_t instances_number = get_instances_number();
 
     for(size_t i = 0; i < instances_number; i++)
     {
-        items[i].use = Generalization;
+        items[i].use = Selection;
     }
 }
 
@@ -1106,13 +1106,13 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
 
 // void split_random_indices(const double&, const double&, const double&) method
 
-/// Creates new training, generalization and testing indices at random.
+/// Creates new training, selection and testing indices at random.
 /// @param training_instances_ratio Ratio of training instances in the data set.
-/// @param generalization_instances_ratio Ratio of generalization instances in the data set.
+/// @param selection_instances_ratio Ratio of selection instances in the data set.
 /// @param testing_instances_ratio Ratio of testing instances in the data set.
 
 void Instances::split_random_indices
-(const double& training_instances_ratio, const double& generalization_instances_ratio, const double& testing_instances_ratio)
+(const double& training_instances_ratio, const double& selection_instances_ratio, const double& testing_instances_ratio)
 {
    const size_t used_instances_number = count_used_instances_number();
 
@@ -1121,15 +1121,15 @@ void Instances::split_random_indices
        return;
    }
 
-   const double total_ratio = training_instances_ratio + generalization_instances_ratio + testing_instances_ratio;
+   const double total_ratio = training_instances_ratio + selection_instances_ratio + testing_instances_ratio;
 
-   // Get number of instances for training, generalization and testing
+   // Get number of instances for training, selection and testing
 
-   const size_t generalization_instances_number = (size_t)(generalization_instances_ratio*used_instances_number/total_ratio);
+   const size_t selection_instances_number = (size_t)(selection_instances_ratio*used_instances_number/total_ratio);
    const size_t testing_instances_number = (size_t)(testing_instances_ratio*used_instances_number/total_ratio);
-   const size_t training_instances_number = used_instances_number - generalization_instances_number - testing_instances_number;
+   const size_t training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
 
-   const size_t sum_instances_number = training_instances_number + generalization_instances_number + testing_instances_number;
+   const size_t sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
 
    if(sum_instances_number != used_instances_number)
    {
@@ -1137,7 +1137,7 @@ void Instances::split_random_indices
 
       buffer << "OpenNN Warning: Instances class.\n" 
                 << "void split_random_indices(const double&, const double&, const double&) method.\n"
-                << "Sum of numbers of training, generalization and testing instances is not equal to number of used instances.\n";
+                << "Sum of numbers of training, selection and testing instances is not equal to number of used instances.\n";
 
       throw std::logic_error(buffer.str());
    }
@@ -1167,18 +1167,18 @@ void Instances::split_random_indices
       i++;
    }
 
-   // Generalization 
+   // Selection 
 
-   size_t count_generalization = 0;
+   size_t count_selection = 0;
 
-   while(count_generalization != generalization_instances_number)
+   while(count_selection != selection_instances_number)
    {
       index = indices[i];
 
       if(items[index].use != Unused)
       {
-        items[index].use = Generalization;
-        count_generalization++;
+        items[index].use = Selection;
+        count_selection++;
       }
 
       i++;
@@ -1205,12 +1205,12 @@ void Instances::split_random_indices
 
 // void split_sequential_indices(const double&, const double&, const double&) method
 
-/// Creates new training, generalization and testing indices with sequential indices.
+/// Creates new training, selection and testing indices with sequential indices.
 /// @param training_instances_ratio Ratio of training instances in the data set.
-/// @param generalization_instances_ratio Ratio of generalization instances in the data set.
+/// @param selection_instances_ratio Ratio of selection instances in the data set.
 /// @param testing_instances_ratio Ratio of testing instances in the data set.
 
-void Instances::split_sequential_indices(const double& training_instances_ratio, const double& generalization_instances_ratio, const double& testing_instances_ratio)
+void Instances::split_sequential_indices(const double& training_instances_ratio, const double& selection_instances_ratio, const double& testing_instances_ratio)
 {
    const size_t used_instances_number = count_used_instances_number();
 
@@ -1219,15 +1219,15 @@ void Instances::split_sequential_indices(const double& training_instances_ratio,
        return;
    }
 
-   const double total_ratio = training_instances_ratio + generalization_instances_ratio + testing_instances_ratio;
+   const double total_ratio = training_instances_ratio + selection_instances_ratio + testing_instances_ratio;
 
-   // Get number of instances for training, generalization and testing
+   // Get number of instances for training, selection and testing
 
-   const size_t generalization_instances_number = (size_t)(generalization_instances_ratio*used_instances_number/total_ratio);
+   const size_t selection_instances_number = (size_t)(selection_instances_ratio*used_instances_number/total_ratio);
    const size_t testing_instances_number = (size_t)(testing_instances_ratio*used_instances_number/total_ratio);
-   const size_t training_instances_number = used_instances_number - generalization_instances_number - testing_instances_number;
+   const size_t training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
 
-   const size_t sum_instances_number = training_instances_number + generalization_instances_number + testing_instances_number;
+   const size_t sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
 
    if(sum_instances_number != used_instances_number)
    {
@@ -1235,7 +1235,7 @@ void Instances::split_sequential_indices(const double& training_instances_ratio,
 
       buffer << "OpenNN Warning: Instances class.\n" 
              << "void split_random_indices(const double&, const double&, const double&) method.\n"
-             << "Sum of numbers of training, generalization and testing instances is not equal to number of used instances.\n";
+             << "Sum of numbers of training, selection and testing instances is not equal to number of used instances.\n";
    
       throw std::logic_error(buffer.str());
    }
@@ -1257,16 +1257,16 @@ void Instances::split_sequential_indices(const double& training_instances_ratio,
       i++;
    }
 
-   // Generalization
+   // Selection
 
-   size_t count_generalization = 0;
+   size_t count_selection = 0;
 
-   while(count_generalization != generalization_instances_number)
+   while(count_selection != selection_instances_number)
    {
       if(items[i].use != Unused)
       {
-        items[i].use = Generalization;
-        count_generalization++;
+        items[i].use = Selection;
+        count_selection++;
       }
 
       i++;
@@ -1289,15 +1289,15 @@ void Instances::split_sequential_indices(const double& training_instances_ratio,
 }
 
 
-// void split_instances(const SplittingMethod& splitting_method = Random, const double& training_ratio = 0.6, const double& generalization_ratio = 0.2, const double& testing_ratio = 0.2) method
+// void split_instances(const SplittingMethod& splitting_method = Random, const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2) method
 
-/// Divides the instances into training, generalization and testing subsets.
+/// Divides the instances into training, selection and testing subsets.
 /// @param splitting_method Instances splitting method (Sequential or Random, Random by default).
 /// @param training_ratio Ratio of training instances (0.6 by default).
-/// @param generalization_ratio Ratio of generalization instances (0.2 by default).
+/// @param selection_ratio Ratio of selection instances (0.2 by default).
 /// @param testing_ratio Ratio of testing instances (0.2 by default).
 
-void Instances::split_instances(const SplittingMethod& splitting_method, const double& training_ratio, const double& generalization_ratio, const double& testing_ratio)
+void Instances::split_instances(const SplittingMethod& splitting_method, const double& training_ratio, const double& selection_ratio, const double& testing_ratio)
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -1313,11 +1313,11 @@ void Instances::split_instances(const SplittingMethod& splitting_method, const d
         throw std::logic_error(buffer.str());
     }
 
-    if(generalization_ratio < 0)
+    if(selection_ratio < 0)
     {
         buffer << "OpenNN Exception: Instances class.\n"
                << "void split_instances(const SplittingMethod&, const double&, const double&, const double&) method.\n"
-               << "Generalization ratio is lower than zero.\n";
+               << "Selection ratio is lower than zero.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -1331,11 +1331,11 @@ void Instances::split_instances(const SplittingMethod& splitting_method, const d
         throw std::logic_error(buffer.str());
     }
 
-    if(training_ratio == 0.0 && generalization_ratio == 0.0 && testing_ratio == 0.0)
+    if(training_ratio == 0.0 && selection_ratio == 0.0 && testing_ratio == 0.0)
     {
         buffer << "OpenNN Exception: Instances class.\n"
                << "void split_instances(const SplittingMethod&, const double&, const double&, const double&) method.\n"
-               << "All training, generalization and testing ratios are zero.\n";
+               << "All training, selection and testing ratios are zero.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -1346,13 +1346,13 @@ void Instances::split_instances(const SplittingMethod& splitting_method, const d
     {
         case Instances::Sequential:
         {
-             split_sequential_indices(training_ratio, generalization_ratio, testing_ratio);
+             split_sequential_indices(training_ratio, selection_ratio, testing_ratio);
         }
         break;
 
         case Instances::Random:
         {
-             split_random_indices(training_ratio, generalization_ratio, testing_ratio);
+             split_random_indices(training_ratio, selection_ratio, testing_ratio);
         }
         break;
 
@@ -1375,7 +1375,7 @@ void Instances::split_instances(const SplittingMethod& splitting_method, const d
 // Vector<double> calculate_uses_percentage(void) const method
 
 /// Returns the percentages of
-/// unused, training, generalization and testing instances, respectively.
+/// unused, training, selection and testing instances, respectively.
 
 Vector<double> Instances::calculate_uses_percentage(void) const
 {
@@ -1432,7 +1432,7 @@ std::string Instances::to_string(void) const
    buffer << "Instances object\n"
 	      << "Instances number: " << get_instances_number() << "\n"
 	      << "Training instances number: " << count_training_instances_number() << "\n"
-	      << "Generalization instances number: " << count_generalization_instances_number() << "\n"
+	      << "Selection instances number: " << count_selection_instances_number() << "\n"
 	      << "Testing instances number: " << count_testing_instances_number() << "\n"
           << "Uses: " << write_uses() << "\n"
           << "Display: " << display << "\n";
@@ -1454,7 +1454,7 @@ void Instances::print(void) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S                                      */
 /*                                                                                                              */
@@ -168,13 +168,13 @@ const double& LevenbergMarquardtAlgorithm::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_generalization_performance_decreases(void) const method
+// const size_t& get_maximum_selection_performance_decreases(void) const method
 
-/// Returns the maximum number of generalization failures during the training process. 
+/// Returns the maximum number of selection failures during the training process. 
 
-const size_t& LevenbergMarquardtAlgorithm::get_maximum_generalization_performance_decreases(void) const
+const size_t& LevenbergMarquardtAlgorithm::get_maximum_selection_performance_decreases(void) const
 {
-   return(maximum_generalization_performance_decreases);
+   return(maximum_selection_performance_decreases);
 }
 
 
@@ -269,13 +269,13 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_elapsed_time_history(void) 
 }
 
 
-// const bool& get_reserve_generalization_performance_history(void) const method
+// const bool& get_reserve_selection_performance_history(void) const method
 
 /// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
-const bool& LevenbergMarquardtAlgorithm::get_reserve_generalization_performance_history(void) const
+const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_performance_history(void) const
 {
-   return(reserve_generalization_performance_history);
+   return(reserve_selection_performance_history);
 }
 
 
@@ -375,7 +375,7 @@ void LevenbergMarquardtAlgorithm::set_default(void)
    minimum_performance_increase = 1.0e-9;
    performance_goal = 1.0e-3;
    gradient_norm_goal = 1.0e-3;
-   maximum_generalization_performance_decreases = 1000;
+   maximum_selection_performance_decreases = 1000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
@@ -388,7 +388,7 @@ void LevenbergMarquardtAlgorithm::set_default(void)
    reserve_performance_history = false;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_generalization_performance_history = false;
+   reserve_selection_performance_history = false;
 
    reserve_Hessian_approximation_history = false;
 
@@ -750,14 +750,14 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const double& new_gradi
 }
 
 
-// void set_maximum_generalization_performance_decreases(const size_t&) method
+// void set_maximum_selection_performance_decreases(const size_t&) method
 
-/// Sets a new maximum number of generalization failures. 
-/// @param new_maximum_generalization_performance_decreases Maximum number of iterations in which the generalization evalutation decreases.
+/// Sets a new maximum number of selection failures. 
+/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_generalization_performance_decreases(const size_t& new_maximum_generalization_performance_decreases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
 {
-   maximum_generalization_performance_decreases = new_maximum_generalization_performance_decreases;
+   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
 }
 
 
@@ -882,15 +882,15 @@ void LevenbergMarquardtAlgorithm::set_reserve_elapsed_time_history(const bool& n
 }
 
 
-// void set_reserve_generalization_performance_history(bool) method
+// void set_reserve_selection_performance_history(bool) method
 
 /// Makes the Selection performance history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise.
+/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise.
 
-void LevenbergMarquardtAlgorithm::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)
+void LevenbergMarquardtAlgorithm::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)
 {
-   reserve_generalization_performance_history = new_reserve_generalization_performance_history;
+   reserve_selection_performance_history = new_reserve_selection_performance_history;
 }
 
 
@@ -1093,9 +1093,9 @@ void LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::resize_tra
         performance_history.resize(new_size);
     }
 
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_generalization_performance_history())
+    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_selection_performance_history())
     {
-        generalization_performance_history.resize(new_size);
+        selection_performance_history.resize(new_size);
     }
 
     if(Levenberg_Marquardt_algorithm_pointer->get_reserve_gradient_history())
@@ -1162,10 +1162,10 @@ std::string LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::to_
 
    // Selection performance history
 
-   if(!generalization_performance_history.empty())
+   if(!selection_performance_history.empty())
    {
        buffer << "% Selection performance history:\n"
-              << generalization_performance_history << "\n";
+              << selection_performance_history << "\n";
    }
 
    // Gradient history 
@@ -1249,12 +1249,12 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResu
 
    const PerformanceFunctional* performance_functional_pointer = Levenberg_Marquardt_algorithm_pointer->get_performance_functional_pointer();
 
-   if(performance_functional_pointer->has_generalization())
+   if(performance_functional_pointer->has_selection())
    {
        names.push_back("Final selection performance");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_generalization_performance;
+       buffer << std::setprecision(precision) << final_selection_performance;
 
        values.push_back(buffer.str());
     }
@@ -1350,10 +1350,10 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
    double old_performance = 0.0;
    double performance_increase = 0.0;
 
-   double generalization_performance = 0.0;
-   double old_generalization_performance = 0.0;
+   double selection_performance = 0.0;
+   double old_selection_performance = 0.0;
 
-   size_t generalization_failures = 0;
+   size_t selection_failures = 0;
 
    Vector<double> terms(training_instances_number);
    Matrix<double> terms_Jacobian(training_instances_number, parameters_number);
@@ -1444,11 +1444,11 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
          performance_increase = old_performance - performance;
       }
 
-      generalization_performance = performance_functional_pointer->calculate_generalization_performance();
+      selection_performance = performance_functional_pointer->calculate_selection_performance();
 
-      if(iteration != 0 && generalization_performance > old_generalization_performance)
+      if(iteration != 0 && selection_performance > old_selection_performance)
       {
-         generalization_failures++;
+         selection_failures++;
       }
       
       // Elapsed time
@@ -1475,9 +1475,9 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
          results_pointer->performance_history[iteration] = performance;
       }
 
-      if(reserve_generalization_performance_history)
+      if(reserve_selection_performance_history)
       {
-         results_pointer->generalization_performance_history[iteration] = generalization_performance;
+         results_pointer->selection_performance_history[iteration] = selection_performance;
       }
 
       if(reserve_gradient_history)
@@ -1551,12 +1551,12 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
          stop_training = true;
       }
 
-      else if(generalization_failures >= maximum_generalization_performance_decreases)
+      else if(selection_failures >= maximum_selection_performance_decreases)
       {
          if(display)
          {
             std::cout << "Iteration " << iteration << ": Maximum selection performance decreases reached.\n"
-                      << "Selection performance decreases: "<< generalization_failures << std::endl;
+                      << "Selection performance decreases: "<< selection_failures << std::endl;
          }
 
          stop_training = true;
@@ -1598,9 +1598,9 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
                        << "Damping parameter: " << damping_parameter << "\n"
                        << "Elapsed time: " << elapsed_time << std::endl;
 
-             if(generalization_performance != 0)
+             if(selection_performance != 0)
              {
-                std::cout << "Selection performance: " << generalization_performance << std::endl;
+                std::cout << "Selection performance: " << selection_performance << std::endl;
              }
           }
 
@@ -1612,7 +1612,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
          results_pointer->final_parameters_norm = parameters_norm;
 
          results_pointer->final_performance = performance;
-         results_pointer->final_generalization_performance = generalization_performance;
+         results_pointer->final_selection_performance = selection_performance;
 
          results_pointer->final_gradient = gradient;
          results_pointer->final_gradient_norm = gradient_norm;
@@ -1633,9 +1633,9 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
                    << "Damping parameter: " << damping_parameter << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl; 
 
-         if(generalization_performance != 0)
+         if(selection_performance != 0)
          {
-            std::cout << "Selection performance: " << generalization_performance << std::endl;
+            std::cout << "Selection performance: " << selection_performance << std::endl;
          }
 
       }
@@ -1643,7 +1643,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
       // Update stuff
 
       old_performance = performance;
-      old_generalization_performance = generalization_performance;
+      old_selection_performance = selection_performance;
 
       // Set new parameters
 
@@ -1662,7 +1662,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
    reserve_parameters_norm_history = true;
 
    reserve_performance_history = true;
-   reserve_generalization_performance_history = true;
+   reserve_selection_performance_history = true;
 
    reserve_gradient_history = true;
    reserve_gradient_norm_history = true;
@@ -1728,12 +1728,12 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    values.push_back(buffer.str());
 
@@ -1787,7 +1787,7 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    values.push_back(buffer.str());
 
@@ -1982,7 +1982,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2048,7 +2048,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2103,7 +2103,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2395,15 +2395,15 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    // Maximum selection performance decreases
 
-   const tinyxml2::XMLElement* maximum_generalization_performance_decreases_element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
+   const tinyxml2::XMLElement* maximum_selection_performance_decreases_element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
 
-   if(maximum_generalization_performance_decreases_element)
+   if(maximum_selection_performance_decreases_element)
    {
-      const size_t new_maximum_generalization_performance_decreases = atoi(maximum_generalization_performance_decreases_element->GetText());
+      const size_t new_maximum_selection_performance_decreases = atoi(maximum_selection_performance_decreases_element->GetText());
 
       try
       {
-         set_maximum_generalization_performance_decreases(new_maximum_generalization_performance_decreases);
+         set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
       }
       catch(const std::logic_error& e)
       {
@@ -2503,15 +2503,15 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    // Reserve selection performance history
 
-   const tinyxml2::XMLElement* reserve_generalization_performance_history_element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+   const tinyxml2::XMLElement* reserve_selection_performance_history_element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
-   if(reserve_generalization_performance_history_element)
+   if(reserve_selection_performance_history_element)
    {
-      const std::string new_reserve_generalization_performance_history = reserve_generalization_performance_history_element->GetText();
+      const std::string new_reserve_selection_performance_history = reserve_selection_performance_history_element->GetText();
 
       try
       {
-         set_reserve_generalization_performance_history(new_reserve_generalization_performance_history != "0");
+         set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
       }
       catch(const std::logic_error& e)
       {
@@ -2671,7 +2671,7 @@ Vector<double> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

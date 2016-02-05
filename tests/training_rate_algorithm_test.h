@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   T R A I N I N G   R A T E   A L G O R I T H M   T E S T   C L A S S   H E A D E R                          */
 /*                                                                                                              */ 

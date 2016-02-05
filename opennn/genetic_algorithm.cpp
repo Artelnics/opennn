@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G E N E T I C   A L G O R I T H M   C L A S S                                                              */
 /*                                                                                                              */
@@ -186,7 +186,7 @@ const double& GeneticAlgorithm::get_selective_pressure(void) const
 
 // const size_t& get_maximum_selection_failures(void) const method
 
-/// Returns the maximum number of generalization failures in the model inputs selection algorithm.
+/// Returns the maximum number of selection failures in the model inputs selection algorithm.
 
 const size_t& GeneticAlgorithm::get_maximum_selection_failures(void) const
 {
@@ -211,13 +211,13 @@ const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation(void) co
     return(reserve_generation_standard_deviation);
 }
 
-// const bool& get_reserve_generation_minimum_generalization(void) const method
+// const bool& get_reserve_generation_minimum_selection(void) const method
 
 /// Returns true if the generation minimum selection performance are to be reserved, and false otherwise.
 
-const bool& GeneticAlgorithm::get_reserve_generation_minimum_generalization(void) const
+const bool& GeneticAlgorithm::get_reserve_generation_minimum_selection(void) const
 {
-    return(reserve_generation_minimum_generalization);
+    return(reserve_generation_minimum_selection);
 }
 
 // const bool& get_reserve_generation_optimum_performance(void) const method
@@ -385,7 +385,7 @@ void GeneticAlgorithm::set_default(void)
 
     reserve_generation_standard_deviation = false;
 
-    reserve_generation_minimum_generalization = true;
+    reserve_generation_minimum_selection = true;
 
     reserve_generation_optimum_performance = true;
 
@@ -822,8 +822,8 @@ void GeneticAlgorithm::set_selective_pressure(const double& new_selective_pressu
 
 // void set_maximum_selection_failures(const size_t&) method
 
-/// Sets the maximum generalization failures for the genetic algorithm.
-/// @param new_maximum_performance_failures Maximum number of generalization failures in the genetic algorithm.
+/// Sets the maximum selection failures for the genetic algorithm.
+/// @param new_maximum_performance_failures Maximum number of selection failures in the genetic algorithm.
 
 void GeneticAlgorithm::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
 {
@@ -835,7 +835,7 @@ void GeneticAlgorithm::set_maximum_selection_failures(const size_t& new_maximum_
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void set_maximum_selection_failures(const size_t&) method.\n"
-               << "Maximum generalization failures must be greater than 0.\n";
+               << "Maximum selection failures must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -865,14 +865,14 @@ void GeneticAlgorithm::set_reserve_generation_standard_deviation(const bool& new
     reserve_generation_standard_deviation = new_reserve_generation_standard_deviation;
 }
 
-// void set_reserve_generation_minimum_generalization(const bool&) method
+// void set_reserve_generation_minimum_selection(const bool&) method
 
 /// Sets the reserve flag for the generation minimum selection performance history.
-/// @param new_reserve_generation_minimum_generalization Flag value.
+/// @param new_reserve_generation_minimum_selection Flag value.
 
-void GeneticAlgorithm::set_reserve_generation_minimum_generalization(const bool& new_reserve_generation_minimum_generalization)
+void GeneticAlgorithm::set_reserve_generation_minimum_selection(const bool& new_reserve_generation_minimum_selection)
 {
-    reserve_generation_minimum_generalization = new_reserve_generation_minimum_generalization;
+    reserve_generation_minimum_selection = new_reserve_generation_minimum_selection;
 }
 
 // void set_reserve_generation_optimum_performance(const bool&) method
@@ -1689,17 +1689,17 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         original_scaling_method = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_method();
     }
 
-    size_t current_minimal_generalization_error_index;
+    size_t current_minimal_selection_error_index;
     double current_minimum_performance_error;
-    double current_minimum_generalization_error;
+    double current_minimum_selection_error;
     Vector<bool> current_inputs;
     Vector<Variables::Use> current_uses;
     double current_mean;
     double current_standard_deviation;
 
-    double previous_minimum_generalization_error = 1e10;
+    double previous_minimum_selection_error = 1e10;
 
-    double optimum_generalization_error = 1e10;
+    double optimum_selection_error = 1e10;
     double optimum_performance_error;
     Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
@@ -1716,7 +1716,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double elapsed_time;
 
     if (display)
+    {
         std::cout << "Performing genetic inputs selection..." << std::endl;
+
+        std::cout.flush();
+    }
 
     original_uses = variables->arrange_uses();
 
@@ -1735,36 +1739,36 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         evaluate_population();
 
-        current_minimal_generalization_error_index = get_optimal_individual_index();
+        current_minimal_selection_error_index = get_optimal_individual_index();
 
         current_mean = performance.arrange_column(1).calculate_mean();
 
         current_standard_deviation = performance.arrange_column(1).calculate_standard_deviation();
 
-        current_inputs = population[current_minimal_generalization_error_index];
+        current_inputs = population[current_minimal_selection_error_index];
 
-        current_minimum_generalization_error = performance(current_minimal_generalization_error_index,1);
+        current_minimum_selection_error = performance(current_minimal_selection_error_index,1);
 
-        current_minimum_performance_error = performance(current_minimal_generalization_error_index,0);
+        current_minimum_performance_error = performance(current_minimal_selection_error_index,0);
 
-        if ((fabs(optimum_generalization_error - current_minimum_generalization_error) >= tolerance &&
-             optimum_generalization_error > current_minimum_generalization_error) ||
-                (fabs(optimum_generalization_error - current_minimum_generalization_error) < tolerance &&
+        if ((fabs(optimum_selection_error - current_minimum_selection_error) >= tolerance &&
+             optimum_selection_error > current_minimum_selection_error) ||
+                (fabs(optimum_selection_error - current_minimum_selection_error) < tolerance &&
                  optimal_inputs.count_occurrences(true) < current_inputs.count_occurrences(true)))
         {
             optimal_inputs = current_inputs;
             optimum_performance_error = current_minimum_performance_error;
-            optimum_generalization_error = current_minimum_generalization_error;
+            optimum_selection_error = current_minimum_selection_error;
         }
-        else if (optimum_generalization_error < current_minimum_generalization_error ||
-                 current_minimum_generalization_error > previous_minimum_generalization_error ||
+        else if (optimum_selection_error < current_minimum_selection_error ||
+                 current_minimum_selection_error > previous_minimum_selection_error ||
                  current_inputs == optimal_inputs)
             selection_failures++;
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        previous_minimum_generalization_error = current_minimum_generalization_error;
+        previous_minimum_selection_error = current_minimum_selection_error;
 
         iterations++;
 
@@ -1778,9 +1782,9 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             results->generation_standard_deviation_history.push_back(current_standard_deviation);
         }
 
-        if (reserve_generation_minimum_generalization)
+        if (reserve_generation_minimum_selection)
         {
-            results->generation_minimum_generalization_history.push_back(current_minimum_generalization_error);
+            results->generation_minimum_selection_history.push_back(current_minimum_selection_error);
         }
 
         if (reserve_generation_optimum_performance)
@@ -1796,7 +1800,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
-        }else if (current_minimum_generalization_error <= selection_performance_goal)
+        }else if (current_minimum_selection_error <= selection_performance_goal)
         {
             end = true;
             if (display)
@@ -1812,7 +1816,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         {
             end = true;
             if (display)
-                std::cout << "Maximum selection performance failures("<<selection_failures<<") reached." << std::endl;
+                std::cout << "Maximum selection performance failures ("<<selection_failures<<") reached." << std::endl;
             results->stopping_condition = InputsSelectionAlgorithm::MaximumSelectionFailures;
         }
 
@@ -1835,19 +1839,17 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if (display)
         {
-            std::cout << "Generation : " << iterations << std::endl;
-            std::cout << "Generation optimal inputs : " << variables->arrange_inputs_name().to_string() << std::endl;
-            std::cout << "Generation optimal number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
-            std::cout << "Generation optimum training performance : " << current_minimum_performance_error << std::endl;
-            std::cout << "Generation optimum selection performance : " << current_minimum_generalization_error << std::endl;
-            std::cout << "Generation generalization mean = " << performance.arrange_column(1).calculate_mean() << std::endl;
-            std::cout << "Generation generalization standard deviation = " << performance.arrange_column(1).calculate_standard_deviation() << std::endl;
-            std::cout << "Elapsed time : " << elapsed_time << std::endl;
+            std::cout << "Generation: " << iterations << std::endl;
+            std::cout << "Generation optimal inputs: " << variables->arrange_inputs_name().to_string() << " " << std::endl;
+            std::cout << "Generation optimal number of inputs: " << current_inputs.count_occurrences(true) << std::endl;
+            std::cout << "Generation optimum training performance: " << current_minimum_performance_error << std::endl;
+            std::cout << "Generation optimum selection performance: " << current_minimum_selection_error << std::endl;
+            std::cout << "Generation selection mean = " << performance.arrange_column(1).calculate_mean() << std::endl;
+            std::cout << "Generation selection standard deviation = " << performance.arrange_column(1).calculate_standard_deviation() << std::endl;
+            std::cout << "Elapsed time: " << elapsed_time << std::endl;
 
             std::cout << std::endl;
         }
-
-
     }
 
     results->inputs_data.set(inputs_history);
@@ -1857,9 +1859,9 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         results->performance_data.set(performance_history);
     }
 
-    if (reserve_generalization_performance_data)
+    if (reserve_selection_performance_data)
     {
-        results->generalization_performance_data.set(generalization_performance_history);
+        results->selection_performance_data.set(selection_performance_history);
     }
 
     if (reserve_parameters_data)
@@ -1872,7 +1874,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         results->minimal_parameters = optimal_parameters;
 
     results->optimal_inputs = optimal_inputs;
-    results->final_generalization_performance = optimum_generalization_error;
+    results->final_selection_performance = optimum_selection_error;
     results->final_performance = calculate_performances(optimal_inputs)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
@@ -1913,11 +1915,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     if (display)
     {
-        std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
-        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
-        std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum selection performance : " << optimum_generalization_error << std::endl;
-        std::cout << "Elapsed time : " << elapsed_time << std::endl;
+        std::cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
+        std::cout << "Optimal number of inputs: " << optimal_inputs.count_occurrences(true) << std::endl;
+        std::cout << "Optimum training performance: " << optimum_performance_error << std::endl;
+        std::cout << "Optimum selection performance: " << optimum_selection_error << std::endl;
+        std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
     return results;
@@ -2021,6 +2023,15 @@ Matrix<std::string> GeneticAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
+   // Mutation rate
+
+   labels.push_back("Mutation rate");
+
+   buffer.str("");
+   buffer << mutation_rate;
+
+   values.push_back(buffer.str());
+
    // Selection performance goal
 
    labels.push_back("Selection performance goal");
@@ -2030,9 +2041,9 @@ Matrix<std::string> GeneticAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
    buffer << maximum_selection_failures;
@@ -2071,7 +2082,7 @@ Matrix<std::string> GeneticAlgorithm::to_string_matrix(void) const
    labels.push_back("Plot selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_data;
+   buffer << reserve_selection_performance_data;
 
    values.push_back(buffer.str());
 
@@ -2280,13 +2291,13 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Reserve generation minimum generalization
+    // Reserve generation minimum selection
     {
-        element = document->NewElement("ReserveGenerationMinimumGeneralization");
+        element = document->NewElement("ReserveGenerationMinimumSelection");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_generation_minimum_generalization;
+        buffer << reserve_generation_minimum_selection;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -2318,7 +2329,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML(void) const
 
     // Reserve performance data
     {
-        element = document->NewElement("ReservePerformanceData");
+        element = document->NewElement("ReservePerformanceHistory");
         root_element->LinkEndChild(element);
 
         buffer.str("");
@@ -2330,11 +2341,11 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML(void) const
 
     // Reserve selection performance data
     {
-        element = document->NewElement("ReserveSelectionPerformanceData");
+        element = document->NewElement("ReserveSelectionPerformanceHistory");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_generalization_performance_data;
+        buffer << reserve_selection_performance_data;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -2436,7 +2447,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Maximum Generalization Failures
+    // Maximum Selection Failures
     {
         element = document->NewElement("MaximumSelectionFailures");
         root_element->LinkEndChild(element);
@@ -2737,17 +2748,17 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve generation minimum generalization
+    // Reserve generation minimum selection
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationMinimumGeneralization");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationMinimumSelection");
 
         if(element)
         {
-            const std::string new_reserve_generation_minimum_generalization = element->GetText();
+            const std::string new_reserve_generation_minimum_selection = element->GetText();
 
             try
             {
-                set_reserve_generation_minimum_generalization(new_reserve_generation_minimum_generalization != "0");
+                set_reserve_generation_minimum_selection(new_reserve_generation_minimum_selection != "0");
             }
             catch(const std::logic_error& e)
             {
@@ -2796,7 +2807,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
@@ -2815,15 +2826,15 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve selection performance data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceData");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
 
         if(element)
         {
-            const std::string new_reserve_generalization_performance_data = element->GetText();
+            const std::string new_reserve_selection_performance_data = element->GetText();
 
             try
             {
-                set_reserve_generalization_performance_data(new_reserve_generalization_performance_data != "0");
+                set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
             }
             catch(const std::logic_error& e)
             {
@@ -2984,7 +2995,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Maximum generalization failures
+    // Maximum selection failures
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
 
@@ -3071,10 +3082,10 @@ std::string GeneticAlgorithm::GeneticAlgorithmResults::to_string(void) const
 
     // Selection performance history
 
-    if(!generalization_performance_data.empty())
+    if(!selection_performance_data.empty())
     {
         buffer << "% Selection performance history:\n"
-               << generalization_performance_data.to_row_matrix() << "\n";
+               << selection_performance_data.to_row_matrix() << "\n";
     }
 
     // Generation optimum performance history
@@ -3085,12 +3096,12 @@ std::string GeneticAlgorithm::GeneticAlgorithmResults::to_string(void) const
                << generation_optimum_performance_history.to_string() << "\n";
     }
 
-    // Generation minimum generalization history
+    // Generation minimum selection history
 
-    if(!generation_minimum_generalization_history.empty())
+    if(!generation_minimum_selection_history.empty())
     {
-        buffer << "% Generation minimum generalization history:\n"
-               << generation_minimum_generalization_history.to_string() << "\n";
+        buffer << "% Generation minimum selection history:\n"
+               << generation_minimum_selection_history.to_string() << "\n";
     }
 
     // Generation mean history
@@ -3124,10 +3135,10 @@ std::string GeneticAlgorithm::GeneticAlgorithmResults::to_string(void) const
 
     // Optimum selection performance
 
-    if (final_generalization_performance != 0)
+    if (final_selection_performance != 0)
     {
         buffer << "% Optimum selection performance:\n"
-               << final_generalization_performance << "\n";
+               << final_selection_performance << "\n";
     }
 
     // Final performance

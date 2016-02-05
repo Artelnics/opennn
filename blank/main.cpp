@@ -28,21 +28,21 @@ using namespace OpenNN;
 
 int main(void)
 {
-   try
-   {
-      std::cout << "OpenNN. Blank Application." << std::endl;
+    try
+    {
+        std::cout << "OpenNN. Blank Application." << std::endl;
 
-      srand((unsigned)time(NULL));
+        srand((unsigned)time(NULL));
 
-      return(0);
-   }
+        return(0);
+    }
 
-   catch(std::exception& e)
-   {
-      std::cout << e.what() << std::endl;
+    catch(std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
 
-      return(1);
-   }
+        return(1);
+    }
 }  
 
 

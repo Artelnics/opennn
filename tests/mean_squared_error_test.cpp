@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M E A N   S Q U A R E D   E R R O R   T E S T   C L A S S                                                  */
 /*                                                                                                              */
@@ -140,7 +140,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
    nn.set(3, 4, 2);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 3, 2);
+   ds.set(3, 2, 5);
    mse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -159,7 +159,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
    nn.set(multilayer_perceptron_architecture);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 2, 3);
+   ds.set(2, 3, 5);
    mse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -188,7 +188,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
    nn.set(3, 4, 2);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 3, 2);
+   ds.set(3, 2, 5);
    mse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -203,7 +203,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
    nn.initialize_parameters(1.0);
    parameters = nn.arrange_parameters();
 
-   ds.set(2, 1, 1);
+   ds.set(1, 1, 2);
    ds.initialize_data(1.0);
 
    gradient = mse.calculate_gradient();
@@ -223,9 +223,9 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_generalization_performance(void)   
+void MeanSquaredErrorTest::test_calculate_selection_performance(void)   
 {
-   message += "test_calculate_generalization_performance\n";
+   message += "test_calculate_selection_performance\n";
 
    NeuralNetwork nn(1, 1, 1);
 
@@ -233,15 +233,15 @@ void MeanSquaredErrorTest::test_calculate_generalization_performance(void)
 
    DataSet ds(1, 1, 1);
 
-   ds.get_instances_pointer()->set_generalization();
+   ds.get_instances_pointer()->set_selection();
 
    ds.initialize_data(0.0);
 
    MeanSquaredError mse(&nn, &ds);  
 
-   double generalization_performance = mse.calculate_generalization_performance();
+   double selection_performance = mse.calculate_selection_performance();
 
-   assert_true(generalization_performance == 0.0, LOG);
+   assert_true(selection_performance == 0.0, LOG);
 }
 
 
@@ -266,7 +266,7 @@ void MeanSquaredErrorTest::test_calculate_terms(void)
    nn.set(2, 2);
    nn.randomize_parameters_normal();
 
-   ds.set(3, 2, 2);
+   ds.set(2, 2, 3);
    ds.randomize_data_normal();
 
    objective = mse.calculate_performance();
@@ -318,7 +318,7 @@ void MeanSquaredErrorTest::test_calculate_terms_Jacobian(void)
    nn.set(3, 4, 2);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 3, 2);
+   ds.set(3, 2, 5);
    mse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -338,7 +338,7 @@ void MeanSquaredErrorTest::test_calculate_terms_Jacobian(void)
    nn.set(multilayer_perceptron_architecture);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 2, 2);
+   ds.set(2, 2, 5);
    mse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
@@ -427,7 +427,7 @@ void MeanSquaredErrorTest::run_test_case(void)
    // Objective methods
 
    test_calculate_performance();   
-   test_calculate_generalization_performance();
+   test_calculate_selection_performance();
 
    test_calculate_gradient();
 

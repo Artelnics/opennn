@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N O R M A L I Z E D   S Q U A R E D   E R R O R   C L A S S                                                */
 /*                                                                                                              */
@@ -102,6 +102,11 @@ NormalizedSquaredError::~NormalizedSquaredError(void)
 
 double NormalizedSquaredError::calculate_normalization_coefficient(const Matrix<double>& target_data, const Vector<double>& target_data_mean) const
 {
+    std::cout << "Target data:\n" << target_data << std::endl;
+    std::cout << "Target data mean:\n" << target_data_mean << std::endl;
+    std::cout << "Coeff:\n" << target_data.calculate_sum_squared_error(target_data_mean) << std::endl;
+
+
    return(target_data.calculate_sum_squared_error(target_data_mean));
 }
 
@@ -257,11 +262,6 @@ double NormalizedSquaredError::calculate_performance(void) const
    {
        training_index = training_indices[i];
 
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
-
       // Input vector
 
       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
@@ -289,7 +289,8 @@ double NormalizedSquaredError::calculate_performance(void) const
 
       buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
 		     << "double calculate_performance(void) const method.\n"
-             << "Normalization coefficient is zero.\n";
+             << "Normalization coefficient is zero.\n"
+             << "Unuse constant target variables or choose another error functional. ";
 
       throw std::logic_error(buffer.str());
    }
@@ -355,8 +356,6 @@ double NormalizedSquaredError::calculate_performance(const Vector<double>& param
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    const Vector<double> training_target_data_mean = data_set_pointer->calculate_training_target_data_mean();
 
    // Normalized squared error stuff
@@ -375,11 +374,6 @@ double NormalizedSquaredError::calculate_performance(const Vector<double>& param
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       // Input vector
 
@@ -408,7 +402,8 @@ double NormalizedSquaredError::calculate_performance(const Vector<double>& param
 
       buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
              << "double calculate_performance(const Vector<double>&) const method.\n"
-             << "Normalization coefficient is zero.\n";
+             << "Normalization coefficient is zero.\n"
+             << "Unuse constant target variables or choose another error functional. ";
 
       throw std::logic_error(buffer.str());
    }
@@ -417,9 +412,9 @@ double NormalizedSquaredError::calculate_performance(const Vector<double>& param
 }
 
 
-// double calculate_generalization_performance(void) const method
+// double calculate_selection_performance(void) const method
 
-double NormalizedSquaredError::calculate_generalization_performance(void) const
+double NormalizedSquaredError::calculate_selection_performance(void) const
 {
    // Control sentence
 
@@ -440,25 +435,23 @@ double NormalizedSquaredError::calculate_generalization_performance(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t generalization_instances_number = instances.count_generalization_instances_number();
+   const size_t selection_instances_number = instances.count_selection_instances_number();
 
-   if(generalization_instances_number < 2)
+   if(selection_instances_number < 2)
    {
       return(0.0);
    }
    
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-   size_t generalization_index;
+   size_t selection_index;
 
    const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
-   const Vector<double> generalization_target_data_mean = data_set_pointer->calculate_generalization_target_data_mean();
+   const Vector<double> selection_target_data_mean = data_set_pointer->calculate_selection_target_data_mean();
 
    Vector<double> inputs(inputs_number);
    Vector<double> outputs(outputs_number);
@@ -469,20 +462,15 @@ double NormalizedSquaredError::calculate_generalization_performance(void) const
 
    int i = 0;
 
-   #pragma omp parallel for private(i, generalization_index, inputs, outputs, targets) reduction(+ : sum_squared_error, normalization_coefficient)
+   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : sum_squared_error, normalization_coefficient)
 
-   for(i = 0; i < (int)generalization_instances_number; i++)
+   for(i = 0; i < (int)selection_instances_number; i++)
    {
-       generalization_index = generalization_indices[i];
-
-       if(missing_values.has_missing_values(generalization_index))
-       {
-           continue;
-       }
+       selection_index = selection_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(generalization_index, inputs_indices);
+      inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
       // Output vector
 
@@ -490,7 +478,7 @@ double NormalizedSquaredError::calculate_generalization_performance(void) const
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(generalization_index, targets_indices);
+      targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
       // Sum squared error
 
@@ -498,7 +486,7 @@ double NormalizedSquaredError::calculate_generalization_performance(void) const
 
 	  // Normalization coefficient
 
-	  normalization_coefficient += targets.calculate_sum_squared_error(generalization_target_data_mean);
+	  normalization_coefficient += targets.calculate_sum_squared_error(selection_target_data_mean);
    }
 
    if(normalization_coefficient < 1.0e-99)
@@ -506,8 +494,9 @@ double NormalizedSquaredError::calculate_generalization_performance(void) const
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-		     << "double calculate_generalization_performance(void) const method.\n"
-             << "Normalization coefficient is zero.\n";
+		     << "double calculate_selection_performance(void) const method.\n"
+             << "Normalization coefficient is zero.\n"
+             << "Unuse constant target variables or choose another error functional. ";
 
       throw std::logic_error(buffer.str());
    }
@@ -570,8 +559,6 @@ Vector<double> NormalizedSquaredError::calculate_gradient(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    const Vector<double> training_target_data_mean = data_set_pointer->calculate_training_target_data_mean();
 
    Vector<double> inputs(inputs_number);
@@ -600,11 +587,6 @@ Vector<double> NormalizedSquaredError::calculate_gradient(void) const
    for(i = 0; i < (int)training_instances_number; i++)
    {
        training_index = training_indices[i];
-
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
 
       // Data set
 
@@ -656,7 +638,8 @@ Vector<double> NormalizedSquaredError::calculate_gradient(void) const
 
       buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
              << "Vector<double> calculate_gradient(void) const method.\n"
-             << "Normalization coefficient is zero.\n";
+             << "Normalization coefficient is zero.\n"
+             << "Unuse constant target variables or choose another error functional. ";
 
       throw std::logic_error(buffer.str());
    }
@@ -716,8 +699,6 @@ Vector<double> NormalizedSquaredError::calculate_terms(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    const Vector<double> training_target_data_mean = data_set_pointer->calculate_training_target_data_mean();
 
    // Calculate
@@ -738,12 +719,7 @@ Vector<double> NormalizedSquaredError::calculate_terms(void) const
    {
        training_index = training_indices[i];
 
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
-
-      // Input vector
+       // Input vector
 
       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
@@ -770,7 +746,8 @@ Vector<double> NormalizedSquaredError::calculate_terms(void) const
 
       buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
              << "Vector<double> calculate_terms(void) const method.\n"
-             << "Normalization coefficient is zero.\n";
+             << "Normalization coefficient is zero.\n"
+             << "Unuse constant target variables or choose another error functional. ";
 
       throw std::logic_error(buffer.str());
    }
@@ -883,8 +860,6 @@ Matrix<double> NormalizedSquaredError::calculate_terms_Jacobian(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    const Vector<double> training_target_data_mean = data_set_pointer->calculate_training_target_data_mean();
 
    Vector<double> inputs(inputs_number);
@@ -915,12 +890,7 @@ Matrix<double> NormalizedSquaredError::calculate_terms_Jacobian(void) const
    {
        training_index = training_indices[i];
 
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
-
-      // Data set
+       // Data set
 
       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
@@ -993,7 +963,8 @@ Matrix<double> NormalizedSquaredError::calculate_terms_Jacobian(void) const
 
       buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
              << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
-             << "Normalization coefficient is zero.\n";
+             << "Normalization coefficient is zero.\n"
+             << "Unuse constant target variables or choose another error functional. ";
 
       throw std::logic_error(buffer.str());
    }
@@ -1055,8 +1026,6 @@ Vector<double> NormalizedSquaredError::calculate_squared_errors(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
    // Calculate
 
    Vector<double> squared_errors(training_instances_number);
@@ -1075,12 +1044,7 @@ Vector<double> NormalizedSquaredError::calculate_squared_errors(void) const
    {
        training_index = training_indices[i];
 
-       if(missing_values.has_missing_values(training_index))
-       {
-           continue;
-       }
-
-      // Input vector
+       // Input vector
 
       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
@@ -1225,7 +1189,7 @@ std::string NormalizedSquaredError::write_information(void) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

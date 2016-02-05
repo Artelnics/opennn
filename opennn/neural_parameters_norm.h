@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E U R A L   P A R A M E T E R S   N O R M   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
@@ -84,7 +84,7 @@ public:
    Vector<double> calculate_gradient(const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
-//   double calculate_generalization_performance(void) const;
+//   double calculate_selection_performance(void) const;
 
    std::string write_performance_term_type(void) const;
 
@@ -110,7 +110,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

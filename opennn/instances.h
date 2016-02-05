@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N S T A N C E S   C L A S S   H E A D E R                                                                */
 /*                                                                                                              */ 
@@ -41,7 +41,7 @@ namespace OpenNN
 {
 
 /// This class is used to store information about the instances of a data set. 
-/// Instances in a data set can be used for training, generalization and testing.    
+/// Instances in a data set can be used for training, selection and testing.    
 
 class Instances
 {
@@ -81,12 +81,12 @@ public:
    // ENUMERATIONS
 
    /// This enumeration represents the possible uses of an instance
-   /// (no use, training, generalization or testing).
+   /// (no use, training, selection or testing).
 
-   enum Use{Unused, Training, Generalization, Testing};
+   enum Use{Unused, Training, Selection, Testing};
 
    /// This is an enumeration of the available methods for dividing the instances
-   /// into training, generalization and testing subsets.
+   /// into training, selection and testing subsets.
 
    enum SplittingMethod{Sequential, Random};
 
@@ -94,7 +94,7 @@ public:
 
    ///
    /// This structure contains the information of a single instance,
-   /// which is only its use (training, generalization, testing or unused).
+   /// which is only its use (training, selection, testing or unused).
    ///
 
    struct Item
@@ -119,7 +119,7 @@ public:
        {
        }
 
-       /// Use of an instance (training, generalization, testing or unused).
+       /// Use of an instance (training, selection, testing or unused).
 
        Use use;
    };
@@ -151,7 +151,7 @@ public:
    bool is_unused(const size_t&) const;
 
    size_t count_training_instances_number(void) const;
-   size_t count_generalization_instances_number(void) const;
+   size_t count_selection_instances_number(void) const;
    size_t count_testing_instances_number(void) const;
    size_t count_unused_instances_number(void) const;
    size_t count_used_instances_number(void) const;
@@ -161,7 +161,7 @@ public:
    Vector<size_t> arrange_used_indices(void)  const;
    Vector<size_t> arrange_unused_indices(void) const;
    Vector<size_t> arrange_training_indices(void) const;
-   Vector<size_t> arrange_generalization_indices(void) const;
+   Vector<size_t> arrange_selection_indices(void) const;
    Vector<size_t> arrange_testing_indices(void) const;
 
    const bool& get_display(void) const;
@@ -188,18 +188,18 @@ public:
 
    void set_unused(const Vector<size_t>&);
    void set_training(void);
-   void set_generalization(void);
+   void set_selection(void);
    void set_testing(void);
 
    void set_display(const bool&);
 
    // Splitting methods
 
-   void split_sequential_indices(const double& training_ratio = 0.6, const double& generalization_ratio = 0.2, const double& testing_ratio = 0.2);
+   void split_sequential_indices(const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2);
 
-   void split_random_indices(const double& training_ratio = 0.6, const double& generalization_ratio = 0.2, const double& testing_ratio = 0.2);
+   void split_random_indices(const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2);
 
-   void split_instances(const SplittingMethod& splitting_method = Random, const double& training_ratio = 0.6, const double& generalization_ratio = 0.2, const double& testing_ratio = 0.2);
+   void split_instances(const SplittingMethod& splitting_method = Random, const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2);
 
    Vector<double> calculate_uses_percentage(void) const;
 
@@ -218,7 +218,7 @@ private:
 
    // MEMBERS
 
-   /// Uses of instances (none, training, generalization or testing).
+   /// Uses of instances (none, training, selection or testing).
 
    Vector<Item> items;
 
@@ -232,7 +232,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

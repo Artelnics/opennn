@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   N E W T O N   M E T H O D   T E S T   C L A S S                                                            */
 /*                                                                                                              */ 
@@ -60,7 +60,7 @@ void NewtonMethodTest::test_calculate_gradient_descent_training_direction(void)
 {
    message += "test_calculate_gradient_descent_training_direction\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
 
    NeuralNetwork nn(1, 1);
    
@@ -90,7 +90,7 @@ void NewtonMethodTest::test_perform_training(void)
 {
    message += "test_perform_training\n";
 
-   DataSet ds(2, 1, 1);
+   DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
 
    NeuralNetwork nn(1, 1);
@@ -235,7 +235,7 @@ void NewtonMethodTest::test_resize_training_history(void)
    assert_true(nmtr.gradient_history.size() == 1, LOG);
    assert_true(nmtr.gradient_norm_history.size() == 1, LOG);
    assert_true(nmtr.inverse_Hessian_history.size() == 1, LOG);
-   assert_true(nmtr.generalization_performance_history.size() == 1, LOG);  
+   assert_true(nmtr.selection_performance_history.size() == 1, LOG);  
 
    assert_true(nmtr.training_direction_history.size() == 1, LOG);
    assert_true(nmtr.training_rate_history.size() == 1, LOG);
@@ -261,7 +261,7 @@ void NewtonMethodTest::test_set_reserve_all_training_history(void)
    assert_true(nm.get_reserve_training_direction_history() == true, LOG);
    assert_true(nm.get_reserve_training_rate_history() == true, LOG);
    assert_true(nm.get_reserve_elapsed_time_history() == true, LOG);
-   assert_true(nm.get_reserve_generalization_performance_history() == true, LOG);
+   assert_true(nm.get_reserve_selection_performance_history() == true, LOG);
 }
 
 

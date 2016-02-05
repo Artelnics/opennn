@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   D A T A   S E T   C L A S S   H E A D E R                                                                  */
 /*                                                                                                              */ 
@@ -129,6 +129,7 @@ public:
    std::string write_learning_task(void) const;
 
    const std::string& get_data_file_name(void) const;
+   const std::string& get_input_data_file_name(void) const;
 
    const bool& get_header_line(void) const;
    const bool& get_rows_label(void) const;
@@ -165,11 +166,11 @@ public:
    bool empty(void) const;
 
    const Matrix<double>& get_data(void) const;
-
+   const Matrix<double> get_input_data(void) const;
    const Matrix<double>& get_time_series_data(void) const;
 
    Matrix<double> arrange_training_data(void) const;
-   Matrix<double> arrange_generalization_data(void) const;
+   Matrix<double> arrange_selection_data(void) const;
    Matrix<double> arrange_testing_data(void) const;
 
    Matrix<double> arrange_input_data(void) const;
@@ -177,8 +178,8 @@ public:
 
    Matrix<double> arrange_training_input_data(void) const;
    Matrix<double> arrange_training_target_data(void) const;  
-   Matrix<double> get_generalization_input_data(void) const;
-   Matrix<double> get_generalization_target_data(void) const;
+   Matrix<double> get_selection_input_data(void) const;
+   Matrix<double> get_selection_target_data(void) const;
    Matrix<double> arrange_testing_input_data(void) const;
    Matrix<double> arrange_testing_target_data(void) const;
 
@@ -210,6 +211,7 @@ public:
    void set_variables_number(const size_t&);
 
    void set_data_file_name(const std::string&);
+   void set_input_data_file_name(const std::string&);
 
    void set_file_type(const FileType&);
    void set_file_type(const std::string&);
@@ -272,18 +274,18 @@ public:
    Matrix<double> calculate_data_shape_parameters_matrix(void) const;
 
    Vector< Statistics<double> > calculate_training_instances_statistics(void) const;
-   Vector< Statistics<double> > calculate_generalization_instances_statistics(void) const;
+   Vector< Statistics<double> > calculate_selection_instances_statistics(void) const;
    Vector< Statistics<double> > calculate_testing_instances_statistics(void) const;
 
    Vector< Vector<double> > calculate_training_instances_shape_parameters(void) const;
-   Vector< Vector<double> > calculate_generalization_instances_shape_parameters(void) const;
+   Vector< Vector<double> > calculate_selection_instances_shape_parameters(void) const;
    Vector< Vector<double> > calculate_testing_instances_shape_parameters(void) const;
 
    Vector< Statistics<double> > calculate_inputs_statistics(void) const;
    Vector< Statistics<double> > calculate_targets_statistics(void) const;
 
    Vector<double> calculate_training_target_data_mean(void) const;
-   Vector<double> calculate_generalization_target_data_mean(void) const;
+   Vector<double> calculate_selection_target_data_mean(void) const;
    Vector<double> calculate_testing_target_data_mean(void) const;
 
    // Correlation methods
@@ -293,6 +295,7 @@ public:
    // Histrogram methods
 
    Vector< Histogram<double> > calculate_data_histograms(const size_t& = 10) const;
+
    Vector< Histogram<double> > calculate_targets_histograms(const size_t& = 10) const;
 
    // Box and whiskers
@@ -410,6 +413,7 @@ public:
 
    void load_data(void);
    void load_data_binary(void);
+   void load_input_data_binary(void);
    void load_time_series_data_binary(void);
 
    Vector<std::string> arrange_time_series_names(const Vector<std::string>&) const;
@@ -431,6 +435,7 @@ public:
 
    void scrub_missing_values_unuse(void);
    void scrub_missing_values_mean(void);
+   void scrub_input_missing_values_mean(void);
    void scrub_missing_values(void);
 
    // String utilities
@@ -476,6 +481,10 @@ private:
    /// Data file name.
 
    std::string data_file_name;
+
+   /// Input data file name
+
+   std::string input_data_file_name;
 
    /// Header which contains variables name.
 
@@ -523,6 +532,12 @@ private:
 
    Matrix<double> data;
 
+   /// Inputs data matrix.
+   /// The number of rows is the number of instances for which the ouputs are to be calculated.
+   /// The number of columns is the number of inputs.
+
+   Matrix<double> input_data;
+
    /// Time series data matrix.
    /// The number of rows is the number of instances before time series changes.
    /// The number of columns is the number of variables before tim series changes.
@@ -533,7 +548,7 @@ private:
 
    Variables variables;
 
-   /// Instances  object (training, generalization and testing instances).
+   /// Instances  object (training, selection and testing instances).
 
    Instances instances;
 
@@ -567,7 +582,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

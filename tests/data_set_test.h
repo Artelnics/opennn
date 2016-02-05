@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   D A T A   S E T   T E S T   C L A S S   H E A D E R                                                        */
 /*                                                                                                              */ 
@@ -63,7 +63,7 @@ public:
    void test_get_data(void);
 
    void test_arrange_training_data(void);
-   void test_arrange_generalization_data(void);
+   void test_arrange_selection_data(void);
    void test_arrange_testing_data(void);
 
    void test_arrange_input_data(void);
@@ -91,7 +91,7 @@ public:
    void test_set_instance(void);
 
    void test_set_training_instance(void);
-   void test_set_generalization_instance(void);
+   void test_set_selection_instance(void);
    void test_set_testing_instance(void);
 
    void test_set_input_instance(void);
@@ -100,8 +100,8 @@ public:
    void test_set_training_input_instance(void);
    void test_set_training_target_instance(void);
 
-   void test_set_generalization_input_instance(void); 
-   void test_set_generalization_target_instance(void);
+   void test_set_selection_input_instance(void); 
+   void test_set_selection_target_instance(void);
 
    void test_set_testing_input_instance(void);
    void test_set_testing_target_instance(void);
@@ -121,9 +121,10 @@ public:
    // Statistics methods
 
    void test_calculate_data_statistics(void);
+   void test_calculate_data_statistics_missing_values(void);
 
    void test_calculate_training_instances_statistics(void);
-   void test_calculate_generalization_instances_statistics(void);
+   void test_calculate_selection_instances_statistics(void);
    void test_calculate_testing_instances_statistics(void);
 
    void test_calculate_input_variables_statistics(void);
@@ -226,9 +227,9 @@ public:
    void test_print_training_instances_statistics(void);
    void test_save_training_instances_statistics(void);
 
-   void test_get_generalization_instances_statistics(void);
-   void test_print_generalization_instances_statistics(void);
-   void test_save_generalization_instances_statistics(void);
+   void test_get_selection_instances_statistics(void);
+   void test_print_selection_instances_statistics(void);
+   void test_save_selection_instances_statistics(void);
 
    void test_get_testing_instances_statistics(void);
    void test_print_testing_instances_statistics(void);

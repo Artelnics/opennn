@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   S I M U L A T E D   A N N E A L I N G   O R D E R   C L A S S   H E A D E R                                */
 /*                                                                                                              */
@@ -110,7 +110,7 @@ public:
 
     // Order selection methods
 
-    size_t get_optimal_generalization_performance_index(void) const;
+    size_t get_optimal_selection_performance_index(void) const;
 
     SimulatedAnnealingOrderResults* perform_order_selection(void);
 
@@ -150,7 +150,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

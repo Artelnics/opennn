@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   D A T A   S E T   T E S T   C L A S S                                                                      */
 /*                                                                                                              */ 
@@ -71,11 +71,7 @@ void DataSetTest::test_constructor(void)
 
    // File constructor
 
-#ifdef __APPLE__
-   const std::string file_name = "../../../../data/data_set.xml";
-#else
    const std::string file_name = "../data/data_set.xml";
-#endif
 
    ds1.save(file_name);
 
@@ -187,9 +183,9 @@ void DataSetTest::test_arrange_training_data(void)
 }
 
 
-void DataSetTest::test_arrange_generalization_data(void)
+void DataSetTest::test_arrange_selection_data(void)
 {
-   message += "test_arrange_generalization_data\n";
+   message += "test_arrange_selection_data\n";
 }
 
 
@@ -430,6 +426,43 @@ void DataSetTest::test_calculate_data_statistics(void)
 }
 
 
+void DataSetTest::test_calculate_data_statistics_missing_values(void)
+{
+    message += "test_calculate_data_statistics_missing_values\n";
+
+    const std::string data_file_name = "../data/data.dat";
+
+    std::ofstream file;
+
+    DataSet ds;
+
+    ds.set_data_file_name(data_file_name);
+
+      ds.set_file_type("dat");
+
+    Matrix<double> data;
+
+    std::string data_string;
+
+    ds.set_separator("Space");
+    ds.set_missing_values_label("?");
+
+    data_string = "-1000 ? 0 \n 3 4 ? \n ? 4 1";
+
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
+
+    ds.load_data();
+
+    data = ds.get_data();
+
+    assert_true(ds.calculate_data_statistics_matrix()(0, 0) == -1000, LOG);
+    assert_true(ds.calculate_data_statistics_matrix()(1, 0) == 4, LOG);
+    assert_true(ds.calculate_data_statistics_matrix()(2, 0) == 0, LOG);
+}
+
+
 void DataSetTest::test_calculate_training_instances_statistics(void)
 {
    message += "test_calculate_training_instances_statistics\n";
@@ -453,12 +486,12 @@ void DataSetTest::test_calculate_training_instances_statistics(void)
 }
 
 
-void DataSetTest::test_calculate_generalization_instances_statistics(void)
+void DataSetTest::test_calculate_selection_instances_statistics(void)
 {
-   message += "test_calculate_generalization_instances_statistics\n";
+   message += "test_calculate_selection_instances_statistics\n";
 
    DataSet ds;
-   Vector< Statistics<double> > generalization_instances_statistics;
+   Vector< Statistics<double> > selection_instances_statistics;
 
    Instances* instances_pointer;
 
@@ -467,11 +500,11 @@ void DataSetTest::test_calculate_generalization_instances_statistics(void)
    ds.set(2,2,2);
 
    instances_pointer = ds.get_instances_pointer();
-   instances_pointer->set_generalization();
+   instances_pointer->set_selection();
 
    ds.initialize_data(0.0);
 
-   generalization_instances_statistics = ds.calculate_generalization_instances_statistics();
+   selection_instances_statistics = ds.calculate_selection_instances_statistics();
 }
 
 
@@ -517,12 +550,38 @@ void DataSetTest::test_calculate_linear_correlations(void)
 void DataSetTest::test_calculate_autocorrelation(void)
 {
     message += "test_calculate_autocorrelation\n";
+
+    DataSet ds;
+
+    Matrix<double> autocorrelation;
+
+    ds.set(20, 1, 1);
+
+    ds.randomize_data_normal();
+
+    autocorrelation = ds.calculate_autocorrelation();
+
+    assert_true(autocorrelation.get_columns_number() == 10, LOG);
+    assert_true(autocorrelation.get_rows_number() == 2, LOG);
 }
 
 
 void DataSetTest::test_calculate_cross_correlation(void)
 {
     message += "test_calculate_cross_correlation";
+
+    DataSet ds;
+
+    Matrix< Vector<double> > cross_correlation;
+
+    ds.set(20, 5, 1);
+
+    ds.randomize_data_normal();
+
+    cross_correlation = ds.calculate_cross_correlation();
+
+    assert_true(cross_correlation.get_columns_number() == 6, LOG);
+    assert_true(cross_correlation.get_rows_number() == 6, LOG);
 }
 
 
@@ -907,7 +966,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     message += "test_balance_binary_target_distribution\n";
 
     // Test
-
+/*
     DataSet ds(22, 2, 1);
     ds.initialize_data(1.0);
 
@@ -1026,7 +1085,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     }
 
     // Test
-
+    {
     DataSet ds2(9, 1, 99);
 
     Matrix<double> data1(9,10);
@@ -1046,6 +1105,97 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
 
     assert_true(ds2.calculate_target_distribution()[0] == ds2.calculate_target_distribution()[1], LOG);
     assert_true(ds2.calculate_target_distribution()[0] == 9, LOG);
+    }
+*/
+    //Test
+    {
+    DataSet ds(4,1,1);
+
+    const std::string data_file_name = "../data/data.dat";
+
+    ds.set_data_file_name(data_file_name);
+    ds.set_header_line(false);
+    ds.set_separator("Comma");
+    ds.set_file_type("dat");
+    ds.set_missing_values_label("NaN");
+
+    const std::string data_string =
+    "5.1,3.5,1.0\n"
+    "7.0,3.2,NaN\n"
+    "7.0,3.2,0.0\n"
+    "6.3,3.3,0.0";
+
+    std::ofstream file;
+
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
+
+    ds.load_data();
+
+    ds.scrub_missing_values_unuse();
+
+    ds.balance_binary_targets_distribution();
+
+    Vector<size_t> target_distribution = ds.calculate_target_distribution();
+
+    assert_true(target_distribution[0] == target_distribution[1], LOG);
+    assert_true(ds.get_instances().arrange_used_indices().size() == 2, LOG);
+    assert_true(ds.get_instances().arrange_unused_indices().size() == 2, LOG);
+    }
+
+    //Test
+    {
+    DataSet ds(16,1,1);
+
+    const std::string data_file_name = "../data/data.dat";
+
+    ds.set_data_file_name(data_file_name);
+    ds.set_header_line(false);
+    ds.set_separator("Comma");
+    ds.set_file_type("dat");
+    ds.set_missing_values_label("NaN");
+
+    const std::string data_string =
+    "5.1,3.5,1.0\n"
+    "7.0,3.2,1.0\n"
+    "7.0,3.2,0.0\n"
+    "6.3,3.3,0.0\n"
+    "5.1,3.5,1.0\n"
+    "7.0,3.2,0.0\n"
+    "7.0,3.2,NaN\n"
+    "6.3,3.3,NaN\n"
+    "5.1,3.5,NaN\n"
+    "7.0,3.2,NaN\n"
+    "7.0,3.2,NaN\n"
+    "6.3,3.3,NaN\n"
+    "5.1,3.5,NaN\n"
+    "7.0,3.2,NaN\n"
+    "7.0,3.2,NaN\n"
+    "6.3,3.3,NaN\n"
+    "5.1,3.5,1.0\n"
+    "7.0,3.2,NaN\n"
+    "7.0,3.2,NaN\n"
+    "6.3,3.3,NaN\n";
+
+    std::ofstream file;
+
+    file.open(data_file_name.c_str());
+    file << data_string;
+    file.close();
+
+    ds.load_data();
+
+    ds.scrub_missing_values_unuse();
+
+    ds.balance_binary_targets_distribution();
+
+    Vector<size_t> target_distribution = ds.calculate_target_distribution();
+
+    std::cout << "Final distribution: " << target_distribution << std::endl;
+
+    assert_true(target_distribution[0] == target_distribution[1], LOG);
+    }
 }
 
 
@@ -1520,11 +1670,7 @@ void DataSetTest::test_save(void)
 {
    message += "test_save\n";
 
-#ifdef __APPLE__
-   const std::string file_name = "../../../../data/data_set.xml";
-#else
-   const std::string file_name = "../data/data_set.xml";
-#endif
+   std::string file_name = "../data/data_set.xml";
 
    DataSet ds;
 
@@ -1538,17 +1684,8 @@ void DataSetTest::test_load(void)
 {
    message += "test_load\n";
 
-#ifdef __APPLE__
-   const std::string file_name = "../../../../data/data_set.xml";
-#else
-   const std::string file_name = "../data/data_set.xml";
-#endif
-
-#ifdef __APPLE__
-   const std::string data_file_name = "../../../../data/data.dat";
-#else
-   const std::string data_file_name = "../data/data.dat";
-#endif
+   std::string file_name = "../data/data_set.xml";
+   std::string data_file_name = "../data/data.dat";
 
    DataSet ds;
    DataSet ds_copy;
@@ -1608,11 +1745,7 @@ void DataSetTest::test_save_data(void)
 {
    message += "test_save_data\n";
 
-#ifdef __APPLE__
-   const std::string data_file_name = "../../../../data/data.dat";
-#else
-   const std::string data_file_name = "../data/data.dat";
-#endif
+   std::string data_file_name = "../data/data.dat";
 
    DataSet ds(2,2,2);
 
@@ -1628,11 +1761,7 @@ void DataSetTest::test_load_data(void)
 {
    message += "test_load_data\n";
 
-#ifdef __APPLE__
-   const std::string data_file_name = "../../../../data/data.dat";
-#else
    const std::string data_file_name = "../data/data.dat";
-#endif
 
    std::ofstream file;
 
@@ -1650,6 +1779,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set();
    ds.set_data_file_name(data_file_name);
+   ds.set_file_type("dat");
 
    ds.set_display(false);
 
@@ -1665,6 +1795,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set(2, 2, 2);
    ds.set_data_file_name(data_file_name);
+   ds.set_file_type("dat");
 
    ds.initialize_data(0.0);
 
@@ -1681,6 +1812,7 @@ void DataSetTest::test_load_data(void)
    // Test
 
    ds.set_separator("Space");
+   ds.set_file_type("dat");
 
    data_string = "\n\t\n   1 \t 2   \n\n\n   3 \t 4   \n\t\n";
 
@@ -1706,6 +1838,7 @@ void DataSetTest::test_load_data(void)
    // Test
 
    ds.set_separator("Tab");
+   ds.set_file_type("dat");
 
    data_string = "\n\n\n1 \t 2\n3 \t 4\n\n\n";
 
@@ -1726,6 +1859,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_header_line(true);
    ds.set_separator("Space");
+   ds.set_file_type("dat");
 
    data_string = "\n"
                  "x y\n"
@@ -1757,6 +1891,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_header_line(true);
    ds.set_separator("Comma");
+   ds.set_file_type("dat");
 
    data_string = "\tx \t ,\t y \n"
                  "\t1 \t, \t 2 \n"
@@ -1782,6 +1917,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_header_line(true);
    ds.set_separator("Comma");
+   ds.set_file_type("dat");
 
    data_string = "x , y\n"
                  "1 , 2\n"
@@ -1807,6 +1943,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_header_line(false);
    ds.set_separator("Comma");
+   ds.set_file_type("dat");
 
    data_string =
    "5.1,3.5,1.4,0.2,Iris-setosa\n"
@@ -1827,6 +1964,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_header_line(false);
    ds.set_separator("Comma");
+   ds.set_file_type("dat");
 
    data_string =
    "5.1,3.5,1.4,0.2,Iris-setosa\n"
@@ -1866,6 +2004,7 @@ void DataSetTest::test_load_data(void)
    ds.set_header_line(true);
    ds.set_separator("Comma");
    ds.set_missing_values_label("NaN");
+   ds.set_file_type("dat");
 
    data_string =
    "sepal length,sepal width,petal length,petal width,class\n"
@@ -1923,6 +2062,7 @@ void DataSetTest::test_load_data(void)
    ds.set_header_line(false);
    ds.set_separator("Comma");
    ds.set_missing_values_label("NaN");
+   ds.set_file_type("dat");
 
    data_string =
    "0,0,0\n"
@@ -1942,6 +2082,7 @@ void DataSetTest::test_load_data(void)
    // Test
 
    ds.set_separator("Space");
+   ds.set_file_type("dat");
 
    data_string = "1 2\n3 4\n5 6\n";
 
@@ -1956,17 +2097,9 @@ void DataSetTest::test_load_data(void)
    variables_pointer->set_name(0, "x");
    variables_pointer->set_name(1, "y");
 
-#ifdef __APPLE__
-   ds.save("../../../../data/data_set.xml");
-#else
    ds.save("../data/data_set.xml");
-#endif
 
-#ifdef __APPLE__
-   ds.load("../../../../data/data_set.xml");
-#else
    ds.load("../data/data_set.xml");
-#endif
 
    assert_true(ds.get_variables().get_name(0) == "x", LOG);
    assert_true(ds.get_variables().get_name(1) == "y", LOG);
@@ -1975,6 +2108,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_header_line(false);
    ds.set_separator("Space");
+   ds.set_file_type("dat");
 
    data_string = "1 true\n"
                  "3 false\n"
@@ -2000,6 +2134,7 @@ void DataSetTest::test_load_data(void)
 
    ds.set_separator("Tab");
    ds.set_missing_values_label("NaN");
+   ds.set_file_type("dat");
 
    data_string =
    "f	52	1100	32	145490	4	no\n"
@@ -2066,21 +2201,21 @@ void DataSetTest::test_print_training_instances_statistics(void)
 }
 
 
-void DataSetTest::test_get_generalization_instances_statistics(void)
+void DataSetTest::test_get_selection_instances_statistics(void)
 {
-   message += "test_get_generalization_instances_statistics\n";
+   message += "test_get_selection_instances_statistics\n";
 }
 
 
-void DataSetTest::test_save_generalization_instances_statistics(void)
+void DataSetTest::test_save_selection_instances_statistics(void)
 {
-   message += "test_save_generalization_instances_statistics\n";
+   message += "test_save_selection_instances_statistics\n";
 }
 
 
-void DataSetTest::test_print_generalization_instances_statistics(void)
+void DataSetTest::test_print_selection_instances_statistics(void)
 {
-   message += "test_print_generalization_instances_statistics\n";
+   message += "test_print_selection_instances_statistics\n";
 }
 
 
@@ -2310,11 +2445,7 @@ void DataSetTest::test_scrub_missing_values(void)
 {
     message += "test_scrub_missing_values\n";
 
-#ifdef __APPLE__
-   const std::string data_file_name = "../../../../data/data.dat";
-#else
     const std::string data_file_name = "../data/data.dat";
-#endif
 
     std::ofstream file;
 
@@ -2334,6 +2465,7 @@ void DataSetTest::test_scrub_missing_values(void)
 
     ds.set_separator("Space");
     ds.set_missing_values_label("NaN");
+    ds.set_file_type("dat");
 
     mv->set_scrubbing_method("Unuse");
 
@@ -2361,6 +2493,7 @@ void DataSetTest::test_scrub_missing_values(void)
 
     ds.set_separator("Space");
     ds.set_missing_values_label("NaN");
+    ds.set_file_type("dat");
 
     data_string = "NaN 3   3\n"
                   "2   NaN 3\n"
@@ -2691,6 +2824,7 @@ void DataSetTest::run_test_case(void)
    message += "Running data set test case...\n";
 
    // Constructor and destructor methods
+
    test_constructor();
    test_destructor();
 
@@ -2712,7 +2846,7 @@ void DataSetTest::run_test_case(void)
    test_get_data();
 
    test_arrange_training_data();
-   test_arrange_generalization_data();
+   test_arrange_selection_data();
    test_arrange_testing_data();
 
    test_arrange_input_data();
@@ -2754,9 +2888,10 @@ void DataSetTest::run_test_case(void)
    // Statistics methods
 
    test_calculate_data_statistics();
+   test_calculate_data_statistics_missing_values();
 
    test_calculate_training_instances_statistics();
-   test_calculate_generalization_instances_statistics();
+   test_calculate_selection_instances_statistics();
    test_calculate_testing_instances_statistics();
 
    test_calculate_input_variables_statistics();
@@ -2765,8 +2900,6 @@ void DataSetTest::run_test_case(void)
    // Correlation methods
 
    test_calculate_linear_correlations();
-   test_calculate_autocorrelation();
-   test_calculate_cross_correlation();
 
    // Histrogram methods
 
@@ -2841,7 +2974,8 @@ void DataSetTest::run_test_case(void)
    test_print();
    test_save();
    test_load();
-
+*/
+/*
    test_print_data();
    test_save_data();
 
@@ -2854,9 +2988,9 @@ void DataSetTest::run_test_case(void)
    test_print_training_instances_statistics();
    test_save_training_instances_statistics();
 
-   test_get_generalization_instances_statistics();
-   test_print_generalization_instances_statistics();
-   test_save_generalization_instances_statistics();
+   test_get_selection_instances_statistics();
+   test_print_selection_instances_statistics();
+   test_save_selection_instances_statistics();
 
    test_get_testing_instances_statistics();
    test_print_testing_instances_statistics();
@@ -2865,7 +2999,8 @@ void DataSetTest::run_test_case(void)
    test_get_instances_statistics();
    test_print_instances_statistics();
    test_save_instances_statistics();
-
+*/
+/*
    test_convert_time_series();
    test_convert_autoassociation();
 

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
@@ -110,7 +110,7 @@ public:
 
       /// History of the selection performance over the training iterations.
 
-      Vector<double> generalization_performance_history;
+      Vector<double> selection_performance_history;
 
       /// History of the performance function gradient over the training iterations.
 
@@ -148,7 +148,7 @@ public:
 
       /// Final selection performance.
 
-      double final_generalization_performance;
+      double final_selection_performance;
 
       /// Final performance function gradient. 
 
@@ -207,7 +207,7 @@ public:
    const double& get_minimum_performance_increase(void) const;
    const double& get_performance_goal(void) const;
    const double& get_gradient_norm_goal(void) const;
-   const size_t& get_maximum_generalization_performance_decreases(void) const;
+   const size_t& get_maximum_selection_performance_decreases(void) const;
 
    const size_t& get_maximum_iterations_number(void) const;
    const double& get_maximum_time(void) const;
@@ -220,7 +220,7 @@ public:
    const bool& get_reserve_performance_history(void) const;
    const bool& get_reserve_gradient_history(void) const;
    const bool& get_reserve_gradient_norm_history(void) const;
-   const bool& get_reserve_generalization_performance_history(void) const;
+   const bool& get_reserve_selection_performance_history(void) const;
 
    const bool& get_reserve_training_direction_history(void) const;
    const bool& get_reserve_training_rate_history(void) const;
@@ -255,7 +255,7 @@ public:
    void set_minimum_performance_increase(const double&);
    void set_performance_goal(const double&);
    void set_gradient_norm_goal(const double&);
-   void set_maximum_generalization_performance_decreases(const size_t&);
+   void set_maximum_selection_performance_decreases(const size_t&);
 
    void set_maximum_iterations_number(const size_t&);
    void set_maximum_time(const double&);
@@ -268,7 +268,7 @@ public:
    void set_reserve_performance_history(const bool&);
    void set_reserve_gradient_history(const bool&);
    void set_reserve_gradient_norm_history(const bool&);
-   void set_reserve_generalization_performance_history(const bool&);
+   void set_reserve_selection_performance_history(const bool&);
 
    void set_reserve_training_direction_history(const bool&);
    void set_reserve_training_rate_history(const bool&);
@@ -349,9 +349,9 @@ private:
    double gradient_norm_goal;
 
    /// Maximum number of iterations at which the selection performance decreases.
-   /// This is an early stopping method for improving generalization.
+   /// This is an early stopping method for improving selection.
 
-   size_t maximum_generalization_performance_decreases;
+   size_t maximum_selection_performance_decreases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 
@@ -397,7 +397,7 @@ private:
 
    /// True if the Selection performance history vector is to be reserved, false otherwise.
 
-   bool reserve_generalization_performance_history;
+   bool reserve_selection_performance_history;
 };
 
 }

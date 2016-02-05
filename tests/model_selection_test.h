@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: An Open Source Neural Networks C++ Library                                                         */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M O D E L   S E L E C T I O N   T E S T   C L A S S   H E A D E R                                          */
 /*                                                                                                              */

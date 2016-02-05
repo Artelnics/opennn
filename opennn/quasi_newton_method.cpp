@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */ 
 /*   Q U A S I - N E W T O N   M E T H O D    C L A S S                                                         */
 /*                                                                                                              */
@@ -245,13 +245,13 @@ const double& QuasiNewtonMethod::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_generalization_performance_decreases(void) const method
+// const size_t& get_maximum_selection_performance_decreases(void) const method
 
-/// Returns the maximum number of generalization failures during the training process. 
+/// Returns the maximum number of selection failures during the training process. 
 
-const size_t& QuasiNewtonMethod::get_maximum_generalization_performance_decreases(void) const
+const size_t& QuasiNewtonMethod::get_maximum_selection_performance_decreases(void) const
 {
-   return(maximum_generalization_performance_decreases);
+   return(maximum_selection_performance_decreases);
 }
 
 
@@ -367,13 +367,13 @@ const bool& QuasiNewtonMethod::get_reserve_inverse_Hessian_history(void) const
 }
 
 
-// const bool& get_reserve_generalization_performance_history(void) const method
+// const bool& get_reserve_selection_performance_history(void) const method
 
 /// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
 
-const bool& QuasiNewtonMethod::get_reserve_generalization_performance_history(void) const
+const bool& QuasiNewtonMethod::get_reserve_selection_performance_history(void) const
 {
-   return(reserve_generalization_performance_history);
+   return(reserve_selection_performance_history);
 }
 
 
@@ -480,7 +480,7 @@ void QuasiNewtonMethod::set_default(void)
    minimum_performance_increase = 0.0;
    performance_goal = -1.0e99;
    gradient_norm_goal = 0.0;
-   maximum_generalization_performance_decreases = 1000000;
+   maximum_selection_performance_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
@@ -493,7 +493,7 @@ void QuasiNewtonMethod::set_default(void)
    reserve_performance_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_generalization_performance_history = false;
+   reserve_selection_performance_history = false;
    reserve_inverse_Hessian_history = false;
 
    reserve_training_direction_history = false;
@@ -794,16 +794,16 @@ void QuasiNewtonMethod::set_gradient_norm_goal(const double& new_gradient_norm_g
 }
 
 
-// void set_maximum_generalization_performance_decreases(const size_t&) method
+// void set_maximum_selection_performance_decreases(const size_t&) method
 
-/// Sets a new maximum number of generalization failures. 
-/// @param new_maximum_generalization_performance_decreases Maximum number of iterations in which the generalization evalutation decreases.
+/// Sets a new maximum number of selection failures. 
+/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void QuasiNewtonMethod::set_maximum_generalization_performance_decreases(const size_t& new_maximum_generalization_performance_decreases)
+void QuasiNewtonMethod::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
 {
-   // Set maximum generalization performace decrases
+   // Set maximum selection performace decrases
 
-   maximum_generalization_performance_decreases = new_maximum_generalization_performance_decreases;
+   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
 }
 
 
@@ -954,15 +954,15 @@ void QuasiNewtonMethod::set_reserve_elapsed_time_history(const bool& new_reserve
 }
 
 
-// void set_reserve_generalization_performance_history(bool) method
+// void set_reserve_selection_performance_history(bool) method
 
 /// Makes the Selection performance history to be reserved or not in memory. 
 /// This is a vector. 
-/// @param new_reserve_generalization_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
 
-void QuasiNewtonMethod::set_reserve_generalization_performance_history(const bool& new_reserve_generalization_performance_history)  
+void QuasiNewtonMethod::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
 {
-   reserve_generalization_performance_history = new_reserve_generalization_performance_history;
+   reserve_selection_performance_history = new_reserve_selection_performance_history;
 }
 
 
@@ -1467,9 +1467,9 @@ void QuasiNewtonMethod::QuasiNewtonMethodResults::resize_training_history(const 
       performance_history.resize(new_size);
    }
 
-   if(quasi_Newton_method_pointer->get_reserve_generalization_performance_history())
+   if(quasi_Newton_method_pointer->get_reserve_selection_performance_history())
    {
-      generalization_performance_history.resize(new_size);
+      selection_performance_history.resize(new_size);
    }
 
    if(quasi_Newton_method_pointer->get_reserve_gradient_history())
@@ -1543,10 +1543,10 @@ std::string QuasiNewtonMethod::QuasiNewtonMethodResults::to_string(void) const
 
    // Selection performance history
 
-   if(!generalization_performance_history.empty())
+   if(!selection_performance_history.empty())
    {
        buffer << "% Selection performance history:\n"
-              << generalization_performance_history << "\n"; 
+              << selection_performance_history << "\n"; 
    }
 
    // Gradient history 
@@ -1641,12 +1641,12 @@ Matrix<std::string> QuasiNewtonMethod::QuasiNewtonMethodResults::write_final_res
 
    const PerformanceFunctional* performance_functional_pointer = quasi_Newton_method_pointer->get_performance_functional_pointer();
 
-   if(performance_functional_pointer->has_generalization())
+   if(performance_functional_pointer->has_selection())
    {
        names.push_back("Final selection performance");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_generalization_performance;
+       buffer << std::setprecision(precision) << final_selection_performance;
 
        values.push_back(buffer.str());
     }
@@ -1751,8 +1751,8 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    Matrix<double> inverse_Hessian(parameters_number, parameters_number);
    Matrix<double> old_inverse_Hessian(parameters_number, parameters_number);
 
-   double generalization_performance = 0.0; 
-   double old_generalization_performance = 0.0;
+   double selection_performance = 0.0; 
+   double old_selection_performance = 0.0;
 
    // Training algorithm stuff 
 
@@ -1773,7 +1773,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
    bool stop_training = false;
 
-   size_t generalization_failures = 0;
+   size_t selection_failures = 0;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
@@ -1829,11 +1829,11 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
           inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
       }
 
-      generalization_performance = performance_functional_pointer->calculate_generalization_performance();
+      selection_performance = performance_functional_pointer->calculate_selection_performance();
 
-      if(iteration != 0 && generalization_performance > old_generalization_performance)
+      if(iteration != 0 && selection_performance > old_selection_performance)
       {
-         generalization_failures++;	  
+         selection_failures++;	  
       }
 
       // Training algorithm 
@@ -1904,9 +1904,9 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
          results_pointer->performance_history[iteration] = performance;
       }
 
-      if(reserve_generalization_performance_history)
+      if(reserve_selection_performance_history)
       {
-         results_pointer->generalization_performance_history[iteration] = generalization_performance;
+         results_pointer->selection_performance_history[iteration] = selection_performance;
       }
 
       if(reserve_gradient_history)
@@ -1985,12 +1985,12 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
          stop_training = true;
       }
 
-      else if(generalization_failures >= maximum_generalization_performance_decreases)
+      else if(selection_failures >= maximum_selection_performance_decreases)
       {
          if(display)
          {
             std::cout << "Iteration " << iteration << ": Maximum selection performance decreases reached.\n"
-                      << "Selection performance decreases: "<< generalization_failures << std::endl;
+                      << "Selection performance decreases: "<< selection_failures << std::endl;
          }
 
          stop_training = true;
@@ -2027,7 +2027,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
          results_pointer->final_parameters_norm = parameters_norm;
 
          results_pointer->final_performance = performance;
-         results_pointer->final_generalization_performance = generalization_performance;
+         results_pointer->final_selection_performance = selection_performance;
 
          results_pointer->final_gradient = gradient;
          results_pointer->final_gradient_norm = gradient_norm;
@@ -2049,9 +2049,9 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
                       << "Training rate: " << training_rate <<  "\n"
                       << "Elapsed time: " << elapsed_time << std::endl; 
 
-            if(generalization_performance != 0)
+            if(selection_performance != 0)
             {
-               std::cout << "Selection performance: " << generalization_performance << std::endl;
+               std::cout << "Selection performance: " << selection_performance << std::endl;
             }
 		 }   
 
@@ -2067,9 +2067,9 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl; 
 
-         if(generalization_performance != 0)
+         if(selection_performance != 0)
          {
-            std::cout << "Selection performance: " << generalization_performance << std::endl;
+            std::cout << "Selection performance: " << selection_performance << std::endl;
          }
       }
 
@@ -2083,7 +2083,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
 	  old_inverse_Hessian = inverse_Hessian;
  
-	  old_generalization_performance = generalization_performance;
+	  old_selection_performance = selection_performance;
 
       old_training_rate = training_rate;
 
@@ -2099,7 +2099,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    results_pointer->final_parameters_norm = parameters_norm;
 
    results_pointer->final_performance = performance;
-   results_pointer->final_generalization_performance = generalization_performance;
+   results_pointer->final_selection_performance = selection_performance;
 
    results_pointer->final_gradient = gradient;
    results_pointer->final_gradient_norm = gradient_norm;
@@ -2121,9 +2121,9 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
                 << "Training rate: " << training_rate <<  "\n"
                 << "Elapsed time: " << elapsed_time << std::endl;
 
-      if(generalization_performance != 0)
+      if(selection_performance != 0)
       {
-         std::cout << "Selection performance: " << generalization_performance << std::endl;
+         std::cout << "Selection performance: " << selection_performance << std::endl;
       }
    }
 
@@ -2310,7 +2310,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2382,7 +2382,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2467,7 +2467,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2606,12 +2606,12 @@ Matrix<std::string> QuasiNewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum generalization failures
+   // Maximum selection failures
 
-   labels.push_back("Maximum generalization failures");
+   labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_generalization_performance_decreases;
+   buffer << maximum_selection_performance_decreases;
 
    values.push_back(buffer.str());
 
@@ -2665,7 +2665,7 @@ Matrix<std::string> QuasiNewtonMethod::to_string_matrix(void) const
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
-   buffer << reserve_generalization_performance_history;
+   buffer << reserve_selection_performance_history;
 
    values.push_back(buffer.str());
 
@@ -2975,11 +2975,11 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_generalization_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_generalization_performance_decreases(new_maximum_generalization_performance_decreases);
+             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -3089,11 +3089,11 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_generalization_performance_history = element->GetText();
+          const std::string new_reserve_selection_performance_history = element->GetText();
 
           try
           {
-             set_reserve_generalization_performance_history(new_reserve_generalization_performance_history != "0");
+             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -3222,11 +3222,11 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_generalization_performance_history = element->GetText();
+          const std::string new_reserve_selection_performance_history = element->GetText();
 
           try
           {
-             set_reserve_generalization_performance_history(new_reserve_generalization_performance_history != "0");
+             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -3315,7 +3315,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

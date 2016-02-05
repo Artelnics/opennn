@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R F O R M A N C E   T E R M   T E S T   C L A S S                                                      */
 /*                                                                                                              */
@@ -169,7 +169,7 @@ void PerformanceTermTest::test_calculate_layers_delta(void)
    Vector<double> inputs;
 
    Vector< Vector<double> > layers_activation_derivative; 
-   Vector<double> output_objective_gradient;
+   Vector<double> output_gradient;
 
    MockPerformanceTerm mpt(&nn);
 
@@ -179,7 +179,7 @@ void PerformanceTermTest::test_calculate_layers_delta(void)
 
    nn.construct_multilayer_perceptron();
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    assert_true(layers_delta.size() == 0, LOG);
 
@@ -191,9 +191,9 @@ void PerformanceTermTest::test_calculate_layers_delta(void)
 
    layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
 
-   output_objective_gradient.set(1, 0.0);
+   output_gradient.set(1, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    assert_true(layers_delta.size() == 1, LOG);
    assert_true(layers_delta[0].size() == 1, LOG);
@@ -207,9 +207,9 @@ void PerformanceTermTest::test_calculate_layers_delta(void)
 
    layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
 
-   output_objective_gradient.set(1, 0.0);
+   output_gradient.set(1, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    assert_true(layers_delta.size() == 2, LOG);
    assert_true(layers_delta[0].size() == 1, LOG);
@@ -225,9 +225,9 @@ void PerformanceTermTest::test_calculate_layers_delta(void)
 
    layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
 
-   output_objective_gradient.set(5, 0.0);
+   output_gradient.set(5, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    assert_true(layers_delta.size() == 2, LOG);
    assert_true(layers_delta[0].size() == 3, LOG);
@@ -245,33 +245,44 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    message += "test_calculate_interlayers_Delta\n";
 
    NeuralNetwork nn;
+   DataSet ds;
+
    Vector<size_t> layers_size;
 
    Vector<double> inputs;
+   Vector<double> targets;
    Vector<double> outputs;
 
-   Vector< Vector<double> > layers_activation_derivative; 
-   Vector< Vector<double> > layers_activation_second_derivative; 
+//   Vector< Vector<double> > layers_activation_derivative;
+//   Vector< Vector<double> > layers_activation_second_derivative;
 
    Matrix< Matrix<double> > interlayers_combination_combination_Jacobian;
 
-   Vector<double> output_objective_gradient;
-   Matrix<double> output_objective_Hessian;
+   Vector<double> output_gradient;
+   Matrix<double> output_Hessian;
 
    Vector< Vector<double> > layers_delta;
 
-   MockPerformanceTerm mpt(&nn);
+   Vector<double> parameters;
+   Vector<double> combinations;
+
+   //MockPerformanceTerm mpt(&nn, &ds);
 
    Matrix< Matrix<double> > interlayers_Delta;
+   Matrix<double> numerical_interlayers_Delta;
+
+   NumericalDifferentiation nd;
+
+   SumSquaredError sse(&nn, &ds);
 
    // Test 
-
+/*
    nn.construct_multilayer_perceptron();
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
 
    assert_true(interlayers_Delta.get_rows_number() == 0, LOG);
    assert_true(interlayers_Delta.get_columns_number() == 0, LOG);
@@ -287,11 +298,11 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
 
-   output_objective_gradient.set(1, 0.0);
-   output_objective_Hessian.set(1, 1, 0.0);
+   output_gradient.set(1, 0.0);
+   output_Hessian.set(1, 1, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
 
    assert_true(interlayers_Delta.get_rows_number() == 1, LOG);
    assert_true(interlayers_Delta.get_columns_number() == 1, LOG);
@@ -314,18 +325,19 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
 
-   output_objective_gradient.set(1, 2.0*outputs[0]);
+   output_gradient.set(1, 2.0*outputs[0]);
    
-   output_objective_Hessian.set(1, 1, 2.0);
+   output_Hessian.set(1, 1);
+   output_Hessian.randomize_normal();
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
 
    assert_true(interlayers_Delta.get_rows_number() == 1, LOG);
    assert_true(interlayers_Delta.get_columns_number() == 1, LOG);
    assert_true(interlayers_Delta(0,0).get_rows_number() == 1, LOG);
    assert_true(interlayers_Delta(0,0).get_columns_number() == 1, LOG);
-//   assert_true(interlayers_Delta(0,0) == 0.0, LOG);
+   assert_true(interlayers_Delta(0,0) == output_Hessian(0,0), LOG);
 
    // Test
 
@@ -341,19 +353,182 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
 
-   output_objective_gradient.set(1, 2.0*outputs[0]);
+   output_gradient.set(1, 2.0*outputs[0]);
    
-   output_objective_Hessian.set(1, 1, 2.0);
+   output_Hessian.set(1, 1, 2.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
 
    assert_true(interlayers_Delta.get_rows_number() == 3, LOG);
    assert_true(interlayers_Delta.get_columns_number() == 3, LOG);
    assert_true(interlayers_Delta(0,0).get_rows_number() == 1, LOG);
    assert_true(interlayers_Delta(0,0).get_columns_number() == 1, LOG);
-//   assert_true(interlayers_Delta(0,0) == 0.0, LOG);
 
+   // Test
+*/
+/*
+   ds.set(1,10,5);
+   ds.initialize_data(1.0);
+
+   inputs = ds.arrange_input_data().arrange_column(0);
+
+   nn.set(10, 5);
+   nn.get_multilayer_perceptron_pointer()->initialize_biases(0.0);
+   nn.get_multilayer_perceptron_pointer()->initialize_synaptic_weights(1.0);
+
+   parameters = nn.arrange_parameters();
+
+   combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs)[0];
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
+
+   interlayers_Delta = mpt.calculate_interlayers_Delta();
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+
+   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
+*/
+   // Test
+/*
+   ds.set(1,10,5);
+   ds.randomize_data_normal();
+
+   inputs = ds.arrange_input_data().arrange_column(0);
+
+   nn.set(10, 5);
+//   nn.get_multilayer_perceptron_pointer()->initialize_biases(0.0);
+//   nn.get_multilayer_perceptron_pointer()->initialize_synaptic_weights(1.0);
+
+   parameters = nn.arrange_parameters();
+
+   combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs)[0];
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
+
+   interlayers_Delta = mpt.calculate_interlayers_Delta();
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_combinations, combinations);
+
+   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
+*/
+
+   // Test
+/*
+   ds.set(1,1,1);
+   ds.randomize_data_normal();
+
+   inputs = ds.arrange_input_data().arrange_column(0);
+
+   nn.set(1,1);
+
+   parameters = nn.arrange_parameters();
+
+   combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs)[0];
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
+
+   interlayers_Delta = mpt.calculate_interlayers_Delta();
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+
+   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
+*/
+   // Test
+/*
+   ds.set(1,1,1);
+   ds.randomize_data_uniform(0,1);
+
+   inputs = ds.arrange_input_data().arrange_column(0);
+
+   nn.set(1,1);
+
+   parameters = nn.arrange_parameters();
+
+   combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs)[0];
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
+
+   interlayers_Delta = mpt.calculate_interlayers_Delta();
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+
+   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
+*/
+   // Test
+/*
+   ds.set(1,1,1);
+   ds.randomize_data_normal();
+
+   inputs = ds.arrange_input_data().arrange_column(0);
+
+   nn.set(1,1);
+
+   parameters = nn.arrange_parameters();
+
+   combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs)[0];
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
+
+   interlayers_Delta = mpt.calculate_interlayers_Delta();
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+
+   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
+
+    // Test
+
+   ds.set(1,1,1);
+   ds.randomize_data_normal();
+
+   inputs = ds.arrange_input_data().arrange_column(0);
+   targets = ds.arrange_target_data().arrange_column(0);
+
+   nn.set(1,3,1);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
+
+   size_t parameters_number = nn.get_multilayer_perceptron_pointer()->count_parameters_number();
+
+   outputs = nn.calculate_outputs(inputs);
+
+   interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
+
+   Vector< Vector<double> > layers_combination = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs);
+   Vector< Vector<double> > layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs);
+   Vector< Vector<double> > layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs);
+
+   output_gradient = mpt.calculate_output_gradient(outputs, targets);
+   output_Hessian = mpt.calculate_output_Hessian(outputs, targets);
+
+   Matrix<double> output_interlayers_Delta = mpt.calculate_output_interlayers_Delta(
+            layers_activation_derivative[1],
+            layers_activation_second_derivative[1],
+            output_gradient,
+            output_Hessian);
+
+   size_t index_1 = 1;
+   size_t index_2 = 0;
+
+
+   const Vector<double> layer_1_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient)[index_1];
+   const Vector<double> layer_1_activation_derivative  = layers_activation_derivative[index_2];
+   const Vector<double> layer_1_activation_second_derivative = layers_activation_second_derivative[index_2];
+
+   //std::cout << "Combination combination jacobian: \n" << interlayers_combination_combination_Jacobian << std::endl;
+
+  Matrix<double> interlayers_Delta_1_0 = mpt.calculate_interlayers_Delta(
+              index_1,
+              index_2,
+              layer_1_activation_derivative,
+              layer_1_activation_second_derivative,
+              layer_1_delta,
+              output_interlayers_Delta,
+              interlayers_combination_combination_Jacobian(index_1,index_2));
+
+  std::cout << "interlayers delta 1,0: \n" << interlayers_Delta_1_0 << std::endl;
+  system("pause");
+
+//   interlayers_Delta = mpt.calculate_interlayers_Delta();
+//   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+
+//   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
+*/
 }
 
 
@@ -369,7 +544,7 @@ void PerformanceTermTest::test_calculate_point_gradient(void)
 
    Vector< Vector<double> > layers_activation; 
    Vector< Vector<double> > layers_activation_derivative; 
-   Vector<double> output_objective_gradient;
+   Vector<double> output_gradient;
 
    MockPerformanceTerm mpt(&nn);
 
@@ -386,7 +561,7 @@ void PerformanceTermTest::test_calculate_point_gradient(void)
 
    layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    point_gradient = mpt.calculate_point_gradient(inputs, layers_activation, layers_delta);
 
@@ -403,9 +578,9 @@ void PerformanceTermTest::test_calculate_point_gradient(void)
    layers_activation = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation(inputs); 
    layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
 
-   output_objective_gradient.set(1, 0.0);
+   output_gradient.set(1, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    point_gradient = mpt.calculate_point_gradient(inputs, layers_activation, layers_delta);
 
@@ -423,9 +598,9 @@ void PerformanceTermTest::test_calculate_point_gradient(void)
    layers_activation = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation(inputs); 
    layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
 
-   output_objective_gradient.set(1, 0.0);
+   output_gradient.set(1, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
 
    point_gradient = mpt.calculate_point_gradient(inputs, layers_activation, layers_delta);
 
@@ -446,6 +621,7 @@ void PerformanceTermTest::test_calculate_point_Hessian(void)
 //   size_t parameters_number;
 
    Vector<double> inputs;
+   Vector<double> targets;
 
    Vector< Vector<double> > layers_activation; 
    Vector< Vector<double> > layers_activation_derivative; 
@@ -455,8 +631,8 @@ void PerformanceTermTest::test_calculate_point_Hessian(void)
 
    Vector< Vector< Vector<double> > > perceptrons_combination_parameters_gradient;
 
-   Vector<double> output_objective_gradient;
-   Matrix<double> output_objective_Hessian;
+   Vector<double> output_gradient;
+   Matrix<double> output_Hessian;
 
    MockPerformanceTerm mpt(&nn);
 
@@ -470,8 +646,8 @@ void PerformanceTermTest::test_calculate_point_Hessian(void)
    nn.set();
    nn.construct_multilayer_perceptron();
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
 
    point_Hessian = mpt.calculate_point_Hessian(layers_activation_derivative, perceptrons_combination_parameters_gradient, interlayers_combination_combination_Jacobian, layers_delta, interlayers_Delta);
 
@@ -481,22 +657,43 @@ void PerformanceTermTest::test_calculate_point_Hessian(void)
    // Test
 
    nn.set(1, 1);
- 
-//   parameters_number = nn.count_parameters_number();
 
-   inputs.set(1, 0.0);
+   nn.get_multilayer_perceptron_pointer()->initialize_synaptic_weights(1.0);
+   nn.get_multilayer_perceptron_pointer()->initialize_biases(1.0);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
 
-   layers_activation = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation(inputs); 
-   layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
-   layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs); 
+   inputs.set(1, 1.0);
+   targets.set(1, 1.0);
 
-   output_objective_gradient.set(1, 0.0);
-   output_objective_Hessian.set(1, 1, 0.0);
+   Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
+   second_order_forward_propagation = nn.get_multilayer_perceptron_pointer()->calculate_second_order_forward_propagation(inputs);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+   Vector< Vector<double> > layers_inputs(nn.get_layers_number());
 
-//   point_Hessian = mpt.calculate_point_Hessian(layers_activation_derivative, perceptrons_combination_parameters_gradient, interlayers_combination_combination_Jacobian, layers_delta, interlayers_Delta);
+   layers_inputs[0] = inputs;
+
+   for(size_t j = 1; j < nn.get_layers_number(); j++)
+   {
+      layers_inputs[j] = layers_activation[j-1];
+   }
+
+   perceptrons_combination_parameters_gradient = nn.get_multilayer_perceptron_pointer()->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
+
+   interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
+   layers_activation = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation(inputs);
+   layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs);
+   layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs);
+
+   output_gradient.set(1, 2*(inputs-targets)[0]);
+   output_Hessian.set(1, 1);
+   output_Hessian.initialize_diagonal(2.0);
+   output_Hessian.set(1, 1);
+   output_Hessian.initialize_diagonal(2.0);
+
+   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
+
+   point_Hessian = mpt.calculate_point_Hessian(layers_activation_derivative, perceptrons_combination_parameters_gradient, interlayers_combination_combination_Jacobian, layers_delta, interlayers_Delta);
 
 //   assert_true(point_Hessian.get_rows_number() == network_parameters_number, LOG);
 //   assert_true(point_Hessian.get_columns_number() == network_parameters_number, LOG);
@@ -504,23 +701,24 @@ void PerformanceTermTest::test_calculate_point_Hessian(void)
 
    // Test
 
-   nn.set(1, 1, 1);
+//   nn.set(1, 1, 1);
  
 //   parameters_number = nn.count_parameters_number();
 
-   inputs.set(1, 0.0);
+//   inputs.set(1, 0.0);
 
-   layers_activation = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation(inputs); 
-   layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs); 
-   layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs); 
+//   layers_activation = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation(inputs);
+//   layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs);
+//   layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs);
 
-   output_objective_gradient.set(1, 0.0);
-   output_objective_Hessian.set(1, 1, 0.0);
+//   output_gradient.set(1, 0.0);
+//   output_Hessian.set(1, 1, 0.0);
 
-   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_objective_gradient);
-//   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_objective_gradient, output_objective_Hessian, layers_delta);
+//   interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
+//   layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
+//   interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
 
-//   point_Hessian = mpt.calculate_point_Hessian(inputs, layers_activation, layers_delta, layers_Delta);
+//   point_Hessian = mpt.calculate_point_Hessian(layers_activation_derivative, perceptrons_combination_parameters_gradient, interlayers_combination_combination_Jacobian, layers_delta, interlayers_Delta);
 
 //   assert_true(point_Hessian.get_rows_number() == network_parameters_number, LOG);
 //   assert_true(point_Hessian.get_columns_number() == network_parameters_number, LOG);
@@ -547,19 +745,19 @@ void PerformanceTermTest::test_calculate_performance(void)
 }
 
 
-void PerformanceTermTest::test_calculate_generalization_performance(void)   
+void PerformanceTermTest::test_calculate_selection_performance(void)   
 {
-   message += "test_calculate_generalization_performance\n";
+   message += "test_calculate_selection_performance\n";
 
    MockPerformanceTerm mpt;
 
-   double generalization_performance;
+   double selection_performance;
 
    // Test
 
-   generalization_performance = mpt.calculate_generalization_performance();
+   selection_performance = mpt.calculate_selection_performance();
 
-   assert_true(generalization_performance == 0.0, LOG);
+   assert_true(selection_performance == 0.0, LOG);
 
 }
 
@@ -783,13 +981,13 @@ void PerformanceTermTest::run_test_case(void)
    // Point objective function methods
 
    test_calculate_point_gradient();
-   test_calculate_point_Hessian();
+   //test_calculate_point_Hessian();
 
    // Objective methods
 
    test_calculate_performance();
 
-   test_calculate_generalization_performance();   
+   test_calculate_selection_performance();   
 
    test_calculate_gradient();
    test_calculate_Hessian();

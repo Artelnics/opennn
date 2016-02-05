@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   D A T A   S E T   C L A S S                                                                                */
 /*                                                                                                              */ 
@@ -266,6 +266,18 @@ const Matrix<double>& DataSet::get_data(void) const
 }
 
 
+// const Matrix<double>& get_input_data(void) const method
+
+/// Returns a reference to the input data matrix in the data set.
+/// The number of rows is equal to the number of instances.
+/// The number of columns is equal to the number of inputs.
+
+const Matrix<double> DataSet::get_input_data(void) const
+{
+   return(input_data);
+}
+
+
 // const Matrix<double>& get_time_series_data(void) const method
 
 /// Returns a reference to the time series data matrix in the data set.
@@ -428,6 +440,16 @@ MissingValues* DataSet::get_missing_values_pointer(void)
 const std::string& DataSet::get_data_file_name(void) const
 {
    return(data_file_name);
+}
+
+
+// const std::string& get_input_data_file_name(void) const method
+
+/// Returns the name of the inputs data file.
+
+const std::string& DataSet::get_input_data_file_name(void) const
+{
+   return(input_data_file_name);
 }
 
 
@@ -664,21 +686,21 @@ Matrix<double> DataSet::arrange_training_data(void) const
 }
 
 
-// Matrix<double> arrange_generalization_data(void) const method
+// Matrix<double> arrange_selection_data(void) const method
 
-/// Returns a matrix with the generalization instances in the data set. 
-/// The number of rows is the number of generalization instances.
+/// Returns a matrix with the selection instances in the data set. 
+/// The number of rows is the number of selection instances.
 /// The number of columns is the number of variables. 
 
-Matrix<double> DataSet::arrange_generalization_data(void) const
+Matrix<double> DataSet::arrange_selection_data(void) const
 {
    const size_t variables_number = variables.get_variables_number();
 
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
    Vector<size_t> variables_indices(0, 1, (int)variables_number-1);
 
-   return(data.arrange_submatrix(generalization_indices, variables_indices));
+   return(data.arrange_submatrix(selection_indices, variables_indices));
 }
 
 
@@ -765,35 +787,35 @@ Matrix<double> DataSet::arrange_training_target_data(void) const
 }
 
 
-// Matrix<double> get_generalization_input_data(void) const method
+// Matrix<double> get_selection_input_data(void) const method
 
-/// Returns a matrix with generalization instances and input variables.
-/// The number of rows is the number of generalization instances.
+/// Returns a matrix with selection instances and input variables.
+/// The number of rows is the number of selection instances.
 /// The number of columns is the number of input variables. 
 
-Matrix<double> DataSet::get_generalization_input_data(void) const
+Matrix<double> DataSet::get_selection_input_data(void) const
 {
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
 
-   return(data.arrange_submatrix(generalization_indices, inputs_indices));
+   return(data.arrange_submatrix(selection_indices, inputs_indices));
 }
 
 
-// Matrix<double> get_generalization_target_data(void) const method
+// Matrix<double> get_selection_target_data(void) const method
 
-/// Returns a matrix with generalization instances and target variables.
-/// The number of rows is the number of generalization instances.
+/// Returns a matrix with selection instances and target variables.
+/// The number of rows is the number of selection instances.
 /// The number of columns is the number of target variables. 
 
-Matrix<double> DataSet::get_generalization_target_data(void) const
+Matrix<double> DataSet::get_selection_target_data(void) const
 {
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   return(data.arrange_submatrix(generalization_indices, targets_indices));
+   return(data.arrange_submatrix(selection_indices, targets_indices));
 }
 
 
@@ -1182,7 +1204,7 @@ void DataSet::set_default(void)
 /// Sets a new data matrix. 
 /// The number of rows must be equal to the number of instances.
 /// The number of columns must be equal to the number of variables. 
-/// Indices of all training, generalization and testing instances and inputs and target variables do not change.
+/// Indices of all training, selection and testing instances and inputs and target variables do not change.
 /// @param new_data Data matrix.
 
 void DataSet::set_data(const Matrix<double>& new_data)
@@ -1241,6 +1263,17 @@ void DataSet::set_data(const Matrix<double>& new_data)
 void DataSet::set_data_file_name(const std::string& new_data_file_name)
 {   
    data_file_name = new_data_file_name;
+}
+
+
+// void set_input_data_file_name(const std::string&) method
+
+/// Sets the name of the inputs data file.
+/// @param new_input_data_file_name Name of the file containing the inputs data.
+
+void DataSet::set_input_data_file_name(const std::string& new_input_data_file_name)
+{
+   input_data_file_name = new_input_data_file_name;
 }
 
 
@@ -1520,7 +1553,7 @@ void DataSet::set_instances_number(const size_t& new_instances_number)
 // void set_variables_number(const size_t&) method
 
 /// Sets a new number of input variables in the data set. 
-/// The indices of the training, generalization and testing instances do not change. 
+/// The indices of the training, selection and testing instances do not change. 
 /// All variables are set as inputs. 
 /// @param new_variables_number Number of variables. 
 
@@ -1778,8 +1811,8 @@ Vector<size_t> DataSet::unuse_constant_variables(void)
 
 // Vector<size_t> unuse_repeated_instances(void) method
 
-/// Removes the training, generalization and testing indices of that instances which are repeated in the data matrix.
-/// It might change the size of the vectors containing the training, generalization and testing indices. 
+/// Removes the training, selection and testing indices of that instances which are repeated in the data matrix.
+/// It might change the size of the vectors containing the training, selection and testing indices. 
 
 Vector<size_t> DataSet::unuse_repeated_instances(void)
 {
@@ -1849,17 +1882,21 @@ Vector< Histogram<double> > DataSet::calculate_data_histograms(const size_t& bin
    const size_t used_instances_number = instances.count_used_instances_number();
    const Vector<size_t> used_instances_indices = instances.arrange_used_indices();
 
-   const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
+//   const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
 
    Vector< Histogram<double> > histograms(used_variables_number);
 
    Vector<double> column(used_instances_number);
 
-   for(size_t i = 0; i < used_variables_number; i++)
+   int i = 0;
+
+   #pragma omp parallel for private(i, column) shared(histograms)
+
+   for(i = 0; i < (int)used_variables_number; i++)
    {
        column = data.arrange_column(used_variables_indices[i], used_instances_indices);
 
-       histograms[i] = column.calculate_histogram_missing_values(missing_indices[i], bins_number);
+       histograms[i] = column.calculate_histogram(bins_number);
    }
 
    return(histograms);
@@ -1994,8 +2031,6 @@ Matrix<double> DataSet::calculate_data_statistics_matrix(void) const
 
     const Vector< Statistics<double> > data_statistics = used_data.calculate_statistics_missing_values(used_missing_indices);
 
-   // std::cout << used_missing_indices << std::endl;
-
     const size_t variables_number = used_variables_indices.size();//variables.count_used_variables_number();
 
     Matrix<double> data_statistics_matrix(variables_number, 4);
@@ -2062,24 +2097,24 @@ Vector< Statistics<double> > DataSet::calculate_training_instances_statistics(vo
 }
 
 
-// Vector< Vector<double> > calculate_generalization_instances_statistics(void) const method
+// Vector< Vector<double> > calculate_selection_instances_statistics(void) const method
 
-/// Returns a vector of vectors containing some basic statistics of all variables on the generalization instances.
+/// Returns a vector of vectors containing some basic statistics of all variables on the selection instances.
 /// The size of this vector is two. The subvectors are:
 /// <ul>
-/// <li> Generalization data minimum.
-/// <li> Generalization data maximum.
-/// <li> Generalization data mean.
-/// <li> Generalization data standard deviation.
+/// <li> Selection data minimum.
+/// <li> Selection data maximum.
+/// <li> Selection data mean.
+/// <li> Selection data standard deviation.
 /// </ul>
 
-Vector< Statistics<double> > DataSet::calculate_generalization_instances_statistics(void) const
+Vector< Statistics<double> > DataSet::calculate_selection_instances_statistics(void) const
 {
-    const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+    const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
     const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
 
-   return(data.calculate_rows_statistics_missing_values(generalization_indices, missing_indices));
+   return(data.calculate_rows_statistics_missing_values(selection_indices, missing_indices));
 }
 
 
@@ -2123,22 +2158,22 @@ Vector< Vector<double> > DataSet::calculate_training_instances_shape_parameters(
 }
 
 
-// Vector< Vector<double> > calculate_generalization_instances_shape_parameters(void) const method
+// Vector< Vector<double> > calculate_selection_instances_shape_parameters(void) const method
 
-/// Returns a vector of vectors containing some shape parameters of all variables on the generalization instances.
+/// Returns a vector of vectors containing some shape parameters of all variables on the selection instances.
 /// The size of this vector is five. The subvectors are:
 /// <ul>
-/// <li> Generalization data asymmetry.
-/// <li> Generalization data kurtosis.
+/// <li> Selection data asymmetry.
+/// <li> Selection data kurtosis.
 /// </ul>
 
-Vector< Vector<double> > DataSet::calculate_generalization_instances_shape_parameters(void) const
+Vector< Vector<double> > DataSet::calculate_selection_instances_shape_parameters(void) const
 {
-    const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+    const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
     const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
 
-   return(data.calculate_rows_shape_parameters_missing_values(generalization_indices, missing_indices));
+   return(data.calculate_rows_shape_parameters_missing_values(selection_indices, missing_indices));
 }
 
 
@@ -2220,19 +2255,19 @@ Vector<double> DataSet::calculate_training_target_data_mean(void) const
 }
 
 
-// Vector<double> calculate_generalization_target_data_mean(void) const method
+// Vector<double> calculate_selection_target_data_mean(void) const method
 
-/// Returns the mean values of the target variables on the generalization instances. 
+/// Returns the mean values of the target variables on the selection instances. 
 
-Vector<double> DataSet::calculate_generalization_target_data_mean(void) const
+Vector<double> DataSet::calculate_selection_target_data_mean(void) const
 {
     const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
    const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
 
-   return(data.calculate_mean_missing_values(generalization_indices, targets_indices, missing_indices));
+   return(data.calculate_mean_missing_values(selection_indices, targets_indices, missing_indices));
 }
 
 
@@ -3573,8 +3608,8 @@ void DataSet::save(const std::string& file_name) const
 /// <li> Instances number.
 /// <li> Training instances number.
 /// <li> Training instances indices.
-/// <li> Generalization instances number.
-/// <li> Generalization instances indices.
+/// <li> Selection instances number.
+/// <li> Selection instances indices.
 /// <li> Testing instances number.
 /// <li> Testing instances indices.
 /// <li> Input variables number.
@@ -4491,12 +4526,56 @@ void DataSet::load_data_binary(void)
         data[i] = value;
     }
 
-    if(get_missing_values().has_missing_values())
+    file.close();
+}
+
+
+/// This method loads the input data from a binary data file for which outputs are to be calculated.
+
+void DataSet::load_input_data_binary(void)
+{
+    std::ifstream file;
+
+    file.open(input_data_file_name.c_str(), std::ios::binary);
+
+    if(!file.is_open())
     {
-        scrub_missing_values();
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void load_input_data_binary(void) method.\n"
+               << "Cannot open data file: " << input_data_file_name << "\n";
+
+        throw std::logic_error(buffer.str());
     }
 
-    file.close();
+    std::streamsize size = sizeof(size_t);
+
+    size_t inputs_number;
+    size_t instances_number;
+
+    file.read(reinterpret_cast<char*>(&inputs_number), size);
+    file.read(reinterpret_cast<char*>(&instances_number), size);
+
+    size = sizeof(double);
+
+    double value;
+
+    input_data.set(instances_number, inputs_number);
+
+    for(size_t i = 0; i < inputs_number*instances_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        input_data[i] = value;
+    }
+
+//    if(get_missing_values().has_missing_values())
+//    {
+//        scrub_missing_values();
+//    }
+
+//    file.close();
 }
 
 
@@ -4540,10 +4619,10 @@ void DataSet::load_time_series_data_binary(void)
         data[i] = value;
     }
 
-    if(get_missing_values().has_missing_values())
-    {
-        scrub_missing_values();
-    }
+//    if(get_missing_values().has_missing_values())
+//    {
+//        scrub_missing_values();
+//    }
 
     size = sizeof(size_t);
 
@@ -4655,7 +4734,7 @@ Vector<size_t> DataSet::calculate_target_distribution(void) const
 
       for(size_t instance_index = 0; instance_index < instances_number; instance_index++)
       {
-          if(data(instance_index, target_index) == -123.456)
+          if(missing_values.arrange_missing_indices()[target_index].contains(instance_index))
           {
               continue;
           }
@@ -4783,6 +4862,10 @@ Vector<size_t> DataSet::balance_binary_targets_distribution(void)
         {
            unbalanced_instances_number = 1;
         }
+        else if(total_unbalanced_instances_number > 0 && unbalanced_instances_number < 1)
+        {
+            unbalanced_instances_number = 1;
+        }
 
         actual_unused_instances = unuse_most_populated_target(unbalanced_instances_number);
 
@@ -4818,7 +4901,7 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
     const Vector<size_t> inputs_variables_indices = variables.arrange_inputs_indices();
     const Vector<size_t> targets_variables_indices = variables.arrange_targets_indices();
 
-    Vector<size_t> maximal_target_class_indices = target_class_distribution.calculate_maximal_indices(targets_number);
+    const Vector<size_t> maximal_target_class_indices = target_class_distribution.calculate_maximal_indices(targets_number);
 
     const size_t minimal_target_class_index = maximal_target_class_indices[targets_number - 1];
 
@@ -4918,52 +5001,65 @@ Vector<size_t> DataSet::balance_multiple_targets_distribution(void)
 /// If the given number is lower than 1, it unuses 1 instance.
 /// @param unused_target_number Number of instances to set unused.
 
-Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_number)
+Vector<size_t> DataSet::unuse_most_populated_target(const size_t& instances_to_unuse)
 {
+    Vector<size_t> most_populated_instances(instances_to_unuse);
+
+    if(instances_to_unuse == 0)
+    {
+        return(most_populated_instances);
+    }
+
     const size_t bins_number = 10;
 
-    const Vector< Histogram<double> > data_histograms = calculate_data_histograms(bins_number);
-
-    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-    const Vector<size_t> unused_indices = variables.arrange_unused_indices();
-    const Vector<size_t> instances_indices = instances.arrange_used_indices();
+    // Variables
 
     const size_t targets_number = variables.count_targets_number();
-    const size_t instances_number = instances.count_used_instances_number();
+
+    const Vector<size_t> inputs = variables.arrange_inputs_indices();
+    const Vector<size_t> targets = variables.arrange_targets_indices();
+
+    const Vector<size_t> unused_variables = variables.arrange_unused_indices();
+
+    // Instances
+
+    const Vector<size_t> used_instances = instances.arrange_used_indices();
+
+    const size_t used_instances_number = instances.count_used_instances_number();
 
     // Most populated target
 
-    size_t actual_frequency = 0;
+    const Vector< Histogram<double> > data_histograms = calculate_data_histograms(bins_number);
+
+    size_t most_populated_target;
+    size_t most_populated_bin;
+
+    size_t frequency;
     size_t maximum_frequency = 0;
-    size_t actual_unused_number;
-    size_t unused_number;
-    size_t most_populated_target_index;
-    size_t maximal_frequency_target_index;
+
+    size_t unused;
 
     for(size_t i = 0; i < targets_number; i++)
     {
-        actual_unused_number = unused_indices.count_less_than(targets_indices[i]);
+        frequency = data_histograms[targets[i] - unused_variables.count_less_than(targets[i])].calculate_maximum_frequency();
 
-        actual_frequency = data_histograms[targets_indices[i] - actual_unused_number].calculate_maximum_frequency();
-
-        if(actual_frequency > maximum_frequency)
+        if(frequency > maximum_frequency)
         {
-            maximum_frequency = actual_frequency;
+            unused = unused_variables.count_less_than(targets[i]);
 
-            most_populated_target_index = targets_indices[i];
+            maximum_frequency = frequency;
 
-            unused_number = actual_unused_number;
+            most_populated_target = targets[i];
 
-            maximal_frequency_target_index = data_histograms[most_populated_target_index - unused_number].frequencies.calculate_maximal_index();
+            most_populated_bin = data_histograms[targets[i] - unused].calculate_most_populated_bin();
         }
     }
 
-   // Calculates frequencies of the instances which belong to the most populated target
+    // Calculates frequencies of the instances which belong to the most populated target
 
-    size_t instance_index;
-    size_t instance_bin;
-    double instance_value;
+    size_t index;
+    size_t bin;
+    double value;
     Vector<double> instance;
 
     Vector<size_t> instance_frequencies;
@@ -4972,20 +5068,26 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
 
     size_t count_instances = 0;
 
-    for(size_t i = 0; i < instances_number; i++)
-    {
-        instance_index = instances_indices[i];
-        instance = get_instance(instance_index);
+    int i = 0;
 
-        instance_value = instance[most_populated_target_index];
-        instance_bin = data_histograms[most_populated_target_index - unused_number].calculate_bin(instance_value);
+//    #pragma omp parallel for private(i, instance_index, instance, instance_value, instance_bin, instance_frequencies) shared(count_instances, total_instances_frequencies, maximal_frequency_target_index)
 
-        if(instance_bin == maximal_frequency_target_index)
+    for(i = 0; i < (int)used_instances_number; i++)
+    {                
+        index = used_instances[i];
+
+        instance = get_instance(index);
+
+        value = instance[most_populated_target];
+
+        bin = data_histograms[most_populated_target - unused].calculate_bin(value);
+
+        if(bin == most_populated_bin)
         {
             instance_frequencies = instance.calculate_total_frequencies(data_histograms);
 
-            total_instances_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs_indices);
-            total_instances_frequencies(count_instances, 1) = instance_index;
+            total_instances_frequencies(count_instances, 0) = instance_frequencies.calculate_partial_sum(inputs);
+            total_instances_frequencies(count_instances, 1) = used_instances[i];
 
             count_instances++;
         }
@@ -4993,24 +5095,19 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
 
     // Unuses instances
 
-    Vector<size_t> most_populated_instances_indices;
 
-    if(unused_target_number > maximum_frequency)
+    if(instances_to_unuse > maximum_frequency)
     {
-        most_populated_instances_indices = total_instances_frequencies.sort_greater_rows(0).arrange_column(1).arrange_subvector_first(maximum_frequency);
-    }
-    else if(unused_target_number < 1)
-    {
-        most_populated_instances_indices = total_instances_frequencies.sort_greater_rows(0).arrange_column(1).arrange_subvector_first(1);
+        most_populated_instances = total_instances_frequencies.sort_greater_rows(0).arrange_column(1).arrange_subvector_first(maximum_frequency);
     }
     else
     {
-        most_populated_instances_indices = total_instances_frequencies.sort_greater_rows(0).arrange_column(1).arrange_subvector_first(unused_target_number);
+        most_populated_instances = total_instances_frequencies.sort_greater_rows(0).arrange_column(1).arrange_subvector_first(instances_to_unuse);
     }
 
-    instances.set_unused(most_populated_instances_indices);
+    instances.set_unused(most_populated_instances);
 
-    return(most_populated_instances_indices);
+    return(most_populated_instances);
 }
 
 
@@ -5021,35 +5118,43 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& unused_target_
 /// It unuses a given percentage of the instances.
 /// @param percentage_balanced_instances Perecentage of the instances to be unused.
 
-Vector<size_t> DataSet::balance_function_regression_targets_distribution(const double& percentage_balanced_instances)
+Vector<size_t> DataSet::balance_function_regression_targets_distribution(const double& percentage)
 {
+    time_t beginning_time, current_time;
+    time(&beginning_time);
+    double elapsed_time;
+
     Vector<size_t> unused_instances;
 
     const size_t instances_number = instances.count_used_instances_number();
 
-    size_t total_unbalanced_instances_number = (size_t) (instances_number*percentage_balanced_instances/100.0);
+    const size_t instances_to_unuse = (size_t)(instances_number*percentage/100.0);
 
-    size_t actual_unused_instances_number;
+    std::cout << "Instances to unuse: " << instances_to_unuse << std::endl;
 
-    size_t unbalanced_instances_number = total_unbalanced_instances_number/10;
+    size_t count;
 
-    Vector<size_t> actual_unused_instances;
-
-    while(total_unbalanced_instances_number != 0)
-    {
-        if(total_unbalanced_instances_number < instances_number/10)
+    while(unused_instances.size() < instances_to_unuse)
+    {        
+        if(instances_to_unuse - unused_instances.size() < instances_to_unuse/10)
         {
-            unbalanced_instances_number = 1;
+            count = instances_to_unuse - unused_instances.size();
+        }
+        else
+        {
+            count = instances_to_unuse/10;
         }
 
-        actual_unused_instances = unuse_most_populated_target(unbalanced_instances_number);
+        if(count == 0)
+        {
+            count = 1;
+        }
 
-        actual_unused_instances_number = actual_unused_instances.size();
-
-        unused_instances = unused_instances.assemble(actual_unused_instances);
-
-        total_unbalanced_instances_number = total_unbalanced_instances_number - actual_unused_instances_number;
+        unused_instances = unused_instances.assemble(unuse_most_populated_target(count));
     }
+
+    time(&current_time);
+    elapsed_time = difftime(current_time, beginning_time);
 
     return(unused_instances);
 }
@@ -5094,16 +5199,8 @@ Matrix<double> DataSet::calculate_instances_distances(const size_t& nearest_neig
                    distances[maximal_index] = distance;
               }
           }
-       // instance = get_instance(instances_indices[i]);
-
-       // for(size_t j = i+1; j < instances_number; j++)
-        //{
-           // other_instance = get_instance(instances_indices[j]);
-
-         //   distances(i, j) = data.calculate_distance(instances_indices[i], instances_indices[j]);
-
-       // }
     }
+
     Matrix<double> distances1(instances_number, instances_number, 0.0);
     return(distances1);
 }
@@ -5304,8 +5401,6 @@ Vector<size_t> DataSet::clean_Tukey_outliers(const double& cleaning_parameter)
     Vector< Vector<double> > box_and_whiskers = calculate_box_and_whiskers();
 
     const size_t variables_number = variables.count_used_variables_number();
-
-    std::cout<< variables_number << std::endl;
 
     Vector<size_t> unused_instances;
 
@@ -5807,6 +5902,41 @@ void DataSet::scrub_missing_values_mean(void)
 }
 
 
+// void scrub_input_missing_values_mean(void) method
+
+/// Substitutes all the missing values by the mean of the corresponding variable for the input data.
+
+void DataSet::scrub_input_missing_values_mean(void)
+{
+    const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
+
+    const Vector<double> means = data.calculate_mean_missing_values(missing_indices);
+
+//    const size_t variables_number = variables.get_variables_number();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+
+    const Vector<double> input_means = means.arrange_subvector(inputs_indices);
+
+//    const size_t targets_number = variables.count_targets_number();
+    const size_t inputs_number = variables.count_inputs_number();
+    const size_t input_instances_number = input_data.get_rows_number();
+
+//    size_t instance_index;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        for(size_t j = 0; j < input_instances_number; j++)
+        {
+            if(input_data(i,j) == -123.456)
+            {
+                input_data(j,i) = input_means[i];
+            }
+        }
+    }
+}
+
+
 // void scrub_missing_values(void) method
 
 /// General method for dealing with missing values.
@@ -6096,7 +6226,7 @@ bool DataSet::is_mixed(const Vector<std::string>& v) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

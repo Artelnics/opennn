@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.artelnics.com/opennn                                                                      #
+#   www.opennn.net                                                                      #
 #                                                                                                 #
 #   O P E N N N   Q T   C R E A T O R   P R O J E C T                                             #
 #                                                                                                 #
@@ -50,15 +50,6 @@ QMAKE_LFLAGS   += -openmp
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }
-
-#QMAKE_CXXFLAGS += -funroll-all-loops
-#QMAKE_LFLAGS   += -funroll-all-loops
-
-#QMAKE_CXXFLAGS_RELEASE -= -O2
-#QMAKE_CXXFLAGS_RELEASE += -O3
-#QMAKE_LFLAGS_RELEASE   -= -O1
-
-
 
 HEADERS += \
     variables.h \

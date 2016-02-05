@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N S T A N C E S   T E S T   C L A S S                                                                    */
 /*                                                                                                              */ 
@@ -60,7 +60,7 @@ void InstancesTest::test_constructor(void)
    Instances ii4;
 
    assert_true(ii4.count_training_instances_number() == 0, LOG);
-   assert_true(ii4.count_generalization_instances_number() == 0, LOG);
+   assert_true(ii4.count_selection_instances_number() == 0, LOG);
    assert_true(ii4.count_testing_instances_number() == 0, LOG);
 
    Instances ii5(1);
@@ -146,37 +146,37 @@ void InstancesTest::test_arrange_training_indices(void)
 }
 
 
-void InstancesTest::test_count_generalization_instances_number(void) 
+void InstancesTest::test_count_selection_instances_number(void) 
 {
-   message += "test_count_generalization_instances_number\n";
+   message += "test_count_selection_instances_number\n";
 
    Instances i;
 
-   assert_true(i.count_generalization_instances_number() == 0, LOG);
+   assert_true(i.count_selection_instances_number() == 0, LOG);
    
    i.set(1);
 
-   assert_true(i.count_generalization_instances_number() == 0, LOG);
+   assert_true(i.count_selection_instances_number() == 0, LOG);
 }
 
 
-void InstancesTest::test_arrange_generalization_indices(void) 
+void InstancesTest::test_arrange_selection_indices(void) 
 {
-   message += "test_arrange_generalization_indices\n";
+   message += "test_arrange_selection_indices\n";
 
    Instances i;
 
-   Vector<size_t> generalization_indices;
+   Vector<size_t> selection_indices;
 
-   generalization_indices = i.arrange_generalization_indices();
+   selection_indices = i.arrange_selection_indices();
 
-   assert_true(generalization_indices.size() == 0, LOG);
+   assert_true(selection_indices.size() == 0, LOG);
    
    i.set(1);
 
-   generalization_indices = i.arrange_generalization_indices();
+   selection_indices = i.arrange_selection_indices();
 
-   assert_true(generalization_indices.size() == 0, LOG);
+   assert_true(selection_indices.size() == 0, LOG);
 }
 
 
@@ -238,7 +238,7 @@ void InstancesTest::test_arrange_used_indices()
     i.set_use(0, Instances::Training);
     i.set_use(1, Instances::Unused);
     i.set_use(2, Instances::Testing);
-    i.set_use(3, Instances::Generalization);
+    i.set_use(3, Instances::Selection);
 
     used_indices = i.arrange_used_indices();
 
@@ -300,7 +300,7 @@ void InstancesTest::test_set_training(void)
    i.set_training();
 
    assert_true(i.count_training_instances_number() == 1, LOG);
-   assert_true(i.count_generalization_instances_number() == 0, LOG);
+   assert_true(i.count_selection_instances_number() == 0, LOG);
    assert_true(i.count_testing_instances_number() == 0, LOG);
 
    assert_true(i.arrange_training_indices() == 0, LOG);
@@ -308,18 +308,18 @@ void InstancesTest::test_set_training(void)
 }
 
 
-void InstancesTest::test_set_generalization(void)
+void InstancesTest::test_set_selection(void)
 {
-   message += "test_set_generalization\n";
+   message += "test_set_selection\n";
 
    Instances i(1);
-   i.set_generalization();
+   i.set_selection();
 
    assert_true(i.count_training_instances_number() == 0, LOG);
-   assert_true(i.count_generalization_instances_number() == 1, LOG);
+   assert_true(i.count_selection_instances_number() == 1, LOG);
    assert_true(i.count_testing_instances_number() == 0, LOG);
 
-   assert_true(i.arrange_generalization_indices() == 0, LOG);
+   assert_true(i.arrange_selection_indices() == 0, LOG);
 
 }
 
@@ -332,7 +332,7 @@ void InstancesTest::test_set_testing(void)
    i.set_testing();
 
    assert_true(i.count_training_instances_number() == 0, LOG);
-   assert_true(i.count_generalization_instances_number() == 0, LOG);
+   assert_true(i.count_selection_instances_number() == 0, LOG);
    assert_true(i.count_testing_instances_number() == 1, LOG);
 
    assert_true(i.arrange_testing_indices() == 0, LOG);
@@ -376,7 +376,7 @@ void InstancesTest::test_split_random_indices(void)
    message += "test_split_random_indices\n";
 
    size_t training_instances_number = 0;
-   size_t generalization_instances_number = 0;
+   size_t selection_instances_number = 0;
    size_t testing_instances_number = 0;
 
    Instances i(12);
@@ -386,23 +386,23 @@ void InstancesTest::test_split_random_indices(void)
    i.split_random_indices(1.0, 0.0, 0.0);
   
    training_instances_number = i.count_training_instances_number();
-   generalization_instances_number = i.count_generalization_instances_number();
+   selection_instances_number = i.count_selection_instances_number();
    testing_instances_number = i.count_testing_instances_number();
 
    assert_true(training_instances_number == 12, LOG);
-   assert_true(generalization_instances_number == 0, LOG);
+   assert_true(selection_instances_number == 0, LOG);
    assert_true(testing_instances_number == 0, LOG);
 
-   // All data for generalization 
+   // All data for selection 
 
    i.split_random_indices(0.0, 10.0, 0.0);
   
    training_instances_number = i.count_training_instances_number();
-   generalization_instances_number = i.count_generalization_instances_number();
+   selection_instances_number = i.count_selection_instances_number();
    testing_instances_number = i.count_testing_instances_number();
 
    assert_true(training_instances_number == 0, LOG);
-   assert_true(generalization_instances_number == 12, LOG);
+   assert_true(selection_instances_number == 12, LOG);
    assert_true(testing_instances_number == 0, LOG);
 
    // All data for testing 
@@ -410,35 +410,35 @@ void InstancesTest::test_split_random_indices(void)
    i.split_random_indices(0.0, 0.0, 100.0);
   
    training_instances_number = i.count_training_instances_number();
-   generalization_instances_number = i.count_generalization_instances_number();
+   selection_instances_number = i.count_selection_instances_number();
    testing_instances_number = i.count_testing_instances_number();
 
    assert_true(training_instances_number == 0, LOG);
-   assert_true(generalization_instances_number == 0, LOG);
+   assert_true(selection_instances_number == 0, LOG);
    assert_true(testing_instances_number == 12, LOG);
 
-   // Split data for training, generalization and testing
+   // Split data for training, selection and testing
 
    i.split_random_indices(0.5, 0.25, 0.25);
   
    training_instances_number = i.count_training_instances_number();
-   generalization_instances_number = i.count_generalization_instances_number();
+   selection_instances_number = i.count_selection_instances_number();
    testing_instances_number = i.count_testing_instances_number();
 
    assert_true(training_instances_number == 6, LOG);
-   assert_true(generalization_instances_number == 3, LOG);
+   assert_true(selection_instances_number == 3, LOG);
    assert_true(testing_instances_number == 3, LOG);
 
-   // Split data for training, generalization and testing
+   // Split data for training, selection and testing
 
    i.split_random_indices(2.0, 1.0, 1.0);
   
    training_instances_number = i.count_training_instances_number();
-   generalization_instances_number = i.count_generalization_instances_number();
+   selection_instances_number = i.count_selection_instances_number();
    testing_instances_number = i.count_testing_instances_number();
 
    assert_true(training_instances_number == 6, LOG);
-   assert_true(generalization_instances_number == 3, LOG);
+   assert_true(selection_instances_number == 3, LOG);
    assert_true(testing_instances_number == 3, LOG);
 
    // Test
@@ -447,11 +447,11 @@ void InstancesTest::test_split_random_indices(void)
    i.split_random_indices();
 
    training_instances_number = i.count_training_instances_number();
-   generalization_instances_number = i.count_generalization_instances_number();
+   selection_instances_number = i.count_selection_instances_number();
    testing_instances_number = i.count_testing_instances_number();
 
    assert_true(training_instances_number == 6, LOG);
-   assert_true(generalization_instances_number == 2, LOG);
+   assert_true(selection_instances_number == 2, LOG);
    assert_true(testing_instances_number == 2, LOG);
 
 }
@@ -463,7 +463,7 @@ void InstancesTest::test_split_sequential_indices(void)
 
 
   size_t training_instances_number = 0;
-  size_t generalization_instances_number = 0;
+  size_t selection_instances_number = 0;
   size_t testing_instances_number = 0;
 
   Instances i(12);
@@ -473,23 +473,23 @@ void InstancesTest::test_split_sequential_indices(void)
   i.split_sequential_indices(1.0, 0.0, 0.0);
 
   training_instances_number = i.count_training_instances_number();
-  generalization_instances_number = i.count_generalization_instances_number();
+  selection_instances_number = i.count_selection_instances_number();
   testing_instances_number = i.count_testing_instances_number();
 
   assert_true(training_instances_number == 12, LOG);
-  assert_true(generalization_instances_number == 0, LOG);
+  assert_true(selection_instances_number == 0, LOG);
   assert_true(testing_instances_number == 0, LOG);
 
-  // All data for generalization
+  // All data for selection
 
   i.split_sequential_indices(0.0, 10.0, 0.0);
 
   training_instances_number = i.count_training_instances_number();
-  generalization_instances_number = i.count_generalization_instances_number();
+  selection_instances_number = i.count_selection_instances_number();
   testing_instances_number = i.count_testing_instances_number();
 
   assert_true(training_instances_number == 0, LOG);
-  assert_true(generalization_instances_number == 12, LOG);
+  assert_true(selection_instances_number == 12, LOG);
   assert_true(testing_instances_number == 0, LOG);
 
   // All data for testing
@@ -497,35 +497,35 @@ void InstancesTest::test_split_sequential_indices(void)
   i.split_sequential_indices(0.0, 0.0, 100.0);
 
   training_instances_number = i.count_training_instances_number();
-  generalization_instances_number = i.count_generalization_instances_number();
+  selection_instances_number = i.count_selection_instances_number();
   testing_instances_number = i.count_testing_instances_number();
 
   assert_true(training_instances_number == 0, LOG);
-  assert_true(generalization_instances_number == 0, LOG);
+  assert_true(selection_instances_number == 0, LOG);
   assert_true(testing_instances_number == 12, LOG);
 
-  // Split data for training, generalization and testing
+  // Split data for training, selection and testing
 
   i.split_sequential_indices(0.5, 0.25, 0.25);
 
   training_instances_number = i.count_training_instances_number();
-  generalization_instances_number = i.count_generalization_instances_number();
+  selection_instances_number = i.count_selection_instances_number();
   testing_instances_number = i.count_testing_instances_number();
 
   assert_true(training_instances_number == 6, LOG);
-  assert_true(generalization_instances_number == 3, LOG);
+  assert_true(selection_instances_number == 3, LOG);
   assert_true(testing_instances_number == 3, LOG);
 
-  // Split data for training, generalization and testing
+  // Split data for training, selection and testing
 
   i.split_sequential_indices(2.0, 1.0, 1.0);
 
   training_instances_number = i.count_training_instances_number();
-  generalization_instances_number = i.count_generalization_instances_number();
+  selection_instances_number = i.count_selection_instances_number();
   testing_instances_number = i.count_testing_instances_number();
 
   assert_true(training_instances_number == 6, LOG);
-  assert_true(generalization_instances_number == 3, LOG);
+  assert_true(selection_instances_number == 3, LOG);
   assert_true(testing_instances_number == 3, LOG);
 
   // Test
@@ -534,11 +534,11 @@ void InstancesTest::test_split_sequential_indices(void)
   i.split_sequential_indices();
 
   training_instances_number = i.count_training_instances_number();
-  generalization_instances_number = i.count_generalization_instances_number();
+  selection_instances_number = i.count_selection_instances_number();
   testing_instances_number = i.count_testing_instances_number();
 
   assert_true(training_instances_number == 6, LOG);
-  assert_true(generalization_instances_number == 2, LOG);
+  assert_true(selection_instances_number == 2, LOG);
   assert_true(testing_instances_number == 2, LOG);
 }
 
@@ -607,8 +607,8 @@ void InstancesTest::run_test_case(void)
    test_count_training_instances_number();
    test_arrange_training_indices();
 
-   test_count_generalization_instances_number();
-   test_arrange_generalization_indices();
+   test_count_selection_instances_number();
+   test_arrange_selection_indices();
 
    test_count_testing_instances_number();
    test_arrange_testing_indices();
@@ -624,7 +624,7 @@ void InstancesTest::run_test_case(void)
    // Instances methods
 
    test_set_training();
-   test_set_generalization();
+   test_set_selection();
    test_set_testing();
 
    test_set_unused();

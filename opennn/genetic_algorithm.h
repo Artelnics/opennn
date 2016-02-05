@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G E N E T I C   A L G O R I T H M   C L A S S   H E A D E R                                                */
 /*                                                                                                              */
@@ -109,7 +109,7 @@ public:
 
         /// Values of the minimum selection performance in each generation.
 
-        Vector<double> generation_minimum_generalization_history;
+        Vector<double> generation_minimum_selection_history;
 
         /// Mean of the selection performance in each generation.
 
@@ -154,7 +154,7 @@ public:
 
     const bool& get_reserve_generation_standard_deviation(void) const;
 
-    const bool& get_reserve_generation_minimum_generalization(void) const;
+    const bool& get_reserve_generation_minimum_selection(void) const;
 
     const bool& get_reserve_generation_optimum_performance(void) const;
 
@@ -200,7 +200,7 @@ public:
 
     void set_reserve_generation_standard_deviation(const bool&);
 
-    void set_reserve_generation_minimum_generalization(const bool&);
+    void set_reserve_generation_minimum_selection(const bool&);
 
     void set_reserve_generation_optimum_performance(const bool&);
 
@@ -338,7 +338,7 @@ private:
 
     /// True if the minimum of selection performance are to be reserved in each generation.
 
-    bool reserve_generation_minimum_generalization;
+    bool reserve_generation_minimum_selection;
 
     /// True if the optimum of performance are to be reserved in each generation.
 

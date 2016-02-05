@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R F O R M A N C E   F U N C T I O N A L   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
@@ -275,7 +275,7 @@ public:
    bool has_mathematical_model(void) const;
    bool has_data_set(void) const;
 
-   bool has_generalization(void) const;
+   bool has_selection(void) const;
 
    bool is_sum_squared_terms(void) const;
 
@@ -411,11 +411,11 @@ public:
    virtual FirstOrderperformance calculate_first_order_performance(void) const;
    virtual SecondOrderperformance calculate_second_order_performance(void) const;
 
-   double calculate_generalization_objective(void) const;
-   double calculate_generalization_regularization(void) const;
-   double calculate_generalization_constraints(void) const;
+   double calculate_selection_objective(void) const;
+   double calculate_selection_regularization(void) const;
+   double calculate_selection_constraints(void) const;
 
-   virtual double calculate_generalization_performance(void) const;
+   virtual double calculate_selection_performance(void) const;
 
    // Taylor approximation methods
 
@@ -565,7 +565,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.artelnics.com/opennn                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
 #   O P E N N N   P R O J E C T                                                                   #
 #                                                                                                 #

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   I N V E R S E   S U M   S Q U A R E D   E R R O R   C L A S S                                              */
 /*                                                                                                              */
@@ -346,11 +346,11 @@ double InverseSumSquaredError::calculate_performance(const Vector<double>& poten
 }
 
 
-// double calculate_generalization_performance(void) const method
+// double calculate_selection_performance(void) const method
 
 /// @todo
 
-double InverseSumSquaredError::calculate_generalization_performance(void) const
+double InverseSumSquaredError::calculate_selection_performance(void) const
 {
    // Control sentence (if debug)
 
@@ -371,18 +371,16 @@ double InverseSumSquaredError::calculate_generalization_performance(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t generalization_instances_number = instances.count_generalization_instances_number();
+   const size_t selection_instances_number = instances.count_selection_instances_number();
 
-   const Vector<size_t> generalization_indices = instances.arrange_generalization_indices();
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-   size_t generalization_index;
+   size_t selection_index;
 
    const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   const MissingValues& missing_values = data_set_pointer->get_missing_values();
 
    // Performance functional
 
@@ -390,24 +388,19 @@ double InverseSumSquaredError::calculate_generalization_performance(void) const
    Vector<double> outputs(outputs_number);
    Vector<double> targets(outputs_number);
 
-   double generalization_objective = 0.0;
+   double selection_objective = 0.0;
 
    int i = 0;
 
-   #pragma omp parallel for private(i, generalization_index, inputs, outputs, targets) reduction(+ : generalization_objective)
+   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_objective)
 
-   for(i = 0; i < (int)generalization_instances_number; i++)
+   for(i = 0; i < (int)selection_instances_number; i++)
    {
-       generalization_index = generalization_indices[i];
-
-       if(missing_values.has_missing_values(generalization_index))
-       {
-           continue;
-       }
+       selection_index = selection_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(generalization_index, inputs_indices);
+      inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
       // Output vector
 
@@ -415,14 +408,14 @@ double InverseSumSquaredError::calculate_generalization_performance(void) const
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(generalization_index, targets_indices);
+      targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
       // Sum of squares error
 
-      generalization_objective += outputs.calculate_sum_squared_error(targets);           
+      selection_objective += outputs.calculate_sum_squared_error(targets);           
    }
 
-   return(generalization_objective);
+   return(selection_objective);
 }
 
 
@@ -501,7 +494,7 @@ void InverseSumSquaredError::from_XML(const tinyxml2::XMLDocument&)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

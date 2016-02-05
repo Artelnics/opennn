@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   P E R F O R M A N C E   T E R M   T E S T   C L A S S   H E A D E R                                        */
 /*                                                                                                              */
@@ -95,7 +95,7 @@ public:
 
    void test_calculate_performance(void);
 
-   void test_calculate_generalization_performance(void);   
+   void test_calculate_selection_performance(void);   
 
    void test_calculate_gradient(void); 
    void test_calculate_Hessian(void); 

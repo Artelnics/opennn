@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M A T R I X   T E S T   C L A S S                                                                          */
 /*                                                                                                              */ 
@@ -791,6 +791,7 @@ void MatrixTest::test_sort_less_rows(void)
     assert_true(sorted_m(4, 1) == 0.9, LOG);
     assert_true(sorted_m(5, 0) == 0.9, LOG);
     assert_true(sorted_m(5, 1) == 7, LOG);
+
 }
 
 

@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M O C K   P E R F O R M A N C E   T E R M   C L A S S   H E A D E R                                        */
 /*                                                                                                              */
@@ -35,6 +35,9 @@ public:
    // GENERAL CONSTRUCTOR
 
    explicit MockPerformanceTerm(NeuralNetwork*);
+
+   explicit MockPerformanceTerm(NeuralNetwork*, DataSet*);
+
 
    // DESTRUCTOR
 

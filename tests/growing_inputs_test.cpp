@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   G R O W I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
@@ -115,7 +115,7 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
     assert_true(gir->optimal_inputs[0] == 1, LOG);
 
-    gi.delete_generalization_history();
+    gi.delete_selection_history();
     gi.delete_parameters_history();
     gi.delete_performance_history();
 
@@ -151,7 +151,7 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
     assert_true(gir->optimal_inputs[0] == 1, LOG);
 
-    gi.delete_generalization_history();
+    gi.delete_selection_history();
     gi.delete_parameters_history();
     gi.delete_performance_history();
 }

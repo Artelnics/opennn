@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   R O O T   M E A N   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R                          */
 /*                                                                                                              */
@@ -54,7 +54,7 @@ public:
 
    void test_calculate_performance(void);   
 
-   void test_calculate_generalization_performance(void);
+   void test_calculate_selection_performance(void);
 
    void test_calculate_gradient(void);
 

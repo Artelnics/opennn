@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M O D E L   S E L E C T I O N   C L A S S   H E A D E R                                                    */
 /*                                                                                                              */
@@ -43,7 +43,7 @@ namespace OpenNN
 {
 
 /// This class represents the concept of model selection algorithm.
-/// It is used for finding a network architecture with maximum generalization capabilities. 
+/// It is used for finding a network architecture with maximum selection capabilities. 
 
 class ModelSelection
 {

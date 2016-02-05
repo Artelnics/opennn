@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   E V O L U T I O N A R Y   A L G O R I T H M   T E S T   C L A S S   H E A D E R                            */
 /*                                                                                                              */

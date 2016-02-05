@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   R O O T   M E A N   S Q U A R E D   E R R O R   T E S T   C L A S S                                        */
 /*                                                                                                              */
@@ -127,7 +127,7 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
    nn.set(3, 4, 2);
    nn.initialize_parameters(0.0);
 
-   ds.set(5, 3, 2);
+   ds.set(3, 2, 5);
    ds.initialize_data(0.0);
 
    // Test
@@ -137,7 +137,7 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
 
    network_parameters = nn.arrange_parameters();
 
-   ds.set(5, 3, 2);
+   ds.set(3, 2, 5);
    ds.initialize_data(1.0);
 
    objective_gradient = rmse.calculate_gradient();
@@ -161,9 +161,9 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void RootMeanSquaredErrorTest::test_calculate_generalization_performance(void)
+void RootMeanSquaredErrorTest::test_calculate_selection_performance(void)
 {
-   message += "test_calculate_generalization_performance\n";
+   message += "test_calculate_selection_performance\n";
 
    NeuralNetwork nn(1,1,1);
 
@@ -171,7 +171,7 @@ void RootMeanSquaredErrorTest::test_calculate_generalization_performance(void)
 
    DataSet ds(1,1,1);
 
-   ds.get_instances_pointer()->set_generalization();
+   ds.get_instances_pointer()->set_selection();
 
    ds.initialize_data(0.0);
 
@@ -207,7 +207,7 @@ void RootMeanSquaredErrorTest::run_test_case(void)
    // Objective methods
 
    test_calculate_performance();
-   test_calculate_generalization_performance();
+   test_calculate_selection_performance();
 
    test_calculate_gradient();
 

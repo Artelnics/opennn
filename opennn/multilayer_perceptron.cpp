@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural MultilayerPerceptrons Library                                                          */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   M U L T I L A Y E R   P E R C E P T R O N   C L A S S                                                      */
 /*                                                                                                              */
@@ -2226,15 +2226,19 @@ Vector<double> MultilayerPerceptron::calculate_interlayer_combination_combinatio
 
 // Matrix<double> calculate_interlayer_combination_combination_Jacobian(const size_t&, const size_t&, const Vector<double>&) const method
 
-/// Returns the partial derivatives of the combinations of a layer (image) with respect to the combinations of another layer (domain). 
-/// This quantity is the Jacobian matrix of the interlayers combination combination function. 
-/// @param image_layer_index Index of image layer. 
-/// @param domain_layer_index Index of domain layer. 
-/// @param domain_layer_combination Vector of combination values of the domain layer. 
+/// Returns the partial derivatives of the combinations of a layer (image) with respect to the combinations of another layer (domain).
+/// This quantity is the Jacobian matrix of the interlayers combination combination function.
+/// @param image_layer_index Index of image layer.
+/// @param domain_layer_index Index of domain layer.
+/// @param domain_layer_combination Vector of combination values of the domain layer.
 
 Matrix<double> MultilayerPerceptron::calculate_interlayer_combination_combination_Jacobian(const size_t& domain_layer_index, const size_t& image_layer_index, const Vector<double>& domain_layer_combination) const
 {
    Matrix<double> interlayer_combination_combination_Jacobian;
+
+//   NumericalDifferentiation nd;
+
+//   nd.calculate_Jacobian()
 
    if(domain_layer_index < image_layer_index)
    {
@@ -2243,38 +2247,39 @@ Matrix<double> MultilayerPerceptron::calculate_interlayer_combination_combinatio
       Vector< Vector<double> > layers_combination_combination(size);
       Vector< Matrix<double> > layers_combination_combination_Jacobian(size);
 
-      layers_combination_combination[0] = calculate_layer_combination_combination(domain_layer_index+1, domain_layer_combination);      
-      layers_combination_combination_Jacobian[0] = calculate_layer_combination_combination_Jacobian(domain_layer_index+1, layers[domain_layer_index].calculate_activations_derivatives(domain_layer_combination));
+      layers_combination_combination[0] = calculate_layer_combination_combination(domain_layer_index+1, domain_layer_combination);
+      layers_combination_combination_Jacobian[0] = calculate_layer_combination_combination_Jacobian(domain_layer_index+1, layers[domain_layer_index].calculate_activations_derivatives(layers_combination_combination[0]));
 
       for(size_t i = 1; i < size; i++)
       {
-         layers_combination_combination[i] = calculate_layer_combination_combination(domain_layer_index+i+1, layers_combination_combination[i-1]);
+         layers_combination_combination[i] = calculate_layer_combination_combination(domain_layer_index+1+i, layers_combination_combination[i-1]);
 
-         layers_combination_combination_Jacobian[i] = calculate_layer_combination_combination_Jacobian(domain_layer_index+i+1, layers_combination_combination[i-1]);
+         //layers_combination_combination_Jacobian[i] = calculate_layer_combination_combination_Jacobian(domain_layer_index+i+1, layers_combination_combination[i-1]);
+         layers_combination_combination_Jacobian[i] = calculate_layer_combination_combination_Jacobian(domain_layer_index+i+1, layers[domain_layer_index+i].calculate_activations_derivatives(layers_combination_combination[i]));
       }
 
       interlayer_combination_combination_Jacobian = layers_combination_combination_Jacobian[size-1];
 
       for(int i = (int)size-2; i > -1; i--)
       {
-         interlayer_combination_combination_Jacobian = interlayer_combination_combination_Jacobian.dot(layers_combination_combination_Jacobian[i]);   
+          interlayer_combination_combination_Jacobian = interlayer_combination_combination_Jacobian.dot(layers_combination_combination_Jacobian[i]);
       }
    }
    else if(domain_layer_index == image_layer_index)
    {
       const size_t image_layer_perceptrons_number = layers[image_layer_index].get_perceptrons_number();
 
-      interlayer_combination_combination_Jacobian.set_identity(image_layer_perceptrons_number);
+        interlayer_combination_combination_Jacobian.set_identity(image_layer_perceptrons_number);
    }
    else
    {
       const size_t image_layer_perceptrons_number = layers[image_layer_index].get_perceptrons_number();
       const size_t domain_layer_perceptrons_number = layers[domain_layer_index].get_perceptrons_number();
 
-      interlayer_combination_combination_Jacobian.set(image_layer_perceptrons_number, domain_layer_perceptrons_number, 0.0);      
+      interlayer_combination_combination_Jacobian.set(image_layer_perceptrons_number, domain_layer_perceptrons_number, 0.0);
    }
 
-   return(interlayer_combination_combination_Jacobian); 
+   return(interlayer_combination_combination_Jacobian);
 }
 
 
@@ -3375,11 +3380,11 @@ Matrix < Matrix<double> > MultilayerPerceptron::calculate_interlayers_combinatio
 
    for(size_t image_index = 0; image_index < layers_number; image_index++)
    {
-      for(size_t domain_index = 0; domain_index < layers_number; domain_index++)
-      {
-         interlayers_combination_combination_Jacobian(image_index,domain_index) =
-         calculate_interlayer_combination_combination_Jacobian(domain_index, image_index, layers_combination[domain_index]);
-      }
+       for(size_t domain_index = 0; domain_index < layers_number; domain_index++)
+       {
+           interlayers_combination_combination_Jacobian(image_index,domain_index) =
+           calculate_interlayer_combination_combination_Jacobian(domain_index, image_index, layers_combination[domain_index]);
+       }
    }
 
    return(interlayers_combination_combination_Jacobian);
@@ -3808,7 +3813,7 @@ std::string MultilayerPerceptron::write_expression(const Vector<std::string>& in
 }
 
 // OpenNN: Open Neural MultilayerPerceptrons Library.
-// Copyright (c) 2005-2015 Roberto Lopez.
+// Copyright (c) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

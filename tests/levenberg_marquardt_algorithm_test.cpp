@@ -1,7 +1,7 @@
 /****************************************************************************************************************/
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.net                                                                                             */
 /*                                                                                                              */
 /*   L E V E N B E R G   M A R Q U A R D T   A L G O R I T H M   T E S T   C L A S S                            */
 /*                                                                                                              */
@@ -158,7 +158,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_gradient(void)
 
    // Test
 
-//   ds.set(2, 1, 1);
+//   ds.set(1, 1, 2);
 //   ds.randomize_data_normal();
 
 //   nn.set(1, 1);
@@ -225,7 +225,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 
    parameters_number = nn.count_parameters_number();
 
-   ds.set(2,1,2);
+   ds.set(1,2,2);
    ds.initialize_data(0.0);
 
    terms_Jacobian = pf.calculate_terms_Jacobian();
@@ -245,7 +245,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 
    parameters_number = nn.count_parameters_number();
 
-   ds.set(3,1,2);
+   ds.set(1,2,3);
    ds.randomize_data_normal();
 
    terms_Jacobian = pf.calculate_terms_Jacobian();
@@ -310,7 +310,7 @@ void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history(void
    assert_true(lma.get_reserve_parameters_norm_history() == true, LOG);
 
    assert_true(lma.get_reserve_performance_history() == true, LOG);
-   assert_true(lma.get_reserve_generalization_performance_history() == true, LOG);
+   assert_true(lma.get_reserve_selection_performance_history() == true, LOG);
    assert_true(lma.get_reserve_gradient_history() == true, LOG);
    assert_true(lma.get_reserve_gradient_norm_history() == true, LOG);
    assert_true(lma.get_reserve_Hessian_approximation_history() == true, LOG);
@@ -347,7 +347,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training(void)
    nn.set(1, 1, 1);
    nn.randomize_parameters_normal(0.0, 1.0e-3);
 
-   ds.set(2, 1, 1);
+   ds.set(1, 1, 2);
    ds.randomize_data_normal(0.0, 1.0e-3);
 
    old_performance = pf.calculate_performance();
@@ -445,7 +445,7 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_history(void)
    assert_true(lmatr.parameters_norm_history.size() == 1, LOG);
 
    assert_true(lmatr.performance_history.size() == 1, LOG);
-   assert_true(lmatr.generalization_performance_history.size() == 1, LOG);
+   assert_true(lmatr.selection_performance_history.size() == 1, LOG);
    assert_true(lmatr.gradient_history.size() == 1, LOG);
    assert_true(lmatr.gradient_norm_history.size() == 1, LOG);
    assert_true(lmatr.Hessian_approximation_history.size() == 1, LOG);
