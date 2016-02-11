@@ -316,7 +316,7 @@ public:
    //Matrix< Matrix <double> > calculate_interlayers_Delta(void) const;
 
    Matrix<double> calculate_output_interlayers_Delta(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
-   Matrix<double> calculate_interlayers_Delta(const size_t& ,const size_t& , const Vector<double>& , /*const Vector<double>& , const Vector<double>& ,*/ const Matrix<double>&/*, const Matrix<double>&*/) const;
+   Matrix<double> calculate_interlayers_Delta(const size_t& ,const size_t& , const Vector<double>& , const Vector<double>& ,/* const Vector<double>& ,*/ const Matrix<double>&/*, const Matrix<double>&*/) const;
 
    Matrix< Matrix <double> > calculate_interlayers_Delta(const Vector< Vector<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&, const Vector<double>&, const Matrix<double>&, const Vector< Vector<double> >&) const;
 

@@ -803,9 +803,13 @@ void PerceptronLayer::grow_perceptron(void)
 {
    const size_t inputs_number = get_inputs_number();
 
+   const Perceptron::ActivationFunction activation_function = get_activation_function();
+
    Perceptron perceptron(inputs_number);
 
    perceptron.initialize_parameters(0.0);
+
+   perceptron.set_activation_function(activation_function);
 
    perceptrons.push_back(perceptron);
 }

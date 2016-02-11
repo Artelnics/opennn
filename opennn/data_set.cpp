@@ -4856,6 +4856,8 @@ Vector<size_t> DataSet::balance_binary_targets_distribution(void)
 
     Vector<size_t> actual_unused_instances;
 
+    std::cout << "Instances to unuse: " << total_unbalanced_instances_number << std::endl;
+
     while(total_unbalanced_instances_number != 0)
     {
         if(total_unbalanced_instances_number < instances_number/10)

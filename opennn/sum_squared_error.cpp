@@ -831,7 +831,11 @@ Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian(void) cons
      + output_gradient
      * layers_activation_second_derivative[layers_number-1]);
 
+    std::cout << "output interlayers Delta: \n" << output_interlayers_Delta << std::endl;
+
     // Both weights in the second layer
+
+    std::cout << "\n Both weights in the second layer\n" << std::endl;
 
     for(size_t i = first_layer_parameters_number; i < second_layer_parameters_number + first_layer_parameters_number; i++)
     {
@@ -847,15 +851,28 @@ Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian(void) cons
             neuron_index_j = parameter_indices[1];
             parameter_index_j = parameter_indices[2];           
 
+            std::cout << "output_interlayers_Delta(neuron_index_j, neuron_index_i): " << output_interlayers_Delta(neuron_index_j,neuron_index_i) << std::endl;
+            std::cout << "neuron index i: " << neuron_index_i << std::endl;
+            std::cout << "neuron index j: " << neuron_index_j << std::endl;
+            std::cout << "layer index i: " << layer_index_i << std::endl;
+            std::cout << "layer index j: " << layer_index_j << std::endl;
+
             single_hidden_layer_Hessian(i,j) =
             perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
             *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
             *calculate_Kronecker_delta(neuron_index_i,neuron_index_j)
             *output_interlayers_Delta(neuron_index_j,neuron_index_i);
+
+            std::cout << "\n Interlayers value: " << calculate_Kronecker_delta(neuron_index_i,neuron_index_j)
+                         *output_interlayers_Delta(neuron_index_j,neuron_index_i) << std::endl;
+
+            std::cout << "Single hidden Hessian(" << i << "," << j << "): " << single_hidden_layer_Hessian(i,j) << std::endl;
         }
     }
 
-    // One weght in each layer
+    // One weight in each layer
+
+    std::cout << "\n One weight in each layer\n" << std::endl;
 
     Matrix<double> second_layer_weights = multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights();
 
@@ -873,6 +890,12 @@ Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian(void) cons
             neuron_index_j = parameter_indices[1];
             parameter_index_j = parameter_indices[2];
 
+            std::cout << "output_interlayers_Delta(neuron_index_j, neuron_index_j): " << output_interlayers_Delta(neuron_index_j, neuron_index_j) << std::endl;
+            std::cout << "neuron index i: " << neuron_index_i << std::endl;
+            std::cout << "neuron index j: " << neuron_index_j << std::endl;
+            std::cout << "layer index i: " << layer_index_i << std::endl;
+            std::cout << "layer index j: " << layer_index_j << std::endl;
+
             single_hidden_layer_Hessian(i,j) =
              (layers_activation_derivative[layer_index_i][neuron_index_i]
              *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
@@ -883,10 +906,18 @@ Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian(void) cons
              *perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
              *layers_delta[layer_index_j][neuron_index_j]
              *calculate_Kronecker_delta(parameter_index_j,neuron_index_i+1));
+
+            std::cout << "\nInterlayers value: " << layers_activation_derivative[layer_index_i][neuron_index_i]
+                         *  second_layer_weights(neuron_index_j, neuron_index_i)
+                         *output_interlayers_Delta(neuron_index_j, neuron_index_j) << std::endl;
+
+            std::cout << "Single hidden Hessian(" << i << "," << j << "): " << single_hidden_layer_Hessian(i,j) << std::endl;
         }
     }
 
     // Both weights in the first layer
+
+    std::cout << "\n Both weights in the first layer\n" << std::endl;
 
     for(size_t i = 0; i < first_layer_parameters_number; i++)
     {
@@ -920,6 +951,8 @@ Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian(void) cons
                     *layers_activation_derivative[layer_index_i][neuron_index_i]
                     *layers_activation_derivative[layer_index_j][neuron_index_j]
                     *sum;
+
+            std::cout << "Single hidden Hessian(" << i << "," << j << "): " << single_hidden_layer_Hessian(i,j) << std::endl;
         }
     }
 

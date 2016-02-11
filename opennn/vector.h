@@ -3601,15 +3601,13 @@ Vector<size_t> Vector<T>::sort_less_indices(void) const
 {
     Vector<size_t> indices(this->size());
 
-#if __APPLE__
 
+#ifdef __APPLE__
     indices = this->calculate_less_rank();
+
 #else
-
     indices.initialize_sequential();
-
-    std::sort(std::begin(indices), std::end(indices), [this](size_t i1, size_t i2) {return (*this)[i1] < (*this)[i2];});
-
+    std::sort(indices.begin(), indices.end(), [this](size_t i1, size_t i2) {return (*this)[i1] < (*this)[i2];});
 #endif
 
     return(indices);
@@ -3623,15 +3621,11 @@ Vector<size_t> Vector<T>::sort_greater_indices(void) const
 {
     Vector<size_t> indices(this->size());
 
-#if __APPLE__
-
-    indices = this->calculate_greater_rank();
+#ifdef __APPLE__
+    indices = this->calculate_less_rank();
 #else
-
     indices.initialize_sequential();
-
-    std::sort(std::begin(indices), std::end(indices), [this](size_t i1, size_t i2) {return (*this)[i1] > (*this)[i2];});
-
+    std::sort(indices.begin(), indices.end(), [this](size_t i1, size_t i2) {return (*this)[i1] < (*this)[i2];});
 #endif
 
     return(indices);

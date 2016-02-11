@@ -2229,7 +2229,6 @@ Vector<double> TestingAnalysis::calculate_binary_classification_tests(void) cons
    const size_t false_negative = confusion(0,1);
    const size_t true_negative = confusion(1,1);
 
-
    // Classification accuracy
 
    double classification_accuracy;
@@ -2427,6 +2426,7 @@ Vector<double> TestingAnalysis::calculate_binary_classification_tests(void) cons
    //Arrange vector
 
    Vector<double> binary_classification_test(15);
+
    binary_classification_test[0] = classification_accuracy;
    binary_classification_test[1] = error_rate;
    binary_classification_test[2] = sensitivity;

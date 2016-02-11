@@ -61,3 +61,9 @@ unix: !mac{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }
+
+# C++11 flags
+unix: !mac{
+QMAKE_CXXFLAGS+= -std=c++11
+QMAKE_LFLAGS +=  -std=c++11
+}

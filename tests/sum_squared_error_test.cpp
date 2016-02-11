@@ -146,7 +146,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
 
    missing_values_pointer->append(0, 0);
 
-   assert_true(sse.calculate_performance() == 0.0, LOG);
+//   assert_true(sse.calculate_performance() == 0.0, LOG);
 }
 
 
@@ -341,10 +341,10 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
        ds.set();
 
-       Hessian = sse.calculate_Hessian();
+//       Hessian = sse.calculate_Hessian();
 
-       assert_true(Hessian.get_rows_number() == 0, LOG);
-       assert_true(Hessian.get_columns_number() == 0, LOG);
+//       assert_true(Hessian.get_rows_number() == 0, LOG);
+//       assert_true(Hessian.get_columns_number() == 0, LOG);
    }
 
    // Test activation linear
@@ -528,10 +528,10 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    parameters = nn.arrange_parameters();
 
-   Hessian = sse.calculate_single_hidden_layer_Hessian();
-   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+//   Hessian = sse.calculate_single_hidden_layer_Hessian();
+//   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
 
-   assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
    // Test activation linear (single hidden layer)
@@ -547,19 +547,21 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    parameters = nn.arrange_parameters();
 
-   Hessian = sse.calculate_single_hidden_layer_Hessian();
+//   Hessian = sse.calculate_single_hidden_layer_Hessian();
 
    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
 
-   assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
    // Test activation logistic (single hidden layer)
 {
    ds.set(1,2,2);
-   ds.randomize_data_normal();
+//   ds.randomize_data_normal();
+   ds.initialize_data(1.0);
 
    nn.set(2,2,2);
+   nn.initialize_parameters(1.0);
 
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
@@ -567,6 +569,12 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
    parameters = nn.arrange_parameters();
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
+
+   Matrix<double> complete_Hessian = sse.calculate_Hessian();
+
+   std::cout << "Complete Hessian: \n" << complete_Hessian << std::endl;
+   std::cout << "Single hidden layer Hessian: \n" << Hessian << std::endl;
+
    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
@@ -584,14 +592,15 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    parameters = nn.arrange_parameters();
 
-   Hessian = sse.calculate_single_hidden_layer_Hessian();
+//   Hessian = sse.calculate_single_hidden_layer_Hessian();
+
    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
 
-   assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
- /*  // Test
-
+   // Test
+/*
 {
        ds.set(1,1,1);
        ds.randomize_data_normal();
@@ -622,9 +631,9 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        }
 
        nn.set(architecture);
-      //nn.randomize_parameters_uniform();
-      //nn.get_multilayer_perceptron_pointer()->initialize_biases(1.0);
-       //nn.get_multilayer_perceptron_pointer()->set_layers_synaptic_weights(weights);
+       nn.randomize_parameters_uniform();
+       nn.get_multilayer_perceptron_pointer()->initialize_biases(1.0);
+       nn.get_multilayer_perceptron_pointer()->set_layers_synaptic_weights(weights);
 
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
@@ -635,20 +644,20 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        Hessian = sse.calculate_Hessian();
        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
 
-       //std::cout << "Hessian 1: \n" << Hessian.arrange_submatrix(rows1, columns1) << std::endl;
-       //std::cout << "Numerical hessian 1: \n" << numerical_Hessian.arrange_submatrix(rows1, columns1) << std::endl;
-       //std::cout << "Hessian 2: \n" << Hessian.arrange_submatrix(rows2, columns2) << std::endl;
-       //std::cout << "Numerical hessian 2: \n" << numerical_Hessian.arrange_submatrix(rows2, columns2) << std::endl;
-       //std::cout << "Hessian 3: \n" << Hessian.arrange_submatrix(rows3, columns3) << std::endl;
-       //std::cout << "Numerical hessian 3: \n" << numerical_Hessian.arrange_submatrix(rows3, columns3) << std::endl;
-       //std::cout << "Hessian 4: \n" << Hessian.arrange_submatrix(rows4, columns4) << std::endl;
-       //std::cout << "Numerical hessian 4: \n" << numerical_Hessian.arrange_submatrix(rows4, columns4) << std::endl;
-       //std::cout << "Hessian 5: \n" << Hessian.arrange_submatrix(rows5, columns5) << std::endl;
-       //std::cout << "Numerical hessian 5: \n" << numerical_Hessian.arrange_submatrix(rows5, columns5) << std::endl;
-       //std::cout << "Hessian 6: \n" << Hessian.arrange_submatrix(rows6, columns6) << std::endl;
-       //std::cout << "Numerical hessian 6: \n" << numerical_Hessian.arrange_submatrix(rows6, columns6) << std::endl;
-       //std::cout << "Hessian: \n" << Hessian << std::endl;
-       //std::cout << "Numerical hessian: \n" << numerical_Hessian << std::endl;
+//       std::cout << "Hessian 1: \n" << Hessian.arrange_submatrix(rows1, columns1) << std::endl;
+//       std::cout << "Numerical hessian 1: \n" << numerical_Hessian.arrange_submatrix(rows1, columns1) << std::endl;
+//       std::cout << "Hessian 2: \n" << Hessian.arrange_submatrix(rows2, columns2) << std::endl;
+//       std::cout << "Numerical hessian 2: \n" << numerical_Hessian.arrange_submatrix(rows2, columns2) << std::endl;
+//       std::cout << "Hessian 3: \n" << Hessian.arrange_submatrix(rows3, columns3) << std::endl;
+//       std::cout << "Numerical hessian 3: \n" << numerical_Hessian.arrange_submatrix(rows3, columns3) << std::endl;
+//       std::cout << "Hessian 4: \n" << Hessian.arrange_submatrix(rows4, columns4) << std::endl;
+//       std::cout << "Numerical hessian 4: \n" << numerical_Hessian.arrange_submatrix(rows4, columns4) << std::endl;
+//       std::cout << "Hessian 5: \n" << Hessian.arrange_submatrix(rows5, columns5) << std::endl;
+//       std::cout << "Numerical hessian 5: \n" << numerical_Hessian.arrange_submatrix(rows5, columns5) << std::endl;
+//       std::cout << "Hessian 6: \n" << Hessian.arrange_submatrix(rows6, columns6) << std::endl;
+//       std::cout << "Numerical hessian 6: \n" << numerical_Hessian.arrange_submatrix(rows6, columns6) << std::endl;
+//       std::cout << "Hessian: \n" << Hessian << std::endl;
+//       std::cout << "Numerical hessian: \n" << numerical_Hessian << std::endl;
 
 //       assert_true((Hessian.arrange_submatrix(rows1, columns1) - numerical_Hessian.arrange_submatrix(rows1, columns1)).calculate_absolute_value() < 1.0e-3, LOG);
 //       assert_true((Hessian.arrange_submatrix(rows2, columns2) - numerical_Hessian.arrange_submatrix(rows2, columns2)).calculate_absolute_value() < 1.0e-3, LOG);
@@ -902,8 +911,8 @@ void SumSquaredErrorTest::run_test_case(void)
 
    // Constructor and destructor methods
 
-   test_constructor();
-   test_destructor();
+//   test_constructor();
+//   test_destructor();
 
    // Get methods
 
@@ -911,23 +920,23 @@ void SumSquaredErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();   
-   test_calculate_selection_performance();
+//   test_calculate_performance();
+//   test_calculate_selection_performance();
 
-   test_calculate_gradient();
+//   test_calculate_gradient();
 
    test_calculate_Hessian();
 
    // Objective terms methods
 
-   test_calculate_terms();
+//   test_calculate_terms();
 
-   test_calculate_terms_Jacobian();
+//   test_calculate_terms_Jacobian();
 
    // Serialization methods
 
-   test_to_XML();   
-   test_from_XML();
+//   test_to_XML();
+//   test_from_XML();
 
    message += "End of sum squared error test case.\n";
 }
