@@ -7,6 +7,7 @@ Some typical applications of OpenNN are function regression (modelling), pattern
 
 The documentation is composed by tutorials and examples to offer a complete overview about the library. The documentation can be found at the official <a href="http://opennn.net" target="_blank">OpenNN site</a>.
 
+CMakeLists.txt are build files for CMake, it is also used byt the CLion IDE.
 
 The .pro files are project files for the Qt Creator IDE, which can be downloaded from its <a href="http://www.qt.io" target="_blank">site</a>. Note that OpenNN does not make use of the Qt library. 
 
