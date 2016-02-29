@@ -38,11 +38,7 @@ int main(void)
 
       DataSet data_set;
 
-#ifdef __APPLE__
-      data_set.set_data_file_name("../../../../data/simple_pattern_recognition.dat");
-#else
       data_set.set_data_file_name("../data/simple_pattern_recognition.dat");
-#endif
 
       data_set.load_data();
 
@@ -115,20 +111,6 @@ int main(void)
 
       scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
 
-#ifdef __APPLE__
-      data_set.save("../../../../data/data_set.xml");
-
-      neural_network.save("../../../../data/neural_network.xml");
-      neural_network.save_expression("../../../../data/expression.txt");
-
-      performance_functional.save("../../../../data/performance_functional.xml");
-
-      training_strategy.save("../../../../data/training_strategy.xml");
-      training_strategy_results.save("../../../../data/training_strategy_results.dat");
-
-      binary_classification_tests.save("../../../../data/binary_classification_tests.dat");
-      confusion.save("../../../../data/confusion.dat");
-#else
       data_set.save("../data/data_set.xml");
 
       neural_network.save("../data/neural_network.xml");
@@ -141,7 +123,7 @@ int main(void)
 
       binary_classification_tests.save("../data/binary_classification_tests.dat");
       confusion.save("../data/confusion.dat");
-#endif
+
       return(0);
    }
    catch(std::exception& e)

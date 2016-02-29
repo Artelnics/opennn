@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = simple_pattern_recognition
 
 DESTDIR = "$$PWD/bin"

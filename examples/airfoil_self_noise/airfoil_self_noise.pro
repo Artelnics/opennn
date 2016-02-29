@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = airfoil_self_noise
 
 DESTDIR = "$$PWD/bin"

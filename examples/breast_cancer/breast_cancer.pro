@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = breast_cancer
 
 DESTDIR = "$$PWD/bin"

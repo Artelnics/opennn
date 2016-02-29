@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = simple_function_regression
 
 DESTDIR = "$$PWD/bin"

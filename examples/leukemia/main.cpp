@@ -40,11 +40,7 @@ int main(void)
 
         DataSet data_set;
 
-#ifdef __APPLE__
-        data_set.set_data_file_name("../../../../data/leukemia.dat");
-#else
         data_set.set_data_file_name("../data/leukemia.dat");
-#endif
 
         data_set.set_separator("Space");
 
@@ -137,19 +133,6 @@ int main(void)
 
         scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
 
-#ifdef __APPLE__
-        data_set.save("../../../../data/data_set.xml");
-
-        neural_network.save("../../../../data/neural_network.xml");
-        neural_network.save_expression("../../../../data/expression.txt");
-
-        training_strategy.save("../../../../data/training_strategy.xml");
-
-        model_selection.save("../../../../data/model_selection.xml");
-        model_selection_results.save("../../../../data/model_selection_results.dat");
-
-        confusion.save("../../../../data/confusion.dat");
-#else
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
@@ -161,7 +144,6 @@ int main(void)
         model_selection_results.save("../data/model_selection_results.dat");
 
         confusion.save("../data/confusion.dat");
-#endif
 
         return(0);
     }

@@ -97,11 +97,8 @@ int main(void)
 
    // Redirect standard output to file
 
-//#ifdef __APPLE__
-//   std::ofstream out("../../../../data/out.txt");
-//#else
-//   std::ofstream out("../data/out.txt");
-//#endif
+   //std::ofstream out("../data/out.txt");
+
    //std::cout.rdbuf(out.rdbuf());
 
    try

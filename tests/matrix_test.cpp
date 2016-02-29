@@ -35,11 +35,7 @@ void MatrixTest::test_constructor(void)
 {
    message += "test_constructor\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/matrix.dat";
-#else
    std::string file_name = "../data/matrix.dat";
-#endif
 
    // Default
 
@@ -484,11 +480,7 @@ void MatrixTest::test_set(void)
 {
    message += "test_set\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/matrix.dat";
-#else
    std::string file_name = "../data/matrix.dat";
-#endif
 
    Matrix<double> m;
 
@@ -1534,11 +1526,7 @@ void MatrixTest::test_save(void)
 {
    message += "test_save\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/matrix.dat";
-#else
    std::string file_name = "../data/matrix.dat";
-#endif
 
    Matrix<int> m;
 
@@ -1551,11 +1539,7 @@ void MatrixTest::test_load(void)
 {
    message += "test_load\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/matrix.dat";
-#else
    std::string file_name = "../data/matrix.dat";
-#endif
 
    Matrix<int> m;
 

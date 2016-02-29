@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = pima_indians_diabetes
 
 DESTDIR = "$$PWD/bin"

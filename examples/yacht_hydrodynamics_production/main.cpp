@@ -35,12 +35,8 @@ int main(void)
       std::cout << "OpenNN. Yacht Resistance Production Application." << std::endl;	
   
       // Neural network
-#ifdef __APPLE__
-      const std::string neural_network_file_name = "../../../../data/neural_network.xml";
-#else
-      const std::string neural_network_file_name = "../data/neural_network.xml";
-#endif
 
+      const std::string neural_network_file_name = "../data/neural_network.xml";
 
       NeuralNetwork neural_network(neural_network_file_name);
 

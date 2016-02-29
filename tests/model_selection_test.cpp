@@ -129,11 +129,7 @@ void ModelSelectionTest::test_save(void)
 {
     message += "test_save\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/model_selection.xml";
-#else
-   std::string file_name = "../data/model_selection.xml";
-#endif
+    std::string file_name = "../data/model_selection.xml";
 
     ModelSelection ms;
 
@@ -144,11 +140,7 @@ void ModelSelectionTest::test_load(void)
 {
     message += "test_load\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/model_selection.xml";
-#else
-   std::string file_name = "../data/model_selection.xml";
-#endif
+    std::string file_name = "../data/model_selection.xml";
 
     ModelSelection ms;
 

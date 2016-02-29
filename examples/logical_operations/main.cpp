@@ -36,12 +36,8 @@ int main(void)
       // Data set
 
       DataSet data_set;
-      
-#ifdef __APPLE__
-      data_set.set_data_file_name("../../../../data/logical_operations.dat");
-#else
+
       data_set.set_data_file_name("../data/logical_operations.dat");
-#endif
 
       data_set.load_data();
 
@@ -85,15 +81,6 @@ int main(void)
 
       // Save results
 
-#ifdef __APPLE__
-      data_set.save("../../../../data/data_set.xml");
-
-      neural_network.save("../../../../data/neural_network.xml");
-
-      performance_functional.save("../../../../data/performance_functional.xml");
-
-      training_strategy.save("../../../../data/training_strategy.xml");
-#else
       data_set.save("../data/data_set.xml");
 
       neural_network.save("../data/neural_network.xml");
@@ -101,7 +88,7 @@ int main(void)
       performance_functional.save("../data/performance_functional.xml");
 
       training_strategy.save("../data/training_strategy.xml");
-#endif
+
       // Print results to screen
 
       Vector<double> inputs(2, 0.0);

@@ -40,11 +40,7 @@ int main(void)
 
       DataSet data_set;
 
-#ifdef __APPLE__
-      data_set.set_data_file_name("../../../../data/airfoil_self_noise.dat");
-#else
       data_set.set_data_file_name("../data/airfoil_self_noise.dat");
-#endif
 
       data_set.set_separator("Tab");
 
@@ -158,19 +154,6 @@ int main(void)
       scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
       unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
 
-#ifdef __APPLE__
-      data_set.save("../../../../data/data_set.xml");
-
-      neural_network.save("../../../../data/neural_network.xml");
-      neural_network.save_expression("../../../../data/expression.txt");
-
-      performance_functional.save("../../../../data/performance_functional.xml");
-
-      training_strategy.save("../../../../data/training_strategy.xml");
-      training_strategy_results.save("../../../../data/training_strategy_results.dat");
-
-      linear_regression_results.save("../../../../data/linear_regression_analysis_results.dat");
-#else
       data_set.save("../data/data_set.xml");
 
       neural_network.save("../data/neural_network.xml");
@@ -182,7 +165,6 @@ int main(void)
       training_strategy_results.save("../data/training_strategy_results.dat");
 
       linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-#endif
 
       return(0);
    }

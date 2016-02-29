@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = urinary_inflammations_diagnosis
 
 DESTDIR = "$$PWD/bin"

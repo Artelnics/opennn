@@ -296,11 +296,7 @@ void TestingAnalysisTest::test_save_linear_regression_parameters(void)
 {
    message += "test_save_linear_regression_parameters\n";
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/linear_regression_parameters.dat";
-#else
    std::string file_name = "../data/linear_regression_parameters.dat";
-#endif
 
    NeuralNetwork nn;
    DataSet ds;

@@ -15,6 +15,10 @@ QT = # Do not use Qt
 
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = opennntests
 
 TEMPLATE = app

@@ -35,12 +35,8 @@ int main(void)
       // Data set
 
       DataSet data_set;
-      
-#ifdef __APPLE__
-      data_set.set_data_file_name("../../../../data/breast_cancer.dat");
-#else
+
       data_set.set_data_file_name("../data/breast_cancer.dat");
-#endif
 
       data_set.load_data();
 
@@ -138,20 +134,6 @@ int main(void)
 
       scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
 
-#ifdef __APPLE__
-      data_set.save("../../../../data/data_set.xml");
-
-      neural_network.save("../../../../data/neural_network.xml");
-      neural_network.save_expression("../../../../data/expression.txt");
-
-      training_strategy.save("../../../../data/training_strategy.xml");
-
-      model_selection.save("../../../../data/model_selection.xml");
-      model_selection_results.save("../../../../data/model_selection_results.dat");
-
-      confusion.save("../../../../data/confusion.dat");
-      binary_classification_tests.save("../../../../data/binary_classification_tests.dat");
-#else
       data_set.save("../data/data_set.xml");
 
       neural_network.save("../data/neural_network.xml");
@@ -164,7 +146,6 @@ int main(void)
 
       confusion.save("../data/confusion.dat");
       binary_classification_tests.save("../data/binary_classification_tests.dat");
-#endif
 
       return(0);
    }

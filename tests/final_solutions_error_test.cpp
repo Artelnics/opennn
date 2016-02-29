@@ -93,11 +93,7 @@ void FinalSolutionsErrorTest::test_from_XML(void)
 {
 	message += "test_from_XML\n"; 
 
-#ifdef __APPLE__
-   std::string file_name = "../../../../data/final_solutions_error.xml";
-#else
     std::string file_name = "../data/final_solutions_error.xml";
-#endif
 
 //   FinalSolutionsError fse;
 

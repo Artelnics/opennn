@@ -14,6 +14,10 @@
 TEMPLATE = app
 CONFIG += console
 
+mac{
+    CONFIG-=app_bundle
+}
+
 TARGET = yacht_hydrodynamics_design
 
 DESTDIR = "$$PWD/bin"
