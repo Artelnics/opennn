@@ -341,7 +341,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         current_selection_performance = current_order_performance[1];
         current_parameters = get_parameters_order(current_order);
 
-        boltzmann_probability = fmin(1, exp(-(current_selection_performance-optimum_performance[1])/temperature));
+        boltzmann_probability = std::min(1.0, exp(-(current_selection_performance-optimum_performance[1])/temperature));
         random_uniform = calculate_random_uniform(0.,1.);
 
         if ((boltzmann_probability <= random_uniform)
