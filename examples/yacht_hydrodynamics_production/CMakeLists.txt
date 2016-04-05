@@ -1,0 +1,7 @@
+
+add_executable(yacht_hydrodynamics_production main.cpp)
+target_link_libraries(yacht_hydrodynamics_production opennn)
+
+
+
+install(TARGETS yacht_hydrodynamics_production RUNTIME DESTINATION bin)
