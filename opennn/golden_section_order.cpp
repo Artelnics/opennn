@@ -261,7 +261,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             if (display)
                 std::cout << "Maximum time reached." << std::endl;
             results->stopping_condition = GoldenSectionOrder::MaximumTime;
-        }else if (fmin(ln_performance[1],mu_performance[1]) <= selection_performance_goal)
+        }else if (std::min(ln_performance[1],mu_performance[1]) <= selection_performance_goal)
         {
             end = true;
             if (display)
