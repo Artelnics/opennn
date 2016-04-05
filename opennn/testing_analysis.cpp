@@ -2403,7 +2403,7 @@ Vector<double> TestingAnalysis::calculate_binary_classification_tests(void) cons
    }
    else
    {
-       Matthews_correlation_coefficient = (double) (true_positive * true_negative - false_positive * false_negative) /(double) sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative));
+       Matthews_correlation_coefficient = (double) (true_positive * true_negative - false_positive * false_negative) /(double) sqrt((double)((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative)));
    }
 
    //Informedness
