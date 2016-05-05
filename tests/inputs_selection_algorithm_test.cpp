@@ -155,21 +155,21 @@ void InputsSelectionAlgorithmTest::test_set_neural_inputs(void)
 
 // Performances calculation methods
 
-void InputsSelectionAlgorithmTest::test_calculate_minimum_final_performances(void)
+void InputsSelectionAlgorithmTest::test_perform_minimum_model_evaluation(void)
 {
-    message += "test_calculate_minimum_final_performances\n";
+    message += "test_perform_minimum_model_evaluation\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_calculate_maximum_final_performances(void)
+void InputsSelectionAlgorithmTest::test_perform_maximum_model_evaluation(void)
 {
-    message += "test_calculate_maximum_final_performances\n";
+    message += "test_perform_maximum_model_evaluation\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_calculate_mean_final_performances(void)
+void InputsSelectionAlgorithmTest::test_perform_mean_model_evaluation(void)
 {
-    message += "test_calculate_mean_final_performances\n";
+    message += "test_perform_mean_model_evaluation\n";
 
 }
 
@@ -179,9 +179,9 @@ void InputsSelectionAlgorithmTest::test_get_final_performances(void)
 
 }
 
-void InputsSelectionAlgorithmTest::test_calculate_performances(void)
+void InputsSelectionAlgorithmTest::test_perform_model_evaluation(void)
 {
-    message += "test_calculate_performances\n";
+    message += "test_perform_model_evaluation\n";
 
 }
 
@@ -223,13 +223,13 @@ void InputsSelectionAlgorithmTest::run_test_case(void)
 
     test_set_neural_inputs();
 
-    test_calculate_minimum_final_performances();
-    test_calculate_maximum_final_performances();
-    test_calculate_mean_final_performances();
+    test_perform_minimum_model_evaluation();
+    test_perform_maximum_model_evaluation();
+    test_perform_mean_model_evaluation();
 
     test_get_final_performances();
 
-    test_calculate_performances();
+    test_perform_model_evaluation();
 
     test_get_parameters_order();
 

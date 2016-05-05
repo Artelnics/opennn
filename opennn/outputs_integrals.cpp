@@ -422,16 +422,16 @@ tinyxml2::XMLDocument* OutputsIntegrals::to_XML(void) const
    }
 
    // Display
-   {
-      tinyxml2::XMLElement* element = document->NewElement("Display");
-      outputs_integrals_element->LinkEndChild(element);
+//   {
+//      tinyxml2::XMLElement* element = document->NewElement("Display");
+//      outputs_integrals_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+//      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }

@@ -413,6 +413,10 @@ public:
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 
+   // PMML Methods
+   void to_PMML(tinyxml2::XMLElement* );
+   void from_PMML(const tinyxml2::XMLElement*);
+
    // Information
 
    Matrix<std::string> write_information(void) const;

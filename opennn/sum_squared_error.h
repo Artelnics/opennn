@@ -98,7 +98,7 @@ public:
 
    double calculate_performance(const Vector<double>&) const;
 
-   double calculate_performance_combinations(const size_t&, const Vector<double>&) const;
+   double calculate_performance_combination(const size_t&, const Vector<double>&) const;
    double calculate_performance_combinations(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
 
    Vector<double> calculate_gradient(const Vector<double>&) const;

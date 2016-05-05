@@ -101,7 +101,7 @@ void IncrementalOrder::set_default(void)
 {
     step = 1;
 
-    maximum_selection_failures = 3;
+    maximum_selection_failures = 10;
 }
 
 // void set_step(const size_t&) method
@@ -148,7 +148,7 @@ void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_maximum_performance_failures <= 0)
+    if(new_maximum_performance_failures <= 0)
     {
         std::ostringstream buffer;
 
@@ -180,6 +180,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
     size_t optimal_order;
     Vector<double> optimum_parameters;
+    double optimum_training_performance;
     double optimum_selection_performance;
 
     Vector<double> parameters_history_row;
@@ -194,7 +195,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     time_t beginning_time, current_time;
     double elapsed_time;
 
-    if (display)
+    if(display)
     {
         std::cout << "Performing Incremental order selection..." << std::endl;
         std::cout.flush();
@@ -204,7 +205,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
     while (!end)
     {
-        performance = calculate_performances(order);
+        performance = perform_model_evaluation(order);
         current_training_performance = performance[0];
         current_selection_performance = performance[1];
 
@@ -213,105 +214,146 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
         results->order_data.push_back(order);
 
-        if (reserve_performance_data)
+        if(reserve_performance_data)
         {
             results->performance_data.push_back(current_training_performance);
         }
 
-        if (reserve_selection_performance_data)
+        if(reserve_selection_performance_data)
         {
             results->selection_performance_data.push_back(current_selection_performance);
         }
 
-        if (reserve_parameters_data)
+        if(reserve_parameters_data)
         {
             parameters_history_row = get_parameters_order(order);
             results->parameters_data.push_back(parameters_history_row);
         }
 
-        if (iterations == 0
+        if(iterations == 0
         || (optimum_selection_performance > current_selection_performance
         && fabs(optimum_selection_performance - current_selection_performance) > tolerance))
         {
             optimal_order = order;
+            optimum_training_performance = current_training_performance;
             optimum_selection_performance = current_selection_performance;
             optimum_parameters = get_parameters_order(optimal_order);
-        }else if (prev_selection_performance < current_selection_performance)
+
+        }else if(prev_selection_performance < current_selection_performance)
+        {
             selection_failures++;
+        }
 
         prev_selection_performance = current_selection_performance;
         iterations++;
 
         // Stopping criteria
 
-        if (elapsed_time >= maximum_time)
+        if(elapsed_time >= maximum_time)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Maximum time reached." << std::endl;
-            results->stopping_condition = IncrementalOrder::MaximumTime;
-        }else if (performance[1] <= selection_performance_goal)
+            }
+
+            results->stopping_condition = IncrementalOrder::MaximumTime;            
+        }
+        else if(performance[1] <= selection_performance_goal)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Selection performance reached." << std::endl;
+            }
+
             results->stopping_condition = IncrementalOrder::SelectionPerformanceGoal;
-        }else if (iterations >= maximum_iterations_number)
+
+        }else if(iterations >= maximum_iterations_number)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Maximum number of iterations reached." << std::endl;
+            }
+
             results->stopping_condition = IncrementalOrder::MaximumIterations;
-        }else if (selection_failures >= maximum_selection_failures)
+        }
+        else if(selection_failures >= maximum_selection_failures)
         {
             end = true;
-            if (display)
-                std::cout << "Maximum selection performance failures("<<selection_failures<<") reached." << std::endl;
+
+            if(display)
+            {
+                std::cout << "Maximum selection failures ("<<selection_failures<<") reached." << std::endl;
+            }
+
             results->stopping_condition = IncrementalOrder::MaximumSelectionFailures;
-        }else if (order == maximum_order)
+        }
+        else if(order == maximum_order)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Algorithm finished" << std::endl;
+            }
+
             results->stopping_condition = IncrementalOrder::AlgorithmFinished;
         }
 
-        if (display)
+        if(display)
         {
-            std::cout << "Iteration : " << iterations << std::endl;
-            std::cout << "Hidden neurons number : " << order << std::endl;
-            std::cout << "Training performance : " << performance[0] << std::endl;
-            std::cout << "Selection performance : " << performance[1] << std::endl;
-            std::cout << "Elapsed time : " << elapsed_time << std::endl;
+            std::cout << "Iteration: " << iterations << std::endl
+                      << "Hidden neurons number: " << order << std::endl
+                      << "Training performance: " << performance[0] << std::endl
+                      << "Selection performance: " << performance[1] << std::endl
+                      << "Elapsed time: " << elapsed_time << std::endl;
         }
 
-        if (!end)
+
+        if(!end)
+        {
             order = std::min(maximum_order, order+step);
+        }
     }
 
-    if (display)
-        std::cout << "Optimal order : " << optimal_order << std:: endl;
+    if(display)
+    {
+        std::cout << std::endl
+                  << "Optimal order: " << optimal_order << std:: endl
+                  << "Optimum selection performance: " << optimum_selection_performance << std::endl
+                  << "Corresponding training performance: " << optimum_training_performance << std::endl;
+    }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
     const size_t perceptrons_number = multilayer_perceptron_pointer->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if (optimal_order > perceptrons_number)
+    if(optimal_order > perceptrons_number)
     {
         multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
-    }else
+    }
+    else
     {
         for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
+        {
             multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
+        }
     }
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
-    if (reserve_minimal_parameters)
+    if(reserve_minimal_parameters)
+    {
         results->minimal_parameters = optimum_parameters;
+    }
 
     results->optimal_order = optimal_order;
     results->final_selection_performance = optimum_selection_performance;
-    results->final_performance = calculate_performances(optimal_order)[0];
+    results->final_performance = perform_model_evaluation(optimal_order)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
 
@@ -484,6 +526,18 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
+   // Step
+   {
+   element = document->NewElement("Step");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << step;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+   }
+
    // Parameters assays number
    {
    element = document->NewElement("TrialsNumber");
@@ -497,33 +551,105 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    }
 
    // Performance calculation method
-   {
-   element = document->NewElement("PerformanceCalculationMethod");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("PerformanceCalculationMethod");
+//   root_element->LinkEndChild(element);
 
-   text = document->NewText(write_performance_calculation_method().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(write_performance_calculation_method().c_str());
+//   element->LinkEndChild(text);
+//   }
 
-   // Step
+   // Reserve parameters data
+//   {
+//   element = document->NewElement("ReserveParametersData");
+//   root_element->LinkEndChild(element);
+
+//   buffer.str("");
+//   buffer << reserve_parameters_data;
+
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
+
+   // Reserve minimal parameters
+//   {
+//   element = document->NewElement("ReserveMinimalParameters");
+//   root_element->LinkEndChild(element);
+
+//   buffer.str("");
+//   buffer << reserve_minimal_parameters;
+
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
+
+   // Display
+//   {
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
+
+//   buffer.str("");
+//   buffer << display;
+
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
+
+   // Tolerance
    {
-   element = document->NewElement("Step");
+   element = document->NewElement("Tolerance");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << step;
+   buffer << tolerance;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve parameters data
+   // Selection performance goal
    {
-   element = document->NewElement("ReserveParametersData");
+   element = document->NewElement("SelectionPerformanceGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_parameters_data;
+   buffer << selection_performance_goal;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+   }
+
+   // Maximum iterations
+//   {
+//   element = document->NewElement("MaximumIterationsNumber");
+//   root_element->LinkEndChild(element);
+
+//   buffer.str("");
+//   buffer << maximum_iterations_number;
+
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
+
+   // Maximum selection failures
+   {
+   element = document->NewElement("MaximumSelectionFailures");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << maximum_selection_failures;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
+   }
+
+   // Maximum time
+   {
+   element = document->NewElement("MaximumTime");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << maximum_time;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -548,102 +674,6 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
 
    buffer.str("");
    buffer << reserve_selection_performance_data;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Reserve minimal parameters
-   {
-   element = document->NewElement("ReserveMinimalParameters");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << reserve_minimal_parameters;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Display
-   {
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << display;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Selection performance goal
-   {
-   element = document->NewElement("SelectionPerformanceGoal");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << selection_performance_goal;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Maximum iterations
-   {
-   element = document->NewElement("MaximumIterationsNumber");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << maximum_iterations_number;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Maximum time
-   {
-   element = document->NewElement("MaximumTime");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << maximum_time;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Tolerance
-   {
-   element = document->NewElement("Tolerance");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << tolerance;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Maximum selection failures
-   {
-   element = document->NewElement("MaximumSelectionFailures");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << maximum_selection_failures;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Maximum selection failures
-   {
-   element = document->NewElement("MaximumSelectionFailures");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << maximum_selection_failures;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -984,7 +1014,7 @@ void IncrementalOrder::load(const std::string& file_name)
 
    tinyxml2::XMLDocument document;
 
-   if (document.LoadFile(file_name.c_str()))
+   if(document.LoadFile(file_name.c_str()))
    {
       std::ostringstream buffer;
 

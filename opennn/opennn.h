@@ -40,7 +40,12 @@
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
-
+#include "threshold_selection_algorithm.h"
+#include "f1_score_optimization_threshold.h"
+#include "matthew_correlation_optimization_threshold.h"
+#include "youden_index_optimization_threshold.h"
+#include "kappa_coefficient_optimization_threshold.h"
+#include "roc_curve_optimization_threshold.h"
 
 // Neural network
 

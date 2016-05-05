@@ -735,6 +735,292 @@ Vector< Vector<size_t> > TestingAnalysis::calculate_maximal_errors(const size_t&
 }
 
 
+// Vector<double> calculate_testing_errors(void) const method
+
+/// Returns a vector containing the values of the errors between the outputs of the neural network
+/// and the targets. The vector consists of:
+/// <ul>
+/// <li> Sum squared error.
+/// <li> Mean squared error.
+/// <li> Root mean squared error.
+/// <li> Normalized squared error.
+/// </ul>
+
+Vector<double> TestingAnalysis::calculate_testing_errors(void) const
+{
+    // Data set stuff
+
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+    const size_t testing_instances_number = data_set_pointer->get_instances().count_testing_instances_number();
+
+     #ifdef __OPENNN_DEBUG__
+
+     std::ostringstream buffer;
+
+     if(testing_instances_number == 0)
+     {
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Vector< Matrix<double> > calculate_errors(void) const.\n"
+               << "Number of testing instances is zero.\n";
+
+        throw std::logic_error(buffer.str());
+     }
+
+     #endif
+
+    const Matrix<double> input_data = data_set_pointer->arrange_testing_input_data();
+
+    const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();
+
+    // Neural network stuff
+
+    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(!unscaling_layer_pointer)
+    {
+       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+              << "Vector< Matrix<double> > calculate_errors(void) const.\n"
+              << "Unscaling layer is NULL.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Vector<double> errors(4,0.0);
+
+    // Results
+
+    errors[0] = output_data.calculate_sum_squared_error(target_data);
+    errors[1] = output_data.calculate_sum_squared_error(target_data)/testing_instances_number;
+    errors[2] = sqrt(errors[1]);
+    errors[3] = calculate_testing_normalized_squared_error(target_data, output_data);
+
+    return errors;
+}
+
+
+// Vector<double> calculate_pattern_recognition_testing_errors(void) const method
+
+/// Returns a vector containing the values of the errors between the outputs of the neural network
+/// and the targets for a pattern recognition problem. The vector consists of:
+/// <ul>
+/// <li> Sum squared error.
+/// <li> Mean squared error.
+/// <li> Root mean squared error.
+/// <li> Normalized squared error.
+/// <li> Cross-entropy error.
+/// <li> Weighted squared error.
+/// </ul>
+
+Vector<double> TestingAnalysis::calculate_pattern_recognition_testing_errors(void) const
+{
+    // Data set stuff
+
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+    const size_t testing_instances_number = data_set_pointer->get_instances().count_testing_instances_number();
+
+     #ifdef __OPENNN_DEBUG__
+
+     std::ostringstream buffer;
+
+     if(testing_instances_number == 0)
+     {
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Vector< Matrix<double> > calculate_errors(void) const.\n"
+               << "Number of testing instances is zero.\n";
+
+        throw std::logic_error(buffer.str());
+     }
+
+     #endif
+
+    const Matrix<double> input_data = data_set_pointer->arrange_testing_input_data();
+
+    const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();
+
+    // Neural network stuff
+
+    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(!unscaling_layer_pointer)
+    {
+       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+              << "Vector< Matrix<double> > calculate_errors(void) const.\n"
+              << "Unscaling layer is NULL.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Vector<double> errors(6,0.0);
+
+    // Results
+
+    errors[0] = output_data.calculate_sum_squared_error(target_data);
+    errors[1] = output_data.calculate_sum_squared_error(target_data)/testing_instances_number;
+    errors[2] = sqrt(errors[1]);
+    errors[3] = calculate_testing_normalized_squared_error(target_data, output_data);
+    errors[4] = calculate_testing_cross_entropy_error(target_data, output_data);
+    errors[5] = calculate_testing_weighted_squared_error(target_data, output_data);
+
+    return errors;
+}
+
+
+// double calculate_testing_normalized_squared_error(const Matrix<double>&, const Matrix<double>&) const method
+
+/// Returns the normalized squared error between the targets and the outputs of the neural network.
+/// @target_data Testing target data.
+/// @output_data Testing output data.
+
+double TestingAnalysis::calculate_testing_normalized_squared_error(const Matrix<double>& target_data, const Matrix<double>& output_data) const
+{
+    const size_t testing_instances_number = target_data.get_rows_number();
+
+    const Vector<double> testing_target_data_mean = data_set_pointer->calculate_testing_target_data_mean();
+
+    double normalization_coefficient = 0.0;
+    double sum_squared_error = 0.0;
+
+    for(size_t i = 0; i < testing_instances_number; i++)
+    {
+        sum_squared_error += output_data.arrange_row(i).calculate_sum_squared_error(target_data.arrange_row(i));
+
+        normalization_coefficient += target_data.arrange_row(i).calculate_sum_squared_error(testing_target_data_mean);
+    }
+
+    return sum_squared_error/normalization_coefficient;
+}
+
+
+// double calculate_testing_cross_entropy_error(const Matrix<double>&, const Matrix<double>&) const method
+
+/// Returns the cross-entropy error between the targets and the outputs of the neural network. It can only be computed for pattern
+/// recognition problems.
+/// @target_data Testing target data.
+/// @output_data Testing output data.
+
+double TestingAnalysis::calculate_testing_cross_entropy_error(const Matrix<double>& target_data, const Matrix<double>& output_data) const
+{
+    const size_t testing_instances_number = target_data.get_rows_number();
+    const size_t outputs_number = target_data.get_columns_number();
+
+    Vector<double> targets(outputs_number);
+    Vector<double> outputs(outputs_number);
+
+    double cross_entropy_error = 0.0;
+
+    for(size_t i = 0; i < testing_instances_number; i++)
+    {
+        outputs = output_data.arrange_row(i);
+        targets = target_data.arrange_row(i);
+
+        for(size_t j = 0; j < outputs_number; j++)
+        {
+            if(outputs[j] == 0.0)
+            {
+                outputs[j] = 1.0e-6;
+            }
+            else if(outputs[j] == 1.0)
+            {
+                outputs[j] = 0.999999;
+            }
+
+            cross_entropy_error -= targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]);
+        }
+    }
+
+    return cross_entropy_error;
+}
+
+
+// double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const method
+
+/// Returns the weighted squared error between the targets and the outputs of the neural network. It can only be computed for
+/// binary pattern recognition problems.
+/// @target_data Testing target data.
+/// @output_data Testing output data.
+
+double TestingAnalysis::calculate_testing_weighted_squared_error(const Matrix<double>& target_data, const Matrix<double>& output_data) const
+{
+    const size_t testing_instances_number = target_data.get_rows_number();
+
+    #ifdef __OPENNN_DEBUG__
+
+    std::ostringstream buffer;
+
+    if(outputs_number != 1)
+    {
+       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+              << "double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const.\n"
+              << "Number of outputs must be one.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    const Vector<size_t> target_distribution = data_set_pointer->calculate_target_distribution();
+
+    const size_t negatives_number = target_distribution[0];
+    const size_t positives_number = target_distribution[1];
+
+    const double negatives_weight = 1.0;
+    const double positives_weight = (double)negatives_number/positives_number;
+
+    double error = 0.0;
+    double sum_squared_error = 0.0;
+
+    for(size_t i = 0; i < testing_instances_number; i++)
+    {
+        if(target_data(0,i) == 1.0)
+        {
+            error = positives_weight*output_data.arrange_column(i).calculate_sum_squared_error(target_data.arrange_column(i));
+        }
+        else if(target_data(0,i) == 0.0)
+        {
+            error = negatives_weight*output_data.arrange_column(i).calculate_sum_squared_error(target_data.arrange_column(i));
+        }
+        else
+        {
+            std::ostringstream buffer;
+
+            buffer << "OpenNN Exception: TestingAnalysis class.\n"
+                   << "double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const method.\n"
+                   << "Target is neither a positive nor a negative.\n";
+
+            throw std::logic_error(buffer.str());
+        }
+
+        sum_squared_error += error;
+    }
+
+    const Vector<size_t> targets_indices = data_set_pointer->get_variables().arrange_targets_indices();
+
+    const size_t negatives = data_set_pointer->calculate_training_negatives(targets_indices[0]);
+
+    const double normalization_coefficient = negatives*negatives_weight*0.5;
+
+    return(sum_squared_error/normalization_coefficient);
+}
+
+
 // Matrix<size_t> calculate_confusion_binary_classification(const Matrix<double>&, const Matrix<double>&, const double&) const method
 
 /// Returns the confusion matrix for a binary classification problem.
@@ -755,31 +1041,29 @@ Matrix<size_t> TestingAnalysis::calculate_confusion_binary_classification(const 
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        // True positive
 
         if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
         {
+            // True positive
+
             true_positive++;
-        }
 
-        // False negative
-
-        if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
+        }else if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
         {
+            // False negative
+
             false_negative++;
-        }
 
-        // False positive
-
-        if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
+        }else if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
         {
+            // False positive
+
             false_positive++;
-        }
 
-        // True negative
-
-        if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
+        }else if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
         {
+            // True negative
+
             true_negative++;
         }
     }
@@ -788,6 +1072,17 @@ Matrix<size_t> TestingAnalysis::calculate_confusion_binary_classification(const 
     confusion(0,1) = false_negative;
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
+
+    if(confusion.calculate_sum() != rows_number)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Matrix<size_t> calculate_confusion_binary_classification(const Matrix<double>&, const Matrix<double>&, const double&) const method.\n"
+               << "Number of elements in confusion matrix must be equal to number of testing instances.\n";
+
+        throw std::logic_error(buffer.str());
+    }
 
     return(confusion);
 }
@@ -909,9 +1204,11 @@ Matrix<size_t> TestingAnalysis::calculate_confusion(void) const
    #endif
 
     const Matrix<double> input_data = data_set_pointer->arrange_testing_input_data();
-    const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();
+    const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();    
 
     const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
+
+//    output_data.save("../data/output_data.dat");
 
     if(outputs_number == 1)
     {
@@ -1013,7 +1310,7 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis (void)
 
      roc_analysis_results.roc_curve = calculate_roc_curve(target_data, output_data);
      roc_analysis_results.area_under_curve = calculate_area_under_curve(target_data, output_data);
-     roc_analysis_results.optimal_threshold = calculate_optimal_threshold (target_data, output_data);
+     roc_analysis_results.optimal_threshold = calculate_optimal_threshold(target_data, output_data);
 
      return(roc_analysis_results);
 }
@@ -1047,7 +1344,8 @@ double TestingAnalysis::calculate_Wilcoxon_parameter (const double& x, const dou
 
 /// Returns a matrix with the values of a ROC curve for a binary classification problem.
 /// The number of columns is two.
-/// The number of rows is one more than the number of outputs.
+/// The number of rows is one more than the number of outputs if the number of outputs is lower than 100
+/// or 50 in other case.
 /// @param target_data Testing target data.
 /// @param output_data Testing output data.
 
@@ -1080,34 +1378,62 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
         throw std::logic_error(buffer.str());
      }
 
-    const size_t rows_number = target_data.get_rows_number();
-    const size_t columns_number = target_data.get_columns_number();
+    const size_t maximum_points_number = 100;
+
+    size_t step_size;
+
+    const size_t testing_instances_number = target_data.get_rows_number();
+    size_t points_number;
+
+    if(testing_instances_number > maximum_points_number)
+    {
+        step_size = testing_instances_number/maximum_points_number;
+        points_number = testing_instances_number/step_size;
+    }
+    else
+    {
+        points_number = testing_instances_number;
+        step_size = 1;
+    }
+
+//    const size_t columns_number = target_data.get_columns_number();
 
     Matrix<double> target_output_data = output_data.assemble_columns(target_data);
 
     Matrix<double> sorted_target_output_data = target_output_data.sort_less_rows(0);
 
-    const Vector<size_t> columns_output_indices(0, 1, columns_number - 1);
-    const Vector<size_t> columns_target_indices(columns_number, 1, 2*columns_number- 1);
+    const Vector<size_t> columns_output_indices(1,0);
+    const Vector<size_t> columns_target_indices(1,1);
 
     const Matrix<double> sorted_target_data = sorted_target_output_data.arrange_submatrix_columns(columns_target_indices);
     const Matrix<double> sorted_output_data = sorted_target_output_data.arrange_submatrix_columns(columns_output_indices);
 
-    Matrix<double> roc_curve(rows_number + 1, 2);
+    Matrix<double> roc_curve(points_number+1, 2);
 
     double threshold = 0;
 
     size_t positives;
     size_t negatives;
 
-    for(size_t i = 0; i < rows_number; i++)
+    size_t current_index;
+
+    int j = 0;
+    int i = 0;
+
+    const size_t step_s = step_size;
+
+#pragma omp parallel for private(i, j, positives, negatives, threshold, current_index)
+
+    for(i = 0; i < (int)points_number; i++)
     {
         positives = 0;
         negatives = 0;
 
-        threshold = sorted_output_data(i, 0);
+        current_index = i*step_s;
 
-        for(size_t j = 0; j < rows_number; j++)
+        threshold = sorted_output_data(current_index, 0);
+
+        for(j = 0; j < (int)current_index; j++)
         {
              if(sorted_output_data(j,0) < threshold && sorted_target_data(j,0) == 1.0)
              {
@@ -1123,8 +1449,8 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
         roc_curve(i,1) = (double)negatives/(double)(total_negatives);
     }
 
-    roc_curve(rows_number, 0) = 1.0;
-    roc_curve(rows_number, 1) = 1.0;
+    roc_curve(points_number, 0) = 1.0;
+    roc_curve(points_number, 1) = 1.0;
 
     return (roc_curve);
 }
@@ -1165,17 +1491,19 @@ double TestingAnalysis::calculate_area_under_curve (const Matrix<double>& target
         throw std::logic_error(buffer.str());
      }
 
-    size_t rows_number = target_data.get_rows_number();
+    size_t testing_instances_number = target_data.get_rows_number();
 
     double sum = 0.0;
 
     double area_under_curve;
 
-    for(size_t i = 0; i < rows_number; i++)
+//#pragma omp parallel for private(i, rows_number, target_data?) reduction(+ : sum)
+
+    for(size_t i = 0; i < testing_instances_number; i++)
     {
         if(target_data(i,0) == 1)
         {
-            for(size_t j = 0; j < rows_number; j++)
+            for(size_t j = 0; j < testing_instances_number; j++)
             {
                 if(target_data(j,0) == 0)
                 {
@@ -1202,6 +1530,22 @@ double TestingAnalysis::calculate_optimal_threshold (const Matrix<double>& targe
     const size_t rows_number = target_data.get_rows_number();
     const size_t columns_number = target_data.get_columns_number();
 
+    const size_t maximum_points_number = 50;
+
+    size_t step_size;
+    size_t points_number;
+
+    if(rows_number > maximum_points_number)
+    {
+        step_size = rows_number/maximum_points_number;
+        points_number = rows_number/step_size;
+    }
+    else
+    {
+        points_number = rows_number;
+        step_size = 1;
+    }
+
     Matrix<double> target_output_data = output_data.assemble_columns(target_data);
 
     Matrix<double> sorted_target_output_data = target_output_data.sort_less_rows(0);
@@ -1220,11 +1564,15 @@ double TestingAnalysis::calculate_optimal_threshold (const Matrix<double>& targe
     double minimun_distance = std::numeric_limits<double>::max();
     double distance;
 
-    for(size_t i = 0; i < rows_number; i++)
-    {
-        threshold = output_data(i, 0);
+    size_t current_index;
 
-        distance = roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0);
+    for(size_t i = 0; i < points_number; i++)
+    {
+        current_index = i*step_size;
+
+        threshold = sorted_output_data(current_index, 0);
+
+        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0));
 
         if(distance < minimun_distance)
         {
@@ -1312,10 +1660,11 @@ Matrix<double> TestingAnalysis::perform_cumulative_gain_analysis(void) const
      return(cumulative_gain);
 }
 
+
 // Matrix<double> calculate_cumulative_gain(const Matrix<double>& , const Matrix<double>&) const
 
 /// Returns a matrix with the values of a cumulative gain chart.
-/// The number of columns is two, the number of rows is ten (percentiles).
+/// The number of columns is two, the number of rows is 20.
 /// @param target_data Testing target data.
 /// @param output_data Testing output data.
 
@@ -1335,22 +1684,22 @@ Matrix<double> TestingAnalysis::calculate_cumulative_gain(const Matrix<double>& 
      }
 
     const size_t rows_number = target_data.get_rows_number();
-    const size_t columns_number = target_data.get_columns_number();
 
     const Matrix<double> target_output_data = output_data.assemble_columns(target_data);
 
     const Matrix<double> sorted_target_output_data = target_output_data.sort_greater_rows(0);
 
-    const Vector<size_t> target_indices(columns_number, 1, 2*columns_number - 1);
+    const Vector<size_t> target_indices(1,1);
 
     const Matrix<double> sorted_target_data = sorted_target_output_data.arrange_submatrix_columns(target_indices);
 
-    const size_t points_number = 11;
+    const size_t points_number = 21;
+    const double percentage_increment = 0.05;
 
     Matrix<double> cumulative_gain(points_number, 2);
 
-    cumulative_gain(0, 0) = 0.0;
-    cumulative_gain(0, 1) = 0.0;
+    cumulative_gain(0,0) = 0.0;
+    cumulative_gain(0,1) = 0.0;
 
     size_t positives = 0;
     size_t negatives = 0;
@@ -1361,7 +1710,7 @@ Matrix<double> TestingAnalysis::calculate_cumulative_gain(const Matrix<double>& 
 
     for(size_t i = 0; i < points_number - 1; i++)
     {
-        percentage += 0.1;
+        percentage += percentage_increment;
         positives = 0;
         negatives = 0;
         maximum_index = (size_t)(percentage*rows_number);
@@ -1374,11 +1723,79 @@ Matrix<double> TestingAnalysis::calculate_cumulative_gain(const Matrix<double>& 
             }
         }
 
-        cumulative_gain(i + 1, 0) = (double) (i + 1.0)/10.0;
+        cumulative_gain(i + 1, 0) = (double) percentage;
         cumulative_gain(i + 1, 1) = (double) positives/(double)(total_positives);
     }
 
     return(cumulative_gain);
+}
+
+
+// Matrix<double> calculate_cumulative_gain(const Matrix<double>& , const Matrix<double>&) const
+
+/// Returns a matrix with the values of a cumulative gain chart for the negative instances.
+/// The number of columns is two, the number of rows is 20.
+/// @param target_data Testing target data.
+/// @param output_data Testing output data.
+
+Matrix<double> TestingAnalysis::calculate_negative_cumulative_gain(const Matrix<double>& target_data, const Matrix<double>& output_data) const
+{
+    const size_t total_negatives = calculate_positives_negatives_rate(target_data, output_data)[1];
+
+    if(total_negatives == 0)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Matrix<double> calculate_negative_cumulative_gain(const Matrix<double>&, const Matrix<double>&) const.\n"
+               << "Number of negative instances (" << total_negatives << ") must be greater than zero.\n";
+
+        throw std::logic_error(buffer.str());
+     }
+
+    const size_t rows_number = target_data.get_rows_number();
+
+    const Matrix<double> target_output_data = output_data.assemble_columns(target_data);
+
+    const Matrix<double> sorted_target_output_data = target_output_data.sort_greater_rows(0);
+
+    const Vector<size_t> target_indices(1,1);
+
+    const Matrix<double> sorted_target_data = sorted_target_output_data.arrange_submatrix_columns(target_indices);
+
+    const size_t points_number = 21;
+    const double percentage_increment = 0.05;
+
+    Matrix<double> negative_cumulative_gain(points_number, 2);
+
+    negative_cumulative_gain(0,0) = 0.0;
+    negative_cumulative_gain(0,1) = 0.0;
+
+    size_t negatives = 0;
+
+    double percentage = 0.0;
+
+    size_t maximum_index;
+
+    for(size_t i = 0; i < points_number - 1; i++)
+    {
+        percentage += percentage_increment;
+        negatives = 0;
+        maximum_index = (size_t)(percentage*rows_number);
+
+        for(size_t j = 0; j < maximum_index; j++)
+        {
+            if(sorted_target_data(j, 0) == 0.0)
+            {
+                 negatives++;
+            }
+        }
+
+        negative_cumulative_gain(i + 1, 0) = (double) percentage;
+        negative_cumulative_gain(i + 1, 1) = (double) negatives/(double)(total_negatives);
+    }
+
+    return(negative_cumulative_gain);
 }
 
 
@@ -1471,6 +1888,11 @@ Matrix<double> TestingAnalysis::calculate_lift_chart(const Matrix<double>& cumul
 
     Matrix<double> lift_chart(rows_number, columns_number);
 
+    lift_chart(0,0) = 0.0;
+    lift_chart(0,1) = 1.0;
+
+// #pragma omp parallel for
+
     for(size_t i = 1; i < rows_number; i++)
     {
         lift_chart(i, 0) = cumulative_gain(i, 0);
@@ -1478,6 +1900,139 @@ Matrix<double> TestingAnalysis::calculate_lift_chart(const Matrix<double>& cumul
     }
 
     return(lift_chart);
+}
+
+
+// Matrix<double> perform_Kolmogorov_Smirnov_analysis(void) const
+
+/// Performs a Kolmogorov-Smirnov analysis, which consists of the cumulative gain for the positive instances and the cumulative
+/// gain for the negative instances. It returns a Kolmogorov-Smirnov results structure, which consists of:
+/// <ul>
+/// <li> Positive cumulative gain
+/// <li> Negative cumulative gain
+/// <li> Maximum gain
+/// </ul>
+
+TestingAnalysis::KolmogorovSmirnovResults TestingAnalysis::perform_Kolmogorov_Smirnov_analysis(void) const
+{
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    if(!multilayer_perceptron_pointer)
+    {
+        std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+              << "Matrix<double> perform_Kolmogorov_Smirnov_analysis(void) const method.\n"
+              << "Pointer to multilayer perceptron in neural network is NULL.\n";
+
+      throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+
+    // Control sentence
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    if(inputs_number != variables.count_inputs_number())
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class." << std::endl
+               << "Matrix<double> perform_Kolmogorov_Smirnov_analysis(void) const method." << std::endl
+               << "Number of inputs in neural network must be equal to number of inputs in data set." << std::endl;
+
+       throw std::logic_error(buffer.str());
+    }
+
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    if(outputs_number != variables.count_targets_number())
+    {
+        std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: TestingAnalysis class." << std::endl
+              << "Matrix<double> perform_Kolmogorov_Smirnov_analysis(void) const method." << std::endl
+              << "Number of outputs in neural network must be equal to number of targets in data set." << std::endl;
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+     const Matrix<double> input_data = data_set_pointer->arrange_testing_input_data();
+     const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();
+
+     const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
+
+     TestingAnalysis::KolmogorovSmirnovResults Kolmogorov_Smirnov_results;
+
+     Kolmogorov_Smirnov_results.positive_cumulative_gain = calculate_cumulative_gain(target_data, output_data);
+     Kolmogorov_Smirnov_results.negative_cumulative_gain = calculate_negative_cumulative_gain(target_data, output_data);
+     Kolmogorov_Smirnov_results.maximum_gain =
+     calculate_maximum_gain(Kolmogorov_Smirnov_results.positive_cumulative_gain,Kolmogorov_Smirnov_results.negative_cumulative_gain);
+
+     return(Kolmogorov_Smirnov_results);
+}
+
+
+// double calculate_Komogorov_Smirnov_score(const Matrix<double>&, const Matrix<double>&) const
+
+/// Returns the score of the the maximum gain, which is the point of major separation between the positive and
+/// the negative cumulative gain charts, and the instances ratio for which it occurs.
+/// @param positive_cumulative_gain Cumulative gain fo the positive instances.
+/// @param negative_cumulative_gain Cumulative gain fo the negative instances.
+
+Vector<double> TestingAnalysis::calculate_maximum_gain(const Matrix<double>& positive_cumulative_gain, const Matrix<double>& negative_cumulative_gain) const
+{
+    const size_t points_number = positive_cumulative_gain.get_rows_number();
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(points_number != negative_cumulative_gain.get_rows_number())
+    {
+        std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+              << "Matrix<double> calculate_maximum_gain(void) const method.\n"
+              << "Positive and negative cumulative gain matrix must have the same rows number.\n";
+
+      throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Vector<double> maximum_gain(2, 0.0);
+
+    const double percentage_increment = 0.05;
+
+    double percentage = 0.0;
+
+    for(size_t i = 0; i < points_number - 1; i++)
+    {
+        percentage += percentage_increment;
+
+        if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
+        && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > 0.0)
+        {
+            maximum_gain[1] = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
+            maximum_gain[0] = percentage;
+        }
+    }
+
+    return maximum_gain;
 }
 
 
@@ -1564,11 +2119,20 @@ Matrix<double> TestingAnalysis::perform_calibration_plot_analysis(void) const
 
 Matrix<double> TestingAnalysis::calculate_calibration_plot(const Matrix<double>& target_data, const Matrix<double>& output_data) const
 {
+    std::cout << "Calibration plot" << std::endl;
+
     const size_t rows_number = target_data.get_rows_number();   
+
+    std::cout << "Rows number: " << rows_number << std::endl;
 
     const size_t points_number = 10;
 
-    Matrix<double> calibration_plot(points_number, 2);
+    Matrix<double> calibration_plot(points_number+2, 2);
+
+    // First point
+
+    calibration_plot(0,0) = 0.0;
+    calibration_plot(0,1) = 0.0;
 
     size_t positives = 0;
 
@@ -1578,7 +2142,7 @@ Matrix<double> TestingAnalysis::calculate_calibration_plot(const Matrix<double>&
 
     double sum = 0.0;
 
-    for(size_t i = 0; i < points_number; i++)
+    for(size_t i = 1; i < points_number+1; i++)
     {
         count = 0;
         positives = 0;
@@ -1612,13 +2176,22 @@ Matrix<double> TestingAnalysis::calculate_calibration_plot(const Matrix<double>&
         }
      }
 
+    // Last point
+
+    calibration_plot(points_number+1,0) = 1.0;
+    calibration_plot(points_number+1,1) = 1.0;
+
+   // Subtracts calibration plot rows with value -1
+
     size_t points_number_subtracted = 0;
 
-   //Subtracts calibration plot rows with value -1
+    size_t current_rows_number;
 
     while(calibration_plot.arrange_column(0).contains(-1))
      {
-         for(size_t i = 0; i < points_number - points_number_subtracted; i++)
+        current_rows_number = calibration_plot.get_rows_number();
+
+         for(size_t i = 1; i < points_number - points_number_subtracted+1; i++)
          {
              if(calibration_plot(i, 0) == -1)
              {
@@ -2444,6 +3017,87 @@ Vector<double> TestingAnalysis::calculate_binary_classification_tests(void) cons
    binary_classification_test[14] = markedness;
 
    return(binary_classification_test);
+}
+
+
+// double calculate_logloss(void) const method
+
+/// Returns the logloss for a binary pattern recognition problem
+
+double TestingAnalysis::calculate_logloss(void) const
+{
+    #ifdef __OPENNN_DEBUG__
+
+     check();
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    if(!multilayer_perceptron_pointer)
+    {
+    std::ostringstream buffer;
+
+    buffer << "OpenNN Exception: TestingAnalysis class.\n"
+          << "Vector<double> calculate_input_error_cross_correlation(void) const method.\n"
+          << "Pointer to multilayer perceptron in neural network is NULL.\n";
+
+    throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+
+    // Control sentence
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    if(inputs_number != variables.count_inputs_number())
+    {
+    std::ostringstream buffer;
+
+    buffer << "OpenNN Exception: TestingAnalysis class." << std::endl
+           << "Vector<double> calculate_input_error_cross_correlation(void) const method." << std::endl
+           << "Number of inputs in neural network must be equal to number of inputs in data set." << std::endl;
+
+    throw std::logic_error(buffer.str());
+    }
+
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    if(outputs_number != variables.count_targets_number())
+    {
+    std::ostringstream buffer;
+
+    buffer << "OpenNN Exception: TestingAnalysis class." << std::endl
+          << "Vector<double> calculate_input_error_cross_correlation(void) const method." << std::endl
+          << "Number of outputs in neural network must be equal to number of targets in data set." << std::endl;
+
+    throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    const Matrix<double> input_data = data_set_pointer->arrange_testing_input_data();
+    const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();
+
+    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
+
+    const size_t testing_instances_number = target_data.get_rows_number();
+
+    double logloss = 0.0;
+
+    for(size_t i = 0; i < testing_instances_number; i++)
+    {
+        logloss += target_data(i,0)*log(output_data(i,0)) + (1-target_data(i,0))*log(1-output_data(i,0));
+    }
+
+    return(-logloss/testing_instances_number);
 }
 
 

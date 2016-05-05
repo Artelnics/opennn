@@ -511,7 +511,7 @@ void TrainingAlgorithm::load(const std::string& file_name)
 
    tinyxml2::XMLDocument document;
 
-   if (document.LoadFile(file_name.c_str()))
+   if(document.LoadFile(file_name.c_str()))
    {
       std::ostringstream buffer;
 

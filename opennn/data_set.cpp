@@ -244,6 +244,73 @@ const bool& DataSet::get_display(void) const
 }
 
 
+// bool is_binary_classification(void) const method
+
+bool DataSet::is_binary_classification(void) const
+{
+    if(variables.count_targets_number() != 1)
+    {
+        return(false);
+    }
+
+    if(!arrange_target_data().is_binary())
+    {
+        return(false);
+    }
+
+    return(true);
+}
+
+
+// bool is_multiple_classification(void) const method
+
+bool DataSet::is_multiple_classification(void) const
+{
+    const Matrix<double> target_data = arrange_target_data();
+
+    if(!arrange_target_data().is_binary())
+    {
+        return(false);
+    }
+
+    for(size_t i = 0; i < target_data.get_rows_number(); i++)
+    {
+        if(target_data.arrange_row(i).calculate_sum() != 0.0)
+        {
+            return(false);
+        }
+    }
+
+    return(true);
+}
+
+
+// bool is_binary_variable(const size_t&) const method
+
+/// Returns true if the given variable is binary and false in other case.
+/// @param variable_index Index of the variable that is going to be checked.
+
+bool DataSet::is_binary_variable(const size_t& variable_index) const
+{
+    const size_t instances_number = instances.get_instances_number();
+
+    for(size_t i = 0; i < instances_number; i++)
+    {
+        if(data(i,variable_index) == 0.0 || data(i,variable_index) == 1.0)
+        {
+            continue;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
+
+    return true;
+}
+
+
 // bool empty(void) const method
 
 /// Returns true if the data matrix is empty, and false otherwise.
@@ -263,18 +330,6 @@ bool DataSet::empty(void) const
 const Matrix<double>& DataSet::get_data(void) const
 {
    return(data);
-}
-
-
-// const Matrix<double>& get_input_data(void) const method
-
-/// Returns a reference to the input data matrix in the data set.
-/// The number of rows is equal to the number of instances.
-/// The number of columns is equal to the number of inputs.
-
-const Matrix<double> DataSet::get_input_data(void) const
-{
-   return(input_data);
 }
 
 
@@ -440,16 +495,6 @@ MissingValues* DataSet::get_missing_values_pointer(void)
 const std::string& DataSet::get_data_file_name(void) const
 {
    return(data_file_name);
-}
-
-
-// const std::string& get_input_data_file_name(void) const method
-
-/// Returns the name of the inputs data file.
-
-const std::string& DataSet::get_input_data_file_name(void) const
-{
-   return(input_data_file_name);
 }
 
 
@@ -718,23 +763,6 @@ Matrix<double> DataSet::arrange_testing_data(void) const
    const Vector<size_t> testing_indices = instances.arrange_testing_indices();
 
    return(data.arrange_submatrix(testing_indices, variables_indices));
-}
-
-
-// Matrix<double> arrange_input_data(void) const method
-
-/// Returns a matrix with the input variables in the data set.
-/// The number of rows is the number of instances.
-/// The number of columns is the number of input variables. 
-
-Matrix<double> DataSet::arrange_input_data(void) const
-{
-   const size_t instances_number = instances.get_instances_number();
-   Vector<size_t> indices(0, 1, (int)instances_number-1);
-
-   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-
-   return(data.arrange_submatrix(indices, inputs_indices));
 }
 
 
@@ -1196,6 +1224,8 @@ void DataSet::set_default(void)
     display = true;
 
     file_type = DAT;
+
+    sheet_number = 1;
 }
 
 
@@ -1210,7 +1240,7 @@ void DataSet::set_default(void)
 void DataSet::set_data(const Matrix<double>& new_data)
 {
    // Control sentence (if debug)
-/*
+
    #ifdef __OPENNN_DEBUG__
 
    const size_t rows_number = new_data.get_rows_number();
@@ -1242,7 +1272,7 @@ void DataSet::set_data(const Matrix<double>& new_data)
    }
 
    #endif
-*/
+
    // Set data
    
    data = new_data;   
@@ -1263,17 +1293,6 @@ void DataSet::set_data(const Matrix<double>& new_data)
 void DataSet::set_data_file_name(const std::string& new_data_file_name)
 {   
    data_file_name = new_data_file_name;
-}
-
-
-// void set_input_data_file_name(const std::string&) method
-
-/// Sets the name of the inputs data file.
-/// @param new_input_data_file_name Name of the file containing the inputs data.
-
-void DataSet::set_input_data_file_name(const std::string& new_input_data_file_name)
-{
-   input_data_file_name = new_input_data_file_name;
 }
 
 
@@ -1798,7 +1817,7 @@ Vector<size_t> DataSet::unuse_constant_variables(void)
 
    for(size_t i = 0; i < variables_number; i++)
    {
-      if(variables.is_used(i) && statistics[i].standard_deviation < 1.0e-6)
+      if(variables.get_use(i) ==  Variables::Input && statistics[i].standard_deviation < 1.0e-6)
       {
          variables.set_use(i, Variables::Unused);
          constant_variables.push_back(i);
@@ -1863,6 +1882,61 @@ Vector<size_t> DataSet::unuse_repeated_instances(void)
 
     return(repeated_instances);
 }
+
+
+// Vector<size_t> unuse_non_significant_inputs(void)
+
+/// Unuses those binary inputs whose positives does not correspond to any positive in the target variables.
+
+Vector<size_t> DataSet::unuse_non_significant_inputs(void)
+{
+    const Vector<size_t> inputs_indices = get_variables_pointer()->arrange_inputs_indices();
+    const size_t inputs_number = inputs_indices.size();
+
+    const size_t target_index = get_variables_pointer()->arrange_targets_indices()[0];
+
+    const size_t instances_number = get_instances_pointer()->count_used_instances_number();
+
+    Vector<size_t> non_significant_variables;
+
+    if(!is_binary_classification())
+    {
+        return non_significant_variables;
+    }
+
+    size_t positives = 0;
+
+    size_t current_input_index;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        positives = 0;
+
+        current_input_index = inputs_indices[i];
+
+        if(!is_binary_variable(current_input_index))
+        {
+            continue;
+        }
+
+        for(size_t j = 0; j < instances_number; j++)
+        {
+            if(data(j, current_input_index) == 1.0 && data(j, target_index) == 1.0)
+            {
+                positives++;
+            }
+        }
+
+        if(positives == 0)
+        {
+            variables.set_use(current_input_index, Variables::Unused);
+            non_significant_variables.push_back(current_input_index);
+        }
+    }
+
+    return non_significant_variables;
+}
+
 
 
 // Vector<Histogram> calculate_data_histograms(const size_t&) const method
@@ -1942,17 +2016,17 @@ Vector< Histogram<double> > DataSet::calculate_targets_histograms(const size_t& 
 // Vector<double> calculate_box_and_whiskers(void) const
 
 /// Returns a vector of subvectors with the values of a box and whiskers plot.
-/// The size of the vector is equal to the number of used inputs variables.
+/// The size of the vector is equal to the number of used variables.
 /// The size of the subvectors is 5 and they consist on:
 /// <ul>
 /// <li> Minimum
-/// <li> First quarter
-/// <li> Second quarter
-/// <li> Third quarter
+/// <li> First quartile
+/// <li> Second quartile
+/// <li> Third quartile
 /// <li> Maximum
 /// </ul>
 
-Vector< Vector<double> > DataSet::calculate_box_and_whiskers(void) const
+Vector< Vector<double> > DataSet::calculate_box_plots(void) const
 {
     const size_t variables_number = variables.count_used_variables_number();
     const Vector<size_t> variables_indices = variables.arrange_used_indices();
@@ -1960,8 +2034,8 @@ Vector< Vector<double> > DataSet::calculate_box_and_whiskers(void) const
     const size_t instances_number = instances.count_used_instances_number();
     const Vector<size_t> instances_indices = instances.arrange_used_indices();
 
-    Vector< Vector<double> > box_and_whiskers;
-    box_and_whiskers.set(variables_number);
+    Vector< Vector<double> > box_plots;
+    box_plots.set(variables_number);
 
     Vector<double> column(instances_number);
 
@@ -1969,10 +2043,118 @@ Vector< Vector<double> > DataSet::calculate_box_and_whiskers(void) const
     {
         column = data.arrange_column(variables_indices[i], instances_indices);
 
-        box_and_whiskers[i] = column.calculate_box_and_whiskers();
+        box_plots[i] = column.calculate_box_and_whiskers();
     }
 
-    return(box_and_whiskers);
+    return(box_plots);
+}
+
+
+// size_t calculate_training_negatives(const size_t&) const method
+
+size_t DataSet::calculate_training_negatives(const size_t& target_index) const
+{
+    size_t negatives = 0;
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    size_t training_index;
+
+    for(size_t i = 0; i < training_instances_number; i++)
+    {
+        training_index = training_indices[i];
+
+        if(data(training_index, target_index) == 0.0)
+        {
+            negatives++;
+        }
+        else if(data(training_index, target_index) != 1.0)
+        {
+            std::ostringstream buffer;
+
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "size_t calculate_training_negatives(const size_t&) const method.\n"
+                  << "Training instance is neither a positive nor a negative: " << data(training_index, target_index) << std::endl;
+
+           throw std::logic_error(buffer.str());
+        }
+    }
+
+    return(negatives);
+}
+
+
+// size_t calculate_selection_negatives(const size_t&) const method
+
+size_t DataSet::calculate_selection_negatives(const size_t& target_index) const
+{
+    size_t negatives = 0;
+
+    const size_t selection_instances_number = instances.count_selection_instances_number();
+
+    Vector<size_t> selection_indices = instances.arrange_selection_indices();
+
+    size_t selection_index;
+
+    for(size_t i = 0; i < selection_instances_number; i++)
+    {
+        selection_index = selection_indices[i];
+
+        if(data(selection_index, target_index) == 0.0)
+        {
+            negatives++;
+        }
+        else if(data(selection_index, target_index) != 1.0)
+        {
+            std::ostringstream buffer;
+
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "size_t calculate_selection_negatives(const size_t&) const method.\n"
+                  << "Selection instance is neither a positive nor a negative: " << data(selection_index, target_index) << std::endl;
+
+           throw std::logic_error(buffer.str());
+        }
+    }
+
+    return(negatives);
+}
+
+
+// size_t calculate_testing_negatives(const size_t&) const method
+
+size_t DataSet::calculate_testing_negatives(const size_t& target_index) const
+{
+    size_t negatives = 0;
+
+    const size_t testing_instances_number = instances.count_testing_instances_number();
+
+    Vector<size_t> testing_indices = instances.arrange_testing_indices();
+
+    size_t testing_index;
+
+    for(size_t i = 0; i < testing_instances_number; i++)
+    {
+        testing_index = testing_indices[i];
+
+        if(data(testing_index, target_index) == 0.0)
+        {
+            negatives++;
+        }
+        else if(data(testing_index, target_index) != 1.0)
+        {
+            std::ostringstream buffer;
+
+           buffer << "OpenNN Exception: DataSet class.\n"
+                  << "size_t calculate_selection_negatives(const size_t&) const method.\n"
+                  << "Testing instance is neither a positive nor a negative: " << data(testing_index, target_index) << std::endl;
+
+           throw std::logic_error(buffer.str());
+        }
+    }
+
+    return(negatives);
 }
 
 
@@ -2334,6 +2516,111 @@ Matrix<double> DataSet::calculate_linear_correlations(void) const
 }
 
 
+// Matrix<double> calculate_covariance_matrix(void) const method
+
+/// Returns the covariance matrix for the data set.
+/// The number of rows of the matrix is the number of variables.
+/// The number of columns of the matrix is the number of variables.
+
+Matrix<double> DataSet::calculate_covariance_matrix(void) const
+{
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> used_instances_indices = instances.arrange_used_indices();
+
+    return (data.arrange_submatrix(used_instances_indices, inputs_indices).calculate_covariance_matrix());
+}
+
+
+// Matrix<double> perform_principal_components_analysis(const double& = 0.0) const mehtod
+
+/// Performs the principal components analysis of the inputs.
+/// It returns a matrix containing the principal components arranged in rows.
+/// @param minimum_explained_variance Minimum percentage of variance used to selec a principal component.
+
+Matrix<double> DataSet::perform_principal_components_analysis(const double& minimum_explained_variance)
+{
+    // Scale data
+
+    data.scale_mean_standard_deviation();
+
+    // Calculate covariance matrix
+
+    const Matrix<double> covariance_matrix = calculate_covariance_matrix();
+
+    std::cout << "Covariance matrix: " << covariance_matrix << std::endl;
+    std::cout << "Rows: " << covariance_matrix.get_rows_number() << std::endl;
+    std::cout << "Columns: " << covariance_matrix.get_columns_number() << std::endl;
+
+    // Calculate mean
+
+    const Vector< Statistics<double> > input_data_statistics = calculate_inputs_statistics();
+
+    const size_t inputs_number = covariance_matrix.get_columns_number();
+
+    Vector<double> inputs_mean(inputs_number);
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        inputs_mean[i] = input_data_statistics[i].mean;
+    }
+
+    // Calculate eigenvectors
+
+    const Matrix<double> eigenvectors = covariance_matrix.calculate_eigenvectors()/*.calculate_transpose()*/;
+
+    std::cout << "Eigenvectors: " << eigenvectors << std::endl;
+
+    // Calculate eigenvalues
+
+    const Matrix<double> eigenvalues = covariance_matrix.calculate_eigenvalues();
+
+//    const Matrix<double> sorted_eigenvalues = eigenvalues.sort_greater_rows(0);
+
+    std::cout << "Eigenvalues: " << eigenvalues << std::endl;
+
+    // Calculate explained variance
+
+    const Vector<double> explained_variance = eigenvalues.arrange_column(0).calculate_explained_variance();
+
+    std::cout << "Explained variance: " << explained_variance << std::endl;
+
+    std::cout << "Minimum explained variance: " << minimum_explained_variance << std::endl;
+
+    // Choose eigenvectors
+
+    Vector<size_t> principal_components_indices;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        if(explained_variance[i] > minimum_explained_variance)
+        {
+            principal_components_indices.push_back(i);
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    const size_t principal_components_number = principal_components_indices.size();
+
+    Matrix<double> feature_matrix(principal_components_number, inputs_number);
+
+    for(size_t i = 0; i < principal_components_number; i++)
+    {
+        feature_matrix.set_row(i, eigenvectors.arrange_column(principal_components_indices[i]));
+    }
+
+    std::cout << "Principal components number: " << principal_components_number << std::endl;
+
+    // Return feature matrix
+
+    std::cout << "Feature matrix: " << feature_matrix << std::endl;
+
+    return feature_matrix;
+}
+
+
 // void scale_data_mean_standard_deviation(const Vector< Statistics<double> >&) const method
 
 /// Scales the data matrix with given mean and standard deviation values.
@@ -2467,7 +2754,7 @@ void DataSet::scale_data_minimum_maximum(const Vector< Statistics<double> >& dat
 /// (MinimumMaximum or MeanStandardDeviation).
 /// @param data_statistics Vector of statistics structures for all the variables in the data set.
 /// The size of that vector must be equal to the number of variables.
-
+/*
 void DataSet::scale_data(const std::string& scaling_unscaling_method_string, const Vector< Statistics<double> >& data_statistics)
 {
    switch(get_scaling_unscaling_method(scaling_unscaling_method_string))
@@ -2537,7 +2824,7 @@ Vector< Statistics<double> > DataSet::scale_data(const std::string& scaling_unsc
 
    return(statistics);
 }
-
+*/
 
 // void scale_inputs_mean_standard_deviation(const Vector< Statistics<double> >&) method
 
@@ -3023,15 +3310,6 @@ tinyxml2::XMLDocument* DataSet::to_XML(void) const
 
    data_set_element->InsertFirstChild(data_file_element);
 
-   // Data file name
-   {
-      element = document->NewElement("DataFileName");
-      data_file_element->LinkEndChild(element);
-
-      text = document->NewText(data_file_name.c_str());
-      element->LinkEndChild(text);
-   }
-
    // File type
    {
        element = document->NewElement("FileType");
@@ -3141,6 +3419,15 @@ tinyxml2::XMLDocument* DataSet::to_XML(void) const
       element->LinkEndChild(text);
    }
 
+   // Data file name
+   {
+      element = document->NewElement("DataFileName");
+      data_file_element->LinkEndChild(element);
+
+      text = document->NewText(data_file_name.c_str());
+      element->LinkEndChild(text);
+   }
+
    // Variables 
    {
       element = document->NewElement("Variables");
@@ -3184,16 +3471,16 @@ tinyxml2::XMLDocument* DataSet::to_XML(void) const
    }
 
    // Display
-   {
-      element = document->NewElement("Display");
-      data_set_element->LinkEndChild(element);
+//   {
+//      element = document->NewElement("Display");
+//      data_set_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }  
+//      text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }
@@ -3731,15 +4018,15 @@ void DataSet::save_data(void) const
 
    for(size_t i = 0; i < rows_number; i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-         file << data(i,j);
+       for(size_t j = 0; j < columns_number; j++)
+       {
+           file << data(i,j);
 
-         if(j != columns_number-1)
-         {
-             file << separator_string;
-         }
-      }
+           if(j != columns_number-1)
+           {
+               file << separator_string;
+           }
+       }
 
       file << std::endl;
    }
@@ -4038,12 +4325,12 @@ void DataSet::read_instance(const std::string& line, const Vector< Vector<std::s
         {
             if(tokens[j] != missing_values_label) // No missing values
             {
-                if(tokens[j] == "false" || tokens[j] == "False"||  tokens[j] == "FALSE"
+                if(tokens[j] == "false" || tokens[j] == "False"||  tokens[j] == "FALSE" || tokens[j] == "F"
                 || tokens[j] == "negative"|| tokens[j] == "Negative"|| tokens[j] == "NEGATIVE")
                 {
                     data(instance_index, column_index) = 0.0;
                 }
-                else if(tokens[j] == "true" || tokens[j] == "True"||  tokens[j] == "TRUE"
+                else if(tokens[j] == "true" || tokens[j] == "True"||  tokens[j] == "TRUE" || tokens[j] == "T"
                 || tokens[j] == "positive"|| tokens[j] == "Positive"|| tokens[j] == "POSITIVE")
                 {
                     data(instance_index, column_index) = 1.0;
@@ -4119,7 +4406,7 @@ Vector< Vector<std::string> > DataSet::set_from_data_file(void)
     std::string line;
     Vector<std::string> tokens;
 
-    bool numeric;
+//    bool numeric;
 
     check_header_line();
 
@@ -4164,8 +4451,8 @@ Vector< Vector<std::string> > DataSet::set_from_data_file(void)
         check_separator(line);
 
         tokens = get_tokens(line);
-
-        if(tokens.size() != columns_number)
+// caixa
+  /*      if(tokens.size() != columns_number)
         {
             std::ostringstream buffer;
 
@@ -4176,20 +4463,27 @@ Vector< Vector<std::string> > DataSet::set_from_data_file(void)
 
             throw std::logic_error(buffer.str());
         }
-
+*/
         instances_count++;
 
-        for(size_t j = 0; j < columns_number; j++)
+        /*
+        if(tokens.size() == columns_number)
         {
-            numeric = is_numeric(tokens[j]);
-
-            if(!numeric
-            && tokens[j] != missing_values_label
-            && !nominal_labels[j].contains(tokens[j]))
+            instances_count++;
+            for(size_t j = 0; j < columns_number; j++)
             {
-                nominal_labels[j].push_back(tokens[j]);
+                numeric = is_numeric(tokens[j]);
+
+                if(!numeric
+                && tokens[j] != missing_values_label
+                && !nominal_labels[j].contains(tokens[j]))
+                {
+                    nominal_labels[j].push_back(tokens[j]);
+                }
             }
-        }
+        }*/
+
+
     }
 
     file.close();
@@ -4307,6 +4601,8 @@ void DataSet::read_from_data_file(const Vector< Vector<std::string> >& nominal_l
             std::replace(line.begin(), line.end(), '\t', ' ');
         }
 
+        const Vector<std::string> tokens = get_tokens(line);
+
         trim(line);
 
         if(line.empty())
@@ -4315,9 +4611,16 @@ void DataSet::read_from_data_file(const Vector< Vector<std::string> >& nominal_l
         }
 
         // #pragma omp task
-
+/*
+        if(tokens.size() == nominal_labels.size())
+        {
+            read_instance(line, nominal_labels, i);
+            i++;
+        }*/
+// caixa
         read_instance(line, nominal_labels, i);
         i++;
+
     }
 
     file.close();
@@ -4530,55 +4833,6 @@ void DataSet::load_data_binary(void)
 }
 
 
-/// This method loads the input data from a binary data file for which outputs are to be calculated.
-
-void DataSet::load_input_data_binary(void)
-{
-    std::ifstream file;
-
-    file.open(input_data_file_name.c_str(), std::ios::binary);
-
-    if(!file.is_open())
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void load_input_data_binary(void) method.\n"
-               << "Cannot open data file: " << input_data_file_name << "\n";
-
-        throw std::logic_error(buffer.str());
-    }
-
-    std::streamsize size = sizeof(size_t);
-
-    size_t inputs_number;
-    size_t instances_number;
-
-    file.read(reinterpret_cast<char*>(&inputs_number), size);
-    file.read(reinterpret_cast<char*>(&instances_number), size);
-
-    size = sizeof(double);
-
-    double value;
-
-    input_data.set(instances_number, inputs_number);
-
-    for(size_t i = 0; i < inputs_number*instances_number; i++)
-    {
-        file.read(reinterpret_cast<char*>(&value), size);
-
-        input_data[i] = value;
-    }
-
-//    if(get_missing_values().has_missing_values())
-//    {
-//        scrub_missing_values();
-//    }
-
-//    file.close();
-}
-
-
 /// This method loads data from a binary data file for time series prediction methods.
 
 void DataSet::load_time_series_data_binary(void)
@@ -4634,7 +4888,7 @@ void DataSet::load_time_series_data_binary(void)
 
     time_series_data.set(time_series_instances_number, time_series_variables_number);
 
-    size = sizeof(size_t);
+    size = sizeof(double);
 
     for(size_t i = 0; i < time_series_instances_number*time_series_variables_number; i++)
     {
@@ -4738,7 +4992,6 @@ Vector<size_t> DataSet::calculate_target_distribution(void) const
           {
               continue;
           }
-
           if(instances.get_use(instance_index) != Instances::Unused)
           {
              if(data(instance_index,target_index) < 0.5)
@@ -4834,8 +5087,9 @@ Vector<double> DataSet::calculate_distances(void) const
 /// This method balances the targets ditribution of a data set with only one target variable by unusing
 /// instances whose target variable belongs to the most populated target class.
 /// It returns a vector with the indices of the instances set unused.
+/// @param percentage Percentage of instances to be unused.
 
-Vector<size_t> DataSet::balance_binary_targets_distribution(void)
+Vector<size_t> DataSet::balance_binary_targets_distribution(const double& percentage)
 {
     Vector<size_t> unused_instances;
 
@@ -4848,7 +5102,7 @@ Vector<size_t> DataSet::balance_binary_targets_distribution(void)
     const size_t maximal_target_class_index = maximal_indices[0];
     const size_t minimal_target_class_index = maximal_indices[1];
 
-    size_t total_unbalanced_instances_number = target_class_distribution[maximal_target_class_index] - target_class_distribution[minimal_target_class_index];
+    size_t total_unbalanced_instances_number = (size_t)((percentage/100.0)*(target_class_distribution[maximal_target_class_index] - target_class_distribution[minimal_target_class_index]));
 
     size_t actual_unused_instances_number;
 
@@ -4856,17 +5110,17 @@ Vector<size_t> DataSet::balance_binary_targets_distribution(void)
 
     Vector<size_t> actual_unused_instances;
 
-    std::cout << "Instances to unuse: " << total_unbalanced_instances_number << std::endl;
+//    std::cout << "Instances to unuse: " << total_unbalanced_instances_number << std::endl;
 
     while(total_unbalanced_instances_number != 0)
     {
         if(total_unbalanced_instances_number < instances_number/10)
         {
-           unbalanced_instances_number = 1;
+           unbalanced_instances_number = total_unbalanced_instances_number;
         }
         else if(total_unbalanced_instances_number > 0 && unbalanced_instances_number < 1)
         {
-            unbalanced_instances_number = 1;
+            unbalanced_instances_number = total_unbalanced_instances_number;
         }
 
         actual_unused_instances = unuse_most_populated_target(unbalanced_instances_number);
@@ -5097,7 +5351,6 @@ Vector<size_t> DataSet::unuse_most_populated_target(const size_t& instances_to_u
 
     // Unuses instances
 
-
     if(instances_to_unuse > maximum_frequency)
     {
         most_populated_instances = total_instances_frequencies.sort_greater_rows(0).arrange_column(1).arrange_subvector_first(maximum_frequency);
@@ -5132,7 +5385,7 @@ Vector<size_t> DataSet::balance_function_regression_targets_distribution(const d
 
     const size_t instances_to_unuse = (size_t)(instances_number*percentage/100.0);
 
-    std::cout << "Instances to unuse: " << instances_to_unuse << std::endl;
+//    std::cout << "Instances to unuse: " << instances_to_unuse << std::endl;
 
     size_t count;
 
@@ -5159,6 +5412,79 @@ Vector<size_t> DataSet::balance_function_regression_targets_distribution(const d
     elapsed_time = difftime(current_time, beginning_time);
 
     return(unused_instances);
+}
+
+
+// Vector<size_t> arrange_binary_inputs_indices(void) const method
+
+Vector<size_t> DataSet::arrange_binary_inputs_indices(void) const
+{
+    const size_t inputs_number = variables.count_inputs_number();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+
+    Vector<size_t> binary_inputs_indices;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        if(is_binary_variable(inputs_indices[i]))
+        {
+            binary_inputs_indices.push_back(inputs_indices[i]);
+        }
+    }
+
+    return(binary_inputs_indices);
+}
+
+
+// Vector<size_t> arrange_real_inputs_indices(void) const method
+
+Vector<size_t> DataSet::arrange_real_inputs_indices(void) const
+{
+    const size_t inputs_number = variables.count_inputs_number();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+
+    Vector<size_t> real_inputs_indices;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        if(!is_binary_variable(inputs_indices[i]))
+        {
+            real_inputs_indices.push_back(inputs_indices[i]);
+        }
+    }
+
+    return(real_inputs_indices);
+}
+
+
+// void sum_binary_inputs(void) method
+
+void DataSet::sum_binary_inputs(void)
+{
+    const size_t inputs_number = variables.count_inputs_number();
+
+    const size_t instances_number = instances.get_instances_number();
+
+    const Vector<size_t> binary_inputs_indices = arrange_binary_inputs_indices();
+
+    const size_t binary_inputs_number = binary_inputs_indices.size();
+
+    Vector<double> binary_variable(instances_number, 0.0);
+
+    for(size_t i = 0; i < binary_inputs_number; i++)
+    {
+        binary_variable += data.arrange_column(binary_inputs_indices[i]);
+    }
+
+    const Vector<size_t> real_inputs_indices = arrange_real_inputs_indices();
+
+    Matrix<double> new_data = data.arrange_submatrix_columns(real_inputs_indices);
+
+    new_data.append_column(binary_variable);
+
+    new_data = new_data.assemble_columns(arrange_target_data());
 }
 
 
@@ -5400,7 +5726,7 @@ Vector<size_t> DataSet::clean_Tukey_outliers(const double& cleaning_parameter)
     const size_t instances_number = instances.count_used_instances_number();
     const Vector<size_t> instances_indices = instances.arrange_used_indices();
 
-    Vector< Vector<double> > box_and_whiskers = calculate_box_and_whiskers();
+    Vector< Vector<double> > box_plots = calculate_box_plots();
 
     const size_t variables_number = variables.count_used_variables_number();
 
@@ -5412,17 +5738,17 @@ Vector<size_t> DataSet::clean_Tukey_outliers(const double& cleaning_parameter)
 
     for(size_t i = 0; i < variables_number; i++)
     {
-        interquartile_range = box_and_whiskers[i][3] - box_and_whiskers[i][1];
+        interquartile_range = box_plots[i][3] - box_plots[i][1];
 
         for(size_t j = 0; j < instances_number; j++)
         {
             instance = get_instance(instances_indices[j]);
 
-            if(instance[i] < box_and_whiskers[i][1] - cleaning_parameter*interquartile_range && !(unused_instances.contains(j)))
+            if(instance[i] < box_plots[i][1] - cleaning_parameter*interquartile_range && !(unused_instances.contains(j)))
             {
                 unused_instances.push_back(instances_indices[j]);
             }
-            else if(instance[i] > box_and_whiskers[i][3] + cleaning_parameter*interquartile_range && !(unused_instances.contains(j)))
+            else if(instance[i] > box_plots[i][3] + cleaning_parameter*interquartile_range && !(unused_instances.contains(j)))
             {
                 unused_instances.push_back(instances_indices[j]);
             }
@@ -5504,7 +5830,7 @@ Matrix< Vector<double> > DataSet::calculate_cross_correlation(void) const
 /// @param instances_number Number of instances in the dataset.
 /// @param variables_number Number of variables in the dataset.
 
-void DataSet::generate_artificial_data(const size_t& instances_number, const size_t& variables_number)
+void DataSet::generate_data_function_regression(const size_t& instances_number, const size_t& variables_number)
 {
     const size_t inputs_number = variables_number-1;
     const size_t targets_number = 1;
@@ -5535,6 +5861,48 @@ void DataSet::generate_artificial_data(const size_t& instances_number, const siz
     set(input_data.assemble_columns(target_data));
 
     data.scale_minimum_maximum();
+}
+
+
+// void generate_data_binary_classification(const size_t&, const size_t&) method
+
+void DataSet::generate_data_binary_classification(const size_t& instances_number, const size_t& inputs_number)
+{
+    const size_t negatives = instances_number/2;
+    const size_t positives = instances_number - negatives;
+
+    // Negatives data
+
+    Vector<double> target_0(negatives, 0.0);
+
+    Matrix<double> class_0(negatives, inputs_number);
+
+    class_0.randomize_normal(-1.0, 1.0);
+
+    class_0.append_column(target_0);
+
+    // Positives data
+
+    Vector<double> target_1(positives, 1.0);
+
+    Matrix<double> class_1(positives, inputs_number);
+
+    class_1.randomize_normal(1.0, 1.0);
+
+    class_1.append_column(target_1);
+
+    // Assemble
+
+    set(class_0.assemble_rows(class_1));
+
+}
+
+
+// void generate_data_multiple_classification(const size_t&, const size_t&) method
+
+void DataSet::generate_data_multiple_classification(const size_t&, const size_t&)
+{
+
 }
 
 
@@ -5890,50 +6258,7 @@ void DataSet::scrub_missing_values_mean(void)
         {
             instance_index = missing_indices[i][j];
 
-            if(targets_indices.contains(i)
-            && data(instance_index, i) == -123.456)
-            {
-                instances.set_use(i, Instances::Unused);
-            }
-            else
-            {
-                data(instance_index, i) = means[i];
-            }
-        }
-    }
-}
-
-
-// void scrub_input_missing_values_mean(void) method
-
-/// Substitutes all the missing values by the mean of the corresponding variable for the input data.
-
-void DataSet::scrub_input_missing_values_mean(void)
-{
-    const Vector< Vector<size_t> > missing_indices = missing_values.arrange_missing_indices();
-
-    const Vector<double> means = data.calculate_mean_missing_values(missing_indices);
-
-//    const size_t variables_number = variables.get_variables_number();
-
-    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-
-    const Vector<double> input_means = means.arrange_subvector(inputs_indices);
-
-//    const size_t targets_number = variables.count_targets_number();
-    const size_t inputs_number = variables.count_inputs_number();
-    const size_t input_instances_number = input_data.get_rows_number();
-
-//    size_t instance_index;
-
-    for(size_t i = 0; i < inputs_number; i++)
-    {
-        for(size_t j = 0; j < input_instances_number; j++)
-        {
-            if(input_data(i,j) == -123.456)
-            {
-                input_data(j,i) = input_means[i];
-            }
+            data(instance_index, i) = means[i];
         }
     }
 }

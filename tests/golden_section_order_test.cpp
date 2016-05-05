@@ -135,7 +135,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     gs.set_trials_number(1);
     gs.set_maximum_order(7);
@@ -189,7 +189,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     gs.set_trials_number(1);
     gs.set_maximum_order(7);

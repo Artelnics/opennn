@@ -100,7 +100,7 @@ void PerceptronLayerTest::test_get_perceptrons_number(void)
    message += "test_get_size\n";
 
    PerceptronLayer pl(1, 1);
-   
+
    assert_true(pl.get_perceptrons_number() == 1, LOG);
 }
 
@@ -119,6 +119,7 @@ void PerceptronLayerTest::test_get_activation_function(void)
 
    pl.set_activation_function(Perceptron::Threshold);
    assert_true(pl.get_activation_function() == Perceptron::Threshold, LOG);
+
    pl.set_activation_function(Perceptron::SymmetricThreshold);
    assert_true(pl.get_activation_function() == Perceptron::SymmetricThreshold, LOG);
 
@@ -384,14 +385,6 @@ void PerceptronLayerTest::test_grow_perceptrons(void)
    message += "test_grow_perceptrons\n";
 
    PerceptronLayer pl;
-
-   // Test
-
-   pl.set();
-   pl.grow_perceptrons(1);
-
-   assert_true(pl.get_inputs_number() == 0, LOG);
-   assert_true(pl.get_perceptrons_number() == 1, LOG);
 
    // Test
 
@@ -1931,7 +1924,7 @@ void PerceptronLayerTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

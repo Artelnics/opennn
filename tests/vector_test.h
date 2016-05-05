@@ -127,6 +127,7 @@ public:
 
    void test_calculate_mean(void);
    void test_calculate_standard_deviation(void);
+   void test_calculate_covariance(void);
 
    void test_calculate_mean_standard_deviation(void);
 
@@ -140,6 +141,7 @@ public:
 
    void test_calculate_minimum_maximum_missing_values(void);
 
+   void test_calculate_explained_variance(void);
 
    void test_calculate_statistics(void);
 
@@ -217,7 +219,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

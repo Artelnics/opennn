@@ -253,8 +253,8 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    Vector<double> targets;
    Vector<double> outputs;
 
-//   Vector< Vector<double> > layers_activation_derivative;
-//   Vector< Vector<double> > layers_activation_second_derivative;
+   Vector< Vector<double> > layers_activation_derivative;
+   Vector< Vector<double> > layers_activation_second_derivative;
 
    Matrix< Matrix<double> > interlayers_combination_combination_Jacobian;
 
@@ -266,9 +266,10 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    Vector<double> parameters;
    Vector<double> combinations;
 
-   //MockPerformanceTerm mpt(&nn, &ds);
+   MockPerformanceTerm mpt(&nn, &ds);
 
    Matrix< Matrix<double> > interlayers_Delta;
+   Matrix<double> output_interlayers_Delta;
    Matrix<double> numerical_interlayers_Delta;
 
    NumericalDifferentiation nd;
@@ -276,7 +277,7 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    SumSquaredError sse(&nn, &ds);
 
    // Test 
-/*
+
    nn.construct_multilayer_perceptron();
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
@@ -298,8 +299,8 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
 
-   output_gradient.set(1, 0.0);
-   output_Hessian.set(1, 1, 0.0);
+   output_gradient.set(1,0.0);
+   output_Hessian.set(1,1,0.0);
 
    layers_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient);
    interlayers_Delta = mpt.calculate_interlayers_Delta(layers_activation_derivative, layers_activation_second_derivative, interlayers_combination_combination_Jacobian, output_gradient, output_Hessian, layers_delta);
@@ -366,7 +367,6 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    assert_true(interlayers_Delta(0,0).get_columns_number() == 1, LOG);
 
    // Test
-*/
 /*
    ds.set(1,10,5);
    ds.initialize_data(1.0);
@@ -383,11 +383,17 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
 
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
 
-   interlayers_Delta = mpt.calculate_interlayers_Delta();
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+   interlayers_Delta = mpt.calculate_output_interlayers_Delta(layers_activation_derivative,
+                                                              layers_activation_second_derivative,
+                                                              interlayers_combination_combination_Jacobian,
+                                                              output_gradient,
+                                                              output_Hessian,
+                                                              layers_delta);
+
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_combinations, 1, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
-*/
+
    // Test
 /*
    ds.set(1,10,5);
@@ -470,8 +476,8 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
-
-    // Test
+*/
+    // Test output interlayers
 
    ds.set(1,1,1);
    ds.randomize_data_normal();
@@ -479,56 +485,33 @@ void PerformanceTermTest::test_calculate_interlayers_Delta(void)
    inputs = ds.arrange_input_data().arrange_column(0);
    targets = ds.arrange_target_data().arrange_column(0);
 
-   nn.set(1,3,1);
-   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
-   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
+   nn.set(1,1,1);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
 
-   size_t parameters_number = nn.get_multilayer_perceptron_pointer()->count_parameters_number();
+   combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs)[1];
 
    outputs = nn.calculate_outputs(inputs);
 
    interlayers_combination_combination_Jacobian = nn.get_multilayer_perceptron_pointer()->calculate_interlayers_combination_combination_Jacobian(inputs);
 
-   Vector< Vector<double> > layers_combination = nn.get_multilayer_perceptron_pointer()->calculate_layers_combination(inputs);
-   Vector< Vector<double> > layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs);
-   Vector< Vector<double> > layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs);
+   layers_activation_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_derivative(inputs);
+   layers_activation_second_derivative = nn.get_multilayer_perceptron_pointer()->calculate_layers_activation_second_derivative(inputs);
 
-   output_gradient = mpt.calculate_output_gradient(outputs, targets);
-   output_Hessian = mpt.calculate_output_Hessian(outputs, targets);
+   output_gradient = sse.calculate_output_gradient(outputs, targets);
+   output_Hessian = sse.calculate_output_Hessian(outputs, targets);
 
-   Matrix<double> output_interlayers_Delta = mpt.calculate_output_interlayers_Delta(
-            layers_activation_derivative[1],
-            layers_activation_second_derivative[1],
-            output_gradient,
-            output_Hessian);
+   output_interlayers_Delta = mpt.calculate_output_interlayers_Delta(
+                                                 layers_activation_derivative[1],
+                                                 layers_activation_second_derivative[1],
+                                                 output_gradient,
+                                                 output_Hessian);
 
-   size_t index_1 = 1;
-   size_t index_2 = 0;
+   const size_t index_1 = 1;
 
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_combination, index_1, combinations);
 
-   const Vector<double> layer_1_delta = mpt.calculate_layers_delta(layers_activation_derivative, output_gradient)[index_1];
-   const Vector<double> layer_1_activation_derivative  = layers_activation_derivative[index_2];
-   const Vector<double> layer_1_activation_second_derivative = layers_activation_second_derivative[index_2];
-
-   //std::cout << "Combination combination jacobian: \n" << interlayers_combination_combination_Jacobian << std::endl;
-
-  Matrix<double> interlayers_Delta_1_0 = mpt.calculate_interlayers_Delta(
-              index_1,
-              index_2,
-              layer_1_activation_derivative,
-              layer_1_activation_second_derivative,
-              layer_1_delta,
-              output_interlayers_Delta,
-              interlayers_combination_combination_Jacobian(index_1,index_2));
-
-  std::cout << "interlayers delta 1,0: \n" << interlayers_Delta_1_0 << std::endl;
-  system("pause");
-
-//   interlayers_Delta = mpt.calculate_interlayers_Delta();
-//   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
-
-//   assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
-*/
+   assert_true((output_interlayers_Delta - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
 
@@ -1006,7 +989,7 @@ void PerformanceTermTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

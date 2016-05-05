@@ -56,6 +56,7 @@ int main(void)
    "performance_functional\n"
    "outputs_integrals\n"
    "normalized_squared_error\n"
+   "weighted_squared_error\n"
    "neural_parameters_norm\n"
    "minkowski_error\n"
    "mean_squared_error\n"
@@ -98,7 +99,6 @@ int main(void)
    // Redirect standard output to file
 
    //std::ofstream out("../data/out.txt");
-
    //std::cout.rdbuf(out.rdbuf());
 
    try
@@ -388,6 +388,15 @@ int main(void)
         tests_count += normalized_squared_error_test.get_tests_count();
         tests_passed_count += normalized_squared_error_test.get_tests_passed_count();
         tests_failed_count += normalized_squared_error_test.get_tests_failed_count();
+      }
+      else if(test == "weighted_squared_error")
+      {
+        WeightedSquaredErrorTest weighted_squared_error_test;
+        weighted_squared_error_test.run_test_case();
+        message += weighted_squared_error_test.get_message();
+        tests_count += weighted_squared_error_test.get_tests_count();
+        tests_passed_count += weighted_squared_error_test.get_tests_passed_count();
+        tests_failed_count += weighted_squared_error_test.get_tests_failed_count();
       }
       else if(test == "minkowski_error")
       {

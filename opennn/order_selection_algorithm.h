@@ -197,15 +197,15 @@ public:
 
     // Performances calculation methods
 
-    Vector<double> calculate_minimum_final_performances(const size_t&);
-    Vector<double> calculate_maximum_final_performances(const size_t&);
-    Vector<double> calculate_mean_final_performances(const size_t&);
+    Vector<double> perform_minimum_model_evaluation(const size_t&);
+    Vector<double> perform_maximum_model_evaluation(const size_t&);
+    Vector<double> perform_mean_model_evaluation(const size_t&);
 
-    Vector<double> get_final_performances(const TrainingStrategy::Results&);
+    Vector<double> get_final_performances(const TrainingStrategy::Results&) const;
 
-    Vector<double> calculate_performances(const size_t&);
+    Vector<double> perform_model_evaluation(const size_t&);
 
-    Vector<double> get_parameters_order(const size_t&);
+    Vector<double> get_parameters_order(const size_t&) const;
 
     // order order selection methods
 

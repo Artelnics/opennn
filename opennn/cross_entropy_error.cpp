@@ -87,7 +87,7 @@ CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& sum_squared_er
 
 /// Copy constructor. 
 /// It creates a cross entropy error not associated to any neural network and not measured on any data set.
-/// It also sets all the rest of class members from another sum squared error object.
+/// It also sets all the rest of class members from another cross-entropy error object.
 /// @param new_cross_entropy_error Object to be copied. 
 
 CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_error)
@@ -234,7 +234,7 @@ void CrossEntropyError::check(void) const
       throw std::logic_error(buffer.str());	  
    }
 
-   // Sum squared error stuff
+   // Cross-entropy error stuff
 
    const Variables& variables = data_set_pointer->get_variables();
 
@@ -928,16 +928,16 @@ tinyxml2::XMLDocument* CrossEntropyError::to_XML(void) const
 
    // Display
 
-   {
-      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-      cross_entropy_error_element->LinkEndChild(display_element);
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      cross_entropy_error_element->LinkEndChild(display_element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-      display_element->LinkEndChild(display_text);
-   }
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
 
    return(document);
 }

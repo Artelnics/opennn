@@ -54,7 +54,7 @@ MockTrainingAlgorithm::MockTrainingAlgorithmResults* MockTrainingAlgorithm::perf
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

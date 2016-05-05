@@ -423,6 +423,118 @@ std::string Variables::write_use(const size_t& i) const
 }
 
 
+// bool is_input(const size_t&) const method
+
+/// Returns true if the use of a variable is an input, and false otherwise.
+/// @param index Index of variable.
+
+bool Variables::is_input(const size_t& index) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t variables_number = get_variables_number();
+
+    if(index >= variables_number)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Variables class.\n"
+              << "bool is_input(const size_t&) const method.\n"
+              << "Index of variable must be less than number of variables.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    if(items[index].use == Variables::Input)
+    {
+        return(true);
+    }
+    else
+    {
+        return(false);
+    }
+}
+
+
+
+// bool is_target(const size_t&) const method
+
+/// Returns true if the use of a variable is a target, and false otherwise.
+/// @param index Index of variable.
+
+bool Variables::is_target(const size_t& index) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t variables_number = get_variables_number();
+
+    if(index >= variables_number)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Variables class.\n"
+              << "bool is_target(const size_t&) const method.\n"
+              << "Index of variable must be less than number of variables.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    if(items[index].use == Variables::Target)
+    {
+        return(true);
+    }
+    else
+    {
+        return(false);
+    }
+}
+
+
+// bool is_unused(const size_t&) const method
+
+/// Returns true if the use of a variable is neither an input nor a target, and false otherwise.
+/// @param index Index of variable.
+
+bool Variables::is_unused(const size_t& index) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t variables_number = get_variables_number();
+
+    if(index >= variables_number)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Variables class.\n"
+              << "bool is_unused(const size_t&) const method.\n"
+              << "Index of variable must be less than number of variables.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    if(items[index].use == Variables::Unused)
+    {
+        return(true);
+    }
+    else
+    {
+        return(false);
+    }
+}
+
+
 // bool is_used(const size_t&) const method
 
 /// Returns true if the use of a variable is either input or target, and false if it is unused.
@@ -1266,6 +1378,19 @@ void Variables::set_target(void)
     }
 }
 
+// void set_unuse(void) method
+
+/// Sets all the variables in the data set as unused variables.
+
+void Variables::set_unuse(void)
+{
+    const size_t variables_number = get_variables_number();
+
+    for(size_t i = 0; i < variables_number; i++)
+    {
+        items[i].use = Unused;
+    }
+}
 
 // void set_default_uses(void) method
 
@@ -1734,7 +1859,7 @@ std::string Variables::to_string(void) const
              << "Use: " << write_use(i) << "\n";
    }
 
-   buffer << "Display: " << display << "\n";
+   //buffer << "Display: " << display << "\n";
 
    return(buffer.str());
 }
@@ -1756,7 +1881,6 @@ tinyxml2::XMLDocument* Variables::to_XML(void) const
    tinyxml2::XMLElement* variables_element = document->NewElement("Variables");
 
    document->InsertFirstChild(variables_element);
-
 
    tinyxml2::XMLElement* element = NULL;
    tinyxml2::XMLText* text = NULL;
@@ -1815,16 +1939,16 @@ tinyxml2::XMLDocument* Variables::to_XML(void) const
    }
 
    // Display
-   {
-      element = document->NewElement("Display");
-      variables_element->LinkEndChild(element);
+//   {
+//      element = document->NewElement("Display");
+//      variables_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+//      text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }

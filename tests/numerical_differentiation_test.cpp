@@ -669,7 +669,7 @@ Vector<double> NumericalDifferentiationTest::f8(const size_t&, const size_t&, co
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1021,6 +1021,56 @@ void MatrixTest::test_dot_matrix(void)
 }
 
 
+void MatrixTest::test_calculate_eigenvalues(void)
+{
+    message += "test_calculate_eigenvalues";
+
+    Matrix<double> eigenvalues;
+
+    Matrix<double> m;
+
+    // Test
+
+    m.set(10,10);
+
+    m.randomize_normal();
+
+    eigenvalues = m.calculate_eigenvalues();
+
+    assert_true(eigenvalues.size() == 10, LOG);
+
+    // Test
+
+    m.set_identity(20);
+
+    eigenvalues = m.calculate_eigenvalues();
+
+    assert_true(eigenvalues.size() == 20, LOG);
+    assert_true(eigenvalues.arrange_column(0).is_constant(1.0), LOG);
+}
+
+
+void MatrixTest::test_calculate_eigenvectors(void)
+{
+    message += "test_calculate_eigenvectors";
+
+    Matrix<double> eigenvectors;
+
+    Matrix<double> m;
+
+    // Test
+
+    m.set(10,10);
+
+    m.randomize_normal();
+
+    eigenvectors = m.calculate_eigenvectors();
+
+    assert_true(eigenvectors.get_rows_number() == 10, LOG);
+    assert_true(eigenvectors.get_columns_number() == 10, LOG);
+}
+
+
 void MatrixTest::test_direct(void)
 {
    message += "test_direct\n";
@@ -1098,6 +1148,38 @@ void MatrixTest::test_calculate_histogram(void)
 
    assert_true(histograms.size() == m.get_columns_number(), LOG);
    assert_true(histograms[0].get_bins_number() == bins_number, LOG);
+}
+
+
+void MatrixTest::test_calculate_covariance_matrix(void)
+{
+    message += "test_calculate_covariance_matrix\n";
+
+    Matrix<double> covariance_matrix;
+
+    Matrix<double> data;
+
+    // Test
+
+    data.set(10,5);
+    data.randomize_normal();
+
+    covariance_matrix = data.calculate_covariance_matrix();
+
+    assert_true(covariance_matrix.get_rows_number() == 5, LOG);
+    assert_true(covariance_matrix.get_columns_number() == 5, LOG);
+    assert_true(covariance_matrix.is_symmetric(), LOG);
+
+    // Test
+
+    data.set(10,20);
+    data.randomize_normal();
+
+    covariance_matrix = data.calculate_covariance_matrix();
+
+    assert_true(covariance_matrix.get_rows_number() == 20, LOG);
+    assert_true(covariance_matrix.get_columns_number() == 20, LOG);
+    assert_true(covariance_matrix.is_symmetric(), LOG);
 }
 
 
@@ -1754,6 +1836,9 @@ void MatrixTest::run_test_case(void)
    test_dot_vector();
    test_dot_matrix();
 
+   test_calculate_eigenvalues();
+   test_calculate_eigenvectors();
+
    test_direct();
 
    test_calculate_minimum_maximum();
@@ -1762,6 +1847,8 @@ void MatrixTest::run_test_case(void)
    test_calculate_statistics();
 
    test_calculate_histogram();
+
+   test_calculate_covariance_matrix();
 
    test_calculate_minimal_indices();
    test_calculate_maximal_indices();

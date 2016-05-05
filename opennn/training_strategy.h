@@ -99,6 +99,7 @@ public:
        NO_MAIN,
        GRADIENT_DESCENT,
        CONJUGATE_GRADIENT,
+       NEWTON_METHOD,
        QUASI_NEWTON_METHOD,
        LEVENBERG_MARQUARDT_ALGORITHM,
        USER_MAIN
@@ -109,7 +110,7 @@ public:
     enum RefinementType
     {
        NO_REFINEMENT,
-       NEWTON_METHOD,
+       //NEWTON_METHOD,
        USER_REFINEMENT
     };
 

@@ -145,6 +145,10 @@ public:
    const Use& get_use(const size_t&) const;
    std::string write_use(const size_t&) const;
 
+   bool is_input(const size_t&) const;
+   bool is_target(const size_t&) const;
+   bool is_unused(const size_t&) const;
+
    bool is_used(const size_t&) const;
 
    Vector<size_t> arrange_used_indices(void) const;
@@ -193,6 +197,7 @@ public:
 
    void set_input(void);
    void set_target(void);
+   void set_unuse(void);
 
    void set_default_uses(void);
 

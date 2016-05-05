@@ -609,6 +609,26 @@ void TestingAnalysisTest::test_calculate_optimal_threshold(void)
 
     // Test
 
+    target_data.set(4,1);
+
+    target_data(0, 0) = 0.0;
+    target_data(1, 0) = 0.0;
+    target_data(2, 0) = 1.0;
+    target_data(3, 0) = 1.0;
+
+    output_data.set(4, 1);
+
+    output_data(0, 0) = 1.0;
+    output_data(1, 0) = 1.0;
+    output_data(2, 0) = 0.0;
+    output_data(3, 0) = 0.0;
+
+    optimal_threshold = ta.calculate_optimal_threshold(target_data, output_data);
+
+    assert_true(optimal_threshold == 1.0, LOG);
+
+    // Test
+
     target_data.set(5,1);
 
     target_data(0, 0) = 0.0;
@@ -664,11 +684,11 @@ void TestingAnalysisTest::test_calculate_cumulative_gain(void)
     cumulative_gain = ta.calculate_cumulative_gain(target_data, output_data);
 
     assert_true(cumulative_gain.get_columns_number() == 2, LOG);
-    assert_true(cumulative_gain.get_rows_number() == 11, LOG);
+    assert_true(cumulative_gain.get_rows_number() == 21, LOG);
     assert_true(cumulative_gain(0, 0) == 0.0, LOG);
     assert_true(cumulative_gain(0, 1) == 0.0, LOG);
-    assert_true(cumulative_gain(10, 0) == 1.0, LOG);
-    assert_true(cumulative_gain(10, 1) == 1.0, LOG);
+    assert_true(cumulative_gain(20, 0) - 1.0 < 1.0e-6, LOG);
+    assert_true(cumulative_gain(20, 1) == 1.0, LOG);
  }
 
 
@@ -758,7 +778,7 @@ void TestingAnalysisTest::test_calculate_calibration_plot(void)
     calibration_plot = ta.calculate_calibration_plot(target_data, output_data);
 
     assert_true(calibration_plot.get_columns_number() == 2, LOG);
-    assert_true(calibration_plot.get_rows_number() == 9, LOG);
+    assert_true(calibration_plot.get_rows_number() == 11, LOG);
 }
 
 
@@ -1255,7 +1275,7 @@ void TestingAnalysisTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

@@ -84,7 +84,11 @@ public:
    double calculate_performance(const Vector<double>&) const;   
    double calculate_selection_performance(void) const;   
 
+   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
+
    Vector<double> calculate_gradient(void) const;
+
+   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
    Matrix<double> calculate_Hessian(void) const;
 

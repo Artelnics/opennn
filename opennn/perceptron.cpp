@@ -866,7 +866,7 @@ double Perceptron::calculate_activation_derivative(const double& combination) co
          const double exponent = exp(-combination);
          const double logistic_function = 1.0/(1.0+exponent);
 
-         return (logistic_function*(1.0-logistic_function));
+         return(logistic_function*(1.0-logistic_function));
          //return(exponent/((1.0+exponent)*(1.0+exponent)));
       }
       break;

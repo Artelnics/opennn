@@ -107,54 +107,53 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     size_t ln = (int)(a+(1.-0.618)*(b-a));
     size_t mu = (int)(a+0.618*(b-a));
 
-    if (display)
+    if(display)
     {
         std::cout << "Performing order selection with golden section method..." << std::endl;
-        std::cout.flush();
     }
 
     time(&beginning_time);
 
-    mu_performance = calculate_performances(mu);
+    mu_performance = perform_model_evaluation(mu);
     current_training_performance = mu_performance[0];
     current_selection_performance = mu_performance[1];
     mu_parameters = get_parameters_order(mu);
 
     results->order_data.push_back(mu);
 
-    if (reserve_performance_data)
+    if(reserve_performance_data)
     {
         results->performance_data.push_back(current_training_performance);
     }
 
-    if (reserve_selection_performance_data)
+    if(reserve_selection_performance_data)
     {
         results->selection_performance_data.push_back(current_selection_performance);
     }
 
-    if (reserve_parameters_data)
+    if(reserve_parameters_data)
     {
         results->parameters_data.push_back(mu_parameters);
     }
 
-    ln_performance = calculate_performances(ln);
+    ln_performance = perform_model_evaluation(ln);
     current_training_performance = ln_performance[0];
     current_selection_performance = ln_performance[1];
     ln_parameters = get_parameters_order(ln);
 
     results->order_data.push_back(ln);
 
-    if (reserve_performance_data)
+    if(reserve_performance_data)
     {
         results->performance_data.push_back(current_training_performance);
     }
 
-    if (reserve_selection_performance_data)
+    if(reserve_selection_performance_data)
     {
         results->selection_performance_data.push_back(current_selection_performance);
     }
 
-    if (reserve_parameters_data)
+    if(reserve_parameters_data)
     {
         results->parameters_data.push_back(ln_parameters);
     }
@@ -162,7 +161,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     time(&current_time);
     elapsed_time = difftime(current_time, beginning_time);
 
-    if (display)
+    if(display)
     {
         std::cout << "Initial values: " << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
@@ -173,16 +172,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
-    if ((ln == mu) || (ln > mu) || (mu < ln)){
+    if((ln == mu) || (ln > mu) || (mu < ln))
+    {
         end = true;
-        if (display)
+
+        if(display)
+        {
             std::cout << "Algorithm finished " << std::endl;
+        }
+
         results->stopping_condition = GoldenSectionOrder::AlgorithmFinished;
     }
 
     while(!end){
 
-        if (ln_performance[1] < mu_performance[1]
+        if(ln_performance[1] < mu_performance[1]
         || fabs(ln_performance[1] - mu_performance[1]) < tolerance)
         {
             b = mu;
@@ -190,24 +194,24 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             mu_performance = ln_performance;
             ln = (int)(a+(1.-0.618)*(b-a));
 
-            ln_performance = calculate_performances(ln);
+            ln_performance = perform_model_evaluation(ln);
             current_training_performance = ln_performance[0];
             current_selection_performance = ln_performance[1];
             ln_parameters = get_parameters_order(ln);
 
             results->order_data.push_back(ln);
 
-            if (reserve_performance_data)
+            if(reserve_performance_data)
             {
                 results->performance_data.push_back(current_training_performance);
             }
 
-            if (reserve_selection_performance_data)
+            if(reserve_selection_performance_data)
             {
                 results->selection_performance_data.push_back(current_selection_performance);
             }
 
-            if (reserve_parameters_data)
+            if(reserve_parameters_data)
             {
                 results->parameters_data.push_back(ln_parameters);
             }
@@ -219,24 +223,24 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             ln_performance = mu_performance;
             mu = (int)(a+0.618*(b-a));
 
-            mu_performance = calculate_performances(mu);
+            mu_performance = perform_model_evaluation(mu);
             current_training_performance = mu_performance[0];
             current_selection_performance = mu_performance[1];
             mu_parameters = get_parameters_order(mu);
 
             results->order_data.push_back(mu);
 
-            if (reserve_performance_data)
+            if(reserve_performance_data)
             {
                 results->performance_data.push_back(current_training_performance);
             }
 
-            if (reserve_selection_performance_data)
+            if(reserve_selection_performance_data)
             {
                 results->selection_performance_data.push_back(current_selection_performance);
             }
 
-            if (reserve_parameters_data)
+            if(reserve_parameters_data)
             {
                 results->parameters_data.push_back(mu_parameters);
             }
@@ -250,92 +254,109 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
         // Stopping criteria
 
-        if ((ln == mu) || (ln > mu)){
+        if((ln == mu) || (ln > mu))
+        {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Algorithm finished " << std::endl;
+            }
+
             results->stopping_condition = GoldenSectionOrder::AlgorithmFinished;
-        }else if (elapsed_time >= maximum_time)
+        }else if(elapsed_time >= maximum_time)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Maximum time reached." << std::endl;
+            }
+
             results->stopping_condition = GoldenSectionOrder::MaximumTime;
-        }else if (std::min(ln_performance[1],mu_performance[1]) <= selection_performance_goal)
+        }else if(std::min(ln_performance[1],mu_performance[1]) <= selection_performance_goal)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Selection performance reached." << std::endl;
+            }
+
             results->stopping_condition = GoldenSectionOrder::SelectionPerformanceGoal;
-        }else if (iterations >= maximum_iterations_number)
+        }else if(iterations >= maximum_iterations_number)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Maximum number of iterations reached." << std::endl;
+            }
+
             results->stopping_condition = GoldenSectionOrder::MaximumIterations;
         }
 
-        if (display && !end)
+        if(display && !end)
         {
 
-            std::cout << "Iteration : " << iterations << std::endl;
+            std::cout << "Iteration: " << iterations << std::endl;
             std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-            std::cout << "ln final training performance : " << ln_performance[0] << std::endl;
-            std::cout << "ln final selection performance : " << ln_performance[1] << std::endl;
-            std::cout << "mu final training performance : " << mu_performance[0] << std::endl;
-            std::cout << "mu final selection performance : " << mu_performance[1] << std::endl;
-            std::cout << "Elapsed time : " << elapsed_time << std::endl;
+            std::cout << "ln final training performance: " << ln_performance[0] << std::endl;
+            std::cout << "ln final selection performance: " << ln_performance[1] << std::endl;
+            std::cout << "mu final training performance: " << mu_performance[0] << std::endl;
+            std::cout << "mu final selection performance: " << mu_performance[1] << std::endl;
+            std::cout << "Elapsed time: " << elapsed_time << std::endl;
         }
     }
 
-    minimums[0] = calculate_performances(a)[1];
+    minimums[0] = perform_model_evaluation(a)[1];
     a_parameters = get_parameters_order(a);
 
-    minimums[1] = calculate_performances(ln)[1];
+    minimums[1] = perform_model_evaluation(ln)[1];
     ln_parameters = get_parameters_order(ln);
 
-    minimums[2] = calculate_performances(mu)[1];
+    minimums[2] = perform_model_evaluation(mu)[1];
     mu_parameters = get_parameters_order(mu);
 
-    minimums[3] = calculate_performances(b)[1];
+    minimums[3] = perform_model_evaluation(b)[1];
     b_parameters = get_parameters_order(b);
 
     time(&current_time);
     elapsed_time = difftime(current_time, beginning_time);
 
-    if (display)
+    if(display)
     {
-        std::cout << "Iteration : " << iterations << std::endl;
+        std::cout << "Iteration: " << iterations << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-        std::cout << "a final training performance : " << calculate_performances(a)[0] << std::endl;
-        std::cout << "a final selection performance : " << calculate_performances(a)[1] << std::endl;
-        std::cout << "ln final training performance : " << ln_performance[0] << std::endl;
-        std::cout << "ln final selection performance : " << ln_performance[1] << std::endl;
-        std::cout << "mu final training performance : " << mu_performance[0] << std::endl;
-        std::cout << "mu final selection performance : " << mu_performance[1] << std::endl;
-        std::cout << "b final training performance : " << calculate_performances(b)[0] << std::endl;
-        std::cout << "b final selection performance : " << calculate_performances(b)[1] << std::endl;
-        std::cout << "Elapsed time : " << elapsed_time << std::endl;
+        std::cout << "a final training performance: " << perform_model_evaluation(a)[0] << std::endl;
+        std::cout << "a final selection performance: " << perform_model_evaluation(a)[1] << std::endl;
+        std::cout << "ln final training performance: " << ln_performance[0] << std::endl;
+        std::cout << "ln final selection performance: " << ln_performance[1] << std::endl;
+        std::cout << "mu final training performance: " << mu_performance[0] << std::endl;
+        std::cout << "mu final selection performance: " << mu_performance[1] << std::endl;
+        std::cout << "b final training performance: " << perform_model_evaluation(b)[0] << std::endl;
+        std::cout << "b final selection performance: " << perform_model_evaluation(b)[1] << std::endl;
+        std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
     minimum = minimums.calculate_minimum();
 
-    if (fabs(minimums[0] - minimum) < tolerance)
+    if(fabs(minimums[0] - minimum) < tolerance)
     {
         optimal_order = a;
 
         optimum_parameters = a_parameters;
 
-        optimum_performance[0] = calculate_performances(a)[0];
+        optimum_performance[0] = perform_model_evaluation(a)[0];
         optimum_performance[1] = minimums[0];
 
-    }else if (fabs(minimums[1] - minimum) < tolerance)
+    }else if(fabs(minimums[1] - minimum) < tolerance)
     {
         optimal_order = ln;
 
         optimum_parameters = ln_parameters;
 
-        optimum_performance[0] = calculate_performances(ln)[0];
+        optimum_performance[0] = perform_model_evaluation(ln)[0];
         optimum_performance[1] = minimums[1];
 
     }else if(fabs(minimums[2] - minimum) < tolerance)
@@ -344,7 +365,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
         optimum_parameters = mu_parameters;
 
-        optimum_performance[0] = calculate_performances(mu)[0];
+        optimum_performance[0] = perform_model_evaluation(mu)[0];
         optimum_performance[1] = minimums[2];
     }else
     {
@@ -352,17 +373,19 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
         optimum_parameters = b_parameters;
 
-        optimum_performance[0] = calculate_performances(b)[0];
+        optimum_performance[0] = perform_model_evaluation(b)[0];
         optimum_performance[1] = minimums[3];
     }
 
-    if (display)
-        std::cout << "Optimal order : " << optimal_order << std::endl;
+    if(display)
+    {
+        std::cout << "Optimal order: " << optimal_order << std::endl;
+    }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
     const size_t perceptrons_number = multilayer_perceptron_pointer->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if (optimal_order > perceptrons_number)
+    if(optimal_order > perceptrons_number)
     {
         multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
     }else
@@ -373,8 +396,10 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
-    if (reserve_minimal_parameters)
+    if(reserve_minimal_parameters)
+    {
         results->minimal_parameters = optimum_parameters;
+    }
 
     results->optimal_order = optimal_order;
     results->final_performance = optimum_performance[0];
@@ -857,7 +882,7 @@ void GoldenSectionOrder::load(const std::string& file_name)
 
    tinyxml2::XMLDocument document;
 
-   if (document.LoadFile(file_name.c_str()))
+   if(document.LoadFile(file_name.c_str()))
    {
       std::ostringstream buffer;
 

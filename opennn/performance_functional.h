@@ -37,6 +37,8 @@
 #include "mean_squared_error.h"
 #include "root_mean_squared_error.h"
 #include "normalized_squared_error.h"
+#include "weighted_squared_error.h"
+#include "roc_area_error.h"
 #include "minkowski_error.h"
 #include "cross_entropy_error.h"
 #include "outputs_integrals.h"
@@ -162,6 +164,8 @@ public:
       ROOT_MEAN_SQUARED_ERROR_OBJECTIVE,
       NORMALIZED_SQUARED_ERROR_OBJECTIVE,
       MINKOWSKI_ERROR_OBJECTIVE,
+      WEIGHTED_SQUARED_ERROR_OBJECTIVE,
+      ROC_AREA_ERROR_OBJECTIVE,
       CROSS_ENTROPY_ERROR_OBJECTIVE,
       OUTPUTS_INTEGRALS_OBJECTIVE,
       SOLUTIONS_ERROR_OBJECTIVE,
@@ -288,6 +292,8 @@ public:
    NormalizedSquaredError* get_normalized_squared_error_objective_pointer(void) const;
    MinkowskiError* get_Minkowski_error_objective_pointer(void) const;
    CrossEntropyError* get_cross_entropy_error_objective_pointer(void) const;
+   WeightedSquaredError* get_weighted_squared_error_objective_pointer(void) const;
+   RocAreaError* get_roc_area_error_objective_pointer(void) const;
    OutputsIntegrals* get_outputs_integrals_objective_pointer(void) const;
    SolutionsError* get_solutions_error_objective_pointer(void) const;
    FinalSolutionsError* get_final_solutions_error_objective_pointer(void) const;
@@ -494,6 +500,14 @@ private:
    /// Pointer to the cross entropy error object wich can be used as the objective term.
 
    CrossEntropyError* cross_entropy_error_objective_pointer;
+
+   /// Pointer to the weighted squared error object wich can be used as the objective term.
+
+   WeightedSquaredError* weighted_squared_error_objective_pointer;
+
+   /// Pointer to the ROC area error object wich can be used as the objective term.
+
+   RocAreaError* roc_area_error_objective_pointer;
 
    /// Pointer to the outputs integrals object wich can be used as the objective term.
 

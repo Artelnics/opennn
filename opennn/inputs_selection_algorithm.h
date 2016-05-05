@@ -74,7 +74,15 @@ public:
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, SelectionPerformanceGoal, MaximumIterations, MaximumSelectionFailures, CorrelationGoal, AlgorithmFinished};
+    enum StoppingCondition{
+        MaximumTime,
+        SelectionPerformanceGoal,
+        MaximumInputs,
+        MinimumInputs,
+        MaximumIterations,
+        MaximumSelectionFailures,
+        CorrelationGoal,
+        AlgorithmFinished};
 
     // STRUCTURES
 
@@ -147,7 +155,7 @@ public:
 
     // Get methods
 
-    const bool& get_regression(void) const;
+    const bool& get_function_regression(void) const;
 
     TrainingStrategy* get_training_strategy_pointer(void) const;
 
@@ -175,7 +183,7 @@ public:
 
     // Set methods
 
-    void set_regression(const bool&);
+    void set_function_regression(const bool&);
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
@@ -210,15 +218,15 @@ public:
 
     void set_neural_inputs(const Vector<bool>&);
 
-    Vector<double> calculate_minimum_final_performances(const Vector<bool>&);
-    Vector<double> calculate_maximum_final_performances(const Vector<bool>&);
-    Vector<double> calculate_mean_final_performances(const Vector<bool>&);
+    Vector<double> perform_minimum_model_evaluation(const Vector<bool>&);
+    Vector<double> perform_maximum_model_evaluation(const Vector<bool>&);
+    Vector<double> perform_mean_model_evaluation(const Vector<bool>&) ;
 
-    Vector<double> get_final_performances(const TrainingStrategy::Results&);
+    Vector<double> get_final_performances(const TrainingStrategy::Results&) const;
 
-    Vector<double> calculate_performances(const Vector<bool>&);
+    Vector<double> perform_model_evaluation(const Vector<bool>&);
 
-    Vector<double> get_parameters_inputs(const Vector<bool>&);
+    Vector<double> get_parameters_inputs(const Vector<bool>&) const;
 
     // inputs selection methods
 
@@ -238,9 +246,9 @@ protected:
 
     // MEMBERS
 
-    /// True if this is a regression problem.
+    /// True if this is a function regression problem.
 
-    bool regression;
+    bool function_regression;
 
     /// Pointer to a training strategy object.
 

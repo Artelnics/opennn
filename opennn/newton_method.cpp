@@ -1211,17 +1211,17 @@ Matrix<std::string> NewtonMethod::NewtonMethodResults::write_final_results(const
 
 NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 {
-   std::ostringstream buffer;
+//   std::ostringstream buffer;
 
-   buffer << "OpenNN Exception: NewtonMethod class.\n"
-          << "NewtonMethodResults* perform_training(void) method.\n"
-          << "This method is under development.\n";
+//   buffer << "OpenNN Exception: NewtonMethod class.\n"
+//          << "NewtonMethodResults* perform_training(void) method.\n"
+//          << "This method is under development.\n";
 
-   throw std::logic_error(buffer.str());	  
+//   throw std::logic_error(buffer.str());
 
-/*
+
    // Control sentence (if debug)
-
+/*
    #ifdef __OPENNN_DEBUG__ 
 
    check();
@@ -1249,7 +1249,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
-   const Vector<double> parameters = neural_network_pointer->arrange_parameters();
+   Vector<double> parameters = neural_network_pointer->arrange_parameters();
    double parameters_norm;
 
    Vector<double> parameters_increment(parameters_number);
@@ -1288,7 +1288,6 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
    directional_point[1] = 0.0;
    
    bool stop_training = false;
-
 
    // Main loop
 
@@ -1397,30 +1396,30 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
       // Training history performance functional
 
-      if(reserve_performance_history)
-      {
-         Newton_method_results_pointer->performance_history[iteration] = performance;
-      }
+//      if(reserve_performance_history)
+//      {
+//         Newton_method_results_pointer->performance_history[iteration] = performance;
+//      }
 
-      if(reserve_selection_performance_history)
-      {
-         Newton_method_results_pointer->selection_performance_history[iteration] = selection_performance;
-      }
+//      if(reserve_selection_performance_history)
+//      {
+//         Newton_method_results_pointer->selection_performance_history[iteration] = selection_performance;
+//      }
 
-      if(reserve_gradient_history)
-      {
-         Newton_method_results_pointer->gradient_history[iteration] = gradient;                                
-      }
+//      if(reserve_gradient_history)
+//      {
+//         Newton_method_results_pointer->gradient_history[iteration] = gradient;
+//      }
 
-      if(reserve_gradient_norm_history)
-      {
-         Newton_method_results_pointer->gradient_norm_history[iteration] = gradient_norm;
-      }
+//      if(reserve_gradient_norm_history)
+//      {
+//         Newton_method_results_pointer->gradient_norm_history[iteration] = gradient_norm;
+//      }
 
-      if(reserve_inverse_Hessian_history)
-      {
-         Newton_method_results_pointer->inverse_Hessian_history[iteration] = inverse_Hessian;
-      }
+//      if(reserve_inverse_Hessian_history)
+//      {
+//         Newton_method_results_pointer->inverse_Hessian_history[iteration] = inverse_Hessian;
+//      }
 
       // Training history training algorithm
 
@@ -1537,7 +1536,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          if(display)
 		 {
             std::cout << "Parameters norm: " << parameters_norm << "\n"
-                      << "Performance: " << performance << "\n"
+                      << "Training performance: " << performance << "\n"
 					  << "Gradient norm: " << gradient_norm << "\n"
                       << performance_functional_pointer->write_information()
                       << "Training rate: " << training_rate << "\n"
@@ -1555,7 +1554,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
       {
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "Performance: " << performance << "\n"
+                   << "Training performance: " << performance << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
                    << performance_functional_pointer->write_information()
                    << "Training rate: " << training_rate << "\n"
@@ -1582,7 +1581,404 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
    } 
 
    return(Newton_method_results_pointer);
-*/
+   */
+
+
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+    // Start training
+
+    if(display)
+    {
+       std::cout << "Training with Newton's method...\n";
+    }
+
+    NewtonMethodResults* newton_method_results_pointer = new NewtonMethodResults(this);
+
+    newton_method_results_pointer->resize_training_history(1+maximum_iterations_number);
+
+    // Neural network stuff
+
+    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+
+    const size_t parameters_number = neural_network_pointer->count_parameters_number();
+
+    Vector<double> parameters(parameters_number);
+    Vector<double> old_parameters(parameters_number);
+    double parameters_norm;
+
+    Vector<double> parameters_increment(parameters_number);
+    double parameters_increment_norm;
+
+    // Performance functional stuff
+
+    double performance = 0.0;
+    double old_performance = 0.0;
+    double performance_increase = 0.0;
+
+    Vector<double> gradient(parameters_number);
+    Vector<double> old_gradient(parameters_number);
+    double gradient_norm;
+
+    Matrix<double> inverse_Hessian(parameters_number, parameters_number);
+
+    double selection_performance = 0.0;
+    double old_selection_performance = 0.0;
+
+    // Training algorithm stuff
+
+    Vector<double> training_direction(parameters_number);
+
+    double training_slope;
+
+    //   const double& first_training_rate = training_rate_algorithm.get_first_training_rate();
+    const double first_training_rate = 0.01;
+
+    double initial_training_rate = 0.0;
+    double training_rate = 0.0;
+    double old_training_rate = 0.0;
+
+    Vector<double> directional_point(2);
+    directional_point[0] = 0.0;
+    directional_point[1] = 0.0;
+
+    bool stop_training = false;
+
+    size_t selection_failures = 0;
+
+    time_t beginning_time, current_time;
+    time(&beginning_time);
+    double elapsed_time;
+
+    size_t iteration;
+
+    // Main loop
+
+    for(iteration = 0; iteration <= maximum_iterations_number; iteration++)
+    {
+       // Neural network
+
+       parameters = neural_network_pointer->arrange_parameters();
+
+       parameters_norm = parameters.calculate_norm();
+
+       if(display && parameters_norm >= warning_parameters_norm)
+       {
+          std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       }
+
+       // Performance functional stuff
+
+       if(iteration == 0)
+       {
+          performance = performance_functional_pointer->calculate_performance();
+          performance_increase = 0.0;
+       }
+       else
+       {
+          performance = directional_point[1];
+          performance_increase = old_performance - performance;
+       }
+
+       gradient = performance_functional_pointer->calculate_gradient();
+
+       gradient_norm = gradient.calculate_norm();
+
+       if(display && gradient_norm >= warning_gradient_norm)
+       {
+          std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+       }
+
+       performance_functional_pointer->calculate_inverse_Hessian();
+
+       selection_performance = performance_functional_pointer->calculate_selection_performance();
+
+       if(iteration != 0 && selection_performance > old_selection_performance)
+       {
+          selection_failures++;
+       }
+
+       // Training algorithm
+
+       training_direction = calculate_training_direction(gradient, inverse_Hessian);
+
+       // Calculate performance training slope
+
+       training_slope = (gradient/gradient_norm).dot(training_direction);
+
+       // Check for a descent direction
+
+       if(training_slope >= 0.0)
+       {
+          // Reset training direction
+
+          training_direction = calculate_gradient_descent_training_direction(gradient);
+       }
+
+       // Get initial training rate
+
+       if(iteration == 0)
+       {
+          initial_training_rate = first_training_rate;
+       }
+       else
+       {
+          initial_training_rate = old_training_rate;
+       }
+
+       directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, initial_training_rate);
+
+       training_rate = directional_point[0];
+
+       // Reset training direction when training rate is 0
+
+       if(iteration != 0 && training_rate < 1.0e-99)
+       {
+
+           training_direction = calculate_gradient_descent_training_direction(gradient);
+
+           directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, first_training_rate);
+
+           training_rate = directional_point[0];
+       }
+
+       parameters_increment = training_direction*training_rate;
+       parameters_increment_norm = parameters_increment.calculate_norm();
+
+       // Elapsed time
+
+       time(&current_time);
+       elapsed_time = difftime(current_time, beginning_time);
+
+       // Training history neural neural network
+
+       if(reserve_parameters_history)
+       {
+          newton_method_results_pointer->parameters_history[iteration] = parameters;
+       }
+
+       if(reserve_parameters_norm_history)
+       {
+          newton_method_results_pointer->parameters_norm_history[iteration] = parameters_norm;
+       }
+
+       if(reserve_performance_history)
+       {
+          newton_method_results_pointer->performance_history[iteration] = performance;
+       }
+
+       if(reserve_selection_performance_history)
+       {
+          newton_method_results_pointer->selection_performance_history[iteration] = selection_performance;
+       }
+
+       if(reserve_gradient_history)
+       {
+          newton_method_results_pointer->gradient_history[iteration] = gradient;
+       }
+
+       if(reserve_gradient_norm_history)
+       {
+          newton_method_results_pointer->gradient_norm_history[iteration] = gradient_norm;
+       }
+
+       if(reserve_inverse_Hessian_history)
+       {
+          newton_method_results_pointer->inverse_Hessian_history[iteration] = inverse_Hessian;
+       }
+
+       // Training history training algorithm
+
+       if(reserve_training_direction_history)
+       {
+          newton_method_results_pointer->training_direction_history[iteration] = training_direction;
+       }
+
+       if(reserve_training_rate_history)
+       {
+          newton_method_results_pointer->training_rate_history[iteration] = training_rate;
+       }
+
+       if(reserve_elapsed_time_history)
+       {
+          newton_method_results_pointer->elapsed_time_history[iteration] = elapsed_time;
+       }
+
+       // Stopping Criteria
+
+       if(parameters_increment_norm <= minimum_parameters_increment_norm)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Minimum parameters increment norm reached.\n"
+                       << "Parameters increment norm: " << parameters_increment_norm << std::endl;
+          }
+
+          stop_training = true;
+       }
+
+       else if(iteration != 0 && performance_increase <= minimum_performance_increase)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Minimum performance increase reached.\n"
+                       << "Performance increase: " << performance_increase << std::endl;
+          }
+
+          stop_training = true;
+       }
+
+       else if(performance <= performance_goal)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Performance goal reached.\n";
+          }
+
+          stop_training = true;
+       }
+
+       else if(gradient_norm <= gradient_norm_goal)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Gradient norm goal reached.\n";
+          }
+
+          stop_training = true;
+       }
+
+       else if(selection_failures >= maximum_selection_performance_decreases)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Maximum selection performance decreases reached.\n"
+                       << "Selection performance decreases: "<< selection_failures << std::endl;
+          }
+
+          stop_training = true;
+       }
+
+       else if(iteration == maximum_iterations_number)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Maximum number of iterations reached.\n";
+          }
+
+          stop_training = true;
+       }
+
+       else if(elapsed_time >= maximum_time)
+       {
+          if(display)
+          {
+             std::cout << "Iteration " << iteration << ": Maximum training time reached.\n";
+          }
+
+          stop_training = true;
+       }
+
+       if(iteration != 0 && iteration % save_period == 0)
+       {
+             neural_network_pointer->save(neural_network_file_name);
+       }
+
+       if(stop_training)
+       {
+          newton_method_results_pointer->final_parameters = parameters;
+          newton_method_results_pointer->final_parameters_norm = parameters_norm;
+
+          newton_method_results_pointer->final_performance = performance;
+          newton_method_results_pointer->final_selection_performance = selection_performance;
+
+          newton_method_results_pointer->final_gradient = gradient;
+          newton_method_results_pointer->final_gradient_norm = gradient_norm;
+
+          newton_method_results_pointer->final_training_direction = training_direction;
+          newton_method_results_pointer->final_training_rate = training_rate;
+          newton_method_results_pointer->elapsed_time = elapsed_time;
+
+          newton_method_results_pointer->iterations_number = iteration;
+
+          newton_method_results_pointer->resize_training_history(iteration+1);
+
+          if(display)
+          {
+             std::cout << "Parameters norm: " << parameters_norm << "\n"
+                       << "Training performance: " << performance <<  "\n"
+                       << "Gradient norm: " << gradient_norm <<  "\n"
+                       << performance_functional_pointer->write_information()
+                       << "Training rate: " << training_rate <<  "\n"
+                       << "Elapsed time: " << elapsed_time << std::endl;
+
+             if(selection_performance != 0)
+             {
+                std::cout << "Selection performance: " << selection_performance << std::endl;
+             }
+          }
+
+          break;
+       }
+       else if(display && iteration % display_period == 0)
+       {
+          std::cout << "Iteration " << iteration << ";\n"
+                    << "Parameters norm: " << parameters_norm << "\n"
+                    << "Training performance: " << performance << "\n"
+                    << "Gradient norm: " << gradient_norm << "\n"
+                    << performance_functional_pointer->write_information()
+                    << "Training rate: " << training_rate << "\n"
+                    << "Elapsed time: " << elapsed_time << std::endl;
+
+          if(selection_performance != 0)
+          {
+             std::cout << "Selection performance: " << selection_performance << std::endl;
+          }
+       }
+
+       // Update stuff
+
+       old_parameters = parameters;
+
+       old_performance = performance;
+
+       old_gradient = gradient;
+
+       old_selection_performance = selection_performance;
+
+       old_training_rate = training_rate;
+
+       // Set new parameters
+
+       parameters += parameters_increment;
+
+       neural_network_pointer->set_parameters(parameters);
+    }
+
+    newton_method_results_pointer->final_parameters = parameters;
+    newton_method_results_pointer->final_parameters_norm = parameters_norm;
+
+    newton_method_results_pointer->final_performance = performance;
+    newton_method_results_pointer->final_selection_performance = selection_performance;
+
+    newton_method_results_pointer->final_gradient = gradient;
+    newton_method_results_pointer->final_gradient_norm = gradient_norm;
+
+    newton_method_results_pointer->final_training_direction = training_direction;
+    newton_method_results_pointer->final_training_rate = training_rate;
+    newton_method_results_pointer->elapsed_time = elapsed_time;
+
+    newton_method_results_pointer->iterations_number = iteration;
+
+    newton_method_results_pointer->resize_training_history(iteration+1);
+
+    return(newton_method_results_pointer);
 }
 
 
@@ -2114,16 +2510,16 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    }
 
    // Display
-   {
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    return(document);
 }

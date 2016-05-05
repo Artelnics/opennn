@@ -148,7 +148,7 @@ public:
 
     const double& get_selective_pressure(void) const;
 
-    const size_t& get_maximum_selection_failures(void) const;
+    const double& get_incest_prevention_distance(void) const;
 
     const bool& get_reserve_generation_mean(void) const;
 
@@ -194,7 +194,7 @@ public:
 
     void set_selective_pressure(const double&);
 
-    void set_maximum_selection_failures(const size_t&);
+    void set_incest_prevention_distance(const double&);
 
     void set_reserve_generation_mean(const bool&);
 
@@ -299,6 +299,11 @@ private:
 
     size_t population_size;
 
+    /// Incest prevention distance
+    /// Distance between two individuals to prevent the crossover.
+
+    double incest_prevention_distance;
+
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
     /// This is a parameter of the mutation operator.
@@ -344,11 +349,6 @@ private:
 
     bool reserve_generation_optimum_performance;
 
-    // STOPPING CRITERIA
-
-    /// Maximum number of iterations at which the selection performance increases.
-
-    size_t maximum_selection_failures;
 };
 
 }

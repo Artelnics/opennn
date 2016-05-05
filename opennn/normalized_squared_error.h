@@ -87,7 +87,11 @@ public:
    // performance methods
 
    double calculate_performance(void) const;
+
+   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
    Vector<double> calculate_gradient(void) const;
+
+   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
    Matrix<double> calculate_Hessian(void) const;
 
    double calculate_performance(const Vector<double>&) const;
@@ -126,7 +130,7 @@ private:
 
    /// Mean values of all the target variables. 
 
-   Vector<double> training_target_mean;
+//   Vector<double> training_target_mean;
 };
 
 }

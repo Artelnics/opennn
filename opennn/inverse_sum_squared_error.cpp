@@ -465,16 +465,16 @@ tinyxml2::XMLDocument* InverseSumSquaredError::to_XML(void) const
 
    // Display
 
-   {
-      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-      inverse_sum_squared_error_element->LinkEndChild(display_element);
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      inverse_sum_squared_error_element->LinkEndChild(display_element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-      display_element->LinkEndChild(display_text);
-   }
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
 
    return(document);
 

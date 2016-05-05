@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
 #   O P E N N N   Q T   C R E A T O R   P R O J E C T                                             #
 #                                                                                                 #
@@ -18,10 +18,13 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
+CONFIG += c++11
 
 CONFIG(debug, debug|release) {
     DEFINES += __OPENNN_DEBUG__
 }
+
+#DEFINES += __Cpp11__
 
 # TinyXML2 library
 
@@ -51,10 +54,11 @@ QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }
 
-# C++11 flags
-unix: !mac{
-QMAKE_CXXFLAGS+= -std=c++11
-QMAKE_LFLAGS +=  -std=c++11
+mac{
+
+INCLUDEPATHOMP = /usr/local/opt/libiomp/include/libiomp
+INCLUDEPATH += INCLUDEPATHOMP
+
 }
 
 HEADERS += \
@@ -87,6 +91,8 @@ HEADERS += \
     neural_parameters_norm.h \
     minkowski_error.h \
     mean_squared_error.h \
+    weighted_squared_error.h \
+    roc_area_error.h \
     inverse_sum_squared_error.h \
     independent_parameters_error.h \
     final_solutions_error.h \
@@ -102,20 +108,27 @@ HEADERS += \
     evolutionary_algorithm.h \
     conjugate_gradient.h \
     model_selection.h \
-    order_selection_algorithm.h\
-    incremental_order.h\
-    golden_section_order.h\
-    simulated_annealing_order.h\
-    inputs_selection_algorithm.h\
-    growing_inputs.h\
-    pruning_inputs.h\
-    genetic_algorithm.h\
+    order_selection_algorithm.h \
+    incremental_order.h \
+    golden_section_order.h \
+    simulated_annealing_order.h \
+    inputs_selection_algorithm.h \
+    growing_inputs.h \
+    pruning_inputs.h \
+    genetic_algorithm.h \
     testing_analysis.h \
     vector.h \
     matrix.h \
     numerical_integration.h \
     numerical_differentiation.h \
-    opennn.h
+    opennn.h \
+    principal_components_layer.h \
+    threshold_selection_algorithm.h \
+    f1_score_optimization_threshold.h \
+    matthew_correlation_optimization_threshold.h \
+    youden_index_optimization_threshold.h \
+    kappa_coefficient_optimization_threshold.h \
+    roc_curve_optimization_threshold.h
 
 SOURCES += \
     variables.cpp \
@@ -147,6 +160,8 @@ SOURCES += \
     neural_parameters_norm.cpp \
     minkowski_error.cpp \
     mean_squared_error.cpp \
+    weighted_squared_error.cpp \
+    roc_area_error.cpp \
     inverse_sum_squared_error.cpp \
     independent_parameters_error.cpp \
     final_solutions_error.cpp \
@@ -162,14 +177,94 @@ SOURCES += \
     evolutionary_algorithm.cpp \
     conjugate_gradient.cpp \
     model_selection.cpp \
-    order_selection_algorithm.cpp\
-    incremental_order.cpp\
-    golden_section_order.cpp\
-    simulated_annealing_order.cpp\
-    inputs_selection_algorithm.cpp\
-    growing_inputs.cpp\
-    pruning_inputs.cpp\
-    genetic_algorithm.cpp\
+    order_selection_algorithm.cpp \
+    incremental_order.cpp \
+    golden_section_order.cpp \
+    simulated_annealing_order.cpp \
+    inputs_selection_algorithm.cpp \
+    growing_inputs.cpp \
+    pruning_inputs.cpp \
+    genetic_algorithm.cpp \
     testing_analysis.cpp \
     numerical_integration.cpp \
-    numerical_differentiation.cpp
+    numerical_differentiation.cpp \
+    principal_components_layer.cpp \
+    threshold_selection_algorithm.cpp \
+    f1_score_optimization_threshold.cpp \
+    matthew_correlation_optimization_threshold.cpp \
+    youden_index_optimization_threshold.cpp \
+    kappa_coefficient_optimization_threshold.cpp \
+    roc_curve_optimization_threshold.cpp
+
+# CUDA (To uncomment: the following DEFINES, include(../cuda.pri) at the end of this file, neuralengine.pro > include(../opennn/cuda.pri) and tinyxml2.pro > #include(../cuda.pri) )
+
+#DEFINES += __OPENNN_CUDA__
+
+contains(DEFINES, __OPENNN_CUDA__){
+
+OTHER_FILES +=  utilities.cu
+
+windows{
+CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v7.5            # Path to cuda toolkit install
+}else:mac{
+CUDA_DIR = /Developer/NVIDIA/CUDA-7.5
+}else:unix{
+CUDA_DIR = /usr/local/cuda-7.5
+}
+
+INCLUDEPATH += $$CUDA_DIR/lib/x64
+DEPENDPATH += $$CUDA_DIR/lib/x64
+
+win32:!win32-g++: PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/cuda.lib
+else:win32-g++: PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcuda.a
+
+INCLUDEPATH += $$CUDA_DIR/lib/x64
+DEPENDPATH += $$CUDA_DIR/lib/x64
+
+win32:!win32-g++: PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/cudart.lib
+else:win32-g++: PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcudart.a
+
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcublas.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcublas.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/cublas.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/cublas.lib
+
+INCLUDEPATH += $$CUDA_DIR/include
+
+# CUDA settings <-- may change depending on your system
+
+CUDA_SOURCES += utilities.cu
+SYSTEM_NAME = x64         # Depending on your system either 'Win32', 'x64', or 'Win64'
+SYSTEM_TYPE = 64            # '32' or '64', depending on your system
+CUDA_ARCH = sm_20           # Type of CUDA architecture, for example 'compute_10', 'compute_11', 'sm_10'
+NVCC_OPTIONS = --use_fast_math
+
+CUDA_LIBS += -lcuda -lcudart -lcublas
+
+# The following makes sure all path names (which often include spaces) are put between quotation marks
+CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
+
+CUDA_OBJECTS_DIR = $$OBJECTS_DIR
+
+# Configuration of the Cuda compiler
+CONFIG(debug, debug|release) {
+    # Debug mode
+    cuda_d.input = CUDA_SOURCES
+    cuda_d.output = debug/${QMAKE_FILE_BASE}_cuda.o
+    cuda_d.commands = $$CUDA_DIR/bin/nvcc -D_DEBUG $$NVCC_OPTIONS $$CUDA_INC $$CUDA_LIBS --machine $$SYSTEM_TYPE -arch=$$CUDA_ARCH -c -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
+    cuda_d.dependency_type = TYPE_C
+    QMAKE_EXTRA_COMPILERS += cuda_d
+}
+else {
+    # Release mode
+    cuda.input = CUDA_SOURCES
+    cuda.output = release/${QMAKE_FILE_BASE}_cuda.o
+    cuda.commands = $$CUDA_DIR/bin/nvcc $$NVCC_OPTIONS $$CUDA_INC $$CUDA_LIBS --machine $$SYSTEM_TYPE -arch=$$CUDA_ARCH -c -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
+    cuda.dependency_type = TYPE_C
+    QMAKE_EXTRA_COMPILERS += cuda
+}
+
+include(../cuda.pri)
+
+}

@@ -171,7 +171,7 @@ public:
 
 
 // OpenNN: An Open Source Neural Networks C++ OpenNN.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This OpenNN is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

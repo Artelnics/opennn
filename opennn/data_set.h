@@ -129,7 +129,6 @@ public:
    std::string write_learning_task(void) const;
 
    const std::string& get_data_file_name(void) const;
-   const std::string& get_input_data_file_name(void) const;
 
    const bool& get_header_line(void) const;
    const bool& get_rows_label(void) const;
@@ -161,19 +160,22 @@ public:
 
    const bool& get_display(void) const;
 
+   bool is_binary_classification(void) const;
+   bool is_multiple_classification(void) const;
+
+   bool is_binary_variable(const size_t&) const;
+
    // Data methods
 
    bool empty(void) const;
 
    const Matrix<double>& get_data(void) const;
-   const Matrix<double> get_input_data(void) const;
    const Matrix<double>& get_time_series_data(void) const;
 
    Matrix<double> arrange_training_data(void) const;
    Matrix<double> arrange_selection_data(void) const;
    Matrix<double> arrange_testing_data(void) const;
 
-   Matrix<double> arrange_input_data(void) const;
    Matrix<double> arrange_target_data(void) const;
 
    Matrix<double> arrange_training_input_data(void) const;
@@ -211,7 +213,6 @@ public:
    void set_variables_number(const size_t&);
 
    void set_data_file_name(const std::string&);
-   void set_input_data_file_name(const std::string&);
 
    void set_file_type(const FileType&);
    void set_file_type(const std::string&);
@@ -256,6 +257,8 @@ public:
    Vector<size_t> unuse_constant_variables(void);
    Vector<size_t> unuse_repeated_instances(void);
 
+   Vector<size_t> unuse_non_significant_inputs(void);
+
    // Initialization methods
 
    void initialize_data(const double&);
@@ -292,6 +295,12 @@ public:
 
    Matrix<double> calculate_linear_correlations(void) const;
 
+   // Principal components mehtod
+
+   Matrix<double> calculate_covariance_matrix(void) const;
+
+   Matrix<double> perform_principal_components_analysis(const double& = 0.0);
+
    // Histrogram methods
 
    Vector< Histogram<double> > calculate_data_histograms(const size_t& = 10) const;
@@ -300,7 +309,11 @@ public:
 
    // Box and whiskers
 
-   Vector< Vector<double> > calculate_box_and_whiskers(void) const;
+   Vector< Vector<double> > calculate_box_plots(void) const;
+
+   size_t calculate_training_negatives(const size_t&) const;
+   size_t calculate_selection_negatives(const size_t&) const;
+   size_t calculate_testing_negatives(const size_t&) const;
 
    // Filtering methods
 
@@ -361,12 +374,17 @@ public:
 
    Vector<double> calculate_distances(void) const;
 
-   Vector<size_t> balance_binary_targets_distribution(void);
+   Vector<size_t> balance_binary_targets_distribution(const double& = 100.0);
    Vector<size_t> balance_multiple_targets_distribution(void);
 
    Vector<size_t> unuse_most_populated_target(const size_t&);
 
    Vector<size_t> balance_function_regression_targets_distribution(const double& = 10.0);
+
+   Vector<size_t> arrange_binary_inputs_indices(void) const;
+   Vector<size_t> arrange_real_inputs_indices(void) const;
+
+   void sum_binary_inputs(void);
 
    // Outlier detection
 
@@ -387,7 +405,10 @@ public:
 
    // Data generation
 
-   void generate_artificial_data(const size_t&, const size_t&);
+   void generate_data_function_regression(const size_t&, const size_t&);
+
+   void generate_data_binary_classification(const size_t&, const size_t&);
+   void generate_data_multiple_classification(const size_t&, const size_t&);
 
    // Serialization methods
 
@@ -413,7 +434,6 @@ public:
 
    void load_data(void);
    void load_data_binary(void);
-   void load_input_data_binary(void);
    void load_time_series_data_binary(void);
 
    Vector<std::string> arrange_time_series_names(const Vector<std::string>&) const;
@@ -482,10 +502,6 @@ private:
 
    std::string data_file_name;
 
-   /// Input data file name
-
-   std::string input_data_file_name;
-
    /// Header which contains variables name.
 
    bool header_line;
@@ -531,12 +547,6 @@ private:
    /// The number of columns is the number of variables.
 
    Matrix<double> data;
-
-   /// Inputs data matrix.
-   /// The number of rows is the number of instances for which the ouputs are to be calculated.
-   /// The number of columns is the number of inputs.
-
-   Matrix<double> input_data;
 
    /// Time series data matrix.
    /// The number of rows is the number of instances before time series changes.

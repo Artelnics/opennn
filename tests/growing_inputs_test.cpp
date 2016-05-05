@@ -105,11 +105,11 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
     nn.set(2,6,1);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     gi.set_display(false);
 
-    gi.set_regression(true);
+    gi.set_function_regression(true);
 
     gir = gi.perform_inputs_selection();
 
@@ -141,11 +141,11 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
     nn.set(2,6,1);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     gi.set_display(false);
 
-    gi.set_regression(false);
+    gi.set_function_regression(false);
 
     gir = gi.perform_inputs_selection();
 

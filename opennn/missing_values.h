@@ -40,9 +40,9 @@
 namespace OpenNN
 {
 
-///
+/// Missing values are those elements which are not present in the data set."
+/// Therefore, they represent a lack of information about several variables in several instances.;
 /// This class is used to store information about the missing values of a data set.
-///
 
 class MissingValues
 {

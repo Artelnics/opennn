@@ -115,7 +115,7 @@ int main(void)
 
         GrowingInputs* growing_inputs_pointer = model_selection.get_growing_inputs_pointer();
 
-        growing_inputs_pointer->set_regression(false);
+        growing_inputs_pointer->set_function_regression(false);
 
         growing_inputs_pointer->set_maximum_selection_failures(3);
 

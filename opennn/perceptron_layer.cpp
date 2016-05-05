@@ -1342,6 +1342,17 @@ Vector<double> PerceptronLayer::calculate_activations(const Vector<double>& comb
 	  throw std::logic_error(buffer.str());
    }   
 
+   if(combination_size == 0)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: PerceptronLayer class.\n"
+             << "Vector<double> calculate_activation(const Vector<double>&) const method.\n"
+             << "Combination size cannot be empty.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
    #endif
 
    // Calculate activation from layer

@@ -124,18 +124,22 @@ public:
     };
 
     ///
-    /// Structure with the results from a lift chart analysis
+    /// Structure with the results from Kolmogorov-Smirnov analysis.
     ///
 
-    struct LiftChartResults
+    struct KolmogorovSmirnovResults
     {
-        /// Matrix with the data of a cumulative lift chart.
+        /// Matrix containing the data of a positive cumulative gain
 
-        Matrix<double> cumulative_lift_chart;
+        Matrix<double> positive_cumulative_gain;
 
-        /// Matrix with the data of lift chart.
+        /// Matrix containing the data of a negative cumulative gain.
 
-        Matrix<double> actual_lift_chart;
+        Matrix<double> negative_cumulative_gain;
+
+        /// Maximum gain of the cumulative gain analysis
+
+        Vector<double> maximum_gain;
     };
 
     ///
@@ -201,6 +205,13 @@ public:
 
    Vector< Vector<size_t> > calculate_maximal_errors(const size_t& = 10) const;
 
+   Vector<double> calculate_testing_errors(void) const;
+   Vector<double> calculate_pattern_recognition_testing_errors(void) const;
+
+   double calculate_testing_normalized_squared_error(const Matrix<double>&, const Matrix<double>&) const;
+   double calculate_testing_cross_entropy_error(const Matrix<double>&, const Matrix<double>&) const;
+   double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const;
+
    // Linear regression analysis methods
 
    Vector< LinearRegressionParameters<double> > calculate_linear_regression_parameters(void) const;
@@ -210,6 +221,8 @@ public:
    // Binary classifcation methods
 
    Vector<double> calculate_binary_classification_tests(void) const;
+
+   double calculate_logloss(void) const;
 
    // Confusion methods
 
@@ -234,9 +247,13 @@ public:
 
    Matrix<double> perform_cumulative_gain_analysis(void) const;
    Matrix<double> calculate_cumulative_gain(const Matrix<double>& ,const Matrix<double>&) const;
+   Matrix<double> calculate_negative_cumulative_gain(const Matrix<double>&, const Matrix<double>&)const;
 
    Matrix<double> perform_lift_chart_analysis(void) const;
    Matrix<double> calculate_lift_chart(const Matrix<double>&) const;
+
+   KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis(void) const;
+   Vector<double> calculate_maximum_gain(const Matrix<double>&, const Matrix<double>&) const;
 
    // Calibration plot
 

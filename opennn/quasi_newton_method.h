@@ -26,6 +26,10 @@
 #include <cmath>
 #include <ctime>
 
+#ifdef __OPENNN_CUDA__
+#include <cublas_v2.h>
+#endif
+
 // OpenNN includes
 
 #include "performance_functional.h"
@@ -317,6 +321,10 @@ public:
    (const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    Matrix<double> calculate_inverse_Hessian_approximation(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
+
+   Matrix<double> calculate_DFP_inverse_Hessian_CUDA(double*, double*, double*, double*, double*, double*) const;
+   Matrix<double> calculate_BFGS_inverse_Hessian_CUDA(double*, double*, double*, double*, double*, double*) const;
+   Matrix<double> calculate_inverse_Hessian_approximation_CUDA(double*, double*, double*, double*, double*, double*) const;
 
    Vector<double> calculate_training_direction(const Vector<double>&, const Matrix<double>&) const;
 

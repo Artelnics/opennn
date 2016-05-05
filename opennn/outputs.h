@@ -173,6 +173,9 @@ public:
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
+   // PMML Methods
+   virtual void to_PMML(tinyxml2::XMLElement*, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>());
+
 protected:
 
    // MEMBERS

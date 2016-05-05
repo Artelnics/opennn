@@ -856,6 +856,7 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
         element->LinkEndChild(text);
     }
 
+
     for(size_t i = 0; i < missing_values_number; i++)
     {
         element = document->NewElement("Item");
@@ -868,7 +869,7 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
         element->LinkEndChild(instance_index_element);
 
         buffer.str("");
-        buffer << items[i].instance_index;
+        buffer << items[i].instance_index+1;
 
         text = document->NewText(buffer.str().c_str());
         instance_index_element->LinkEndChild(text);
@@ -879,23 +880,23 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
         element->LinkEndChild(variable_index_element);
 
         buffer.str("");
-        buffer << items[i].variable_index;
+        buffer << items[i].variable_index+1;
 
         text = document->NewText(buffer.str().c_str());
         variable_index_element->LinkEndChild(text);
     }
 
     // Display
-    {
-        element = document->NewElement("Display");
-        missing_values_element->LinkEndChild(element);
+//    {
+//        element = document->NewElement("Display");
+//        missing_values_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << display;
+//        buffer.str("");
+//        buffer << display;
 
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
 
     return(document);
 }
@@ -1037,9 +1038,9 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
             throw std::logic_error(buffer.str());
         }
 
-        const size_t instance_index = atoi(instance_index_element->GetText());
+        const size_t new_instance_index = atoi(instance_index_element->GetText())-1;
 
-        items[i].instance_index = instance_index;
+        items[i].instance_index = new_instance_index;
 
         // Variable index
 
@@ -1054,9 +1055,9 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
             throw std::logic_error(buffer.str());
         }
 
-        const size_t variable_index = atoi(variable_index_element->GetText());
+        const size_t new_variable_index = atoi(variable_index_element->GetText())-1;
 
-        items[i].variable_index = variable_index;
+        items[i].variable_index = new_variable_index;
     }
 }
 
@@ -1085,7 +1086,7 @@ std::string MissingValues::to_string(void) const
 
     buffer << "Scrubbing method: " << write_scrubbing_method() << "\n";
 
-    buffer << "Display: " << display << "\n";
+    //buffer << "Display: " << display << "\n";
 
     return(buffer.str());
 }

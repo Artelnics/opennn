@@ -14,6 +14,7 @@
 QT = # Do not use Qt
 
 CONFIG += console
+CONFIG += c++11
 
 mac{
     CONFIG-=app_bundle
@@ -54,6 +55,7 @@ SOURCES += \
     performance_functional_test.cpp \
     outputs_integrals_test.cpp \
     normalized_squared_error_test.cpp \
+    weighted_squared_error_test.cpp \
     neural_parameters_norm_test.cpp \
     minkowski_error_test.cpp \
     mean_squared_error_test.cpp \
@@ -117,6 +119,7 @@ HEADERS += \
     performance_functional_test.h \
     outputs_integrals_test.h \
     normalized_squared_error_test.h \
+    weighted_squared_error_test.h \
     neural_parameters_norm_test.h \
     minkowski_error_test.h \
     mean_squared_error_test.h \
@@ -188,13 +191,15 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
 
 # OpenMP library
-unix: !mac{
+!win32{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }
 
-# C++11 flags
-unix: !mac{
-QMAKE_CXXFLAGS+= -std=c++11
-QMAKE_LFLAGS +=  -std=c++11
+mac{
+INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
+LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
+
+# CUDA libraries
+#include(../cuda.pri)

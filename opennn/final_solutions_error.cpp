@@ -529,7 +529,7 @@ std::string FinalSolutionsError::write_information(void) const
    buffer << "Final solutions error\n"
 	      << "Target final solutions: " << target_final_solutions << "\n"
 		  << "Final solutions: " << dependent_variables_final_solutions << "\n"
-		  << "performance: " << performance << "\n";
+		  << "Training performance: " << performance << "\n";
 
    return(buffer.str());
 }
@@ -589,16 +589,16 @@ tinyxml2::XMLDocument* FinalSolutionsError::to_XML(void) const
    }
 
    // Display
-   {
-      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-      final_solutions_error_element->LinkEndChild(display_element);
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      final_solutions_error_element->LinkEndChild(display_element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-      display_element->LinkEndChild(display_text);
-   }
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
 
    return(document);
 }

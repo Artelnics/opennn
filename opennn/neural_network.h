@@ -34,6 +34,7 @@
 #include "perceptron_layer.h"
 #include "multilayer_perceptron.h"
 #include "scaling_layer.h"
+#include "principal_components_layer.h"
 #include "unscaling_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
@@ -126,6 +127,7 @@ public:
    bool has_inputs(void) const;
    bool has_outputs(void) const;
    bool has_scaling_layer(void) const;
+   bool has_principal_components_layer(void) const;
    bool has_unscaling_layer(void) const;
    bool has_bounding_layer(void) const;
    bool has_probabilistic_layer(void) const;
@@ -136,6 +138,7 @@ public:
    Inputs* get_inputs_pointer(void) const;
    Outputs* get_outputs_pointer(void) const;
    ScalingLayer* get_scaling_layer_pointer(void) const;
+   PrincipalComponentsLayer* get_principal_components_layer_pointer(void) const;
    UnscalingLayer* get_unscaling_layer_pointer(void) const;   
    BoundingLayer* get_bounding_layer_pointer(void) const;
    ProbabilisticLayer* get_probabilistic_layer_pointer(void) const;
@@ -163,6 +166,7 @@ public:
 
    void set_multilayer_perceptron_pointer(MultilayerPerceptron*);
    void set_scaling_layer_pointer(ScalingLayer*);
+   void set_principal_components_layer_pointer(PrincipalComponentsLayer*);
    void set_unscaling_layer_pointer(UnscalingLayer*);
    void set_bounding_layer_pointer(BoundingLayer*);
    void set_probabilistic_layer_pointer(ProbabilisticLayer*);
@@ -189,6 +193,7 @@ public:
 
    void construct_multilayer_perceptron(void);
    void construct_scaling_layer(void);
+   void construct_principal_components_layer(void);
    void construct_unscaling_layer(void);
    void construct_bounding_layer(void);
    void construct_probabilistic_layer(void);
@@ -266,9 +271,13 @@ public:
    Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&, const Vector<double>&) const;
 
    Matrix<double> calculate_output_data(const Matrix<double>&) const;
-   Matrix<double> calculate_output_data_missing_values(const Matrix<double>&, const double& missing_values_flag = -123.456) const;
+   Matrix<double> calculate_output_data_missing_values(const Matrix<double>&/*, const double& missing_values_flag = -123.456*/) const;
 
    Vector< Matrix<double> > calculate_Jacobian_data(const Matrix<double>&) const;
+
+   Vector< Histogram<double> > calculate_outputs_histograms(const size_t& = 1000, const size_t& = 10) const;
+   Vector< Histogram<double> > calculate_outputs_histograms(const Matrix<double>&, const size_t& = 10) const;
+
 
    // Serialization methods
 
@@ -296,6 +305,12 @@ public:
    void save_expression_python(const std::string&);
    void save_expression_R(const std::string&);
 
+   // PMML methods
+
+   virtual tinyxml2::XMLDocument* to_PMML(void) const;
+   virtual void from_PMML(const tinyxml2::XMLDocument&);
+
+
 protected:
 
    // MEMBERS
@@ -307,6 +322,10 @@ protected:
    /// Pointer to a scaling layer object.
 
    ScalingLayer* scaling_layer_pointer;
+
+   /// Pointer to a principal components layer object.
+
+   PrincipalComponentsLayer* principal_components_layer_pointer;
 
    /// Pointer to an unscaling layer object.
 

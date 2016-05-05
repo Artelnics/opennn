@@ -1096,7 +1096,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
           {
              std::cout << "Parameters norm: " << parameters_norm << "\n"
                        << "Potential parameters norm: " << potential_parameters_norm << "\n"
-                       << "Performance: " << performance << "\n"
+                       << "Training performance: " << performance << "\n"
                        << performance_functional_pointer->write_information()
                        << "Potential performance: " << potential_performance << "\n"
                        << "Training rate: " << training_rate << "\n"
@@ -1128,7 +1128,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
                    << "Potential parameters norm: " << potential_parameters_norm << "\n"
-                   << "Performance: " << performance << "\n"
+                   << "Training performance: " << performance << "\n"
                    << performance_functional_pointer->write_information()
                    << "Potential performance: " << potential_performance << "\n"
                    << "Training rate: " << training_rate << "\n"
@@ -1539,16 +1539,16 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
    }
 
    // Display
-   {
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    return(document);
 }

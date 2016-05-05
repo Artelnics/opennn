@@ -173,6 +173,10 @@ public:
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 
+   // PMML Methods
+   virtual void to_PMML(tinyxml2::XMLElement*, const Vector<std::string>& ) const;
+   void from_PMML(const tinyxml2::XMLElement*, const Vector<std::string>& );
+
    // Expression methods
 
    std::string write_none_expression(const Vector<std::string>&, const Vector<std::string>&) const;

@@ -1487,7 +1487,7 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          if(display)
 		 {
             std::cout << "Parameters norm: " << parameters_norm << "\n"
-                      << "Performance: " << performance << "\n"
+                      << "Training performance: " << performance << "\n"
                       << "Gradient norm: " << gradient_norm << "\n"
 			          << performance_functional_pointer->write_information() 
                       << "Training rate: " << training_rate << "\n"
@@ -1527,7 +1527,7 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
       {
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "Performance: " << performance << "\n"
+                   << "Training performance: " << performance << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
                    << performance_functional_pointer->write_information()
                    << "Training rate: " << training_rate << "\n"
@@ -1629,9 +1629,9 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum selection failures
+   // Maximum selection performance decreases
 
-   labels.push_back("Maximum selection failures");
+   labels.push_back("Maximum selection performance decreases");
 
    buffer.str("");
    buffer << maximum_selection_performance_decreases;
@@ -1674,21 +1674,21 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve gradient norm history
-
-   labels.push_back("Reserve gradient norm history");
-
-   buffer.str("");
-   buffer << reserve_gradient_norm_history;
-
-   values.push_back(buffer.str());
-
    // Reserve selection performance history
 
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
    buffer << reserve_selection_performance_history;
+
+   values.push_back(buffer.str());
+
+   // Reserve gradient norm history
+
+   labels.push_back("Reserve gradient norm history");
+
+   buffer.str("");
+   buffer << reserve_gradient_norm_history;
 
    values.push_back(buffer.str());
 
@@ -1710,12 +1710,12 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
 
    // Reserve elapsed time history
 
-   labels.push_back("Reserve elapsed time history");
+//   labels.push_back("Reserve elapsed time history");
 
-   buffer.str("");
-   buffer << reserve_elapsed_time_history;
+//   buffer.str("");
+//   buffer << reserve_elapsed_time_history;
 
-   values.push_back(buffer.str());
+//   values.push_back(buffer.str());
 
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
@@ -1766,69 +1766,69 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 
    // Warning parameters norm
 
-   element = document->NewElement("WarningParametersNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("WarningParametersNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_parameters_norm;
+//   buffer.str("");
+//   buffer << warning_parameters_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Warning gradient norm 
 
-   element = document->NewElement("WarningGradientNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("WarningGradientNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_gradient_norm;
+//   buffer.str("");
+//   buffer << warning_gradient_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Warning training rate 
 
-   element = document->NewElement("WarningTrainingRate");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("WarningTrainingRate");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_training_rate;
+//   buffer.str("");
+//   buffer << warning_training_rate;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Error parameters norm
 
-   element = document->NewElement("ErrorParametersNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ErrorParametersNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_parameters_norm;
+//   buffer.str("");
+//   buffer << error_parameters_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Error gradient norm 
 
-   element = document->NewElement("ErrorGradientNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ErrorGradientNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_gradient_norm;
+//   buffer.str("");
+//   buffer << error_gradient_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Error training rate
 
-   element = document->NewElement("ErrorTrainingRate");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ErrorTrainingRate");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_training_rate;
+//   buffer.str("");
+//   buffer << error_training_rate;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Minimum parameters increment norm
 
@@ -1907,18 +1907,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve parameters history 
-
-   element = document->NewElement("ReserveParametersHistory");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << reserve_parameters_history;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-
-   // Reserve parameters norm history 
+   // Reserve parameters norm history
 
    element = document->NewElement("ReserveParametersNormHistory");
    root_element->LinkEndChild(element);
@@ -1928,6 +1917,17 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
+
+   // Reserve parameters history 
+
+//   element = document->NewElement("ReserveParametersHistory");
+//   root_element->LinkEndChild(element);
+
+//   buffer.str("");
+//   buffer << reserve_parameters_history;
+
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve performance history 
 
@@ -1953,14 +1953,14 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 
    // Reserve gradient history 
 
-   element = document->NewElement("ReserveGradientHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveGradientHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_gradient_history;
+//   buffer.str("");
+//   buffer << reserve_gradient_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve gradient norm history 
 
@@ -1975,88 +1975,88 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 
    // Reserve training direction history 
 
-   element = document->NewElement("ReserveTrainingDirectionHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveTrainingDirectionHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_training_direction_history;
+//   buffer.str("");
+//   buffer << reserve_training_direction_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve training rate history 
 
-   element = document->NewElement("ReserveTrainingRateHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveTrainingRateHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_training_rate_history;
+//   buffer.str("");
+//   buffer << reserve_training_rate_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve elapsed time history 
 
-   element = document->NewElement("ReserveElapsedTimeHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveElapsedTimeHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_elapsed_time_history;
+//   buffer.str("");
+//   buffer << reserve_elapsed_time_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve selection performance history 
 
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveSelectionPerformanceHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_selection_performance_history;
+//   buffer.str("");
+//   buffer << reserve_selection_performance_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Display period
 
-   element = document->NewElement("DisplayPeriod");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("DisplayPeriod");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display_period;
+//   buffer.str("");
+//   buffer << display_period;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Save period
 
-   element = document->NewElement("SavePeriod");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("SavePeriod");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << save_period;
+//   buffer.str("");
+//   buffer << save_period;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Neural network file name
 
-   element = document->NewElement("NeuralNetworkFileName");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("NeuralNetworkFileName");
+//   root_element->LinkEndChild(element);
 
-   text = document->NewText(neural_network_file_name.c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(neural_network_file_name.c_str());
+//   element->LinkEndChild(text);
 
    // Display warnings 
 
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    return(document);
 }

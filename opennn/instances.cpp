@@ -992,16 +992,16 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
    }
 
    // Display
-   {
-      element = document->NewElement("Display");
-      instances_element->LinkEndChild(element);
+//   {
+//      element = document->NewElement("Display");
+//      instances_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+//      text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }
@@ -1404,7 +1404,7 @@ void Instances::convert_time_series(const size_t& lags_number)
 {
     const size_t instances_number = get_instances_number();
 
-    if (instances_number < lags_number)
+    if(instances_number < lags_number)
     {
         std::ostringstream buffer;
 
@@ -1434,8 +1434,8 @@ std::string Instances::to_string(void) const
 	      << "Training instances number: " << count_training_instances_number() << "\n"
 	      << "Selection instances number: " << count_selection_instances_number() << "\n"
 	      << "Testing instances number: " << count_testing_instances_number() << "\n"
-          << "Uses: " << write_uses() << "\n"
-          << "Display: " << display << "\n";
+          << "Uses: " << write_uses() << "\n";
+          //<< "Display: " << display << "\n";
 
    return(buffer.str());
 }

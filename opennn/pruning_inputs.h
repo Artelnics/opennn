@@ -94,11 +94,15 @@ public:
 
     // Get methods
 
+    const size_t& get_minimum_inputs_number(void) const;
+
     const size_t& get_maximum_selection_failures(void) const;
 
     // Set methods
 
     void set_default(void);
+
+    void set_minimum_inputs_number(const size_t&);
 
     void set_maximum_selection_failures(const size_t&);
 
@@ -119,11 +123,15 @@ public:
 
 private:
 
-   // STOPPING CRITERIA
+    // STOPPING CRITERIA
 
-   /// Maximum number of iterations at which the selection performance increases.
+    /// Minimum number of inputs in the neural network.
 
-   size_t maximum_selection_failures;
+    size_t minimum_inputs_number;
+
+    /// Maximum number of iterations at which the selection performance increases.
+
+    size_t maximum_selection_failures;
 };
 
 }

@@ -74,6 +74,15 @@ GrowingInputs::~GrowingInputs(void)
 
 // METHODS
 
+// const size_t& get_maximum_inputs_number(void) const method
+
+/// Returns the maximum number of inputs in the growing inputs selection algorithm.
+
+const size_t& GrowingInputs::get_maximum_inputs_number(void) const
+{
+    return(maximum_inputs_number);
+}
+
 // const size_t& get_maximum_selection_failures(void) const method
 
 /// Returns the maximum number of selection failures in the growing inputs selection algorithm.
@@ -91,15 +100,44 @@ void GrowingInputs::set_default(void)
 {
     size_t inputs_number ;
 
-    if (training_strategy_pointer == NULL
+    if(training_strategy_pointer == NULL
             || !training_strategy_pointer->has_performance_functional())
     {
         maximum_selection_failures = 3;
+
+        maximum_inputs_number = 100;
     }else
     {
         inputs_number = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer()->get_inputs_number();
         maximum_selection_failures = (size_t)std::max(3.,inputs_number/5.);
+
+        maximum_inputs_number = inputs_number;
     }
+}
+
+// void set_maximum_inputs_number(const size_t&) method
+
+/// Sets the maximum inputs number for the growing inputs selection algorithm.
+/// @param new_maximum_inputs_number Maximum inputs number in the growing inputs selection algorithm.
+
+void GrowingInputs::set_maximum_inputs_number(const size_t& new_maximum_inputs_number)
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(new_maximum_inputs_number <= 1)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: GrowingInputs class.\n"
+               << "void set_maximum_selection_failures(const size_t&) method.\n"
+               << "Maximum selection failures must be greater than 0.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+#endif
+
+    maximum_inputs_number = new_maximum_inputs_number;
 }
 
 
@@ -112,7 +150,7 @@ void GrowingInputs::set_maximum_selection_failures(const size_t& new_maximum_per
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_maximum_performance_failures <= 0)
+    if(new_maximum_performance_failures <= 0)
     {
         std::ostringstream buffer;
 
@@ -164,7 +202,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     bool has_scaling_layer = neural_network_pointer->has_scaling_layer();
 
-    if (has_scaling_layer)
+    if(has_scaling_layer)
     {
         original_statistics = neural_network_pointer->get_scaling_layer_pointer()->get_statistics();
         original_scaling_method = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_method();
@@ -199,26 +237,24 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     time_t beginning_time, current_time;
     double elapsed_time;
 
-    if (display)
+    if(display)
     {
         std::cout << "Performing growing inputs selection..." << std::endl;
         std::cout << std::endl << "Calculating correlations..." << std::endl;
-        std::cout.flush();
-
     }
 
     final_correlations = calculate_final_correlations();
 
-    if (display)
+    if(display)
     {
         std::cout << "Correlations : \n";
         for(size_t i = 0; i < final_correlations.size(); i++)
         {
             original_index = get_input_index(original_uses, i);
 
-            std::cout << "input : " << variables->arrange_names()[original_index] << ", correlation = " << final_correlations[i] << std::endl;
+            std::cout << "Input: " << variables->arrange_names()[original_index] << "; Correlation: " << final_correlations[i] << std::endl;
 
-            if (i == 9)
+            if(i == 9)
             {
                 std::cout << "...\n";
                 break;
@@ -227,8 +263,12 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     }
 
     for (size_t i = 0; i < current_uses.size(); i++)
+    {
         if(current_uses[i] == Variables::Input)
+        {
             current_uses[i] = Variables::Unused;
+        }
+    }
 
     current_inputs.set(inputs_number, false);
 
@@ -236,7 +276,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     index = final_correlations.calculate_maximal_index();
 
-    if (final_correlations[index] >= 0.9999*targets_number)
+    if(final_correlations[index] >= 0.9999*targets_number)
     {
         original_index = get_input_index(original_uses, index);
 
@@ -246,13 +286,13 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
         variables->set_uses(current_uses);
 
-        set_neural_inputs(current_inputs);
-
         if(display)
+        {
             std::cout << "Maximal correlation(" << final_correlations[index] << ") is nearly 1. \n"
                       << "The problem is linear separable with the input " << variables->arrange_names()[original_index] << ".\n\n" ;
+        }
 
-        final = calculate_performances(current_inputs);
+        final = perform_model_evaluation(current_inputs);
 
         optimal_inputs = current_inputs;
         optimum_selection_error = final[0];
@@ -261,17 +301,17 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
         results->inputs_data.push_back(current_inputs);
 
-        if (reserve_performance_data)
+        if(reserve_performance_data)
         {
             results->performance_data.push_back(optimum_selection_error);
         }
 
-        if (reserve_selection_performance_data)
+        if(reserve_selection_performance_data)
         {
             results->selection_performance_data.push_back(optimum_performance_error);
         }
 
-        if (reserve_parameters_data)
+        if(reserve_parameters_data)
         {
             results->parameters_data.push_back(optimal_parameters);
         }
@@ -282,6 +322,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     }else
     {
         for(size_t i = 0; i < final_correlations.size(); i++)
+        {
             if(final_correlations[i] >= maximum_correlation*targets_number)
             {
                 final_correlations[i] = -1;
@@ -294,14 +335,58 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
                 variables->set_uses(current_uses);
 
-                set_neural_inputs(current_inputs);
-
                 if(display)
+                {
                     std::cout << "Added input "<< variables->arrange_names()[original_index] << std::endl;
+                }
+
+                if(current_inputs.count_occurrences(true) >= maximum_inputs_number)
+                {
+                    end = true;
+
+                    if(display)
+                    {
+                        std::cout << "Maximum inputs ("<< maximum_inputs_number <<") reached." << std::endl;
+                    }
+
+                    results->stopping_condition = InputsSelectionAlgorithm::MaximumInputs;
+
+                    final = perform_model_evaluation(current_inputs);
+
+                    optimal_inputs = current_inputs;
+                    optimum_performance_error = final[0];
+                    optimum_selection_error = final[1];
+
+                    results->inputs_data.push_back(current_inputs);
+
+                    if(reserve_performance_data)
+                    {
+                        results->performance_data.push_back(optimum_performance_error);
+                    }
+
+                    if(reserve_selection_performance_data)
+                    {
+                        results->selection_performance_data.push_back(optimum_selection_error);
+                    }
+
+                    if(reserve_parameters_data)
+                    {
+                        history_row = get_parameters_inputs(current_inputs);
+
+                        results->parameters_data.push_back(history_row);
+                    }
+
+                    break;
+                }
+
                 flag_input = true;
             }
+        }
+
         if(display)
+        {
             std::cout << std::endl;
+        }
 
     }
 
@@ -315,9 +400,27 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             if(final_correlations[index] <= minimum_correlation*targets_number)
             {
                 end = true;
-                if (display)
+
+                if(display)
+                {
                     std::cout << "Correlation goal reached." << std::endl << std::endl;
+                }
+
                 results->stopping_condition = InputsSelectionAlgorithm::CorrelationGoal;
+
+                if (current_inputs.count_occurrences(true) == 0)
+                {
+                    original_index = get_input_index(original_uses, index);
+
+                    current_uses[original_index] = Variables::Input;
+
+                    current_inputs[index] = true;
+
+                    variables->set_uses(current_uses);
+                }
+
+                optimal_inputs = current_inputs;
+
             }else
             {
 
@@ -330,27 +433,25 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
                 current_inputs[index] = true;
 
                 variables->set_uses(current_uses);
-
-                set_neural_inputs(current_inputs);
-
             }
         }
 
-        final = calculate_performances(current_inputs);
+        final = perform_model_evaluation(current_inputs);
 
         current_training_performance = final[0];
         current_selection_performance = final[1];
 
-        if (fabs(optimum_selection_error - current_selection_performance) < tolerance ||
+        if(fabs(optimum_selection_error - current_selection_performance) < tolerance ||
                 optimum_selection_error > current_selection_performance)
         {
             optimal_inputs = current_inputs;
             optimum_performance_error = current_training_performance;
             optimum_selection_error = current_selection_performance;
         }
-        else if (optimum_selection_error < current_selection_performance)
-                 //previous_selection_performance < current_selection_performance)
+        else if(optimum_selection_error < current_selection_performance)
+        {
             selection_failures++;
+        }
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
@@ -360,66 +461,102 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
         results->inputs_data.push_back(current_inputs);
 
-        if (reserve_performance_data)
+        if(reserve_performance_data)
         {
             results->performance_data.push_back(current_training_performance);
         }
 
-        if (reserve_selection_performance_data)
+        if(reserve_selection_performance_data)
         {
             results->selection_performance_data.push_back(current_selection_performance);
         }
 
-        if (reserve_parameters_data)
+        if(reserve_parameters_data)
         {
             history_row = get_parameters_inputs(current_inputs);
+
             results->parameters_data.push_back(history_row);
         }
 
         // STOPPING CRITERIA
 
-        if (elapsed_time >= maximum_time)
+        if(elapsed_time >= maximum_time)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Maximum time reached." << std::endl;
+            }
+
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
-        }else if (final[1] <= selection_performance_goal)
+        }else if(final[1] <= selection_performance_goal)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Selection performance reached." << std::endl;
+            }
+
             results->stopping_condition = InputsSelectionAlgorithm::SelectionPerformanceGoal;
-        }else if (iterations >= maximum_iterations_number)
+        }else if(iterations >= maximum_iterations_number)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
                 std::cout << "Maximum number of iterations reached." << std::endl;
+            }
+
             results->stopping_condition = InputsSelectionAlgorithm::MaximumIterations;
-        }else if (selection_failures >= maximum_selection_failures)
+        }else if(selection_failures >= maximum_selection_failures)
         {
             end = true;
-            if (display)
-                std::cout << "Maximum selection performance failures("<<selection_failures<<") reached." << std::endl;
+
+            if(display)
+            {
+                std::cout << "Maximum selection failures ("<<selection_failures<<") reached." << std::endl;
+            }
+
             results->stopping_condition = InputsSelectionAlgorithm::MaximumSelectionFailures;
-        }else if (current_inputs.count_occurrences(true) == current_inputs.size())
+        }else if(current_inputs.count_occurrences(true) >= maximum_inputs_number)
         {
             end = true;
-            if (display)
+
+            if(display)
+            {
+                std::cout << "Maximum inputs ("<< maximum_inputs_number <<") reached." << std::endl;
+            }
+
+            results->stopping_condition = InputsSelectionAlgorithm::MaximumInputs;
+        }
+        else if(current_inputs.count_occurrences(true) == current_inputs.size())
+        {
+            end = true;
+
+            if(display)
+            {
                 std::cout << "Algorithm finished" << std::endl;
+            }
+
             results->stopping_condition = InputsSelectionAlgorithm::AlgorithmFinished;
         }
 
-        if (display)
+        if(display)
         {
-            std::cout << "Iteration : " << iterations << std::endl;
+            std::cout << "Iteration: " << iterations << std::endl;
+
             if(!flag_input)
-                std::cout << "Add input : " << variables->arrange_names()[original_index] << std::endl;
-            std::cout << "Current inputs : " <<  variables->arrange_inputs_name().to_string() << std::endl;
-            std::cout << "Number of inputs : " << current_inputs.count_occurrences(true) << std::endl;
-            std::cout << "Training performance : " << final[0] << std::endl;
-            std::cout << "Selection performance : " << final[1] << std::endl;
-            std::cout << "Elapsed time : " << elapsed_time << std::endl;
+            {
+                std::cout << "Add input: " << variables->arrange_names()[original_index] << std::endl;
+            }
+
+            std::cout << "Current inputs: " <<  variables->arrange_inputs_name().to_string() << std::endl;
+            std::cout << "Number of inputs: " << current_inputs.count_occurrences(true) << std::endl;
+            std::cout << "Training performance: " << final[0] << std::endl;
+            std::cout << "Selection performance: " << final[1] << std::endl;
+            std::cout << "Elapsed time: " << elapsed_time << std::endl;
 
             std::cout << std::endl;
         }
@@ -427,9 +564,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     }
 
     optimal_parameters = get_parameters_inputs(optimal_inputs);
-    if (reserve_minimal_parameters)
-        results->minimal_parameters = optimal_parameters;
 
+    if(reserve_minimal_parameters)
+    {
+        results->minimal_parameters = optimal_parameters;
+    }
 
     results->optimal_inputs = optimal_inputs;
     results->final_selection_performance = optimum_selection_error;
@@ -441,11 +580,13 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     for (size_t i = 0; i < optimal_inputs.size(); i++)
     {
         original_index = get_input_index(original_uses, i);
-        if (optimal_inputs[i] == 1)
+        if(optimal_inputs[i] == 1)
         {
             current_uses[original_index] = Variables::Input;
-            if (has_scaling_layer)
+            if(has_scaling_layer)
+            {
                 statistics.push_back(original_statistics[i]);
+            }
         }else
         {
             current_uses[original_index] = Variables::Unused;
@@ -458,7 +599,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     neural_network_pointer->set_parameters(optimal_parameters);
     neural_network_pointer->get_inputs_pointer()->set_names(variables->arrange_inputs_name());
 
-    if (has_scaling_layer)
+    if(has_scaling_layer)
     {
         ScalingLayer scaling_layer(statistics);
         scaling_layer.set_scaling_method(original_scaling_method);
@@ -468,13 +609,13 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     time(&current_time);
     elapsed_time = difftime(current_time, beginning_time);
 
-    if (display)
+    if(display)
     {
-        std::cout << "Optimal inputs : " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
-        std::cout << "Optimal number of inputs : " << optimal_inputs.count_occurrences(true) << std::endl;
-        std::cout << "Optimum training performance : " << optimum_performance_error << std::endl;
-        std::cout << "Optimum selection performance : " << optimum_selection_error << std::endl;
-        std::cout << "Elapsed time : " << elapsed_time << std::endl;
+        std::cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
+        std::cout << "Optimal number of inputs: " << optimal_inputs.count_occurrences(true) << std::endl;
+        std::cout << "Optimum training performance: " << optimum_performance_error << std::endl;
+        std::cout << "Optimum selection performance: " << optimum_selection_error << std::endl;
+        std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
     return results;
@@ -524,6 +665,15 @@ Matrix<std::string> GrowingInputs::to_string_matrix(void) const
 
    buffer.str("");
    buffer << maximum_selection_failures;
+
+   values.push_back(buffer.str());
+
+   // Maximum inputs number
+
+   labels.push_back("Maximum inputs number");
+
+   buffer.str("");
+   buffer << maximum_inputs_number;
 
    values.push_back(buffer.str());
 
@@ -613,16 +763,16 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
     tinyxml2::XMLText* text = NULL;
 
     // Regression
-    {
-        element = document->NewElement("Regression");
-        root_element->LinkEndChild(element);
+//    {
+//        element = document->NewElement("FunctionRegression");
+//        root_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << regression;
+//        buffer.str("");
+//        buffer << function_regression;
 
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
 
     // Trials number
     {
@@ -636,22 +786,98 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Performance calculation method
+    // Tolerance
     {
-        element = document->NewElement("PerformanceCalculationMethod");
-        root_element->LinkEndChild(element);
-
-        text = document->NewText(write_performance_calculation_method().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Reserve parameters data
-    {
-        element = document->NewElement("ReserveParametersData");
+        element = document->NewElement("Tolerance");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_parameters_data;
+        buffer << tolerance;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Selection performance goal
+    {
+        element = document->NewElement("SelectionPerformanceGoal");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << selection_performance_goal;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum selection failures
+    {
+        element = document->NewElement("MaximumSelectionFailures");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_selection_failures;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum inputs number
+    {
+        element = document->NewElement("MaximumInputsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_inputs_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Minimum correlation
+    {
+        element = document->NewElement("MinimumCorrelation");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << minimum_correlation;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+
+    // Maximum correlation
+    {
+        element = document->NewElement("MaximumCorrelation");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_correlation;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum iterations
+    {
+        element = document->NewElement("MaximumIterationsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_iterations_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum time
+    {
+        element = document->NewElement("MaximumTime");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_time;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -681,113 +907,50 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
         element->LinkEndChild(text);
     }
 
+    // Performance calculation method
+//    {
+//        element = document->NewElement("PerformanceCalculationMethod");
+//        root_element->LinkEndChild(element);
+
+//        text = document->NewText(write_performance_calculation_method().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Reserve parameters data
+//    {
+//        element = document->NewElement("ReserveParametersData");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << reserve_parameters_data;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
     // Reserve minimal parameters
-    {
-        element = document->NewElement("ReserveMinimalParameters");
-        root_element->LinkEndChild(element);
+//    {
+//        element = document->NewElement("ReserveMinimalParameters");
+//        root_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << reserve_minimal_parameters;
+//        buffer.str("");
+//        buffer << reserve_minimal_parameters;
 
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
 
     // Display
-    {
-        element = document->NewElement("Display");
-        root_element->LinkEndChild(element);
+//    {
+//        element = document->NewElement("Display");
+//        root_element->LinkEndChild(element);
 
-        buffer.str("");
-        buffer << display;
+//        buffer.str("");
+//        buffer << display;
 
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Selection performance goal
-    {
-        element = document->NewElement("SelectionPerformanceGoal");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << selection_performance_goal;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Maximum iterations
-    {
-        element = document->NewElement("MaximumIterationsNumber");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << maximum_iterations_number;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Maximum correlation
-    {
-        element = document->NewElement("MaximumCorrelation");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << maximum_correlation;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Minimum correlation
-    {
-        element = document->NewElement("MinimumCorrelation");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << minimum_correlation;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Maximum time
-    {
-        element = document->NewElement("MaximumTime");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << maximum_time;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Tolerance
-    {
-        element = document->NewElement("Tolerance");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << tolerance;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    // Maximum Selection Failures
-    {
-        element = document->NewElement("MaximumSelectionFailures");
-        root_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << maximum_selection_failures;
-
-        text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
 
     return(document);
 }
@@ -814,7 +977,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regression
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Regression");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("FunctionRegression");
 
         if(element)
         {
@@ -822,7 +985,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
             try
             {
-                set_regression(new_regression != "0");
+                set_function_regression(new_regression != "0");
             }
             catch(const std::logic_error& e)
             {
@@ -1078,6 +1241,25 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
+    // Maximum inputs number
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumInputsNumber");
+
+        if(element)
+        {
+            const size_t new_maximum_inputs_number = atoi(element->GetText());
+
+            try
+            {
+                set_maximum_inputs_number(new_maximum_inputs_number);
+            }
+            catch(const std::logic_error& e)
+            {
+                std::cout << e.what() << std::endl;
+            }
+        }
+    }
+
     // Maximum selection failures
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionFailures");
@@ -1125,7 +1307,7 @@ void GrowingInputs::load(const std::string& file_name)
 
     tinyxml2::XMLDocument document;
 
-    if (document.LoadFile(file_name.c_str()))
+    if(document.LoadFile(file_name.c_str()))
     {
         std::ostringstream buffer;
 

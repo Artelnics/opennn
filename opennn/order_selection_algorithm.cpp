@@ -297,7 +297,7 @@ void OrderSelectionAlgorithm::set_default(void)
     size_t inputs_number ;
     size_t outputs_number;
 
-    if (training_strategy_pointer == NULL
+    if(training_strategy_pointer == NULL
             || !training_strategy_pointer->has_performance_functional())
     {
         inputs_number = 0;
@@ -491,15 +491,15 @@ void OrderSelectionAlgorithm::set_performance_calculation_method(const OrderSele
 
 void OrderSelectionAlgorithm::set_performance_calculation_method(const std::string& new_performance_calculation_method)
 {
-    if (new_performance_calculation_method == "Maximum")
+    if(new_performance_calculation_method == "Maximum")
     {
         performance_calculation_method = Maximum;
 
-    }else if (new_performance_calculation_method == "Minimum")
+    }else if(new_performance_calculation_method == "Minimum")
     {
         performance_calculation_method = Minimum;
 
-    }else if (new_performance_calculation_method == "Mean")
+    }else if(new_performance_calculation_method == "Mean")
     {
         performance_calculation_method = Mean;
 
@@ -537,7 +537,7 @@ void OrderSelectionAlgorithm::set_selection_performance_goal(const double& new_s
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_selection_performance_goal < 0)
+    if(new_selection_performance_goal < 0)
     {
         std::ostringstream buffer;
 
@@ -563,7 +563,7 @@ void OrderSelectionAlgorithm::set_maximum_iterations_number(const size_t& new_ma
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_maximum_iterations_number <= 0)
+    if(new_maximum_iterations_number <= 0)
     {
         std::ostringstream buffer;
 
@@ -589,7 +589,7 @@ void OrderSelectionAlgorithm::set_maximum_time(const double& new_maximum_time)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_maximum_time < 0)
+    if(new_maximum_time < 0)
     {
         std::ostringstream buffer;
 
@@ -614,7 +614,7 @@ void OrderSelectionAlgorithm::set_tolerance(const double& new_tolerance)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (new_tolerance < 0)
+    if(new_tolerance < 0)
     {
         std::ostringstream buffer;
 
@@ -631,12 +631,12 @@ void OrderSelectionAlgorithm::set_tolerance(const double& new_tolerance)
 }
 
 
-// Vector<double> calculate_minimum_final_performances(const size_t&) method
+// Vector<double> perform_minimum_model_evaluation(const size_t&) method
 
 /// Returns the minimum of the performance and selection performance in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
-Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(const size_t& order_number)
+Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const size_t& order_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -645,7 +645,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_minimum_final_performances(size_t) method.\n"
+               << "Vector<double> perform_minimum_model_evaluation(size_t) method.\n"
                << "Number of hidden perceptrons must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -656,7 +656,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_minimum_final_performances(size_t) method.\n"
+               << "Vector<double> perform_minimum_model_evaluation(size_t) method.\n"
                << "Number of parameters assay must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -681,7 +681,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 
     for (size_t i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order_number)
+        if(order_history[i] == order_number)
         {
             final[0] = performance_history[i];
             flag_performance = true;
@@ -690,24 +690,26 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 
     for (size_t i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order_number)
+        if(order_history[i] == order_number)
         {
             final[1] = selection_performance_history[i];
             flag_selection = true;
         }
     }
 
-    if (flag_performance && flag_selection)
+    if(flag_performance && flag_selection)
+    {
         return(final);
+    }
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
     const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if (order_number > perceptrons_number)
+    if(order_number > perceptrons_number)
     {
         multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
-        neural_network->perturbate_parameters(0.5);
+        neural_network->perturbate_parameters(200);
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
@@ -715,8 +717,11 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
     }else
     {
         for (size_t i = 0; i < (perceptrons_number-order_number); i++)
+        {
             multilayer_perceptron->prune_layer_perceptron(last_hidden_layer,0);
-        neural_network->perturbate_parameters(0.5);
+        }
+
+        neural_network->perturbate_parameters(200);
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
@@ -725,11 +730,11 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 
     for (size_t i = 1; i < trials_number; i++)
     {
-        if (display)
+        if(display)
         {
-            std::cout << "Trial number : " << i << std::endl;
-            std::cout << "Training performance : " << final[0] << std::endl;
-            std::cout << "Selection performance : " << final[1] << std::endl;
+            std::cout << "Trial number: " << i << std::endl;
+            std::cout << "Training performance: " << final[0] << std::endl;
+            std::cout << "Selection performance: " << final[1] << std::endl;
         }
 
         neural_network->randomize_parameters_normal();
@@ -738,25 +743,25 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 
         current_performance = get_final_performances(training_strategy_results);
 
-        if (!flag_performance && final[0] > current_performance[0])
+        if(!flag_performance && final[0] > current_performance[0])
         {
             final[0] = current_performance[0];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if (!flag_selection && final[1] > current_performance[1])
+        if(!flag_selection && final[1] > current_performance[1])
         {
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if (i == trials_number - 1 && display)
+        if(i == trials_number - 1 && display)
         {
-            std::cout << "Trial number : " << trials_number << std::endl;
-            std::cout << "Training performance : " << final[0] << std::endl;
-            std::cout << "Selection performance : " << final[1] << std::endl;
+            std::cout << "Trial number: " << trials_number << std::endl;
+            std::cout << "Training performance: " << final[0] << std::endl;
+            std::cout << "Selection performance: " << final[1] << std::endl;
         }
 
     }
@@ -774,12 +779,12 @@ Vector<double> OrderSelectionAlgorithm::calculate_minimum_final_performances(con
 }
 
 
-// Vector<double> calculate_maximum_final_performances(const size_t&) const method
+// Vector<double> perform_maximum_model_evaluation(const size_t&) const method
 
 /// Returns the maximum of the performance and selection performance in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
-Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(const size_t& order_number)
+Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const size_t& order_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -788,7 +793,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_maximum_final_performances(size_t) method.\n"
+               << "Vector<double> perform_maximum_model_evaluation(size_t) method.\n"
                << "Number of hidden perceptrons must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -799,7 +804,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_maximum_final_performances(size_t) method.\n"
+               << "Vector<double> perform_maximum_model_evaluation(size_t) method.\n"
                << "Number of parameters assay must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -824,7 +829,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 
     for (size_t i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order_number)
+        if(order_history[i] == order_number)
         {
             final[0] = performance_history[i];
             flag_performance = true;
@@ -835,7 +840,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 
     for (size_t i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order_number)
+        if(order_history[i] == order_number)
         {
             final[1] = selection_performance_history[i];
             flag_selection = true;
@@ -843,17 +848,19 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
     }
 
 
-    if (flag_performance && flag_selection)
+    if(flag_performance && flag_selection)
+    {
         return(final);
+    }
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
     const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if (order_number > perceptrons_number)
+    if(order_number > perceptrons_number)
     {
         multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
-        neural_network->perturbate_parameters(0.5);
+        neural_network->perturbate_parameters(200);
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
@@ -861,9 +868,13 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
     }else
     {
         training_strategy_pointer->get_quasi_Newton_method_pointer()->set_maximum_selection_performance_decreases(training_strategy_pointer->get_quasi_Newton_method_pointer()->get_maximum_iterations_number());
+
         for (size_t i = 0; i < (perceptrons_number-order_number); i++)
+        {
             multilayer_perceptron->prune_layer_perceptron(last_hidden_layer,0);
-        neural_network->perturbate_parameters(0.5);
+        }
+
+        neural_network->perturbate_parameters(200);
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
@@ -872,11 +883,11 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 
     for (size_t i = 1; i < trials_number; i++)
     {
-        if (display)
+        if(display)
         {
-            std::cout << "Trial number : " << i << std::endl;
-            std::cout << "Training performance : " << final[0] << std::endl;
-            std::cout << "Selection performance : " << final[1] << std::endl;
+            std::cout << "Trial number: " << i << std::endl;
+            std::cout << "Training performance: " << final[0] << std::endl;
+            std::cout << "Selection performance: " << final[1] << std::endl;
         }
 
         neural_network->randomize_parameters_normal();
@@ -885,25 +896,25 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 
         current_performance = get_final_performances(training_strategy_results);
 
-        if (!flag_performance && final[0] < current_performance[0])
+        if(!flag_performance && final[0] < current_performance[0])
         {
             final[0] = current_performance[0];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if (!flag_selection && final[1] < current_performance[1])
+        if(!flag_selection && final[1] < current_performance[1])
         {
             final[1] = current_performance[1];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if (i == trials_number - 1 && display)
+        if(i == trials_number - 1 && display)
         {
-            std::cout << "Trial number : " << trials_number << std::endl;
-            std::cout << "Training performance : " << final[0] << std::endl;
-            std::cout << "Selection performance : " << final[1] << std::endl;
+            std::cout << "Trial number: " << trials_number << std::endl;
+            std::cout << "Training performance: " << final[0] << std::endl;
+            std::cout << "Selection performance: " << final[1] << std::endl;
         }
 
     }
@@ -920,12 +931,12 @@ Vector<double> OrderSelectionAlgorithm::calculate_maximum_final_performances(con
 }
 
 
-// Vector<double> calculate_mean_final_performances(const size_t&) method
+// Vector<double> perform_mean_model_evaluation(const size_t&) method
 
 /// Returns the mean of the performance and selection performance in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
-Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const size_t& order_number)
+Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size_t& order_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -934,7 +945,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_mean_final_performances(size_t) method.\n"
+               << "Vector<double> perform_mean_model_evaluation(size_t) method.\n"
                << "Number of hidden perceptrons must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -945,7 +956,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_mean_final_performances(size_t) method.\n"
+               << "Vector<double> perform_mean_model_evaluation(size_t) method.\n"
                << "Number of parameters assay must be greater than 0.\n";
 
         throw std::logic_error(buffer.str());
@@ -971,7 +982,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
     for (size_t i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order_number)
+        if(order_history[i] == order_number)
         {
             mean_final[0] = performance_history[i];
             flag_performance = true;
@@ -982,7 +993,7 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
     for (size_t i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order_number)
+        if(order_history[i] == order_number)
         {
             mean_final[1] = selection_performance_history[i];
             flag_selection = true;
@@ -990,17 +1001,19 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
     }
 
 
-    if (flag_performance && flag_selection)
+    if(flag_performance && flag_selection)
+    {
         return(mean_final);
+    }
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
     const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if (order_number > perceptrons_number)
+    if(order_number > perceptrons_number)
     {
         multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
-        neural_network->perturbate_parameters(0.5);
+        neural_network->perturbate_parameters(200);
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
@@ -1008,8 +1021,11 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
     }else
     {
         for (size_t i = 0; i < (perceptrons_number-order_number); i++)
+        {
             multilayer_perceptron->prune_layer_perceptron(last_hidden_layer,0);
-        neural_network->perturbate_parameters(0.5);
+        }
+
+        neural_network->perturbate_parameters(200);
         training_strategy_results = training_strategy_pointer->perform_training();
 
         final_parameters.set(neural_network->arrange_parameters());
@@ -1018,11 +1034,11 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
     for (size_t i = 1; i < trials_number; i++)
     {
-        if (display)
+        if(display)
         {
-            std::cout << "Trial number : " << i << std::endl;
-            std::cout << "Training performance : " << mean_final[0] << std::endl;
-            std::cout << "Selection performance : " << mean_final[1] << std::endl;
+            std::cout << "Trial number: " << i << std::endl;
+            std::cout << "Training performance: " << mean_final[0] << std::endl;
+            std::cout << "Selection performance: " << mean_final[1] << std::endl;
         }
 
         neural_network->randomize_parameters_normal();
@@ -1031,16 +1047,21 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
 
         current_performance = get_final_performances(training_strategy_results);
 
-        if (!flag_performance)
-            mean_final[0] += current_performance[0]/trials_number;
-        if (!flag_selection)
-            mean_final[1] += current_performance[1]/trials_number;
-
-        if (i == trials_number - 1 && display)
+        if(!flag_performance)
         {
-            std::cout << "Trial number : " << trials_number << std::endl;
-            std::cout << "Training performance : " << mean_final[0] << std::endl;
-            std::cout << "Selection performance : " << mean_final[1] << std::endl;
+            mean_final[0] += current_performance[0]/trials_number;
+        }
+
+        if(!flag_selection)
+        {
+            mean_final[1] += current_performance[1]/trials_number;
+        }
+
+        if(i == trials_number - 1 && display)
+        {
+            std::cout << "Trial number: " << trials_number << std::endl;
+            std::cout << "Training performance: " << mean_final[0] << std::endl;
+            std::cout << "Selection performance: " << mean_final[1] << std::endl;
         }
 
     }
@@ -1056,12 +1077,12 @@ Vector<double> OrderSelectionAlgorithm::calculate_mean_final_performances(const 
     return mean_final;
 }
 
-// Vector<double> get_final_performances(const TrainingStrategy::Results&) method
+// Vector<double> get_final_performances(const TrainingStrategy::Results&) const method
 
 /// Return final training performance and final selection performance depending on the training method.
 /// @param results Results of the perform_training method.
 
-Vector<double> OrderSelectionAlgorithm::get_final_performances(const TrainingStrategy::Results& results)
+Vector<double> OrderSelectionAlgorithm::get_final_performances(const TrainingStrategy::Results& results) const
 {
     Vector<double> performances(2);
     switch(training_strategy_pointer->get_main_type())
@@ -1117,27 +1138,33 @@ Vector<double> OrderSelectionAlgorithm::get_final_performances(const TrainingStr
     return(performances);
 }
 
-// Vector<double> calculate_performances(const size_t&) method
+// Vector<double> perform_model_evaluation(const size_t&) method
 
 /// Return performance and selection depending on the performance calculation method.
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
-Vector<double> OrderSelectionAlgorithm::calculate_performances(const size_t& order_number)
+Vector<double> OrderSelectionAlgorithm::perform_model_evaluation(const size_t& order_number)
 {
     switch (performance_calculation_method)
     {
     case Maximum:
-        return(calculate_maximum_final_performances(order_number));
+    {
+        return(perform_maximum_model_evaluation(order_number));
+    }
     case Minimum:
-        return(calculate_minimum_final_performances(order_number));
+    {
+        return(perform_minimum_model_evaluation(order_number));
+    }
     case Mean:
-        return(calculate_mean_final_performances(order_number));
+    {
+        return(perform_mean_model_evaluation(order_number));
+    }
     default:
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> calculate_performances(const size_t) method.\n"
+               << "Vector<double> perform_model_evaluation(const size_t) method.\n"
                << "Unknown performance calculation method.\n";
 
         throw std::logic_error(buffer.str());
@@ -1146,16 +1173,16 @@ Vector<double> OrderSelectionAlgorithm::calculate_performances(const size_t& ord
 }
 
 
-// Vector<double> get_parameters_order(const size_t&) method 
+// Vector<double> get_parameters_order(const size_t&) const method
 
 /// Returns the parameters of the neural network if the order is in the history.
 /// @param order Order of the neural network.
 
-Vector<double> OrderSelectionAlgorithm::get_parameters_order(const size_t& order)
+Vector<double> OrderSelectionAlgorithm::get_parameters_order(const size_t& order) const
 {
 #ifdef __OPENNN_DEBUG__
 
-    if (order <= 0)
+    if(order <= 0)
     {
         std::ostringstream buffer;
 
@@ -1173,24 +1200,14 @@ Vector<double> OrderSelectionAlgorithm::get_parameters_order(const size_t& order
 
     for (i = 0; i < order_history.size(); i++)
     {
-        if (order_history[i] == order)
+        if(order_history[i] == order)
         {
             parameters = parameters_history[i];
             break;
         }
     }
 
-    if (i == order_history.size())
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
-               << "Vector<double> get_parameters_order(const size_t&) method.\n"
-               << "Order (" << order << ") not found in the parameter_history.\n";
-
-        throw std::logic_error(buffer.str());
-    }else
-        return(parameters);
+    return(parameters);
 }
 
 // void delete_selection_history(void) method 
@@ -1429,7 +1446,7 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
 
    // Optimum selection performance
 
-   if (final_selection_performance != 0)
+   if(final_selection_performance != 0)
    {
        buffer << "% Optimum selection performance:\n"
               << final_selection_performance << "\n";
@@ -1437,7 +1454,7 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
 
    // Final performance
 
-   if (final_performance != 0)
+   if(final_performance != 0)
    {
        buffer << "% Final performance:\n"
               << final_performance << "\n";
@@ -1445,7 +1462,7 @@ std::string OrderSelectionAlgorithm::OrderSelectionResults::to_string(void) cons
 
    // Optimal order
 
-   if (optimal_order != 0)
+   if(optimal_order != 0)
    {
        buffer << "% Optimal order:\n"
               << optimal_order << "\n";

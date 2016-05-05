@@ -803,6 +803,12 @@ void TrainingStrategy::set_main_type(const MainType& new_main_type)
       }
       break;
 
+      case NEWTON_METHOD:
+      {
+         Newton_method_pointer = new NewtonMethod(performance_functional_pointer);
+      }
+      break;
+
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
          Levenberg_Marquardt_algorithm_pointer = new LevenbergMarquardtAlgorithm(performance_functional_pointer);
@@ -936,6 +942,10 @@ void TrainingStrategy::set_main_type(const std::string& new_main_type)
    {
       set_main_type(QUASI_NEWTON_METHOD);
    }
+   else if(new_main_type == "NEWTON_METHOD")
+   {
+      set_main_type(NEWTON_METHOD);
+   }
    else if(new_main_type == "LEVENBERG_MARQUARDT_ALGORITHM")
    {
       set_main_type(LEVENBERG_MARQUARDT_ALGORITHM);
@@ -969,10 +979,10 @@ void TrainingStrategy::set_refinement_type(const std::string& new_refinement_typ
    {
       set_refinement_type(NO_REFINEMENT);
    }
-   else if(new_refinement_type == "NEWTON_METHOD")
-   {
-      set_refinement_type(NEWTON_METHOD);
-   }
+//   else if(new_refinement_type == "NEWTON_METHOD")
+//   {
+//      set_refinement_type(NEWTON_METHOD);
+//   }
    else if(new_refinement_type == "USER_REFINEMENT")
    {
       set_refinement_type(USER_REFINEMENT);
@@ -1525,6 +1535,15 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       }
       break;
 
+      case NEWTON_METHOD:
+      {
+           Newton_method_pointer->set_display(display);
+
+           training_strategy_results.Newton_method_results_pointer
+           = Newton_method_pointer->perform_training();
+      }
+      break;
+
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
            Levenberg_Marquardt_algorithm_pointer->set_display(display);
@@ -1563,14 +1582,14 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       }
       break;
 
-      case NEWTON_METHOD:
-      {
-           Newton_method_pointer->set_display(display);
+//      case NEWTON_METHOD:
+//      {
+//           Newton_method_pointer->set_display(display);
 
-           training_strategy_results.Newton_method_results_pointer
-           = Newton_method_pointer->perform_training();
-      }
-      break;
+//           training_strategy_results.Newton_method_results_pointer
+//           = Newton_method_pointer->perform_training();
+//      }
+//      break;
 
       case USER_REFINEMENT:
       {
@@ -1773,11 +1792,11 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
    document->InsertFirstChild(training_strategy_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+//   tinyxml2::XMLElement* element = NULL;
+//   tinyxml2::XMLText* text = NULL;
 
    // Initialization
-
+/*
    switch(initialization_type)
    {
        case NO_INITIALIZATION:
@@ -1841,7 +1860,7 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
       }
       break;
    }
-
+*/
     // Main
 
    switch(main_type)
@@ -1987,16 +2006,16 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
    }
 
    // Display
-   {
-      element = document->NewElement("Display");
-      training_strategy_element->LinkEndChild(element);
+//   {
+//      element = document->NewElement("Display");
+//      training_strategy_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+//      text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }
@@ -2279,7 +2298,7 @@ void TrainingStrategy::load(const std::string& file_name)
 
    tinyxml2::XMLDocument document;
    
-   if (document.LoadFile(file_name.c_str()))
+   if(document.LoadFile(file_name.c_str()))
    {
       std::ostringstream buffer;
 

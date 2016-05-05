@@ -34,6 +34,8 @@ PerformanceFunctional::PerformanceFunctional(void)
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -75,6 +77,8 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -117,6 +121,8 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -160,6 +166,8 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -203,6 +211,8 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -243,6 +253,8 @@ PerformanceFunctional::PerformanceFunctional(PerformanceTerm* new_user_objective
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -283,6 +295,8 @@ PerformanceFunctional::PerformanceFunctional(const std::string& file_name)
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -324,6 +338,8 @@ PerformanceFunctional::PerformanceFunctional(const tinyxml2::XMLDocument& perfor
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -366,6 +382,8 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
  , normalized_squared_error_objective_pointer(NULL)
  , Minkowski_error_objective_pointer(NULL)
  , cross_entropy_error_objective_pointer(NULL)
+ , weighted_squared_error_objective_pointer(NULL)
+ , roc_area_error_objective_pointer(NULL)
  , outputs_integrals_objective_pointer(NULL)
  , solutions_error_objective_pointer(NULL)
  , final_solutions_error_objective_pointer(NULL)
@@ -420,6 +438,18 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
         {
             normalized_squared_error_objective_pointer = new NormalizedSquaredError(*other_performance_functional.normalized_squared_error_objective_pointer);
+        }
+        break;
+
+        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        {
+            weighted_squared_error_objective_pointer = new WeightedSquaredError(*other_performance_functional.weighted_squared_error_objective_pointer);
+        }
+        break;
+
+        case ROC_AREA_ERROR_OBJECTIVE:
+        {
+            roc_area_error_objective_pointer = new RocAreaError(*other_performance_functional.roc_area_error_objective_pointer);
         }
         break;
 
@@ -597,6 +627,7 @@ PerformanceFunctional::~PerformanceFunctional(void)
    delete normalized_squared_error_objective_pointer;
    delete Minkowski_error_objective_pointer;
    delete cross_entropy_error_objective_pointer;
+   delete weighted_squared_error_objective_pointer;
    delete outputs_integrals_objective_pointer;
    delete solutions_error_objective_pointer;
    delete final_solutions_error_objective_pointer;
@@ -937,7 +968,7 @@ CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_objective_poin
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "SumSquaredError* get_cross_entropy_error_objective_pointer(void) const method.\n"
+              << "CrossEntropyError* get_cross_entropy_error_objective_pointer(void) const method.\n"
               << "Pointer to cross entropy error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -947,6 +978,63 @@ CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_objective_poin
 
     return(cross_entropy_error_objective_pointer);
 }
+
+
+// WeightedSquaredError* get_weighted_squared_error_objective_pointer(void) const method
+
+/// Returns a pointer to the weighted squared error which is used as objective.
+/// If that object does not exists, an exception is thrown.
+
+WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_objective_pointer(void) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(!cross_entropy_error_objective_pointer)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+              << "WeightedSquaredError* get_weighted_squared_error_objective_pointer(void) const method.\n"
+              << "Pointer to weighted squared error objective is NULL.\n";
+
+       throw std::logic_error(buffer.str());
+     }
+
+     #endif
+
+    return(weighted_squared_error_objective_pointer);
+}
+
+
+// RocAreaError* get_roc_area_error_objective_pointer(void) const method
+
+/// Returns a pointer to the ROC area error which is used as objective.
+/// If that object does not exists, an exception is thrown.
+
+RocAreaError* PerformanceFunctional::get_roc_area_error_objective_pointer(void) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(!roc_area_error_objective_pointer)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+              << "RocAreaError* get_roc_area_error_objective_pointer(void) const method.\n"
+              << "Pointer to ROC area error objective is NULL.\n";
+
+       throw std::logic_error(buffer.str());
+     }
+
+     #endif
+
+    return(roc_area_error_objective_pointer);
+}
+
 
 
 // OutputsIntegrals* get_outputs_integrals_objective_pointer(void) const method
@@ -1398,6 +1486,10 @@ std::string PerformanceFunctional::write_objective_type(void) const
    {
       return("NORMALIZED_SQUARED_ERROR_OBJECTIVE");
    }
+   else if(objective_type == WEIGHTED_SQUARED_ERROR_OBJECTIVE)
+   {
+      return("WEIGHTED_SQUARED_ERROR_OBJECTIVE");
+   }
    else if(objective_type == MINKOWSKI_ERROR_OBJECTIVE)
    {
       return("MINKOWSKI_ERROR_OBJECTIVE");
@@ -1546,6 +1638,10 @@ std::string PerformanceFunctional::write_objective_type_text(void) const
    else if(objective_type == NORMALIZED_SQUARED_ERROR_OBJECTIVE)
    {
       return("normalized squared error");
+   }
+   else if(objective_type == WEIGHTED_SQUARED_ERROR_OBJECTIVE)
+   {
+      return("weighted squared error");
    }
    else if(objective_type == MINKOWSKI_ERROR_OBJECTIVE)
    {
@@ -1721,6 +1817,12 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
         {
             normalized_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+        }
+        break;
+
+        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        {
+            weighted_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
@@ -1924,6 +2026,12 @@ void PerformanceFunctional::set_mathematical_model_pointer(MathematicalModel* ne
         }
         break;
 
+        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        {
+            weighted_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
+        }
+        break;
+
         case MINKOWSKI_ERROR_OBJECTIVE:
         {
             Minkowski_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
@@ -2121,6 +2229,25 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
         {
             normalized_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+        }
+        break;
+
+        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        {
+            weighted_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+
+            if(new_data_set_pointer == NULL)
+            {
+                set_default();
+            }
+            else if(new_data_set_pointer->empty())
+            {
+                set_default();
+            }
+            else
+            {
+                weighted_squared_error_objective_pointer->set_weights();
+            }
         }
         break;
 
@@ -2363,6 +2490,14 @@ void PerformanceFunctional::set_objective_type(const std::string& new_objective_
    {
       set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
    }
+   else if(new_objective_type == "WEIGHTED_SQUARED_ERROR_OBJECTIVE")
+   {
+      set_objective_type(WEIGHTED_SQUARED_ERROR_OBJECTIVE);
+   }
+   else if(new_objective_type == "ROC_AREA_ERROR_OBJECTIVE")
+   {
+      set_objective_type(ROC_AREA_ERROR_OBJECTIVE);
+   }
    else if(new_objective_type == "MINKOWSKI_ERROR_OBJECTIVE")
    {
       set_objective_type(MINKOWSKI_ERROR_OBJECTIVE);
@@ -2539,6 +2674,18 @@ void PerformanceFunctional::set_objective_type(const ObjectiveType& new_objectiv
          normalized_squared_error_objective_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
       }
       break;
+
+       case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+       {
+          weighted_squared_error_objective_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
+       }
+       break;
+
+       case ROC_AREA_ERROR_OBJECTIVE:
+       {
+          roc_area_error_objective_pointer = new RocAreaError(neural_network_pointer, data_set_pointer);
+       }
+       break;
 
       case MINKOWSKI_ERROR_OBJECTIVE:
       {
@@ -2861,6 +3008,18 @@ double PerformanceFunctional::calculate_objective(void) const
          }
          break;
 
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             objective = weighted_squared_error_objective_pointer->calculate_performance();
+         }
+         break;
+
+         case ROC_AREA_ERROR_OBJECTIVE:
+         {
+             objective = roc_area_error_objective_pointer->calculate_performance();
+         }
+         break;
+
          case MINKOWSKI_ERROR_OBJECTIVE:
          {
              objective = Minkowski_error_objective_pointer->calculate_performance();
@@ -2974,6 +3133,18 @@ double PerformanceFunctional::calculate_objective(const Vector<double>& paramete
          case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
          {
              objective = normalized_squared_error_objective_pointer->calculate_performance(parameters);
+         }
+         break;
+
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             objective = weighted_squared_error_objective_pointer->calculate_performance(parameters);
+         }
+         break;
+
+         case ROC_AREA_ERROR_OBJECTIVE:
+         {
+             objective = roc_area_error_objective_pointer->calculate_performance(parameters);
          }
          break;
 
@@ -3372,6 +3543,12 @@ Vector<double> PerformanceFunctional::calculate_objective_terms(void) const
          }
          break;
 
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             objective_terms = weighted_squared_error_objective_pointer->calculate_terms();
+         }
+         break;
+
          case MINKOWSKI_ERROR_OBJECTIVE:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
@@ -3663,6 +3840,12 @@ Matrix<double> PerformanceFunctional::calculate_objective_terms_Jacobian(void) c
          case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
          {
              objective_terms_Jacobian = normalized_squared_error_objective_pointer->calculate_terms_Jacobian();
+         }
+         break;
+
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             objective_terms_Jacobian = weighted_squared_error_objective_pointer->calculate_terms_Jacobian();
          }
          break;
 
@@ -3961,6 +4144,18 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(void) const
          }
          break;
 
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             gradient = weighted_squared_error_objective_pointer->calculate_gradient();
+         }
+         break;
+
+         case ROC_AREA_ERROR_OBJECTIVE:
+         {
+             gradient = roc_area_error_objective_pointer->calculate_gradient();
+         }
+         break;
+
          case MINKOWSKI_ERROR_OBJECTIVE:
          {
              gradient = Minkowski_error_objective_pointer->calculate_gradient();
@@ -4077,6 +4272,12 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(const Vector<
          case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
          {
              //gradient = normalized_squared_error_objective_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             //gradient = weighted_squared_error_objective_pointer->calculate_gradient(parameters);
          }
          break;
 
@@ -4483,6 +4684,12 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(void) const
          }
          break;
 
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             Hessian = weighted_squared_error_objective_pointer->calculate_Hessian();
+         }
+         break;
+
          case MINKOWSKI_ERROR_OBJECTIVE:
          {
              Hessian = Minkowski_error_objective_pointer->calculate_Hessian();
@@ -4600,6 +4807,12 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(const Vector<d
          case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
          {
              //Hessian = normalized_squared_error_objective_pointer->calculate_Hessian(parameters);
+         }
+         break;
+
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             //Hessian = weighted_squared_error_objective_pointer->calculate_Hessian(parameters);
          }
          break;
 
@@ -5030,73 +5243,85 @@ double PerformanceFunctional::calculate_selection_objective(void) const
 
         case SUM_SQUARED_ERROR_OBJECTIVE:
         {
-            selection_objective += sum_squared_error_objective_pointer->calculate_selection_performance();
+            selection_objective = sum_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case MEAN_SQUARED_ERROR_OBJECTIVE:
         {
-            selection_objective += mean_squared_error_objective_pointer->calculate_selection_performance();
+            selection_objective = mean_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
         {
-            selection_objective += root_mean_squared_error_objective_pointer->calculate_selection_performance();
+            selection_objective = root_mean_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
         {
-            selection_objective += normalized_squared_error_objective_pointer->calculate_selection_performance();
+            selection_objective = normalized_squared_error_objective_pointer->calculate_selection_performance();
+        }
+        break;
+
+        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        {
+            selection_objective = weighted_squared_error_objective_pointer->calculate_selection_performance();
+        }
+        break;
+
+        case ROC_AREA_ERROR_OBJECTIVE:
+        {
+            selection_objective = roc_area_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case MINKOWSKI_ERROR_OBJECTIVE:
         {
-            selection_objective += Minkowski_error_objective_pointer->calculate_selection_performance();
+            selection_objective = Minkowski_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case CROSS_ENTROPY_ERROR_OBJECTIVE:
         {
-            selection_objective += cross_entropy_error_objective_pointer->calculate_selection_performance();
+            selection_objective = cross_entropy_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case OUTPUTS_INTEGRALS_OBJECTIVE:
         {
-            selection_objective += outputs_integrals_objective_pointer->calculate_selection_performance();
+            selection_objective = outputs_integrals_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case SOLUTIONS_ERROR_OBJECTIVE:
         {
-            selection_objective += solutions_error_objective_pointer->calculate_selection_performance();
+            selection_objective = solutions_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
         {
-            selection_objective += final_solutions_error_objective_pointer->calculate_selection_performance();
+            selection_objective = final_solutions_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
         {
-            selection_objective += independent_parameters_error_objective_pointer->calculate_selection_performance();
+            selection_objective = independent_parameters_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
         {
-            selection_objective += inverse_sum_squared_error_objective_pointer->calculate_selection_performance();
+            selection_objective = inverse_sum_squared_error_objective_pointer->calculate_selection_performance();
         }
         break;
 
         case USER_OBJECTIVE:
         {
-            selection_objective += user_objective_pointer->calculate_selection_performance();
+            selection_objective = user_objective_pointer->calculate_selection_performance();
         }
         break;
 
@@ -5186,31 +5411,31 @@ double PerformanceFunctional::calculate_selection_constraints(void) const
 
         case OUTPUTS_INTEGRALS_CONSTRAINTS:
         {
-            selection_constraints += outputs_integrals_constraints_pointer->calculate_selection_performance();
+            selection_constraints = outputs_integrals_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case SOLUTIONS_ERROR_CONSTRAINTS:
         {
-            selection_constraints += solutions_error_constraints_pointer->calculate_selection_performance();
+            selection_constraints = solutions_error_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
         {
-            selection_constraints += final_solutions_error_constraints_pointer->calculate_selection_performance();
+            selection_constraints = final_solutions_error_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
         {
-            selection_constraints += independent_parameters_error_constraints_pointer->calculate_selection_performance();
+            selection_constraints = independent_parameters_error_constraints_pointer->calculate_selection_performance();
         }
         break;
 
         case USER_CONSTRAINTS:
         {
-            selection_constraints += user_constraints_pointer->calculate_selection_performance();
+            selection_constraints = user_constraints_pointer->calculate_selection_performance();
         }
         break;
 
@@ -5249,9 +5474,9 @@ double PerformanceFunctional::calculate_selection_performance(void) const
    #endif
 
    const double selection_performance
-    = calculate_selection_objective()
-    + calculate_selection_regularization()
-    + calculate_selection_constraints();
+    = calculate_selection_objective();
+    //+ calculate_selection_regularization()
+    //+ calculate_selection_constraints();
 
    return(selection_performance);
 }
@@ -5442,14 +5667,6 @@ Matrix<double> PerformanceFunctional::calculate_terms_Jacobian(void) const
 
 Matrix<double> PerformanceFunctional::calculate_inverse_Hessian(void) const
 {  
-   std::ostringstream buffer;
-
-   buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-          << "Matrix<double> calculate_inverse_Hessian(void) const method.\n"
-          << "This method is not yet implemented.\n";
-
-   throw std::logic_error(buffer.str());	  
-
    // Control sentence (if debug)
 
    #ifdef __OPENNN_DEBUG__
@@ -5460,9 +5677,9 @@ Matrix<double> PerformanceFunctional::calculate_inverse_Hessian(void) const
 
    #endif
 
-//   const Matrix<double> Hessian = calculate_Hessian();
+   const Matrix<double> Hessian = calculate_Hessian();
          
-//   return(Hessian.calculate_inverse());
+   return(Hessian.calculate_LU_inverse());
 }
 
 
@@ -5814,6 +6031,23 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
+       case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+       {
+            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
+            performance_functional_element->LinkEndChild(objective_element);
+
+            objective_element->SetAttribute("Type", "WEIGHTED_SQUARED_ERROR_OBJECTIVE");
+
+            const tinyxml2::XMLDocument* weighted_squared_error_document = weighted_squared_error_objective_pointer->to_XML();
+
+            const tinyxml2::XMLElement* weighted_squared_error_element = weighted_squared_error_document->FirstChildElement("WeightedSquaredError");
+
+            DeepClone(objective_element, weighted_squared_error_element, document, NULL);
+
+            delete weighted_squared_error_document;
+       }
+       break;
+
       case MINKOWSKI_ERROR_OBJECTIVE:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
@@ -6118,14 +6352,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
 
    // Display
 
-   tinyxml2::XMLElement* display_element = document->NewElement("Display");
-   performance_functional_element->LinkEndChild(display_element);
+//   tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//   performance_functional_element->LinkEndChild(display_element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-   display_element->LinkEndChild(display_text);
+//   tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//   display_element->LinkEndChild(display_text);
 
    return(document);
 }
@@ -6218,6 +6452,19 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
                normalized_squared_error_objective_pointer->from_XML(new_document);
+          }
+          break;
+
+          case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+          {
+               tinyxml2::XMLDocument new_document;
+
+               tinyxml2::XMLElement* element_clone = new_document.NewElement("WeightedSquaredError");
+               new_document.InsertFirstChild(element_clone);
+
+               DeepClone(element_clone, objective_element, &new_document, NULL);
+
+               weighted_squared_error_objective_pointer->from_XML(new_document);
           }
           break;
 
@@ -6549,6 +6796,18 @@ std::string PerformanceFunctional::to_string(void) const
          }
          break;
 
+         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         {
+             buffer << weighted_squared_error_objective_pointer->to_string();
+         }
+         break;
+
+         case ROC_AREA_ERROR_OBJECTIVE:
+         {
+             buffer << roc_area_error_objective_pointer->to_string();
+         }
+         break;
+
          case MINKOWSKI_ERROR_OBJECTIVE:
          {
              buffer << Minkowski_error_objective_pointer->to_string();
@@ -6708,7 +6967,7 @@ std::string PerformanceFunctional::to_string(void) const
          break;
      }
 
-    buffer << "Display:" << display << "\n";
+    //buffer << "Display:" << display << "\n";
 
     return(buffer.str());
 }
@@ -6800,6 +7059,18 @@ std::string PerformanceFunctional::write_information(void)
         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
         {
             buffer << normalized_squared_error_objective_pointer->write_information();
+        }
+        break;
+
+        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        {
+            buffer << weighted_squared_error_objective_pointer->write_information();
+        }
+        break;
+
+        case ROC_AREA_ERROR_OBJECTIVE:
+        {
+            buffer << roc_area_error_objective_pointer->write_information();
         }
         break;
 

@@ -182,9 +182,11 @@ public:
     void initialize(const T&);
 
     void randomize_uniform(const double& = -1.0, const double& = 1.0);
+    void randomize_uniform(const Vector<double>&, const Vector<double>&);
     void randomize_uniform(const Matrix<double>&, const Matrix<double>&);
 
     void randomize_normal(const double& = 0.0, const double& = 1.0);
+    void randomize_normal(const Vector<double>&, const Vector<double>&);
     void randomize_normal(const Matrix<double>&, const Matrix<double>&);
 
     void initialize_identity(void);
@@ -255,6 +257,8 @@ public:
 
     Vector< Vector<double> > calculate_columns_shape_parameters_missing_values(const Vector<size_t>&, const Vector< Vector<size_t> >&) const;
 
+    Matrix<double> calculate_covariance_matrix(void) const;
+
     Vector< Histogram<T> > calculate_histograms(const size_t& = 10) const;
 
     Vector< Histogram<T> > calculate_histograms_missing_values(const Vector< Vector<size_t> >&, const size_t& = 10) const;
@@ -313,6 +317,8 @@ public:
 
     Matrix<T> calculate_inverse(void) const;
 
+    Matrix<T> calculate_LU_inverse(void) const;
+
     double calculate_distance(const size_t&, const size_t&) const;
 
     Matrix<T> operator + (const T&) const;
@@ -361,6 +367,9 @@ public:
 
     Matrix<double> dot(const Matrix<double>&) const;
 
+    Matrix<double> calculate_eigenvalues(void) const;
+    Matrix<double> calculate_eigenvectors(void) const;
+
     Matrix<T> direct(const Matrix<T>&) const;
 
     bool empty(void) const;
@@ -376,6 +385,8 @@ public:
     bool is_scalar(void) const;
 
     bool is_identity(void) const;
+
+    bool is_binary(void) const;
 
     Matrix<T> filter(const size_t&, const T&, const T&) const;
 
@@ -394,6 +405,8 @@ public:
     void load_binary(const std::string&);
 
     void save(const std::string&) const;
+
+    void save_binary(const std::string&) const;
 
     void save_csv(const std::string&) const;
 
@@ -2105,7 +2118,7 @@ void Matrix<T>::append_row(const Vector<T>& new_row)
 
        buffer << "OpenNN Exception: Matrix Template.\n"
               << "append_row(const Vector<T>&) const.\n"
-              << "Size must be equal to number of columns.\n";
+              << "Size (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw std::logic_error(buffer.str());
     }
@@ -2142,13 +2155,13 @@ void Matrix<T>::append_column(const Vector<T>& new_column)
 
    const size_t size = new_column.size();
 
-   if(size != columns_number)
+   if(size != rows_number)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "append_column(const Vector<T>&) const.\n"
-             << "Size must be equal to number of columns.\n";
+             << "Size (" << size << ") must be equal to number of rows (" << rows_number << ").\n";
 
       throw std::logic_error(buffer.str());
    }
@@ -2463,13 +2476,15 @@ Matrix<T> Matrix<T>::sort_less_rows(const size_t& column_index) const
 
     const Vector<T> column = arrange_column(column_index);
 
-    const Vector<size_t> sorted_indices = column.calculate_minimal_indices(rows_number);
+    const Vector<size_t> indices = column.sort_less_indices();
 
     size_t index;
 
+// #pragma parallel for private(index, i, j)
+
     for(size_t i = 0; i < rows_number; i++)
     {
-        index = sorted_indices[i];
+        index = indices[i];
 
         for(size_t j = 0; j < columns_number; j++)
         {
@@ -2515,6 +2530,8 @@ Matrix<T> Matrix<T>::sort_greater_rows(const size_t& column_index) const
 
 
     size_t index;
+
+// #pragma parallel for private(index, i, j)
 
     for(size_t i = 0; i < rows_number; i++)
     {
@@ -2621,6 +2638,64 @@ void Matrix<T>::randomize_uniform(const double& minimum, const double& maximum)
 }
 
 
+// void randomize_uniform(const Vector<double>&, const Vector<double>&) const method
+
+/// @param minimum Minimum possible values.
+/// @param maximum Maximum possible values.
+
+template <class T>
+void Matrix<T>::randomize_uniform(const Vector<double>& minimums, const Vector<double>& maximums)
+{
+   // Control sentence (if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(minimums.size() != columns_number)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void randomize_uniform(const Vector<double>&, const Vector<double>&) const method.\n"
+             << "Size of minimums must be equal to number of columns.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   if(maximums.size() != columns_number)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void randomize_uniform(const Vector<double>&, const Vector<double>&) const method.\n"
+             << "Size of maximums must be equal to number of columns.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   if(minimums > maximums)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void randomize_uniform(const Vector<double>&, const Vector<double>&) const method.\n"
+             << "Minimums must be less or equal than maximums.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   #endif
+
+   Vector<double> column(rows_number);
+
+   for(size_t i = 0; i < columns_number; i++)
+   {
+        column.randomize_uniform(minimums[i], maximums[i]);
+
+        set_column(i, column);
+   }
+}
+
+
 // void randomize_uniform(const Matrix<double>&, const Matrix<double>&) const method
 
 /// Initializes all the elements in the matrix with random values comprised between a minimum and a maximum
@@ -2686,6 +2761,61 @@ void Matrix<T>::randomize_normal(const double& mean, const double& standard_devi
    for(size_t i = 0; i < this->size(); i++)
    {
       (*this)[i] = calculate_random_normal(mean, standard_deviation);
+   }
+}
+
+
+// void randomize_normal(const Vector<double>&, const Vector<double>&) const method
+
+template <class T>
+void Matrix<T>::randomize_normal(const Vector<double>& means, const Vector<double>& standard_deviations)
+{
+   // Control sentence (if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(means.size() != columns_number)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void randomize_normal(const Vector<double>&, const Vector<double>&) const method.\n"
+             << "Size of means must be equal to number of columns.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   if(standard_deviations.size() != columns_number)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void randomize_normal(const Vector<double>&, const Vector<double>&) const method.\n"
+             << "Size of standard deviations must be equal to number of columns.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   if(means < 0.0)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void randomize_normal(const Vector<double>&, const Vector<double>&) const method.\n"
+             << "Means must be less or equal than zero.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   #endif
+
+   Vector<double> column(rows_number);
+
+   for(size_t i = 0; i < columns_number; i++)
+   {
+        column.randomize_normal(means[i], standard_deviations[i]);
+
+        set_column(i, column);
    }
 }
 
@@ -4205,6 +4335,53 @@ Vector< Vector<double> > Matrix<T>::calculate_columns_shape_parameters_missing_v
 }
 
 
+// Matrix<double> calculate_covariance_matrix(void) const method
+
+/// Retruns the covariance matrix of this matrix.
+/// The number of columns and rows of the matrix is equal to the number of columns of this matrix.
+
+template <class T>
+Matrix<double> Matrix<T>::calculate_covariance_matrix(void) const
+{
+    const size_t size = (*this).get_columns_number();
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(size == 0)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix template."
+              << "void calculate_covariance_matrix(void) const method.\n"
+              << "Number of columns must be greater than zero.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Matrix<double> covariance_matrix(size, size, 0.0);
+
+    Vector<double> first_column;
+    Vector<double> second_column;
+
+    for(size_t i = 0; i < size; i++)
+    {
+        first_column = (*this).arrange_column(i);
+
+        for(size_t j = i; j < size; j++)
+        {
+            second_column = (*this).arrange_column(j);
+
+            covariance_matrix(i,j) = first_column.calculate_covariance(second_column);
+            covariance_matrix(j,i) = covariance_matrix(i,j);
+        }
+    }
+
+    return covariance_matrix;
+}
+
+
 // Vector<Histogram<T> > calculate_histograms(const size_t&) const method
 
 /// Calculates a histogram for each column, each having a given number of bins.
@@ -5407,6 +5584,53 @@ Matrix<T> Matrix<T>::calculate_inverse(void) const
 }
 
 
+// Matrix<T> calculate_LU_inverse(void) const method
+
+/// Returns the inverse of a square matrix using the LU decomposition method.
+/// The given matrix must be invertible.
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_LU_inverse(void) const
+{
+   // Control sentence (if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+    if(empty())
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "calculate_LU_inverse(void) const method.\n"
+              << "Matrix is empty.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+   if(rows_number != columns_number)
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "calculate_LU_inverse(void) const method.\n"
+             << "Matrix must be square.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   #endif
+
+   Matrix<T> inverse(rows_number, columns_number);
+
+   const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
+   Eigen::Map<Eigen::MatrixXd> inverse_eigen(inverse.data(), rows_number, columns_number);
+
+   inverse_eigen = this_eigen.inverse();
+
+   return(inverse);
+}
+
+
 // double calculate_distances(const size_t&, const size_t&) const
 
 /// Calculates the distance between two rows in the matix
@@ -6213,6 +6437,140 @@ Matrix<double> Matrix<T>::dot(const Matrix<double>& other_matrix) const
 }
 
 
+// Matrix<double> calculate_eigen_values(void) const method
+
+/// Calculates the eigen values of this matrix, which must be squared.
+/// Returns a matrix with only one column and rows the same as this matrix with the eigenvalues.
+
+template<class T>
+Matrix<double> Matrix<T>::calculate_eigenvalues(void) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if((*this).get_columns_number() == 0)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Matrix<T> calculate_eigen_values(void) const method.\n"
+              << "Number of columns must be greater than zero.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    if((*this).get_rows_number() == 0)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Matrix<T> calculate_eigen_values(void) const method.\n"
+              << "Number of rows must be greater than zero.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    if((*this).get_columns_number() != (*this).get_rows_number())
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Matrix<T> calculate_eigen_values(void) const method.\n"
+              << "The matrix must be squared.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Matrix<T> eigenvalues(rows_number, 1);
+
+    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
+    const Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> matrix_eigen(this_eigen, Eigen::EigenvaluesOnly);
+    Eigen::Map<Eigen::MatrixXd> eigenvalues_eigen(eigenvalues.data(), rows_number, 1);
+
+    eigenvalues_eigen = matrix_eigen.eigenvalues();
+
+    return(eigenvalues);
+}
+
+
+// Matrix<double> calculate_eigenvectors(void) const method
+
+/// Calculates the eigenvectors of this matrix, which must be squared.
+/// Returns a matrix whose columns are the eigenvectors.
+
+template<class T>
+Matrix<double> Matrix<T>::calculate_eigenvectors(void) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if((*this).get_columns_number() == 0)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Matrix<T> calculate_eigen_values(void) const method.\n"
+              << "Number of columns must be greater than zero.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    if((*this).get_rows_number() == 0)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Matrix<T> calculate_eigen_values(void) const method.\n"
+              << "Number of rows must be greater than zero.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    #ifdef __OPENNN_DEBUG__
+
+    if((*this).get_columns_number() != (*this).get_rows_number())
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Matrix<T> calculate_eigen_values(void) const method.\n"
+              << "The matrix must be squared.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Matrix<T> eigenvectors(rows_number, rows_number);
+
+    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
+    const Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> matrix_eigen(this_eigen, Eigen::ComputeEigenvectors);
+    Eigen::Map<Eigen::MatrixXd> eigenvectors_eigen(eigenvectors.data(), rows_number, rows_number);
+
+    eigenvectors_eigen = matrix_eigen.eigenvectors();
+
+    return(eigenvectors);
+}
+
+
 // Matrix<T> direct(const Matrix<T>&) const method
 
 /// Calculates the direct product of this matrix with another matrix.
@@ -6471,6 +6829,25 @@ bool Matrix<T>::is_identity(void) const
             return(false);
          }
       }
+   }
+
+   return(true);
+}
+
+
+// bool is_binary(void) const method
+
+/// Returns true if this matrix has binary values.
+
+template <class T>
+bool Matrix<T>::is_binary(void) const
+{
+   for(size_t i = 0; i < this->size(); i++)
+   {
+         if((*this)[i] != 0 && (*this)[i] != 1)
+         {
+            return(false);
+         }
    }
 
    return(true);
@@ -6847,6 +7224,55 @@ void Matrix<T>::save(const std::string& file_name) const
 
    file.close();
 }
+
+
+// void save_binary(const std::string&) const method
+
+/// Saves the values of the matrix to a binary file.
+/// @param file_name File name.
+
+template <class T>
+void Matrix<T>::save_binary(const std::string& file_name) const
+{
+   std::ofstream file(file_name.c_str(), std::ios::binary);
+
+   if(!file.is_open())
+   {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix template." << std::endl
+             << "void save(const std::string) method." << std::endl
+             << "Cannot open matrix binary file." << std::endl;
+
+      throw std::logic_error(buffer.str());
+   }
+
+   // Write data
+
+   std::streamsize size = sizeof(size_t);
+
+   size_t m = columns_number;
+   size_t n = rows_number;
+
+   file.write(reinterpret_cast<char*>(&m), size);
+   file.write(reinterpret_cast<char*>(&n), size);
+
+   size = sizeof(double);
+
+   double value;
+
+   for(int i = 0; i < this->size(); i++)
+   {
+       value = (*this)[i];
+
+       file.write(reinterpret_cast<char*>(&value), size);
+   }
+
+   // Close file
+
+   file.close();
+}
+
 
 
 // void save_csv(const std::string&) const method

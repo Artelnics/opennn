@@ -1402,12 +1402,12 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       gradient_norm = gradient.calculate_norm();
 
+      JacobianT_dot_Jacobian = terms_Jacobian.calculate_transpose().dot(terms_Jacobian);
+
       if(display && gradient_norm >= warning_gradient_norm)
       {
-         std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << "." << std::endl;          
+         std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << "." << std::endl;
       }
-
-      JacobianT_dot_Jacobian = terms_Jacobian.calculate_transpose().dot(terms_Jacobian);
 
       do
       {
@@ -1592,7 +1592,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
           if(display)
           {
              std::cout << "Parameters norm: " << parameters_norm << "\n"
-                       << "performance: " << performance << "\n"
+                       << "Training performance: " << performance << "\n"
                        << "Gradient norm: " << gradient_norm << "\n"
                        << performance_functional_pointer->write_information()
                        << "Damping parameter: " << damping_parameter << "\n"
@@ -1627,7 +1627,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
       {
          std::cout << "Iteration " << iteration << ";\n" 
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "performance: " << performance << "\n"
+                   << "Training performance: " << performance << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
                    << performance_functional_pointer->write_information()
                    << "Damping parameter: " << damping_parameter << "\n"
@@ -1692,6 +1692,15 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
     Vector<std::string> labels;
     Vector<std::string> values;
 
+    // Damping parameter factor
+
+    labels.push_back("Damping parameter factor");
+
+    buffer.str("");
+    buffer << damping_parameter_factor;
+
+    values.push_back(buffer.str());
+
    // Minimum parameters increment norm
 
    labels.push_back("Minimum parameters increment norm");
@@ -1728,9 +1737,9 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum selection failures
+   // Maximum selection performance decreases
 
-   labels.push_back("Maximum selection failures");
+   labels.push_back("Maximum selection performance decreases");
 
    buffer.str("");
    buffer << maximum_selection_performance_decreases;
@@ -1773,21 +1782,21 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve gradient norm history
-
-   labels.push_back("Reserve gradient norm history");
-
-   buffer.str("");
-   buffer << reserve_gradient_norm_history;
-
-   values.push_back(buffer.str());
-
    // Reserve selection performance history
 
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
    buffer << reserve_selection_performance_history;
+
+   values.push_back(buffer.str());
+
+   // Reserve gradient norm history
+
+   labels.push_back("Reserve gradient norm history");
+
+   buffer.str("");
+   buffer << reserve_gradient_norm_history;
 
    values.push_back(buffer.str());
 
@@ -1809,12 +1818,12 @@ Matrix<std::string> LevenbergMarquardtAlgorithm::to_string_matrix(void) const
 
    // Reserve elapsed time history
 
-   labels.push_back("Reserve elapsed time history");
+//   labels.push_back("Reserve elapsed time history");
 
-   buffer.str("");
-   buffer << reserve_elapsed_time_history;
+//   buffer.str("");
+//   buffer << reserve_elapsed_time_history;
 
-   values.push_back(buffer.str());
+//   values.push_back(buffer.str());
 
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
@@ -1846,36 +1855,36 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
 
    // Damping parameter
 
-   element = document->NewElement("DampingParameter");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("DampingParameter");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << damping_parameter;
+//   buffer.str("");
+//   buffer << damping_parameter;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Minimum damping parameter.
 
-   element = document->NewElement("MinimumDampingParameter");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("MinimumDampingParameter");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << minimum_damping_parameter;
+//   buffer.str("");
+//   buffer << minimum_damping_parameter;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Maximum damping parameter.
 
-   element = document->NewElement("MaximumDampingParameter");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("MaximumDampingParameter");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << maximum_damping_parameter;
+//   buffer.str("");
+//   buffer << maximum_damping_parameter;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Damping paramterer factor.
 
@@ -1890,47 +1899,47 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
 
    // Warning parameters norm
 
-   element = document->NewElement("WarningParametersNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("WarningParametersNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_parameters_norm;
+//   buffer.str("");
+//   buffer << warning_parameters_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Warning gradient norm 
 
-   element = document->NewElement("WarningGradientNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("WarningGradientNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_gradient_norm;
+//   buffer.str("");
+//   buffer << warning_gradient_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Error parameters norm
 
-   element = document->NewElement("ErrorParametersNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ErrorParametersNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_parameters_norm;
+//   buffer.str("");
+//   buffer << error_parameters_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Error gradient norm 
 
-   element = document->NewElement("ErrorGradientNorm");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ErrorGradientNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_gradient_norm;
+//   buffer.str("");
+//   buffer << error_gradient_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Minimum parameters increment norm
 
@@ -2011,14 +2020,14 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
 
    // Reserve parameters history 
 
-   element = document->NewElement("ReserveParametersHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveParametersHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_parameters_history;
+//   buffer.str("");
+//   buffer << reserve_parameters_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve parameters norm history 
 
@@ -2055,14 +2064,14 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
 
    // Reserve gradient history 
 
-   element = document->NewElement("ReserveGradientHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveGradientHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_gradient_history;
+//   buffer.str("");
+//   buffer << reserve_gradient_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve gradient norm history 
 
@@ -2077,79 +2086,79 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML(void) const
 
    // Reserve Hessian approximation history
 
-   element = document->NewElement("ReserveHessianApproximationHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveHessianApproximationHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_Hessian_approximation_history;
+//   buffer.str("");
+//   buffer << reserve_Hessian_approximation_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve elapsed time history 
 
-   element = document->NewElement("ReserveElapsedTimeHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveElapsedTimeHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_elapsed_time_history;
+//   buffer.str("");
+//   buffer << reserve_elapsed_time_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Reserve selection performance history
 
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("ReserveSelectionPerformanceHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_selection_performance_history;
+//   buffer.str("");
+//   buffer << reserve_selection_performance_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Display period
 
-   element = document->NewElement("DisplayPeriod");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("DisplayPeriod");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display_period;
+//   buffer.str("");
+//   buffer << display_period;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    // Save period
-   {
-       element = document->NewElement("SavePeriod");
-       root_element->LinkEndChild(element);
+//   {
+//       element = document->NewElement("SavePeriod");
+//       root_element->LinkEndChild(element);
 
-       buffer.str("");
-       buffer << save_period;
+//       buffer.str("");
+//       buffer << save_period;
 
-       text = document->NewText(buffer.str().c_str());
-       element->LinkEndChild(text);
-   }
+//       text = document->NewText(buffer.str().c_str());
+//       element->LinkEndChild(text);
+//   }
 
    // Neural network file name
-   {
-       element = document->NewElement("NeuralNetworkFileName");
-       root_element->LinkEndChild(element);
+//   {
+//       element = document->NewElement("NeuralNetworkFileName");
+//       root_element->LinkEndChild(element);
 
-       text = document->NewText(neural_network_file_name.c_str());
-       element->LinkEndChild(text);
-   }
+//       text = document->NewText(neural_network_file_name.c_str());
+//       element->LinkEndChild(text);
+//   }
 
    // Display
 
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
 
    return(document);
 }
@@ -2667,6 +2676,36 @@ Vector<double> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition
 
     return(x);
 }
+
+#ifdef __OPENN_CUDA__
+
+void LevenbergMarquardtAlgorithm::testCUDA(
+        double* terms, double* terms_Jacobian, double* Jacobian_dot_Jacobian, double* gradient,
+        double* gradient_norm, const int n, const int m)
+{
+    double* terms_device;
+    double* terms_Jacobian_device;
+    double* Jacobian_dot_Jacobian_device;
+    double* gradient_device;
+
+    mallocCUDA(&terms_device, m*sizeof(double));
+    mallocCUDA(&terms_Jacobian_device, m*n*sizeof(double));
+    mallocCUDA(&Jacobian_dot_Jacobian_device, n*n*sizeof(double));
+    mallocCUDA(&gradient_device, n*sizeof(double));
+
+    memcpyCUDA(&terms_device, terms, m*sizeof(double));
+    memcpyCUDA(&terms_Jacobian_device, terms_Jacobian, m*n*sizeof(double));
+
+    gradientJacobianDotJacobian(terms_Jacobian_device, terms_device, Jacobian_dot_Jacobian_device, gradient_device,
+                                Jacobian_dot_Jacobian, gradient, gradient_norm, m, n);
+
+    freeCUDA(terms_device);
+    freeCUDA(terms_Jacobian_device);
+    freeCUDA(Jacobian_dot_Jacobian_device);
+    freeCUDA(gradient_device);
+}
+
+#endif
 
 }
 

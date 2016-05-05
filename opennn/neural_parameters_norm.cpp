@@ -49,7 +49,7 @@ NeuralParametersNorm::NeuralParametersNorm(NeuralNetwork* new_neural_network_poi
 
 /// XML constructor. 
 /// It creates a neural parameters norm object not associated to any neural network.
-/// The object members are loaded by means of a XML document->
+/// The object members are loaded by means of a XML document.
 /// Please be careful with the format of that file, which is specified in the OpenNN manual.
 /// @param neural_parameters_norm_document TinyXML document with the neural parameters norm elements.
 
@@ -412,16 +412,16 @@ tinyxml2::XMLDocument* NeuralParametersNorm::to_XML(void) const
 
    // Display
 
-   {
-      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-      neural_network_parameters_norm_element->LinkEndChild(display_element);
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      neural_network_parameters_norm_element->LinkEndChild(display_element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-      display_element->LinkEndChild(display_text);
-   }
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
 
    return(document);
 }

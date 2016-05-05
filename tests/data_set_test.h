@@ -206,6 +206,13 @@ public:
    //void test_clean_local_outlier_factor(void);
    void test_clean_Tukey_outliers(void);
 
+   // Data generation
+
+   void test_generate_data_function_regression(void);
+
+   void test_generate_data_binary_classification(void);
+   void test_generate_data_multiple_classification(void);
+
    // Serialization methods
 
    void test_to_XML(void);
@@ -271,7 +278,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

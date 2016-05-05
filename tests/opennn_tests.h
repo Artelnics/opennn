@@ -53,6 +53,7 @@
 #include "mean_squared_error_test.h"
 #include "root_mean_squared_error_test.h"
 #include "normalized_squared_error_test.h"
+#include "weighted_squared_error_test.h"
 #include "minkowski_error_test.h"
 #include "cross_entropy_error_test.h"
 #include "inverse_sum_squared_error_test.h"

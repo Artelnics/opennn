@@ -76,7 +76,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 
 /// XML constructor. 
 /// It creates a mean squared error object with all pointers set to NULL. 
-/// The object members are loaded by means of a XML document->
+/// The object members are loaded by means of a XML document.
 /// Please be careful with the format of that file, which is specified in the OpenNN manual.
 /// @param mean_squared_error_document TinyXML document with the mean squared error elements.
 
@@ -441,6 +441,19 @@ double MeanSquaredError::calculate_selection_performance(void) const
 }
 
 
+// Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const method
+
+Vector<double> MeanSquaredError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
+{
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    const Vector<double> output_gradient = (output-target)*(2.0/(double)training_instances_number);
+
+    return(output_gradient);
+}
+
 // Vector<double> calculate_gradient(void) const method
 
 /// Calculates the performance gradient by means of the back-propagation algorithm,
@@ -548,15 +561,157 @@ Vector<double> MeanSquaredError::calculate_gradient(void) const
 }
 
 
+// Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const method
+
+Matrix<double> MeanSquaredError::calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const
+{
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    const size_t outputs_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_outputs_number();
+
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+    output_Hessian.initialize_diagonal(2.0/training_instances_number);
+
+    return(output_Hessian);
+}
+
+
 // Matrix<double> calculate_Hessian(void) const method
 
 /// @todo
 
 Matrix<double> MeanSquaredError::calculate_Hessian(void) const
 {
-   Matrix<double> H;
+    #ifdef __OPENNN_DEBUG__
 
-   return(H);
+    check();
+
+    #endif
+
+    // Neural network stuff
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
+
+    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    if(layers_number != 2)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: SumSquaredError class.\n"
+               << "Matrix<double> calculate_Hessian(void) method.\n"
+               << "This method is under development for more than one hidden layer.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
+
+    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
+
+    Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
+
+    Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
+    Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
+
+    Vector<double> particular_solution;
+    Vector<double> homogeneous_solution;
+
+    // Data set stuff
+
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    size_t training_index;
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+    Vector<double> inputs(inputs_number);
+    Vector<double> targets(outputs_number);
+
+    // Sum squared error stuff
+
+    Vector< Vector<double> > layers_delta(layers_number);
+    Matrix<double> output_interlayers_Delta;
+
+    Vector<double> output_gradient(outputs_number);
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+
+    Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
+
+    for(size_t i = 0; i < training_instances_number; i++)
+    {
+        training_index = training_indices[i];
+
+       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+
+       targets = data_set_pointer->get_instance(training_index, targets_indices);
+
+       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
+
+       const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
+       const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
+       const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
+
+       Vector< Vector<double> > layers_inputs(layers_number);
+
+       layers_inputs[0] = inputs;
+
+       for(size_t j = 1; j < layers_number; j++)
+       {
+          layers_inputs[j] = layers_activation[j-1];
+       }
+
+       perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
+
+       interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
+
+       if(!has_conditions_layer)
+       {
+          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
+
+          output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
+
+          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+
+          output_interlayers_Delta = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
+                                                                 layers_activation_second_derivative[layers_number-1],
+                                                                 output_gradient,
+                                                                 output_Hessian);
+       }
+       else
+       {
+          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
+          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
+
+          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+
+          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
+       }
+
+       Hessian += calculate_single_hidden_layer_point_Hessian(layers_activation_derivative,
+                                                              layers_activation_second_derivative,
+                                                              perceptrons_combination_parameters_gradient,
+                                                              layers_delta,
+                                                              output_interlayers_Delta);
+    }
+
+    return(Hessian);
 }
 
 
@@ -914,16 +1069,16 @@ tinyxml2::XMLDocument* MeanSquaredError::to_XML(void) const
    document->InsertFirstChild(mean_squared_error_element);
 
    // Display
-   {
-      tinyxml2::XMLElement* element = document->NewElement("Display");
-      mean_squared_error_element->LinkEndChild(element);
+//   {
+//      tinyxml2::XMLElement* element = document->NewElement("Display");
+//      mean_squared_error_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+//      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }

@@ -102,11 +102,6 @@ NormalizedSquaredError::~NormalizedSquaredError(void)
 
 double NormalizedSquaredError::calculate_normalization_coefficient(const Matrix<double>& target_data, const Vector<double>& target_data_mean) const
 {
-    std::cout << "Target data:\n" << target_data << std::endl;
-    std::cout << "Target data mean:\n" << target_data_mean << std::endl;
-    std::cout << "Coeff:\n" << target_data.calculate_sum_squared_error(target_data_mean) << std::endl;
-
-
    return(target_data.calculate_sum_squared_error(target_data_mean));
 }
 
@@ -505,6 +500,21 @@ double NormalizedSquaredError::calculate_selection_performance(void) const
 }
 
 
+// Vector<double> calculate_output_gradient(const Vector<double>&, conts Vector<double>&) const method
+
+/// Returns the normalized squared error function output gradient of a multilayer perceptron on a data set.
+/// It uses the error back-propagation method.
+
+Vector<double> NormalizedSquaredError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
+{
+    const Vector<double> training_target_data_mean = data_set_pointer->calculate_training_target_data_mean();
+
+    const double normalization_coefficient = target.calculate_sum_squared_error(training_target_data_mean);
+
+    return (output-target)*2.0/normalization_coefficient;
+}
+
+
 // Vector<double> calculate_gradient(void) const method
 
 /// Returns the normalized squared error function gradient of a multilayer perceptron on a data set. 
@@ -648,6 +658,27 @@ Vector<double> NormalizedSquaredError::calculate_gradient(void) const
 }
 	
 
+// Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const method
+
+/// Returns the normalized squared error function otuput Hessian of a multilayer perceptron on a data set.
+
+Matrix<double> NormalizedSquaredError::calculate_output_Hessian(const Vector<double>& , const Vector<double>& target) const
+{
+    const Vector<double> training_target_data_mean = data_set_pointer->calculate_training_target_data_mean();
+
+    const double normalization_coefficient = target.calculate_sum_squared_error(training_target_data_mean);
+
+    MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    Matrix<double> output_Hessian(outputs_number, outputs_number, 0.0);
+    output_Hessian.initialize_diagonal(2/normalization_coefficient);
+
+    return output_Hessian;
+}
+
+
 // Matrix<double> calculate_Hessian(void) const method
 
 /// Returns the normalized squared error function Hessian of a multilayer perceptron on a data set. 
@@ -656,9 +687,134 @@ Vector<double> NormalizedSquaredError::calculate_gradient(void) const
 
 Matrix<double> NormalizedSquaredError::calculate_Hessian(void) const
 {
-   Matrix<double> Hessian;
+    #ifdef __OPENNN_DEBUG__
 
-   return(Hessian);
+    check();
+
+    #endif
+
+    // Neural network stuff
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
+
+    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    if(layers_number != 2)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: SumSquaredError class.\n"
+               << "Matrix<double> calculate_Hessian(void) method.\n"
+               << "This method is under development for more than one hidden layer.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
+
+    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
+
+    Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
+
+    Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
+    Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
+
+    Vector<double> particular_solution;
+    Vector<double> homogeneous_solution;
+
+    // Data set stuff
+
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    size_t training_index;
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+    Vector<double> inputs(inputs_number);
+    Vector<double> targets(outputs_number);
+
+    // Sum squared error stuff
+
+    Vector< Vector<double> > layers_delta(layers_number);
+    Matrix<double> output_interlayers_Delta;
+
+    Vector<double> output_gradient(outputs_number);
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+
+    Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
+
+    for(size_t i = 0; i < training_instances_number; i++)
+    {
+        training_index = training_indices[i];
+
+       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+
+       targets = data_set_pointer->get_instance(training_index, targets_indices);
+
+       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
+
+       const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
+       const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
+       const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
+
+       Vector< Vector<double> > layers_inputs(layers_number);
+
+       layers_inputs[0] = inputs;
+
+       for(size_t j = 1; j < layers_number; j++)
+       {
+          layers_inputs[j] = layers_activation[j-1];
+       }
+
+       perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
+
+       interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
+
+       if(!has_conditions_layer)
+       {
+          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
+
+          output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
+
+          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+
+          output_interlayers_Delta = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
+                                                                 layers_activation_second_derivative[layers_number-1],
+                                                                 output_gradient,
+                                                                 output_Hessian);
+       }
+       else
+       {
+          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
+          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
+
+          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+
+          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
+       }
+
+       Hessian += calculate_single_hidden_layer_point_Hessian(layers_activation_derivative,
+                                                              layers_activation_second_derivative,
+                                                              perceptrons_combination_parameters_gradient,
+                                                              layers_delta,
+                                                              output_interlayers_Delta);
+    }
+
+    return(Hessian);
 }
 
 
@@ -1127,16 +1283,16 @@ tinyxml2::XMLDocument* NormalizedSquaredError::to_XML(void) const
    document->InsertFirstChild(normalized_squared_error_element);
 
    // Display
-   {
-      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-      normalized_squared_error_element->LinkEndChild(display_element);
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      normalized_squared_error_element->LinkEndChild(display_element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-      display_element->LinkEndChild(display_text);
-   }
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
 
    return(document);
 }

@@ -68,13 +68,13 @@ public:
 
    void test_set_neural_inputs(void);
 
-   void test_calculate_minimum_final_performances(void);
-   void test_calculate_maximum_final_performances(void);
-   void test_calculate_mean_final_performances(void);
+   void test_perform_minimum_model_evaluation(void);
+   void test_perform_maximum_model_evaluation(void);
+   void test_perform_mean_model_evaluation(void);
 
    void test_get_final_performances(void);
 
-   void test_calculate_performances(void);
+   void test_perform_model_evaluation(void);
 
    void test_get_parameters_order(void);
 

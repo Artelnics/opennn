@@ -384,11 +384,11 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     nn.set(2,6,1);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     ga.set_display(false);
 
-    ga.set_regression(true);
+    ga.set_function_regression(true);
 
     ga.set_population_size(10);
 
@@ -425,11 +425,11 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     nn.set(2,6,1);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     ga.set_display(false);
 
-    ga.set_regression(false);
+    ga.set_function_regression(false);
 
     ga.set_population_size(10);
 

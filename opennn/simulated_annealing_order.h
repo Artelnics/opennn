@@ -96,7 +96,6 @@ public:
 
     const double& get_cooling_rate(void) const;
 
-    const size_t& get_maximum_selection_failures(void) const;
     const double& get_minimum_temperature(void) const;
 
     // Set methods
@@ -105,7 +104,6 @@ public:
 
     void set_cooling_rate(const double&);
 
-    void set_maximum_selection_failures(const size_t&);
     void set_minimum_temperature(const double&);
 
     // Order selection methods
@@ -134,10 +132,6 @@ private:
    double cooling_rate;
 
    // STOPPING CRITERIA
-
-   /// Maximum number of iterations at which the selection performance increases.
-
-   size_t maximum_selection_failures;
 
    /// Minimum temperature reached in the simulated annealing algorithm.
 

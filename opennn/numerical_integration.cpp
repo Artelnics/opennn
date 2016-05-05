@@ -191,7 +191,7 @@ double NumericalIntegration::calculate_trapezoid_integral(const Vector<double>& 
 
    // Calculate integral
 
-   double trapezoid_integral = 0;
+   double trapezoid_integral = 0.0;
 
    for(size_t i = 0; i < n-1; i++)
    {

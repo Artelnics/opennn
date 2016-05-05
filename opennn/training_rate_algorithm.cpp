@@ -596,7 +596,7 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
                  << "Vector<double> calculate_bracketing_triplet(double, const Vector<double>&, double) const method\n."
                  << "Right point is " << triplet.B[0] << "." << std::endl;
 
-          buffer << "Performance: " << performance << "\n"
+          buffer << "Training performance: " << performance << "\n"
                  << "Training direction: " << training_direction << "\n"
                  << "Initial training rate: " << initial_training_rate << std::endl;
 
@@ -1022,16 +1022,16 @@ tinyxml2::XMLDocument* TrainingRateAlgorithm::to_XML(void) const
    }
 
    // Bracketing factor
-   {
-   element = document->NewElement("BracketingFactor");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("BracketingFactor");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << bracketing_factor;
+//   buffer.str("");
+//   buffer << bracketing_factor;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Training rate tolerance 
    {
@@ -1046,40 +1046,40 @@ tinyxml2::XMLDocument* TrainingRateAlgorithm::to_XML(void) const
    }
 
    // Warning training rate 
-   {
-   element = document->NewElement("WarningTrainingRate");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("WarningTrainingRate");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_training_rate;
+//   buffer.str("");
+//   buffer << warning_training_rate;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Error training rate
-   {
-   element = document->NewElement("ErrorTrainingRate");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ErrorTrainingRate");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_training_rate;
+//   buffer.str("");
+//   buffer << error_training_rate;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Display warnings
-   {
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    return(document);
 }

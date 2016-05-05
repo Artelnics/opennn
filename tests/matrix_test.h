@@ -138,6 +138,9 @@ public:
    void test_dot_vector(void);
    void test_dot_matrix(void);
 
+   void test_calculate_eigenvalues(void);
+   void test_calculate_eigenvectors(void);
+
    void test_direct(void);
 
    void test_calculate_minimum_maximum(void);
@@ -146,6 +149,8 @@ public:
    void test_calculate_statistics(void);
 
    void test_calculate_histogram(void);
+
+   void test_calculate_covariance_matrix(void);
 
    void test_calculate_minimal_indices(void);
    void test_calculate_maximal_indices(void);
@@ -218,7 +223,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -135,7 +135,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     sa.set_trials_number(1);
     sa.set_maximum_order(7);
@@ -189,7 +189,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     sa.set_trials_number(1);
     sa.set_maximum_order(7);
@@ -200,7 +200,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
     results = sa.perform_order_selection();
 
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::MaximumSelectionFailures, LOG);
+                OrderSelectionAlgorithm::MaximumIterations, LOG);
 
 }
 

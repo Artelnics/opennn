@@ -298,6 +298,7 @@ public:
 
    Vector<double> perform_Householder_QR_decomposition(const Matrix<double>&, const Vector<double>&) const;
 
+   void testCUDA(double*, double*, double*, double*, double*, const int, const int);
 
 private:
 

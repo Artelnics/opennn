@@ -885,14 +885,14 @@ void DataSetTest::test_subtract_constant_variables(void)
 
    // Test 
 
-   ds.set(1, 1, 2);
+   ds.set(1, 2, 1);
 
    ds.initialize_data(0.0);
 
    ds.unuse_constant_variables();
 
    assert_true(ds.get_variables().count_inputs_number() == 0, LOG);
-   assert_true(ds.get_variables().count_targets_number() == 0, LOG);
+   assert_true(ds.get_variables().count_targets_number() == 1, LOG);
 }
 
 
@@ -966,7 +966,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     message += "test_balance_binary_target_distribution\n";
 
     // Test
-/*
+
     DataSet ds(22, 2, 1);
     ds.initialize_data(1.0);
 
@@ -1085,6 +1085,90 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     }
 
     // Test
+
+    {
+    DataSet ds(10, 3, 1);
+
+    Vector<double> instance0(4);
+    Vector<double> instance1(4);
+    Vector<double> instance2(4);
+    Vector<double> instance3(4);
+    Vector<double> instance4(4);
+    Vector<double> instance5(4);
+    Vector<double> instance6(4);
+    Vector<double> instance7(4);
+    Vector<double> instance8(4);
+    Vector<double> instance9(4);
+
+    instance0[0] = 0.9;
+    instance0[1] = 5.0;
+    instance0[2] = 0.0;
+    instance0[3] = 0.0;
+
+    instance1[0] = 1.1;
+    instance1[1] = 2.3;
+    instance1[2] = 0.0;
+    instance1[3] = 0.0;
+
+    instance2[0] = 2.3;
+    instance2[1] = 3.0;
+    instance2[2] = 1.0;
+    instance2[3] = 0.0;
+
+    instance3[0] = 5.6;
+    instance3[1] = 3.4;
+    instance3[2] = 1.0;
+    instance3[3] = 1.0;
+
+    instance4[0] = 0.8;
+    instance4[1] = 3.1;
+    instance4[2] = 0.0;
+    instance4[3] = 0.0;
+
+    instance5[0] = 3.4;
+    instance5[1] = 3.9;
+    instance5[2] = 0.0;
+    instance5[3] = 0.0;
+
+    instance6[0] = 5.6;
+    instance6[1] = 8.0;
+    instance6[2] = 1.0;
+    instance6[3] = 0.0;
+
+    instance7[0] = 3.9;
+    instance7[1] = 9.0;
+    instance7[2] = 0.0;
+    instance7[3] = 1.0;
+
+    instance8[0] = 1.9;
+    instance8[1] = 2.3;
+    instance8[2] = 0.0;
+    instance8[3] = 0.0;
+
+    instance9[0] = 7.8;
+    instance9[1] = 2.8;
+    instance9[2] = 0.0;
+    instance9[3] = 0.0;
+
+    ds.set_instance(0, instance0);
+    ds.set_instance(1, instance1);
+    ds.set_instance(2, instance2);
+    ds.set_instance(3, instance3);
+    ds.set_instance(4, instance4);
+    ds.set_instance(5, instance5);
+    ds.set_instance(6, instance6);
+    ds.set_instance(7, instance7);
+    ds.set_instance(8, instance8);
+    ds.set_instance(9, instance9);
+
+    ds.balance_binary_targets_distribution(50.0);
+
+    assert_true(ds.get_instances().count_unused_instances_number() == 3, LOG);
+    assert_true(ds.calculate_target_distribution()[1] == 2, LOG);
+    assert_true(ds.calculate_target_distribution()[0] == 5, LOG);
+    }
+
+    // Test
     {
     DataSet ds2(9, 1, 99);
 
@@ -1106,7 +1190,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     assert_true(ds2.calculate_target_distribution()[0] == ds2.calculate_target_distribution()[1], LOG);
     assert_true(ds2.calculate_target_distribution()[0] == 9, LOG);
     }
-*/
+
     //Test
     {
     DataSet ds(4,1,1);
@@ -1191,8 +1275,6 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     ds.balance_binary_targets_distribution();
 
     Vector<size_t> target_distribution = ds.calculate_target_distribution();
-
-    std::cout << "Final distribution: " << target_distribution << std::endl;
 
     assert_true(target_distribution[0] == target_distribution[1], LOG);
     }
@@ -1593,6 +1675,40 @@ void DataSetTest::test_clean_Tukey_outliers(void)
     assert_true(ds.get_instances().count_unused_instances_number() == 1, LOG);
     assert_true(unused_instances.size() == 1, LOG);
     assert_true(unused_instances[0] == 9, LOG);
+}
+
+
+void DataSetTest::test_generate_data_function_regression(void)
+{
+    message += "test_generate_data_function_regression\n";
+
+}
+
+
+void DataSetTest::test_generate_data_binary_classification(void)
+{
+    message += "test_generate_data_binary_classification\n";
+
+    DataSet ds;
+
+    Vector<size_t> target_distribution;
+
+    // Test
+
+    ds.generate_data_binary_classification(2, 1);
+
+    target_distribution = ds.calculate_target_distribution();
+
+    assert_true(target_distribution.size() == 2, LOG);
+    assert_true(target_distribution[0] == 1, LOG);
+    assert_true(target_distribution[1] == 1, LOG);
+}
+
+
+void DataSetTest::test_generate_data_multiple_classification(void)
+{
+    message += "test_generate_data_multiple_classification\n";
+
 }
 
 
@@ -2966,67 +3082,72 @@ void DataSetTest::run_test_case(void)
    //test_clean_local_outlier_factor();
    test_clean_Tukey_outliers();
 
+   // Data generation
+
+   test_generate_data_function_regression();
+
+   test_generate_data_binary_classification();
+   test_generate_data_multiple_classification();
+
    // Serialization methods
-/*
-   test_to_XML();
-   test_from_XML();
 
-   test_print();
-   test_save();
-   test_load();
-*/
-/*
-   test_print_data();
-   test_save_data();
+//   test_to_XML();
+//   test_from_XML();
 
-   test_load_data();
+//   test_print();
+//   test_save();
+//   test_load();
 
-   test_get_data_statistics();
-   test_print_data_statistics();
+//   test_print_data();
+//   test_save_data();
 
-   test_get_training_instances_statistics();
-   test_print_training_instances_statistics();
-   test_save_training_instances_statistics();
+//   test_load_data();
 
-   test_get_selection_instances_statistics();
-   test_print_selection_instances_statistics();
-   test_save_selection_instances_statistics();
+//   test_get_data_statistics();
+//   test_print_data_statistics();
 
-   test_get_testing_instances_statistics();
-   test_print_testing_instances_statistics();
-   test_save_testing_instances_statistics();
+//   test_get_training_instances_statistics();
+//   test_print_training_instances_statistics();
+//   test_save_training_instances_statistics();
 
-   test_get_instances_statistics();
-   test_print_instances_statistics();
-   test_save_instances_statistics();
-*/
-/*
-   test_convert_time_series();
-   test_convert_autoassociation();
+//   test_get_selection_instances_statistics();
+//   test_print_selection_instances_statistics();
+//   test_save_selection_instances_statistics();
 
-   test_convert_angular_variable_degrees();
-   test_convert_angular_variable_radians();
+//   test_get_testing_instances_statistics();
+//   test_print_testing_instances_statistics();
+//   test_save_testing_instances_statistics();
 
-   test_convert_angular_variables();
+//   test_get_instances_statistics();
+//   test_print_instances_statistics();
+//   test_save_instances_statistics();
 
-   test_scrub_missing_values();
+//   test_convert_time_series();
+//   test_convert_autoassociation();
+
+//   test_convert_angular_variable_degrees();
+//   test_convert_angular_variable_radians();
+
+//   test_convert_angular_variables();
+
+//   test_scrub_missing_values();
 
    // String utilities
 
-   test_trim();
-   test_get_trimmed();
+//   test_trim();
+//   test_get_trimmed();
 
-   test_count_tokens();
-   test_get_tokens();
+//   test_count_tokens();
+//   test_get_tokens();
 
-   test_is_numeric();
-*/
+//   test_is_numeric();
+
    message += "End of data set test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

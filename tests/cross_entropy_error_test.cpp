@@ -105,7 +105,7 @@ void CrossEntropyErrorTest::test_calculate_performance(void)
 
    // Test
 
-   nn.set(3,1);
+   nn.set(3, 1);
 
    mlpp = nn.get_multilayer_perceptron_pointer();
 
@@ -117,6 +117,23 @@ void CrossEntropyErrorTest::test_calculate_performance(void)
    ds.randomize_data_normal();
 
    assert_true(cee.calculate_performance() > 0, LOG);
+
+   // Test
+
+   nn.set(3,3,3);
+
+   mlpp = nn.get_multilayer_perceptron_pointer();
+
+   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
+   mlpp->get_layer_pointer(1)->set_activation_function(Perceptron::Logistic);
+
+   nn.initialize_parameters(0);
+
+   ds.set(50,3,3);
+   ds.randomize_data_normal();
+
+   assert_true(cee.calculate_performance() > 0, LOG);
+
 }
 
 
@@ -393,7 +410,7 @@ void CrossEntropyErrorTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

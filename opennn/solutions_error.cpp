@@ -695,16 +695,16 @@ tinyxml2::XMLDocument* SolutionsError::to_XML(void) const
    }
 
    // Display
-   {
-      element = document->NewElement("Display");
-      root_element->LinkEndChild(element);
+//   {
+//      element = document->NewElement("Display");
+//      root_element->LinkEndChild(element);
 
-      buffer.str("");
-      buffer << display;
+//      buffer.str("");
+//      buffer << display;
 
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+//      text = document->NewText(buffer.str().c_str());
+//      element->LinkEndChild(text);
+//   }
 
    return(document);
 }

@@ -15,6 +15,32 @@
 
 #include "quasi_newton_method.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+void createHandle(cublasHandle_t* handle);
+void destroyHandle(cublasHandle_t* handle);
+void initCUDA();
+int mallocCUDA(double** A_d, int nBytes);
+int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
+void freeCUDA(double* A_d);
+
+void dfpInverseHessian(
+        double* old_parameters, double* parameters,
+        double* old_gradient, double* gradient,
+        double* old_inverse_Hessian, double* auxiliar_matrix,
+        double* inverse_Hessian_host, int n);
+
+void bfgsInverseHessian(
+        double* old_parameters, double* parameters,
+        double* old_gradient, double* gradient,
+        double* old_inverse_Hessian, double* auxiliar_matrix,
+        double* inverse_Hessian_host, int n);
+
+#endif
+
+
 //#include"windows.h"
 
 namespace OpenNN
@@ -1040,6 +1066,42 @@ const Matrix<double>& old_inverse_Hessian) const
    }
 }
 
+#ifdef __OPENNN_CUDA__
+
+Matrix<double> QuasiNewtonMethod::calculate_inverse_Hessian_approximation_CUDA(
+double* old_parameters_d, double* parameters_d,
+double* old_gradient_d, double* gradient_d,
+double* old_inverse_Hessian_d, double* auxiliar_matrix_d) const
+{
+    switch(inverse_Hessian_approximation_method)
+    {
+       case DFP:
+       {
+          return(calculate_DFP_inverse_Hessian_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d));
+       }
+       break;
+
+       case BFGS:
+       {
+          return(calculate_BFGS_inverse_Hessian_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d));
+       }
+       break;
+
+       default:
+       {
+          std::ostringstream buffer;
+
+          buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+                 << "Vector<double> calculate_inverse_Hessian_approximation_CUDA(const double*, const double*, const double*, const double*, const double*) method.\n"
+                 << "Unknown inverse Hessian approximation method.\n";
+
+          throw std::logic_error(buffer.str());
+       }
+       break;
+    }
+}
+
+#endif
 
 // Vector<double> calculate_training_direction(const Vector<double>&, const Matrix<double>&) const method
 
@@ -1239,13 +1301,14 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
       throw std::logic_error(buffer.str());	  
    }
 
-    Matrix<double> inverse_Hessian_approximation = old_inverse_Hessian;
+   Matrix<double> inverse_Hessian_approximation = old_inverse_Hessian;
+
+   const Vector<double> Hessian_dot_gradient_difference = old_inverse_Hessian.dot(gradient_difference);
 
    inverse_Hessian_approximation += parameters_difference.direct(parameters_difference)/parameters_difference.dot(gradient_difference);
 
-   inverse_Hessian_approximation -= (old_inverse_Hessian.dot(gradient_difference)).direct(old_inverse_Hessian.dot(gradient_difference))
-            /gradient_difference.dot(old_inverse_Hessian).dot(gradient_difference);
-
+   inverse_Hessian_approximation -= (Hessian_dot_gradient_difference).direct(Hessian_dot_gradient_difference)
+            /gradient_difference.dot(Hessian_dot_gradient_difference);
 
    return(inverse_Hessian_approximation);
 }
@@ -1385,27 +1448,65 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
 	  throw std::logic_error(buffer.str());
    }
 
-
    // BGFS Vector
 
-   const Vector<double> BFGS = parameters_difference/parameters_difference.dot(gradient_difference)
-   - old_inverse_Hessian.dot(gradient_difference)
-   /gradient_difference.dot(old_inverse_Hessian).dot(gradient_difference);
+   const double parameters_dot_gradient = parameters_difference.dot(gradient_difference);
+   const Vector<double> Hessian_dot_gradient = old_inverse_Hessian.dot(gradient_difference);
+   const double gradient_dot_Hessian_dot_gradient = gradient_difference.dot(Hessian_dot_gradient);
+
+   const Vector<double> BFGS = parameters_difference/parameters_dot_gradient
+   - Hessian_dot_gradient
+   /gradient_dot_Hessian_dot_gradient;
 
    // Calculate inverse Hessian approximation
 
    Matrix<double> inverse_Hessian_approximation = old_inverse_Hessian;
 
-   inverse_Hessian_approximation += parameters_difference.direct(parameters_difference)/parameters_difference.dot(gradient_difference);
+   inverse_Hessian_approximation += parameters_difference.direct(parameters_difference)/parameters_dot_gradient;
 
-   inverse_Hessian_approximation -= (old_inverse_Hessian.dot(gradient_difference)).direct(gradient_difference.dot(old_inverse_Hessian))
-   /gradient_difference.dot(old_inverse_Hessian).dot(gradient_difference);
+   inverse_Hessian_approximation -= (Hessian_dot_gradient).direct(Hessian_dot_gradient)
+   /gradient_dot_Hessian_dot_gradient;
 
-   inverse_Hessian_approximation += (BFGS.direct(BFGS))*(gradient_difference.dot(old_inverse_Hessian).dot(gradient_difference));
+   inverse_Hessian_approximation += (BFGS.direct(BFGS))*(gradient_dot_Hessian_dot_gradient);
 
    return(inverse_Hessian_approximation);
 }
 
+#ifdef __OPENNN_CUDA__
+
+Matrix<double> QuasiNewtonMethod::calculate_DFP_inverse_Hessian_CUDA(
+double* old_parameters_d, double* parameters_d,
+double* old_gradient_d, double* gradient_d,
+double* old_inverse_Hessian_d, double* auxiliar_matrix_d) const
+{
+    const size_t parameters_number = performance_functional_pointer->get_neural_network_pointer()->count_parameters_number();
+
+    Matrix<double> inverse_Hessian_approximation(parameters_number, parameters_number);
+
+    double* inverse_Hessian_approximation_data = inverse_Hessian_approximation.data();
+
+    dfpInverseHessian(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d, inverse_Hessian_approximation_data, (int)parameters_number);
+
+    return(inverse_Hessian_approximation);
+}
+
+Matrix<double> QuasiNewtonMethod::calculate_BFGS_inverse_Hessian_CUDA(
+double* old_parameters_d, double* parameters_d,
+double* old_gradient_d, double* gradient_d,
+double* old_inverse_Hessian_d, double* auxiliar_matrix_d) const
+{
+    const size_t parameters_number = performance_functional_pointer->get_neural_network_pointer()->count_parameters_number();
+
+    Matrix<double> inverse_Hessian_approximation(parameters_number, parameters_number);
+
+    double* inverse_Hessian_approximation_data = inverse_Hessian_approximation.data();
+
+    bfgsInverseHessian(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d, inverse_Hessian_approximation_data, (int)parameters_number);
+
+    return(inverse_Hessian_approximation);
+}
+
+#endif
 
 // QuasiNewtonMethod* get_quasi_Newton_method_pointer(void) const method
 
@@ -1751,7 +1852,103 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    Matrix<double> inverse_Hessian(parameters_number, parameters_number);
    Matrix<double> old_inverse_Hessian(parameters_number, parameters_number);
 
-   double selection_performance = 0.0; 
+#ifdef __OPENNN_CUDA__
+
+   double* parameters_data = parameters.data();
+   double* old_parameters_data = old_parameters.data();
+
+   double* gradient_data = gradient.data();
+   double* old_gradient_data = old_gradient.data();
+
+   double* old_inverse_Hessian_data = old_inverse_Hessian.data();
+
+   double* parameters_d;
+   double* old_parameters_d;
+
+   double* gradient_d;
+   double* old_gradient_d;
+
+   double* auxiliar_matrix_d;
+   double* old_inverse_Hessian_d;
+
+   const int num_bytes = (int)parameters_number * sizeof(double);
+
+   int error;
+
+   int deviceCount;
+   int gpuDeviceCount = 0;
+   struct cudaDeviceProp properties;
+
+   cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
+
+   if (cudaResultCode != cudaSuccess)
+   {
+       deviceCount = 0;
+   }
+
+   for (int device = 0; device < deviceCount; ++device)
+   {
+       cudaGetDeviceProperties(&properties, device);
+
+       if (properties.major != 9999) /* 9999 means emulation only */
+       {
+           ++gpuDeviceCount;
+       }else if (properties.major > 3)
+       {
+           ++gpuDeviceCount;
+       }else if (properties.major == 3 && properties.minor >= 5)
+       {
+           ++gpuDeviceCount;
+       }
+   }
+
+   if (gpuDeviceCount > 0)
+   {
+       initCUDA();
+
+       //createHandle(&cublas_handle);
+
+       error = mallocCUDA(&parameters_d, num_bytes);
+       if (error != 0)
+       {
+           gpuDeviceCount = 0;
+       }
+
+       error = mallocCUDA(&old_parameters_d, num_bytes);
+       if (error != 0)
+       {
+           gpuDeviceCount = 0;
+       }
+
+       error = mallocCUDA(&gradient_d, num_bytes);
+       if (error != 0)
+       {
+           gpuDeviceCount = 0;
+       }
+
+       error = mallocCUDA(&old_gradient_d, num_bytes);
+       if (error != 0)
+       {
+           gpuDeviceCount = 0;
+       }
+
+       error = mallocCUDA(&auxiliar_matrix_d, (int)parameters_number * num_bytes);
+       if (error != 0)
+       {
+           gpuDeviceCount = 0;
+       }
+
+       error = mallocCUDA(&old_inverse_Hessian_d, (int)parameters_number * num_bytes);
+       if (error != 0)
+       {
+           gpuDeviceCount = 0;
+       }
+
+   }
+
+#endif
+
+   double selection_performance = 0.0;
    double old_selection_performance = 0.0;
 
    // Training algorithm stuff 
@@ -1826,7 +2023,57 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
       }
       else
       {
-          inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+        #ifdef __OPENNN_CUDA__
+
+          if (gpuDeviceCount > 0)
+          {
+              error = memcpyCUDA(old_parameters_d, old_parameters_data, num_bytes);
+              if (error != 0)
+              {
+                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+                  break;
+              }
+
+              error = memcpyCUDA(parameters_d, parameters_data, num_bytes);
+              if (error != 0)
+              {
+                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+                  break;
+              }
+
+              error = memcpyCUDA(old_gradient_d, old_gradient_data, num_bytes);
+              if (error != 0)
+              {
+                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+                  break;
+              }
+
+              error = memcpyCUDA(gradient_d, gradient_data, num_bytes);
+              if (error != 0)
+              {
+                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+                  break;
+              }
+
+              error = memcpyCUDA(old_inverse_Hessian_d, old_inverse_Hessian_data, (int)parameters_number * num_bytes);
+              if (error != 0)
+              {
+                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+                  break;
+              }
+
+              inverse_Hessian = calculate_inverse_Hessian_approximation_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d);
+
+          }else
+          {
+              inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+          }
+
+        #else
+
+            inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
+
+        #endif
       }
 
       selection_performance = performance_functional_pointer->calculate_selection_performance();
@@ -1838,7 +2085,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
       // Training algorithm 
 
-      training_direction = calculate_training_direction(gradient, inverse_Hessian);          
+      training_direction = calculate_training_direction(gradient, inverse_Hessian);
 
       // Calculate performance training slope
 
@@ -1872,11 +2119,12 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
       if(iteration != 0 && training_rate < 1.0e-99)
       {
-         training_direction = calculate_gradient_descent_training_direction(gradient);         
 
-         directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, first_training_rate);
+          training_direction = calculate_gradient_descent_training_direction(gradient);
 
-         training_rate = directional_point[0];
+          directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, first_training_rate);
+
+          training_rate = directional_point[0];
       }
 
       parameters_increment = training_direction*training_rate;
@@ -1954,7 +2202,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
          stop_training = true;
       }
 
-      if(iteration != 0 && performance_increase <= minimum_performance_increase)
+      else if(iteration != 0 && performance_increase <= minimum_performance_increase)
       {
          if(display)
          {
@@ -2043,7 +2291,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
          if(display)
 		 {
             std::cout << "Parameters norm: " << parameters_norm << "\n"
-                      << "Performance: " << performance <<  "\n"
+                      << "Training performance: " << performance <<  "\n"
                       << "Gradient norm: " << gradient_norm <<  "\n"
                       << performance_functional_pointer->write_information() 
                       << "Training rate: " << training_rate <<  "\n"
@@ -2061,7 +2309,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
       {
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "Performance: " << performance << "\n"
+                   << "Training performance: " << performance << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
 				   << performance_functional_pointer->write_information() 
                    << "Training rate: " << training_rate << "\n"
@@ -2092,7 +2340,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
       parameters += parameters_increment;
 
       neural_network_pointer->set_parameters(parameters);
-
    }
 
    results_pointer->final_parameters = parameters;
@@ -2112,20 +2359,21 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
    results_pointer->resize_training_history(iteration+1);
 
-   if(display)
-   {
-      std::cout << "Parameters norm: " << parameters_norm << "\n"
-                << "Performance: " << performance <<  "\n"
-                << "Gradient norm: " << gradient_norm <<  "\n"
-                << performance_functional_pointer->write_information()
-                << "Training rate: " << training_rate <<  "\n"
-                << "Elapsed time: " << elapsed_time << std::endl;
+#ifdef __OPENNN_CUDA__
 
-      if(selection_performance != 0)
-      {
-         std::cout << "Selection performance: " << selection_performance << std::endl;
-      }
+   if (gpuDeviceCount > 0)
+   {
+       freeCUDA(parameters_d);
+       freeCUDA(old_parameters_d);
+
+       freeCUDA(gradient_d);
+       freeCUDA(old_gradient_d);
+
+       freeCUDA(auxiliar_matrix_d);
+       freeCUDA(old_inverse_Hessian_d);
    }
+
+#endif
 
    return(results_pointer);
 }
@@ -2185,76 +2433,76 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
    }
 
    // Warning parameters norm
-   {
-   element = document->NewElement("WarningParametersNorm");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("WarningParametersNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_parameters_norm;
+//   buffer.str("");
+//   buffer << warning_parameters_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Warning gradient norm 
-   {
-   element = document->NewElement("WarningGradientNorm");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("WarningGradientNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_gradient_norm;
+//   buffer.str("");
+//   buffer << warning_gradient_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Warning training rate 
-   {
-   element = document->NewElement("WarningTrainingRate");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("WarningTrainingRate");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << warning_training_rate;
+//   buffer.str("");
+//   buffer << warning_training_rate;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Error parameters norm
-   {
-   element = document->NewElement("ErrorParametersNorm");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ErrorParametersNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_parameters_norm;
+//   buffer.str("");
+//   buffer << error_parameters_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Error gradient norm 
-   {
-   element = document->NewElement("ErrorGradientNorm");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ErrorGradientNorm");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_gradient_norm;
+//   buffer.str("");
+//   buffer << error_gradient_norm;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Error training rate
-   {
-   element = document->NewElement("ErrorTrainingRate");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ErrorTrainingRate");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << error_training_rate;
+//   buffer.str("");
+//   buffer << error_training_rate;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Minimum parameters increment norm
    {
@@ -2341,16 +2589,16 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
    }
 
    // Reserve parameters history 
-   {
-   element = document->NewElement("ReserveParametersHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveParametersHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_parameters_history;
+//   buffer.str("");
+//   buffer << reserve_parameters_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Reserve parameters norm history 
    {
@@ -2390,16 +2638,16 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
 
 
    // Reserve gradient history 
-   {
-   element = document->NewElement("ReserveGradientHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveGradientHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_gradient_history;
+//   buffer.str("");
+//   buffer << reserve_gradient_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Reserve gradient norm history 
    {
@@ -2414,109 +2662,109 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
    }
 
    // Reserve inverse Hessian history 
-   {
-   element = document->NewElement("ReserveInverseHessianHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveInverseHessianHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_inverse_Hessian_history;
+//   buffer.str("");
+//   buffer << reserve_inverse_Hessian_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Reserve training direction history 
-   {
-   element = document->NewElement("ReserveTrainingDirectionHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveTrainingDirectionHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_training_direction_history;
+//   buffer.str("");
+//   buffer << reserve_training_direction_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Reserve training rate history 
-   {
-   element = document->NewElement("ReserveTrainingRateHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveTrainingRateHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_training_rate_history;
+//   buffer.str("");
+//   buffer << reserve_training_rate_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Reserve elapsed time history 
-   {
-   element = document->NewElement("ReserveElapsedTimeHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveElapsedTimeHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_elapsed_time_history;
+//   buffer.str("");
+//   buffer << reserve_elapsed_time_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Reserve selection performance history 
-   {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("ReserveSelectionPerformanceHistory");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << reserve_selection_performance_history;
+//   buffer.str("");
+//   buffer << reserve_selection_performance_history;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Display period
-   {
-   element = document->NewElement("DisplayPeriod");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("DisplayPeriod");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display_period;
+//   buffer.str("");
+//   buffer << display_period;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    // Save period
-   {
-       element = document->NewElement("SavePeriod");
-       root_element->LinkEndChild(element);
+//   {
+//       element = document->NewElement("SavePeriod");
+//       root_element->LinkEndChild(element);
 
-       buffer.str("");
-       buffer << save_period;
+//       buffer.str("");
+//       buffer << save_period;
 
-       text = document->NewText(buffer.str().c_str());
-       element->LinkEndChild(text);
-   }
+//       text = document->NewText(buffer.str().c_str());
+//       element->LinkEndChild(text);
+//   }
 
    // Neural network file name
-   {
-       element = document->NewElement("NeuralNetworkFileName");
-       root_element->LinkEndChild(element);
+//   {
+//       element = document->NewElement("NeuralNetworkFileName");
+//       root_element->LinkEndChild(element);
 
-       text = document->NewText(neural_network_file_name.c_str());
-       element->LinkEndChild(text);
-   }
+//       text = document->NewText(neural_network_file_name.c_str());
+//       element->LinkEndChild(text);
+//   }
 
    // Display
-   {
-   element = document->NewElement("Display");
-   root_element->LinkEndChild(element);
+//   {
+//   element = document->NewElement("Display");
+//   root_element->LinkEndChild(element);
 
-   buffer.str("");
-   buffer << display;
+//   buffer.str("");
+//   buffer << display;
 
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
+//   text = document->NewText(buffer.str().c_str());
+//   element->LinkEndChild(text);
+//   }
 
    return(document);
 }
@@ -2606,9 +2854,9 @@ Matrix<std::string> QuasiNewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum selection failures
+   // Maximum selection performance decreases
 
-   labels.push_back("Maximum selection failures");
+   labels.push_back("Maximum selection performance decreases");
 
    buffer.str("");
    buffer << maximum_selection_performance_decreases;
@@ -2651,21 +2899,21 @@ Matrix<std::string> QuasiNewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve gradient norm history
-
-   labels.push_back("Reserve gradient norm history");
-
-   buffer.str("");
-   buffer << reserve_gradient_norm_history;
-
-   values.push_back(buffer.str());
-
    // Reserve selection performance history
 
    labels.push_back("Reserve selection performance history");
 
    buffer.str("");
    buffer << reserve_selection_performance_history;
+
+   values.push_back(buffer.str());
+
+   // Reserve gradient norm history
+
+   labels.push_back("Reserve gradient norm history");
+
+   buffer.str("");
+   buffer << reserve_gradient_norm_history;
 
    values.push_back(buffer.str());
 
@@ -2687,12 +2935,12 @@ Matrix<std::string> QuasiNewtonMethod::to_string_matrix(void) const
 
    // Reserve elapsed time history
 
-   labels.push_back("Reserve elapsed time history");
+//   labels.push_back("Reserve elapsed time history");
 
-   buffer.str("");
-   buffer << reserve_elapsed_time_history;
+//   buffer.str("");
+//   buffer << reserve_elapsed_time_history;
 
-   values.push_back(buffer.str());
+//   values.push_back(buffer.str());
 
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;

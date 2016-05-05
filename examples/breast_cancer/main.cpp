@@ -92,7 +92,7 @@ int main(void)
 
       ProbabilisticLayer* probabilistic_layer_pointer = neural_network.get_probabilistic_layer_pointer();
 
-      probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Softmax);
+      probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Probability);
 
       // Performance functional
 
@@ -118,7 +118,7 @@ int main(void)
 
       simulated_annealing_order_pointer->set_cooling_rate(0.9);
 
-      simulated_annealing_order_pointer->set_maximum_selection_failures(10);
+      simulated_annealing_order_pointer->set_maximum_iterations_number(15);
 
       ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_order_selection();
       

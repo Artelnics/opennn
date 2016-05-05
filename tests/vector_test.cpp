@@ -800,6 +800,29 @@ void VectorTest::test_calculate_standard_deviation(void)
    assert_true(fabs(standard_deviation-1.4142) < 1.0e-3, LOG);
 }
 
+void VectorTest::test_calculate_covariance(void)
+{
+    message += "test_calculate_covariance\n";
+
+    Vector<double> v1;
+    Vector<double> v2;
+    Vector<double> v3;
+
+    // Test
+
+    v1.set(10);
+    v2.set(10);
+    v3.set(10);
+
+    v1.randomize_normal();
+    v2.randomize_normal();
+    v3.randomize_normal();
+
+    assert_true(fabs(v1.calculate_covariance(v1)-v1.calculate_variance()) < 1.0e-3, LOG);
+    assert_true(fabs(v2.calculate_covariance(v2)-v2.calculate_variance()) < 1.0e-3, LOG);
+    assert_true(fabs(v3.calculate_covariance(v3)-v3.calculate_variance()) < 1.0e-3, LOG);
+}
+
    
 void VectorTest::test_calculate_mean_standard_deviation(void)
 {
@@ -952,6 +975,43 @@ void VectorTest::test_calculate_minimum_maximum_missing_values(void)
 
    assert_true(minimum_maximum[0] == -1, LOG);
    assert_true(minimum_maximum[1] == 1, LOG);
+}
+
+
+void VectorTest::test_calculate_explained_variance(void)
+{
+    message += "test_calculate_explained_variance\n";
+
+    Vector<double> v;
+
+    Vector<double> explained_variance;
+
+    // Test
+
+    v.set(3);
+
+    v[0] = 7.0;
+    v[1] = 2.0;
+    v[2] = 1.0;
+
+    explained_variance = v.calculate_explained_variance();
+
+    assert_true(explained_variance.size() == 3, LOG);
+    assert_true(explained_variance[0] == 70.0, LOG);
+    assert_true(explained_variance[1] == 20.0, LOG);
+    assert_true(explained_variance[2] == 10.0, LOG);
+
+    // Test
+
+    v.set(100);
+    v.randomize_normal();
+
+    explained_variance = v.calculate_explained_variance();
+
+    std::cout << explained_variance.calculate_sum() << std::endl;
+
+    assert_true(explained_variance.size() == 100, LOG);
+    assert_true(explained_variance.calculate_sum() - 100.0 < 1.0e-12, LOG);
 }
 
 
@@ -2096,6 +2156,7 @@ void VectorTest::run_test_case(void)
 
    test_calculate_mean();
    test_calculate_standard_deviation();
+   test_calculate_covariance();
 
    test_calculate_mean_standard_deviation();
 
@@ -2108,6 +2169,8 @@ void VectorTest::run_test_case(void)
    test_calculate_maximum_missing_values();
 
    test_calculate_minimum_maximum_missing_values();
+
+   test_calculate_explained_variance();
 
    test_calculate_histogram();
 
@@ -2206,7 +2269,7 @@ Vector<double> VectorTest::dot(const Vector<double>& vector, const Matrix<double
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

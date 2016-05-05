@@ -103,11 +103,11 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     nn.set(2,6,1);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     pi.set_display(false);
 
-    pi.set_regression(true);
+    pi.set_function_regression(true);
 
     pir = pi.perform_inputs_selection();
 
@@ -139,11 +139,11 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     nn.set(2,6,1);
 
-    ts.get_quasi_Newton_method_pointer()->set_display(false);
+    ts.set_display(false);
 
     pi.set_display(false);
 
-    pi.set_regression(false);
+    pi.set_function_regression(false);
 
     pir = pi.perform_inputs_selection();
 
