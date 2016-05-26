@@ -139,7 +139,7 @@ int main(void)
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
 
-        genetic_algorithm_pointer->set_regression(false);
+        genetic_algorithm_pointer->set_function_regression(false);
 
         genetic_algorithm_pointer->set_inicialization_method(GeneticAlgorithm::Random);
 
