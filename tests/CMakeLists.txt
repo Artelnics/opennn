@@ -48,14 +48,14 @@ set(OPENNNTESTSSRCS
     evolutionary_algorithm_test.cpp
     conjugate_gradient_test.cpp
     model_selection_test.cpp
-    order_selection_algorithm_test.cpp\
-    incremental_order_test.cpp\
-    golden_section_order_test.cpp\
-    simulated_annealing_order_test.cpp\
-    inputs_selection_algorithm_test.cpp\
-    growing_inputs_test.cpp\
-    pruning_inputs_test.cpp\
-    genetic_algorithm_test.cpp\
+    order_selection_algorithm_test.cpp
+    incremental_order_test.cpp
+    golden_section_order_test.cpp
+    simulated_annealing_order_test.cpp
+    inputs_selection_algorithm_test.cpp
+    growing_inputs_test.cpp
+    pruning_inputs_test.cpp
+    genetic_algorithm_test.cpp
     testing_analysis_test.cpp
     vector_test.cpp
     matrix_test.cpp
@@ -113,14 +113,14 @@ unit_testing.h
     evolutionary_algorithm_test.h
     conjugate_gradient_test.h
     model_selection_test.h
-    order_selection_algorithm_test.h\
-    incremental_order_test.h\
-    golden_section_order_test.h\
-    simulated_annealing_order_test.h\
-    inputs_selection_algorithm_test.h\
-    growing_inputs_test.h\
-    pruning_inputs_test.h\
-    genetic_algorithm_test.h\
+    order_selection_algorithm_test.h
+    incremental_order_test.h
+    golden_section_order_test.h
+    simulated_annealing_order_test.h
+    inputs_selection_algorithm_test.h
+    growing_inputs_test.h
+    pruning_inputs_test.h
+    genetic_algorithm_test.h
     testing_analysis_test.h
     vector_test.h
     matrix_test.h
