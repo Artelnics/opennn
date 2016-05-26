@@ -20,11 +20,11 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a mean squared error performance term not associated to any 
+/// It creates a mean squared error term not associated to any 
 /// neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-MeanSquaredError::MeanSquaredError(void) : PerformanceTerm()
+MeanSquaredError::MeanSquaredError(void) : ErrorTerm()
 {
 }
 
@@ -32,13 +32,13 @@ MeanSquaredError::MeanSquaredError(void) : PerformanceTerm()
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a mean squared error performance term object associated to a 
+/// It creates a mean squared error term object associated to a 
 /// neural network object but not measured on any data set object.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer)
-: PerformanceTerm(new_neural_network_pointer)
+: ErrorTerm(new_neural_network_pointer)
 {
 }
 
@@ -46,13 +46,13 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer)
 // DATA SET CONSTRUCTOR
 
 /// Data set constructor. 
-/// It creates a mean squared error performance term not associated to any 
+/// It creates a mean squared error term not associated to any 
 /// neural network but to be measured on a given data set object.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 MeanSquaredError::MeanSquaredError(DataSet* new_data_set_pointer)
-: PerformanceTerm(new_data_set_pointer)
+: ErrorTerm(new_data_set_pointer)
 {
 }
 
@@ -60,14 +60,14 @@ MeanSquaredError::MeanSquaredError(DataSet* new_data_set_pointer)
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
-/// It creates a mean squared error performance term object associated to a 
+/// It creates a mean squared error term object associated to a 
 /// neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-: PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+: ErrorTerm(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
@@ -81,7 +81,7 @@ MeanSquaredError::MeanSquaredError(NeuralNetwork* new_neural_network_pointer, Da
 /// @param mean_squared_error_document TinyXML document with the mean squared error elements.
 
 MeanSquaredError::MeanSquaredError(const tinyxml2::XMLDocument& mean_squared_error_document)
- : PerformanceTerm(mean_squared_error_document)
+ : ErrorTerm(mean_squared_error_document)
 {
 }
 
@@ -93,7 +93,7 @@ MeanSquaredError::MeanSquaredError(const tinyxml2::XMLDocument& mean_squared_err
 /// @param other_mean_squared_error Mean squared error object to be copied.
 
 MeanSquaredError::MeanSquaredError(const MeanSquaredError& other_mean_squared_error)
-: PerformanceTerm(other_mean_squared_error)
+: ErrorTerm(other_mean_squared_error)
 {
 }
 
@@ -200,11 +200,11 @@ void MeanSquaredError::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_error(void) const method
 
 /// Returns the mean squared error of a neural network on a data set.
 
-double MeanSquaredError::calculate_performance(void) const
+double MeanSquaredError::calculate_error(void) const
 {
    // Control sentence
 
@@ -273,13 +273,13 @@ double MeanSquaredError::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns which would be the performance term of a neural network for an hypothetical
 /// vector of parameters. It does not set that vector of parameters to the neural network. 
 /// @param parameters Vector of potential parameters for the neural network associated to the performance term.
 
-double MeanSquaredError::calculate_performance(const Vector<double>& parameters) const
+double MeanSquaredError::calculate_error(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -300,7 +300,7 @@ double MeanSquaredError::calculate_performance(const Vector<double>& parameters)
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: MeanSquaredError class.\n"
-             << "double calculate_performance(const Vector<double>&) const method.\n"
+             << "double calculate_error(const Vector<double>&) const method.\n"
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
       throw std::logic_error(buffer.str());
@@ -367,12 +367,12 @@ double MeanSquaredError::calculate_performance(const Vector<double>& parameters)
 }
 
 
-// double calculate_selection_performance(void) const method
+// double calculate_selection_error(void) const method
 
 /// Returns the mean squared error of the multilayer perceptron measured on the selection instances of the 
 /// data set.
 
-double MeanSquaredError::calculate_selection_performance(void) const
+double MeanSquaredError::calculate_selection_error(void) const
 {
    // Control sentence (if debug)
 
@@ -454,112 +454,6 @@ Vector<double> MeanSquaredError::calculate_output_gradient(const Vector<double>&
     return(output_gradient);
 }
 
-// Vector<double> calculate_gradient(void) const method
-
-/// Calculates the performance gradient by means of the back-propagation algorithm,
-/// and returns it in a single vector of size the number of multilayer perceptron parameters.
-
-Vector<double> MeanSquaredError::calculate_gradient(void) const
-{
-   // Control sentence (if debug)
-
-   #ifdef __OPENNN_DEBUG__ 
-
-   check();
-
-   #endif
-
-   // Multilayer percepron stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-   const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-   Vector< Vector< Vector<double> > > first_order_forward_propagation(2); 
-
-   const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-   const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-   Vector<double> particular_solution;
-   Vector<double> homogeneous_solution;
-
-   // Data set stuff
-
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const size_t training_instances_number = instances.count_training_instances_number();
-
-   const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-   size_t training_index;
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-   const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   Vector<double> inputs(inputs_number);
-   Vector<double> targets(outputs_number);
-
-   // Mean squared error stuff
-
-   Vector< Vector<double> > layers_delta; 
-
-   Vector<double> output_gradient(outputs_number);
-
-   Vector<double> point_gradient(parameters_number, 0.0);
-
-   Vector<double> gradient(parameters_number, 0.0);
-
-   int i = 0;
-
-   #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, \
-    output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
-
-   for(i = 0; i < (int)training_instances_number; i++)
-   {
-       training_index = training_indices[i];
-
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-      first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-	  const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-      const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-      if(!has_conditions_layer)
-      {
-         output_gradient = (layers_activation[layers_number-1]-targets)*(2.0/(double)training_instances_number);
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-      }
-      else
-      {
-         particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-         homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*(2.0/(double)training_instances_number);
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-      }
-
-      point_gradient = calculate_point_gradient(inputs, layers_activation, layers_delta);
-
-      #pragma omp critical
-      gradient += point_gradient;
-   }
-
-   return(gradient);
-}
-
 
 // Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const method
 
@@ -578,148 +472,11 @@ Matrix<double> MeanSquaredError::calculate_output_Hessian(const Vector<double>&,
 }
 
 
-// Matrix<double> calculate_Hessian(void) const method
-
-/// @todo
-
-Matrix<double> MeanSquaredError::calculate_Hessian(void) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    // Neural network stuff
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    if(layers_number != 2)
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: SumSquaredError class.\n"
-               << "Matrix<double> calculate_Hessian(void) method.\n"
-               << "This method is under development for more than one hidden layer.\n";
-
-        throw std::logic_error(buffer.str());
-    }
-
-    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
-
-    Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
-
-    Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
-    Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
-
-    Vector<double> particular_solution;
-    Vector<double> homogeneous_solution;
-
-    // Data set stuff
-
-    const Instances& instances = data_set_pointer->get_instances();
-
-    const size_t training_instances_number = instances.count_training_instances_number();
-
-    const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-    size_t training_index;
-
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> targets(outputs_number);
-
-    // Sum squared error stuff
-
-    Vector< Vector<double> > layers_delta(layers_number);
-    Matrix<double> output_interlayers_Delta;
-
-    Vector<double> output_gradient(outputs_number);
-    Matrix<double> output_Hessian(outputs_number, outputs_number);
-
-    Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
-
-    for(size_t i = 0; i < training_instances_number; i++)
-    {
-        training_index = training_indices[i];
-
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
-
-       const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
-       const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
-       const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
-
-       Vector< Vector<double> > layers_inputs(layers_number);
-
-       layers_inputs[0] = inputs;
-
-       for(size_t j = 1; j < layers_number; j++)
-       {
-          layers_inputs[j] = layers_activation[j-1];
-       }
-
-       perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
-
-       interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
-
-       if(!has_conditions_layer)
-       {
-          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
-
-          output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
-
-          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-
-          output_interlayers_Delta = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
-                                                                 layers_activation_second_derivative[layers_number-1],
-                                                                 output_gradient,
-                                                                 output_Hessian);
-       }
-       else
-       {
-          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
-
-          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-       }
-
-       Hessian += calculate_single_hidden_layer_point_Hessian(layers_activation_derivative,
-                                                              layers_activation_second_derivative,
-                                                              perceptrons_combination_parameters_gradient,
-                                                              layers_delta,
-                                                              output_interlayers_Delta);
-    }
-
-    return(Hessian);
-}
-
-
 // FirstOrderPerformance calculate_first_order_performance(void) const method
 
 /// @todo
 
-PerformanceTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_performance(void) const
+ErrorTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_performance(void) const
 {
     // Control sentence
 
@@ -731,7 +488,7 @@ PerformanceTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_p
 
    FirstOrderPerformance first_order_performance;
 
-   first_order_performance.performance = calculate_performance();
+   first_order_performance.performance = calculate_error();
    first_order_performance.gradient = calculate_gradient();
 
    return(first_order_performance);
@@ -742,7 +499,7 @@ PerformanceTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_p
 
 /// @todo
 
-PerformanceTerm::SecondOrderPerformance MeanSquaredError::calculate_second_order_performance(void) const
+ErrorTerm::SecondOrderPerformance MeanSquaredError::calculate_second_order_performance(void) const
 {
     // Control sentence
 
@@ -754,7 +511,7 @@ PerformanceTerm::SecondOrderPerformance MeanSquaredError::calculate_second_order
 
    SecondOrderPerformance second_order_performance;
 
-   second_order_performance.performance = calculate_performance();
+   second_order_performance.performance = calculate_error();
    second_order_performance.gradient = calculate_gradient();
    second_order_performance.Hessian = calculate_Hessian();
 
@@ -1082,6 +839,17 @@ tinyxml2::XMLDocument* MeanSquaredError::to_XML(void) const
 
    return(document);
 }
+
+
+// void write_XML(tinyxml2::XMLPrinter &) const method
+
+void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    //file_stream.OpenElement("MeanSquaredError");
+
+    //file_stream.CloseElement();
+}
+
 
 }
 

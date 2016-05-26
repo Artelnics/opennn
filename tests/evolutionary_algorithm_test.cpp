@@ -740,7 +740,7 @@ void EvolutionaryAlgorithmTest::test_evaluate_population(void)
    ds.initialize_data(0.0);
 
    PerformanceFunctional pf(&nn, &ds);
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    EvolutionaryAlgorithm ea(&pf);
 

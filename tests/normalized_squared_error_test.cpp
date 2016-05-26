@@ -71,13 +71,15 @@ void NormalizedSquaredErrorTest::test_destructor(void)
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_performance(void)   
+void NormalizedSquaredErrorTest::test_calculate_error(void)
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_error\n";
 
    Vector<double> parameters;
 
    NeuralNetwork nn(1,1);
+
+   DataSet ds(1,1,1);
 
    MultilayerPerceptron* mlpp = nn.get_multilayer_perceptron_pointer();
 
@@ -85,8 +87,6 @@ void NormalizedSquaredErrorTest::test_calculate_performance(void)
 
    mlpp->initialize_biases(0.0);
    mlpp->initialize_synaptic_weights(1.0);
-
-   DataSet ds(1,1,2);
 
    Matrix<double> new_data(2, 2);
    new_data(0,0) = -1.0;
@@ -98,25 +98,25 @@ void NormalizedSquaredErrorTest::test_calculate_performance(void)
 
    NormalizedSquaredError nse(&nn, &ds);
 
-   assert_true(nse.calculate_performance() == 0.0, LOG);
+   assert_true(nse.calculate_error() == 0.0, LOG);
 
    // Test
 
-   nn.set(1, 1);
+   nn.set(1, 2);
    nn.randomize_parameters_normal();
 
    parameters = nn.arrange_parameters();
 
-   ds.set(1, 1, 2);
+   ds.set(2, 1, 2);
    ds.randomize_data_normal();
 
-   assert_true(nse.calculate_performance() == nse.calculate_performance(parameters), LOG);
+   assert_true(nse.calculate_error() == nse.calculate_error(parameters), LOG);
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_selection_performance(void)   
+void NormalizedSquaredErrorTest::test_calculate_selection_error(void)
 {
-   message += "test_calculate_selection_performance\n";
+   message += "test_calculate_selection_error\n";
 
    NeuralNetwork nn;
 
@@ -136,7 +136,7 @@ void NormalizedSquaredErrorTest::test_calculate_selection_performance(void)
 
    ds.randomize_data_normal();
 
-   selection_performance = nse.calculate_selection_performance();
+   selection_performance = nse.calculate_selection_error();
 
    assert_true(selection_performance != 0.0, LOG);
 
@@ -193,7 +193,7 @@ void NormalizedSquaredErrorTest::test_calculate_gradient(void)
    ds.randomize_data_normal();
 
    objective_gradient = nse.calculate_gradient();
-   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_performance, network_parameters);
+   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, network_parameters);
 
    assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -211,7 +211,7 @@ void NormalizedSquaredErrorTest::test_calculate_gradient(void)
    ds.randomize_data_normal();
 
    objective_gradient = nse.calculate_gradient();
-   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_performance, network_parameters);
+   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, network_parameters);
 
    assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
@@ -244,10 +244,10 @@ void NormalizedSquaredErrorTest::test_calculate_terms(void)
    nn.set(2, 2);
    nn.randomize_parameters_normal();
 
-   ds.set(2, 2, 3);
+   ds.set(3, 2, 2);
    ds.randomize_data_normal();
 
-   objective = nse.calculate_performance();
+   objective = nse.calculate_error();
 
    evaluation_terms = nse.calculate_terms();
 
@@ -282,7 +282,7 @@ void NormalizedSquaredErrorTest::test_calculate_terms_Jacobian(void)
    nn.randomize_parameters_normal();
    network_parameters = nn.arrange_parameters();
 
-   ds.set(1, 1, 2);
+   ds.set(2, 1, 1);
    ds.randomize_data_normal();
 
    terms_Jacobian = nse.calculate_terms_Jacobian();
@@ -339,7 +339,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
     nn.set(1, 1);
     nn.randomize_parameters_normal();
 
-    ds.set(1, 1, 2);
+    ds.set(2, 1, 1);
     ds.randomize_data_normal();
 
     squared_errors = nse.calculate_squared_errors();
@@ -366,7 +366,7 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
     nn.set(1, 1);
     nn.randomize_parameters_normal();
 
-    ds.set(1, 1, 3);
+    ds.set(3, 1, 1);
     ds.randomize_data_normal();
 
     squared_errors = nse.calculate_squared_errors();
@@ -405,8 +405,8 @@ void NormalizedSquaredErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();   
-   test_calculate_selection_performance();
+   test_calculate_error();
+   test_calculate_selection_error();
 
    test_calculate_gradient();
 

@@ -732,6 +732,125 @@ tinyxml2::XMLDocument* PlugIn::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void PlugIn::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("PlugIn");
+
+    // Independent variables number
+
+    file_stream.OpenElement("IndependentVariablesNumber");
+
+    buffer.str("");
+    buffer << independent_variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Dependent variables number
+
+    file_stream.OpenElement("DependentVariablesNumber");
+
+    buffer.str("");
+    buffer << dependent_variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Input method
+
+    file_stream.OpenElement("InputMethod");
+
+    file_stream.PushText(write_input_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Template file_name
+
+    file_stream.OpenElement("TemplateFileName");
+
+    file_stream.PushText(template_file_name.c_str());
+
+    file_stream.CloseElement();
+
+    // Input file_name
+
+    file_stream.OpenElement("InputFileName");
+
+    file_stream.PushText(input_file_name.c_str());
+
+    file_stream.CloseElement();
+
+    // Batch file_name
+
+    file_stream.OpenElement("BatchFileName");
+
+    file_stream.PushText(script_file_name.c_str());
+
+    file_stream.CloseElement();
+
+    // Output file_name
+
+    file_stream.OpenElement("OutputFileName");
+
+    file_stream.PushText(output_file_name.c_str());
+
+    file_stream.CloseElement();
+
+    // Input flags
+
+    file_stream.OpenElement("InputFlags");
+
+    buffer.str("");
+    buffer << input_flags;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Output rows number
+
+    file_stream.OpenElement("OutputRowsNumber");
+
+    buffer.str("");
+    buffer << output_rows_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Output columns number
+
+    file_stream.OpenElement("OutputColumnsNumber");
+
+    buffer.str("");
+    buffer << output_columns_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this plug-in object.

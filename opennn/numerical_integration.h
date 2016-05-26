@@ -76,7 +76,10 @@ class NumericalIntegration
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML(void) const;   
-   void from_XML(const tinyxml2::XMLDocument&);   
+   void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
    // Integration of class member methods
 

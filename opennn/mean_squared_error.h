@@ -25,7 +25,7 @@
 
 // OpenNN includes
 
-#include "performance_term.h"
+#include "error_term.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -35,12 +35,12 @@
 namespace OpenNN
 {
 
-/// This class represents the mean squared error performance term. 
+/// This class represents the mean squared error term.
 /// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
 /// This functional is used in data modeling problems, such as function regression, 
 /// pattern recognition and time series prediction.
 
-class MeanSquaredError : public PerformanceTerm
+class MeanSquaredError : public ErrorTerm
 {
 
 public:
@@ -88,17 +88,13 @@ public:
 
    // Objective methods
 
-   double calculate_performance(void) const;
-   double calculate_performance(const Vector<double>&) const;   
-   double calculate_selection_performance(void) const;
+   double calculate_error(void) const;
+   double calculate_error(const Vector<double>&) const;
+   double calculate_selection_error(void) const;
 
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
 
-   Vector<double> calculate_gradient(void) const;
-
    Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
-
-   Matrix<double> calculate_Hessian(void) const;
 
    FirstOrderPerformance calculate_first_order_performance(void) const;
    SecondOrderPerformance calculate_second_order_performance(void) const;
@@ -118,6 +114,8 @@ public:
 
    tinyxml2::XMLDocument* to_XML(void) const;   
 
+   void write_XML(tinyxml2::XMLPrinter &) const;
+   // void read_XML(   );
 
 private:
 

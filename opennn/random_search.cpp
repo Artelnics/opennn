@@ -1554,6 +1554,239 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
 }
 
 
+//void write_XML(tinyxml2::XMLPrinter&) const method
+
+void RandomSearch::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("RandomSearch");
+
+    // Training rate reduction factor
+
+    file_stream.OpenElement("TrainingRateReductionFactor");
+
+    buffer.str("");
+    buffer << training_rate_reduction_factor;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Training rate reduction period
+
+    file_stream.OpenElement("TrainingRateReductionPeriod");
+
+    buffer.str("");
+    buffer << training_rate_reduction_period;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // First training rate
+
+    file_stream.OpenElement("FirstTrainingRate");
+
+    buffer.str("");
+    buffer << first_training_rate;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Warning parameters norm
+
+    file_stream.OpenElement("WarningParametersNorm");
+
+    buffer.str("");
+    buffer << warning_parameters_norm;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Warning training rate
+
+    file_stream.OpenElement("WarningTrainingRate");
+
+    buffer.str("");
+    buffer << warning_training_rate;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Error parameters norm
+
+    file_stream.OpenElement("ErrorParametersNorm");
+
+    buffer.str("");
+    buffer << error_parameters_norm;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Error training rate
+
+    file_stream.OpenElement("ErrorTrainingRate");
+
+    buffer.str("");
+    buffer << error_training_rate;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Performance goal
+
+    file_stream.OpenElement("PerformanceGoal");
+
+    buffer.str("");
+    buffer << performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum selection performance decreases
+
+    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+
+    buffer.str("");
+    buffer << maximum_selection_performance_decreases;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum iterations number
+
+    file_stream.OpenElement("MaximumIterationsNumber");
+
+    buffer.str("");
+    buffer << maximum_iterations_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum time
+
+    file_stream.OpenElement("MaximumTime");
+
+    buffer.str("");
+    buffer << maximum_time;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve parameters history
+
+    file_stream.OpenElement("ReserveParametersHistory");
+
+    buffer.str("");
+    buffer << reserve_parameters_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve parameters norm history
+
+    file_stream.OpenElement("ReserveParametersNormHistory");
+
+    buffer.str("");
+    buffer << reserve_parameters_norm_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve performance history
+
+    file_stream.OpenElement("ReservePerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve selection performance history
+
+    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_selection_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve training direction history
+
+    file_stream.OpenElement("ReserveTrainingDirectionHistory");
+
+    buffer.str("");
+    buffer << reserve_training_direction_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve training rate history
+
+    file_stream.OpenElement("ReserveTrainingRateHistory");
+
+    buffer.str("");
+    buffer << reserve_training_rate_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve elapsed time history
+
+    file_stream.OpenElement("ReserveElapsedTimeHistory");
+
+    buffer.str("");
+    buffer << reserve_elapsed_time_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve selection performance history
+
+    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_selection_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Display period
+
+    file_stream.OpenElement("DisplayPeriod");
+
+    buffer.str("");
+    buffer << display_period;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)

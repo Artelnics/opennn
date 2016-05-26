@@ -2355,7 +2355,7 @@ Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
 // tinyxml2::XMLDocument* to_XML(void) const method
 
 /// Serializes the conjugate gradient object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this element. 
+/// See the OpenNN manual for more information about the format of this element.
 
 tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 {
@@ -2408,7 +2408,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Warning gradient norm 
+   // Warning gradient norm
 //   {
 //      element = document->NewElement("WarningGradientNorm");
 //      root_element->LinkEndChild(element);
@@ -2420,7 +2420,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Warning training rate 
+   // Warning training rate
 //   {
 //      element = document->NewElement("WarningTrainingRate");
 //      root_element->LinkEndChild(element);
@@ -2444,7 +2444,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Error gradient norm 
+   // Error gradient norm
 //   {
 //      element = document->NewElement("ErrorGradientNorm");
 //      root_element->LinkEndChild(element);
@@ -2480,7 +2480,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Minimum performance increase 
+   // Minimum performance increase
    {
       element = document->NewElement("MinimumPerformanceIncrease");
       root_element->LinkEndChild(element);
@@ -2492,7 +2492,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Performance goal 
+   // Performance goal
    {
       element = document->NewElement("PerformanceGoal");
       root_element->LinkEndChild(element);
@@ -2504,7 +2504,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Gradient norm goal 
+   // Gradient norm goal
    {
       element = document->NewElement("GradientNormGoal");
       root_element->LinkEndChild(element);
@@ -2528,7 +2528,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Maximum iterations number 
+   // Maximum iterations number
    {
       element = document->NewElement("MaximumIterationsNumber");
       root_element->LinkEndChild(element);
@@ -2540,7 +2540,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Maximum time 
+   // Maximum time
    {
       element = document->NewElement("MaximumTime");
       root_element->LinkEndChild(element);
@@ -2552,7 +2552,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Reserve parameters history 
+   // Reserve parameters history
 //   {
 //      element = document->NewElement("ReserveParametersHistory");
 //      root_element->LinkEndChild(element);
@@ -2564,7 +2564,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve parameters norm history 
+   // Reserve parameters norm history
    {
       element = document->NewElement("ReserveParametersNormHistory");
       root_element->LinkEndChild(element);
@@ -2576,7 +2576,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Reserve performance history 
+   // Reserve performance history
    {
       element = document->NewElement("ReservePerformanceHistory");
       root_element->LinkEndChild(element);
@@ -2600,7 +2600,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Reserve gradient history 
+   // Reserve gradient history
 //   {
 //      element = document->NewElement("ReserveGradientHistory");
 //      root_element->LinkEndChild(element);
@@ -2612,7 +2612,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve gradient norm history 
+   // Reserve gradient norm history
    {
       element = document->NewElement("ReserveGradientNormHistory");
       root_element->LinkEndChild(element);
@@ -2624,7 +2624,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Reserve training direction history 
+   // Reserve training direction history
 //   {
 //      element = document->NewElement("ReserveTrainingDirectionHistory");
 //      root_element->LinkEndChild(element);
@@ -2636,7 +2636,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve training rate history 
+   // Reserve training rate history
 //   {
 //      tinyxml2::XMLElement* element = document->NewElement("ReserveTrainingRateHistory");
 //      root_element->LinkEndChild(element);
@@ -2648,7 +2648,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve elapsed time history 
+   // Reserve elapsed time history
 //   {
 //      element = document->NewElement("ReserveElapsedTimeHistory");
 //      root_element->LinkEndChild(element);
@@ -2660,7 +2660,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve selection performance history 
+   // Reserve selection performance history
 //   {
 //      element = document->NewElement("ReserveSelectionPerformanceHistory");
 //      root_element->LinkEndChild(element);
@@ -2719,6 +2719,179 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 
    return(document);
 }
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the conjugate gradient object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this element.
+
+void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+   std::ostringstream buffer;
+
+   //file_stream.OpenElement("ConjugateGradient");
+
+   // Training direction method
+
+   {
+       file_stream.OpenElement("TrainingDirectionMethod");
+
+       file_stream.PushText(write_training_direction_method().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Training rate algorithm
+
+   training_rate_algorithm.write_XML(file_stream);
+
+   // Minimum parameters increment norm
+
+   {
+       file_stream.OpenElement("MinimumParametersIncrementNorm");
+
+       buffer.str("");
+       buffer << minimum_parameters_increment_norm;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Minimum performance increase
+
+   {
+       file_stream.OpenElement("MinimumPerformanceIncrease");
+
+       buffer.str("");
+       buffer << minimum_performance_increase;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Performance goal
+
+   {
+       file_stream.OpenElement("PerformanceGoal");
+
+       buffer.str("");
+       buffer << performance_goal;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Gradient norm goal
+
+   {
+       file_stream.OpenElement("GradientNormGoal");
+
+       buffer.str("");
+       buffer << gradient_norm_goal;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Maximum selection performance decreases
+
+   {
+       file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+
+       buffer.str("");
+       buffer << maximum_selection_performance_decreases;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Maximum iterations number
+
+   {
+       file_stream.OpenElement("MaximumIterationsNumber");
+
+       buffer.str("");
+       buffer << maximum_iterations_number;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Maximum time
+
+   {
+       file_stream.OpenElement("MaximumTime");
+
+       buffer.str("");
+       buffer << maximum_time;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Reserve parameters norm history
+
+   {
+       file_stream.OpenElement("ReserveParametersNormHistory");
+
+       buffer.str("");
+       buffer << reserve_parameters_norm_history;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Reserve performance history
+
+   {
+       file_stream.OpenElement("ReservePerformanceHistory");
+
+       buffer.str("");
+       buffer << reserve_performance_history;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Reserve selection performance history
+
+   {
+       file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+       buffer.str("");
+       buffer << reserve_selection_performance_history;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   // Reserve gradient norm history
+
+   {
+       file_stream.OpenElement("ReserveGradientNormHistory");
+
+       buffer.str("");
+       buffer << reserve_gradient_norm_history;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
+   //file_stream.CloseElement();
+}
+
 
 
 // void from_XML(const tinyxml2::XMLDocument&) method

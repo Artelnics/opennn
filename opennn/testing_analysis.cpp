@@ -781,16 +781,16 @@ Vector<double> TestingAnalysis::calculate_testing_errors(void) const
 
     const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
-    #ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__   
 
-    if(!unscaling_layer_pointer)
-    {
-       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-              << "Vector< Matrix<double> > calculate_errors(void) const.\n"
-              << "Unscaling layer is NULL.\n";
+//    if(!unscaling_layer_pointer)
+//    {
+//       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+//              << "Vector< Matrix<double> > calculate_errors(void) const.\n"
+//              << "Unscaling layer is NULL.\n";
 
-       throw std::logic_error(buffer.str());
-    }
+//       throw std::logic_error(buffer.str());
+//    }
 
     #endif
 
@@ -817,7 +817,6 @@ Vector<double> TestingAnalysis::calculate_testing_errors(void) const
 /// <li> Root mean squared error.
 /// <li> Normalized squared error.
 /// <li> Cross-entropy error.
-/// <li> Weighted squared error.
 /// </ul>
 
 Vector<double> TestingAnalysis::calculate_pattern_recognition_testing_errors(void) const
@@ -855,20 +854,7 @@ Vector<double> TestingAnalysis::calculate_pattern_recognition_testing_errors(voi
 
     const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
-    #ifdef __OPENNN_DEBUG__
-
-    if(!unscaling_layer_pointer)
-    {
-       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-              << "Vector< Matrix<double> > calculate_errors(void) const.\n"
-              << "Unscaling layer is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-    }
-
-    #endif
-
-    Vector<double> errors(6,0.0);
+    Vector<double> errors(5,0.0);
 
     // Results
 
@@ -877,7 +863,6 @@ Vector<double> TestingAnalysis::calculate_pattern_recognition_testing_errors(voi
     errors[2] = sqrt(errors[1]);
     errors[3] = calculate_testing_normalized_squared_error(target_data, output_data);
     errors[4] = calculate_testing_cross_entropy_error(target_data, output_data);
-    errors[5] = calculate_testing_weighted_squared_error(target_data, output_data);
 
     return errors;
 }
@@ -963,16 +948,16 @@ double TestingAnalysis::calculate_testing_weighted_squared_error(const Matrix<do
 
     #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+//    std::ostringstream buffer;
 
-    if(outputs_number != 1)
-    {
-       buffer << "OpenNN Exception: TestingAnalysis class.\n"
-              << "double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const.\n"
-              << "Number of outputs must be one.\n";
+//    if(outputs_number != 1)
+//    {
+//       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+//              << "double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const.\n"
+//              << "Number of outputs must be one.\n";
 
-       throw std::logic_error(buffer.str());
-    }
+//       throw std::logic_error(buffer.str());
+//    }
 
     #endif
 
@@ -1042,7 +1027,15 @@ Matrix<size_t> TestingAnalysis::calculate_confusion_binary_classification(const 
     for(size_t i = 0; i < rows_number; i++)
     {
 
-        if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
+        if(decision_threshold == 0.0 && target_data(i,0) == 0.0 )
+        {
+            false_positive++;
+
+        }else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
+        {
+            true_positive++;
+
+        }else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
         {
             // True positive
 
@@ -3155,6 +3148,29 @@ tinyxml2::XMLDocument* TestingAnalysis::to_XML(void) const
     testing_analysis_element->LinkEndChild(display_text);
 
     return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+    file_stream.OpenElement("TestingAnalysis");
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
 }
 
 

@@ -349,6 +349,14 @@ tinyxml2::XMLDocument* NumericalDifferentiation::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void NumericalDifferentiation::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes the object from a XML document.

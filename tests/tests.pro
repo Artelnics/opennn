@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
+#   www.opennn.net                                                                                #
 #                                                                                                 #
 #   T E S T S   P R O J E C T                                                                     #
 #                                                                                                 #
@@ -49,9 +49,8 @@ SOURCES += \
     bounding_layer_test.cpp \
     sum_squared_error_test.cpp \
     root_mean_squared_error_test.cpp \
-    solutions_error_test.cpp \
-    performance_term_test.cpp \
-    mock_performance_term.cpp \
+    error_term_test.cpp \
+    mock_error_term.cpp \
     performance_functional_test.cpp \
     outputs_integrals_test.cpp \
     normalized_squared_error_test.cpp \
@@ -59,9 +58,6 @@ SOURCES += \
     neural_parameters_norm_test.cpp \
     minkowski_error_test.cpp \
     mean_squared_error_test.cpp \
-    inverse_sum_squared_error_test.cpp \
-    independent_parameters_error_test.cpp \
-    final_solutions_error_test.cpp \
     cross_entropy_error_test.cpp \
     training_strategy_test.cpp \
     training_rate_algorithm_test.cpp \
@@ -113,9 +109,8 @@ HEADERS += \
     bounding_layer_test.h \
     sum_squared_error_test.h \
     root_mean_squared_error_test.h \
-    solutions_error_test.h \
-    performance_term_test.h \
-    mock_performance_term.h \
+    error_term_test.h \
+    mock_error_term.h \
     performance_functional_test.h \
     outputs_integrals_test.h \
     normalized_squared_error_test.h \
@@ -123,9 +118,6 @@ HEADERS += \
     neural_parameters_norm_test.h \
     minkowski_error_test.h \
     mean_squared_error_test.h \
-    inverse_sum_squared_error_test.h \
-    independent_parameters_error_test.h \
-    final_solutions_error_test.h \
     cross_entropy_error_test.h \
     training_strategy_test.h \
     training_rate_algorithm_test.h \
@@ -191,7 +183,20 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
 
 # OpenMP library
-!win32{
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS   += -openmp
+}
+
+unix{
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS +=  -fopenmp
+
+QMAKE_CXXFLAGS+= -std=c++11
+QMAKE_LFLAGS +=  -std=c++11
+}
+
+mac{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }

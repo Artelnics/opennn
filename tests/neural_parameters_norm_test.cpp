@@ -77,7 +77,7 @@ void NeuralParametersNormTest::test_calculate_performance(void)
    nn.set(1, 1);
    nn.initialize_parameters(0.0);
 
-   performance = npn.calculate_performance();
+   performance = npn.calculate_regularization();
 
    assert_true(performance == 0.0, LOG);
 
@@ -88,7 +88,7 @@ void NeuralParametersNormTest::test_calculate_performance(void)
 
    parameters = nn.arrange_parameters();
 
-   assert_true(npn.calculate_performance() == npn.calculate_performance(parameters), LOG);
+   assert_true(npn.calculate_regularization() == npn.calculate_regularization(parameters), LOG);
 }
 
 /*
@@ -185,7 +185,7 @@ void NeuralParametersNormTest::test_calculate_gradient(void)
    parameters = nn.arrange_parameters();
 
    gradient = npn.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(npn, &NeuralParametersNorm::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(npn, &NeuralParametersNorm::calculate_regularization, parameters);
    error = (gradient - numerical_gradient).calculate_absolute_value();
 
    assert_true(error < 1.0e-3, LOG);

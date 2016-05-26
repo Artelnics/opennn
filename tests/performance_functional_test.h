@@ -17,7 +17,7 @@
 // Unit testing includes
 
 #include "unit_testing.h"
-#include "mock_performance_term.h"
+#include "mock_error_term.h"
 
 using namespace OpenNN;
 
@@ -55,7 +55,7 @@ public:
    void test_get_mathematical_model_pointer(void);
    void test_get_data_set_pointer(void);
 
-   void test_get_user_objective_pointer(void);
+   void test_get_user_pointer(void);
    void test_get_user_regularization_pointer(void);
    void test_get_user_constraints_pointer(void);
 

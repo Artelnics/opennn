@@ -25,7 +25,7 @@
 
 // OpenNN includes
 
-#include "performance_term.h"
+#include "regularization_term.h"
 
 // TinyXml includes
 
@@ -37,7 +37,7 @@ namespace OpenNN
 /// This class represents the neural parameters norm performance term. 
 /// This performance term is very useful as a regularization functional in data modeling, optimal control or inverse problems.
 
-class NeuralParametersNorm : public PerformanceTerm
+class NeuralParametersNorm : public RegularizationTerm
 {
 
 public:
@@ -76,15 +76,13 @@ public:
 
    // performance methods
 
-   double calculate_performance(void) const;   
+   double calculate_regularization(void) const;
    Vector<double> calculate_gradient(void) const;
    Matrix<double> calculate_Hessian(void) const;
 
-   double calculate_performance(const Vector<double>&) const;
+   double calculate_regularization(const Vector<double>&) const;
    Vector<double> calculate_gradient(const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
-
-//   double calculate_selection_performance(void) const;
 
    std::string write_performance_term_type(void) const;
 
@@ -93,8 +91,10 @@ public:
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML(void) const;   
-
    void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
 private:
 

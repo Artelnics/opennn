@@ -1281,6 +1281,101 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    const size_t scaling_neurons_number = get_scaling_neurons_number();
+
+
+    file_stream.OpenElement("ScalingLayer");
+
+    // Scaling neurons number
+
+    file_stream.OpenElement("ScalingNeuronsNumber");
+
+    buffer.str("");
+    buffer << scaling_neurons_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Statistics
+
+    for(size_t i = 0; i < scaling_neurons_number; i++)
+    {
+        file_stream.OpenElement("Statistics");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        // Minimum
+
+        file_stream.OpenElement("Minimum");
+
+        buffer.str("");
+        buffer << statistics[i].minimum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Maximum
+
+        file_stream.OpenElement("Maximum");
+
+        buffer.str("");
+        buffer << statistics[i].maximum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Mean
+
+        file_stream.OpenElement("Mean");
+
+        buffer.str("");
+        buffer << statistics[i].mean;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Standard deviation
+
+        file_stream.OpenElement("StandardDeviation");
+
+        buffer.str("");
+        buffer << statistics[i].standard_deviation;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+
+        file_stream.CloseElement();
+    }
+
+    // Scaling method
+
+    file_stream.OpenElement("ScalingMethod");
+
+    file_stream.PushText(write_scaling_method().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+
+
+
+
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this scaling layer object.
@@ -1459,9 +1554,9 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-// virtual void to_PMML(tinyxml2::XMLElement*) const method
+// void to_PMML(tinyxml2::XMLElement*) const method
 
-void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<std::string>& inputs_names)
+void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<std::string>& inputs_names) const
 {
     tinyxml2::XMLDocument* pmml_document = element->GetDocument();
 
@@ -1469,7 +1564,7 @@ void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<std::stri
 
     std::stringstream double_precision_stream;
 
-    // Error checking
+    // Check scaling neurons number error
 
     if(scaling_neurons_number != inputs_names.size())
     {
@@ -1531,6 +1626,86 @@ void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<std::stri
         linear_norm_end->SetAttribute("norm",double_precision_stream.str().c_str());
     }
 }
+
+
+// void write_PMML(tinyxml2::XMLPrinter&, const Vector<std::string>&) const;
+
+void ScalingLayer::write_PMML(tinyxml2::XMLPrinter& file_stream, const Vector<std::string>& inputs_names) const
+{
+    const size_t scaling_neurons_number = get_scaling_neurons_number();
+
+    std::stringstream double_precision_stream;
+
+    // Check scaling neurons number error
+
+    if(scaling_neurons_number != inputs_names.size())
+    {
+        return;
+    }
+
+    if(scaling_method == NoScaling)
+    {
+        return;
+    }
+
+    const Vector<double> inputs_to_scale_range_begin(scaling_neurons_number,0.0f);
+    const Vector<double> inputs_to_scale_range_end(scaling_neurons_number,1.0f);
+
+    const Vector<double> scaled_outputs_range_begin = calculate_outputs(inputs_to_scale_range_begin);
+    const Vector<double> scaled_outputs_range_end = calculate_outputs(inputs_to_scale_range_end);
+
+
+    for(size_t i = 0 ; i < scaling_neurons_number; i++)
+    {
+        const std::string current_input_display_name(inputs_names[i]);
+        const std::string current_input_name(current_input_display_name + "*");
+
+        file_stream.OpenElement("DerivedField");
+
+        file_stream.PushAttribute("displayName",current_input_display_name.c_str());
+        file_stream.PushAttribute("name",current_input_name.c_str());
+        file_stream.PushAttribute("dataType","double");
+        file_stream.PushAttribute("optype","continuous");
+
+
+        file_stream.OpenElement("NormContinuous");
+
+        file_stream.PushAttribute("field",current_input_display_name.c_str());
+
+        // Normalization range begin
+
+        file_stream.OpenElement("LinearNorm");
+
+        file_stream.PushAttribute("orig", "0.0");
+
+        double_precision_stream.str(std::string());
+        double_precision_stream << std::setprecision(15) << scaled_outputs_range_begin[i];
+
+        file_stream.PushAttribute("norm",double_precision_stream.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Normalization range end
+
+        file_stream.OpenElement("LinearNorm");
+
+        file_stream.PushAttribute("orig", "1.0");
+
+        double_precision_stream.str(std::string());
+        double_precision_stream << std::setprecision(15) << scaled_outputs_range_end[i];
+
+        file_stream.PushAttribute("norm",double_precision_stream.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Close NormContinuous
+        file_stream.CloseElement();
+
+        // Close DerivedField
+        file_stream.CloseElement();
+    }
+}
+
 
 // void from_PMML(const tinyxml2::XMLElement*, const Vector<std::string>&) method
 

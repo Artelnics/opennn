@@ -83,7 +83,7 @@ public:
    /// This enumeration represents the possible uses of an instance
    /// (no use, training, selection or testing).
 
-   enum Use{Unused, Training, Selection, Testing};
+   enum Use{Training, Selection, Testing, Unused};
 
    /// This is an enumeration of the available methods for dividing the instances
    /// into training, selection and testing subsets.
@@ -213,6 +213,9 @@ public:
 
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
 private:
 

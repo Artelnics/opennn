@@ -1109,6 +1109,49 @@ tinyxml2::XMLDocument* ProbabilisticLayer::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("ProbabilisticLayer");
+
+    // Probabilistic neurons number
+
+    file_stream.OpenElement("ProbabilisticNeuronsNumber");
+
+    buffer.str("");
+    buffer << probabilistic_neurons_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Probabilistic method
+
+    file_stream.OpenElement("ProbabilisticMethod");
+
+    file_stream.PushText(write_probabilistic_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Probabilistic neurons number
+
+    file_stream.OpenElement("DecisionThreshold");
+
+    buffer.str("");
+    buffer << decision_threshold;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this probabilistic layer object.
@@ -1215,28 +1258,6 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-}
-
-// void ProbabilisticLayer::to_PMML(tinyxml2::XMLElement* ) const method
-
-void ProbabilisticLayer::to_PMML(tinyxml2::XMLElement* neural_network ) const
-{
-    tinyxml2::XMLElement* probabilistic_layer = neural_network->LastChildElement("NeuralLayer");
-
-    switch(probabilistic_method)
-    {
-    case Competitive:
-        break;
-
-    case Binary:
-        break;
-
-    case Softmax:
-        // PMML defines softmax normalization method
-        probabilistic_layer->SetAttribute("normalizationMethod","softmax");
-        break;
-    }
-
 }
 
 // std::string write_binary_expression(const Vector<std::string>&, const Vector<std::string>&) const method

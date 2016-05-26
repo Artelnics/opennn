@@ -774,7 +774,7 @@ std::string BoundingLayer::to_string(void) const
 // tinyxml2::XMLDocument* to_XML(void) const method
 
 /// Serializes the bounding layer object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document. 
+/// See the OpenNN manual for more information about the format of this document.
 
 tinyxml2::XMLDocument* BoundingLayer::to_XML(void) const
 {
@@ -825,6 +825,59 @@ tinyxml2::XMLDocument* BoundingLayer::to_XML(void) const
    }
 
    return(document);
+}
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the bounding layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
+void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+   std::ostringstream buffer;
+
+   file_stream.OpenElement("BoundingLayer");
+
+   // Lower bounds
+
+   {
+      file_stream.OpenElement("LowerBounds");
+
+      buffer.str("");
+      buffer << lower_bounds;
+
+      file_stream.PushText(buffer.str().c_str());
+
+      file_stream.CloseElement();
+   }
+
+   // Upper bounds
+
+   {
+      file_stream.OpenElement("UpperBounds");
+
+      buffer.str("");
+      buffer << upper_bounds;
+
+      file_stream.PushText(buffer.str().c_str());
+
+      file_stream.CloseElement();
+   }
+
+   // Display
+
+   {
+      file_stream.OpenElement("Display");
+
+      buffer.str("");
+      buffer << display;
+
+      file_stream.PushText(buffer.str().c_str());
+
+      file_stream.CloseElement();
+   }
+
+   file_stream.CloseElement();
 }
 
 

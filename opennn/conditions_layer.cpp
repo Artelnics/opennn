@@ -1444,6 +1444,97 @@ tinyxml2::XMLDocument* ConditionsLayer::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the conditions layer object into a document of the TinyXML library without keep the DOM tree in memory.
+
+void ConditionsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("ConditionsLayer");
+
+    // Inputs number
+
+    {
+        file_stream.OpenElement("ExternalInputsNumber");
+
+        buffer.str("");
+        buffer << external_inputs_number;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Conditions neurons number
+
+    {
+        file_stream.OpenElement("ConditionsNeuronsNumber");
+
+        buffer.str("");
+        buffer << conditions_neurons_number;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Conditions method
+
+    {
+        file_stream.OpenElement("ConditionsMethod");
+
+        buffer.str("");
+        buffer << write_conditions_method();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Input values
+
+    {
+        file_stream.OpenElement("InputValues");
+
+        buffer.str("");
+        buffer << external_input_values;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Output values
+
+    {
+        file_stream.OpenElement("OutputValues");
+
+        buffer.str("");
+        buffer << output_values.to_vector();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Display
+
+    {
+        file_stream.OpenElement("Display");
+
+        buffer.str("");
+        buffer << display;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+}
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this conditions layer object.

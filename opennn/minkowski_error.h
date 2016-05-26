@@ -24,7 +24,7 @@
 
 // OpenNN includes
 
-#include "performance_term.h"
+#include "error_term.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -34,12 +34,12 @@
 namespace OpenNN
 {
 
-/// This class represents the Minkowski error performance term. 
+/// This class represents the Minkowski error term. 
 /// The Minkowski error measures the difference between the outputs of a neural network and the targets in a data set. 
 /// This performance term is used in data modeling problems.
 /// It can be more useful when the data set presents outliers. 
 
-class MinkowskiError : public PerformanceTerm
+class MinkowskiError : public ErrorTerm
 {
 
 public:
@@ -87,12 +87,12 @@ public:
 
    // performance methods
 
-   double calculate_performance(void) const;
-   double calculate_performance(const Vector<double>&) const;   
-   double calculate_selection_performance(void) const;   
+   double calculate_error(void) const;
+   double calculate_error(const Vector<double>&) const;
+   double calculate_selection_error(void) const;
 
-   Vector<double> calculate_gradient(void) const;
-   Matrix<double> calculate_Hessian(void) const;
+   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
+   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
    std::string write_performance_term_type(void) const;
 
@@ -100,6 +100,9 @@ public:
 
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);   
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
 private:
 

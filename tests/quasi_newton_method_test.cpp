@@ -189,7 +189,7 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_Hessian_approximation(vo
    PerformanceFunctional pf(&nn);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    QuasiNewtonMethod qnm(&pf);
 

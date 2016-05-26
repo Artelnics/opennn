@@ -905,6 +905,58 @@ void ModelSelection::check(void) const
 
 }
 
+// Vector<double> calculate_inputs_importance(void) const method
+
+/// Calculate the importance of the inputs, returns a vector with the selection error of the neural network removing one input.
+
+Vector<double> ModelSelection::calculate_inputs_importance(void) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    check();
+
+#endif
+
+    PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+
+    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+
+    const size_t inputs_number = neural_network_pointer->get_inputs_number();
+
+    Vector<double> input_importance(inputs_number, 0.0);
+
+    Vector< Statistics<double> > statistics;
+
+    const bool has_scaling_layer = neural_network_pointer->has_scaling_layer();
+
+    if(has_scaling_layer)
+    {
+        statistics = neural_network_pointer->get_scaling_layer_pointer()->get_statistics();
+    }
+
+    training_strategy_pointer->perform_training();
+
+    const Vector<double> parameters = neural_network_pointer->arrange_parameters();
+
+    for (size_t i = 0; i < inputs_number; i++)
+    {
+        neural_network_pointer->prune_input(i);
+
+        input_importance[i] = performance_functional_pointer->calculate_selection_error();
+
+        neural_network_pointer->grow_input();
+
+        neural_network_pointer->set_parameters(parameters);
+    }
+
+    if(has_scaling_layer)
+    {
+        neural_network_pointer->get_scaling_layer_pointer()->set_statistics(statistics);
+    }
+
+    return input_importance;
+}
+
 // ModelSelectionResults perform_order_selection(void) method
 
 /// Perform the order selection, returns a structure with the results of the order selection
@@ -1289,9 +1341,348 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
         break;
     }
 
+    // Threshold Selection
+
+    switch(threshold_selection_type)
+    {
+    case NO_ORDER_SELECTION:
+    {
+        tinyxml2::XMLElement* order_selection_element = document->NewElement("ThresholdSelection");
+        model_selection_element->LinkEndChild(order_selection_element);
+
+        order_selection_element->SetAttribute("Type", "NO_ORDER_SELECTION");
+    }
+        break;
+
+    case F1_SCORE_OPTIMIZATION:
+    {
+        tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
+        model_selection_element->LinkEndChild(threshold_selection_element);
+
+        threshold_selection_element->SetAttribute("Type", "F1_SCORE_OPTIMIZATION");
+
+        const tinyxml2::XMLDocument* f1_score_optimization_document = f1_score_optimization_threshold_pointer->to_XML();
+
+        const tinyxml2::XMLElement* f1_score_optimization_element = f1_score_optimization_document->FirstChildElement("F1ScoreOptimizationThreshold");
+
+        DeepClone(threshold_selection_element, f1_score_optimization_element, document, NULL);
+
+        delete f1_score_optimization_document;
+    }
+        break;
+
+    case MATTHEW_CORRELATION:
+    {
+        tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
+        model_selection_element->LinkEndChild(threshold_selection_element);
+
+        threshold_selection_element->SetAttribute("Type", "MATTHEW_CORRELATION");
+
+        const tinyxml2::XMLDocument* matthew_correlation_optimization_document = matthew_correlation_optimization_threshold_pointer->to_XML();
+
+        const tinyxml2::XMLElement* matthew_correlation_optimization_element = matthew_correlation_optimization_document->FirstChildElement("MatthewCorrelationOptimizationThreshold");
+
+        DeepClone(threshold_selection_element, matthew_correlation_optimization_element, document, NULL);
+
+        delete matthew_correlation_optimization_document;
+    }
+        break;
+
+    case YOUDEN_INDEX:
+    {
+        tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
+        model_selection_element->LinkEndChild(threshold_selection_element);
+
+        threshold_selection_element->SetAttribute("Type", "YOUDEN_INDEX");
+
+        const tinyxml2::XMLDocument* youden_index_optimization_document = youden_index_optimization_threshold_pointer->to_XML();
+
+        const tinyxml2::XMLElement* youden_index_optimization_element = youden_index_optimization_document->FirstChildElement("YoudenIndexOptimizationThreshold");
+
+        DeepClone(threshold_selection_element, youden_index_optimization_element, document, NULL);
+
+        delete youden_index_optimization_document;
+    }
+        break;
+
+    case KAPPA_COEFFICIENT:
+    {
+        tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
+        model_selection_element->LinkEndChild(threshold_selection_element);
+
+        threshold_selection_element->SetAttribute("Type", "KAPPA_COEFFICIENT");
+
+        const tinyxml2::XMLDocument* kappa_coefficient_optimization_document = kappa_coefficient_optimization_threshold_pointer->to_XML();
+
+        const tinyxml2::XMLElement* kappa_coefficient_optimization_element = kappa_coefficient_optimization_document->FirstChildElement("KappaCoefficientOptimizationThreshold");
+
+        DeepClone(threshold_selection_element, kappa_coefficient_optimization_element, document, NULL);
+
+        delete kappa_coefficient_optimization_document;
+    }
+        break;
+
+    case ROC_CURVE_DISTANCE:
+    {
+        tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
+        model_selection_element->LinkEndChild(threshold_selection_element);
+
+        threshold_selection_element->SetAttribute("Type", "ROC_CURVE_DISTANCE");
+
+        const tinyxml2::XMLDocument* roc_curve_optimization_document = roc_curve_optimization_threshold_pointer->to_XML();
+
+        const tinyxml2::XMLElement* roc_curve_optimization_element = roc_curve_optimization_document->FirstChildElement("ROCCurveOptimizationThreshold");
+
+        DeepClone(threshold_selection_element, roc_curve_optimization_element, document, NULL);
+
+        delete roc_curve_optimization_document;
+    }
+        break;
+
+    default:
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+               << "Unknown threshold selection type.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+        break;
+    }
+
     return(document);
 }
 
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    file_stream.OpenElement("ModelSelection");
+
+    // Inputs Selection
+
+    switch(inputs_selection_type)
+    {
+    case NO_INPUTS_SELECTION:
+    {
+        file_stream.OpenElement("InputsSelection");
+
+        file_stream.PushAttribute("Type", "NO_INPUTS_SELECTION");
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case GROWING_INPUTS:
+    {
+        file_stream.OpenElement("InputsSelection");
+
+        file_stream.PushAttribute("Type", "GROWING_INPUTS");
+
+        growing_inputs_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case PRUNING_INPUTS:
+    {
+        file_stream.OpenElement("InputsSelection");
+
+        file_stream.PushAttribute("Type", "PRUNING_INPUTS");
+
+        pruning_inputs_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case GENETIC_ALGORITHM:
+    {
+        file_stream.OpenElement("InputsSelection");
+
+        file_stream.PushAttribute("Type", "GENETIC_ALGORITHM");
+
+        genetic_algorithm_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    default:
+    {
+        std::ostringstream buffer;
+
+        file_stream.CloseElement();
+
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+               << "Unknown inputs selection type.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+        break;
+    }
+
+    // Order Selection
+
+    switch(order_selection_type)
+    {
+    case NO_ORDER_SELECTION:
+    {
+        file_stream.OpenElement("OrderSelection");
+
+        file_stream.PushAttribute("Type", "NO_ORDER_SELECTION");
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case INCREMENTAL_ORDER:
+    {
+        file_stream.OpenElement("OrderSelection");
+
+        file_stream.PushAttribute("Type", "INCREMENTAL_ORDER");
+
+        incremental_order_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case GOLDEN_SECTION:
+    {
+        file_stream.OpenElement("OrderSelection");
+
+        file_stream.PushAttribute("Type", "GOLDEN_SECTION");
+
+        golden_section_order_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case SIMULATED_ANNEALING:
+    {
+        file_stream.OpenElement("OrderSelection");
+
+        file_stream.PushAttribute("Type", "SIMULATED_ANNEALING");
+
+        simulated_annelaing_order_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    default:
+    {
+        std::ostringstream buffer;
+
+        file_stream.CloseElement();
+
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+               << "Unknown order selection type.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+        break;
+    }
+
+    // Threshold Selection
+
+    switch(threshold_selection_type)
+    {
+    case NO_THRESHOLD_SELECTION:
+    {
+        file_stream.OpenElement("ThresholdSelection");
+
+        file_stream.PushAttribute("Type", "NO_THRESHOLD_SELECTION");
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case F1_SCORE_OPTIMIZATION:
+    {
+        file_stream.OpenElement("ThresholdSelection");
+
+        file_stream.PushAttribute("Type", "F1_SCORE_OPTIMIZATION");
+
+        f1_score_optimization_threshold_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case MATTHEW_CORRELATION:
+    {
+        file_stream.OpenElement("ThresholdSelection");
+
+        file_stream.PushAttribute("Type", "MATTHEW_CORRELATION");
+
+        matthew_correlation_optimization_threshold_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case YOUDEN_INDEX:
+    {
+        file_stream.OpenElement("ThresholdSelection");
+
+        file_stream.PushAttribute("Type", "YOUDEN_INDEX");
+
+        youden_index_optimization_threshold_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case KAPPA_COEFFICIENT:
+    {
+        file_stream.OpenElement("ThresholdSelection");
+
+        file_stream.PushAttribute("Type", "KAPPA_COEFFICIENT");
+
+        kappa_coefficient_optimization_threshold_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    case ROC_CURVE_DISTANCE:
+    {
+        file_stream.OpenElement("ThresholdSelection");
+
+        file_stream.PushAttribute("Type", "ROC_CURVE_DISTANCE");
+
+        roc_curve_optimization_threshold_pointer->write_XML(file_stream);
+
+        file_stream.CloseElement();
+    }
+        break;
+
+    default:
+    {
+        std::ostringstream buffer;
+
+        file_stream.CloseElement();
+
+        buffer << "OpenNN Exception: ModelSelection class.\n"
+               << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+               << "Unknown order selection type.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+        break;
+    }
+
+    file_stream.CloseElement();
+}
 
 // void from_XML(const tinyxml2::XMLDocument&) method
 
@@ -1432,6 +1823,98 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
                 DeepClone(element_clone, element, &new_document, NULL);
 
                 simulated_annelaing_order_pointer->from_XML(new_document);
+            }
+                break;
+            default:
+            {
+                std::ostringstream buffer;
+
+                buffer << "OpenNN Exception: ModelSelection class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Unknown order selection type.\n";
+
+                throw std::logic_error(buffer.str());
+            }
+                break;
+            }
+        }
+    }
+
+    // Threshold Selection
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ThresholdSelection");
+
+        if(element)
+        {
+            const std::string new_threshold_selection_type = element->Attribute("Type");
+
+            set_threshold_selection_type(new_threshold_selection_type);
+
+            switch(threshold_selection_type)
+            {
+            case NO_THRESHOLD_SELECTION:
+            {
+                // do nothing
+            }
+                break;
+            case F1_SCORE_OPTIMIZATION:
+            {
+                tinyxml2::XMLDocument new_document;
+
+                tinyxml2::XMLElement* element_clone = new_document.NewElement("F1ScoreOptimizationThreshold");
+                new_document.InsertFirstChild(element_clone);
+
+                DeepClone(element_clone, element, &new_document, NULL);
+
+                f1_score_optimization_threshold_pointer->from_XML(new_document);
+            }
+                break;
+            case MATTHEW_CORRELATION:
+            {
+                tinyxml2::XMLDocument new_document;
+
+                tinyxml2::XMLElement* element_clone = new_document.NewElement("MatthewCorrelationOptimizationThreshold");
+                new_document.InsertFirstChild(element_clone);
+
+                DeepClone(element_clone, element, &new_document, NULL);
+
+                matthew_correlation_optimization_threshold_pointer->from_XML(new_document);
+            }
+                break;
+            case YOUDEN_INDEX:
+            {
+                tinyxml2::XMLDocument new_document;
+
+                tinyxml2::XMLElement* element_clone = new_document.NewElement("YoudenIndexOptimizationThreshold");
+                new_document.InsertFirstChild(element_clone);
+
+                DeepClone(element_clone, element, &new_document, NULL);
+
+                youden_index_optimization_threshold_pointer->from_XML(new_document);
+            }
+                break;
+            case KAPPA_COEFFICIENT:
+            {
+                tinyxml2::XMLDocument new_document;
+
+                tinyxml2::XMLElement* element_clone = new_document.NewElement("KappaCoefficientOptimizationThreshold");
+                new_document.InsertFirstChild(element_clone);
+
+                DeepClone(element_clone, element, &new_document, NULL);
+
+                kappa_coefficient_optimization_threshold_pointer->from_XML(new_document);
+            }
+                break;
+            case ROC_CURVE_DISTANCE:
+            {
+                tinyxml2::XMLDocument new_document;
+
+                tinyxml2::XMLElement* element_clone = new_document.NewElement("ROCCurveOptimizationThreshold");
+                new_document.InsertFirstChild(element_clone);
+
+                DeepClone(element_clone, element, &new_document, NULL);
+
+                roc_curve_optimization_threshold_pointer->from_XML(new_document);
             }
                 break;
             default:

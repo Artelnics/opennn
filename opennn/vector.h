@@ -269,7 +269,7 @@ public:
   Vector<double>
   calculate_shape_parameters_missing_values(const Vector<size_t> &) const;
 
-  Vector<double> calculate_box_and_whiskers(void) const;
+  Vector<double> calculate_box_plots(void) const;
 
   // Norm methods
 
@@ -1691,7 +1691,7 @@ Vector<T>::calculate_maximal_indices(const size_t &number) const {
 
 // Vector<size_t> calculate_minimal_maximal_index(void) const method
 
-/// Returns a vector with the indexes of the smallest and the largest elements
+/// Returns a vector with the indices of the smallest and the largest elements
 /// in the vector.
 
 template <class T>
@@ -2315,8 +2315,7 @@ template <class T> Vector<double> Vector<T>::calculate_quartiles(void) const {
   Vector<double> quartiles(4);
 
   if(this_size % 2 == 0) {
-    quartiles[0] =
-        (sorted_vector[this_size / 4] + sorted_vector[this_size / 4 + 1]) / 2;
+    quartiles[0] = (sorted_vector[this_size / 4] + sorted_vector[this_size / 4 + 1]) / 2;
     quartiles[1] = (sorted_vector[this_size * 2 / 4] +
                    sorted_vector[this_size * 2 / 4 + 1]) /
                   2;
@@ -2325,9 +2324,9 @@ template <class T> Vector<double> Vector<T>::calculate_quartiles(void) const {
                   2;
     quartiles[3] = calculate_maximum();
   } else {
-    quartiles[0] = sorted_vector[this_size / 4 + 1];
-    quartiles[1] = sorted_vector[this_size * 2 / 4 + 1];
-    quartiles[2] = sorted_vector[this_size * 3 / 4 + 1];
+    quartiles[0] = sorted_vector[this_size / 4 /*+ 1*/];
+    quartiles[1] = sorted_vector[this_size * 2 / 4 /*+ 1*/];
+    quartiles[2] = sorted_vector[this_size * 3 / 4 /*+ 1*/];
     quartiles[3] = calculate_maximum();
   }
 
@@ -2702,23 +2701,23 @@ Vector<double> Vector<T>::calculate_shape_parameters_missing_values(
   return (shape_parameters);
 }
 
-// Vector<double> calculate_box_and_whiskers(void) const
+// Vector<double> calculate_box_plots(void) const
 
 /// Returns the box and whispers for a vector.
 
 template <class T>
-Vector<double> Vector<T>::calculate_box_and_whiskers(void) const {
-  Vector<double> box_and_whispers(5);
+Vector<double> Vector<T>::calculate_box_plots(void) const {
+  Vector<double> box_plots(5);
 
   Vector<double> quartiles = calculate_quartiles();
 
-  box_and_whispers[0] = calculate_minimum();
-  box_and_whispers[1] = quartiles[0];
-  box_and_whispers[2] = quartiles[1];
-  box_and_whispers[3] = quartiles[2];
-  box_and_whispers[4] = quartiles[3];
+  box_plots[0] = calculate_minimum();
+  box_plots[1] = quartiles[0];
+  box_plots[2] = quartiles[1];
+  box_plots[3] = quartiles[2];
+  box_plots[4] = quartiles[3];
 
-  return (box_and_whispers);
+  return (box_plots);
 }
 
 // double calculate_norm(void) const method
@@ -3880,7 +3879,7 @@ Vector<size_t> Vector<T>::calculate_greater_rank(void) const
 
   Vector<T> sorted_vector(*this);
 
-  std::sort(sorted_vector.begin(), sorted_vector.end(), std::greater<double>());
+  std::sort(sorted_vector.begin(), sorted_vector.end(), std::greater<T>());
 
   Vector<size_t> previous_rank;
   previous_rank.set(this_size, -1);
@@ -3907,6 +3906,7 @@ Vector<size_t> Vector<T>::calculate_greater_rank(void) const
 
   return (rank);
 }
+
 
 // Vector<T> operator + (const T&) const method
 

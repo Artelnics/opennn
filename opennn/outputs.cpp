@@ -834,6 +834,67 @@ tinyxml2::XMLDocument* Outputs::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    const size_t outputs_number = get_outputs_number();
+
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("Outputs");
+
+    // Outputs number
+
+    file_stream.OpenElement("OutputsNumber");
+
+    buffer.str("");
+    buffer << outputs_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Items
+
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+        file_stream.OpenElement("Item");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        // Name
+
+        file_stream.OpenElement("Name");
+
+        file_stream.PushText(items[i].name.c_str());
+
+        file_stream.CloseElement();
+
+        // Units
+
+        file_stream.OpenElement("Units");
+
+        file_stream.PushText(items[i].units.c_str());
+
+        file_stream.CloseElement();
+
+        // Description
+
+        file_stream.OpenElement("Description");
+
+        file_stream.PushText(items[i].description.c_str());
+
+        file_stream.CloseElement();
+
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this outputs object.
@@ -1069,7 +1130,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
 
                 std::string field_ref_name(output_name);
 
-                if(is_data_unscaled)
+                if(is_data_unscaled || is_probabilistic)
                 {
                     field_ref_name.append("*");
                 }
@@ -1079,6 +1140,156 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
         }
     }
 
+}
+
+
+// void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() ) method
+
+void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const bool& is_probabilistic, const Vector<Statistics<double>>& outputs_statistics )
+{
+    const size_t outputs_number = get_outputs_number();
+
+    if(is_probabilistic && outputs_number > 1)
+    {
+        file_stream.OpenElement("DataField");
+
+        file_stream.PushAttribute("dataType", "string");
+        file_stream.PushAttribute("name", "classificationField");
+        file_stream.PushAttribute("optype", "categorical");
+
+        for(size_t i = 0; i < outputs_number; i++)
+        {
+            std::string output_name = get_name(i);
+
+            file_stream.OpenElement("Value");
+
+            file_stream.PushAttribute("value", output_name.c_str());
+
+            file_stream.CloseElement();
+        }
+
+        file_stream.CloseElement();
+    }
+    else
+    {
+        for(size_t i = 0; i < outputs_number; i++)
+        {
+            std::string output_name = get_name(i);
+
+            file_stream.OpenElement("DataField");
+
+            file_stream.PushAttribute("dataType", "double");
+            file_stream.PushAttribute("name",output_name.c_str());
+            file_stream.PushAttribute("optype", "continuous");
+
+            if(!outputs_statistics.empty())
+            {
+                file_stream.OpenElement("Interval");
+
+                file_stream.PushAttribute("closure","closedClosed");
+                file_stream.PushAttribute("leftMargin",outputs_statistics.at(i).minimum);
+                file_stream.PushAttribute("rightMargin", outputs_statistics.at(i).maximum);
+
+                file_stream.CloseElement();
+            }
+
+            file_stream.CloseElement();
+        }
+    }
+}
+
+
+// void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() ) method
+
+void Outputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream, const bool& is_probabilistic)
+{
+    const size_t outputs_number = get_outputs_number();
+
+    if(is_probabilistic && outputs_number > 1)
+    {
+        file_stream.OpenElement("MiningField");
+
+        file_stream.PushAttribute("name", "classificationField");
+        file_stream.PushAttribute("usageType", "predicted");
+
+        file_stream.CloseElement();
+    }
+    else
+    {
+        for(size_t i = 0 ; i< outputs_number; i++)
+        {
+            std::string output_name = get_name(i);
+
+            file_stream.OpenElement("MiningField");
+
+            file_stream.PushAttribute("name",output_name.c_str());
+            file_stream.PushAttribute("usageType","predicted");
+
+            file_stream.CloseElement();
+        }
+    }
+}
+
+
+// void write_PMML_neural_outputs(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() ) method
+
+void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_t number_of_layers, const bool& is_probabilistic, bool is_data_unscaled )
+{
+    const size_t outputs_number = get_outputs_number();
+
+    for(size_t i = 0; i < outputs_number ; i++)
+    {
+        std::string output_name = get_name(i);
+
+        file_stream.OpenElement("NeuralOutput");
+
+        std::string neural_output_id = std::to_string(number_of_layers);
+        neural_output_id.append(",");
+        neural_output_id.append(std::to_string(i));
+
+        file_stream.PushAttribute("outputNeuron",neural_output_id.c_str());
+
+        file_stream.OpenElement("DerivedField");
+
+
+        if(is_probabilistic && outputs_number > 1)
+        {
+            file_stream.PushAttribute("optype","categorical");
+            file_stream.PushAttribute("dataType","string");
+
+            file_stream.OpenElement("NormDiscrete");
+
+            file_stream.PushAttribute("field","classificationField");
+            file_stream.PushAttribute("value",output_name.c_str());
+
+            // Close NormDiscrete
+            file_stream.CloseElement();
+        }
+        else
+        {
+            file_stream.PushAttribute("optype","continuous");
+            file_stream.PushAttribute("dataType","double");
+
+            file_stream.OpenElement("FieldRef");
+
+            std::string field_ref_name(output_name);
+
+            if(is_data_unscaled || (is_probabilistic && (outputs_number == 1)))
+            {
+                field_ref_name.append("*");
+            }
+
+            file_stream.PushAttribute("field",field_ref_name.c_str());
+
+            file_stream.CloseElement();
+        }
+
+        // Close DerivedField
+        file_stream.CloseElement();
+
+        // Close NeuralOutput
+        file_stream.CloseElement();
+    }
 }
 
 }

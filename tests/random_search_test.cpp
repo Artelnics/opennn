@@ -130,7 +130,7 @@ void RandomSearchTest::test_perform_training(void)
    nn.set(1, 1);
    
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    rs.set_display(false);
    rs.set_maximum_iterations_number(1),

@@ -84,7 +84,7 @@ void MeanSquaredErrorTest::test_calculate_performance(void)
 
    MeanSquaredError mse(&nn, &ds);
 
-   assert_true(mse.calculate_performance() == 0.0, LOG);
+   assert_true(mse.calculate_error() == 0.0, LOG);
 
    // Test
 
@@ -96,7 +96,7 @@ void MeanSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(mse.calculate_performance() == mse.calculate_performance(parameters), LOG);
+   assert_true(mse.calculate_error() == mse.calculate_error(parameters), LOG);
 
 }
 
@@ -207,7 +207,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
    ds.initialize_data(1.0);
 
    gradient = mse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(mse, &MeanSquaredError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(mse, &MeanSquaredError::calculate_error, parameters);
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
    // Test
@@ -218,7 +218,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
    parameters = nn.arrange_parameters();
 
    gradient = mse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(mse, &MeanSquaredError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(mse, &MeanSquaredError::calculate_error, parameters);
    error = (gradient - numerical_gradient).calculate_absolute_value();
 }
 
@@ -239,9 +239,9 @@ void MeanSquaredErrorTest::test_calculate_selection_performance(void)
 
    MeanSquaredError mse(&nn, &ds);  
 
-   double selection_performance = mse.calculate_selection_performance();
+   double selection_error = mse.calculate_selection_error();
 
-   assert_true(selection_performance == 0.0, LOG);
+   assert_true(selection_error == 0.0, LOG);
 }
 
 
@@ -269,7 +269,7 @@ void MeanSquaredErrorTest::test_calculate_terms(void)
    ds.set(2, 2, 3);
    ds.randomize_data_normal();
 
-   objective = mse.calculate_performance();
+   objective = mse.calculate_error();
 
    evaluation_terms = mse.calculate_terms();
 

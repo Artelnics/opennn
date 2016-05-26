@@ -180,10 +180,14 @@ public:
    tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&);
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const Vector<std::string>&) ;
+   void to_PMML(tinyxml2::XMLElement*, const Vector<std::string>&) const;
+   void write_PMML(tinyxml2::XMLPrinter&, const Vector<std::string>&) const;
+
+
    void from_PMML(const tinyxml2::XMLElement*, const Vector<std::string>&);
 
 protected:

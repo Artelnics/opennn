@@ -460,7 +460,7 @@ void TrainingRateAlgorithm::set_display(const bool& new_display)
 /// Returns a vector with two elements:
 /// (i) the training rate calculated by means of the corresponding algorithm, and
 /// (ii) the performance for that training rate.
-/// @param performance Initial performance function performance.
+/// @param performance Initial Performance value.
 /// @param training_direction Initial training direction.
 /// @param initial_training_rate Initial training rate to start the algorithm. 
 
@@ -536,7 +536,7 @@ Vector<double> TrainingRateAlgorithm::calculate_directional_point(const double& 
 
 /// Returns bracketing triplet.
 /// This algorithm is used by line minimization algorithms. 
-/// @param performance Initial performance function performance.
+/// @param performance Initial Performance value.
 /// @param training_direction Initial training direction.
 /// @param initial_training_rate Initial training rate to start the algorithm. 
 
@@ -1082,6 +1082,38 @@ tinyxml2::XMLDocument* TrainingRateAlgorithm::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+//void write_XML(tinyxml2::XMLPrinter&) const method
+
+void TrainingRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("TrainingRateAlgorithm");
+
+    // Training rate method
+
+    file_stream.OpenElement("TrainingRateMethod");
+
+    file_stream.PushText(write_training_rate_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Training rate tolerance
+
+    file_stream.OpenElement("TrainingRateTolerance");
+
+    buffer.str("");
+    buffer << training_rate_tolerance;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
 }
 
 

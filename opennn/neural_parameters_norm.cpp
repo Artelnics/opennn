@@ -25,7 +25,7 @@ namespace OpenNN
 /// It also initializes all the rest of class members to their default values.
 
 NeuralParametersNorm::NeuralParametersNorm(void) 
- : PerformanceTerm()
+ : RegularizationTerm()
 {
    set_default();
 }
@@ -39,7 +39,7 @@ NeuralParametersNorm::NeuralParametersNorm(void)
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 NeuralParametersNorm::NeuralParametersNorm(NeuralNetwork* new_neural_network_pointer) 
-: PerformanceTerm(new_neural_network_pointer)
+: RegularizationTerm(new_neural_network_pointer)
 {
    set_default();
 }
@@ -54,7 +54,7 @@ NeuralParametersNorm::NeuralParametersNorm(NeuralNetwork* new_neural_network_poi
 /// @param neural_parameters_norm_document TinyXML document with the neural parameters norm elements.
 
 NeuralParametersNorm::NeuralParametersNorm(const tinyxml2::XMLDocument& neural_parameters_norm_document)
- : PerformanceTerm()
+ : RegularizationTerm()
 {
    set_default();
 
@@ -166,12 +166,12 @@ void NeuralParametersNorm::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_regularization(void) const method
 
 /// Returns the performance of this peformance term. 
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
-double NeuralParametersNorm::calculate_performance(void) const
+double NeuralParametersNorm::calculate_regularization(void) const
 {
    #ifdef __OPENNN_DEBUG__ 
 
@@ -240,13 +240,13 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) method
+// double calculate_regularization(const Vector<double>&) method
 
 /// Returns the neural parameters norm value of a neural network for a vector of parameters.
 /// It does not set that vector of parameters to the neural network.
 /// @param parameters Vector of parameters for the neural network associated to the performance term.
 
-double NeuralParametersNorm::calculate_performance(const Vector<double>& parameters) const
+double NeuralParametersNorm::calculate_regularization(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -376,7 +376,7 @@ std::string NeuralParametersNorm::write_information(void) const
 {
    std::ostringstream buffer;
    
-   buffer << "Neural parameters norm: " << calculate_performance() << "\n";
+   buffer << "Neural parameters norm: " << calculate_regularization() << "\n";
 
    return(buffer.str());
 }
@@ -424,6 +424,30 @@ tinyxml2::XMLDocument* NeuralParametersNorm::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void NeuralParametersNorm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("NeuralParametersNorm");
+
+    // Neural parameters norm weight
+
+    file_stream.OpenElement("NeuralParametersNormWeight");
+
+    buffer.str("");
+    buffer << neural_parameters_norm_weight;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
 }
 
 

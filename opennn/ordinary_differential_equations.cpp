@@ -1329,6 +1329,148 @@ tinyxml2::XMLDocument* OrdinaryDifferentialEquations::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void OrdinaryDifferentialEquations::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("OrdinaryDifferentialEquations");
+
+    // Independent variables number
+
+    file_stream.OpenElement("IndependentVariablesNumber");
+
+    buffer.str("");
+    buffer << independent_variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Dependent variables number
+
+    file_stream.OpenElement("DependentVariablesNumber");
+
+    buffer.str("");
+    buffer << dependent_variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Initial independent variable
+
+    file_stream.OpenElement("InitialIndependentVariable");
+
+    buffer.str("");
+    buffer << initial_independent_variable;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Final independent variable
+
+    file_stream.OpenElement("FinalIndependentVariable");
+
+    buffer.str("");
+    buffer << final_independent_variable;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Initial dependent variables
+
+    file_stream.OpenElement("InitialDependentVariables");
+
+    buffer.str("");
+    buffer << initial_dependent_variables;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Solution method
+
+    file_stream.OpenElement("SolutionMethod");
+
+    file_stream.PushText(write_solution_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Points number
+
+    file_stream.OpenElement("PointsNumber");
+
+    buffer.str("");
+    buffer << points_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Tolerance
+
+    file_stream.OpenElement("Tolerance");
+
+    buffer.str("");
+    buffer << tolerance;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Initial size
+
+    file_stream.OpenElement("InitialSize");
+
+    buffer.str("");
+    buffer << initial_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Warning size
+
+    file_stream.OpenElement("WarningSize");
+
+    buffer.str("");
+    buffer << warning_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Error size
+
+    file_stream.OpenElement("ErrorSize");
+
+    buffer.str("");
+    buffer << error_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this ordinary differential equations object.

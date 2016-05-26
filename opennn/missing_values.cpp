@@ -857,6 +857,53 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
     }
 
 
+
+    if(missing_values_number > 0)
+    {
+        tinyxml2::XMLElement* instances_indices_element = document->NewElement("InstancesIndices");
+        missing_values_element->LinkEndChild(instances_indices_element);
+
+        tinyxml2::XMLElement* variables_indices_element = document->NewElement("VariablesIndices");
+        missing_values_element->LinkEndChild(variables_indices_element);
+
+        std::string instances_indices_text;
+        std::string variables_indices_text;
+
+        for(size_t i = 0; i < missing_values_number; i++)
+        {
+            // Instance index
+
+            const size_t instance_index = items[i].instance_index + 1;
+
+            instances_indices_text.append(std::to_string(instance_index));
+
+            instances_indices_text.append(" ");
+
+            // Variable index
+
+            const size_t variable_index = items[i].variable_index + 1;
+
+            variables_indices_text.append(std::to_string(variable_index));
+
+            variables_indices_text.append(" ");
+        }
+
+        // Insert instances indices
+
+        instances_indices_text.pop_back();
+
+        text = document->NewText(instances_indices_text.c_str());
+        instances_indices_element->LinkEndChild(text);
+
+        // Insert variables indices
+
+        variables_indices_text.pop_back();
+
+        text = document->NewText(variables_indices_text.c_str());
+        variables_indices_element->LinkEndChild(text);
+    }
+
+    /*
     for(size_t i = 0; i < missing_values_number; i++)
     {
         element = document->NewElement("Item");
@@ -885,6 +932,7 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
         text = document->NewText(buffer.str().c_str());
         variable_index_element->LinkEndChild(text);
     }
+*/
 
     // Display
 //    {
@@ -899,6 +947,111 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
 //    }
 
     return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    const size_t missing_values_number = get_missing_values_number();
+
+    file_stream.OpenElement("MissingValues");
+
+    // Instances number
+
+    file_stream.OpenElement("InstancesNumber");
+
+    buffer.str("");
+    buffer << instances_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Variables number
+
+    file_stream.OpenElement("VariablesNumber");
+
+    buffer.str("");
+    buffer << variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Scrubbing method
+
+    file_stream.OpenElement("ScrubbingMethod");
+
+    file_stream.PushText(write_scrubbing_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Missing values number
+
+    file_stream.OpenElement("MissingValuesNumber");
+
+    buffer.str("");
+    buffer << missing_values_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    if(missing_values_number <= 0)
+    {
+        file_stream.CloseElement();
+
+        return;
+    }
+
+    std::string instances_indices_text;
+    std::string variables_indices_text;
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        // Instance index
+
+        const size_t instance_index = items[i].instance_index + 1;
+
+        instances_indices_text.append(std::to_string(instance_index));
+
+        instances_indices_text.append(" ");
+
+        // Variable index
+
+        const size_t variable_index = items[i].variable_index + 1;
+
+        variables_indices_text.append(std::to_string(variable_index));
+
+        variables_indices_text.append(" ");
+    }
+
+    instances_indices_text.pop_back();
+    variables_indices_text.pop_back();
+
+    // Instances indices
+
+    file_stream.OpenElement("InstancesIndices");
+
+    file_stream.PushText(instances_indices_text.c_str());
+
+    file_stream.CloseElement();
+
+    // Variables indices
+
+    file_stream.OpenElement("VariablesIndices");
+
+    file_stream.PushText(variables_indices_text.c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
 }
 
 
@@ -985,22 +1138,80 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
         throw std::logic_error(buffer.str());
     }
 
-    const size_t missing_values_number = atoi(missing_values_number_element->GetText());
+    const size_t new_missing_values_number = atoi(missing_values_number_element->GetText());
 
-    set_missing_values_number(missing_values_number);
+    set_missing_values_number(new_missing_values_number);
 
-    if(missing_values_number <= 0)
+    if(new_missing_values_number <= 0)
     {
         return;
     }
 
     // Items
 
+    const tinyxml2::XMLElement* instances_indices_element = missing_values_element->FirstChildElement("InstancesIndices");
+
+    if(!instances_indices_element)
+    {
+        buffer << "OpenNN Exception: MissingValues class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pointer to instances indices element is NULL.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    const std::string instances_indices_text(instances_indices_element->GetText());
+
+    Vector<size_t> instances_indices;
+    instances_indices.parse(instances_indices_text);
+
+    if(instances_indices.size() != new_missing_values_number)
+    {
+        buffer << "OpenNN Exception: MissingValues class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Instances indices size (" << instances_indices.size() << ") must be the same than missing values number (" << new_missing_values_number << ").\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    const tinyxml2::XMLElement* variables_indices_element = missing_values_element->FirstChildElement("VariablesIndices");
+
+    if(!variables_indices_element)
+    {
+        buffer << "OpenNN Exception: MissingValues class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Pointer to variables indices element is NULL.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    const std::string variables_indices_text(variables_indices_element->GetText());
+
+    Vector<size_t> variables_indices;
+    variables_indices.parse(variables_indices_text);
+
+    if(variables_indices.size() != new_missing_values_number)
+    {
+        buffer << "OpenNN Exception: MissingValues class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Variables indices size (" << variables_indices.size() << ") must be the same than missing values number (" << new_missing_values_number << ").\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    for(size_t i = 0; i < new_missing_values_number; i++)
+    {
+        items[i].instance_index = instances_indices.at(i) - 1;
+
+        items[i].variable_index = variables_indices.at(i) - 1;
+    }
+
+/*
     unsigned index = 0;
 
     const tinyxml2::XMLElement* start_element = missing_values_number_element;
 
-    for(size_t i = 0; i < missing_values_number; i++)
+    for(size_t i = 0; i < new_missing_values_number; i++)
     {
         const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
         start_element = item_element;
@@ -1059,6 +1270,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
 
         items[i].variable_index = new_variable_index;
     }
+*/
 }
 
 

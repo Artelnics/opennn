@@ -413,8 +413,13 @@ public:
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
+
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement* );
+   void to_PMML(tinyxml2::XMLElement* ) const;
+   void write_PMML(tinyxml2::XMLPrinter&, bool is_softmax_normalization_method = false) const;
+
    void from_PMML(const tinyxml2::XMLElement*);
 
    // Information

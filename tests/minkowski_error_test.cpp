@@ -103,7 +103,7 @@ void MinkowskiErrorTest::test_calculate_performance(void)
 
    MinkowskiError me(&nn, &ds);
 
-   assert_true(me.calculate_performance() == 0.0, LOG);
+   assert_true(me.calculate_error() == 0.0, LOG);
 
    // Test
 
@@ -115,7 +115,7 @@ void MinkowskiErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 2);
    ds.randomize_data_normal();
 
-   assert_true(me.calculate_performance() == me.calculate_performance(parameters), LOG);     
+   assert_true(me.calculate_error() == me.calculate_error(parameters), LOG);
 }
 
 
@@ -252,7 +252,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    ds.randomize_data_normal();
 
    gradient = me.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(me, &MinkowskiError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(me, &MinkowskiError::calculate_error, parameters);
 
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -269,7 +269,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    me.set_Minkowski_parameter(1.75);
 
    gradient = me.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(me, &MinkowskiError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(me, &MinkowskiError::calculate_error, parameters);
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
 }

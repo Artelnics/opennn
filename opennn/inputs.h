@@ -169,8 +169,14 @@ public:
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
+   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   // virtual void read_XML(   );
+
    // PMML Methods
-   virtual void to_PMML(tinyxml2::XMLElement*, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() );
+   void to_PMML(tinyxml2::XMLElement*, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) const;
+   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) const;
+   void write_PMML_mining_schema(tinyxml2::XMLPrinter&) const;
+   void write_PMML_neural_inputs(tinyxml2::XMLPrinter&, const bool& is_data_scaled = false) const;
 
 protected:
 

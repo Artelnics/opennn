@@ -28,32 +28,21 @@ PerformanceFunctional::PerformanceFunctional(void)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    set_error_type(NORMALIZED_SQUARED_ERROR);
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
     set_default();
 }
@@ -71,32 +60,20 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    set_error_type(NORMALIZED_SQUARED_ERROR);
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
    set_default();
 }
@@ -115,32 +92,21 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(new_data_set_pointer)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-   set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
-   set_regularization_type(NO_REGULARIZATION);
-   set_constraints_type(NO_CONSTRAINTS);
+   set_error_type(NORMALIZED_SQUARED_ERROR);
+   set_regularization_type(NO_REGULARIZATION);   
 
    set_default();
 
@@ -160,32 +126,21 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(new_mathematical_model_pointer)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    set_error_type(NORMALIZED_SQUARED_ERROR);
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
    set_default();
 }
@@ -205,32 +160,21 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(new_data_set_pointer)
  , mathematical_model_pointer(new_mathematical_model_pointer)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    set_error_type(NORMALIZED_SQUARED_ERROR);
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
    set_default();
 }
@@ -241,38 +185,27 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
 /// Objective term constructor. 
 /// It creates a performance functional object with a given objective functional.
 /// The rest of pointers are initialized to NULL. 
-/// The other members are set to their default values, but the objective term type, which is set to USER_PERFORMANCE_TERM. 
+/// The other members are set to their default values, but the error term type, which is set to USER_PERFORMANCE_TERM. 
 
-PerformanceFunctional::PerformanceFunctional(PerformanceTerm* new_user_objective_pointer)
+PerformanceFunctional::PerformanceFunctional(ErrorTerm* new_user_error_pointer)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(new_user_objective_pointer)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(new_user_error_pointer)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    objective_type = USER_OBJECTIVE;
+    error_type = USER_ERROR;
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
    set_default();
 }
@@ -289,32 +222,21 @@ PerformanceFunctional::PerformanceFunctional(const std::string& file_name)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    set_error_type(NORMALIZED_SQUARED_ERROR);
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
    set_default();
 
@@ -332,32 +254,21 @@ PerformanceFunctional::PerformanceFunctional(const tinyxml2::XMLDocument& perfor
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
-    set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    set_error_type(NORMALIZED_SQUARED_ERROR);
     set_regularization_type(NO_REGULARIZATION);
-    set_constraints_type(NO_CONSTRAINTS);
 
    set_default();
 
@@ -376,128 +287,86 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
- , sum_squared_error_objective_pointer(NULL)
- , mean_squared_error_objective_pointer(NULL)
- , root_mean_squared_error_objective_pointer(NULL)
- , normalized_squared_error_objective_pointer(NULL)
- , Minkowski_error_objective_pointer(NULL)
- , cross_entropy_error_objective_pointer(NULL)
- , weighted_squared_error_objective_pointer(NULL)
- , roc_area_error_objective_pointer(NULL)
- , outputs_integrals_objective_pointer(NULL)
- , solutions_error_objective_pointer(NULL)
- , final_solutions_error_objective_pointer(NULL)
- , independent_parameters_error_objective_pointer(NULL)
- , inverse_sum_squared_error_objective_pointer(NULL)
- , user_objective_pointer(NULL)
- , neural_parameters_norm_regularization_pointer(NULL)
- , outputs_integrals_regularization_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
- , outputs_integrals_constraints_pointer(NULL)
- , solutions_error_constraints_pointer(NULL)
- , final_solutions_error_constraints_pointer(NULL)
- , independent_parameters_error_constraints_pointer(NULL)
- , user_constraints_pointer(NULL)
 {
     neural_network_pointer = other_performance_functional.neural_network_pointer;
     data_set_pointer = other_performance_functional.data_set_pointer;
     mathematical_model_pointer = other_performance_functional.mathematical_model_pointer;
 
-   objective_type = other_performance_functional.objective_type;
+   error_type = other_performance_functional.error_type;
    regularization_type = other_performance_functional.regularization_type;
-   constraints_type = other_performance_functional.constraints_type;
 
    // Objective
 
-    switch(objective_type)
+    switch(error_type)
     {
-        case NO_OBJECTIVE:
+        case NO_ERROR:
         {
             // Do nothing
         }
         break;
 
-        case SUM_SQUARED_ERROR_OBJECTIVE:
+        case SUM_SQUARED_ERROR:
         {
-            sum_squared_error_objective_pointer = new SumSquaredError(*other_performance_functional.sum_squared_error_objective_pointer);
+            sum_squared_error_pointer = new SumSquaredError(*other_performance_functional.sum_squared_error_pointer);
         }
         break;
 
-        case MEAN_SQUARED_ERROR_OBJECTIVE:
+        case MEAN_SQUARED_ERROR:
         {
-            mean_squared_error_objective_pointer = new MeanSquaredError(*other_performance_functional.mean_squared_error_objective_pointer);
+            mean_squared_error_pointer = new MeanSquaredError(*other_performance_functional.mean_squared_error_pointer);
         }
         break;
 
-        case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+        case ROOT_MEAN_SQUARED_ERROR:
         {
-            root_mean_squared_error_objective_pointer = new RootMeanSquaredError(*other_performance_functional.root_mean_squared_error_objective_pointer);
+            root_mean_squared_error_pointer = new RootMeanSquaredError(*other_performance_functional.root_mean_squared_error_pointer);
         }
         break;
 
-        case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+        case NORMALIZED_SQUARED_ERROR:
         {
-            normalized_squared_error_objective_pointer = new NormalizedSquaredError(*other_performance_functional.normalized_squared_error_objective_pointer);
+            normalized_squared_error_pointer = new NormalizedSquaredError(*other_performance_functional.normalized_squared_error_pointer);
         }
         break;
 
-        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        case WEIGHTED_SQUARED_ERROR:
         {
-            weighted_squared_error_objective_pointer = new WeightedSquaredError(*other_performance_functional.weighted_squared_error_objective_pointer);
+            weighted_squared_error_pointer = new WeightedSquaredError(*other_performance_functional.weighted_squared_error_pointer);
         }
         break;
 
-        case ROC_AREA_ERROR_OBJECTIVE:
+        case ROC_AREA_ERROR:
         {
-            roc_area_error_objective_pointer = new RocAreaError(*other_performance_functional.roc_area_error_objective_pointer);
+            roc_area_error_pointer = new RocAreaError(*other_performance_functional.roc_area_error_pointer);
         }
         break;
 
-        case MINKOWSKI_ERROR_OBJECTIVE:
+        case MINKOWSKI_ERROR:
         {
-            Minkowski_error_objective_pointer = new MinkowskiError(*other_performance_functional.Minkowski_error_objective_pointer);
+            Minkowski_error_pointer = new MinkowskiError(*other_performance_functional.Minkowski_error_pointer);
         }
         break;
 
-        case CROSS_ENTROPY_ERROR_OBJECTIVE:
+        case CROSS_ENTROPY_ERROR:
         {
-            cross_entropy_error_objective_pointer = new CrossEntropyError(*other_performance_functional.cross_entropy_error_objective_pointer);
+            cross_entropy_error_pointer = new CrossEntropyError(*other_performance_functional.cross_entropy_error_pointer);
         }
         break;
 
-        case OUTPUTS_INTEGRALS_OBJECTIVE:
+        case USER_ERROR:
         {
-            outputs_integrals_objective_pointer = new OutputsIntegrals(*other_performance_functional.outputs_integrals_objective_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            solutions_error_objective_pointer = new SolutionsError(*other_performance_functional.solutions_error_objective_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            final_solutions_error_objective_pointer = new FinalSolutionsError(*other_performance_functional.final_solutions_error_objective_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-        {
-            independent_parameters_error_objective_pointer = new IndependentParametersError(*other_performance_functional.independent_parameters_error_objective_pointer);
-        }
-        break;
-
-        case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            inverse_sum_squared_error_objective_pointer = new InverseSumSquaredError(*other_performance_functional.inverse_sum_squared_error_objective_pointer);
-        }
-        break;
-
-        case USER_OBJECTIVE:
-        {
-            //user_objective_pointer = new PerformanceTerm(*other_performance_functional.user_objective_pointer);
         }
         break;
 
@@ -507,7 +376,7 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                    << "Copy constructor.\n"
-                   << "Unknown objective type.\n";
+                   << "Unknown error type.\n";
 
             throw std::logic_error(buffer.str());
         }
@@ -524,21 +393,21 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
         }
         break;
 
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+        case NEURAL_PARAMETERS_NORM:
         {
-            neural_parameters_norm_regularization_pointer = new NeuralParametersNorm(*other_performance_functional.neural_parameters_norm_regularization_pointer);
+            neural_parameters_norm_pointer = new NeuralParametersNorm(*other_performance_functional.neural_parameters_norm_pointer);
         }
         break;
 
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
+        case OUTPUTS_INTEGRALS:
         {
-            outputs_integrals_regularization_pointer = new OutputsIntegrals(*other_performance_functional.outputs_integrals_regularization_pointer);
+            outputs_integrals_pointer = new OutputsIntegrals(*other_performance_functional.outputs_integrals_pointer);
         }
         break;
 
         case USER_REGULARIZATION:
         {
-            //user_regularization_pointer = new PerformanceTerm(*other_performance_functional.user_regularization_pointer);
+            //user_regularization_pointer = new ErrorTerm(*other_performance_functional.user_regularization_pointer);
         }
         break;
 
@@ -549,59 +418,6 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                    << "Copy constructor.\n"
                    << "Unknown regularization type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-   // Constraints
-
-    switch(constraints_type)
-    {
-        case NO_CONSTRAINTS:
-        {
-            // Do nothing
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_CONSTRAINTS:
-        {
-            outputs_integrals_constraints_pointer = new OutputsIntegrals(*other_performance_functional.outputs_integrals_constraints_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            solutions_error_constraints_pointer = new SolutionsError(*other_performance_functional.solutions_error_constraints_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            final_solutions_error_constraints_pointer = new FinalSolutionsError(*other_performance_functional.final_solutions_error_constraints_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-        {
-            independent_parameters_error_constraints_pointer = new IndependentParametersError(*other_performance_functional.independent_parameters_error_constraints_pointer);
-        }
-        break;
-
-        case USER_CONSTRAINTS:
-        {
-            //user_constraints_pointer = new PerformanceTerm(*other_performance_functional.user_constraints_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Copy constructor.\n"
-                   << "Unknown constraints type.\n";
 
             throw std::logic_error(buffer.str());
         }
@@ -619,35 +435,23 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
 
 PerformanceFunctional::~PerformanceFunctional(void)
 {
-   // Delete objective terms
+   // Delete error terms
 
-   delete sum_squared_error_objective_pointer;
-   delete mean_squared_error_objective_pointer;
-   delete root_mean_squared_error_objective_pointer;
-   delete normalized_squared_error_objective_pointer;
-   delete Minkowski_error_objective_pointer;
-   delete cross_entropy_error_objective_pointer;
-   delete weighted_squared_error_objective_pointer;
-   delete outputs_integrals_objective_pointer;
-   delete solutions_error_objective_pointer;
-   delete final_solutions_error_objective_pointer;
-   delete independent_parameters_error_objective_pointer;
-   delete inverse_sum_squared_error_objective_pointer;
-   delete user_objective_pointer;
+   delete sum_squared_error_pointer;
+   delete mean_squared_error_pointer;
+   delete root_mean_squared_error_pointer;
+   delete normalized_squared_error_pointer;
+   delete Minkowski_error_pointer;
+   delete cross_entropy_error_pointer;
+   delete weighted_squared_error_pointer;
+   delete outputs_integrals_pointer;
+   delete user_error_pointer;
 
     // Delete regularization terms
 
-   delete neural_parameters_norm_regularization_pointer;
-   delete outputs_integrals_regularization_pointer;
+   delete neural_parameters_norm_pointer;
+   delete outputs_integrals_pointer;
    delete user_regularization_pointer;
-
-    // Delete constraints terms
-
-   delete outputs_integrals_constraints_pointer;
-   delete solutions_error_constraints_pointer;
-   delete final_solutions_error_constraints_pointer;
-   delete independent_parameters_error_constraints_pointer;
-   delete user_constraints_pointer;
 }
 
 
@@ -740,28 +544,15 @@ bool PerformanceFunctional::has_selection(void) const
 
 bool PerformanceFunctional::is_sum_squared_terms(void) const
 {
-    if(objective_type == ROOT_MEAN_SQUARED_ERROR_OBJECTIVE
-    || objective_type == MINKOWSKI_ERROR_OBJECTIVE
-    || objective_type == CROSS_ENTROPY_ERROR_OBJECTIVE
-    || objective_type == OUTPUTS_INTEGRALS_OBJECTIVE
-    || objective_type == SOLUTIONS_ERROR_OBJECTIVE
-    || objective_type == FINAL_SOLUTIONS_ERROR_OBJECTIVE
-    || objective_type == INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE
-    || objective_type == INVERSE_SUM_SQUARED_ERROR_OBJECTIVE)
+    if(error_type == ROOT_MEAN_SQUARED_ERROR
+    || error_type == MINKOWSKI_ERROR
+    || error_type == CROSS_ENTROPY_ERROR)
     {
         return(false);
     }
 
-    if(regularization_type == NEURAL_PARAMETERS_NORM_REGULARIZATION
-    || regularization_type == OUTPUTS_INTEGRALS_REGULARIZATION)
-    {
-        return(false);
-    }
-
-    if(constraints_type == OUTPUTS_INTEGRALS_CONSTRAINTS
-    || constraints_type == SOLUTIONS_ERROR_CONSTRAINTS
-    || constraints_type == FINAL_SOLUTIONS_ERROR_CONSTRAINTS
-    || constraints_type == INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS)
+    if(regularization_type == NEURAL_PARAMETERS_NORM
+    || regularization_type == OUTPUTS_INTEGRALS)
     {
         return(false);
     }
@@ -796,9 +587,8 @@ void PerformanceFunctional::check_neural_network(void) const
 
 void PerformanceFunctional::check_performance_terms(void) const
 {
-    if(objective_type == NO_OBJECTIVE
-    && regularization_type == NO_REGULARIZATION
-    && constraints_type == NO_CONSTRAINTS)
+    if(error_type == NO_ERROR
+    && regularization_type == NO_REGULARIZATION)
     {
         std::ostringstream buffer;
 
@@ -812,23 +602,23 @@ void PerformanceFunctional::check_performance_terms(void) const
 }
 
 
-// SumSquaredError* get_sum_squared_error_objective_pointer(void) const method
+// SumSquaredError* get_sum_squared_error_pointer(void) const method
 
 /// Returns a pointer to the sum squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-SumSquaredError* PerformanceFunctional::get_sum_squared_error_objective_pointer(void) const
+SumSquaredError* PerformanceFunctional::get_sum_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!sum_squared_error_objective_pointer)
+    if(!sum_squared_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "SumSquaredError* get_sum_squared_error_objective_pointer(void) const method.\n"
+              << "SumSquaredError* get_sum_squared_error_pointer(void) const method.\n"
               << "Pointer to sum squared error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -836,27 +626,27 @@ SumSquaredError* PerformanceFunctional::get_sum_squared_error_objective_pointer(
 
      #endif
 
-    return(sum_squared_error_objective_pointer);
+    return(sum_squared_error_pointer);
 }
 
 
-// MeanSquaredError* get_mean_squared_error_objective_pointer(void) const method
+// MeanSquaredError* get_mean_squared_error_pointer(void) const method
 
 /// Returns a pointer to the mean squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-MeanSquaredError* PerformanceFunctional::get_mean_squared_error_objective_pointer(void) const
+MeanSquaredError* PerformanceFunctional::get_mean_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!mean_squared_error_objective_pointer)
+    if(!mean_squared_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "MeanSquaredError* get_mean_squared_error_objective_pointer(void) const method.\n"
+              << "MeanSquaredError* get_mean_squared_error_pointer(void) const method.\n"
               << "Pointer to mean squared error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -864,27 +654,27 @@ MeanSquaredError* PerformanceFunctional::get_mean_squared_error_objective_pointe
 
      #endif
 
-    return(mean_squared_error_objective_pointer);
+    return(mean_squared_error_pointer);
 }
 
 
-// RootMeanSquaredError* get_root_mean_squared_error_objective_pointer(void) const method
+// RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const method
 
 /// Returns a pointer to the root mean squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-RootMeanSquaredError* PerformanceFunctional::get_root_mean_squared_error_objective_pointer(void) const
+RootMeanSquaredError* PerformanceFunctional::get_root_mean_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!root_mean_squared_error_objective_pointer)
+    if(!root_mean_squared_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "RootMeanSquaredError* get_root_mean_squared_error_objective_pointer(void) const method.\n"
+              << "RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const method.\n"
               << "Pointer to root mean squared error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -892,27 +682,27 @@ RootMeanSquaredError* PerformanceFunctional::get_root_mean_squared_error_objecti
 
      #endif
 
-    return(root_mean_squared_error_objective_pointer);
+    return(root_mean_squared_error_pointer);
 }
 
 
-// NormalizedSquaredError* get_normalized_squared_error_objective_pointer(void) const method
+// NormalizedSquaredError* get_normalized_squared_error_pointer(void) const method
 
 /// Returns a pointer to the normalized squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-NormalizedSquaredError* PerformanceFunctional::get_normalized_squared_error_objective_pointer(void) const
+NormalizedSquaredError* PerformanceFunctional::get_normalized_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!normalized_squared_error_objective_pointer)
+    if(!normalized_squared_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "NormalizedSquaredError* get_normalized_squared_error_objective_pointer(void) const method.\n"
+              << "NormalizedSquaredError* get_normalized_squared_error_pointer(void) const method.\n"
               << "Pointer to normalized squared error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -920,27 +710,27 @@ NormalizedSquaredError* PerformanceFunctional::get_normalized_squared_error_obje
 
      #endif
 
-    return(normalized_squared_error_objective_pointer);
+    return(normalized_squared_error_pointer);
 }
 
 
-// MinkowskiError* get_Minkowski_error_objective_pointer(void) const method
+// MinkowskiError* get_Minkowski_error_pointer(void) const method
 
 /// Returns a pointer to the Minkowski error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-MinkowskiError* PerformanceFunctional::get_Minkowski_error_objective_pointer(void) const
+MinkowskiError* PerformanceFunctional::get_Minkowski_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!Minkowski_error_objective_pointer)
+    if(!Minkowski_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "MinkowskiError* get_Minkowski_error_objective_pointer(void) const method.\n"
+              << "MinkowskiError* get_Minkowski_error_pointer(void) const method.\n"
               << "Pointer to Minkowski error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -948,27 +738,27 @@ MinkowskiError* PerformanceFunctional::get_Minkowski_error_objective_pointer(voi
 
      #endif
 
-    return(Minkowski_error_objective_pointer);
+    return(Minkowski_error_pointer);
 }
 
 
-// CrossEntropyError* get_cross_entropy_error_objective_pointer(void) const method
+// CrossEntropyError* get_cross_entropy_error_pointer(void) const method
 
 /// Returns a pointer to the cross entropy error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_objective_pointer(void) const
+CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!cross_entropy_error_objective_pointer)
+    if(!cross_entropy_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "CrossEntropyError* get_cross_entropy_error_objective_pointer(void) const method.\n"
+              << "CrossEntropyError* get_cross_entropy_error_pointer(void) const method.\n"
               << "Pointer to cross entropy error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -976,27 +766,27 @@ CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_objective_poin
 
      #endif
 
-    return(cross_entropy_error_objective_pointer);
+    return(cross_entropy_error_pointer);
 }
 
 
-// WeightedSquaredError* get_weighted_squared_error_objective_pointer(void) const method
+// WeightedSquaredError* get_weighted_squared_error_pointer(void) const method
 
 /// Returns a pointer to the weighted squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_objective_pointer(void) const
+WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!cross_entropy_error_objective_pointer)
+    if(!cross_entropy_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "WeightedSquaredError* get_weighted_squared_error_objective_pointer(void) const method.\n"
+              << "WeightedSquaredError* get_weighted_squared_error_pointer(void) const method.\n"
               << "Pointer to weighted squared error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -1004,27 +794,27 @@ WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_objectiv
 
      #endif
 
-    return(weighted_squared_error_objective_pointer);
+    return(weighted_squared_error_pointer);
 }
 
 
-// RocAreaError* get_roc_area_error_objective_pointer(void) const method
+// RocAreaError* get_roc_area_error_pointer(void) const method
 
 /// Returns a pointer to the ROC area error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-RocAreaError* PerformanceFunctional::get_roc_area_error_objective_pointer(void) const
+RocAreaError* PerformanceFunctional::get_roc_area_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!roc_area_error_objective_pointer)
+    if(!roc_area_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "RocAreaError* get_roc_area_error_objective_pointer(void) const method.\n"
+              << "RocAreaError* get_roc_area_error_pointer(void) const method.\n"
               << "Pointer to ROC area error objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -1032,29 +822,29 @@ RocAreaError* PerformanceFunctional::get_roc_area_error_objective_pointer(void) 
 
      #endif
 
-    return(roc_area_error_objective_pointer);
+    return(roc_area_error_pointer);
 }
 
 
 
-// OutputsIntegrals* get_outputs_integrals_objective_pointer(void) const method
+// OutputsIntegrals* get_outputs_integrals_pointer(void) const method
 
 /// Returns a pointer to the outputs integrals which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
 
-OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_objective_pointer(void) const
+OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!outputs_integrals_objective_pointer)
+    if(!outputs_integrals_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "OutputsIntegrals* get_outputs_integrals_objective_pointer(void) const method.\n"
+              << "OutputsIntegrals* get_outputs_integrals_pointer(void) const method.\n"
               << "Pointer to outputs integrals objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -1062,139 +852,27 @@ OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_objective_pointer
 
      #endif
 
-    return(outputs_integrals_objective_pointer);
+    return(outputs_integrals_pointer);
 }
 
 
-// SolutionsError* get_solutions_error_objective_pointer(void) const method
-
-/// Returns a pointer to the solutions error which is used as objective.
-/// If that object does not exists, an exception is thrown.
-
-SolutionsError* PerformanceFunctional::get_solutions_error_objective_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!solutions_error_objective_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "SolutionsError* get_solutions_error_objective_pointer(void) const method.\n"
-              << "Pointer to solutions error objective is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(solutions_error_objective_pointer);
-}
-
-
-// FinalSolutionsError* get_final_solutions_error_objective_pointer(void) const method
-
-/// Returns a pointer to the final solutions error which is used as objective.
-/// If that object does not exists, an exception is thrown.
-
-FinalSolutionsError* PerformanceFunctional::get_final_solutions_error_objective_pointer(void) const
-{    
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!final_solutions_error_objective_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "FinalSolutionsError* get_final_solutions_error_objective_pointer(void) const method.\n"
-              << "Pointer to final solutions error objective is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(final_solutions_error_objective_pointer);
-}
-
-
-// IndependentParametersError* get_independent_parameters_error_objective_pointer(void) const method
-
-/// Returns a pointer to the independent parameters error which is used as objective.
-/// If that object does not exists, an exception is thrown.
-
-IndependentParametersError* PerformanceFunctional::get_independent_parameters_error_objective_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!independent_parameters_error_objective_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "IndependentParametersError* get_independent_parameters_error_objective_pointer(void) const method.\n"
-              << "Pointer to independent parameters error objective is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(independent_parameters_error_objective_pointer);
-}
-
-
-// InverseSumSquaredError* get_inverse_sum_squared_error_objective_pointer(void) const method
-
-/// Returns a pointer to the inverse sum squared error which is used as objective.
-/// If that object does not exists, an exception is thrown.
-
-InverseSumSquaredError* PerformanceFunctional::get_inverse_sum_squared_error_objective_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!solutions_error_objective_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "InverseSumSquaredError* get_inverse_sum_squared_error_objective_pointer(void) const method.\n"
-              << "Pointer to inverse sum squared error objective is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(inverse_sum_squared_error_objective_pointer);
-}
-
-
-// PerformanceTerm* get_user_objective_pointer(void) const method
+// ErrorTerm* get_user_error_pointer(void) const method
 
 /// Returns a pointer to the user performance term which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-PerformanceTerm* PerformanceFunctional::get_user_objective_pointer(void) const
+ErrorTerm* PerformanceFunctional::get_user_error_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!user_objective_pointer)
+    if(!user_error_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "PerformanceTerm* get_user_objective_pointer(void) const method.\n"
+              << "ErrorTerm* get_user_error_pointer(void) const method.\n"
               << "Pointer to user objective is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -1202,27 +880,27 @@ PerformanceTerm* PerformanceFunctional::get_user_objective_pointer(void) const
 
      #endif
 
-    return(user_objective_pointer);
+    return(user_error_pointer);
 }
 
 
-// NeuralParametersNorm* get_neural_parameters_norm_regularization_pointer(void) const method
+// NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const method
 
 /// Returns a pointer to the neural parameters norm functional which is used as regularization.
 /// If that object does not exists, an exception is thrown.
 
-NeuralParametersNorm* PerformanceFunctional::get_neural_parameters_norm_regularization_pointer(void) const
+NeuralParametersNorm* PerformanceFunctional::get_neural_parameters_norm_pointer(void) const
 {
     // Control sentence (if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!neural_parameters_norm_regularization_pointer)
+    if(!neural_parameters_norm_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "NeuralParametersNorm* get_neural_parameters_norm_regularization_pointer(void) const method.\n"
+              << "NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const method.\n"
               << "Pointer to neural parameters norm regularization is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -1230,44 +908,16 @@ NeuralParametersNorm* PerformanceFunctional::get_neural_parameters_norm_regulari
 
      #endif
 
-    return(neural_parameters_norm_regularization_pointer);
+    return(neural_parameters_norm_pointer);
 }
 
 
-// OutputsIntegrals* get_outputs_integrals_regularization_pointer(void) const method
-
-/// Returns a pointer to the outputs integrals functional which is used as regularization.
-/// If that object does not exists, an exception is thrown.
-
-OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_regularization_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!outputs_integrals_regularization_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "NeuralParametersNorm* get_outputs_integrals_regularization_pointer(void) const method.\n"
-              << "Pointer to outputs integrals regularization is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(outputs_integrals_regularization_pointer);
-}
-
-
-// PerformanceTerm* get_user_regularization_pointer(void) const method
+// RegularizationTerm* get_user_regularization_pointer(void) const method
 
 /// Returns a pointer to the user regularization functional.
 /// If that object does not exists, an exception is thrown.
 
-PerformanceTerm* PerformanceFunctional::get_user_regularization_pointer(void) const
+RegularizationTerm* PerformanceFunctional::get_user_regularization_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -1278,7 +928,7 @@ PerformanceTerm* PerformanceFunctional::get_user_regularization_pointer(void) co
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "PerformanceTerm* get_user_regularization_pointer(void) const method.\n"
+              << "ErrorTerm* get_user_regularization_pointer(void) const method.\n"
               << "Pointer to user regularization is NULL.\n";
 
        throw std::logic_error(buffer.str());
@@ -1290,153 +940,13 @@ PerformanceTerm* PerformanceFunctional::get_user_regularization_pointer(void) co
 }
 
 
-// OutputsIntegrals* get_outputs_integrals_constraints_pointer(void) const method
-
-/// Returns a pointer to the outputs integrals which is used as constraints.
-/// If that object does not exists, an exception is thrown.
-
-OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_constraints_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!outputs_integrals_constraints_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "OutputsIntegrals* get_outputs_integrals_constraints_pointer(void) const method.\n"
-              << "Pointer to outputs integrals constraints is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(outputs_integrals_constraints_pointer);
-}
-
-
-// SolutionsError* get_solutions_error_constraints_pointer(void) const method
-
-/// Returns a pointer to the solutions error which is used as constraints.
-/// If that object does not exists, an exception is thrown.
-
-SolutionsError* PerformanceFunctional::get_solutions_error_constraints_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!solutions_error_constraints_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "SolutionsError* get_outputs_integrals_constraints_pointer(void) const method.\n"
-              << "Pointer to solutions error constraints is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(solutions_error_constraints_pointer);
-}
-
-
-// FinalSolutionsError* get_final_solutions_error_constraints_pointer(void) const method
-
-/// Returns a pointer to the final solutions error which is used as constraints.
-/// If that object does not exists, an exception is thrown.
-
-FinalSolutionsError* PerformanceFunctional::get_final_solutions_error_constraints_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!final_solutions_error_constraints_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "FinalSolutionsError* get_final_solutions_error_constraints_pointer(void) const method.\n"
-              << "Pointer to final solutions error constraints is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(final_solutions_error_constraints_pointer);
-}
-
-
-// IndependentParametersError* get_independent_parameters_error_constraints_pointer(void) const method
-
-/// Returns a pointer to the independent parameters error which is used as constraints.
-/// If that object does not exists, an exception is thrown.
-
-IndependentParametersError* PerformanceFunctional::get_independent_parameters_error_constraints_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!independent_parameters_error_constraints_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "IndependentParametersError* get_independent_parameters_error_constraints_pointer(void) const method.\n"
-              << "Pointer to solutions error constraints is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-    }
-
-    #endif
-
-    return(independent_parameters_error_constraints_pointer);
-}
-
-
-// PerformanceTerm* get_user_constraints_pointer(void) const method
-
-/// Returns a pointer to the user constraints functional.
-/// If that object does not exists, an exception is thrown.
-
-PerformanceTerm* PerformanceFunctional::get_user_constraints_pointer(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!user_constraints_pointer)
-    {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-              << "PerformanceTerm* get_user_constraints_pointer(void) const method.\n"
-              << "Pointer to user constraints is NULL.\n";
-
-       throw std::logic_error(buffer.str());
-    }
-
-    #endif
-
-    return(user_constraints_pointer);
-}
-
-
-// const ObjectiveType& get_objective_type(void) const method
+// const ErrorType& get_error_type(void) const method
 
 /// Returns the type of objective term used in the performance functional expression.
 
-const PerformanceFunctional::ObjectiveType& PerformanceFunctional::get_objective_type(void) const
+const PerformanceFunctional::ErrorType& PerformanceFunctional::get_error_type(void) const
 {
-   return(objective_type);
+   return(error_type);
 }
 
 
@@ -1450,85 +960,55 @@ const PerformanceFunctional::RegularizationType& PerformanceFunctional::get_regu
 }
 
 
-// const ConstraintsType& get_constraints_type(void) const method
-
-/// Returns the type of constraints term used in the performance functional expression.
-
-const PerformanceFunctional::ConstraintsType& PerformanceFunctional::get_constraints_type(void) const
-{
-   return(constraints_type);
-}
-
-
-// std::string write_objective_type(void) const
+// std::string write_error_type(void) const
 
 /// Returns a string with the type of objective term used in the performance functional expression.
 
-std::string PerformanceFunctional::write_objective_type(void) const
+std::string PerformanceFunctional::write_error_type(void) const
 {
-   if(objective_type == NO_OBJECTIVE)
+   if(error_type == NO_ERROR)
    {
-      return("NO_OBJECTIVE");
+      return("NO_ERROR");
    }
-   else if(objective_type == SUM_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == SUM_SQUARED_ERROR)
    {
-      return("SUM_SQUARED_ERROR_OBJECTIVE");
+      return("SUM_SQUARED_ERROR");
    }
-   else if(objective_type == MEAN_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == MEAN_SQUARED_ERROR)
    {
-      return("MEAN_SQUARED_ERROR_OBJECTIVE");
+      return("MEAN_SQUARED_ERROR");
    }
-   else if(objective_type == ROOT_MEAN_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == ROOT_MEAN_SQUARED_ERROR)
    {
-      return("ROOT_MEAN_SQUARED_ERROR_OBJECTIVE");
+      return("ROOT_MEAN_SQUARED_ERROR");
    }
-   else if(objective_type == NORMALIZED_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == NORMALIZED_SQUARED_ERROR)
    {
-      return("NORMALIZED_SQUARED_ERROR_OBJECTIVE");
+      return("NORMALIZED_SQUARED_ERROR");
    }
-   else if(objective_type == WEIGHTED_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == WEIGHTED_SQUARED_ERROR)
    {
-      return("WEIGHTED_SQUARED_ERROR_OBJECTIVE");
+      return("WEIGHTED_SQUARED_ERROR");
    }
-   else if(objective_type == MINKOWSKI_ERROR_OBJECTIVE)
+   else if(error_type == MINKOWSKI_ERROR)
    {
-      return("MINKOWSKI_ERROR_OBJECTIVE");
+      return("MINKOWSKI_ERROR");
    }
-   else if(objective_type == CROSS_ENTROPY_ERROR_OBJECTIVE)
+   else if(error_type == CROSS_ENTROPY_ERROR)
    {
-      return("CROSS_ENTROPY_ERROR_OBJECTIVE");
+      return("CROSS_ENTROPY_ERROR");
    }
-   else if(objective_type == OUTPUTS_INTEGRALS_OBJECTIVE)
+   else if(error_type == USER_ERROR)
    {
-      return("OUTPUTS_INTEGRALS_OBJECTIVE");
-   }
-   else if(objective_type == SOLUTIONS_ERROR_OBJECTIVE)
-   {
-      return("SOLUTIONS_ERROR_OBJECTIVE");
-   }
-   else if(objective_type == FINAL_SOLUTIONS_ERROR_OBJECTIVE)
-   {
-      return("FINAL_SOLUTIONS_ERROR_OBJECTIVE");
-   }
-   else if(objective_type == INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE)
-   {
-      return("INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE");
-   }
-   else if(objective_type == INVERSE_SUM_SQUARED_ERROR_OBJECTIVE)
-   {
-      return("INVERSE_SUM_SQUARED_ERROR_OBJECTIVE");
-   }
-   else if(objective_type == USER_OBJECTIVE)
-   {
-      return("USER_OBJECTIVE");
+      return("USER_ERROR");
    }
    else
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "std::string write_objective_type(void) const method.\n"
-             << "Unknown objective type.\n";
+             << "std::string write_error_type(void) const method.\n"
+             << "Unknown error type.\n";
  
 	  throw std::logic_error(buffer.str());
    }
@@ -1545,13 +1025,13 @@ std::string PerformanceFunctional::write_regularization_type(void) const
    {
       return("NO_REGULARIZATION");
    }
-   else if(regularization_type == NEURAL_PARAMETERS_NORM_REGULARIZATION)
+   else if(regularization_type == NEURAL_PARAMETERS_NORM)
    {
-      return("NEURAL_PARAMETERS_NORM_REGULARIZATION");
+      return("NEURAL_PARAMETERS_NORM");
    }
-   else if(regularization_type == OUTPUTS_INTEGRALS_REGULARIZATION)
+   else if(regularization_type == OUTPUTS_INTEGRALS)
    {
-      return("OUTPUTS_INTEGRALS_REGULARIZATION");
+      return("OUTPUTS_INTEGRALS");
    }
    else if(regularization_type == USER_REGULARIZATION)
    {
@@ -1570,118 +1050,55 @@ std::string PerformanceFunctional::write_regularization_type(void) const
 }
 
 
-// std::string write_constraints_type(void) const method
-
-/// Returns a string with the type of constraints term used in the performance functional expression.
-
-std::string PerformanceFunctional::write_constraints_type(void) const
-{
-   if(constraints_type == NO_CONSTRAINTS)
-   {
-      return("NO_CONSTRAINTS");
-   }
-   else if(constraints_type == OUTPUTS_INTEGRALS_CONSTRAINTS)
-   {
-      return("OUTPUTS_INTEGRALS_CONSTRAINTS");
-   }
-   else if(constraints_type == SOLUTIONS_ERROR_CONSTRAINTS)
-   {
-      return("SOLUTIONS_ERROR_CONSTRAINTS");
-   }
-   else if(constraints_type == FINAL_SOLUTIONS_ERROR_CONSTRAINTS)
-   {
-      return("FINAL_SOLUTIONS_ERROR_CONSTRAINTS");
-   }
-   else if(constraints_type == INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS)
-   {
-      return("INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS");
-   }
-   else if(constraints_type == USER_CONSTRAINTS)
-   {
-      return("USER_CONSTRAINTS");
-   }
-   else
-   {
-      std::ostringstream buffer;
-
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "std::string write_constraints_type(void) const method.\n"
-             << "Unknown constraints type.\n";
- 
-	  throw std::logic_error(buffer.str());
-   }
-}
-
-
-// std::string write_objective_type_text(void) const
+// std::string write_error_type_text(void) const
 
 /// Returns a string in text format with the type of objective term used in the performance functional expression.
 
-std::string PerformanceFunctional::write_objective_type_text(void) const
+std::string PerformanceFunctional::write_error_type_text(void) const
 {
-   if(objective_type == NO_OBJECTIVE)
+   if(error_type == NO_ERROR)
    {
-      return("no objective");
+      return("no error");
    }
-   else if(objective_type == SUM_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == SUM_SQUARED_ERROR)
    {
       return("sum squared error");
    }
-   else if(objective_type == MEAN_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == MEAN_SQUARED_ERROR)
    {
       return("mean squared error");
    }
-   else if(objective_type == ROOT_MEAN_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == ROOT_MEAN_SQUARED_ERROR)
    {
       return("root mean squared error");
    }
-   else if(objective_type == NORMALIZED_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == NORMALIZED_SQUARED_ERROR)
    {
       return("normalized squared error");
    }
-   else if(objective_type == WEIGHTED_SQUARED_ERROR_OBJECTIVE)
+   else if(error_type == WEIGHTED_SQUARED_ERROR)
    {
       return("weighted squared error");
    }
-   else if(objective_type == MINKOWSKI_ERROR_OBJECTIVE)
+   else if(error_type == MINKOWSKI_ERROR)
    {
       return("Minkowski error");
    }
-   else if(objective_type == CROSS_ENTROPY_ERROR_OBJECTIVE)
+   else if(error_type == CROSS_ENTROPY_ERROR)
    {
       return("cross entropy error");
    }
-   else if(objective_type == OUTPUTS_INTEGRALS_OBJECTIVE)
+   else if(error_type == USER_ERROR)
    {
-      return("outputs integrals");
-   }
-   else if(objective_type == SOLUTIONS_ERROR_OBJECTIVE)
-   {
-      return("solutions error");
-   }
-   else if(objective_type == FINAL_SOLUTIONS_ERROR_OBJECTIVE)
-   {
-      return("final solutions error");
-   }
-   else if(objective_type == INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE)
-   {
-      return("independent parameters error");
-   }
-   else if(objective_type == INVERSE_SUM_SQUARED_ERROR_OBJECTIVE)
-   {
-      return("inverse sum squared error");
-   }
-   else if(objective_type == USER_OBJECTIVE)
-   {
-      return("user objective");
+      return("user error");
    }
    else
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "std::string write_objective_type_text(void) const method.\n"
-             << "Unknown objective type.\n";
+             << "std::string write_error_type_text(void) const method.\n"
+             << "Unknown error type.\n";
 
       throw std::logic_error(buffer.str());
    }
@@ -1698,11 +1115,11 @@ std::string PerformanceFunctional::write_regularization_type_text(void) const
    {
       return("no regularization");
    }
-   else if(regularization_type == NEURAL_PARAMETERS_NORM_REGULARIZATION)
+   else if(regularization_type == NEURAL_PARAMETERS_NORM)
    {
       return("neural parameters norm");
    }
-   else if(regularization_type == OUTPUTS_INTEGRALS_REGULARIZATION)
+   else if(regularization_type == OUTPUTS_INTEGRALS)
    {
       return("outputs integrals");
    }
@@ -1717,49 +1134,6 @@ std::string PerformanceFunctional::write_regularization_type_text(void) const
       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
              << "std::string write_regularization_type_text(void) const method.\n"
              << "Unknown regularization type.\n";
-
-      throw std::logic_error(buffer.str());
-   }
-}
-
-
-// std::string write_constraints_type_text(void) const method
-
-/// Returns a string in text format with the type of constraints term used in the performance functional expression.
-
-std::string PerformanceFunctional::write_constraints_type_text(void) const
-{
-   if(constraints_type == NO_CONSTRAINTS)
-   {
-      return("no constraints");
-   }
-   else if(constraints_type == OUTPUTS_INTEGRALS_CONSTRAINTS)
-   {
-      return("outputs integrals");
-   }
-   else if(constraints_type == SOLUTIONS_ERROR_CONSTRAINTS)
-   {
-      return("solutions error");
-   }
-   else if(constraints_type == FINAL_SOLUTIONS_ERROR_CONSTRAINTS)
-   {
-      return("fina solutions error");
-   }
-   else if(constraints_type == INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS)
-   {
-      return("independent parameters error");
-   }
-   else if(constraints_type == USER_CONSTRAINTS)
-   {
-      return("user constraints");
-   }
-   else
-   {
-      std::ostringstream buffer;
-
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "std::string write_constraints_type_text(void) const method.\n"
-             << "Unknown constraints type.\n";
 
       throw std::logic_error(buffer.str());
    }
@@ -1788,89 +1162,59 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
 
    // Objective
 
-    switch(objective_type)
+    switch(error_type)
     {
-        case NO_OBJECTIVE:
+        case NO_ERROR:
         {
             // Do nothing
         }
         break;
 
-        case SUM_SQUARED_ERROR_OBJECTIVE:
+        case SUM_SQUARED_ERROR:
         {
-            sum_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            sum_squared_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case MEAN_SQUARED_ERROR_OBJECTIVE:
+        case MEAN_SQUARED_ERROR:
         {
-            mean_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            mean_squared_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+        case ROOT_MEAN_SQUARED_ERROR:
         {
-            root_mean_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            root_mean_squared_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+        case NORMALIZED_SQUARED_ERROR:
         {
-            normalized_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            normalized_squared_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        case WEIGHTED_SQUARED_ERROR:
         {
-            weighted_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            weighted_squared_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case MINKOWSKI_ERROR_OBJECTIVE:
+        case MINKOWSKI_ERROR:
         {
-            Minkowski_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            Minkowski_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case CROSS_ENTROPY_ERROR_OBJECTIVE:
+        case CROSS_ENTROPY_ERROR:
         {
-            cross_entropy_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            cross_entropy_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case OUTPUTS_INTEGRALS_OBJECTIVE:
+        case USER_ERROR:
         {
-            outputs_integrals_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            solutions_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            final_solutions_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-        {
-            independent_parameters_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            inverse_sum_squared_error_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case USER_OBJECTIVE:
-        {
-            user_objective_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            user_error_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
@@ -1880,7 +1224,7 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                    << "void set_neural_network_pointer(NeuralNetwork*) method.\n"
-                   << "Unknown objective type.\n";
+                   << "Unknown error type.\n";
 
             throw std::logic_error(buffer.str());
         }
@@ -1897,15 +1241,15 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
         }
         break;
 
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+        case NEURAL_PARAMETERS_NORM:
         {
-            neural_parameters_norm_regularization_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            neural_parameters_norm_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
+        case OUTPUTS_INTEGRALS:
         {
-            outputs_integrals_regularization_pointer->set_neural_network_pointer(new_neural_network_pointer);
+            outputs_integrals_pointer->set_neural_network_pointer(new_neural_network_pointer);
         }
         break;
 
@@ -1927,59 +1271,6 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
         }
         break;
     }
-
-   // Constraints
-
-    switch(constraints_type)
-    {
-        case NO_CONSTRAINTS:
-        {
-            // Do nothing
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_CONSTRAINTS:
-        {
-            outputs_integrals_constraints_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            solutions_error_constraints_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            final_solutions_error_constraints_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-        {
-            independent_parameters_error_constraints_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        case USER_CONSTRAINTS:
-        {
-            user_constraints_pointer->set_neural_network_pointer(new_neural_network_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "void set_neural_network_pointer(NeuralNetwork*) method.\n"
-                   << "Unknown constraints type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
 }
 
 
@@ -1991,201 +1282,6 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
 void PerformanceFunctional::set_mathematical_model_pointer(MathematicalModel* new_mathematical_model_pointer)
 {
    mathematical_model_pointer = new_mathematical_model_pointer;
-
-   // Objective
-
-    switch(objective_type)
-    {
-        case NO_OBJECTIVE:
-        {
-            // Do nothing
-        }
-        break;
-
-        case SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            sum_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case MEAN_SQUARED_ERROR_OBJECTIVE:
-        {
-            mean_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
-        {
-            root_mean_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
-        {
-            normalized_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
-        {
-            weighted_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case MINKOWSKI_ERROR_OBJECTIVE:
-        {
-            Minkowski_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case CROSS_ENTROPY_ERROR_OBJECTIVE:
-        {
-            cross_entropy_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_OBJECTIVE:
-        {
-            outputs_integrals_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            solutions_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            final_solutions_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-        {
-            independent_parameters_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            inverse_sum_squared_error_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case USER_OBJECTIVE:
-        {
-            user_objective_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "void set_mathematical_model_pointer(MathematicalModel*) method.\n"
-                   << "Unknown objective type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-   // Regularization
-
-    switch(regularization_type)
-    {
-        case NO_REGULARIZATION:
-        {
-            // Do nothing
-        }
-        break;
-
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
-        {
-            neural_parameters_norm_regularization_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
-        {
-            outputs_integrals_regularization_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case USER_REGULARIZATION:
-        {
-            user_regularization_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "void set_mathematical_model_pointer(NeuralNetwork*) method.\n"
-                   << "Unknown regularization type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-   // Constraints
-
-    switch(constraints_type)
-    {
-        case NO_CONSTRAINTS:
-        {
-            // Do nothing
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_CONSTRAINTS:
-        {
-            outputs_integrals_constraints_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            solutions_error_constraints_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            final_solutions_error_constraints_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-        {
-            independent_parameters_error_constraints_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        case USER_CONSTRAINTS:
-        {
-            user_constraints_pointer->set_mathematical_model_pointer(new_mathematical_model_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "void set_mathematical_model_pointer(NeuralNetwork*) method.\n"
-                   << "Unknown constraints type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
 }
 
 
@@ -2200,41 +1296,41 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
 
    // Objective
 
-    switch(objective_type)
+    switch(error_type)
     {
-        case NO_OBJECTIVE:
+        case NO_ERROR:
         {
             // Do nothing
         }
         break;
 
-        case SUM_SQUARED_ERROR_OBJECTIVE:
+        case SUM_SQUARED_ERROR:
         {
-            sum_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            sum_squared_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
-        case MEAN_SQUARED_ERROR_OBJECTIVE:
+        case MEAN_SQUARED_ERROR:
         {
-            mean_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            mean_squared_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
-        case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+        case ROOT_MEAN_SQUARED_ERROR:
         {
-            root_mean_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            root_mean_squared_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
-        case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+        case NORMALIZED_SQUARED_ERROR:
         {
-            normalized_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            normalized_squared_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
-        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        case WEIGHTED_SQUARED_ERROR:
         {
-            weighted_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            weighted_squared_error_pointer->set_data_set_pointer(new_data_set_pointer);
 
             if(new_data_set_pointer == NULL)
             {
@@ -2246,56 +1342,26 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
             }
             else
             {
-                weighted_squared_error_objective_pointer->set_weights();
+                weighted_squared_error_pointer->set_weights();
             }
         }
         break;
 
-        case MINKOWSKI_ERROR_OBJECTIVE:
+        case MINKOWSKI_ERROR:
         {
-            Minkowski_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            Minkowski_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
-        case CROSS_ENTROPY_ERROR_OBJECTIVE:
+        case CROSS_ENTROPY_ERROR:
         {
-            cross_entropy_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            cross_entropy_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
-        case OUTPUTS_INTEGRALS_OBJECTIVE:
+        case USER_ERROR:
         {
-            outputs_integrals_objective_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            solutions_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            final_solutions_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-        {
-            independent_parameters_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            inverse_sum_squared_error_objective_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case USER_OBJECTIVE:
-        {
-            user_objective_pointer->set_data_set_pointer(new_data_set_pointer);
+            user_error_pointer->set_data_set_pointer(new_data_set_pointer);
         }
         break;
 
@@ -2305,101 +1371,7 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                    << "void set_data_set_pointer(DataSet*) method.\n"
-                   << "Unknown objective type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-   // Regularization
-
-    switch(regularization_type)
-    {
-        case NO_REGULARIZATION:
-        {
-            // Do nothing
-        }
-        break;
-
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
-        {
-            neural_parameters_norm_regularization_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
-        {
-            outputs_integrals_regularization_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case USER_REGULARIZATION:
-        {
-            user_regularization_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "void set_data_set_pointer(DataSet*) method.\n"
-                   << "Unknown regularization type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-   // Constraints
-
-    switch(constraints_type)
-    {
-        case NO_CONSTRAINTS:
-        {
-            // Do nothing
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_CONSTRAINTS:
-        {
-            outputs_integrals_constraints_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            solutions_error_constraints_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            final_solutions_error_constraints_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-        {
-            independent_parameters_error_constraints_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        case USER_CONSTRAINTS:
-        {
-            user_constraints_pointer->set_data_set_pointer(new_data_set_pointer);
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "void set_data_set_pointer(DataSet*) method.\n"
-                   << "Unknown constraints type.\n";
+                   << "Unknown error type.\n";
 
             throw std::logic_error(buffer.str());
         }
@@ -2408,48 +1380,33 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
 }
 
 
-// void set_user_objective_pointer(PerformanceTerm*) method
+// void set_user_error_pointer(ErrorTerm*) method
 
-/// Sets the objective term to be a specialized one provided by the user.
-/// @param new_user_objective_pointer Pointer to a performance term object.
+/// Sets the error term to be a specialized one provided by the user.
+/// @param new_user_error_pointer Pointer to a performance term object.
 
-void PerformanceFunctional::set_user_objective_pointer(PerformanceTerm* new_user_objective_pointer)
+void PerformanceFunctional::set_user_error_pointer(ErrorTerm* new_user_error_pointer)
 {
-    destruct_objective();
+    destruct_error_term();
 
-    objective_type = USER_OBJECTIVE;
+    error_type = USER_ERROR;
 
-    user_objective_pointer = new_user_objective_pointer;
+    user_error_pointer = new_user_error_pointer;
 }
 
 
-// void set_user_regularization_pointer(PerformanceTerm*) method
+// void set_user_regularization_pointer(RegularizationTerm*) method
 
 /// Sets the regularization term to be a specialized one provided by the user.
-/// @param new_user_regularization_pointer Pointer to a performance term object.
+/// @param new_user_regularization_pointer Pointer to a regularization term object.
 
-void PerformanceFunctional::set_user_regularization_pointer(PerformanceTerm* new_user_regularization_pointer)
+void PerformanceFunctional::set_user_regularization_pointer(RegularizationTerm* new_user_regularization_pointer)
 {
-    destruct_regularization();
+    destruct_regularization_term();
 
     regularization_type = USER_REGULARIZATION;
 
     user_regularization_pointer = new_user_regularization_pointer;
-}
-
-
-// void set_user_constraints_pointer(PerformanceTerm*) method
-
-/// Sets the constraints term to be a specialized one provided by the user.
-/// @param new_user_constraints_pointer Pointer to a performance term object.
-
-void PerformanceFunctional::set_user_constraints_pointer(PerformanceTerm* new_user_constraints_pointer)
-{
-    destruct_constraints();
-
-    constraints_type = USER_CONSTRAINTS;
-
-    user_constraints_pointer = new_user_constraints_pointer;
 }
 
 
@@ -2463,80 +1420,60 @@ void PerformanceFunctional::set_default(void)
 }
 
 
-// void set_objective_type(const std::string&) method
+// void set_error_type(const std::string&) method
 
-/// Sets a new type for the objective term from a string.
-/// @param new_objective_type String with the type of objective term.
+/// Sets a new type for the error term from a string.
+/// @param new_error_type String with the type of objective term.
 
-void PerformanceFunctional::set_objective_type(const std::string& new_objective_type)
+void PerformanceFunctional::set_error_type(const std::string& new_error_type)
 {
-   if(new_objective_type == "NO_OBJECTIVE")
+   if(new_error_type == "NO_ERROR")
    {
-      set_objective_type(NO_OBJECTIVE);
+      set_error_type(NO_ERROR);
    }
-   else if(new_objective_type == "SUM_SQUARED_ERROR_OBJECTIVE")
+   else if(new_error_type == "SUM_SQUARED_ERROR")
    {
-      set_objective_type(SUM_SQUARED_ERROR_OBJECTIVE);
+      set_error_type(SUM_SQUARED_ERROR);
    }
-   else if(new_objective_type == "MEAN_SQUARED_ERROR_OBJECTIVE")
+   else if(new_error_type == "MEAN_SQUARED_ERROR")
    {
-      set_objective_type(MEAN_SQUARED_ERROR_OBJECTIVE);
+      set_error_type(MEAN_SQUARED_ERROR);
    }
-   else if(new_objective_type == "ROOT_MEAN_SQUARED_ERROR_OBJECTIVE")
+   else if(new_error_type == "ROOT_MEAN_SQUARED_ERROR")
    {
-      set_objective_type(ROOT_MEAN_SQUARED_ERROR_OBJECTIVE);
+      set_error_type(ROOT_MEAN_SQUARED_ERROR);
    }
-   else if(new_objective_type == "NORMALIZED_SQUARED_ERROR_OBJECTIVE")
+   else if(new_error_type == "NORMALIZED_SQUARED_ERROR")
    {
-      set_objective_type(NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+      set_error_type(NORMALIZED_SQUARED_ERROR);
    }
-   else if(new_objective_type == "WEIGHTED_SQUARED_ERROR_OBJECTIVE")
+   else if(new_error_type == "WEIGHTED_SQUARED_ERROR")
    {
-      set_objective_type(WEIGHTED_SQUARED_ERROR_OBJECTIVE);
+      set_error_type(WEIGHTED_SQUARED_ERROR);
    }
-   else if(new_objective_type == "ROC_AREA_ERROR_OBJECTIVE")
+   else if(new_error_type == "ROC_AREA_ERROR")
    {
-      set_objective_type(ROC_AREA_ERROR_OBJECTIVE);
+      set_error_type(ROC_AREA_ERROR);
    }
-   else if(new_objective_type == "MINKOWSKI_ERROR_OBJECTIVE")
+   else if(new_error_type == "MINKOWSKI_ERROR")
    {
-      set_objective_type(MINKOWSKI_ERROR_OBJECTIVE);
+      set_error_type(MINKOWSKI_ERROR);
    }
-   else if(new_objective_type == "CROSS_ENTROPY_ERROR_OBJECTIVE")
+   else if(new_error_type == "CROSS_ENTROPY_ERROR")
    {
-      set_objective_type(CROSS_ENTROPY_ERROR_OBJECTIVE);
+      set_error_type(CROSS_ENTROPY_ERROR);
    }
-   else if(new_objective_type == "OUTPUTS_INTEGRALS_OBJECTIVE")
+   else if(new_error_type == "USER_ERROR")
    {
-      set_objective_type(OUTPUTS_INTEGRALS_OBJECTIVE);
-   }
-   else if(new_objective_type == "SOLUTIONS_ERROR_OBJECTIVE")
-   {
-      set_objective_type(SOLUTIONS_ERROR_OBJECTIVE);
-   }
-   else if(new_objective_type == "FINAL_SOLUTIONS_ERROR_OBJECTIVE")
-   {
-      set_objective_type(FINAL_SOLUTIONS_ERROR_OBJECTIVE);
-   }
-   else if(new_objective_type == "INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE")
-   {
-      set_objective_type(INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE);
-   }
-   else if(new_objective_type == "INVERSE_SUM_SQUARED_ERROR_OBJECTIVE")
-   {
-      set_objective_type(INVERSE_SUM_SQUARED_ERROR_OBJECTIVE);
-   }
-   else if(new_objective_type == "USER_OBJECTIVE")
-   {
-      set_objective_type(USER_OBJECTIVE);
+      set_error_type(USER_ERROR);
    }
    else
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "void set_objective_type(const std::string&) method.\n"
-             << "Unknown objective type: " << new_objective_type << ".\n";
+             << "void set_error_type(const std::string&) method.\n"
+             << "Unknown objective type: " << new_error_type << ".\n";
 
       throw std::logic_error(buffer.str());
    }   
@@ -2554,13 +1491,13 @@ void PerformanceFunctional::set_regularization_type(const std::string& new_regul
    {
       set_regularization_type(NO_REGULARIZATION);
    }
-   else if(new_regularization_type == "NEURAL_PARAMETERS_NORM_REGULARIZATION")
+   else if(new_regularization_type == "NEURAL_PARAMETERS_NORM")
    {
-      set_regularization_type(NEURAL_PARAMETERS_NORM_REGULARIZATION);
+      set_regularization_type(NEURAL_PARAMETERS_NORM);
    }
-   else if(new_regularization_type == "OUTPUTS_INTEGRALS_REGULARIZATION")
+   else if(new_regularization_type == "OUTPUTS_INTEGRALS")
    {
-      set_regularization_type(OUTPUTS_INTEGRALS_REGULARIZATION);
+      set_regularization_type(OUTPUTS_INTEGRALS);
    }
    else
    {
@@ -2569,50 +1506,6 @@ void PerformanceFunctional::set_regularization_type(const std::string& new_regul
       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
              << "void set_regularization_type(const std::string&) method.\n"
              << "Unknown regularization type: " << new_regularization_type << ".\n";
-
-      throw std::logic_error(buffer.str());
-   }   
-}
-
-
-// void set_constraints_type(const std::string&) method
-
-/// Sets a new type for the constraints term from a string.
-/// @param new_constraints_type String with the type of constraints term.
-
-void PerformanceFunctional::set_constraints_type(const std::string& new_constraints_type)
-{
-   if(new_constraints_type == "NO_CONSTRAINTS")
-   {
-      set_constraints_type(NO_CONSTRAINTS);
-   }
-   else if(new_constraints_type == "OUTPUTS_INTEGRALS_CONSTRAINTS")
-   {
-      set_constraints_type(OUTPUTS_INTEGRALS_CONSTRAINTS);
-   }
-   else if(new_constraints_type == "SOLUTIONS_ERROR_CONSTRAINTS")
-   {
-      set_constraints_type(SOLUTIONS_ERROR_CONSTRAINTS);
-   }
-   else if(new_constraints_type == "FINAL_SOLUTIONS_ERROR_CONSTRAINTS")
-   {
-      set_constraints_type(FINAL_SOLUTIONS_ERROR_CONSTRAINTS);
-   }
-   else if(new_constraints_type == "INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS")
-   {
-      set_constraints_type(INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS);
-   }
-   else if(new_constraints_type == "USER_CONSTRAINTS")
-   {
-      set_constraints_type(USER_CONSTRAINTS);
-   }
-   else
-   {
-      std::ostringstream buffer;
-
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "void set_constraints_type(const std::string&) method.\n"
-             << "Unknown constraints term type: " << new_constraints_type << ".\n";
 
       throw std::logic_error(buffer.str());
    }   
@@ -2632,106 +1525,76 @@ void PerformanceFunctional::set_display(const bool& new_display)
 }
 
 
-// void set_objective_type(const ObjectiveType&) method
+// void set_error_type(const ErrorType&) method
 
 /// Creates a new objective term inside the performance functional of a given performance term type.
-/// @param new_objective_type Type of objective term to be created.
+/// @param new_error_type Type of objective term to be created.
 
-void PerformanceFunctional::set_objective_type(const ObjectiveType& new_objective_type)
+void PerformanceFunctional::set_error_type(const ErrorType& new_error_type)
 {
-    destruct_objective();
+    destruct_error_term();
 
-   objective_type = new_objective_type;
+   error_type = new_error_type;
 
-   switch(new_objective_type)
+   switch(new_error_type)
    {
-      case NO_OBJECTIVE:
+      case NO_ERROR:
       {
          // Do nothing
       }
       break;
 
-      case SUM_SQUARED_ERROR_OBJECTIVE:
+      case SUM_SQUARED_ERROR:
       {
-         sum_squared_error_objective_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
+         sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
       }
       break;
 
-      case MEAN_SQUARED_ERROR_OBJECTIVE:
+      case MEAN_SQUARED_ERROR:
       {
-         mean_squared_error_objective_pointer = new MeanSquaredError(neural_network_pointer, data_set_pointer);
+         mean_squared_error_pointer = new MeanSquaredError(neural_network_pointer, data_set_pointer);
       }
       break;
 
-      case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+      case ROOT_MEAN_SQUARED_ERROR:
       {
-         root_mean_squared_error_objective_pointer = new RootMeanSquaredError(neural_network_pointer, data_set_pointer);
+         root_mean_squared_error_pointer = new RootMeanSquaredError(neural_network_pointer, data_set_pointer);
       }
       break;
 
-      case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+      case NORMALIZED_SQUARED_ERROR:
       {
-         normalized_squared_error_objective_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
+         normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
       }
       break;
 
-       case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+       case WEIGHTED_SQUARED_ERROR:
        {
-          weighted_squared_error_objective_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
+          weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
        }
        break;
 
-       case ROC_AREA_ERROR_OBJECTIVE:
+       case ROC_AREA_ERROR:
        {
-          roc_area_error_objective_pointer = new RocAreaError(neural_network_pointer, data_set_pointer);
+          roc_area_error_pointer = new RocAreaError(neural_network_pointer, data_set_pointer);
        }
        break;
 
-      case MINKOWSKI_ERROR_OBJECTIVE:
+      case MINKOWSKI_ERROR:
       {
-         Minkowski_error_objective_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
+         Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
       }
       break;
 
-      case CROSS_ENTROPY_ERROR_OBJECTIVE:
+      case CROSS_ENTROPY_ERROR:
       {
-         cross_entropy_error_objective_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
+         cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
       }
       break;
 
-      case OUTPUTS_INTEGRALS_OBJECTIVE:
+      case USER_ERROR:
       {
-         outputs_integrals_objective_pointer = new OutputsIntegrals(neural_network_pointer);
-      }
-      break;
-
-      case SOLUTIONS_ERROR_OBJECTIVE:
-      {
-         solutions_error_objective_pointer = new SolutionsError(neural_network_pointer);
-      }
-      break;
-
-      case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-      {
-         final_solutions_error_objective_pointer = new FinalSolutionsError(neural_network_pointer);
-      }
-      break;
-
-      case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-      {
-         independent_parameters_error_objective_pointer = new IndependentParametersError(neural_network_pointer);
-      }
-      break;
-
-      case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-      {
-         inverse_sum_squared_error_objective_pointer = new InverseSumSquaredError(neural_network_pointer);
-      }
-      break;
-
-      case USER_OBJECTIVE:
-      {
-         //user_objective_pointer = NULL;
+         //user_error_pointer = NULL;
       }
       break;
 
@@ -2740,8 +1603,8 @@ void PerformanceFunctional::set_objective_type(const ObjectiveType& new_objectiv
          std::ostringstream buffer;
 
          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                << "void set_objective_type(const ObjectiveType&) method.\n"
-                << "Unknown objective type.\n";
+                << "void set_error_type(const ErrorType&) method.\n"
+                << "Unknown error type.\n";
  
          throw std::logic_error(buffer.str());	     
       }
@@ -2757,7 +1620,7 @@ void PerformanceFunctional::set_objective_type(const ObjectiveType& new_objectiv
 
 void PerformanceFunctional::set_regularization_type(const RegularizationType& new_regularization_type)
 {
-    destruct_regularization();
+    destruct_regularization_term();
 
    regularization_type = new_regularization_type;
 
@@ -2769,15 +1632,15 @@ void PerformanceFunctional::set_regularization_type(const RegularizationType& ne
       }
       break;
 
-      case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+      case NEURAL_PARAMETERS_NORM:
       {
-         neural_parameters_norm_regularization_pointer = new NeuralParametersNorm(neural_network_pointer);
+         neural_parameters_norm_pointer = new NeuralParametersNorm(neural_network_pointer);
       }
       break;
 
-      case OUTPUTS_INTEGRALS_REGULARIZATION:
+      case OUTPUTS_INTEGRALS:
       {
-         outputs_integrals_regularization_pointer = new OutputsIntegrals(neural_network_pointer);
+         outputs_integrals_pointer = new OutputsIntegrals(neural_network_pointer);
       }
       break;
 
@@ -2802,146 +1665,51 @@ void PerformanceFunctional::set_regularization_type(const RegularizationType& ne
 }
 
 
-// void set_constraints_type(const ConstraintsType&) method
+// void destruct_error_term(void) method
 
-/// Creates a new constraints term inside the performance functional of a given performance term type.
-/// @param new_constraints_type Type of constraints term to be created.
+/// This method deletes the error term object. 
+/// It also sets the error term type to NONE and the corresponding flag to false. 
 
-void PerformanceFunctional::set_constraints_type(const ConstraintsType& new_constraints_type)
+void PerformanceFunctional::destruct_error_term(void)
 {
-    destruct_constraints();
+    delete sum_squared_error_pointer;
+    delete mean_squared_error_pointer;
+    delete root_mean_squared_error_pointer;
+    delete normalized_squared_error_pointer;
+    delete Minkowski_error_pointer;
+    delete cross_entropy_error_pointer;
+    delete outputs_integrals_pointer;
+    delete user_error_pointer;
 
-   constraints_type = new_constraints_type;
+    sum_squared_error_pointer = NULL;
+    mean_squared_error_pointer = NULL;
+    root_mean_squared_error_pointer = NULL;
+    normalized_squared_error_pointer = NULL;
+    Minkowski_error_pointer = NULL;
+    cross_entropy_error_pointer = NULL;
+    outputs_integrals_pointer = NULL;
+    user_error_pointer = NULL;
 
-   switch(constraints_type)
-   {
-      case NO_CONSTRAINTS:
-      {
-         // Do nothing
-      }
-      break;
-
-      case OUTPUTS_INTEGRALS_CONSTRAINTS:
-      {
-         outputs_integrals_constraints_pointer = new OutputsIntegrals(neural_network_pointer);
-      }
-      break;
-
-      case SOLUTIONS_ERROR_CONSTRAINTS:
-      {
-         solutions_error_constraints_pointer = new SolutionsError(neural_network_pointer);
-      }
-      break;
-
-      case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-      {
-         final_solutions_error_constraints_pointer = new FinalSolutionsError(neural_network_pointer);
-      }
-      break;
-
-      case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-      {
-         independent_parameters_error_constraints_pointer = new IndependentParametersError(neural_network_pointer);
-      }
-      break;
-
-      case USER_CONSTRAINTS:
-      {
-         user_constraints_pointer = NULL;
-      }
-      break;
-
-      default:
-      {
-         std::ostringstream buffer;
-
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                << "void set_constraints_type(const ConstraintsType&) method.\n"
-                << "Unknown constraints type.\n";
- 
-         throw std::logic_error(buffer.str());	     
-      }
-      break;
-   }
+   error_type = NO_ERROR;
 }
 
 
-// void destruct_objective(void) method
-
-/// This method deletes the objective term object. 
-/// It also sets the objective term type to NONE and the corresponding flag to false. 
-
-void PerformanceFunctional::destruct_objective(void)
-{
-    delete sum_squared_error_objective_pointer;
-    delete mean_squared_error_objective_pointer;
-    delete root_mean_squared_error_objective_pointer;
-    delete normalized_squared_error_objective_pointer;
-    delete Minkowski_error_objective_pointer;
-    delete cross_entropy_error_objective_pointer;
-    delete outputs_integrals_objective_pointer;
-    delete solutions_error_objective_pointer;
-    delete final_solutions_error_objective_pointer;
-    delete independent_parameters_error_objective_pointer;
-    delete inverse_sum_squared_error_objective_pointer;
-    delete user_objective_pointer;
-
-    sum_squared_error_objective_pointer = NULL;
-    mean_squared_error_objective_pointer = NULL;
-    root_mean_squared_error_objective_pointer = NULL;
-    normalized_squared_error_objective_pointer = NULL;
-    Minkowski_error_objective_pointer = NULL;
-    cross_entropy_error_objective_pointer = NULL;
-    outputs_integrals_objective_pointer = NULL;
-    solutions_error_objective_pointer = NULL;
-    final_solutions_error_objective_pointer = NULL;
-    independent_parameters_error_objective_pointer = NULL;
-    inverse_sum_squared_error_objective_pointer = NULL;
-    user_objective_pointer = NULL;
-
-   objective_type = NO_OBJECTIVE;
-}
-
-
-// void destruct_regularization(void) method
+// void destruct_regularization_term(void) method
 
 /// This method deletes the regularization term object. 
 /// It also sets the regularization term type to NONE and the corresponding flag to false. 
 
-void PerformanceFunctional::destruct_regularization(void)
+void PerformanceFunctional::destruct_regularization_term(void)
 {
-    delete neural_parameters_norm_regularization_pointer;
-    delete outputs_integrals_regularization_pointer;
+    delete neural_parameters_norm_pointer;
+    delete outputs_integrals_pointer;
     delete user_regularization_pointer;
 
-    neural_parameters_norm_regularization_pointer = NULL;
-    outputs_integrals_regularization_pointer = NULL;
+    neural_parameters_norm_pointer = NULL;
+    outputs_integrals_pointer = NULL;
     user_regularization_pointer = NULL;
 
    regularization_type = NO_REGULARIZATION;
-}
-
-
-// void destruct_constraints(void) method
-
-/// This method deletes the constraints term object. 
-/// It also sets the constraints term type to NONE and the corresponding flag to false. 
-
-void PerformanceFunctional::destruct_constraints(void)
-{
-    delete outputs_integrals_constraints_pointer;
-    delete solutions_error_constraints_pointer;
-    delete final_solutions_error_constraints_pointer;
-    delete independent_parameters_error_constraints_pointer;
-    delete user_constraints_pointer;
-
-    outputs_integrals_constraints_pointer = NULL;
-    solutions_error_constraints_pointer = NULL;
-    final_solutions_error_constraints_pointer = NULL;
-    independent_parameters_error_constraints_pointer = NULL;
-    user_constraints_pointer = NULL;
-
-   constraints_type = NO_CONSTRAINTS;
 }
 
 
@@ -2951,18 +1719,17 @@ void PerformanceFunctional::destruct_constraints(void)
 
 void PerformanceFunctional::destruct_all_terms(void)
 {
-   destruct_objective();
-   destruct_regularization();
-   destruct_constraints();
+   destruct_error_term();
+   destruct_regularization_term();
 }
 
 
-// double calculate_objective(void) const method
+// double calculate_error(void) const method
 
 /// Returns the objective evaluation,
 /// according to the respective objective type used in the performance functional expression.
 
-double PerformanceFunctional::calculate_objective(void) const
+double PerformanceFunctional::calculate_error(void) const
 {
     // Control sentence (if debug)
 
@@ -2976,95 +1743,65 @@ double PerformanceFunctional::calculate_objective(void) const
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-            objective = sum_squared_error_objective_pointer->calculate_performance();
+            objective = sum_squared_error_pointer->calculate_error();
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             objective = mean_squared_error_objective_pointer->calculate_performance();
+             objective = mean_squared_error_pointer->calculate_error();
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             objective = root_mean_squared_error_objective_pointer->calculate_performance();
+             objective = root_mean_squared_error_pointer->calculate_error();
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             objective = normalized_squared_error_objective_pointer->calculate_performance();
+             objective = normalized_squared_error_pointer->calculate_error();
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             objective = weighted_squared_error_objective_pointer->calculate_performance();
+             objective = weighted_squared_error_pointer->calculate_error();
          }
          break;
 
-         case ROC_AREA_ERROR_OBJECTIVE:
+         case ROC_AREA_ERROR:
          {
-             objective = roc_area_error_objective_pointer->calculate_performance();
+             objective = roc_area_error_pointer->calculate_error();
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             objective = Minkowski_error_objective_pointer->calculate_performance();
+             objective = Minkowski_error_pointer->calculate_error();
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             objective = cross_entropy_error_objective_pointer->calculate_performance();
+             objective = cross_entropy_error_pointer->calculate_error();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             objective = outputs_integrals_objective_pointer->calculate_performance();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             objective = solutions_error_objective_pointer->calculate_performance();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             objective = final_solutions_error_objective_pointer->calculate_performance();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             objective = independent_parameters_error_objective_pointer->calculate_performance();
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             objective = inverse_sum_squared_error_objective_pointer->calculate_performance();
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             objective = user_objective_pointer->calculate_performance();
+             objective = user_error_pointer->calculate_error();
          }
          break;
 
@@ -3073,8 +1810,8 @@ double PerformanceFunctional::calculate_objective(void) const
              std::ostringstream buffer;
 
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "double calculate_objective(void) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "double calculate_error(void) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -3085,12 +1822,12 @@ double PerformanceFunctional::calculate_objective(void) const
 }
 
 
-// double calculate_objective(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns the objective evaluation,
 /// according to the respective objective type used in the performance functional expression.
 
-double PerformanceFunctional::calculate_objective(const Vector<double>& parameters) const
+double PerformanceFunctional::calculate_error(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -3104,95 +1841,65 @@ double PerformanceFunctional::calculate_objective(const Vector<double>& paramete
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-            objective = sum_squared_error_objective_pointer->calculate_performance(parameters);
+            objective = sum_squared_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             objective = mean_squared_error_objective_pointer->calculate_performance(parameters);
+             objective = mean_squared_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             objective = root_mean_squared_error_objective_pointer->calculate_performance(parameters);
+             objective = root_mean_squared_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             objective = normalized_squared_error_objective_pointer->calculate_performance(parameters);
+             objective = normalized_squared_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             objective = weighted_squared_error_objective_pointer->calculate_performance(parameters);
+             objective = weighted_squared_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case ROC_AREA_ERROR_OBJECTIVE:
+         case ROC_AREA_ERROR:
          {
-             objective = roc_area_error_objective_pointer->calculate_performance(parameters);
+             objective = roc_area_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             objective = Minkowski_error_objective_pointer->calculate_performance(parameters);
+             objective = Minkowski_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             objective = cross_entropy_error_objective_pointer->calculate_performance(parameters);
+             objective = cross_entropy_error_pointer->calculate_error(parameters);
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             objective = outputs_integrals_objective_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             objective = solutions_error_objective_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             //objective = final_solutions_error_objective_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             objective = independent_parameters_error_objective_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             objective = inverse_sum_squared_error_objective_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             objective = user_objective_pointer->calculate_performance(parameters);
+             objective = user_error_pointer->calculate_error(parameters);
          }
          break;
 
@@ -3201,8 +1908,8 @@ double PerformanceFunctional::calculate_objective(const Vector<double>& paramete
              std::ostringstream buffer;
 
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "double calculate_objective(const Vector<double>&) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "double calculate_error(const Vector<double>&) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -3238,21 +1945,21 @@ double PerformanceFunctional::calculate_regularization(void) const
         }
         break;
 
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+        case NEURAL_PARAMETERS_NORM:
         {
-            regularization = neural_parameters_norm_regularization_pointer->calculate_performance();
+            regularization = neural_parameters_norm_pointer->calculate_regularization();
         }
         break;
 
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
+        case OUTPUTS_INTEGRALS:
         {
-            regularization = outputs_integrals_regularization_pointer->calculate_performance();
+            regularization = outputs_integrals_pointer->calculate_regularization();
         }
         break;
 
         case USER_REGULARIZATION:
         {
-            regularization = user_regularization_pointer->calculate_performance();
+            regularization = user_regularization_pointer->calculate_regularization();
         }
         break;
 
@@ -3298,21 +2005,21 @@ double PerformanceFunctional::calculate_regularization(const Vector<double>& par
         }
         break;
 
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+        case NEURAL_PARAMETERS_NORM:
         {
-            regularization = neural_parameters_norm_regularization_pointer->calculate_performance(parameters);
+            regularization = neural_parameters_norm_pointer->calculate_regularization(parameters);
         }
         break;
 
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
+        case OUTPUTS_INTEGRALS:
         {
-            regularization = outputs_integrals_regularization_pointer->calculate_performance(parameters);
+            regularization = outputs_integrals_pointer->calculate_regularization(parameters);
         }
         break;
 
         case USER_REGULARIZATION:
         {
-            regularization = user_regularization_pointer->calculate_performance(parameters);
+            regularization = user_regularization_pointer->calculate_regularization(parameters);
         }
         break;
 
@@ -3333,161 +2040,14 @@ double PerformanceFunctional::calculate_regularization(const Vector<double>& par
 }
 
 
-// double calculate_constraints(void) const method
 
-/// Returns the constraints evaluation,
-/// according to the respective constraints type used in the performance functional expression.
+// Vector<double> calculate_error_terms(void) const method
 
-double PerformanceFunctional::calculate_constraints(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    check_neural_network();
-
-    #endif
-
-    double constraints = 0.0;
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             constraints = outputs_integrals_constraints_pointer->calculate_performance();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             constraints = solutions_error_constraints_pointer->calculate_performance();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             constraints = final_solutions_error_constraints_pointer->calculate_performance();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             constraints = independent_parameters_error_constraints_pointer->calculate_performance();
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             constraints = user_constraints_pointer->calculate_performance();
-         }
-         break;
-
-         default:
-         {
-             std::ostringstream buffer;
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "double calculate_constraints(void) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     return(constraints);
-}
-
-
-// double calculate_constraints(const Vector<double>&) const method
-
-/// Returns the constraints evaluation,
-/// according to the respective constraints type used in the performance functional expression.
-
-double PerformanceFunctional::calculate_constraints(const Vector<double>& parameters) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    check_neural_network();
-
-    #endif
-
-    double constraints = 0.0;
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             constraints = outputs_integrals_constraints_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             constraints = solutions_error_constraints_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             //constraints = final_solutions_error_constraints_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             constraints = independent_parameters_error_constraints_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             constraints = user_constraints_pointer->calculate_performance(parameters);
-         }
-         break;
-
-         default:
-         {
-             std::ostringstream buffer;
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "double calculate_constraints(const Vector<double>&) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     return(constraints);
-}
-
-
-// Vector<double> calculate_objective_terms(void) const method
-
-/// Returns the evaluation of all the objective terms,
+/// Returns the evaluation of all the error terms,
 /// according to the respective objective type used in the performance functional expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 
-Vector<double> PerformanceFunctional::calculate_objective_terms(void) const
+Vector<double> PerformanceFunctional::calculate_error_terms(void) const
 {
     // Control sentence (if debug)
 
@@ -3507,129 +2067,79 @@ Vector<double> PerformanceFunctional::calculate_objective_terms(void) const
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-            objective_terms = sum_squared_error_objective_pointer->calculate_terms();
+            objective_terms = sum_squared_error_pointer->calculate_terms();
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-            objective_terms = mean_squared_error_objective_pointer->calculate_terms();
+            objective_terms = mean_squared_error_pointer->calculate_terms();
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms(void) const method.\n"
                     << "Cannot calculate performance terms for root mean squared error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             objective_terms = normalized_squared_error_objective_pointer->calculate_terms();
+             objective_terms = normalized_squared_error_pointer->calculate_terms();
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             objective_terms = weighted_squared_error_objective_pointer->calculate_terms();
+             objective_terms = weighted_squared_error_pointer->calculate_terms();
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms(void) const method.\n"
                     << "Cannot calculate performance terms for Minkowski error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms(void) const method.\n"
                     << "Cannot calculate performance terms for cross-entropy error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for outputs integrals objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for solutions error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for final solutions error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for independent parameters error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for inverse sum squared error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             objective_terms = user_objective_pointer->calculate_terms();
+             objective_terms = user_error_pointer->calculate_terms();
          }
          break;
 
          default:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_terms(void) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "Vector<double> calculate_error_terms(void) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -3640,158 +2150,16 @@ Vector<double> PerformanceFunctional::calculate_objective_terms(void) const
 }
 
 
-// Vector<double> calculate_regularization_terms(void) const method
+// Matrix<double> calculate_error_terms_Jacobian(void) const method
 
-/// @todo
-
-Vector<double> PerformanceFunctional::calculate_regularization_terms(void) const
-{
-    std::ostringstream buffer;
-
-    Vector<double> regularization_terms;
-
-    switch(regularization_type)
-    {
-        case NO_REGULARIZATION:
-        {
-            // Do nothing
-        }
-        break;
-
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
-        {
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Vector<double> calculate_regularization_terms(void) const method.\n"
-                   << "Cannot calculate performance terms for neural parameters norm.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
-        {
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Vector<double> calculate_regularization_terms(void) const method.\n"
-                   << "Cannot calculate performance terms for outputs integrals.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-
-        case USER_REGULARIZATION:
-        {
-            regularization_terms = user_regularization_pointer->calculate_terms();
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Vector<double> calculate_regularization_terms(void) const method.\n"
-                   << "Unknown regularization type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-    return(regularization_terms);
-}
-
-
-// Vector<double> calculate_constraints_terms(void) const method
-
-/// @todo
-
-Vector<double> PerformanceFunctional::calculate_constraints_terms(void) const
-{
-    Vector<double> constraints_terms;
-
-    std::ostringstream buffer;
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for outputs integrals.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for solutions error.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for final solutions error.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for independent parameters error.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             constraints_terms = user_constraints_pointer->calculate_terms();
-         }
-         break;
-
-         default:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_terms(void) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-    return(constraints_terms);
-}
-
-
-// Matrix<double> calculate_objective_terms_Jacobian(void) const method
-
-/// Returns the Jacobian of the objective terms function,
+/// Returns the Jacobian of the error terms function,
 /// according to the objective type used in the performance functional expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters,
 /// and the number of columns the number of terms composing the objective.
 
-Matrix<double> PerformanceFunctional::calculate_objective_terms_Jacobian(void) const
+Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
 {
     // Control sentence (if debug)
 
@@ -3807,129 +2175,80 @@ Matrix<double> PerformanceFunctional::calculate_objective_terms_Jacobian(void) c
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-            objective_terms_Jacobian = sum_squared_error_objective_pointer->calculate_terms_Jacobian();
+            objective_terms_Jacobian = sum_squared_error_pointer->calculate_terms_Jacobian();
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-            objective_terms_Jacobian = mean_squared_error_objective_pointer->calculate_terms_Jacobian();
+            objective_terms_Jacobian = mean_squared_error_pointer->calculate_terms_Jacobian();
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
+                    << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
                     << "Cannot calculate performance terms for root mean squared error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             objective_terms_Jacobian = normalized_squared_error_objective_pointer->calculate_terms_Jacobian();
+             objective_terms_Jacobian = normalized_squared_error_pointer->calculate_terms_Jacobian();
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             objective_terms_Jacobian = weighted_squared_error_objective_pointer->calculate_terms_Jacobian();
+             objective_terms_Jacobian = weighted_squared_error_pointer->calculate_terms_Jacobian();
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
+                    << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
                     << "Cannot calculate performance terms for Minkowski error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
          break;
 
-     case CROSS_ENTROPY_ERROR_OBJECTIVE:
+     case CROSS_ENTROPY_ERROR:
      {
          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
+                << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
                 << "Cannot calculate performance terms for cross-entropy error objective.\n";
 
          throw std::logic_error(buffer.str());
      }
      break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+
+         case USER_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for outputs integrals objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for solutions error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for final solutions error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for independent parameters error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for inverse sum squared error objective.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             objective_terms_Jacobian = user_objective_pointer->calculate_terms_Jacobian();
+             objective_terms_Jacobian = user_error_pointer->calculate_terms_Jacobian();
          }
          break;
 
          default:
          {
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_terms_Jacobian(void) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -3940,163 +2259,13 @@ Matrix<double> PerformanceFunctional::calculate_objective_terms_Jacobian(void) c
 }
 
 
-// Matrix<double> calculate_regularization_terms_Jacobian(void) const method
-
-/// Returns the Jacobian of the regularization terms function,
-/// according to the regularization type used in the performance functional expression.
-/// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
-/// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
-/// The number of rows in the Jacobian matrix are the number of parameters,
-/// and the number of columns the number of terms composing the regularization.
-
-Matrix<double> PerformanceFunctional::calculate_regularization_terms_Jacobian(void) const
-{
-    Matrix<double> regularization_terms_Jacobian;
-
-    std::ostringstream buffer;
-
-    switch(regularization_type)
-    {
-        case NO_REGULARIZATION:
-        {
-            // Do nothing
-        }
-        break;
-
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
-        {
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Matrix<double> calculate_regularization_terms_Jacobian(void) const method.\n"
-                   << "Cannot calculate performance terms for neural parameters norm.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
-        {
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Matrix<double> calculate_regularization_terms_Jacobian(void) const method.\n"
-                   << "Cannot calculate performance terms for outputs integrals.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-
-        case USER_REGULARIZATION:
-        {
-            regularization_terms_Jacobian = user_regularization_pointer->calculate_terms_Jacobian();
-        }
-        break;
-
-        default:
-        {
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "Matrix<double> calculate_regularization_terms_Jacobian(void) const method.\n"
-                   << "Unknown regularization type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-    return(regularization_terms_Jacobian);
-}
-
-
-// Matrix<double> calculate_constraints_terms_Jacobian(void) const method
-
-/// Returns the Jacobian of the constraints terms function,
-/// according to the constraints type used in the performance functional expression.
-/// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
-/// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
-/// The number of rows in the Jacobian matrix are the number of parameters,
-/// and the number of columns the number of terms composing the constraints.
-
-Matrix<double> PerformanceFunctional::calculate_constraints_terms_Jacobian(void) const
-{
-    Matrix<double> constraints_terms_Jacobian;
-
-    std::ostringstream buffer;
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for outputs integrals.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for solutions error.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for final solutions error.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for independent parameters error.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             constraints_terms_Jacobian = user_constraints_pointer->calculate_terms_Jacobian();
-         }
-         break;
-
-         default:
-         {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_terms_Jacobian(void) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-    return(constraints_terms_Jacobian);
-}
-
-
-// Vector<double> calculate_objective_gradient(void) const method
+// Vector<double> calculate_error_gradient(void) const method
 
 /// Returns the gradient of the objective, according to the objective type.
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> PerformanceFunctional::calculate_objective_gradient(void) const
+Vector<double> PerformanceFunctional::calculate_error_gradient(void) const
 {
     // Control sentence (if debug)
 
@@ -4112,95 +2281,65 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(void) const
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-             gradient = sum_squared_error_objective_pointer->calculate_gradient();
+             gradient = sum_squared_error_pointer->calculate_gradient();
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             gradient = mean_squared_error_objective_pointer->calculate_gradient();
+             gradient = mean_squared_error_pointer->calculate_gradient();
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             gradient = root_mean_squared_error_objective_pointer->calculate_gradient();
+             gradient = root_mean_squared_error_pointer->calculate_gradient();
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             gradient = normalized_squared_error_objective_pointer->calculate_gradient();
+             gradient = normalized_squared_error_pointer->calculate_gradient();
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             gradient = weighted_squared_error_objective_pointer->calculate_gradient();
+             gradient = weighted_squared_error_pointer->calculate_gradient();
          }
          break;
 
-         case ROC_AREA_ERROR_OBJECTIVE:
+         case ROC_AREA_ERROR:
          {
-             gradient = roc_area_error_objective_pointer->calculate_gradient();
+             gradient = roc_area_error_pointer->calculate_gradient();
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             gradient = Minkowski_error_objective_pointer->calculate_gradient();
+             gradient = Minkowski_error_pointer->calculate_gradient();
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             gradient = cross_entropy_error_objective_pointer->calculate_gradient();
+             gradient = cross_entropy_error_pointer->calculate_gradient();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             gradient = outputs_integrals_objective_pointer->calculate_gradient();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             gradient = solutions_error_objective_pointer->calculate_gradient();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             gradient = final_solutions_error_objective_pointer->calculate_gradient();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             gradient = independent_parameters_error_objective_pointer->calculate_gradient();
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             gradient = inverse_sum_squared_error_objective_pointer->calculate_gradient();
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             gradient = user_objective_pointer->calculate_gradient();
+             gradient = user_error_pointer->calculate_gradient();
          }
          break;
 
@@ -4209,8 +2348,8 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(void) const
              std::ostringstream buffer;
 
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_gradient(void) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "Vector<double> calculate_error_gradient(void) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -4221,13 +2360,13 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(void) const
 }
 
 
-// Vector<double> calculate_objective_gradient(const Vector<double>&) const method
+// Vector<double> calculate_error_gradient(const Vector<double>&) const method
 
 /// Returns the gradient of the objective, according to the objective type.
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> PerformanceFunctional::calculate_objective_gradient(const Vector<double>& parameters) const
+Vector<double> PerformanceFunctional::calculate_error_gradient(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -4243,89 +2382,59 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(const Vector<
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-             //gradient = sum_squared_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = sum_squared_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             //gradient = mean_squared_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = mean_squared_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             //gradient = root_mean_squared_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = root_mean_squared_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             //gradient = normalized_squared_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = normalized_squared_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             //gradient = weighted_squared_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = weighted_squared_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             //gradient = Minkowski_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = Minkowski_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             //gradient = cross_entropy_error_objective_pointer->calculate_gradient(parameters);
+             //gradient = cross_entropy_error_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             //gradient = outputs_integrals_objective_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             gradient = solutions_error_objective_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             gradient = final_solutions_error_objective_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             //gradient = independent_parameters_error_objective_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             gradient = inverse_sum_squared_error_objective_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             gradient = user_objective_pointer->calculate_gradient(parameters);
+             gradient = user_error_pointer->calculate_gradient(parameters);
          }
          break;
 
@@ -4334,8 +2443,8 @@ Vector<double> PerformanceFunctional::calculate_objective_gradient(const Vector<
              std::ostringstream buffer;
 
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_objective_gradient(const Vector<double>&) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "Vector<double> calculate_error_gradient(const Vector<double>&) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -4376,15 +2485,15 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(void) co
          }
          break;
 
-         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+         case NEURAL_PARAMETERS_NORM:
          {
-             gradient = neural_parameters_norm_regularization_pointer->calculate_gradient();
+             gradient = neural_parameters_norm_pointer->calculate_gradient();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_REGULARIZATION:
+         case OUTPUTS_INTEGRALS:
          {
-             gradient = outputs_integrals_regularization_pointer->calculate_gradient();
+             gradient = outputs_integrals_pointer->calculate_gradient();
          }
          break;
 
@@ -4441,15 +2550,15 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(const Ve
          }
          break;
 
-         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+         case NEURAL_PARAMETERS_NORM:
          {
-             //gradient = neural_parameters_norm_regularization_pointer->calculate_gradient(parameters);
+             //gradient = neural_parameters_norm_pointer->calculate_gradient(parameters);
          }
          break;
 
-         case OUTPUTS_INTEGRALS_REGULARIZATION:
+         case OUTPUTS_INTEGRALS:
          {
-             //gradient = outputs_integrals_regularization_pointer->calculate_gradient(parameters);
+             //gradient = outputs_integrals_pointer->calculate_gradient(parameters);
          }
          break;
 
@@ -4476,167 +2585,13 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(const Ve
 }
 
 
-// Vector<double> calculate_constraints_gradient(void) const method
-
-/// Returns the gradient of the constraints, according to the objective type.
-/// That gradient is the vector of partial derivatives of the constraints with respect to the parameters.
-/// The size is thus the number of parameters.
-
-Vector<double> PerformanceFunctional::calculate_constraints_gradient(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    check_neural_network();
-
-    #endif
-
-    const size_t parameters_number = neural_network_pointer->count_parameters_number();
-
-    Vector<double> gradient(parameters_number, 0.0);
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             gradient = outputs_integrals_constraints_pointer->calculate_gradient();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             gradient = solutions_error_constraints_pointer->calculate_gradient();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             gradient = final_solutions_error_constraints_pointer->calculate_gradient();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             gradient = independent_parameters_error_constraints_pointer->calculate_gradient();
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             gradient = user_constraints_pointer->calculate_gradient();
-         }
-         break;
-
-         default:
-         {
-             std::ostringstream buffer;
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_gradient(void) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     return(gradient);
-}
-
-
-// Vector<double> calculate_constraints_gradient(const Vector<double>&) const method
-
-/// Returns the gradient of the constraints, according to the objective type.
-/// That gradient is the vector of partial derivatives of the constraints with respect to the parameters.
-/// The size is thus the number of parameters.
-
-Vector<double> PerformanceFunctional::calculate_constraints_gradient(const Vector<double>& parameters) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    check_neural_network();
-
-    #endif
-
-    const size_t parameters_number = neural_network_pointer->count_parameters_number();
-
-    Vector<double> gradient(parameters_number, 0.0);
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             //gradient = outputs_integrals_constraints_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             gradient = solutions_error_constraints_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             gradient = final_solutions_error_constraints_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             //gradient = independent_parameters_error_constraints_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             gradient = user_constraints_pointer->calculate_gradient(parameters);
-         }
-         break;
-
-         default:
-         {
-             std::ostringstream buffer;
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Vector<double> calculate_constraints_gradient(const Vector<double>&) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     return(gradient);
-}
-
-
-// Matrix<double> calculate_objective_Hessian(void) const method
+// Matrix<double> calculate_error_Hessian(void) const method
 
 /// Returns the Hessian of the objective, according to the objective type.
 /// That Hessian is the matrix of second partial derivatives of the objective with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 
-Matrix<double> PerformanceFunctional::calculate_objective_Hessian(void) const
+Matrix<double> PerformanceFunctional::calculate_error_Hessian(void) const
 {
     // Control sentence (if debug)
 
@@ -4652,89 +2607,59 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(void) const
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-             Hessian = sum_squared_error_objective_pointer->calculate_Hessian();
+             Hessian = sum_squared_error_pointer->calculate_Hessian();
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             Hessian = mean_squared_error_objective_pointer->calculate_Hessian();
+             Hessian = mean_squared_error_pointer->calculate_Hessian();
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             Hessian = root_mean_squared_error_objective_pointer->calculate_Hessian();
+             Hessian = root_mean_squared_error_pointer->calculate_Hessian();
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             Hessian = normalized_squared_error_objective_pointer->calculate_Hessian();
+             Hessian = normalized_squared_error_pointer->calculate_Hessian();
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             Hessian = weighted_squared_error_objective_pointer->calculate_Hessian();
+             Hessian = weighted_squared_error_pointer->calculate_Hessian();
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             Hessian = Minkowski_error_objective_pointer->calculate_Hessian();
+             Hessian = Minkowski_error_pointer->calculate_Hessian();
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             Hessian = cross_entropy_error_objective_pointer->calculate_Hessian();
+             Hessian = cross_entropy_error_pointer->calculate_Hessian();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             Hessian = outputs_integrals_objective_pointer->calculate_Hessian();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             Hessian = solutions_error_objective_pointer->calculate_Hessian();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             Hessian = final_solutions_error_objective_pointer->calculate_Hessian();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             Hessian = independent_parameters_error_objective_pointer->calculate_Hessian();
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             Hessian = inverse_sum_squared_error_objective_pointer->calculate_Hessian();
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             Hessian = user_objective_pointer->calculate_Hessian();
+             Hessian = user_error_pointer->calculate_Hessian();
          }
          break;
 
@@ -4743,8 +2668,8 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(void) const
              std::ostringstream buffer;
 
              buffer << "Matrix<double> Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_Hessian(void) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "Matrix<double> calculate_error_Hessian(void) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -4755,14 +2680,14 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(void) const
 }
 
 
-// Matrix<double> calculate_objective_Hessian(const Vector<double>&) const method
+// Matrix<double> calculate_error_Hessian(const Vector<double>&) const method
 
 /// Returns the Hessian of the objective, according to the objective type.
 /// That Hessian is the matrix of second partial derivatives of the objective with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 /// @todo
 
-Matrix<double> PerformanceFunctional::calculate_objective_Hessian(const Vector<double>& parameters) const
+Matrix<double> PerformanceFunctional::calculate_error_Hessian(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -4778,89 +2703,59 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(const Vector<d
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-             Hessian = sum_squared_error_objective_pointer->calculate_Hessian(parameters);
+             Hessian = sum_squared_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             //Hessian = mean_squared_error_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = mean_squared_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             //Hessian = root_mean_squared_error_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = root_mean_squared_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             //Hessian = normalized_squared_error_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = normalized_squared_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             //Hessian = weighted_squared_error_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = weighted_squared_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             //Hessian = Minkowski_error_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = Minkowski_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             //Hessian = cross_entropy_error_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = cross_entropy_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             //Hessian = outputs_integrals_objective_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             //Hessian = solutions_error_objective_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             //Hessian = final_solutions_error_objective_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             //Hessian = independent_parameters_error_objective_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             //Hessian = inverse_sum_squared_error_objective_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             //Hessian = user_objective_pointer->calculate_Hessian(parameters);
+             //Hessian = user_error_pointer->calculate_Hessian(parameters);
          }
          break;
 
@@ -4869,8 +2764,8 @@ Matrix<double> PerformanceFunctional::calculate_objective_Hessian(const Vector<d
              std::ostringstream buffer;
 
              buffer << "Matrix<double> Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_objective_Hessian(const Vector<double>&) const method.\n"
-                    << "Unknown objective type.\n";
+                    << "Matrix<double> calculate_error_Hessian(const Vector<double>&) const method.\n"
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -4911,15 +2806,15 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(void) con
          }
          break;
 
-         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+         case NEURAL_PARAMETERS_NORM:
          {
-             Hessian = neural_parameters_norm_regularization_pointer->calculate_Hessian();
+             Hessian = neural_parameters_norm_pointer->calculate_Hessian();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_REGULARIZATION:
+         case OUTPUTS_INTEGRALS:
          {
-             Hessian = outputs_integrals_regularization_pointer->calculate_Hessian();
+             Hessian = outputs_integrals_pointer->calculate_Hessian();
          }
          break;
 
@@ -4977,15 +2872,15 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(const Vec
          }
          break;
 
-         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+         case NEURAL_PARAMETERS_NORM:
          {
-             //Hessian = neural_parameters_norm_regularization_pointer->calculate_Hessian(parameters);
+             //Hessian = neural_parameters_norm_pointer->calculate_Hessian(parameters);
          }
          break;
 
-         case OUTPUTS_INTEGRALS_REGULARIZATION:
+         case OUTPUTS_INTEGRALS:
          {
-             //Hessian = outputs_integrals_regularization_pointer->calculate_Hessian(parameters);
+             //Hessian = outputs_integrals_pointer->calculate_Hessian(parameters);
          }
          break;
 
@@ -5002,161 +2897,6 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(const Vec
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                     << "Matrix<double> calculate_regularization_Hessian(const Vector<double>&) const method.\n"
                     << "Unknown regularization type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     return(Hessian);
-}
-
-
-// Matrix<double> calculate_constraints_Hessian(void) const method
-
-/// Returns the Hessian of the constraints, according to the constraints type.
-/// That Hessian is the matrix of second partial derivatives of the constraints with respect to the parameters.
-/// That matrix is symmetric, with size the number of parameters.
-
-Matrix<double> PerformanceFunctional::calculate_constraints_Hessian(void) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    check_neural_network();
-
-    #endif
-
-    const size_t parameters_number = neural_network_pointer->count_parameters_number();
-
-    Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             Hessian = outputs_integrals_constraints_pointer->calculate_Hessian();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             Hessian = solutions_error_constraints_pointer->calculate_Hessian();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             Hessian = final_solutions_error_constraints_pointer->calculate_Hessian();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             Hessian = independent_parameters_error_constraints_pointer->calculate_Hessian();
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             Hessian = user_constraints_pointer->calculate_Hessian();
-         }
-         break;
-
-         default:
-         {
-             std::ostringstream buffer;
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_Hessian(void) const method.\n"
-                    << "Unknown constraints type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     return(Hessian);
-}
-
-
-// Matrix<double> calculate_constraints_Hessian(const Vector<double>&) const method
-
-/// Returns the Hessian of the constraints, according to the constraints type.
-/// That Hessian is the matrix of second partial derivatives of the constraints with respect to the parameters.
-/// That matrix is symmetric, with size the number of parameters.
-/// @todo
-
-Matrix<double> PerformanceFunctional::calculate_constraints_Hessian(const Vector<double>&) const
-{
-    // Control sentence (if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    check_neural_network();
-
-    #endif
-
-    const size_t parameters_number = neural_network_pointer->count_parameters_number();
-
-    Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
-
-    // Constraints
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             //Hessian = outputs_integrals_constraints_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             //Hessian = solutions_error_constraints_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             //Hessian = final_solutions_error_constraints_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             //Hessian = independent_parameters_error_constraints_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             //Hessian = user_constraints_pointer->calculate_Hessian(parameters);
-         }
-         break;
-
-         default:
-         {
-             std::ostringstream buffer;
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "Matrix<double> calculate_constraints_Hessian(const Vector<double>&) const method.\n"
-                    << "Unknown constraints type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -5184,7 +2924,7 @@ double PerformanceFunctional::calculate_performance(void) const
 
    #endif
 
-   return(calculate_objective() + calculate_regularization() + calculate_constraints());
+   return(calculate_error() + calculate_regularization());
 }
 
 
@@ -5221,107 +2961,77 @@ double PerformanceFunctional::calculate_performance(const Vector<double>& parame
 
    #endif
 
-   return(calculate_objective(parameters) + calculate_regularization(parameters) + calculate_constraints(parameters));
+   return(calculate_error(parameters) + calculate_regularization(parameters));
 }
 
 
-// double calculate_selection_objective(void) const method
+// double calculate_selection_error(void) const method
 
-/// Returns the evaluation of the objective term on the selection instances of the associated data set.
+/// Returns the evaluation of the error term on the selection instances of the associated data set.
 
-double PerformanceFunctional::calculate_selection_objective(void) const
+double PerformanceFunctional::calculate_selection_error(void) const
 {
-    double selection_objective = 0.0;
+    double selection_error = 0.0;
 
-    switch(objective_type)
+    switch(error_type)
     {
-        case NO_OBJECTIVE:
+        case NO_ERROR:
         {
             // Do nothing
         }
         break;
 
-        case SUM_SQUARED_ERROR_OBJECTIVE:
+        case SUM_SQUARED_ERROR:
         {
-            selection_objective = sum_squared_error_objective_pointer->calculate_selection_performance();
+            selection_error = sum_squared_error_pointer->calculate_selection_error();
         }
         break;
 
-        case MEAN_SQUARED_ERROR_OBJECTIVE:
+        case MEAN_SQUARED_ERROR:
         {
-            selection_objective = mean_squared_error_objective_pointer->calculate_selection_performance();
+            selection_error = mean_squared_error_pointer->calculate_selection_error();
         }
         break;
 
-        case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+        case ROOT_MEAN_SQUARED_ERROR:
         {
-            selection_objective = root_mean_squared_error_objective_pointer->calculate_selection_performance();
+            selection_error = root_mean_squared_error_pointer->calculate_selection_error();
         }
         break;
 
-        case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+        case NORMALIZED_SQUARED_ERROR:
         {
-            selection_objective = normalized_squared_error_objective_pointer->calculate_selection_performance();
+            selection_error = normalized_squared_error_pointer->calculate_selection_error();
         }
         break;
 
-        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        case WEIGHTED_SQUARED_ERROR:
         {
-            selection_objective = weighted_squared_error_objective_pointer->calculate_selection_performance();
+            selection_error = weighted_squared_error_pointer->calculate_selection_error();
         }
         break;
 
-        case ROC_AREA_ERROR_OBJECTIVE:
+        case ROC_AREA_ERROR:
         {
-            selection_objective = roc_area_error_objective_pointer->calculate_selection_performance();
+            selection_error = roc_area_error_pointer->calculate_selection_error();
         }
         break;
 
-        case MINKOWSKI_ERROR_OBJECTIVE:
+        case MINKOWSKI_ERROR:
         {
-            selection_objective = Minkowski_error_objective_pointer->calculate_selection_performance();
+            selection_error = Minkowski_error_pointer->calculate_selection_error();
         }
         break;
 
-        case CROSS_ENTROPY_ERROR_OBJECTIVE:
+        case CROSS_ENTROPY_ERROR:
         {
-            selection_objective = cross_entropy_error_objective_pointer->calculate_selection_performance();
+            selection_error = cross_entropy_error_pointer->calculate_selection_error();
         }
         break;
 
-        case OUTPUTS_INTEGRALS_OBJECTIVE:
+        case USER_ERROR:
         {
-            selection_objective = outputs_integrals_objective_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            selection_objective = solutions_error_objective_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            selection_objective = final_solutions_error_objective_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-        {
-            selection_objective = independent_parameters_error_objective_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            selection_objective = inverse_sum_squared_error_objective_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case USER_OBJECTIVE:
-        {
-            selection_objective = user_objective_pointer->calculate_selection_performance();
+            selection_error = user_error_pointer->calculate_selection_error();
         }
         break;
 
@@ -5330,129 +3040,15 @@ double PerformanceFunctional::calculate_selection_objective(void) const
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "double calculate_selection_objective(void) const method.\n"
-                   << "Unknown objective type.\n";
+                   << "double calculate_selection_error(void) const method.\n"
+                   << "Unknown error type.\n";
 
             throw std::logic_error(buffer.str());
         }
         break;
     }
 
-    return(selection_objective);
-}
-
-
-// double calculate_selection_regularization(void) const method
-
-/// Returns the evaluation of the regularization term on the selection instances of the associated data set.
-
-double PerformanceFunctional::calculate_selection_regularization(void) const
-{
-    double selection_regularization = 0.0;
-
-    switch(regularization_type)
-    {
-        case NO_REGULARIZATION:
-        {
-            // Do nothing
-        }
-        break;
-
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
-        {
-            selection_regularization = neural_parameters_norm_regularization_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
-        {
-            selection_regularization = outputs_integrals_regularization_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case USER_REGULARIZATION:
-        {
-            selection_regularization = user_regularization_pointer->calculate_selection_performance();
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "double calculate_selection_regularization(void) const method.\n"
-                   << "Unknown regularization type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-    return(selection_regularization);
-}
-
-
-// double calculate_selection_constraints(void) const
-
-/// Returns the evaluation of the constraints term on the selection instances of the associated data set.
-
-double PerformanceFunctional::calculate_selection_constraints(void) const
-{
-    double selection_constraints = 0.0;
-
-    switch(constraints_type)
-    {
-        case NO_CONSTRAINTS:
-        {
-            // Do nothing
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_CONSTRAINTS:
-        {
-            selection_constraints = outputs_integrals_constraints_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            selection_constraints = solutions_error_constraints_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            selection_constraints = final_solutions_error_constraints_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-        {
-            selection_constraints = independent_parameters_error_constraints_pointer->calculate_selection_performance();
-        }
-        break;
-
-        case USER_CONSTRAINTS:
-        {
-            selection_constraints = user_constraints_pointer->calculate_selection_performance();
-        }
-        break;
-
-        default:
-        {
-            std::ostringstream buffer;
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "double calculate_selection_constraints(void) const method.\n"
-                   << "Unknown constraints type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
-
-    return(selection_constraints);
+    return(selection_error);
 }
 
 
@@ -5473,12 +3069,7 @@ double PerformanceFunctional::calculate_selection_performance(void) const
 
    #endif
 
-   const double selection_performance
-    = calculate_selection_objective();
-    //+ calculate_selection_regularization()
-    //+ calculate_selection_constraints();
-
-   return(selection_performance);
+   return(calculate_selection_error());
 }
 
 
@@ -5498,7 +3089,7 @@ Vector<double> PerformanceFunctional::calculate_gradient(void) const
 
    #endif
 
-   return(calculate_objective_gradient() + calculate_regularization_gradient() + calculate_constraints_gradient());
+   return(calculate_error_gradient() + calculate_regularization_gradient());
 }
 
 
@@ -5537,7 +3128,7 @@ Vector<double> PerformanceFunctional::calculate_gradient(const Vector<double>& p
    
    #endif
     
-   return(calculate_objective_gradient(parameters) + calculate_regularization_gradient(parameters) + calculate_constraints_gradient(parameters));
+   return(calculate_error_gradient(parameters) + calculate_regularization_gradient(parameters));
 }
 
 
@@ -5557,7 +3148,7 @@ Matrix<double> PerformanceFunctional::calculate_Hessian(void) const
 
     #endif
 
-    return(calculate_objective_Hessian() + calculate_regularization_Hessian() + calculate_constraints_Hessian());
+    return(calculate_error_Hessian() + calculate_regularization_Hessian());
 }
 
 
@@ -5595,7 +3186,7 @@ Matrix<double> PerformanceFunctional::calculate_Hessian(const Vector<double>& pa
 
    #endif
 
-   return(calculate_objective_Hessian(parameters) + calculate_regularization_Hessian(parameters) + calculate_constraints_Hessian(parameters));
+   return(calculate_error_Hessian(parameters) + calculate_regularization_Hessian(parameters));
 }
 
 
@@ -5616,13 +3207,9 @@ Vector<double> PerformanceFunctional::calculate_terms(void) const
 
     #endif
 
-    const Vector<double> objective_terms = calculate_objective_terms();
+    const Vector<double> objective_terms = calculate_error_terms();
 
-    const Vector<double> regularization_terms = calculate_regularization_terms();
-
-    const Vector<double> constraints_terms = calculate_constraints_terms();
-
-    return(objective_terms.assemble(regularization_terms).assemble(constraints_terms));
+    return(objective_terms);
 }
 
 
@@ -5642,7 +3229,7 @@ Matrix<double> PerformanceFunctional::calculate_terms_Jacobian(void) const
 
     #endif
 
-    const Matrix<double> objective_terms_Jacobian = calculate_objective_terms_Jacobian();
+    const Matrix<double> objective_terms_Jacobian = calculate_error_terms_Jacobian();
 
 //    const Matrix<double> regularization_terms_Jacobian = calculate_regularization_terms_Jacobian();
 
@@ -5952,25 +3539,25 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
 
    // Objective
 
-   switch(objective_type)
+   switch(error_type)
    {
-      case NO_OBJECTIVE:
+      case NO_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-           objective_element->SetAttribute("Type", "NO_OBJECTIVE");
+           objective_element->SetAttribute("Type", "NO_ERROR");
       }
       break;
 
-      case SUM_SQUARED_ERROR_OBJECTIVE:
+      case SUM_SQUARED_ERROR:
       {                
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-           objective_element->SetAttribute("Type", "SUM_SQUARED_ERROR_OBJECTIVE");
+           objective_element->SetAttribute("Type", "SUM_SQUARED_ERROR");
 
-           const tinyxml2::XMLDocument* sum_squared_error_document = sum_squared_error_objective_pointer->to_XML();
+           const tinyxml2::XMLDocument* sum_squared_error_document = sum_squared_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* sum_squared_error_element = sum_squared_error_document->FirstChildElement("SumSquaredError");
 
@@ -5980,14 +3567,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case MEAN_SQUARED_ERROR_OBJECTIVE:
+      case MEAN_SQUARED_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-            objective_element->SetAttribute("Type", "MEAN_SQUARED_ERROR_OBJECTIVE");
+            objective_element->SetAttribute("Type", "MEAN_SQUARED_ERROR");
 
-            const tinyxml2::XMLDocument* mean_squared_error_document = mean_squared_error_objective_pointer->to_XML();
+            const tinyxml2::XMLDocument* mean_squared_error_document = mean_squared_error_pointer->to_XML();
 
             const tinyxml2::XMLElement* mean_squared_error_element = mean_squared_error_document->FirstChildElement("MeanSquaredError");
 
@@ -5997,14 +3584,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+      case ROOT_MEAN_SQUARED_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-            objective_element->SetAttribute("Type", "ROOT_MEAN_SQUARED_ERROR_OBJECTIVE");
+            objective_element->SetAttribute("Type", "ROOT_MEAN_SQUARED_ERROR");
 
-            const tinyxml2::XMLDocument* root_mean_squared_error_document = root_mean_squared_error_objective_pointer->to_XML();
+            const tinyxml2::XMLDocument* root_mean_squared_error_document = root_mean_squared_error_pointer->to_XML();
 
             const tinyxml2::XMLElement* root_mean_squared_error_element = root_mean_squared_error_document->FirstChildElement("RootMeanSquaredError");
 
@@ -6014,14 +3601,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+      case NORMALIZED_SQUARED_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-           objective_element->SetAttribute("Type", "NORMALIZED_SQUARED_ERROR_OBJECTIVE");
+           objective_element->SetAttribute("Type", "NORMALIZED_SQUARED_ERROR");
 
-           const tinyxml2::XMLDocument* normalized_squared_error_document = normalized_squared_error_objective_pointer->to_XML();
+           const tinyxml2::XMLDocument* normalized_squared_error_document = normalized_squared_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* normalized_squared_error_element = normalized_squared_error_document->FirstChildElement("NormalizedSquaredError");
 
@@ -6031,14 +3618,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-       case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+       case WEIGHTED_SQUARED_ERROR:
        {
             tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
             performance_functional_element->LinkEndChild(objective_element);
 
-            objective_element->SetAttribute("Type", "WEIGHTED_SQUARED_ERROR_OBJECTIVE");
+            objective_element->SetAttribute("Type", "WEIGHTED_SQUARED_ERROR");
 
-            const tinyxml2::XMLDocument* weighted_squared_error_document = weighted_squared_error_objective_pointer->to_XML();
+            const tinyxml2::XMLDocument* weighted_squared_error_document = weighted_squared_error_pointer->to_XML();
 
             const tinyxml2::XMLElement* weighted_squared_error_element = weighted_squared_error_document->FirstChildElement("WeightedSquaredError");
 
@@ -6048,14 +3635,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
        }
        break;
 
-      case MINKOWSKI_ERROR_OBJECTIVE:
+      case MINKOWSKI_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-           objective_element->SetAttribute("Type", "MINKOWSKI_ERROR_OBJECTIVE");
+           objective_element->SetAttribute("Type", "MINKOWSKI_ERROR");
 
-           const tinyxml2::XMLDocument* Minkowski_error_document = Minkowski_error_objective_pointer->to_XML();
+           const tinyxml2::XMLDocument* Minkowski_error_document = Minkowski_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* Minkowski_error_element = Minkowski_error_document->FirstChildElement("MinkowskiError");
 
@@ -6065,14 +3652,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case CROSS_ENTROPY_ERROR_OBJECTIVE:
+      case CROSS_ENTROPY_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
            performance_functional_element->LinkEndChild(objective_element);
 
-           objective_element->SetAttribute("Type", "CROSS_ENTROPY_ERROR_OBJECTIVE");
+           objective_element->SetAttribute("Type", "CROSS_ENTROPY_ERROR");
 
-           const tinyxml2::XMLDocument* cross_entropy_error_document = cross_entropy_error_objective_pointer->to_XML();
+           const tinyxml2::XMLDocument* cross_entropy_error_document = cross_entropy_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* cross_entropy_error_element = cross_entropy_error_document->FirstChildElement("CrossEntropyError");
 
@@ -6082,92 +3669,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case OUTPUTS_INTEGRALS_OBJECTIVE:
-      {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
-
-            objective_element->SetAttribute("Type", "OUTPUTS_INTEGRALS_OBJECTIVE");
-
-            const tinyxml2::XMLDocument* outputs_integrals_document = outputs_integrals_objective_pointer->to_XML();
-
-            const tinyxml2::XMLElement* outputs_integrals_element = outputs_integrals_document->FirstChildElement("OutputsIntegrals");
-
-            DeepClone(objective_element, outputs_integrals_element, document, NULL);
-
-            delete outputs_integrals_document;
-      }
-      break;
-
-      case SOLUTIONS_ERROR_OBJECTIVE:
-      {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
-
-            objective_element->SetAttribute("Type", "SOLUTIONS_ERROR_OBJECTIVE");
-
-            const tinyxml2::XMLDocument* solutions_error_document = solutions_error_objective_pointer->to_XML();
-
-            const tinyxml2::XMLElement* solutions_error_element = solutions_error_document->FirstChildElement("SolutionsError");
-
-            DeepClone(objective_element, solutions_error_element, document, NULL);
-
-            delete solutions_error_document;
-      }
-      break;
-
-      case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-      {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
-
-            objective_element->SetAttribute("Type", "FINAL_SOLUTIONS_ERROR_OBJECTIVE");
-
-            const tinyxml2::XMLDocument* final_solutions_error_document = final_solutions_error_objective_pointer->to_XML();
-
-            const tinyxml2::XMLElement* final_solutions_error_element = final_solutions_error_document->FirstChildElement("FinalSolutionsError");
-
-            DeepClone(objective_element, final_solutions_error_element, document, NULL);
-
-            delete final_solutions_error_document;
-      }
-      break;
-
-      case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-      {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
-
-           objective_element->SetAttribute("Type", "INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE");
-
-           const tinyxml2::XMLDocument* independent_parameters_error_document = independent_parameters_error_objective_pointer->to_XML();
-
-           const tinyxml2::XMLElement* independent_parameters_error_element = independent_parameters_error_document->FirstChildElement("IndependentParametersError");
-
-           DeepClone(objective_element, independent_parameters_error_element, document, NULL);
-
-           delete independent_parameters_error_document;
-      }
-      break;
-
-      case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-      {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
-
-           objective_element->SetAttribute("Type", "INVERSE_SUM_SQUARED_ERROR_OBJECTIVE");
-
-           const tinyxml2::XMLDocument* inverse_sum_squared_error_document = inverse_sum_squared_error_objective_pointer->to_XML();
-
-           const tinyxml2::XMLElement* inverse_sum_squared_error_element = inverse_sum_squared_error_document->FirstChildElement("InverseSumSquaredError");
-
-           DeepClone(objective_element, inverse_sum_squared_error_element, document, NULL);
-
-           delete inverse_sum_squared_error_document;
-      }
-      break;
-
-      case USER_OBJECTIVE:
+      case USER_ERROR:
       {
          // Do nothing
       }
@@ -6179,7 +3681,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
 
          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                 << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
-                << "Unknown objective type.\n";
+                << "Unknown error type.\n";
 
          throw std::logic_error(buffer.str());
       }
@@ -6199,14 +3701,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+      case NEURAL_PARAMETERS_NORM:
       {
            tinyxml2::XMLElement* regularization_element = document->NewElement("Regularization");
            performance_functional_element->LinkEndChild(regularization_element);
 
-           regularization_element->SetAttribute("Type", "NEURAL_PARAMETERS_NORM_REGULARIZATION");
+           regularization_element->SetAttribute("Type", "NEURAL_PARAMETERS_NORM");
 
-           const tinyxml2::XMLDocument* neural_parameters_norm_document = neural_parameters_norm_regularization_pointer->to_XML();
+           const tinyxml2::XMLDocument* neural_parameters_norm_document = neural_parameters_norm_pointer->to_XML();
 
            const tinyxml2::XMLElement* neural_parameters_norm_element = neural_parameters_norm_document->FirstChildElement("NeuralParametersNorm");
 
@@ -6216,14 +3718,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       }
       break;
 
-      case OUTPUTS_INTEGRALS_REGULARIZATION:
+      case OUTPUTS_INTEGRALS:
       {
-           tinyxml2::XMLElement* regularization_element = document->NewElement("OUTPUTS_INTEGRALS_REGULARIZATION");
+           tinyxml2::XMLElement* regularization_element = document->NewElement("OUTPUTS_INTEGRALS");
            performance_functional_element->LinkEndChild(regularization_element);
 
-           regularization_element->SetAttribute("Type", "NEURAL_PARAMETERS_NORM_REGULARIZATION");
+           regularization_element->SetAttribute("Type", "OUTPUTS_INTEGRALS");
 
-           const tinyxml2::XMLDocument* outputs_integrals_document = outputs_integrals_regularization_pointer->to_XML();
+           const tinyxml2::XMLDocument* outputs_integrals_document = outputs_integrals_pointer->to_XML();
 
            const tinyxml2::XMLElement* outputs_integrals_element = outputs_integrals_document->FirstChildElement("OutputsIntegrals");
 
@@ -6252,104 +3754,6 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       break;
    }
 
-   // Constraints
-
-   switch(constraints_type)
-   {
-      case NO_CONSTRAINTS:
-      {
-         // Do nothing
-      }
-      break;
-
-      case OUTPUTS_INTEGRALS_CONSTRAINTS:
-      {
-           tinyxml2::XMLElement* constraints_element = document->NewElement("Constraints");
-           performance_functional_element->LinkEndChild(constraints_element);
-           constraints_element->SetAttribute("Type", "OUTPUTS_INTEGRALS_CONSTRAINTS");
-
-           const tinyxml2::XMLDocument* outputs_integrals_document = outputs_integrals_constraints_pointer->to_XML();
-
-           const tinyxml2::XMLElement* outputs_integrals_element = outputs_integrals_document->FirstChildElement("OutputsIntegrals");
-
-           DeepClone(constraints_element, outputs_integrals_element, document, NULL);
-
-           delete outputs_integrals_document;
-      }
-      break;
-
-      case SOLUTIONS_ERROR_CONSTRAINTS:
-      {
-            tinyxml2::XMLElement* constraints_element = document->NewElement("Constraints");
-            performance_functional_element->LinkEndChild(constraints_element);
-
-            constraints_element->SetAttribute("Type", "SOLUTIONS_ERROR_CONSTRAINTS");
-
-            const tinyxml2::XMLDocument* solutions_error_document = solutions_error_constraints_pointer->to_XML();
-
-            const tinyxml2::XMLElement* solutions_error_element = solutions_error_document->FirstChildElement("SolutionsError");
-
-            DeepClone(constraints_element, solutions_error_element, document, NULL);
-
-            delete solutions_error_document;
-      }
-      break;
-
-       case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-      {
-       tinyxml2::XMLElement* constraints_element = document->NewElement("Constraints");
-       performance_functional_element->LinkEndChild(constraints_element);
-
-         constraints_element->SetAttribute("Type", "FINAL_SOLUTIONS_ERROR_CONSTRAINTS");
-
-         const tinyxml2::XMLDocument* final_solutions_error_document = final_solutions_error_constraints_pointer->to_XML();
-
-         const tinyxml2::XMLElement* final_solutions_error_element = final_solutions_error_document->FirstChildElement("FinalSolutionsError");
-
-         DeepClone(constraints_element, final_solutions_error_element, document, NULL);
-
-         delete final_solutions_error_document;
-
-      }
-      break;
-
-      case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-      {
-       tinyxml2::XMLElement* constraints_element = document->NewElement("Constraints");
-       performance_functional_element->LinkEndChild(constraints_element);
-
-         constraints_element->SetAttribute("Type", "INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS");
-
-         const tinyxml2::XMLDocument* independent_parameters_error_document = independent_parameters_error_constraints_pointer->to_XML();
-
-         const tinyxml2::XMLElement* independent_parameters_error_element = independent_parameters_error_document->FirstChildElement("FinalSolutionsError");
-
-         DeepClone(constraints_element, independent_parameters_error_element, document, NULL);
-
-         delete independent_parameters_error_document;
-
-      }
-      break;
-
-      case USER_CONSTRAINTS:
-      {
-         // Do nothing
-      }
-      break;
-
-      default:
-      {
-         std::ostringstream buffer;
-
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
-                << "Unknown constraints type.\n";
-
-         throw std::logic_error(buffer.str());
-      }
-      break;
-   }
-
    // Display
 
 //   tinyxml2::XMLElement* display_element = document->NewElement("Display");
@@ -6362,6 +3766,196 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
 //   display_element->LinkEndChild(display_text);
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void PerformanceFunctional::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("PerformanceFunctional");
+
+    // Objective
+
+    switch(error_type)
+    {
+       case NO_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "NO_ERROR");
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case SUM_SQUARED_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "SUM_SQUARED_ERROR");
+
+            sum_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case MEAN_SQUARED_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "MEAN_SQUARED_ERROR");
+
+            mean_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case ROOT_MEAN_SQUARED_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "ROOT_MEAN_SQUARED_ERROR");
+
+            root_mean_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case NORMALIZED_SQUARED_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "NORMALIZED_SQUARED_ERROR");
+
+            normalized_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+        case WEIGHTED_SQUARED_ERROR:
+        {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "WEIGHTED_SQUARED_ERROR");
+
+            weighted_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+        break;
+
+       case MINKOWSKI_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "MINKOWSKI_ERROR");
+
+            Minkowski_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case CROSS_ENTROPY_ERROR:
+       {
+            file_stream.OpenElement("Objective");
+
+            file_stream.PushAttribute("Type", "CROSS_ENTROPY_ERROR");
+
+            cross_entropy_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case USER_ERROR:
+       {
+          // Do nothing
+       }
+       break;
+
+       default:
+       {
+          std::ostringstream buffer;
+
+          file_stream.CloseElement();
+
+          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+                 << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+                 << "Unknown error type.\n";
+
+          throw std::logic_error(buffer.str());
+       }
+       break;
+    }
+
+    // Regularization
+
+    switch(regularization_type)
+    {
+       case NO_REGULARIZATION:
+       {
+            file_stream.OpenElement("Regularization");
+
+            file_stream.PushAttribute("Type", "NO_REGULARIZATION");
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case NEURAL_PARAMETERS_NORM:
+       {
+            file_stream.OpenElement("Regularization");
+
+            file_stream.PushAttribute("Type", "NEURAL_PARAMETERS_NORM");
+
+            neural_parameters_norm_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case OUTPUTS_INTEGRALS:
+       {
+            file_stream.OpenElement("Regularization");
+
+            file_stream.PushAttribute("Type", "OUTPUTS_INTEGRALS");
+
+            outputs_integrals_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case USER_REGULARIZATION:
+       {
+           // Do nothing
+       }
+       break;
+
+       default:
+       {
+          std::ostringstream buffer;
+
+          file_stream.CloseElement();
+
+          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+                 << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+                 << "Unknown regularization type.\n";
+
+          throw std::logic_error(buffer.str());
+       }
+       break;
+    }
+
+    file_stream.CloseElement();
 }
 
 
@@ -6391,19 +3985,19 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
    if(objective_element)
    {
-       const std::string new_objective_type = objective_element->Attribute("Type");
+       const std::string new_error_type = objective_element->Attribute("Type");
 
-       set_objective_type(new_objective_type);
+       set_error_type(new_error_type);
 
-       switch(objective_type)
+       switch(error_type)
        {
-          case NO_OBJECTIVE:
+          case NO_ERROR:
           {
              // Do nothing
           }
           break;
 
-          case SUM_SQUARED_ERROR_OBJECTIVE:
+          case SUM_SQUARED_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6412,11 +4006,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               sum_squared_error_objective_pointer->from_XML(new_document);
+               sum_squared_error_pointer->from_XML(new_document);
           }
           break;
 
-          case MEAN_SQUARED_ERROR_OBJECTIVE:
+          case MEAN_SQUARED_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6425,11 +4019,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               mean_squared_error_objective_pointer->from_XML(new_document);
+               mean_squared_error_pointer->from_XML(new_document);
           }
           break;
 
-          case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+          case ROOT_MEAN_SQUARED_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6438,11 +4032,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               root_mean_squared_error_objective_pointer->from_XML(new_document);
+               root_mean_squared_error_pointer->from_XML(new_document);
           }
           break;
 
-          case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+          case NORMALIZED_SQUARED_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6451,11 +4045,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               normalized_squared_error_objective_pointer->from_XML(new_document);
+               normalized_squared_error_pointer->from_XML(new_document);
           }
           break;
 
-          case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+          case WEIGHTED_SQUARED_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6464,11 +4058,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               weighted_squared_error_objective_pointer->from_XML(new_document);
+               weighted_squared_error_pointer->from_XML(new_document);
           }
           break;
 
-          case MINKOWSKI_ERROR_OBJECTIVE:
+          case MINKOWSKI_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6477,11 +4071,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               Minkowski_error_objective_pointer->from_XML(new_document);
+               Minkowski_error_pointer->from_XML(new_document);
           }
           break;
 
-          case CROSS_ENTROPY_ERROR_OBJECTIVE:
+          case CROSS_ENTROPY_ERROR:
           {
                tinyxml2::XMLDocument new_document;
 
@@ -6490,78 +4084,13 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, objective_element, &new_document, NULL);
 
-               cross_entropy_error_objective_pointer->from_XML(new_document);
+               cross_entropy_error_pointer->from_XML(new_document);
           }
           break;
 
-          case OUTPUTS_INTEGRALS_OBJECTIVE:
+          case USER_ERROR:
           {
-               tinyxml2::XMLDocument new_document;
-
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("OutputsIntegralsError");
-               new_document.InsertFirstChild(element_clone);
-
-               DeepClone(element_clone, objective_element, &new_document, NULL);
-
-               outputs_integrals_objective_pointer->from_XML(new_document);
-          }
-          break;
-
-          case SOLUTIONS_ERROR_OBJECTIVE:
-          {
-               tinyxml2::XMLDocument new_document;
-
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("SolutionsError");
-               new_document.InsertFirstChild(element_clone);
-
-               DeepClone(element_clone, objective_element, &new_document, NULL);
-
-               solutions_error_objective_pointer->from_XML(new_document);
-          }
-          break;
-
-          case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-          {
-               tinyxml2::XMLDocument new_document;
-
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("FinalSolutionsError");
-               new_document.InsertFirstChild(element_clone);
-
-               DeepClone(element_clone, objective_element, &new_document, NULL);
-
-               final_solutions_error_objective_pointer->from_XML(new_document);
-          }
-          break;
-
-          case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-          {
-               tinyxml2::XMLDocument new_document;
-
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("IndependentParametersError");
-               new_document.InsertFirstChild(element_clone);
-
-               DeepClone(element_clone, objective_element, &new_document, NULL);
-
-               independent_parameters_error_objective_pointer->from_XML(new_document);
-          }
-          break;
-
-          case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-          {
-               tinyxml2::XMLDocument new_document;
-
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("InverseSumSquaredError");
-               new_document.InsertFirstChild(element_clone);
-
-               DeepClone(element_clone, objective_element, &new_document, NULL);
-
-               inverse_sum_squared_error_objective_pointer->from_XML(new_document);
-          }
-          break;
-
-          case USER_OBJECTIVE:
-          {
-             //user_objective_pointer = NULL;
+             //user_error_pointer = NULL;
           }
           break;
 
@@ -6571,7 +4100,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                     << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                    << "Unknown objective type.\n";
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
           }
@@ -6597,7 +4126,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
          }
          break;
 
-         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+         case NEURAL_PARAMETERS_NORM:
          {
                tinyxml2::XMLDocument new_document;
 
@@ -6606,11 +4135,11 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, regularization_element, &new_document, NULL);
 
-               neural_parameters_norm_regularization_pointer->from_XML(new_document);
+               neural_parameters_norm_pointer->from_XML(new_document);
          }
          break;
 
-         case OUTPUTS_INTEGRALS_REGULARIZATION:
+         case OUTPUTS_INTEGRALS:
          {
                tinyxml2::XMLDocument new_document;
 
@@ -6619,7 +4148,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
                DeepClone(element_clone, regularization_element, &new_document, NULL);
 
-               outputs_integrals_regularization_pointer->from_XML(new_document);
+               outputs_integrals_pointer->from_XML(new_document);
          }
          break;
 
@@ -6642,96 +4171,8 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
          break;
       }
 
-      // Constraints term type
-
-      const tinyxml2::XMLElement* constraints_element = performance_functional_element->FirstChildElement("Constraints");
-
-      if(constraints_element)
-      {
-         const std::string new_constraints_type = constraints_element->Attribute("Type");
-
-         set_constraints_type(new_constraints_type);
-
-         switch(constraints_type)
-         {
-            case NO_CONSTRAINTS:
-            {
-               // Do nothing
-            }
-            break;
-
-            case OUTPUTS_INTEGRALS_CONSTRAINTS:
-            {
-                 tinyxml2::XMLDocument new_document;
-
-                 tinyxml2::XMLElement* element_clone = new_document.NewElement("OutputsIntegrals");
-                 new_document.InsertFirstChild(element_clone);
-
-                 DeepClone(element_clone, constraints_element, &new_document, NULL);
-
-                 outputs_integrals_constraints_pointer->from_XML(new_document);
-            }
-            break;
-
-            case SOLUTIONS_ERROR_CONSTRAINTS:
-            {
-               tinyxml2::XMLDocument new_document;
-
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("SolutionsError");
-               new_document.InsertFirstChild(element_clone);
-
-               DeepClone(element_clone, constraints_element, &new_document, NULL);
-
-               solutions_error_constraints_pointer->from_XML(new_document);
-            }
-            break;
-
-            case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-            {
-                 tinyxml2::XMLDocument new_document;
-
-                 tinyxml2::XMLElement* element_clone = new_document.NewElement("FinalSolutionsError");
-                 new_document.InsertFirstChild(element_clone);
-
-                 DeepClone(element_clone, constraints_element, &new_document, NULL);
-
-                 final_solutions_error_constraints_pointer->from_XML(new_document);
-            }
-            break;
-
-            case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-            {
-                 tinyxml2::XMLDocument new_document;
-
-                 tinyxml2::XMLElement* element_clone = new_document.NewElement("IndependentParametersError");
-                 new_document.InsertFirstChild(element_clone);
-
-                 DeepClone(element_clone, constraints_element, &new_document, NULL);
-
-                 independent_parameters_error_constraints_pointer->from_XML(new_document);
-            }
-            break;
-
-            case USER_CONSTRAINTS:
-            {
-               // Do nothing
-            }
-            break;
-
-            default:
-            {
-               std::ostringstream buffer;
-
-               buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                      << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                      << "Unknown constraints type.\n";
-
-               throw std::logic_error(buffer.str());
-            }
-            break;
-         }
-      }
-   }
+    }
+    // Display
 
    const tinyxml2::XMLElement* display_element = performance_functional_element->FirstChildElement("Display");
 
@@ -6760,99 +4201,69 @@ std::string PerformanceFunctional::to_string(void) const
     std::ostringstream buffer;
 
     buffer << "Performance functional\n"
-           << "Objective type: " << write_objective_type() << "\n";
+           << "Objective type: " << write_error_type() << "\n";
 
     // Objective
 
-     switch(objective_type)
+     switch(error_type)
      {
-         case NO_OBJECTIVE:
+         case NO_ERROR:
          {
              // Do nothing
          }
          break;
 
-         case SUM_SQUARED_ERROR_OBJECTIVE:
+         case SUM_SQUARED_ERROR:
          {
-             buffer << sum_squared_error_objective_pointer->to_string();
+             buffer << sum_squared_error_pointer->to_string();
          }
          break;
 
-         case MEAN_SQUARED_ERROR_OBJECTIVE:
+         case MEAN_SQUARED_ERROR:
          {
-             buffer << mean_squared_error_objective_pointer->to_string();
+             buffer << mean_squared_error_pointer->to_string();
          }
          break;
 
-         case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+         case ROOT_MEAN_SQUARED_ERROR:
          {
-             buffer << root_mean_squared_error_objective_pointer->to_string();
+             buffer << root_mean_squared_error_pointer->to_string();
          }
          break;
 
-         case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+         case NORMALIZED_SQUARED_ERROR:
          {
-             buffer << normalized_squared_error_objective_pointer->to_string();
+             buffer << normalized_squared_error_pointer->to_string();
          }
          break;
 
-         case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+         case WEIGHTED_SQUARED_ERROR:
          {
-             buffer << weighted_squared_error_objective_pointer->to_string();
+             buffer << weighted_squared_error_pointer->to_string();
          }
          break;
 
-         case ROC_AREA_ERROR_OBJECTIVE:
+         case ROC_AREA_ERROR:
          {
-             buffer << roc_area_error_objective_pointer->to_string();
+             buffer << roc_area_error_pointer->to_string();
          }
          break;
 
-         case MINKOWSKI_ERROR_OBJECTIVE:
+         case MINKOWSKI_ERROR:
          {
-             buffer << Minkowski_error_objective_pointer->to_string();
+             buffer << Minkowski_error_pointer->to_string();
          }
          break;
 
-         case CROSS_ENTROPY_ERROR_OBJECTIVE:
+         case CROSS_ENTROPY_ERROR:
          {
-             buffer << cross_entropy_error_objective_pointer->to_string();
+             buffer << cross_entropy_error_pointer->to_string();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_OBJECTIVE:
+         case USER_ERROR:
          {
-             buffer << outputs_integrals_objective_pointer->to_string();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             buffer << solutions_error_objective_pointer->to_string();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-         {
-             buffer << final_solutions_error_objective_pointer->to_string();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-         {
-             buffer << independent_parameters_error_objective_pointer->to_string();
-         }
-         break;
-
-         case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-         {
-             buffer << inverse_sum_squared_error_objective_pointer->to_string();
-         }
-         break;
-
-         case USER_OBJECTIVE:
-         {
-             buffer << user_objective_pointer->to_string();
+             buffer << user_error_pointer->to_string();
          }
          break;
 
@@ -6862,7 +4273,7 @@ std::string PerformanceFunctional::to_string(void) const
 
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                     << "std::string to_string(void) method.\n"
-                    << "Unknown objective type.\n";
+                    << "Unknown error type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -6881,15 +4292,15 @@ std::string PerformanceFunctional::to_string(void) const
          }
          break;
 
-         case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+         case NEURAL_PARAMETERS_NORM:
          {
-             buffer << neural_parameters_norm_regularization_pointer->to_string();
+             buffer << neural_parameters_norm_pointer->to_string();
          }
          break;
 
-         case OUTPUTS_INTEGRALS_REGULARIZATION:
+         case OUTPUTS_INTEGRALS:
          {
-             buffer << outputs_integrals_regularization_pointer->to_string();
+             buffer << outputs_integrals_pointer->to_string();
          }
          break;
 
@@ -6906,61 +4317,6 @@ std::string PerformanceFunctional::to_string(void) const
              buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                     << "std::string to_string(void) method.\n"
                     << "Unknown regularization type.\n";
-
-             throw std::logic_error(buffer.str());
-         }
-         break;
-     }
-
-     // Constraints
-
-     buffer << "Constraints type: " << write_constraints_type() << "\n";
-
-     switch(constraints_type)
-     {
-         case NO_CONSTRAINTS:
-         {
-             // Do nothing
-         }
-         break;
-
-         case OUTPUTS_INTEGRALS_CONSTRAINTS:
-         {
-             buffer << outputs_integrals_constraints_pointer->to_string();
-         }
-         break;
-
-         case SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             buffer << solutions_error_constraints_pointer->to_string();
-         }
-         break;
-
-         case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-         {
-             buffer << final_solutions_error_constraints_pointer->to_string();
-         }
-         break;
-
-         case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-         {
-             buffer << independent_parameters_error_constraints_pointer->to_string();
-         }
-         break;
-
-         case USER_CONSTRAINTS:
-         {
-             buffer << user_constraints_pointer->to_string();
-         }
-         break;
-
-         default:
-         {
-             buffer.str("");
-
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                    << "std::string to_string(void) method.\n"
-                    << "Unknown constraints type.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -7030,95 +4386,65 @@ std::string PerformanceFunctional::write_information(void)
    
    // Objective
 
-    switch(objective_type)
+    switch(error_type)
     {
-        case NO_OBJECTIVE:
+        case NO_ERROR:
         {
             // Do nothing
         }
         break;
 
-        case SUM_SQUARED_ERROR_OBJECTIVE:
+        case SUM_SQUARED_ERROR:
         {
-            buffer << sum_squared_error_objective_pointer->write_information();
+            buffer << sum_squared_error_pointer->write_information();
         }
         break;
 
-        case MEAN_SQUARED_ERROR_OBJECTIVE:
+        case MEAN_SQUARED_ERROR:
         {
-            buffer << mean_squared_error_objective_pointer->write_information();
+            buffer << mean_squared_error_pointer->write_information();
         }
         break;
 
-        case ROOT_MEAN_SQUARED_ERROR_OBJECTIVE:
+        case ROOT_MEAN_SQUARED_ERROR:
         {
-            buffer << root_mean_squared_error_objective_pointer->write_information();
+            buffer << root_mean_squared_error_pointer->write_information();
         }
         break;
 
-        case NORMALIZED_SQUARED_ERROR_OBJECTIVE:
+        case NORMALIZED_SQUARED_ERROR:
         {
-            buffer << normalized_squared_error_objective_pointer->write_information();
+            buffer << normalized_squared_error_pointer->write_information();
         }
         break;
 
-        case WEIGHTED_SQUARED_ERROR_OBJECTIVE:
+        case WEIGHTED_SQUARED_ERROR:
         {
-            buffer << weighted_squared_error_objective_pointer->write_information();
+            buffer << weighted_squared_error_pointer->write_information();
         }
         break;
 
-        case ROC_AREA_ERROR_OBJECTIVE:
+        case ROC_AREA_ERROR:
         {
-            buffer << roc_area_error_objective_pointer->write_information();
+            buffer << roc_area_error_pointer->write_information();
         }
         break;
 
-        case MINKOWSKI_ERROR_OBJECTIVE:
+        case MINKOWSKI_ERROR:
         {
-            buffer << Minkowski_error_objective_pointer->write_information();
+            buffer << Minkowski_error_pointer->write_information();
         }
         break;
 
-        case CROSS_ENTROPY_ERROR_OBJECTIVE:
+        case CROSS_ENTROPY_ERROR:
         {
-            buffer << cross_entropy_error_objective_pointer->write_information();
+            buffer << cross_entropy_error_pointer->write_information();
         }
         break;
 
-        case OUTPUTS_INTEGRALS_OBJECTIVE:
+        case USER_ERROR:
         {
-            buffer << outputs_integrals_objective_pointer->write_information();
-        }
-        break;
-
-        case SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            buffer << solutions_error_objective_pointer->write_information();
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_OBJECTIVE:
-        {
-            buffer << final_solutions_error_objective_pointer->write_information();
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE:
-        {
-            buffer << independent_parameters_error_objective_pointer->write_information();
-        }
-        break;
-
-        case INVERSE_SUM_SQUARED_ERROR_OBJECTIVE:
-        {
-            buffer << inverse_sum_squared_error_objective_pointer->write_information();
-        }
-        break;
-
-        case USER_OBJECTIVE:
-        {
-            buffer << user_objective_pointer->write_information();
+            buffer << user_error_pointer->write_information();
         }
         break;
 
@@ -7128,7 +4454,7 @@ std::string PerformanceFunctional::write_information(void)
 
             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
                    << "std::string write_information(void) method.\n"
-                   << "Unknown objective type.\n";
+                   << "Unknown error type.\n";
 
             throw std::logic_error(buffer.str());
         }
@@ -7145,15 +4471,15 @@ std::string PerformanceFunctional::write_information(void)
         }
         break;
 
-        case NEURAL_PARAMETERS_NORM_REGULARIZATION:
+        case NEURAL_PARAMETERS_NORM:
         {
-            buffer << neural_parameters_norm_regularization_pointer->write_information();
+            buffer << neural_parameters_norm_pointer->write_information();
         }
         break;
 
-        case OUTPUTS_INTEGRALS_REGULARIZATION:
+        case OUTPUTS_INTEGRALS:
         {
-            buffer << outputs_integrals_regularization_pointer->write_information();
+            buffer << outputs_integrals_pointer->write_information();
         }
         break;
 
@@ -7176,58 +4502,6 @@ std::string PerformanceFunctional::write_information(void)
         break;
     }
 
-    // Constraints
-
-    switch(constraints_type)
-    {
-        case NO_CONSTRAINTS:
-        {
-            // Do nothing
-        }
-        break;
-
-        case OUTPUTS_INTEGRALS_CONSTRAINTS:
-        {
-            buffer << outputs_integrals_constraints_pointer->write_information();
-        }
-        break;
-
-        case SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            buffer << solutions_error_constraints_pointer->write_information();
-        }
-        break;
-
-        case FINAL_SOLUTIONS_ERROR_CONSTRAINTS:
-        {
-            buffer << final_solutions_error_constraints_pointer->write_information();
-        }
-        break;
-
-        case INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS:
-        {
-            buffer << independent_parameters_error_constraints_pointer->write_information();
-        }
-        break;
-
-        case USER_CONSTRAINTS:
-        {
-            buffer << user_constraints_pointer->write_information();
-        }
-        break;
-
-        default:
-        {
-            buffer.str("");
-
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                   << "std::string write_information(void) method.\n"
-                   << "Unknown constraints type.\n";
-
-            throw std::logic_error(buffer.str());
-        }
-        break;
-    }
 
    return(buffer.str());
 }

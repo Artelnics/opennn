@@ -31,7 +31,8 @@
 #include "mathematical_model.h"
 
 #include "neural_network.h"
-#include "performance_term.h"
+#include "error_term.h"
+#include "regularization_term.h"
 
 #include "sum_squared_error.h"
 #include "mean_squared_error.h"
@@ -42,10 +43,6 @@
 #include "minkowski_error.h"
 #include "cross_entropy_error.h"
 #include "outputs_integrals.h"
-#include "solutions_error.h"
-#include "final_solutions_error.h"
-#include "independent_parameters_error.h"
-#include "inverse_sum_squared_error.h"
 
 #include "neural_parameters_norm.h"
 
@@ -57,8 +54,7 @@ namespace OpenNN
 {
 
 /// This abstract class represents the concept of performance functional for a neural network. 
-/// A performance functional is composed of three terms: An performance term, a regularization functional 
-/// and a constraints functional. 
+/// A performance functional is composed of two terms: An error term and a regularization term.
 /// Any derived class must implement the calculate_performance(void) method.
 
 class PerformanceFunctional
@@ -72,7 +68,7 @@ public:
 
    // OBJECTIVE FUNCTIONAL CONSTRUCTOR
 
-   explicit PerformanceFunctional(PerformanceTerm*);
+   explicit PerformanceFunctional(ErrorTerm*);
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -109,12 +105,12 @@ public:
 
    // STRUCTURES 
 
-   /// performance value of the peformance function. 
+   /// Performance value of the peformance function.
    /// This is a very simple structure with just one value. 
 
    struct ZeroOrderperformance
    {
-      /// Performance function performance. 
+      /// Performance value.
 
       double performance;
    };
@@ -124,7 +120,7 @@ public:
 
    struct FirstOrderperformance
    {
-      /// Performance function performance. 
+      /// Performance value.
 
       double performance;
 
@@ -138,7 +134,7 @@ public:
 
    struct SecondOrderperformance
    {
-      /// Performance function performance. 
+      /// Performance value.
 
       double performance;
 
@@ -156,23 +152,18 @@ public:
 
    /// Enumeration of available objective types in OpenNN.
 
-   enum ObjectiveType
+   enum ErrorType
    {
-      NO_OBJECTIVE,
-      SUM_SQUARED_ERROR_OBJECTIVE,
-      MEAN_SQUARED_ERROR_OBJECTIVE,
-      ROOT_MEAN_SQUARED_ERROR_OBJECTIVE,
-      NORMALIZED_SQUARED_ERROR_OBJECTIVE,
-      MINKOWSKI_ERROR_OBJECTIVE,
-      WEIGHTED_SQUARED_ERROR_OBJECTIVE,
-      ROC_AREA_ERROR_OBJECTIVE,
-      CROSS_ENTROPY_ERROR_OBJECTIVE,
-      OUTPUTS_INTEGRALS_OBJECTIVE,
-      SOLUTIONS_ERROR_OBJECTIVE,
-      FINAL_SOLUTIONS_ERROR_OBJECTIVE,
-      INDEPENDENT_PARAMETERS_ERROR_OBJECTIVE,
-      INVERSE_SUM_SQUARED_ERROR_OBJECTIVE,
-      USER_OBJECTIVE
+      NO_ERROR,
+      SUM_SQUARED_ERROR,
+      MEAN_SQUARED_ERROR,
+      ROOT_MEAN_SQUARED_ERROR,
+      NORMALIZED_SQUARED_ERROR,
+      MINKOWSKI_ERROR,
+      WEIGHTED_SQUARED_ERROR,
+      ROC_AREA_ERROR,
+      CROSS_ENTROPY_ERROR,
+      USER_ERROR
    };
 
    /// Enumeration of available regularization types in OpenNN.
@@ -180,24 +171,12 @@ public:
    enum RegularizationType
    {
       NO_REGULARIZATION,
-      NEURAL_PARAMETERS_NORM_REGULARIZATION,
-      OUTPUTS_INTEGRALS_REGULARIZATION,
+      NEURAL_PARAMETERS_NORM,
+      OUTPUTS_INTEGRALS,
       USER_REGULARIZATION
    };
 
-   /// Enumeration of available constraints types in OpenNN.
 
-   enum ConstraintsType
-   {
-      NO_CONSTRAINTS,
-      OUTPUTS_INTEGRALS_CONSTRAINTS,
-      SOLUTIONS_ERROR_CONSTRAINTS,
-      FINAL_SOLUTIONS_ERROR_CONSTRAINTS,
-      INDEPENDENT_PARAMETERS_ERROR_CONSTRAINTS,
-      USER_CONSTRAINTS
-   };
-
-   
    // METHODS
 
    // Check methods
@@ -274,7 +253,6 @@ public:
       return(data_set_pointer);
    }
 
-
    bool has_neural_network(void) const;
    bool has_mathematical_model(void) const;
    bool has_data_set(void) const;
@@ -283,51 +261,34 @@ public:
 
    bool is_sum_squared_terms(void) const;
 
-
    // Objective terms
 
-   SumSquaredError* get_sum_squared_error_objective_pointer(void) const;
-   MeanSquaredError* get_mean_squared_error_objective_pointer(void) const;
-   RootMeanSquaredError* get_root_mean_squared_error_objective_pointer(void) const;
-   NormalizedSquaredError* get_normalized_squared_error_objective_pointer(void) const;
-   MinkowskiError* get_Minkowski_error_objective_pointer(void) const;
-   CrossEntropyError* get_cross_entropy_error_objective_pointer(void) const;
-   WeightedSquaredError* get_weighted_squared_error_objective_pointer(void) const;
-   RocAreaError* get_roc_area_error_objective_pointer(void) const;
-   OutputsIntegrals* get_outputs_integrals_objective_pointer(void) const;
-   SolutionsError* get_solutions_error_objective_pointer(void) const;
-   FinalSolutionsError* get_final_solutions_error_objective_pointer(void) const;
-   IndependentParametersError* get_independent_parameters_error_objective_pointer(void) const;
-   InverseSumSquaredError* get_inverse_sum_squared_error_objective_pointer(void) const;
-   PerformanceTerm* get_user_objective_pointer(void) const;
+   SumSquaredError* get_sum_squared_error_pointer(void) const;
+   MeanSquaredError* get_mean_squared_error_pointer(void) const;
+   RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const;
+   NormalizedSquaredError* get_normalized_squared_error_pointer(void) const;
+   MinkowskiError* get_Minkowski_error_pointer(void) const;
+   CrossEntropyError* get_cross_entropy_error_pointer(void) const;
+   WeightedSquaredError* get_weighted_squared_error_pointer(void) const;
+   RocAreaError* get_roc_area_error_pointer(void) const;
+   ErrorTerm* get_user_error_pointer(void) const;
 
    // Regularization terms
 
-   NeuralParametersNorm* get_neural_parameters_norm_regularization_pointer(void) const;
-   OutputsIntegrals* get_outputs_integrals_regularization_pointer(void) const;
-   PerformanceTerm* get_user_regularization_pointer(void) const;
-
-   // Constraints terms
-
-   OutputsIntegrals* get_outputs_integrals_constraints_pointer(void) const;
-   SolutionsError* get_solutions_error_constraints_pointer(void) const;
-   FinalSolutionsError* get_final_solutions_error_constraints_pointer(void) const;
-   IndependentParametersError* get_independent_parameters_error_constraints_pointer(void) const;
-   PerformanceTerm* get_user_constraints_pointer(void) const;
+   NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const;
+   OutputsIntegrals* get_outputs_integrals_pointer(void) const;
+   RegularizationTerm* get_user_regularization_pointer(void) const;
 
    // Functional type methods
 
-   const ObjectiveType& get_objective_type(void) const;
+   const ErrorType& get_error_type(void) const;
    const RegularizationType& get_regularization_type(void) const;
-   const ConstraintsType& get_constraints_type(void) const;
 
-   std::string write_objective_type(void) const;
+   std::string write_error_type(void) const;
    std::string write_regularization_type(void) const;
-   std::string write_constraints_type(void) const;
 
-   std::string write_objective_type_text(void) const;
+   std::string write_error_type_text(void) const;
    std::string write_regularization_type_text(void) const;
-   std::string write_constraints_type_text(void) const;
 
    // Serialization methods
 
@@ -340,25 +301,21 @@ public:
    void set_mathematical_model_pointer(MathematicalModel*);
    void set_data_set_pointer(DataSet*);
 
-   void set_user_objective_pointer(PerformanceTerm*);
-   void set_user_regularization_pointer(PerformanceTerm*);
-   void set_user_constraints_pointer(PerformanceTerm*);
+   void set_user_error_pointer(ErrorTerm*);
+   void set_user_regularization_pointer(RegularizationTerm*);
 
    void set_default(void);
 
    // Functionals methods 
 
-   void set_objective_type(const ObjectiveType&);
+   void set_error_type(const ErrorType&);
    void set_regularization_type(const RegularizationType&);
-   void set_constraints_type(const ConstraintsType&);
 
-   void set_objective_type(const std::string&);
+   void set_error_type(const std::string&);
    void set_regularization_type(const std::string&);
-   void set_constraints_type(const std::string&);
    
-   void destruct_objective(void);
-   void destruct_regularization(void);
-   void destruct_constraints(void);
+   void destruct_error_term(void);
+   void destruct_regularization_term(void);
 
    void destruct_all_terms(void);
 
@@ -366,37 +323,26 @@ public:
 
    // Performance functional methods
 
-   double calculate_objective(void) const;
+   double calculate_error(void) const;
    double calculate_regularization(void) const;
-   double calculate_constraints(void) const;
 
-   double calculate_objective(const Vector<double>&) const;
+   double calculate_error(const Vector<double>&) const;
    double calculate_regularization(const Vector<double>&) const;
-   double calculate_constraints(const Vector<double>&) const;
 
-   Vector<double> calculate_objective_terms(void) const;
-   Vector<double> calculate_regularization_terms(void) const;
-   Vector<double> calculate_constraints_terms(void) const;
+   Vector<double> calculate_error_terms(void) const;
+   Matrix<double> calculate_error_terms_Jacobian(void) const;
 
-   Matrix<double> calculate_objective_terms_Jacobian(void) const;
-   Matrix<double> calculate_regularization_terms_Jacobian(void) const;
-   Matrix<double> calculate_constraints_terms_Jacobian(void) const;
-
-   Vector<double> calculate_objective_gradient(void) const;
+   Vector<double> calculate_error_gradient(void) const;
    Vector<double> calculate_regularization_gradient(void) const;
-   Vector<double> calculate_constraints_gradient(void) const;
 
-   Vector<double> calculate_objective_gradient(const Vector<double>&) const;
+   Vector<double> calculate_error_gradient(const Vector<double>&) const;
    Vector<double> calculate_regularization_gradient(const Vector<double>&) const;
-   Vector<double> calculate_constraints_gradient(const Vector<double>&) const;
 
-   Matrix<double> calculate_objective_Hessian(void) const;
+   Matrix<double> calculate_error_Hessian(void) const;
    Matrix<double> calculate_regularization_Hessian(void) const;
-   Matrix<double> calculate_constraints_Hessian(void) const;
 
-   Matrix<double> calculate_objective_Hessian(const Vector<double>&) const;
+   Matrix<double> calculate_error_Hessian(const Vector<double>&) const;
    Matrix<double> calculate_regularization_Hessian(const Vector<double>&) const;
-   Matrix<double> calculate_constraints_Hessian(const Vector<double>&) const;
 
    double calculate_performance(void) const;
    Vector<double> calculate_gradient(void) const;
@@ -417,8 +363,8 @@ public:
    virtual FirstOrderperformance calculate_first_order_performance(void) const;
    virtual SecondOrderperformance calculate_second_order_performance(void) const;
 
-   double calculate_selection_objective(void) const;
-   double calculate_selection_regularization(void) const;
+   double calculate_selection_error(void) const;
+   //double calculate_selection_regularization(void) const;
    double calculate_selection_constraints(void) const;
 
    virtual double calculate_selection_performance(void) const;
@@ -440,6 +386,9 @@ public:
    virtual tinyxml2::XMLDocument* to_XML(void) const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
    
+   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   // virtual void read_XML(   );
+
    virtual std::string to_string(void) const;
    virtual void save(const std::string&) const;   
    virtual void load(const std::string&);   
@@ -463,111 +412,65 @@ private:
 
    MathematicalModel* mathematical_model_pointer;
 
-   /// Type of objective term.
+   /// Type of error term.
 
-   ObjectiveType objective_type;
+   ErrorType error_type;
 
    /// Type of regularization term.
 
    RegularizationType regularization_type;
 
-   /// Type of constraints term.
+   // Error terms
 
-   ConstraintsType constraints_type;
+   /// Pointer to the sum squared error object wich can be used as the error term.
 
-   // Objective terms
+   SumSquaredError* sum_squared_error_pointer;
 
-   /// Pointer to the sum squared error object wich can be used as the objective term.
+   /// Pointer to the mean squared error object wich can be used as the error term.
 
-   SumSquaredError* sum_squared_error_objective_pointer;
+   MeanSquaredError* mean_squared_error_pointer;
 
-   /// Pointer to the mean squared error object wich can be used as the objective term.
+   /// Pointer to the root mean squared error object wich can be used as the error term.
 
-   MeanSquaredError* mean_squared_error_objective_pointer;
+   RootMeanSquaredError* root_mean_squared_error_pointer;
 
-   /// Pointer to the root mean squared error object wich can be used as the objective term.
+   /// Pointer to the normalized squared error object wich can be used as the error term.
 
-   RootMeanSquaredError* root_mean_squared_error_objective_pointer;
+   NormalizedSquaredError* normalized_squared_error_pointer;
 
-   /// Pointer to the normalized squared error object wich can be used as the objective term.
+   /// Pointer to the Mikowski error object wich can be used as the error term.
 
-   NormalizedSquaredError* normalized_squared_error_objective_pointer;
+   MinkowskiError* Minkowski_error_pointer;
 
-   /// Pointer to the Mikowski error object wich can be used as the objective term.
+   /// Pointer to the cross entropy error object wich can be used as the error term.
 
-   MinkowskiError* Minkowski_error_objective_pointer;
+   CrossEntropyError* cross_entropy_error_pointer;
 
-   /// Pointer to the cross entropy error object wich can be used as the objective term.
+   /// Pointer to the weighted squared error object wich can be used as the error term.
 
-   CrossEntropyError* cross_entropy_error_objective_pointer;
+   WeightedSquaredError* weighted_squared_error_pointer;
 
-   /// Pointer to the weighted squared error object wich can be used as the objective term.
+   /// Pointer to the ROC area error object wich can be used as the error term.
 
-   WeightedSquaredError* weighted_squared_error_objective_pointer;
-
-   /// Pointer to the ROC area error object wich can be used as the objective term.
-
-   RocAreaError* roc_area_error_objective_pointer;
-
-   /// Pointer to the outputs integrals object wich can be used as the objective term.
-
-   OutputsIntegrals* outputs_integrals_objective_pointer;
-
-   /// Pointer to the solutions error object wich can be used as the objective term.
-
-   SolutionsError* solutions_error_objective_pointer;
-
-   /// Pointer to the final solutions error object wich can be used as the objective term.
-
-   FinalSolutionsError* final_solutions_error_objective_pointer;
-
-   /// Pointer to the independent parameters error object wich can be used as the objective term.
-
-   IndependentParametersError* independent_parameters_error_objective_pointer;
-
-   /// Pointer to the inverse sum squared error object wich can be used as the objective term.
-
-   InverseSumSquaredError* inverse_sum_squared_error_objective_pointer;
+   RocAreaError* roc_area_error_pointer;
 
    /// Pointer to the user performance term object wich can be used as objective.
 
-   PerformanceTerm* user_objective_pointer;
+   ErrorTerm* user_error_pointer;
 
    // Regularization terms
 
    /// Pointer to the neural parameters norm object wich can be used as the regularization term.
 
-   NeuralParametersNorm* neural_parameters_norm_regularization_pointer;
+   NeuralParametersNorm* neural_parameters_norm_pointer;
 
    /// Pointer to the sum outputs integrals object wich can be used as the regularization term.
 
-   OutputsIntegrals* outputs_integrals_regularization_pointer;
+   OutputsIntegrals* outputs_integrals_pointer;
 
    /// Pointer to a user performance term to be used for regularization.
 
-   PerformanceTerm* user_regularization_pointer;
-
-   // Constraints terms
-
-   /// Pointer to the outputs integrals object wich can be used as constraints term.
-
-   OutputsIntegrals* outputs_integrals_constraints_pointer;
-
-   /// Pointer to the solutions error object wich can be used as constraints term.
-
-   SolutionsError* solutions_error_constraints_pointer;
-
-   /// Pointer to the final solutions error object wich can be used as constraints term.
-
-   FinalSolutionsError* final_solutions_error_constraints_pointer;
-
-   /// Pointer to the independent parameters error object wich can be used as constraints term.
-
-   IndependentParametersError* independent_parameters_error_constraints_pointer;
-
-   /// Pointer to a user performance term to represent the contraint.
-
-   PerformanceTerm* user_constraints_pointer;
+   RegularizationTerm* user_regularization_pointer;
 
    /// Display messages to screen. 
 

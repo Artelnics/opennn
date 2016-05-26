@@ -766,6 +766,141 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
    return(document);
 }
 
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void SimulatedAnnealingOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("SimulatedAnnealingOrder");
+
+    // Minimum order
+
+    file_stream.OpenElement("MinimumOrder");
+
+    buffer.str("");
+    buffer << minimum_order;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum order
+
+    file_stream.OpenElement("MaximumOrder");
+
+    buffer.str("");
+    buffer << maximum_order;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Cooling rate
+
+    file_stream.OpenElement("CoolingRate");
+
+    buffer.str("");
+    buffer << cooling_rate;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Trials number
+
+    file_stream.OpenElement("TrialsNumber");
+
+    buffer.str("");
+    buffer << trials_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Tolerance
+
+    file_stream.OpenElement("Tolerance");
+
+    buffer.str("");
+    buffer << tolerance;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Selection performance goal
+
+    file_stream.OpenElement("SelectionPerformanceGoal");
+
+    buffer.str("");
+    buffer << selection_performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Minimum temperature
+
+    file_stream.OpenElement("MinimumTemperature");
+
+    buffer.str("");
+    buffer << minimum_temperature;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum iterations
+
+    file_stream.OpenElement("MaximumIterationsNumber");
+
+    buffer.str("");
+    buffer << maximum_iterations_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum time
+
+    file_stream.OpenElement("MaximumTime");
+
+    buffer.str("");
+    buffer << maximum_time;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve performance data
+
+    file_stream.OpenElement("ReservePerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_performance_data;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve selection performance data
+
+    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_selection_performance_data;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this simulated annealing order object.

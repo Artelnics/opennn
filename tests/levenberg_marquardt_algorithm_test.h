@@ -17,7 +17,7 @@
 // Unit testing includes
 
 #include "unit_testing.h"
-#include "mock_performance_term.h"
+#include "mock_error_term.h"
 
 using namespace OpenNN;
 

@@ -766,6 +766,23 @@ Matrix<double> DataSet::arrange_testing_data(void) const
 }
 
 
+// Matrix<double> arrange_input_data(void) const method
+
+/// Returns a matrix with the input variables in the data set.
+/// The number of rows is the number of instances.
+/// The number of columns is the number of input variables.
+
+Matrix<double> DataSet::arrange_input_data(void) const
+{
+   const size_t instances_number = instances.get_instances_number();
+   Vector<size_t> indices(0, 1, (size_t)instances_number-1);
+
+   const Vector<size_t> input_indices = variables.arrange_inputs_indices();
+
+   return(data.arrange_submatrix(indices, input_indices));
+}
+
+
 // Matrix<double> arrange_target_data(void) const method
 
 /// Returns a matrix with the target variables in the data set.
@@ -2043,7 +2060,7 @@ Vector< Vector<double> > DataSet::calculate_box_plots(void) const
     {
         column = data.arrange_column(variables_indices[i], instances_indices);
 
-        box_plots[i] = column.calculate_box_and_whiskers();
+        box_plots[i] = column.calculate_box_plots();
     }
 
     return(box_plots);
@@ -2547,10 +2564,6 @@ Matrix<double> DataSet::perform_principal_components_analysis(const double& mini
 
     const Matrix<double> covariance_matrix = calculate_covariance_matrix();
 
-    std::cout << "Covariance matrix: " << covariance_matrix << std::endl;
-    std::cout << "Rows: " << covariance_matrix.get_rows_number() << std::endl;
-    std::cout << "Columns: " << covariance_matrix.get_columns_number() << std::endl;
-
     // Calculate mean
 
     const Vector< Statistics<double> > input_data_statistics = calculate_inputs_statistics();
@@ -2566,25 +2579,15 @@ Matrix<double> DataSet::perform_principal_components_analysis(const double& mini
 
     // Calculate eigenvectors
 
-    const Matrix<double> eigenvectors = covariance_matrix.calculate_eigenvectors()/*.calculate_transpose()*/;
-
-    std::cout << "Eigenvectors: " << eigenvectors << std::endl;
+    const Matrix<double> eigenvectors = covariance_matrix.calculate_eigenvectors();
 
     // Calculate eigenvalues
 
     const Matrix<double> eigenvalues = covariance_matrix.calculate_eigenvalues();
 
-//    const Matrix<double> sorted_eigenvalues = eigenvalues.sort_greater_rows(0);
-
-    std::cout << "Eigenvalues: " << eigenvalues << std::endl;
-
     // Calculate explained variance
 
     const Vector<double> explained_variance = eigenvalues.arrange_column(0).calculate_explained_variance();
-
-    std::cout << "Explained variance: " << explained_variance << std::endl;
-
-    std::cout << "Minimum explained variance: " << minimum_explained_variance << std::endl;
 
     // Choose eigenvectors
 
@@ -2611,11 +2614,7 @@ Matrix<double> DataSet::perform_principal_components_analysis(const double& mini
         feature_matrix.set_row(i, eigenvectors.arrange_column(principal_components_indices[i]));
     }
 
-    std::cout << "Principal components number: " << principal_components_number << std::endl;
-
     // Return feature matrix
-
-    std::cout << "Feature matrix: " << feature_matrix << std::endl;
 
     return feature_matrix;
 }
@@ -3483,6 +3482,164 @@ tinyxml2::XMLDocument* DataSet::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
+
+void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("DataSet");
+
+    // Data file
+
+    file_stream.OpenElement("DataFile");
+
+    // File type
+
+    {
+        file_stream.OpenElement("FileType");
+
+        file_stream.PushText(write_file_type().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // First cell
+
+    {
+        file_stream.OpenElement("FirstCell");
+
+        file_stream.PushText(write_first_cell().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Last cell
+
+    {
+        file_stream.OpenElement("LastCell");
+
+        file_stream.PushText(write_last_cell().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Sheet number
+
+    {
+        file_stream.OpenElement("SheetNumber");
+
+        buffer.str("");
+        buffer << write_sheet_number();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Lags number
+
+    {
+        file_stream.OpenElement("LagsNumber");
+
+        buffer.str("");
+        buffer << get_lags_number();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Steps Ahead
+
+    {
+        file_stream.OpenElement("StepsAhead");
+
+        buffer.str("");
+        buffer << get_steps_ahead();
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Header line
+
+    {
+        file_stream.OpenElement("ColumnsName");
+
+        buffer.str("");
+        buffer << header_line;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Rows label
+
+    {
+        file_stream.OpenElement("RowsLabel");
+
+        buffer.str("");
+        buffer << rows_label;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Separator
+
+    {
+        file_stream.OpenElement("Separator");
+
+        file_stream.PushText(write_separator().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Missing values label
+
+    {
+        file_stream.OpenElement("MissingValuesLabel");
+
+        file_stream.PushText(missing_values_label.c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Data file name
+
+    {
+        file_stream.OpenElement("DataFileName");
+
+        file_stream.PushText(data_file_name.c_str());
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+
+    // Variables
+
+    variables.write_XML(file_stream);
+
+    // Instances
+
+    instances.write_XML(file_stream);
+
+    // Missing values
+
+    missing_values.write_XML(file_stream);
+
+
+    file_stream.CloseElement();
 }
 
 
@@ -5460,31 +5617,32 @@ Vector<size_t> DataSet::arrange_real_inputs_indices(void) const
 
 
 // void sum_binary_inputs(void) method
+// @todo
 
 void DataSet::sum_binary_inputs(void)
 {
-    const size_t inputs_number = variables.count_inputs_number();
+//    const size_t inputs_number = variables.count_inputs_number();
 
-    const size_t instances_number = instances.get_instances_number();
+//    const size_t instances_number = instances.get_instances_number();
 
-    const Vector<size_t> binary_inputs_indices = arrange_binary_inputs_indices();
+//    const Vector<size_t> binary_inputs_indices = arrange_binary_inputs_indices();
 
-    const size_t binary_inputs_number = binary_inputs_indices.size();
+//    const size_t binary_inputs_number = binary_inputs_indices.size();
 
-    Vector<double> binary_variable(instances_number, 0.0);
+//    Vector<double> binary_variable(instances_number, 0.0);
 
-    for(size_t i = 0; i < binary_inputs_number; i++)
-    {
-        binary_variable += data.arrange_column(binary_inputs_indices[i]);
-    }
+//    for(size_t i = 0; i < binary_inputs_number; i++)
+//    {
+//        binary_variable += data.arrange_column(binary_inputs_indices[i]);
+//    }
 
-    const Vector<size_t> real_inputs_indices = arrange_real_inputs_indices();
+//    const Vector<size_t> real_inputs_indices = arrange_real_inputs_indices();
 
-    Matrix<double> new_data = data.arrange_submatrix_columns(real_inputs_indices);
+//    Matrix<double> new_data = data.arrange_submatrix_columns(real_inputs_indices);
 
-    new_data.append_column(binary_variable);
+//    new_data.append_column(binary_variable);
 
-    new_data = new_data.assemble_columns(arrange_target_data());
+//    new_data = new_data.assemble_columns(arrange_target_data());
 }
 
 
@@ -5692,6 +5850,7 @@ Vector<double> DataSet::calculate_local_outlier_factor(const size_t& nearest_nei
 
 /// Removes the outliers from the data set using the local outlier factor method.
 /// @param nearest_neighbors_number Number of nearest neighbros to calculate
+/// @todo
 
 Vector<size_t> DataSet::clean_local_outlier_factor(const size_t& nearest_neighbors_number)
 {
@@ -5726,38 +5885,57 @@ Vector<size_t> DataSet::clean_Tukey_outliers(const double& cleaning_parameter)
     const size_t instances_number = instances.count_used_instances_number();
     const Vector<size_t> instances_indices = instances.arrange_used_indices();
 
-    Vector< Vector<double> > box_plots = calculate_box_plots();
-
     const size_t variables_number = variables.count_used_variables_number();
+    const Vector<size_t> used_variables_indices = variables.arrange_used_indices();
 
-    Vector<size_t> unused_instances;
+    Vector<size_t> unused_instances_indices;
 
     Vector<double> instance;
 
+    Vector<double> box_plot;
     double interquartile_range;
+
+    size_t variable_index;
 
     for(size_t i = 0; i < variables_number; i++)
     {
-        interquartile_range = box_plots[i][3] - box_plots[i][1];
+        variable_index = used_variables_indices[i];
+
+        box_plot = data.arrange_column(variable_index).calculate_box_plots();
+
+        if(box_plot[3] == box_plot[1])
+        {
+            continue;
+        }
+        else if(is_binary_variable(variable_index))
+        {
+            continue;
+        }
+        else
+        {
+            interquartile_range = std::abs((box_plot[3] - box_plot[1]));
+        }
 
         for(size_t j = 0; j < instances_number; j++)
         {
             instance = get_instance(instances_indices[j]);
 
-            if(instance[i] < box_plots[i][1] - cleaning_parameter*interquartile_range && !(unused_instances.contains(j)))
+            if(instance[variable_index] < (box_plot[1] - cleaning_parameter*interquartile_range)
+            && !(unused_instances_indices.contains(instances_indices[j])))
             {
-                unused_instances.push_back(instances_indices[j]);
+                unused_instances_indices.push_back(instances_indices[j]);
             }
-            else if(instance[i] > box_plots[i][3] + cleaning_parameter*interquartile_range && !(unused_instances.contains(j)))
+            else if(instance[variable_index] > (box_plot[3] + cleaning_parameter*interquartile_range)
+                 && !(unused_instances_indices.contains(instances_indices[j])))
             {
-                unused_instances.push_back(instances_indices[j]);
+                unused_instances_indices.push_back(instances_indices[j]);
             }
         }
     }
 
-    instances.set_unused(unused_instances);
+    instances.set_unused(unused_instances_indices);
 
-    return(unused_instances);
+    return(unused_instances_indices);
 }
 
 

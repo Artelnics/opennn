@@ -219,7 +219,7 @@ void TrainingRateAlgorithmTest::test_calculate_fixed_directional_point(void)
    PerformanceFunctional pf(&nn);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    double performance;
    Vector<double> gradient;
@@ -295,7 +295,7 @@ void TrainingRateAlgorithmTest::test_calculate_bracketing_triplet(void)
     // Test
 
     pf.destruct_all_terms();
-    pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+    pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
     nn.randomize_parameters_normal();
 
@@ -343,7 +343,7 @@ void TrainingRateAlgorithmTest::test_calculate_bracketing_triplet(void)
     nn.randomize_parameters_normal();
 
     pf.destruct_all_terms();
-    pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
     performance = pf.calculate_performance();
     training_direction = pf.calculate_gradient()*(-1.0);
@@ -365,7 +365,7 @@ void TrainingRateAlgorithmTest::test_calculate_bracketing_triplet(void)
     nn.randomize_parameters_normal();
 
     pf.destruct_all_terms();
-    pf.set_objective_type(PerformanceFunctional::NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+    pf.set_error_type(PerformanceFunctional::NORMALIZED_SQUARED_ERROR);
 
     performance = pf.calculate_performance();
     training_direction = pf.calculate_gradient()*(-1.0);
@@ -389,7 +389,7 @@ void TrainingRateAlgorithmTest::test_calculate_golden_section_directional_point(
    PerformanceFunctional pf(&nn);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    TrainingRateAlgorithm tra(&pf);
 
@@ -421,7 +421,7 @@ void TrainingRateAlgorithmTest::test_calculate_Brent_method_directional_point(vo
    PerformanceFunctional pf(&nn);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    TrainingRateAlgorithm tra(&pf);
 

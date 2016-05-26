@@ -25,7 +25,7 @@ namespace OpenNN
 /// It also initializes all the rest of class members to their default values.
 
 OutputsIntegrals::OutputsIntegrals(void) 
- : PerformanceTerm()
+ : RegularizationTerm()
 {
    set_default();
 }
@@ -39,7 +39,7 @@ OutputsIntegrals::OutputsIntegrals(void)
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 OutputsIntegrals::OutputsIntegrals(NeuralNetwork* new_neural_network_pointer) 
-: PerformanceTerm(new_neural_network_pointer)
+: RegularizationTerm(new_neural_network_pointer)
 {
    set_default();
 }
@@ -53,7 +53,7 @@ OutputsIntegrals::OutputsIntegrals(NeuralNetwork* new_neural_network_pointer)
 /// @param outputs_integrals_document Pointer to a TinyXML document with the object data.
 
 OutputsIntegrals::OutputsIntegrals(const tinyxml2::XMLDocument& outputs_integrals_document)
- : PerformanceTerm(outputs_integrals_document)
+ : RegularizationTerm(outputs_integrals_document)
 {
    set_default();
 
@@ -231,17 +231,17 @@ void OutputsIntegrals::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_regularization(void) const method
 
-/// Returns the objective value of a multilayer perceptron according to the sum squared error on a data set.
+/// Returns the regularization value of a neural network according to the outputs integrals.
 /// @todo
 
-double OutputsIntegrals::calculate_performance(void) const
+double OutputsIntegrals::calculate_regularization(void) const
 {
    std::ostringstream buffer;
 
    buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-          << "double calculate_performance(void) const method.\n"
+          << "double calculate_regularization(void) const method.\n"
           << "This method is under development.\n";
 
    throw std::logic_error(buffer.str());	  
@@ -275,18 +275,18 @@ double OutputsIntegrals::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_regularization(const Vector<double>&) const method
 
 /// Returns which would be the performance of a neural network for an hypothetical vector of parameters. 
 /// It does not set that vector of parameters to the neural network. 
 // @param parameters Vector of potential parameters for the neural network associated to the performance functional.
 
-double OutputsIntegrals::calculate_performance(const Vector<double>&) const
+double OutputsIntegrals::calculate_regularization(const Vector<double>&) const
 {
    std::ostringstream buffer;
 
    buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-          << "double calculate_performance(const Vector<double>&) const method.\n"
+          << "double calculate_regularization(const Vector<double>&) const method.\n"
           << "This method is under development.\n";
 
    throw std::logic_error(buffer.str());	  
@@ -310,7 +310,7 @@ double OutputsIntegrals::calculate_performance(const Vector<double>&) const
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: OutputsIntegrals class." << std::endl
-             << "double calculate_performance(const Vector<double>&) const method." << std::endl
+             << "double calculate_error(const Vector<double>&) const method." << std::endl
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
 
       throw std::logic_error(buffer.str());
@@ -434,6 +434,37 @@ tinyxml2::XMLDocument* OutputsIntegrals::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void OutputsIntegrals::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("OutputsIntegrals");
+
+    // Numerical differentiation
+
+    if(numerical_differentiation_pointer)
+    {
+        numerical_differentiation_pointer->write_XML(file_stream);
+    }
+
+    // Outputs integrals weights
+
+    file_stream.OpenElement("OutputsIntegralsWeights");
+
+    buffer.str("");
+    buffer << outputs_integrals_weights;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
 }
 
 

@@ -94,7 +94,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.initialize_data(0.0);
 
-   performance = sse.calculate_performance();
+   performance = sse.calculate_error();
 
    assert_true(performance == 0.0, LOG);
 
@@ -106,7 +106,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.initialize_data(1.0);
 
-   performance = sse.calculate_performance();
+   performance = sse.calculate_error();
 
    assert_true(performance == 1.0, LOG);
 
@@ -120,7 +120,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(sse.calculate_performance() == sse.calculate_performance(parameters), LOG);
+   assert_true(sse.calculate_error() == sse.calculate_error(parameters), LOG);
 
    // Test
 
@@ -132,7 +132,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(sse.calculate_performance() != sse.calculate_performance(parameters*2.0), LOG);
+   assert_true(sse.calculate_error() != sse.calculate_error(parameters*2.0), LOG);
 
    // Test
 
@@ -278,7 +278,7 @@ void SumSquaredErrorTest::test_calculate_gradient(void)
    gradient.clear();
 
    gradient = sse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, parameters);
    error = (gradient - numerical_gradient).calculate_absolute_value();
 
    assert_true(error < 1.0e-3, LOG);
@@ -297,7 +297,7 @@ void SumSquaredErrorTest::test_calculate_gradient(void)
    gradient.clear();
 
    gradient = sse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, parameters);
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
    // Test
@@ -580,7 +580,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    assert_true((Hessian - complete_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-}*/
+}
 
    // Test
 {
@@ -617,7 +617,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    Hessian = sse.calculate_Hessian();
 
-   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_error, parameters);
 
    std::cout << "Hessian: \n" << Hessian << std::endl;
    std::cout << "Numerical Hessian: \n" << numerical_Hessian << std::endl;
@@ -845,7 +845,7 @@ void SumSquaredErrorTest::test_calculate_selection_performance(void)
 
    ds.set();
 
-   selection_objective = sse.calculate_selection_performance();
+   selection_objective = sse.calculate_selection_error();
    
    assert_true(selection_objective == 0.0, LOG);
 }
@@ -892,7 +892,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors(void)
 
    squared_errors = sse.calculate_squared_errors();
 
-   objective = sse.calculate_performance();
+   objective = sse.calculate_error();
 
    assert_true(fabs(squared_errors.calculate_sum() - objective) < 1.0e-12, LOG);
 
@@ -960,7 +960,7 @@ void SumSquaredErrorTest::run_test_case(void)
 
    test_calculate_gradient();
 
-   test_calculate_Hessian();
+//   test_calculate_Hessian();
 
    // Objective terms methods
 

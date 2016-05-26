@@ -112,7 +112,7 @@ Inputs& Inputs::operator = (const Inputs& other_inputs)
 bool Inputs::operator == (const Inputs& other_inputs) const
 {
     if(/*items == other_inputs.items
-                                           &&*/ display == other_inputs.display)
+                                                   &&*/ display == other_inputs.display)
     {
         return(true);
     }
@@ -894,6 +894,67 @@ tinyxml2::XMLDocument* Inputs::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void Inputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    const size_t inputs_number = get_inputs_number();
+
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("Inputs");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << inputs_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Items
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        file_stream.OpenElement("Item");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        // Name
+
+        file_stream.OpenElement("Name");
+
+        file_stream.PushText(items[i].name.c_str());
+
+        file_stream.CloseElement();
+
+        // Units
+
+        file_stream.OpenElement("Units");
+
+        file_stream.PushText(items[i].units.c_str());
+
+        file_stream.CloseElement();
+
+        // Description
+
+        file_stream.OpenElement("Description");
+
+        file_stream.PushText(items[i].description.c_str());
+
+        file_stream.CloseElement();
+
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this inputs object.
@@ -1002,7 +1063,7 @@ void Inputs::from_XML(const tinyxml2::XMLDocument& document)
 
 // void to_PMML(tinyxml2::XMLElement*, const bool&, const Vector<Statistics<double>>&) method
 
-void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, const Vector<Statistics<double>>& inputs_statistics )
+void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, const Vector<Statistics<double>>& inputs_statistics ) const
 {
     std::string element_name(element->Name());
 
@@ -1080,6 +1141,93 @@ void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, 
         }
     }
 
+}
+
+
+// void write_PMML_data_dictionary(tinyxml2::XMLPrinter, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) method
+
+void Inputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const Vector<Statistics<double>>& inputs_statistics ) const
+{
+    const size_t inputs_number = get_inputs_number();
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        file_stream.OpenElement("DataField");
+
+        file_stream.PushAttribute("dataType", "double");
+        file_stream.PushAttribute("name", get_name(i).c_str());
+        file_stream.PushAttribute("optype", "continuous");
+
+        if(!inputs_statistics.empty())
+        {
+            file_stream.OpenElement("Interval");
+
+            file_stream.PushAttribute("closure","closedClosed");
+            file_stream.PushAttribute("leftMargin",inputs_statistics.at(i).minimum);
+            file_stream.PushAttribute("rightMargin", inputs_statistics.at(i).maximum);
+
+            file_stream.CloseElement();
+        }
+
+        file_stream.CloseElement();
+    }
+}
+
+
+// void write_PMML_mining_schema(tinyxml2::XMLPrinter, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) method
+
+void Inputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream) const
+{
+    const size_t inputs_number = get_inputs_number();
+
+    for(size_t i = 0 ; i< inputs_number; i++)
+    {
+        file_stream.OpenElement("MiningField");
+
+        file_stream.PushAttribute("name", get_name(i).c_str());
+
+        file_stream.CloseElement();
+    }
+}
+
+
+// void write_PMML_neural_inputs(tinyxml2::XMLPrinter, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) method
+
+void Inputs::write_PMML_neural_inputs(tinyxml2::XMLPrinter& file_stream, const bool& is_data_scaled) const
+{
+    const size_t inputs_number = get_inputs_number();
+
+    for(size_t i = 0; i < inputs_number ; i++)
+    {
+        file_stream.OpenElement("NeuralInput");
+
+        file_stream.PushAttribute("id",("0," + std::to_string(i)).c_str());
+
+        file_stream.OpenElement("DerivedField");
+
+        file_stream.PushAttribute("optype","continuous");
+        file_stream.PushAttribute("dataType","double");
+
+        file_stream.OpenElement("FieldRef");
+
+        std::string field_ref_name(get_name(i));
+
+        if(is_data_scaled)
+        {
+            field_ref_name.append("*");
+        }
+
+        file_stream.PushAttribute("field",field_ref_name.c_str());
+
+        // Close FieldRef
+        file_stream.CloseElement();
+
+        // Close DerivedField
+        file_stream.CloseElement();
+
+        // Close NeuralInput
+        file_stream.CloseElement();
+    }
 }
 
 }

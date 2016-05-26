@@ -404,6 +404,30 @@ tinyxml2::XMLDocument* TrainingAlgorithm::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void TrainingAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("TrainingAlgorithm");
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Loads a default training algorithm from a XML document.

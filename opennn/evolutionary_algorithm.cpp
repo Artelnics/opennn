@@ -3669,6 +3669,256 @@ tinyxml2::XMLDocument* EvolutionaryAlgorithm::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void EvolutionaryAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("EvolutionaryAlgorithm");
+
+    // Population
+
+    file_stream.OpenElement("Population");
+
+    file_stream.PushText(population.to_string().c_str());
+
+    file_stream.CloseElement();
+
+    // Fitness assignment method
+
+    file_stream.OpenElement("FitnessAssignmentMethod");
+
+    file_stream.PushText(write_fitness_assignment_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Selection method
+
+    file_stream.OpenElement("SelectionMethod");
+
+    file_stream.PushText(write_selection_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Recombination method
+
+    file_stream.OpenElement("RecombinationMethod");
+
+    file_stream.PushText(write_recombination_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Mutation method
+
+    file_stream.OpenElement("MutationMethod");
+
+    file_stream.PushText(write_recombination_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Elitism
+
+    file_stream.OpenElement("ElitismSize");
+
+    buffer.str("");
+    buffer << elitism_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Selective pressure
+
+    file_stream.OpenElement("SelectivePressure");
+
+    buffer.str("");
+    buffer << selective_pressure;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Recombination size
+
+    file_stream.OpenElement("RecombinationSize");
+
+    buffer.str("");
+    buffer << recombination_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Mutation rate
+
+    file_stream.OpenElement("MutationRate");
+
+    buffer.str("");
+    buffer << mutation_rate;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Mutation range
+
+    file_stream.OpenElement("MutationRange");
+
+    buffer.str("");
+    buffer << mutation_range;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Mean performance goal
+
+    file_stream.OpenElement("MeanPerformanceGoal");
+
+    buffer.str("");
+    buffer << mean_performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Standard deviation performance goal
+
+    file_stream.OpenElement("StandardDeviationPerformanceGoal");
+
+    buffer.str("");
+    buffer << standard_deviation_performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Best performance goal
+
+    file_stream.OpenElement("BestPerformanceGoal");
+
+    buffer.str("");
+    buffer << best_performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum selection performance decreases
+
+    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+
+    buffer.str("");
+    buffer << maximum_selection_performance_decreases;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum generations number
+
+    file_stream.OpenElement("MaximumGenerationsNumber");
+
+    buffer.str("");
+    buffer << maximum_generations_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum time
+
+    file_stream.OpenElement("MaximumTime");
+
+    buffer.str("");
+    buffer << maximum_time;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve mean norm history
+
+    file_stream.OpenElement("ReserveMeanNormHistory");
+
+    buffer.str("");
+    buffer << reserve_mean_norm_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve standard deviation norm history
+
+    file_stream.OpenElement("ReserveStandardDeviationNormHistory");
+
+    buffer.str("");
+    buffer << reserve_standard_deviation_norm_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve best norm history
+
+    file_stream.OpenElement("ReserveBestNormHistory");
+
+    buffer.str("");
+    buffer << reserve_best_norm_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve mean performance history
+
+    file_stream.OpenElement("ReserveMeanPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_mean_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve standard deviation performance history
+
+    file_stream.OpenElement("ReserveStandardDeviationPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_standard_deviation_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve best performance history
+
+    file_stream.OpenElement("ReserveBestPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_best_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve selection performance history
+
+    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_selection_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Loads a evolutionary algorithm object from a XML document.

@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <errno.h>
 
 // OpenNN includes
 
@@ -220,7 +221,7 @@ public:
 
    // Layers 
 
-   size_t get_layers_number(void);
+   size_t get_layers_number(void) const;
 
    // Architecture
 
@@ -258,6 +259,10 @@ public:
 
    void perturbate_parameters(const double&);
 
+   // Feature importance
+
+   Vector<double> calculate_inputs_importance(const size_t&) const;
+
    // Output 
 
    Vector<double> calculate_outputs(const Vector<double>&) const;
@@ -286,6 +291,9 @@ public:
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
+   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   // virtual void read_XML(   );
+
    void print(void) const;
    void save(const std::string&) const;
    void save_parameters(const std::string&) const;
@@ -307,8 +315,10 @@ public:
 
    // PMML methods
 
-   virtual tinyxml2::XMLDocument* to_PMML(void) const;
-   virtual void from_PMML(const tinyxml2::XMLDocument&);
+   tinyxml2::XMLDocument* to_PMML(void) const;
+   void write_PMML(const std::string&) const;
+
+   void from_PMML(const tinyxml2::XMLDocument&);
 
 
 protected:

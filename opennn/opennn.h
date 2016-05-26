@@ -37,6 +37,7 @@
 #include "golden_section_order.h"
 #include "simulated_annealing_order.h"
 #include "inputs_selection_algorithm.h"
+#include "selective_pruning.h"
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
@@ -65,21 +66,17 @@
 // Performance functional
 
 #include "performance_functional.h"
-#include "performance_term.h"
+#include "error_term.h"
+#include "regularization_term.h"
 
 #include "neural_parameters_norm.h"
 
 #include "cross_entropy_error.h"
-#include "inverse_sum_squared_error.h"
 #include "mean_squared_error.h"
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"
 #include "root_mean_squared_error.h"
 #include "sum_squared_error.h"
-
-#include "final_solutions_error.h"
-#include "solutions_error.h"
-#include "independent_parameters_error.h"
 
 // Testing analysis
 

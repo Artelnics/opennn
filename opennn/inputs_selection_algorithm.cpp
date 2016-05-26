@@ -708,7 +708,7 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
             PerformanceFunctional performance_functional(&neural_network, &data_set);
 
-            performance_functional.set_objective_type(PerformanceFunctional::WEIGHTED_SQUARED_ERROR_OBJECTIVE);
+            performance_functional.set_error_type(PerformanceFunctional::WEIGHTED_SQUARED_ERROR);
 
             TrainingStrategy training_strategy(&performance_functional);
 

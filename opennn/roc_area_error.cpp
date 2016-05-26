@@ -22,10 +22,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a sum squared error performance term not associated to any neural network and not measured on any data set.
+/// It creates a sum squared error term not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-RocAreaError::RocAreaError(void) : PerformanceTerm()
+RocAreaError::RocAreaError(void) : ErrorTerm()
 {
 }
 
@@ -33,12 +33,12 @@ RocAreaError::RocAreaError(void) : PerformanceTerm()
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a sum squared error performance term associated to a neural network but not measured on any data set.
+/// It creates a sum squared error term associated to a neural network but not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 RocAreaError::RocAreaError(NeuralNetwork* new_neural_network_pointer)
-: PerformanceTerm(new_neural_network_pointer)
+: ErrorTerm(new_neural_network_pointer)
 {
 }
 
@@ -51,7 +51,7 @@ RocAreaError::RocAreaError(NeuralNetwork* new_neural_network_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 RocAreaError::RocAreaError(DataSet* new_data_set_pointer)
-: PerformanceTerm(new_data_set_pointer)
+: ErrorTerm(new_data_set_pointer)
 {
 }
 
@@ -65,7 +65,7 @@ RocAreaError::RocAreaError(DataSet* new_data_set_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 RocAreaError::RocAreaError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
- : PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+ : ErrorTerm(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
@@ -78,7 +78,7 @@ RocAreaError::RocAreaError(NeuralNetwork* new_neural_network_pointer, DataSet* n
 /// @param sum_squared_error_document XML document with the class members.
 
 RocAreaError::RocAreaError(const tinyxml2::XMLDocument& roc_area_error_document)
- : PerformanceTerm(roc_area_error_document)
+ : ErrorTerm(roc_area_error_document)
 {
 }
 
@@ -92,7 +92,7 @@ RocAreaError::RocAreaError(const tinyxml2::XMLDocument& roc_area_error_document)
 /// @param new_sum_squared_error Object to be copied. 
 
 RocAreaError::RocAreaError(const RocAreaError& new_roc_area_error)
- : PerformanceTerm(new_roc_area_error)
+ : ErrorTerm(new_roc_area_error)
 {
 
 }
@@ -182,11 +182,11 @@ void RocAreaError::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_error(void) const method
 
 /// Returns the performance value of a neural network according to the sum squared error on a data set.
 
-double RocAreaError::calculate_performance(void) const
+double RocAreaError::calculate_error(void) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -302,7 +302,7 @@ double RocAreaError::calculate_performance(void) const
                std::ostringstream buffer;
 
                buffer << "OpenNN Exception: RocAreaError class.\n"
-                      << "double calculate_performance(void) const method.\n"
+                      << "double calculate_error(void) const method.\n"
                       << "Target is not binary.\n";
 
                throw std::logic_error(buffer.str());
@@ -314,7 +314,7 @@ double RocAreaError::calculate_performance(void) const
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "Cannot compute false_positive_rate.\n";
 
            throw std::logic_error(buffer.str());
@@ -328,7 +328,7 @@ double RocAreaError::calculate_performance(void) const
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "false_positve_rate must be between 0 and 1.\n";
 
            throw std::logic_error(buffer.str());
@@ -339,7 +339,7 @@ double RocAreaError::calculate_performance(void) const
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "Cannot compute true_positive_rate.\n";
 
            throw std::logic_error(buffer.str());
@@ -353,7 +353,7 @@ double RocAreaError::calculate_performance(void) const
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "true_positve_rate must be between 0 and 1.\n";
 
            throw std::logic_error(buffer.str());
@@ -372,13 +372,13 @@ double RocAreaError::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns which would be the sum squard error performance of a neural network for an hypothetical vector of parameters. 
 /// It does not set that vector of parameters to the neural network. 
 /// @param parameters Vector of potential parameters for the neural network associated to the performance term.
 
-double RocAreaError::calculate_performance(const Vector<double>& parameters) const
+double RocAreaError::calculate_error(const Vector<double>& parameters) const
 {
    // Neural network stuff
 
@@ -401,7 +401,7 @@ double RocAreaError::calculate_performance(const Vector<double>& parameters) con
    if(size != parameters_number)
    {
       buffer << "OpenNN Exception: RocAreaError class." << std::endl
-             << "double calculate_performance(const Vector<double>&) const method." << std::endl
+             << "double calculate_error(const Vector<double>&) const method." << std::endl
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
 
       throw std::logic_error(buffer.str());
@@ -515,7 +515,7 @@ double RocAreaError::calculate_performance(const Vector<double>& parameters) con
                std::ostringstream buffer;
 
                buffer << "OpenNN Exception: RocAreaError class.\n"
-                      << "double calculate_performance(void) const method.\n"
+                      << "double calculate_error(void) const method.\n"
                       << "Target is not binary.\n";
 
                throw std::logic_error(buffer.str());
@@ -527,7 +527,7 @@ double RocAreaError::calculate_performance(const Vector<double>& parameters) con
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "Cannot compute false_positive_rate.\n";
 
            throw std::logic_error(buffer.str());
@@ -541,7 +541,7 @@ double RocAreaError::calculate_performance(const Vector<double>& parameters) con
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "false_positve_rate must be between 0 and 1.\n";
 
            throw std::logic_error(buffer.str());
@@ -552,7 +552,7 @@ double RocAreaError::calculate_performance(const Vector<double>& parameters) con
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "Cannot compute true_positive_rate.\n";
 
            throw std::logic_error(buffer.str());
@@ -566,7 +566,7 @@ double RocAreaError::calculate_performance(const Vector<double>& parameters) con
            std::ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_performance(void) const method.\n"
+                  << "double calculate_error(void) const method.\n"
                   << "true_positve_rate must be between 0 and 1.\n";
 
            throw std::logic_error(buffer.str());
@@ -1442,7 +1442,7 @@ Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
 /// Returns the first order performance of the terms performance function.
 /// This is a structure containing the performance terms vector and the performance terms Jacobian.
 
-PerformanceTerm::FirstOrderTerms RocAreaError::calculate_first_order_terms(void) const
+ErrorTerm::FirstOrderTerms RocAreaError::calculate_first_order_terms(void) const
 {
    FirstOrderTerms first_order_terms;
 
@@ -1593,6 +1593,16 @@ tinyxml2::XMLDocument* RocAreaError::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void RocAreaError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    file_stream.OpenElement("RocAreaError");
+
+    file_stream.CloseElement();
 }
 
 

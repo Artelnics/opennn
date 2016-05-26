@@ -21,10 +21,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates Minkowski error performance term not associated to any neural network and not measured on any data set.
+/// It creates Minkowski error term not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-MinkowskiError::MinkowskiError(void) : PerformanceTerm()
+MinkowskiError::MinkowskiError(void) : ErrorTerm()
 {
    set_default();
 }
@@ -33,12 +33,12 @@ MinkowskiError::MinkowskiError(void) : PerformanceTerm()
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a Minkowski error performance term associated to a neural network but not measured on any data set.
+/// It creates a Minkowski error term associated to a neural network but not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer)
-: PerformanceTerm(new_neural_network_pointer)
+: ErrorTerm(new_neural_network_pointer)
 {
    set_default();
 }
@@ -47,12 +47,12 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer)
 // DATA SET CONSTRUCTOR
 
 /// Data set constructor. 
-/// It creates a Minkowski error performance term not associated to any neural network but to be measured on a data set.
+/// It creates a Minkowski error term not associated to any neural network but to be measured on a data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 MinkowskiError::MinkowskiError(DataSet* new_data_set_pointer)
-: PerformanceTerm(new_data_set_pointer)
+: ErrorTerm(new_data_set_pointer)
 {
    set_default();
 }
@@ -61,13 +61,13 @@ MinkowskiError::MinkowskiError(DataSet* new_data_set_pointer)
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
-/// It creates a Minkowski error performance term object associated to a neural network and measured on a data set.
+/// It creates a Minkowski error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
- : PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+ : ErrorTerm(new_neural_network_pointer, new_data_set_pointer)
 {
    set_default();
 }
@@ -81,7 +81,7 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
 /// @param mean_squared_error_document TinyXML document with the Minkowski error elements.
 
 MinkowskiError::MinkowskiError(const tinyxml2::XMLDocument& mean_squared_error_document)
- : PerformanceTerm(mean_squared_error_document)
+ : ErrorTerm(mean_squared_error_document)
 {
    set_default();
 
@@ -245,11 +245,11 @@ void MinkowskiError::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_error(void) const method
 
 /// Returns the Minkowski error performance.
 
-double MinkowskiError::calculate_performance(void) const
+double MinkowskiError::calculate_error(void) const
 {
    // Control sentence
 
@@ -316,13 +316,13 @@ double MinkowskiError::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns which would be the Minkowski error of for an hypothetical vector of parameters.
 /// It does not set that vector of parameters to the neural network.
 /// @param parameters Vector of potential parameters for the neural network associated to the Minkowski error.
 
-double MinkowskiError::calculate_performance(const Vector<double>& parameters) const
+double MinkowskiError::calculate_error(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -343,7 +343,7 @@ double MinkowskiError::calculate_performance(const Vector<double>& parameters) c
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: MeanSquaredError class.\n"
-             << "double calculate_performance(const Vector<double>&) const method.\n"
+             << "double calculate_error(const Vector<double>&) const method.\n"
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
       throw std::logic_error(buffer.str());
@@ -407,12 +407,12 @@ double MinkowskiError::calculate_performance(const Vector<double>& parameters) c
 }
 
 
-// double calculate_selection_performance(void) const method
+// double calculate_selection_error(void) const method
 
 /// Returns the Minkowski error of the multilayer perceptron measured on the selection instances of the 
 /// data set.
 
-double MinkowskiError::calculate_selection_performance(void) const
+double MinkowskiError::calculate_selection_error(void) const
 {
    // Control sentence (if debug)
 
@@ -481,147 +481,29 @@ double MinkowskiError::calculate_selection_performance(void) const
 }
 
 
-// Vector<double> calculate_gradient(void) const method
+// Vector<double> calculate_output_gradient(const Vector<double>&, conts Vector<double>&) const method
 
-/// Returns the Minkowski error gradient of a neural network measured on a data set.
+/// Returns the Minkowski error function output gradient of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
 
-Vector<double> MinkowskiError::calculate_gradient(void) const
+Vector<double> MinkowskiError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
 {
-   // Control sentence (if debug)
-
-   #ifdef __OPENNN_DEBUG__ 
-
-   check();
-
-   #endif
-
-   // Neural network stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   // Neural network stuff
-
-   const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-   const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-   const size_t neural_parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-   Vector< Vector< Vector<double> > > first_order_forward_propagation(2);
-
-   Vector<double> particular_solution;
-   Vector<double> homogeneous_solution;
-
-   // Data set stuff
-
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const size_t training_instances_number = instances.count_training_instances_number();
-
-   const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-   size_t training_index;
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-   const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   Vector<double> inputs(inputs_number);
-   Vector<double> targets(outputs_number);
-
-   // Minkowski error stuff
-
-   Vector<double> output_gradient(outputs_number);
-
-   Vector< Matrix<double> > layers_combination_parameters_Jacobian;
-
-   Vector< Vector<double> > layers_inputs(layers_number);
-   Vector< Vector<double> > layers_delta;
-
-   Vector<double> point_gradient(neural_parameters_number, 0.0);
-
-   Vector<double> gradient(neural_parameters_number, 0.0);
-
-   int i = 0;
-
-   #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian, \
-    output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
-
-   for(i = 0; i < (int)training_instances_number; i++)
-   {
-       training_index = training_indices[i];
-
-       // Data set
-
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-      // Neural network
-
-      first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-      const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-      const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-      layers_inputs = multilayer_perceptron_pointer->arrange_layers_input(inputs, layers_activation);
-
-      layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
-
-      // Performance functional
-
-      if(!has_conditions_layer)
-      {
-         output_gradient = (layers_activation[layers_number-1]-targets).calculate_p_norm_gradient(Minkowski_parameter);
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-      }
-      else
-      {
-         particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-         homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets).calculate_pow(Minkowski_parameter-1.0)*Minkowski_parameter;
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-      }
-
-      point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
-
-      #pragma omp critical
-
-      gradient += point_gradient;
-   }
-
-   return(gradient);
+    return (output-target).calculate_p_norm_gradient(Minkowski_parameter);
 }
 
 
-// Matrix<double> calculate_Hessian(void) const method
+// Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const method
 
+/// Returns the Minkowski error function otuput Hessian of a multilayer perceptron on a data set.
 /// @todo
 
-Matrix<double> MinkowskiError::calculate_Hessian(void) const
+Matrix<double> MinkowskiError::calculate_output_Hessian(const Vector<double>& , const Vector<double>& ) const
 {
-    // Control sentence (if debug)
+    Matrix<double> output_Hessian;
 
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-   Matrix<double> Hessian;
-
-   return(Hessian);
+    return output_Hessian;
 }
+
 
 
 // std::string write_performance_term_type(void) const method
@@ -676,6 +558,30 @@ tinyxml2::XMLDocument* MinkowskiError::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("MinkowskiError");
+
+    // Minkowski parameter
+
+    file_stream.OpenElement("MinkowskiParameter");
+
+    buffer.str("");
+    buffer << Minkowski_parameter;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
 }
 
 

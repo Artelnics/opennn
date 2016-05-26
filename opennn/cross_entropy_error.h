@@ -22,7 +22,7 @@
 
 // OpenNN includes
 
-#include "performance_term.h"
+#include "error_term.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -36,7 +36,7 @@ namespace OpenNN
 /// This class represents the cross entropy performance term. 
 /// This functional is used in pattern recognition problems.
 
-class CrossEntropyError : public PerformanceTerm
+class CrossEntropyError : public ErrorTerm
 {
 
 public:
@@ -85,16 +85,16 @@ public:
 
    // performance methods
 
-   double calculate_performance(void) const;
-   double calculate_performance(const Vector<double>&) const;
+   double calculate_error(void) const;
+   double calculate_error(const Vector<double>&) const;
 
    double calculate_minimum_performance(void) const;
 
-   double calculate_selection_performance(void) const;
-   double calculate_minimum_selection_performance(void) const;
+   double calculate_selection_error(void) const;
+   double calculate_minimum_selection_error(void) const;
 
-   Vector<double> calculate_gradient(void) const;
-   Matrix<double> calculate_Hessian(void) const;
+   Vector<double> calculate_output_gradient(const Vector<double> &, const Vector<double> &) const;
+   Matrix<double> calculate_output_Hessian(const Vector<double> &, const Vector<double> &) const;
 
    std::string write_performance_term_type(void) const;
 
@@ -102,6 +102,10 @@ public:
 
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   //void read_XML(   );
+
 };
 
 }

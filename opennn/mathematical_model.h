@@ -110,6 +110,9 @@ public:
    virtual tinyxml2::XMLDocument* to_XML(void) const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
+   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   // virtual void read_XML(   );
+
    void save(const std::string&) const;
    void load(const std::string&);
 

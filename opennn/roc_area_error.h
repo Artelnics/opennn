@@ -25,7 +25,7 @@
 
 // OpenNN includes
 
-#include "performance_term.h"
+#include "error_term.h"
 #include "data_set.h"
 #include "numerical_integration.h"
 
@@ -40,7 +40,7 @@ namespace OpenNN
 /// This is used as the performance term in data modeling problems, such as function regression, 
 /// pattern recognition or time series prediction.
 
-class RocAreaError : public PerformanceTerm
+class RocAreaError : public ErrorTerm
 {
 
 public:
@@ -85,9 +85,9 @@ public:
 
    // performance methods
 
-   double calculate_performance(void) const;   
+   double calculate_error(void) const;
 
-//   double calculate_selection_performance(void) const;
+//   double calculate_selection_error(void) const;
 
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
 
@@ -97,7 +97,7 @@ public:
 
 //   Matrix<double> calculate_single_hidden_layer_Hessian(void) const;
 
-   double calculate_performance(const Vector<double>&) const;
+   double calculate_error(const Vector<double>&) const;
 
 //   double calculate_performance_combination(const size_t&, const Vector<double>&) const;
 //   double calculate_performance_combinations(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
@@ -115,7 +115,7 @@ public:
 
 //   Matrix<double> calculate_terms_Jacobian(void) const;
 
-//   PerformanceTerm::FirstOrderTerms calculate_first_order_terms(void) const;
+//   ErrorTerm::FirstOrderTerms calculate_first_order_terms(void) const;
 
    // Squared errors methods
 
@@ -126,9 +126,10 @@ public:
    // Serialization methods
 
 //   tinyxml2::XMLDocument* to_XML(void) const;
-
 //   void from_XML(const tinyxml2::XMLDocument&);
 
+//   void write_XML(tinyxml2::XMLPrinter&) const;
+//   void read_XML(   );
 private:
 
    NumericalIntegration numerical_integration;

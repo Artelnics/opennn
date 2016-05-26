@@ -61,7 +61,14 @@ public:
 
    // ENUMERATIONS
 
-   enum PrincipalComponentsState{NoPrincipalComponents, ActivatedPrincipalComponents};
+   enum PrincipalComponentsMethod{NoPrincipalComponents, ActivatedPrincipalComponents};
+
+   // Principal components state methods
+
+   const PrincipalComponentsMethod& get_principal_components_method(void) const;
+
+   std::string write_principal_components_method(void) const;
+   std::string write_principal_components_method_text(void) const;
 
    // GET METHODS
 
@@ -89,6 +96,9 @@ public:
 
    virtual void set_default(void);
 
+   void set_principal_components_method(const PrincipalComponentsMethod&);
+   void set_principal_components_method(const std::string&);
+
    // GET METHODS
 
    size_t get_principal_components_neurons_number(void) const;
@@ -111,6 +121,9 @@ public:
    tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
+
 protected:
 
    // MEMBERS
@@ -122,6 +135,10 @@ protected:
    /// Eigenvectors of the variables in columns.
 
    Matrix<double> eigenvectors;
+
+   /// Principal components layer method
+
+   PrincipalComponentsMethod principal_components_method;
 
    /// Display warning messages to screen.
 

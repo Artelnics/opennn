@@ -955,6 +955,141 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
     return(document);
 }
 
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("GrowingInputs");
+
+    // Trials number
+
+    file_stream.OpenElement("TrialsNumber");
+
+    buffer.str("");
+    buffer << trials_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Tolerance
+
+    file_stream.OpenElement("Tolerance");
+
+    buffer.str("");
+    buffer << tolerance;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Selection performance goal
+
+    file_stream.OpenElement("SelectionPerformanceGoal");
+
+    buffer.str("");
+    buffer << selection_performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum selection failures
+
+    file_stream.OpenElement("MaximumSelectionFailures");
+
+    buffer.str("");
+    buffer << maximum_selection_failures;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum inputs number
+
+    file_stream.OpenElement("MaximumInputsNumber");
+
+    buffer.str("");
+    buffer << maximum_inputs_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Minimum correlation
+
+    file_stream.OpenElement("MinimumCorrelation");
+
+    buffer.str("");
+    buffer << minimum_correlation;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum correlation
+
+    file_stream.OpenElement("MaximumCorrelation");
+
+    buffer.str("");
+    buffer << maximum_correlation;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum iterations
+
+    file_stream.OpenElement("MaximumIterationsNumber");
+
+    buffer.str("");
+    buffer << maximum_iterations_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum time
+
+    file_stream.OpenElement("MaximumTime");
+
+    buffer.str("");
+    buffer << maximum_time;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve performance data
+
+    file_stream.OpenElement("ReservePerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_performance_data;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve selection performance data
+
+    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_selection_performance_data;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this growing inputs object.

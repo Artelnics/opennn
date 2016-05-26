@@ -293,8 +293,10 @@ public:
    Matrix<std::string> to_string_matrix(void) const;
 
    tinyxml2::XMLDocument* to_XML(void) const;
-
    void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
    Vector<double> perform_Householder_QR_decomposition(const Matrix<double>&, const Vector<double>&) const;
 

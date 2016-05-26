@@ -88,7 +88,7 @@ void RootMeanSquaredErrorTest::test_calculate_performance(void)
 
    RootMeanSquaredError rmse(&nn, &ds);
 
-   assert_true(rmse.calculate_performance() == 0.0, LOG);
+   assert_true(rmse.calculate_error() == 0.0, LOG);
 
    // Test
 
@@ -100,7 +100,7 @@ void RootMeanSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(rmse.calculate_performance() == rmse.calculate_performance(parameters), LOG);
+   assert_true(rmse.calculate_error() == rmse.calculate_error(parameters), LOG);
 
 }
 
@@ -124,7 +124,7 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
 
    // Test
 
-   nn.set(3, 4, 2);
+   nn.set(2, 4, 5);
    nn.initialize_parameters(0.0);
 
    ds.set(3, 2, 5);
@@ -132,7 +132,7 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
 
    // Test
 
-   nn.set(3, 4, 2);
+   nn.set(2, 4, 5);
    nn.initialize_parameters(1.0);
 
    network_parameters = nn.arrange_parameters();
@@ -141,7 +141,8 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
    ds.initialize_data(1.0);
 
    objective_gradient = rmse.calculate_gradient();
-   numerical_objective_gradient = nd.calculate_gradient(rmse, &RootMeanSquaredError::calculate_performance, network_parameters);
+   numerical_objective_gradient = nd.calculate_gradient(rmse, &RootMeanSquaredError::calculate_error, network_parameters);
+
    assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
    // Test
@@ -156,7 +157,7 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
    rmse.set_neural_network_pointer(&nn);
 
    objective_gradient = rmse.calculate_gradient();
-   numerical_objective_gradient = nd.calculate_gradient(rmse, &RootMeanSquaredError::calculate_performance, network_parameters);
+   numerical_objective_gradient = nd.calculate_gradient(rmse, &RootMeanSquaredError::calculate_error, network_parameters);
    assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
 

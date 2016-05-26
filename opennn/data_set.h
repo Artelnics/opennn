@@ -176,6 +176,7 @@ public:
    Matrix<double> arrange_selection_data(void) const;
    Matrix<double> arrange_testing_data(void) const;
 
+   Matrix<double> arrange_input_data(void) const;
    Matrix<double> arrange_target_data(void) const;
 
    Matrix<double> arrange_training_input_data(void) const;
@@ -419,6 +420,9 @@ public:
 
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   //void read_XML(   );
 
    void save(const std::string&) const;
    void load(const std::string&);

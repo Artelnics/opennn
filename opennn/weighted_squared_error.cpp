@@ -20,11 +20,11 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a weighted squared error performance term not associated to any
+/// It creates a weighted squared error term not associated to any
 /// neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-WeightedSquaredError::WeightedSquaredError(void) : PerformanceTerm()
+WeightedSquaredError::WeightedSquaredError(void) : ErrorTerm()
 {
     set_default();
 }
@@ -33,13 +33,13 @@ WeightedSquaredError::WeightedSquaredError(void) : PerformanceTerm()
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a weighted squared error performance term object associated to a
+/// It creates a weighted squared error term object associated to a
 /// neural network object but not measured on any data set object.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_pointer)
-    : PerformanceTerm(new_neural_network_pointer)
+    : ErrorTerm(new_neural_network_pointer)
 {
     set_default();
 }
@@ -48,13 +48,13 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_poi
 // DATA SET CONSTRUCTOR
 
 /// Data set constructor. 
-/// It creates a weighted squared error performance term not associated to any
+/// It creates a weighted squared error term not associated to any
 /// neural network but to be measured on a given data set object.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 WeightedSquaredError::WeightedSquaredError(DataSet* new_data_set_pointer)
-    : PerformanceTerm(new_data_set_pointer)
+    : ErrorTerm(new_data_set_pointer)
 {
     set_default();
 }
@@ -63,14 +63,14 @@ WeightedSquaredError::WeightedSquaredError(DataSet* new_data_set_pointer)
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
-/// It creates a weighted squared error performance term object associated to a
+/// It creates a weighted squared error term object associated to a
 /// neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-    : PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+    : ErrorTerm(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
 }
@@ -85,7 +85,7 @@ WeightedSquaredError::WeightedSquaredError(NeuralNetwork* new_neural_network_poi
 /// @param weighted_squared_error_document TinyXML document with the weighted squared error elements.
 
 WeightedSquaredError::WeightedSquaredError(const tinyxml2::XMLDocument& weighted_squared_error_document)
-    : PerformanceTerm(weighted_squared_error_document)
+    : ErrorTerm(weighted_squared_error_document)
 {
     set_default();
 }
@@ -98,7 +98,7 @@ WeightedSquaredError::WeightedSquaredError(const tinyxml2::XMLDocument& weighted
 /// @param other_weighted_squared_error Weighted squared error object to be copied.
 
 WeightedSquaredError::WeightedSquaredError(const WeightedSquaredError& other_weighted_squared_error)
-    : PerformanceTerm(other_weighted_squared_error)
+    : ErrorTerm(other_weighted_squared_error)
 {
     negatives_weight = other_weighted_squared_error.negatives_weight;
     positives_weight = other_weighted_squared_error.positives_weight;
@@ -333,7 +333,7 @@ double WeightedSquaredError::calculate_positives_performance(void) const
 
     double sum_squared_error = 0.0;
 
-    double positives = positives_weight;
+    double positives = get_positives_weight();
 
 #pragma omp parallel for private(i, training_index, inputs, outputs, targets, positives) reduction(+:sum_squared_error)
 
@@ -413,9 +413,10 @@ double WeightedSquaredError::calculate_negatives_performance(void) const
 
     double sum_squared_error = 0.0;
 
-    double negatives = negatives_weight;
+    double negatives = get_negatives_weight();
 
 #pragma omp parallel for private(i, training_index, inputs, outputs, targets, negatives) reduction(+:sum_squared_error)
+
 
     for(i = 0; i < (int)training_instances_number; i++)
     {
@@ -448,11 +449,11 @@ double WeightedSquaredError::calculate_negatives_performance(void) const
 
 
 
-// double calculate_performance(void) const method
+// double calculate_error(void) const method
 
 /// Returns the weighted squared error of a neural network on a data set.
 
-double WeightedSquaredError::calculate_performance(void) const
+double WeightedSquaredError::calculate_error(void) const
 {
     // Control sentence
 
@@ -532,7 +533,7 @@ double WeightedSquaredError::calculate_performance(void) const
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-                   << "double calculate_performance(void) const method.\n"
+                   << "double calculate_error(void) const method.\n"
                    << "Target is neither a positive nor a negative.\n";
 
             throw std::logic_error(buffer.str());
@@ -549,13 +550,13 @@ double WeightedSquaredError::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns which would be the performance term of a neural network for an hypothetical
 /// vector of parameters. It does not set that vector of parameters to the neural network. 
 /// @param parameters Vector of potential parameters for the neural network associated to the performance term.
 
-double WeightedSquaredError::calculate_performance(const Vector<double>& parameters) const
+double WeightedSquaredError::calculate_error(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -576,7 +577,7 @@ double WeightedSquaredError::calculate_performance(const Vector<double>& paramet
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-               << "double calculate_performance(const Vector<double>&) const method.\n"
+               << "double calculate_error(const Vector<double>&) const method.\n"
                << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
         throw std::logic_error(buffer.str());
@@ -654,7 +655,7 @@ double WeightedSquaredError::calculate_performance(const Vector<double>& paramet
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-                   << "double calculate_performance(const Vector<double>&) const method.\n"
+                   << "double calculate_error(const Vector<double>&) const method.\n"
                    << "Target is neither a positive nor a negative.\n";
 
             throw std::logic_error(buffer.str());
@@ -674,10 +675,10 @@ double WeightedSquaredError::calculate_performance(const Vector<double>& paramet
 
 // double calculate_selection_performance(void) const method
 
-/// Returns the weighted squared error of the multilayer perceptron measured on the selection instances of the
+/// Returns the weighted squared error of the neural network measured on the selection instances of the
 /// data set.
 
-double WeightedSquaredError::calculate_selection_performance(void) const
+double WeightedSquaredError::calculate_selection_error(void) const
 {
     // Control sentence (if debug)
 
@@ -756,7 +757,7 @@ double WeightedSquaredError::calculate_selection_performance(void) const
             std::ostringstream buffer;
 
             buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-                   << "double calculate_performance(const Vector<double>&) const method.\n"
+                   << "double calculate_error(const Vector<double>&) const method.\n"
                    << "Target is neither a positive nor a negative.\n";
 
             throw std::logic_error(buffer.str());
@@ -793,20 +794,20 @@ Vector<double> WeightedSquaredError::calculate_output_gradient(const Vector<doub
 
     Vector<double> targets(outputs_number);
 
-    size_t training_index;
+    //size_t training_index;
 
     const Variables& variables = data_set_pointer->get_variables();
     const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
     for(size_t i = 0; i < training_instances_number; i++)
     {
-        targets = data_set_pointer->get_instance(training_index, targets_indices);
+        //targets = data_set_pointer->get_instance(training_index, targets_indices);
 
-        if(targets[0] == 1.0)
+        if(target[0] == 1.0)
         {
             output_gradient = (output-target)*positives_w*2.0;
         }
-        else if(targets[0] == 0.0)
+        else if(target[0] == 0.0)
         {
             output_gradient = (output-target)*negatives_w*2.0;
         }
@@ -822,152 +823,11 @@ Vector<double> WeightedSquaredError::calculate_output_gradient(const Vector<doub
         }
     }
 
-    const size_t negatives = data_set_pointer->calculate_selection_negatives(targets_indices[0]);
-
-    const double normalization_coefficient = negatives*negatives_weight*0.5;
-
-    return output_gradient/normalization_coefficient;
-}
-
-
-// Vector<double> calculate_gradient(void) const method
-
-/// Calculates the performance gradient by means of the back-propagation algorithm,
-/// and returns it in a single vector of size the number of multilayer perceptron parameters.
-
-Vector<double> WeightedSquaredError::calculate_gradient(void) const
-{
-    // Control sentence (if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-    check();
-
-#endif
-
-    // Multilayer percepron stuff
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-    Vector< Vector< Vector<double> > > first_order_forward_propagation(2);
-
-    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-    Vector<double> particular_solution;
-    Vector<double> homogeneous_solution;
-
-    // Data set stuff
-
-    const Instances& instances = data_set_pointer->get_instances();
-
-    const size_t training_instances_number = instances.count_training_instances_number();
-
-    const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-    size_t training_index;
-
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> targets(outputs_number);
-
-    // Weighted squared error stuff
-
-    Vector< Vector<double> > layers_delta;
-
-    Vector<double> output_gradient(outputs_number);
-
-    Vector<double> point_gradient(parameters_number, 0.0);
-
-    Vector<double> gradient(parameters_number, 0.0);
-
-    int i = 0;
-
-    const double positives_w = positives_weight;
-    const double negatives_w = negatives_weight;
-
-#pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, \
-    output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
-
-    for(i = 0; i < (int)training_instances_number; i++)
-    {
-        training_index = training_indices[i];
-
-        inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-        targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-        first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-        const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-        const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-        if(!has_conditions_layer)
-        {
-            if(targets[0] == 1.0)
-            {
-                output_gradient = (layers_activation[layers_number-1]-targets)*positives_w*2.0;
-            }
-            else if(targets[0] == 0.0)
-            {
-                output_gradient = (layers_activation[layers_number-1]-targets)*negatives_w*2.0;
-            }
-            else
-            {
-                std::ostringstream buffer;
-
-                buffer << "OpenNN Exception: WeightedSquaredError class.\n"
-                       << "Vector<double> calculate_gradient(void) const method.\n"
-                       << "Target is neither a positive nor a negative.\n";
-
-                throw std::logic_error(buffer.str());
-            }
-
-
-//            output_gradient /= normalization_coefficient;
-
-            layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-        }
-        else
-        {
-            particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-            homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-            if(targets[0] == 1.0)
-            {
-                output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*(positives_w*2.0/(double)training_instances_number);
-            }
-            else
-            {
-                output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*(negatives_w*2.0/(double)training_instances_number);
-            }
-
-            layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-        }
-
-        point_gradient = calculate_point_gradient(inputs, layers_activation, layers_delta);
-
-#pragma omp critical
-        gradient += point_gradient;
-    }
-
     const size_t negatives = data_set_pointer->calculate_training_negatives(targets_indices[0]);
 
     const double normalization_coefficient = negatives*negatives_weight*0.5;
 
-    return(gradient/normalization_coefficient);
+    return output_gradient/normalization_coefficient;
 }
 
 
@@ -983,23 +843,12 @@ Matrix<double> WeightedSquaredError::calculate_output_Hessian(const Vector<doubl
     return output_Hessian;
 }
 
-// Matrix<double> calculate_Hessian(void) const method
-
-/// @todo
-
-Matrix<double> WeightedSquaredError::calculate_Hessian(void) const
-{
-    Matrix<double> H;
-
-    return(H);
-}
-
 
 // FirstOrderPerformance calculate_first_order_performance(void) const method
 
 /// @todo
 
-PerformanceTerm::FirstOrderPerformance WeightedSquaredError::calculate_first_order_performance(void) const
+ErrorTerm::FirstOrderPerformance WeightedSquaredError::calculate_first_order_performance(void) const
 {
     // Control sentence
 
@@ -1011,7 +860,7 @@ PerformanceTerm::FirstOrderPerformance WeightedSquaredError::calculate_first_ord
 
     FirstOrderPerformance first_order_performance;
 
-    first_order_performance.performance = calculate_performance();
+    first_order_performance.performance = calculate_error();
     first_order_performance.gradient = calculate_gradient();
 
     return(first_order_performance);
@@ -1022,7 +871,7 @@ PerformanceTerm::FirstOrderPerformance WeightedSquaredError::calculate_first_ord
 
 /// @todo
 
-PerformanceTerm::SecondOrderPerformance WeightedSquaredError::calculate_second_order_performance(void) const
+ErrorTerm::SecondOrderPerformance WeightedSquaredError::calculate_second_order_performance(void) const
 {
     // Control sentence
 
@@ -1034,7 +883,7 @@ PerformanceTerm::SecondOrderPerformance WeightedSquaredError::calculate_second_o
 
     SecondOrderPerformance second_order_performance;
 
-    second_order_performance.performance = calculate_performance();
+    second_order_performance.performance = calculate_error();
     second_order_performance.gradient = calculate_gradient();
     second_order_performance.Hessian = calculate_Hessian();
 
@@ -1418,6 +1267,41 @@ tinyxml2::XMLDocument* WeightedSquaredError::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("WeightedSquaredError");
+
+    // Positives weight
+
+    file_stream.OpenElement("PositivesWeight");
+
+    buffer.str("");
+    buffer << positives_weight;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Negatives weight
+
+    file_stream.OpenElement("NegativesWeight");
+
+    buffer.str("");
+    buffer << negatives_weight;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Loads a weighted squared error object from a XML document.
@@ -1494,7 +1378,7 @@ std::string WeightedSquaredError::write_information(void) const
 {
     std::ostringstream buffer;
 
-    buffer << "Weighted squared error: " << calculate_performance() << "\n";
+    buffer << "Weighted squared error: " << calculate_error() << "\n";
 
     return(buffer.str());
 

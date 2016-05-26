@@ -339,13 +339,16 @@ public:
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML(void) const;
+   void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   //void read_XML(   );
+
 
    std::string to_string(void) const;
    Matrix<std::string> to_string_matrix(void) const;
 
-   void from_XML(const tinyxml2::XMLDocument&);
 
-  
 private: 
 
    /// Training rate algorithm object. 

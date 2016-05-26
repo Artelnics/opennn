@@ -22,11 +22,11 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a root mean squared error performance term object not associated to any 
+/// It creates a root mean squared error term object not associated to any 
 /// neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-RootMeanSquaredError::RootMeanSquaredError(void) : PerformanceTerm()
+RootMeanSquaredError::RootMeanSquaredError(void) : ErrorTerm()
 {
 }
 
@@ -39,7 +39,7 @@ RootMeanSquaredError::RootMeanSquaredError(void) : PerformanceTerm()
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 RootMeanSquaredError::RootMeanSquaredError(NeuralNetwork* new_neural_network_pointer)
-: PerformanceTerm(new_neural_network_pointer)
+: ErrorTerm(new_neural_network_pointer)
 {
 }
 
@@ -52,7 +52,7 @@ RootMeanSquaredError::RootMeanSquaredError(NeuralNetwork* new_neural_network_poi
 /// @param new_data_set_pointer Pointer to a data set object.
 
 RootMeanSquaredError::RootMeanSquaredError(DataSet* new_data_set_pointer)
-: PerformanceTerm(new_data_set_pointer)
+: ErrorTerm(new_data_set_pointer)
 {
 }
 
@@ -60,14 +60,14 @@ RootMeanSquaredError::RootMeanSquaredError(DataSet* new_data_set_pointer)
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
-/// It creates a root mean squared error performance term object associated to a 
+/// It creates a root mean squared error term object associated to a 
 /// neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
 RootMeanSquaredError::RootMeanSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
-: PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+: ErrorTerm(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
@@ -80,7 +80,7 @@ RootMeanSquaredError::RootMeanSquaredError(NeuralNetwork* new_neural_network_poi
 /// @param root_mean_squared_error_document TinyXML document with the object members. 
 
 RootMeanSquaredError::RootMeanSquaredError(const tinyxml2::XMLDocument& root_mean_squared_error_document)
-: PerformanceTerm(root_mean_squared_error_document)
+: ErrorTerm(root_mean_squared_error_document)
 {
 }
 
@@ -187,12 +187,12 @@ void RootMeanSquaredError::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_error(void) const method
 
 /// Returns the performance value of a neural network according to the root mean squared error 
 /// on the training instances of a data set.
 
-double RootMeanSquaredError::calculate_performance(void) const
+double RootMeanSquaredError::calculate_error(void) const
 {
    // Control sentence
 
@@ -265,14 +265,14 @@ double RootMeanSquaredError::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns which would be the performance of a multilayer perceptron for an hypothetical
 /// vector of parameters. It does not set that vector of parameters to the multilayer perceptron. 
 /// @param parameters Vector of potential parameters for the multilayer perceptron associated 
 /// to the performance term.
 
-double RootMeanSquaredError::calculate_performance(const Vector<double>& parameters) const
+double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -293,7 +293,7 @@ double RootMeanSquaredError::calculate_performance(const Vector<double>& paramet
    if(size != parameters_number)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "double calculate_performance(const Vector<double>&) const method.\n"
+             << "double calculate_error(const Vector<double>&) const method.\n"
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
       throw std::logic_error(buffer.str());	  
@@ -370,131 +370,19 @@ Vector<double> RootMeanSquaredError::calculate_output_gradient(const Vector<doub
 
     const size_t training_instances_number = instances.count_training_instances_number();
 
-    const double performance = calculate_performance();
+    const double performance = calculate_error();
 
     const Vector<double>  output_gradient = (output-target)/(training_instances_number*performance);
 
     return(output_gradient);
 }
 
-// Vector<double> calculate_gradient(void) const method
 
-/// Calculates the gradient the root mean squared error funcion by means of the back-propagation algorithm.
-
-Vector<double> RootMeanSquaredError::calculate_gradient(void) const
-{
-   // Control sentence
-
-   #ifdef __OPENNN_DEBUG__ 
-
-   check();
-
-   #endif
-
-   // Neural network stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-   const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-   // Data set stuff
-
-   Vector< Vector< Vector<double> > > first_order_forward_propagation(2); 
-
-   const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-   const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-   Vector<double> particular_solution;
-   Vector<double> homogeneous_solution;
-
-   // Data set stuff
-
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const size_t training_instances_number = instances.count_training_instances_number();
-
-   const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-   size_t training_index;
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-   const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   Vector<double> inputs(inputs_number);
-   Vector<double> targets(outputs_number);
-
-   // Performance functional stuff
-
-   const double performance = calculate_performance();
-
-   Vector< Vector<double> > layers_delta; 
-
-   Vector<double> output_gradient(outputs_number);
-
-   Vector<double> point_gradient(parameters_number, 0.0);
-
-   // Main loop
-
-   Vector<double> gradient(parameters_number, 0.0);
-
-   int i = 0;
-
-   #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, output_gradient, \
-    layers_delta, particular_solution, homogeneous_solution, point_gradient)
-
-   for(i = 0; i < (int)training_instances_number; i++)
-   {
-       training_index = training_indices[i];
-
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-      first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-	  const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-      const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-      if(!has_conditions_layer)
-      {
-         output_gradient = (layers_activation[layers_number-1]-targets)/(training_instances_number*performance);
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-      }
-      else
-      {
-         particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-         homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)/(training_instances_number*performance);
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-      }
-
-      point_gradient = calculate_point_gradient(inputs, layers_activation, layers_delta);
-
-      #pragma omp critical
-
-      gradient += point_gradient;
-   }
-
-   return(gradient);
-}
-
-
-// double calculate_selection_performance(void) const method
+// double calculate_selection_error(void) const method
 
 /// Returns the root mean squared error of the multilayer perceptron measured on the selection instances of the data set.
 
-double RootMeanSquaredError::calculate_selection_performance(void) const
+double RootMeanSquaredError::calculate_selection_error(void) const
 {
    // Control sentence (if debug)
 
@@ -573,7 +461,7 @@ Matrix<double> RootMeanSquaredError::calculate_output_Hessian(const Vector<doubl
 
     const size_t training_instances_number = instances.count_training_instances_number();
 
-    const double performance = calculate_performance();
+    const double performance = calculate_error();
 
     const size_t outputs_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_outputs_number();
 
@@ -585,143 +473,6 @@ Matrix<double> RootMeanSquaredError::calculate_output_Hessian(const Vector<doubl
     output_Hessian.set_diagonal(diagonal);
 
     return(output_Hessian);
-}
-
-
-// Matrix<double> calculate_Hessian(void) const method
-
-/// @todo
-
-Matrix<double> RootMeanSquaredError::calculate_Hessian(void) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    // Neural network stuff
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    if(layers_number != 2)
-    {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: SumSquaredError class.\n"
-               << "Matrix<double> calculate_Hessian(void) method.\n"
-               << "This method is under development for more than one hidden layer.\n";
-
-        throw std::logic_error(buffer.str());
-    }
-
-    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
-
-    Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
-
-    Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
-    Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
-
-    Vector<double> particular_solution;
-    Vector<double> homogeneous_solution;
-
-    // Data set stuff
-
-    const Instances& instances = data_set_pointer->get_instances();
-
-    const size_t training_instances_number = instances.count_training_instances_number();
-
-    const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-    size_t training_index;
-
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> targets(outputs_number);
-
-    // Sum squared error stuff
-
-    Vector< Vector<double> > layers_delta(layers_number);
-    Matrix<double> output_interlayers_Delta;
-
-    Vector<double> output_gradient(outputs_number);
-    Matrix<double> output_Hessian(outputs_number, outputs_number);
-
-    Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
-
-    for(size_t i = 0; i < training_instances_number; i++)
-    {
-        training_index = training_indices[i];
-
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
-
-       const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
-       const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
-       const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
-
-       Vector< Vector<double> > layers_inputs(layers_number);
-
-       layers_inputs[0] = inputs;
-
-       for(size_t j = 1; j < layers_number; j++)
-       {
-          layers_inputs[j] = layers_activation[j-1];
-       }
-
-       perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
-
-       interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
-
-       if(!has_conditions_layer)
-       {
-          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
-
-          output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
-
-          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-
-          output_interlayers_Delta = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
-                                                                 layers_activation_second_derivative[layers_number-1],
-                                                                 output_gradient,
-                                                                 output_Hessian);
-       }
-       else
-       {
-          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
-
-          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-       }
-
-       Hessian += calculate_single_hidden_layer_point_Hessian(layers_activation_derivative,
-                                                              layers_activation_second_derivative,
-                                                              perceptrons_combination_parameters_gradient,
-                                                              layers_delta,
-                                                              output_interlayers_Delta);
-    }
-
-    return(Hessian);
 }
 
 
@@ -765,6 +516,16 @@ tinyxml2::XMLDocument* RootMeanSquaredError::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void RootMeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    //file_stream.OpenElement("RootMeanSquaredError");
+
+    //file_stream.CloseElement();
 }
 
 

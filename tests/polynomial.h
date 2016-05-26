@@ -18,7 +18,7 @@
 
 using namespace OpenNN;
 
-class Polynomial : public PerformanceTerm
+class Polynomial : public PerformanceFunctional
 {
 
 public:

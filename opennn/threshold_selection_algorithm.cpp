@@ -290,8 +290,15 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
      for(size_t i = 0; i < rows_number; i++)
      {
+         if(decision_threshold == 0.0 && target_data(i,0) == 0.0 )
+         {
+             false_positive++;
 
-         if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
+         }else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
+         {
+             true_positive++;
+
+         }else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
          {
              // True positive
 
@@ -321,9 +328,6 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
      confusion(0,1) = false_negative;
      confusion(1,0) = false_positive;
      confusion(1,1) = true_negative;
-
-     confusion.print();
-     std::cout << std::endl;
 
      if(confusion.calculate_sum() != rows_number)
      {

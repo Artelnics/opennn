@@ -91,7 +91,7 @@ void GradientDescentTest::test_perform_training(void)
    PerformanceFunctional pf(&nn, &ds);
 
    pf.destruct_all_terms();
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    GradientDescent gd(&pf);
 

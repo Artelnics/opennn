@@ -157,8 +157,8 @@ public:
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
-   // PMML Methods
-   void to_PMML(tinyxml2::XMLElement* ) const;
+   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   //virtual void read_XML(   );
 
 protected:
 

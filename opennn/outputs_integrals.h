@@ -25,7 +25,7 @@
 
 // OpenNN includes
 
-#include "performance_term.h"
+#include "regularization_term.h"
 #include "numerical_integration.h"
 
 // TinyXml includes
@@ -40,7 +40,7 @@ namespace OpenNN
 /// The neural network here must have only one input. 
 /// This performance term might be used in optimal control as an objective or a regularization terms. 
 
-class OutputsIntegrals : public PerformanceTerm
+class OutputsIntegrals : public RegularizationTerm
 {
 
 public:
@@ -86,8 +86,8 @@ public:
 
    // Regularization methods
 
-   double calculate_performance(void) const;   
-   double calculate_performance(const Vector<double>&) const;
+   double calculate_regularization(void) const;
+   double calculate_regularization(const Vector<double>&) const;
 
    Vector<double> calculate_gradient(void) const;
 
@@ -98,8 +98,10 @@ public:
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML(void) const;   
-
    void from_XML(const tinyxml2::XMLDocument&);
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+   // void read_XML(   );
 
 private:
 

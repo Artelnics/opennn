@@ -229,7 +229,7 @@ void ConjugateGradientTest::test_perform_training(void)
 
    PerformanceFunctional pf(&nn, &ds);
 
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    double old_performance;
    double performance;

@@ -1954,6 +1954,75 @@ tinyxml2::XMLDocument* Variables::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void Variables::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    const size_t variables_number = get_variables_number();
+
+    file_stream.OpenElement("Variables");
+
+    // Variables number
+
+    file_stream.OpenElement("VariablesNumber");
+
+    buffer.str("");
+    buffer << variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Items
+
+    for(size_t i = 0; i < variables_number; i++)
+    {
+        file_stream.OpenElement("Item");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        // Name
+
+        file_stream.OpenElement("Name");
+
+        file_stream.PushText(items[i].name.c_str());
+
+        file_stream.CloseElement();
+
+        // Units
+
+        file_stream.OpenElement("Units");
+
+        file_stream.PushText(items[i].units.c_str());
+
+        file_stream.CloseElement();
+
+        // Description
+
+        file_stream.OpenElement("Description");
+
+        file_stream.PushText(items[i].description.c_str());
+
+        file_stream.CloseElement();
+
+        // Use
+
+        file_stream.OpenElement("Use");
+
+        file_stream.PushText(write_use(i).c_str());
+
+        file_stream.CloseElement();
+
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this variables object.

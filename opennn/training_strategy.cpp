@@ -2021,6 +2021,142 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("TrainingStrategy");
+
+
+    switch(main_type)
+    {
+       case NO_MAIN:
+       {
+            file_stream.OpenElement("Main");
+
+            file_stream.PushAttribute("Type", "NO_MAIN");
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case GRADIENT_DESCENT:
+       {
+            file_stream.OpenElement("Main");
+
+            file_stream.PushAttribute("Type", "GRADIENT_DESCENT");
+
+            gradient_descent_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case CONJUGATE_GRADIENT:
+       {
+            file_stream.OpenElement("Main");
+
+            file_stream.PushAttribute("Type", "CONJUGATE_GRADIENT");
+
+            conjugate_gradient_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case QUASI_NEWTON_METHOD:
+       {
+            file_stream.OpenElement("Main");
+
+            file_stream.PushAttribute("Type", "QUASI_NEWTON_METHOD");
+
+            quasi_Newton_method_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case LEVENBERG_MARQUARDT_ALGORITHM:
+       {
+            file_stream.OpenElement("Main");
+
+            file_stream.PushAttribute("Type", "LEVENBERG_MARQUARDT_ALGORITHM");
+
+            Levenberg_Marquardt_algorithm_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case USER_MAIN:
+       {
+          // do nothing
+       }
+       break;
+
+       default:
+       {
+          std::ostringstream buffer;
+
+          file_stream.CloseElement();
+
+          buffer << "OpenNN Exception: TrainingStrategy class.\n"
+                 << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+                 << "Unknown main type.\n";
+
+          throw std::logic_error(buffer.str());
+       }
+       break;
+    }
+
+    switch(refinement_type)
+    {
+       case NO_REFINEMENT:
+       {
+          // do nothing
+       }
+       break;
+
+       case NEWTON_METHOD:
+       {
+            file_stream.OpenElement("Refinement");
+
+            file_stream.PushAttribute("Type", "NEWTON_METHOD");
+
+            Newton_method_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+       case USER_REFINEMENT:
+       {
+          // do nothing
+       }
+       break;
+
+       default:
+       {
+          std::ostringstream buffer;
+
+          file_stream.CloseElement();
+
+          buffer << "OpenNN Exception: TrainingStrategy class.\n"
+                 << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+                 << "Unknown refinement type.\n";
+
+          throw std::logic_error(buffer.str());
+       }
+       break;
+    }
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Loads the members of this training strategy object from a XML document.

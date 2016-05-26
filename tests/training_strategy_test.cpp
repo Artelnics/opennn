@@ -251,7 +251,7 @@ void TrainingStrategyTest::test_to_XML(void)
 
    ts.set_initialization_type(TrainingStrategy::RANDOM_SEARCH);
    ts.set_main_type(TrainingStrategy::GRADIENT_DESCENT);
-   ts.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
+//   ts.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
 
    tinyxml2::XMLDocument* document = ts.to_XML();
 
@@ -271,7 +271,7 @@ void TrainingStrategyTest::test_from_XML(void)
 
    ts1.set_initialization_type(TrainingStrategy::RANDOM_SEARCH);
    ts1.set_main_type(TrainingStrategy::GRADIENT_DESCENT);
-   ts1.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
+//   ts1.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
 
    tinyxml2::XMLDocument* document = ts1.to_XML();
 
@@ -301,7 +301,7 @@ void TrainingStrategyTest::test_save(void)
 
    ts.set_initialization_type(TrainingStrategy::RANDOM_SEARCH);
    ts.set_main_type(TrainingStrategy::GRADIENT_DESCENT);
-   ts.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
+//   ts.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
 
    ts.save(file_name);
 

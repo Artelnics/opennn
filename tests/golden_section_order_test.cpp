@@ -131,7 +131,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
@@ -185,7 +185,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 

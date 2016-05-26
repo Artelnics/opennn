@@ -3602,6 +3602,41 @@ tinyxml2::XMLDocument* MultilayerPerceptron::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void MultilayerPerceptron::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    file_stream.OpenElement("MultilayerPerceptron");
+
+    // Architecture
+
+    file_stream.OpenElement("Architecture");
+
+    file_stream.PushText(arrange_architecture().to_string().c_str());
+
+    file_stream.CloseElement();
+
+    // Layers activation function
+
+    file_stream.OpenElement("LayersActivationFunction");
+
+    file_stream.PushText(write_layers_activation_function().to_string().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    file_stream.PushText(arrange_parameters().to_string().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this multilayer perceptron object.
@@ -3715,7 +3750,7 @@ void MultilayerPerceptron::from_XML(const tinyxml2::XMLDocument& document)
 
 /// Serializes the perceptrons layers into a PMML document
 
-void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network)
+void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 {
     tinyxml2::XMLDocument* pmml_document = neural_network->GetDocument();
 
@@ -3801,7 +3836,10 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network)
 
             const Perceptron current_perceptron = current_layer.get_perceptron(neurons_loop_i);
 
-            neuron->SetAttribute("bias",current_perceptron.get_bias());
+            std::stringstream buffer;
+            buffer << std::setprecision(15) << current_perceptron.get_bias();
+
+            neuron->SetAttribute("bias",buffer.str().c_str());
 
             std::string neuron_id = std::to_string(layers_loop_i+1);
             neuron_id.append(",");
@@ -3825,7 +3863,10 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network)
 
                 const double connection_weight = current_perceptron.get_synaptic_weight(connections_loop_i);
 
-                con->SetAttribute("weight",connection_weight);
+                buffer.str(std::string());
+                buffer << std::setprecision(15) << connection_weight;
+
+                con->SetAttribute("weight",buffer.str().c_str());
             }
 
             // End neuron connections
@@ -3835,6 +3876,119 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network)
     }
 
 }
+
+
+// void write_PMML(tinyxml2::XMLPrinter&, bool is_softmax_normalization_method) const method
+
+void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is_softmax_normalization_method) const
+{
+
+    Perceptron::ActivationFunction neural_network_activation_function = get_layer(0).get_activation_function();
+
+    bool equal_activation_function_for_all_layers = true;
+
+    const size_t number_of_layers = get_layers_number();
+
+
+    for(size_t i = 1; i < number_of_layers ; i++ )
+    {
+        if (get_layer(i).get_activation_function() != neural_network_activation_function)
+        {
+            equal_activation_function_for_all_layers = false;
+
+            break;
+        }
+    }
+
+
+    for(size_t layers_loop_i = 0 ; layers_loop_i < number_of_layers; layers_loop_i++)
+    {
+        file_stream.OpenElement("NeuralLayer");
+
+        const PerceptronLayer current_layer = get_layer(layers_loop_i);
+
+        const size_t number_of_neurons = current_layer.get_perceptrons_number();
+
+        file_stream.PushAttribute("numberOfNeurons",(unsigned)number_of_neurons);
+
+        if(!equal_activation_function_for_all_layers)
+        {
+            switch(current_layer.get_activation_function())
+            {
+            case Perceptron::ActivationFunction::Threshold:
+                file_stream.PushAttribute("activationFunction", "threshold");
+                break;
+
+            case Perceptron::ActivationFunction::Logistic:
+                file_stream.PushAttribute("activationFunction", "logistic");
+                break;
+
+            case Perceptron::ActivationFunction::HyperbolicTangent:
+                file_stream.PushAttribute("activationFunction", "tanh");
+                break;
+
+            case Perceptron::ActivationFunction::Linear:
+                file_stream.PushAttribute("activationFunction", "identity");
+                break;
+            }
+        }
+
+        // Put softmax normalizatoin method at output layer (the last) if needed
+        if(layers_loop_i == (number_of_layers - 1))
+            if(is_softmax_normalization_method)
+                file_stream.PushAttribute("normalizationMethod","softmax");
+
+        // Layer neurons
+        for(size_t neurons_loop_i = 0; neurons_loop_i < number_of_neurons ; neurons_loop_i++ )
+        {
+            file_stream.OpenElement("Neuron");
+
+            const Perceptron current_perceptron = current_layer.get_perceptron(neurons_loop_i);
+
+            std::stringstream buffer;
+            buffer << std::setprecision(15) << current_perceptron.get_bias();
+
+            file_stream.PushAttribute("bias",buffer.str().c_str());
+
+            std::string neuron_id = std::to_string(layers_loop_i+1);
+            neuron_id.append(",");
+            neuron_id.append(std::to_string(neurons_loop_i));
+
+            file_stream.PushAttribute("id",neuron_id.c_str());
+
+            // Neuron connections
+            const size_t number_of_connections = current_perceptron.get_inputs_number();
+
+            for(size_t connections_loop_i = 0; connections_loop_i < number_of_connections ; connections_loop_i++)
+            {
+                file_stream.OpenElement("Con");
+
+                std::string connection_from = std::to_string(layers_loop_i);
+                connection_from.append(",");
+                connection_from.append(std::to_string(connections_loop_i));
+
+                file_stream.PushAttribute("from",connection_from.c_str());
+
+                const double connection_weight = current_perceptron.get_synaptic_weight(connections_loop_i);
+
+                buffer.str(std::string());
+                buffer << std::setprecision(15) << connection_weight;
+
+                file_stream.PushAttribute("weight", buffer.str().c_str());
+
+                // Close Con
+                file_stream.CloseElement();
+            }
+
+            // Close Neuron
+            file_stream.CloseElement();
+        }
+
+        // Close NeuralLayer
+        file_stream.CloseElement();
+    }
+}
+
 
 // void from_PMML(const tinyxml2::XMLElement*) method
 

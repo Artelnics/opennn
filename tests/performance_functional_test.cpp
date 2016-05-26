@@ -78,9 +78,9 @@ void PerformanceFunctionalTest::test_get_data_set_pointer(void)
 }
 
 
-void PerformanceFunctionalTest::test_get_user_objective_pointer(void)
+void PerformanceFunctionalTest::test_get_user_pointer(void)
 {
-   message += "test_get_user_objective_pointer\n";
+   message += "test_get_user_pointer\n";
 }
 
 
@@ -176,9 +176,9 @@ void PerformanceFunctionalTest::test_calculate_performance(void)
    // Test
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
-   NeuralParametersNorm* neural_parameters_norm = pf.get_neural_parameters_norm_regularization_pointer();
+   NeuralParametersNorm* neural_parameters_norm = pf.get_neural_parameters_norm_pointer();
 
    double neural_parameters_norm_weight = neural_parameters_norm->get_neural_parameters_norm_weight();
 
@@ -222,7 +222,7 @@ void PerformanceFunctionalTest::test_calculate_performance(void)
    pf.set_data_set_pointer(&ds);
 
    pf.destruct_all_terms();
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    nn.set(1, 1);
 
@@ -251,9 +251,9 @@ void PerformanceFunctionalTest::test_calculate_performance(void)
 
    nn.initialize_parameters(0.0);
 
-   MockPerformanceTerm* mptp = new MockPerformanceTerm(&nn);
+   MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_objective_pointer(mptp);
+   pf.set_user_error_pointer(mptp);
 
    performance = pf.calculate_performance();
 
@@ -273,7 +273,7 @@ void PerformanceFunctionalTest::test_calculate_gradient(void)
    PerformanceFunctional pf(&nn);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    Vector<double> gradient;
 
@@ -294,9 +294,9 @@ void PerformanceFunctionalTest::test_calculate_gradient(void)
    parameters_number = nn.count_parameters_number();
    nn.initialize_parameters(0.0);
 
-   MockPerformanceTerm* mptp = new MockPerformanceTerm(&nn);
+   MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_objective_pointer(mptp);
+   pf.set_user_error_pointer(mptp);
 
    gradient = pf.calculate_gradient();
 
@@ -323,7 +323,7 @@ void PerformanceFunctionalTest::test_calculate_Hessian(void)
    PerformanceFunctional pf(&nn);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    Matrix<double> Hessian;
 
@@ -368,9 +368,9 @@ void PerformanceFunctionalTest::test_calculate_Hessian(void)
    parameters_number = nn.count_parameters_number();
    nn.initialize_parameters(0.0);
 
-   MockPerformanceTerm* mptp = new MockPerformanceTerm(&nn);
+   MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_objective_pointer(mptp);
+   pf.set_user_error_pointer(mptp);
 
    Hessian = pf.calculate_Hessian();
 
@@ -424,7 +424,7 @@ void PerformanceFunctionalTest::test_calculate_terms(void)
    NeuralNetwork nn;
    PerformanceFunctional pf(&nn, &ds);
 
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    Vector<double> terms;
 
@@ -452,7 +452,7 @@ void PerformanceFunctionalTest::test_calculate_terms_Jacobian(void)
    NeuralNetwork nn;
    PerformanceFunctional pf(&nn, &ds);
 
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    Matrix<double> terms_Jacobian;
 
@@ -508,7 +508,7 @@ void PerformanceFunctionalTest::test_calculate_directional_performance(void)
    nn.set(1, 1);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    direction.set(2, 1.0e3);
 
@@ -535,7 +535,7 @@ void PerformanceFunctionalTest::test_calculate_directional_performance_derivativ
    nn.initialize_parameters(0.0);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    direction.set(2, 0.0);
 
@@ -562,7 +562,7 @@ void PerformanceFunctionalTest::test_calculate_directional_performance_second_de
    nn.initialize_parameters(0.0);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    direction.set(2, 0.0);
 
@@ -578,8 +578,8 @@ void PerformanceFunctionalTest::test_to_XML(void)
 
    PerformanceFunctional pf;
 
-   pf.set_objective_type(PerformanceFunctional::MINKOWSKI_ERROR_OBJECTIVE);
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_error_type(PerformanceFunctional::MINKOWSKI_ERROR);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    tinyxml2::XMLDocument* document = pf.to_XML();
 
@@ -596,8 +596,8 @@ void PerformanceFunctionalTest::test_from_XML(void)
    PerformanceFunctional pf1;
    PerformanceFunctional pf2;
 
-   pf1.set_objective_type(PerformanceFunctional::MINKOWSKI_ERROR_OBJECTIVE);
-   pf1.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf1.set_error_type(PerformanceFunctional::MINKOWSKI_ERROR);
+   pf1.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    tinyxml2::XMLDocument* document = pf1.to_XML();
 
@@ -605,8 +605,8 @@ void PerformanceFunctionalTest::test_from_XML(void)
 
    delete document;
 
-    assert_true(pf2.get_objective_type() == PerformanceFunctional::MINKOWSKI_ERROR_OBJECTIVE, LOG);
-    assert_true(pf2.get_regularization_type() == PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION, LOG);
+    assert_true(pf2.get_error_type() == PerformanceFunctional::MINKOWSKI_ERROR, LOG);
+    assert_true(pf2.get_regularization_type() == PerformanceFunctional::NEURAL_PARAMETERS_NORM, LOG);
 
 }
 
@@ -629,8 +629,8 @@ void PerformanceFunctionalTest::test_save(void)
 
    PerformanceFunctional pf;
 
-   pf.set_objective_type(PerformanceFunctional::MINKOWSKI_ERROR_OBJECTIVE);
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf.set_error_type(PerformanceFunctional::MINKOWSKI_ERROR);
+   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    pf.save(file_name);
 }
@@ -647,15 +647,15 @@ void PerformanceFunctionalTest::test_load(void)
 
    // Test
 
-   pf1.set_objective_type(PerformanceFunctional::MINKOWSKI_ERROR_OBJECTIVE);
-   pf1.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+   pf1.set_error_type(PerformanceFunctional::MINKOWSKI_ERROR);
+   pf1.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
    pf1.save(file_name);
 
    pf2.load(file_name);
 
-   assert_true(pf2.get_objective_type() == PerformanceFunctional::MINKOWSKI_ERROR_OBJECTIVE, LOG);
-   assert_true(pf2.get_regularization_type() == PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION, LOG);
+   assert_true(pf2.get_error_type() == PerformanceFunctional::MINKOWSKI_ERROR, LOG);
+   assert_true(pf2.get_regularization_type() == PerformanceFunctional::NEURAL_PARAMETERS_NORM, LOG);
 }
 
 
@@ -697,7 +697,7 @@ void PerformanceFunctionalTest::run_test_case(void)
    test_get_mathematical_model_pointer();
    test_get_data_set_pointer();
 
-   test_get_user_objective_pointer();
+   test_get_user_pointer();
    test_get_user_regularization_pointer();
    test_get_user_constraints_pointer();
 

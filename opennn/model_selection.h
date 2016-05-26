@@ -223,6 +223,8 @@ public:
 
     void check(void) const;
 
+    Vector<double> calculate_inputs_importance(void) const;
+
     ModelSelectionResults perform_order_selection(void) const;
 
     ModelSelectionResults perform_inputs_selection(void) const;
@@ -235,6 +237,9 @@ public:
 
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
+
+    void write_XML(tinyxml2::XMLPrinter&) const;
+    // void read_XML(   );
 
     void print(void) const;
     void save(const std::string&) const;

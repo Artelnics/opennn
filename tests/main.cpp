@@ -52,7 +52,7 @@ int main(void)
    "bounding_layer\n"
    "sum_squared_error\n"
    "solutions_error\n"
-   "performance_term\n"
+   "error_term\n"
    "performance_functional\n"
    "outputs_integrals\n"
    "normalized_squared_error\n"
@@ -60,9 +60,6 @@ int main(void)
    "neural_parameters_norm\n"
    "minkowski_error\n"
    "mean_squared_error\n"
-   "inverse_sum_squared_error\n"
-   "independent_parameters_error\n"
-   "final_solutions_error\n"
    "cross_entropy_error\n"
    "training_strategy\n"
    "training_rate_algorithm\n"
@@ -344,14 +341,14 @@ int main(void)
       // P E R F O R M A N C E   F U N C T I O N A L   T E S T S
       // 
 
-      else if(test == "performance_term")
+      else if(test == "error_term")
       {
-        PerformanceTermTest performance_term_test;
-        performance_term_test.run_test_case();
-        message += performance_term_test.get_message();
-        tests_count += performance_term_test.get_tests_count();
-        tests_passed_count += performance_term_test.get_tests_passed_count();
-        tests_failed_count += performance_term_test.get_tests_failed_count();
+        ErrorTermTest error_term_test;
+        error_term_test.run_test_case();
+        message += error_term_test.get_message();
+        tests_count += error_term_test.get_tests_count();
+        tests_passed_count += error_term_test.get_tests_passed_count();
+        tests_failed_count += error_term_test.get_tests_failed_count();
       }
       else if(test == "sum_squared_error")
       {
@@ -416,24 +413,6 @@ int main(void)
         tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
         tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
       }
-      else if(test == "independent_parameters_error")
-      {
-        IndependentParametersErrorTest independent_parameters_error_test;
-        independent_parameters_error_test.run_test_case();
-        message += independent_parameters_error_test.get_message();
-        tests_count += independent_parameters_error_test.get_tests_count();
-        tests_passed_count += independent_parameters_error_test.get_tests_passed_count();
-        tests_failed_count += independent_parameters_error_test.get_tests_failed_count();
-      }
-      else if(test == "inverse_sum_squared_error")
-      {
-        InverseSumSquaredErrorTest test_inverse_sum_squared_error;
-        test_inverse_sum_squared_error.run_test_case();
-        message += test_inverse_sum_squared_error.get_message();
-        tests_count += test_inverse_sum_squared_error.get_tests_count();
-        tests_passed_count += test_inverse_sum_squared_error.get_tests_passed_count();
-        tests_failed_count += test_inverse_sum_squared_error.get_tests_failed_count();
-      }
       else if(test == "neural_parameters_norm")
       {
         NeuralParametersNormTest test_neural_parameters_norm;
@@ -451,24 +430,6 @@ int main(void)
         tests_count += test_outputs_integrals.get_tests_count();
         tests_passed_count += test_outputs_integrals.get_tests_passed_count();
         tests_failed_count += test_outputs_integrals.get_tests_failed_count();
-      }
-      else if(test == "final_solutions_error")
-      {
-        FinalSolutionsErrorTest final_solutions_error_test;
-        final_solutions_error_test.run_test_case();
-        message += final_solutions_error_test.get_message();
-        tests_count += final_solutions_error_test.get_tests_count();
-        tests_passed_count += final_solutions_error_test.get_tests_passed_count();
-        tests_failed_count += final_solutions_error_test.get_tests_failed_count();
-      }
-      else if(test == "solutions_error")
-      {
-        SolutionsErrorTest solutions_error_test;
-        solutions_error_test.run_test_case();
-        message += solutions_error_test.get_message();
-        tests_count += solutions_error_test.get_tests_count();
-        tests_passed_count += solutions_error_test.get_tests_passed_count();
-        tests_failed_count += solutions_error_test.get_tests_failed_count();
       }
       else if(test == "performance_functional")
       {
@@ -893,7 +854,7 @@ int main(void)
 
           // performance term
 
-          PerformanceTermTest performance_term_test;
+          ErrorTermTest performance_term_test;
           performance_term_test.run_test_case();
           message += performance_term_test.get_message();
           tests_count += performance_term_test.get_tests_count();
@@ -953,24 +914,6 @@ int main(void)
           tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
           tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
 
-          // independent parameters error
-
-          IndependentParametersErrorTest independent_parameters_error_test;
-          independent_parameters_error_test.run_test_case();
-          message += independent_parameters_error_test.get_message();
-          tests_count += independent_parameters_error_test.get_tests_count();
-          tests_passed_count += independent_parameters_error_test.get_tests_passed_count();
-          tests_failed_count += independent_parameters_error_test.get_tests_failed_count();
-
-          // inverse sum squared error
-
-          InverseSumSquaredErrorTest test_inverse_sum_squared_error;
-          test_inverse_sum_squared_error.run_test_case();
-          message += test_inverse_sum_squared_error.get_message();
-          tests_count += test_inverse_sum_squared_error.get_tests_count();
-          tests_passed_count += test_inverse_sum_squared_error.get_tests_passed_count();
-          tests_failed_count += test_inverse_sum_squared_error.get_tests_failed_count();
-
           // neural parameters norm
 
           NeuralParametersNormTest test_neural_parameters_norm;
@@ -988,24 +931,6 @@ int main(void)
           tests_count += test_outputs_integrals.get_tests_count();
           tests_passed_count += test_outputs_integrals.get_tests_passed_count();
           tests_failed_count += test_outputs_integrals.get_tests_failed_count();
-
-          // final solutions error
-
-          FinalSolutionsErrorTest final_solutions_error_test;
-          final_solutions_error_test.run_test_case();
-          message += final_solutions_error_test.get_message();
-          tests_count += final_solutions_error_test.get_tests_count();
-          tests_passed_count += final_solutions_error_test.get_tests_passed_count();
-          tests_failed_count += final_solutions_error_test.get_tests_failed_count();
-
-          // solutions error
-
-          SolutionsErrorTest solutions_error_test;
-          solutions_error_test.run_test_case();
-          message += solutions_error_test.get_message();
-          tests_count += solutions_error_test.get_tests_count();
-          tests_passed_count += solutions_error_test.get_tests_passed_count();
-          tests_failed_count += solutions_error_test.get_tests_failed_count();
 
           // performance functional
 

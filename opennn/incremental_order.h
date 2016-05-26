@@ -116,8 +116,11 @@ public:
     Matrix<std::string> to_string_matrix(void) const;
 
     tinyxml2::XMLDocument* to_XML(void) const;
-
     void from_XML(const tinyxml2::XMLDocument&);
+
+    void write_XML(tinyxml2::XMLPrinter&) const;
+    // void read_XML(   );
+
 
     void save(const std::string&) const;
     void load(const std::string&);

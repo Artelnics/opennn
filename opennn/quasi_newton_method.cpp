@@ -2019,7 +2019,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
       || (old_parameters - parameters).calculate_absolute_value() < 1.0e-99
       || (old_gradient - gradient).calculate_absolute_value() < 1.0e-99)
       {
-         inverse_Hessian.initialize_identity();
+          inverse_Hessian.initialize_identity();
       }
       else
       {
@@ -2027,42 +2027,27 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
           if (gpuDeviceCount > 0)
           {
-              error = memcpyCUDA(old_parameters_d, old_parameters_data, num_bytes);
+              error += memcpyCUDA(old_parameters_d, old_parameters_data, num_bytes);
+
+              error += memcpyCUDA(parameters_d, parameters_data, num_bytes);
+
+              error += memcpyCUDA(old_gradient_d, old_gradient_data, num_bytes);
+
+              error += memcpyCUDA(gradient_d, gradient_data, num_bytes);
+
+              error += memcpyCUDA(old_inverse_Hessian_d, old_inverse_Hessian_data, (int)parameters_number * num_bytes);
+
               if (error != 0)
               {
                   inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-                  break;
-              }
 
-              error = memcpyCUDA(parameters_d, parameters_data, num_bytes);
-              if (error != 0)
+                  error = 0;
+              }
+              else
               {
-                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-                  break;
-              }
+                  inverse_Hessian = calculate_inverse_Hessian_approximation_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d);
 
-              error = memcpyCUDA(old_gradient_d, old_gradient_data, num_bytes);
-              if (error != 0)
-              {
-                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-                  break;
               }
-
-              error = memcpyCUDA(gradient_d, gradient_data, num_bytes);
-              if (error != 0)
-              {
-                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-                  break;
-              }
-
-              error = memcpyCUDA(old_inverse_Hessian_d, old_inverse_Hessian_data, (int)parameters_number * num_bytes);
-              if (error != 0)
-              {
-                  inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-                  break;
-              }
-
-              inverse_Hessian = calculate_inverse_Hessian_approximation_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d);
 
           }else
           {
@@ -2083,7 +2068,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
          selection_failures++;	  
       }
 
-      // Training algorithm 
+      // Training algorithm
 
       training_direction = calculate_training_direction(gradient, inverse_Hessian);
 
@@ -2767,6 +2752,152 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+//void write_XML(tinyxml2::XMLPrinter&) const method
+
+void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("QuasiNewtonMethod");
+
+    // Inverse Hessian approximation method
+
+    file_stream.OpenElement("InverseHessianApproximationMethod");
+
+    file_stream.PushText(write_inverse_Hessian_approximation_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Training rate algorithm
+
+    training_rate_algorithm.write_XML(file_stream);
+
+    // Minimum parameters increment norm
+
+    file_stream.OpenElement("MinimumParametersIncrementNorm");
+
+    buffer.str("");
+    buffer << minimum_parameters_increment_norm;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Minimum performance increase
+
+    file_stream.OpenElement("MinimumPerformanceIncrease");
+
+    buffer.str("");
+    buffer << minimum_performance_increase;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Performance goal
+
+    file_stream.OpenElement("PerformanceGoal");
+
+    buffer.str("");
+    buffer << performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Gradient norm goal
+
+    file_stream.OpenElement("GradientNormGoal");
+
+    buffer.str("");
+    buffer << gradient_norm_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum selection performance decreases
+
+    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+
+    buffer.str("");
+    buffer << maximum_selection_performance_decreases;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum iterations number
+
+    file_stream.OpenElement("MaximumIterationsNumber");
+
+    buffer.str("");
+    buffer << maximum_iterations_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum time
+
+    file_stream.OpenElement("MaximumTime");
+
+    buffer.str("");
+    buffer << maximum_time;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve parameters norm history
+
+    file_stream.OpenElement("ReserveParametersNormHistory");
+
+    buffer.str("");
+    buffer << reserve_parameters_norm_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve performance history
+
+    file_stream.OpenElement("ReservePerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve selection performance history
+
+    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+
+    buffer.str("");
+    buffer << reserve_selection_performance_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve gradient norm history
+
+    file_stream.OpenElement("ReserveGradientNormHistory");
+
+    buffer.str("");
+    buffer << reserve_gradient_norm_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
 }
 
 

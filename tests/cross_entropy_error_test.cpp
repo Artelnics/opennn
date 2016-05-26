@@ -65,26 +65,9 @@ void CrossEntropyErrorTest::test_calculate_performance(void)
    ds.set(1,1,1);
    ds.initialize_data(0.0);
 
-   cross_entropy_error = cee.calculate_performance();
+   cross_entropy_error = cee.calculate_error();
 
-   assert_true(cross_entropy_error == cee.calculate_performance(parameters), LOG);
-
-   // Test
-
-   nn.set(1, 1);
-
-   mlpp = nn.get_multilayer_perceptron_pointer();
-
-   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-
-   nn.randomize_parameters_normal();
-
-   parameters = nn.arrange_parameters();
-
-   ds.set(1, 1, 1);
-   ds.randomize_data_normal();
-
-   assert_true(cee.calculate_performance() == cee.calculate_performance(parameters), LOG);
+   assert_true(cross_entropy_error == cee.calculate_error(parameters), LOG);
 
    // Test
 
@@ -101,7 +84,24 @@ void CrossEntropyErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(cee.calculate_performance() != cee.calculate_performance(parameters*2.0), LOG);
+   assert_true(cee.calculate_error() == cee.calculate_error(parameters), LOG);
+
+   // Test
+
+   nn.set(1, 1);
+
+   mlpp = nn.get_multilayer_perceptron_pointer();
+
+   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
+
+   nn.randomize_parameters_normal();
+
+   parameters = nn.arrange_parameters();
+
+   ds.set(1, 1, 1);
+   ds.randomize_data_normal();
+
+   assert_true(cee.calculate_error() != cee.calculate_error(parameters*2.0), LOG);
 
    // Test
 
@@ -116,7 +116,7 @@ void CrossEntropyErrorTest::test_calculate_performance(void)
    ds.set(50,3,1);
    ds.randomize_data_normal();
 
-   assert_true(cee.calculate_performance() > 0, LOG);
+   assert_true(cee.calculate_error() > 0, LOG);
 
    // Test
 
@@ -132,7 +132,7 @@ void CrossEntropyErrorTest::test_calculate_performance(void)
    ds.set(50,3,3);
    ds.randomize_data_normal();
 
-   assert_true(cee.calculate_performance() > 0, LOG);
+   assert_true(cee.calculate_error() > 0, LOG);
 
 }
 
@@ -158,7 +158,7 @@ void CrossEntropyErrorTest::test_calculate_selection_performance(void)
    ds.get_instances_pointer()->set_selection();
    ds.initialize_data(0.0);
    
-   selection_objective = cee.calculate_selection_performance();
+   selection_objective = cee.calculate_selection_error();
 
    assert_true(selection_objective > 0.0, LOG);
 }
@@ -185,7 +185,7 @@ void CrossEntropyErrorTest::test_calculate_minimum_performance(void)
     ds.set(20,1,1);
     ds.randomize_data_uniform(0,1);
 
-    performance = cee.calculate_performance();
+    performance = cee.calculate_error();
     minimum_performance = cee.calculate_minimum_performance();
 
     assert_true(minimum_performance <= performance, LOG);
@@ -214,8 +214,8 @@ void CrossEntropyErrorTest::test_calculate_minimum_selection_performance(void)
     ds.get_instances_pointer()->set_selection();
     ds.randomize_data_uniform(0,1);
 
-    selection_performance = cee.calculate_selection_performance();
-    minimum_selection_performance = cee.calculate_minimum_selection_performance();
+    selection_performance = cee.calculate_selection_error();
+    minimum_selection_performance = cee.calculate_minimum_selection_error();
 
     assert_true(minimum_selection_performance <= selection_performance, LOG);
     assert_true(minimum_selection_performance > 0, LOG);
@@ -346,7 +346,7 @@ void CrossEntropyErrorTest::test_calculate_gradient(void)
    ds.initialize_data(0.5);
 
    gradient = cee.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(cee, &CrossEntropyError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(cee, &CrossEntropyError::calculate_error, parameters);
 
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -361,7 +361,7 @@ void CrossEntropyErrorTest::test_calculate_gradient(void)
    ds.randomize_data_uniform(0.0, 1.0);
 
    gradient = cee.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(cee, &CrossEntropyError::calculate_performance, parameters);
+   numerical_gradient = nd.calculate_gradient(cee, &CrossEntropyError::calculate_error, parameters);
 
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
@@ -393,7 +393,7 @@ void CrossEntropyErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();   
+   test_calculate_performance();
    test_calculate_selection_performance();
 
    test_calculate_minimum_performance();

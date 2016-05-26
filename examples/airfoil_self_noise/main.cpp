@@ -126,7 +126,7 @@ int main(void)
 
       PerformanceFunctional performance_functional(&neural_network, &data_set);
 
-      performance_functional.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM_REGULARIZATION);
+      performance_functional.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
 
       // Training strategy object
 

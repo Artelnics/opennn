@@ -2618,6 +2618,187 @@ tinyxml2::XMLDocument* IndependentParameters::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void IndependentParameters::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    const size_t parameters_number = get_parameters_number();
+
+    file_stream.OpenElement("IndependentParameters");
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+    buffer << parameters;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Names
+
+    file_stream.OpenElement("Names");
+
+    for(size_t i = 0; i < parameters_number; i++)
+    {
+        file_stream.OpenElement("Name");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        file_stream.PushText(names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+
+    // Units
+
+    file_stream.OpenElement("Units");
+
+    for(size_t i = 0; i < parameters_number; i++)
+    {
+        file_stream.OpenElement("Unit");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        file_stream.PushText(units[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+
+    // Descriptions
+
+    file_stream.OpenElement("Descriptions");
+
+    for(size_t i = 0; i < parameters_number; i++)
+    {
+        file_stream.OpenElement("Description");
+
+        file_stream.PushAttribute("Index", (unsigned)i+1);
+
+        file_stream.PushText(descriptions[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    file_stream.CloseElement();
+
+    // Minimums
+
+    file_stream.OpenElement("Minimums");
+
+    buffer.str("");
+    buffer << minimums;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximums
+
+    file_stream.OpenElement("Maximums");
+
+    buffer.str("");
+    buffer << maximums;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Means
+
+    file_stream.OpenElement("Means");
+
+    buffer.str("");
+    buffer << means;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Standard deviations
+
+    file_stream.OpenElement("StandardDeviations");
+
+    buffer.str("");
+    buffer << standard_deviations;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Lower bounds
+
+    file_stream.OpenElement("LowerBounds");
+
+    buffer.str("");
+    buffer << lower_bounds;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Upper bounds
+
+    file_stream.OpenElement("UpperBounds");
+
+    buffer.str("");
+    buffer << upper_bounds;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Scaling method
+
+    file_stream.OpenElement("ScalingMethod");
+
+    file_stream.PushText(write_scaling_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Bounding method
+
+    file_stream.OpenElement("BoundingMethod");
+
+    file_stream.PushText(write_bounding_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Display range warning
+
+    file_stream.OpenElement("DisplayRangeWarning");
+
+    buffer.str("");
+    buffer << display_range_warning;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this independent parameters object.

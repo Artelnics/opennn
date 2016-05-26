@@ -59,8 +59,8 @@ public:
 
    // Objective methods
 
-   void test_calculate_performance(void);   
-   void test_calculate_selection_performance(void);
+   void test_calculate_error(void);
+   void test_calculate_selection_error(void);
 
    void test_calculate_gradient(void);
    void test_calculate_Hessian(void);

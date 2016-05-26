@@ -804,6 +804,8 @@ void Instances::set_uses(const Vector<std::string>& new_uses)
 }
 
 
+
+
 // void set_use(const Use&) method
 
 /// Sets the use of a single instance.
@@ -953,7 +955,7 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
 
    std::ostringstream buffer;
 
-   // Instances     
+   // Instances
 
    tinyxml2::XMLElement* instances_element = document->NewElement("Instances");
 
@@ -976,8 +978,16 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
       element->LinkEndChild(text);
    }
 
+   // Items uses
+
+   element = document->NewElement("ItemsUses");
+   instances_element->LinkEndChild(element);
+
+   std::string items_uses;
+
    for(size_t i = 0; i < instances_number; i++)
    {
+/*
        element = document->NewElement("Item");
        element->SetAttribute("Index", (unsigned)i+1);
        instances_element->LinkEndChild(element);
@@ -989,7 +999,19 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
 
        tinyxml2::XMLText* use_text = document->NewText(write_use(i).c_str());
        use_element->LinkEndChild(use_text);
+*/
+
+       std::string item_use_string(std::to_string((size_t) get_use(i)));
+
+       items_uses.append(item_use_string);
+
+       items_uses.append(" ");
    }
+
+   items_uses.pop_back();
+
+   tinyxml2::XMLText* items_uses_text = document->NewText(items_uses.c_str());
+   element->LinkEndChild(items_uses_text);
 
    // Display
 //   {
@@ -1004,6 +1026,53 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void Instances::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    const size_t instances_number = get_instances_number();
+
+    file_stream.OpenElement("Instances");
+
+    // Instances number
+
+    file_stream.OpenElement("InstancesNumber");
+
+    buffer.str("");
+    buffer << instances_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Items uses
+
+    std::string items_uses;
+
+    for(size_t i = 0; i < instances_number; i++)
+    {
+        std::string item_use_string(std::to_string((size_t) get_use(i)));
+
+        items_uses.append(item_use_string);
+
+        items_uses.append(" ");
+    }
+
+    items_uses.pop_back();
+
+    file_stream.OpenElement("ItemsUses");
+
+    file_stream.PushText(items_uses.c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
 }
 
 
@@ -1052,8 +1121,8 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
    }
 
 
-   // Items
-
+   // Items uses
+/*
    unsigned index = 0;
 
    const tinyxml2::XMLElement* start_element = instances_number_element;
@@ -1101,6 +1170,49 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
         set_use(index-1, use_element->GetText());
      }
   }
+*/
+
+   const tinyxml2::XMLElement* items_uses_element = instances_element->FirstChildElement("ItemsUses");
+
+   if(!items_uses_element)
+   {
+       const tinyxml2::XMLElement* unknown_element = instances_element->FirstChildElement("Item");
+
+       if(unknown_element)
+       {
+           buffer << "Project file is old.\n";
+       }
+
+      buffer << "OpenNN Exception: Instances class.\n"
+             << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+             << "Pointer to items uses is NULL.\n";
+
+      throw std::logic_error(buffer.str());
+   }
+
+   // Read uses
+
+   const std::string items_uses_text(items_uses_element->GetText());
+
+   Vector<size_t> items_uses;
+   items_uses.parse(items_uses_text);
+
+   // Check instances number error
+
+   if(instances_number != items_uses.size())
+   {
+       buffer << "OpenNN Exception: Instances class.\n"
+              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+              << "Items uses size (" << items_uses.size() << ") must be the same than instances number (" << instances_number << ").\n";
+
+       throw std::logic_error(buffer.str());
+   }
+
+   for(size_t i = 0; i < instances_number; i++)
+   {
+       set_use(i, (Use)items_uses.at(i));
+   }
+
 }
 
 

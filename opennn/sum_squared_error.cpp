@@ -22,10 +22,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a sum squared error performance term not associated to any neural network and not measured on any data set.
+/// It creates a sum squared error term not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-SumSquaredError::SumSquaredError(void) : PerformanceTerm()
+SumSquaredError::SumSquaredError(void) : ErrorTerm()
 {
 }
 
@@ -33,12 +33,12 @@ SumSquaredError::SumSquaredError(void) : PerformanceTerm()
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a sum squared error performance term associated to a neural network but not measured on any data set.
+/// It creates a sum squared error term associated to a neural network but not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
 SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer) 
-: PerformanceTerm(new_neural_network_pointer)
+: ErrorTerm(new_neural_network_pointer)
 {
 }
 
@@ -51,7 +51,7 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 SumSquaredError::SumSquaredError(DataSet* new_data_set_pointer)
-: PerformanceTerm(new_data_set_pointer)
+: ErrorTerm(new_data_set_pointer)
 {
 }
 
@@ -65,7 +65,7 @@ SumSquaredError::SumSquaredError(DataSet* new_data_set_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
- : PerformanceTerm(new_neural_network_pointer, new_data_set_pointer)
+ : ErrorTerm(new_neural_network_pointer, new_data_set_pointer)
 {
 }
 
@@ -78,7 +78,7 @@ SumSquaredError::SumSquaredError(NeuralNetwork* new_neural_network_pointer, Data
 /// @param sum_squared_error_document XML document with the class members.
 
 SumSquaredError::SumSquaredError(const tinyxml2::XMLDocument& sum_squared_error_document)
- : PerformanceTerm(sum_squared_error_document)
+ : ErrorTerm(sum_squared_error_document)
 {
 }
 
@@ -92,7 +92,7 @@ SumSquaredError::SumSquaredError(const tinyxml2::XMLDocument& sum_squared_error_
 /// @param new_sum_squared_error Object to be copied. 
 
 SumSquaredError::SumSquaredError(const SumSquaredError& new_sum_squared_error)
- : PerformanceTerm(new_sum_squared_error)
+ : ErrorTerm(new_sum_squared_error)
 {
 
 }
@@ -182,11 +182,11 @@ void SumSquaredError::check(void) const
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_error(void) const method
 
 /// Returns the performance value of a neural network according to the sum squared error on a data set.
 
-double SumSquaredError::calculate_performance(void) const
+double SumSquaredError::calculate_error(void) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -252,13 +252,13 @@ double SumSquaredError::calculate_performance(void) const
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_error(const Vector<double>&) const method
 
 /// Returns which would be the sum squard error performance of a neural network for an hypothetical vector of parameters. 
 /// It does not set that vector of parameters to the neural network. 
 /// @param parameters Vector of potential parameters for the neural network associated to the performance term.
 
-double SumSquaredError::calculate_performance(const Vector<double>& parameters) const
+double SumSquaredError::calculate_error(const Vector<double>& parameters) const
 {
    // Neural network stuff
 
@@ -281,7 +281,7 @@ double SumSquaredError::calculate_performance(const Vector<double>& parameters) 
    if(size != parameters_number)
    {
       buffer << "OpenNN Exception: SumSquaredError class." << std::endl
-             << "double calculate_performance(const Vector<double>&) const method." << std::endl
+             << "double calculate_error(const Vector<double>&) const method." << std::endl
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
 
       throw std::logic_error(buffer.str());
@@ -392,11 +392,11 @@ double SumSquaredError::calculate_performance_combinations(const size_t& index_1
 }
 
 
-// double calculate_selection_performance(void) const method
+// double calculate_selection_error(void) const method
 
 /// Returns the sum squared error of the neural network measured on the selection instances of the data set.
 
-double SumSquaredError::calculate_selection_performance(void) const
+double SumSquaredError::calculate_selection_error(void) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -466,123 +466,7 @@ double SumSquaredError::calculate_selection_performance(void) const
 
 Vector<double> SumSquaredError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
 {
-    const Vector<double> output_gradient = (output-target)*2.0;
-
-    return(output_gradient);
-}
-
-
-// Vector<double> calculate_gradient(void) const method
-
-/// Calculates the performance term gradient by means of the back-propagation algorithm, 
-/// and returns it in a single vector of size the number of neural network parameters. 
-
-Vector<double> SumSquaredError::calculate_gradient(void) const
-{
-   #ifdef __OPENNN_DEBUG__
-
-   check();
-
-   #endif
-
-   // Neural network stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   // Neural network stuff
-
-   const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-   const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-   const size_t neural_parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-   Vector< Vector< Vector<double> > > first_order_forward_propagation(2); 
-
-   Vector<double> particular_solution;
-   Vector<double> homogeneous_solution;
-
-   // Data set stuff
-
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const size_t training_instances_number = instances.count_training_instances_number();
-
-   const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-   size_t training_index;
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-   const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   Vector<double> inputs(inputs_number);
-   Vector<double> targets(outputs_number);
-
-   // Sum squared error stuff
-
-   Vector<double> output_gradient(outputs_number);
-
-   Vector< Matrix<double> > layers_combination_parameters_Jacobian; 
-
-   Vector< Vector<double> > layers_inputs(layers_number); 
-   Vector< Vector<double> > layers_delta; 
-
-   Vector<double> point_gradient(neural_parameters_number, 0.0);
-
-   Vector<double> gradient(neural_parameters_number, 0.0);
-
-   int i;
-
-   #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
-    output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
-
-   for(i = 0; i < (int)training_instances_number; i++)
-   {
-       training_index = training_indices[i];
-
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-      first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-      const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-      const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-      layers_inputs = multilayer_perceptron_pointer->arrange_layers_input(inputs, layers_activation);
-
-      layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
-
-      if(!has_conditions_layer)
-      {
-          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
-
-          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-      }
-      else
-      {
-         particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-         homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-      }
-
-      point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
-
-      #pragma omp critical
-      gradient += point_gradient;
-   }
-
-   return(gradient);
+    return((output-target)*2.0);
 }
 
 
@@ -598,144 +482,6 @@ Matrix<double> SumSquaredError::calculate_output_Hessian(const Vector<double>&, 
     return(output_Hessian);
 }
 
-
-// Matrix<double> calculate_Hessian(void) const method
-
-/// Calculates the Hessian by means of the back-propagation algorithm,
-/// and returns it in a single symmetric matrix of size the number of neural network parameters. 
-/// Only implemented for one hidden layer
-
-Matrix<double> SumSquaredError::calculate_Hessian(void) const
-{
-   #ifdef __OPENNN_DEBUG__
-
-   check();
-
-   #endif
-
-   // Neural network stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-   const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-   if(layers_number != 2)
-   {
-       std::ostringstream buffer;
-
-       buffer << "OpenNN Exception: SumSquaredError class.\n"
-              << "Matrix<double> calculate_Hessian(void) method.\n"
-              << "This method is under development for more than one hidden layer.\n";
-
-       throw std::logic_error(buffer.str());
-   }
-
-   const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-   const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
-
-   Vector< Vector< Vector<double> > > second_order_forward_propagation(3); 
-
-   Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
-   Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
-
-   Vector<double> particular_solution;
-   Vector<double> homogeneous_solution;
-
-   // Data set stuff
-
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const size_t training_instances_number = instances.count_training_instances_number();
-
-   const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-   size_t training_index;
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-   const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   Vector<double> inputs(inputs_number);
-   Vector<double> targets(outputs_number);
-
-   // Sum squared error stuff
-
-   Vector< Vector<double> > layers_delta(layers_number);
-   Matrix<double> output_interlayers_Delta;
-
-   Vector<double> output_gradient(outputs_number);
-   Matrix<double> output_Hessian(outputs_number, outputs_number);
-
-   Matrix<double> Hessian(parameters_number, parameters_number, 0.0);
-
-   for(size_t i = 0; i < training_instances_number; i++)
-   {
-       training_index = training_indices[i];
-
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-      second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
-	  
-      const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
-      const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
-      const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
-
-	  Vector< Vector<double> > layers_inputs(layers_number);
-
-	  layers_inputs[0] = inputs;
-
-      for(size_t j = 1; j < layers_number; j++)
-	  {
-	     layers_inputs[j] = layers_activation[j-1];
-      }
-
-	  perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
-
-      interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
-
-      if(!has_conditions_layer)
-      {
-         output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
-
-         output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-
-         output_interlayers_Delta = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
-                                                                layers_activation_second_derivative[layers_number-1],
-                                                                output_gradient,
-                                                                output_Hessian);
-      }
-      else
-      {
-         particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-         homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
-
-         layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-      }
-
-      Hessian += calculate_single_hidden_layer_point_Hessian(layers_activation_derivative,
-                                                             layers_activation_second_derivative,
-                                                             perceptrons_combination_parameters_gradient,
-                                                             layers_delta,
-                                                             output_interlayers_Delta);
-   }
-
-   return(Hessian);
-}
 
 // Matrix<double> calculate_single_hidden_layer_Hessian(void) const
 
@@ -1217,7 +963,7 @@ Matrix<double> SumSquaredError::calculate_terms_Jacobian(void) const
 /// Returns the first order performance of the terms performance function.
 /// This is a structure containing the performance terms vector and the performance terms Jacobian.
 
-PerformanceTerm::FirstOrderTerms SumSquaredError::calculate_first_order_terms(void) const
+ErrorTerm::FirstOrderTerms SumSquaredError::calculate_first_order_terms(void) const
 {
    FirstOrderTerms first_order_terms;
 
@@ -1303,31 +1049,6 @@ Vector<double> SumSquaredError::calculate_squared_errors(void) const
 }
 
 
-// Vector<double> calculate_gradient(const Vector<double>&) const method
-
-/// @todo
-
-Vector<double> SumSquaredError::calculate_gradient(const Vector<double>&) const
-{
-    Vector<double> gradient;
-
-    return(gradient);
-}
-
-
-// Matrix<double> calculate_Hessian(const Vector<double>&) const metod
-
-/// @todo
-
-Matrix<double> SumSquaredError::calculate_Hessian(const Vector<double>&) const
-{
-    Matrix<double> Hessian;
-
-
-    return(Hessian);
-}
-
-
 // std::string write_performance_term_type(void) const method
 
 /// Returns a string with the name of the sum squared error performance type, "SUM_SQUARED_ERROR".
@@ -1368,6 +1089,16 @@ tinyxml2::XMLDocument* SumSquaredError::to_XML(void) const
 //   }
 
    return(document);
+}
+
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    //file_stream.OpenElement("SumSquaredError");
+
+    //file_stream.CloseElement();
 }
 
 

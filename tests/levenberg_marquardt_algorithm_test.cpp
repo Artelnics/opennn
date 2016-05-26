@@ -178,9 +178,9 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_gradient(void)
 
    nn.randomize_parameters_normal();
 
-   MockPerformanceTerm* mptp = new MockPerformanceTerm(&nn);
+   MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_objective_pointer(mptp);
+   pf.set_user_error_pointer(mptp);
 
    terms= pf.calculate_terms();
 
@@ -209,7 +209,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 
    PerformanceFunctional pf(&nn, &ds);
 
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    Matrix<double> terms_Jacobian;
    Matrix<double> Hessian;
@@ -238,7 +238,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 
    // Test
 
-   pf.set_objective_type(PerformanceFunctional::NORMALIZED_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::NORMALIZED_SQUARED_ERROR);
 
    nn.set(1,1,2);
    nn.randomize_parameters_normal();
@@ -262,9 +262,9 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 
    nn.randomize_parameters_normal();
 
-   MockPerformanceTerm* mptp = new MockPerformanceTerm(&nn);
+   MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_objective_pointer(mptp);
+   pf.set_user_error_pointer(mptp);
 
    terms_Jacobian = pf.calculate_terms_Jacobian();
 
@@ -276,7 +276,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 
    // Test
 
-   pf.set_objective_type(PerformanceFunctional::SUM_SQUARED_ERROR_OBJECTIVE);
+   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
 
    ds.set(1, 1, 1);
 

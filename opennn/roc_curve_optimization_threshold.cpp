@@ -465,6 +465,63 @@ tinyxml2::XMLDocument* ROCCurveOptimizationThreshold::to_XML(void) const
    return(document);
 }
 
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void ROCCurveOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("ROCCurveOptimizationThreshold");
+
+    // Minimum threshold
+
+    file_stream.OpenElement("MinimumThreshold");
+
+    buffer.str("");
+    buffer << minimum_threshold;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum threshold
+
+    file_stream.OpenElement("MaximumThreshold");
+
+    buffer.str("");
+    buffer << maximum_threshold;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Step
+
+    file_stream.OpenElement("Step");
+
+    buffer.str("");
+    buffer << step;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve function data
+
+    file_stream.OpenElement("ReserveFunctionData");
+
+    buffer.str("");
+    buffer << reserve_function_data;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    //file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this roc curve optimization object.
@@ -539,6 +596,25 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            {
               std::cout << e.what() << std::endl;
            }
+        }
+    }
+
+    // Reserve function data
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveFunctionData");
+
+        if(element)
+        {
+            const std::string new_reserve_function_data = element->GetText();
+
+            try
+            {
+                set_reserve_function_data(new_reserve_function_data != "0");
+            }
+            catch(const std::logic_error& e)
+            {
+               std::cout << e.what() << std::endl;
+            }
         }
     }
 

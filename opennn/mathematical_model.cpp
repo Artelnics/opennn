@@ -368,6 +368,52 @@ tinyxml2::XMLDocument* MathematicalModel::to_XML(void) const
 }
 
 
+// virtual void write_XML(tinyxml2::XMLPrinter&) const method
+
+void MathematicalModel::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("MathematicalModel");
+
+    // Independent variables number
+
+    file_stream.OpenElement("IndependentVariablesNumber");
+
+    buffer.str("");
+    buffer << independent_variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Dependent variables number
+
+    file_stream.OpenElement("DependentVariablesNumber");
+
+    buffer.str("");
+    buffer << dependent_variables_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this mathematical model object. 

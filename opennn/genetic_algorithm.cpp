@@ -2524,6 +2524,209 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML(void) const
     return(document);
 }
 
+
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    //file_stream.OpenElement("GeneticAlgorithm");
+
+    // Trials number
+
+    file_stream.OpenElement("TrialsNumber");
+
+    buffer.str("");
+    buffer << trials_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Tolerance
+
+    file_stream.OpenElement("Tolerance");
+
+    buffer.str("");
+    buffer << tolerance;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Population size
+
+    file_stream.OpenElement("PopulationSize");
+
+    buffer.str("");
+    buffer << population_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Initialization method
+
+    file_stream.OpenElement("InitializationMethod");
+
+    file_stream.PushText(write_initialization_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Fitness assignment method
+
+    file_stream.OpenElement("FitnessAssignmentMethod");
+
+    file_stream.PushText(write_fitness_assignment_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Crossover method
+
+    file_stream.OpenElement("CrossoverMethod");
+
+    file_stream.PushText(write_crossover_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Elitism size
+
+    file_stream.OpenElement("ElitismSize");
+
+    buffer.str("");
+    buffer << elitism_size;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Crossover first point
+
+    file_stream.OpenElement("CrossoverFirstPoint");
+
+    buffer.str("");
+    buffer << crossover_first_point;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Crossover second point
+
+    file_stream.OpenElement("CrossoverSecondPoint");
+
+    buffer.str("");
+    buffer << crossover_second_point;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Selective pressure
+
+    file_stream.OpenElement("SelectivePressure");
+
+    buffer.str("");
+    buffer << selective_pressure;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Mutation rate
+
+    file_stream.OpenElement("MutationRate");
+
+    buffer.str("");
+    buffer << mutation_rate;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Selection performance goal
+
+    file_stream.OpenElement("SelectionPerformanceGoal");
+
+    buffer.str("");
+    buffer << selection_performance_goal;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum iterations
+
+    file_stream.OpenElement("MaximumGenerationsNumber");
+
+    buffer.str("");
+    buffer << maximum_iterations_number;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Maximum time
+
+    file_stream.OpenElement("MaximumTime");
+
+    buffer.str("");
+    buffer << maximum_time;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve generation optimum performance
+
+    file_stream.OpenElement("ReserveGenerationOptimumPerformance");
+
+    buffer.str("");
+    buffer << reserve_generation_optimum_performance;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve generation minimum selection
+
+    file_stream.OpenElement("ReserveGenerationMinimumSelection");
+
+    buffer.str("");
+    buffer << reserve_generation_minimum_selection;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve generation mean
+
+    file_stream.OpenElement("ReserveGenerationMean");
+
+    buffer.str("");
+    buffer << reserve_generation_mean;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Reserve generation standard deviation
+
+    file_stream.OpenElement("ReserveGenerationStandardDeviation");
+
+    buffer.str("");
+    buffer << reserve_generation_standard_deviation;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    //file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this genetic algorithm object.

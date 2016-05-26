@@ -368,6 +368,38 @@ tinyxml2::XMLDocument* NumericalIntegration::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void NumericalIntegration::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    std::ostringstream buffer;
+
+    file_stream.OpenElement("NumericalIntegration");
+
+    // Numerical integration method
+
+    file_stream.OpenElement("NumericalIntegrationMethod");
+
+    file_stream.PushText(write_numerical_integration_method().c_str());
+
+    file_stream.CloseElement();
+
+    // Display
+
+    file_stream.OpenElement("Display");
+
+    buffer.str("");
+    buffer << display;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes the object from a XML document.

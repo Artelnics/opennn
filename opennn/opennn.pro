@@ -28,18 +28,18 @@ CONFIG(debug, debug|release) {
 
 # TinyXML2 library
 
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
-else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
+#win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
+#else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
+#else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
 
-INCLUDEPATH += $$PWD/../tinyxml2
-DEPENDPATH += $$PWD/../tinyxml2
+#INCLUDEPATH += $$PWD/../tinyxml2
+#DEPENDPATH += $$PWD/../tinyxml2
 
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
-else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
+#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
+#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
+#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
+#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
+#else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
 
 # Eigen library
 
@@ -56,8 +56,7 @@ QMAKE_LFLAGS +=  -fopenmp
 
 mac{
 
-INCLUDEPATHOMP = /usr/local/opt/libiomp/include/libiomp
-INCLUDEPATH += INCLUDEPATHOMP
+INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
 
 }
 
@@ -82,9 +81,9 @@ HEADERS += \
     conditions_layer.h \
     bounding_layer.h \
     sum_squared_error.h \
-    solutions_error.h \
     root_mean_squared_error.h \
-    performance_term.h \
+    error_term.h \
+    regularization_term.h \
     performance_functional.h \
     outputs_integrals.h \
     normalized_squared_error.h \
@@ -93,9 +92,6 @@ HEADERS += \
     mean_squared_error.h \
     weighted_squared_error.h \
     roc_area_error.h \
-    inverse_sum_squared_error.h \
-    independent_parameters_error.h \
-    final_solutions_error.h \
     cross_entropy_error.h \
     training_strategy.h \
     training_algorithm.h \
@@ -128,7 +124,8 @@ HEADERS += \
     matthew_correlation_optimization_threshold.h \
     youden_index_optimization_threshold.h \
     kappa_coefficient_optimization_threshold.h \
-    roc_curve_optimization_threshold.h
+    roc_curve_optimization_threshold.h \
+    selective_pruning.h
 
 SOURCES += \
     variables.cpp \
@@ -151,9 +148,9 @@ SOURCES += \
     conditions_layer.cpp \
     bounding_layer.cpp \
     sum_squared_error.cpp \
-    solutions_error.cpp \
     root_mean_squared_error.cpp \
-    performance_term.cpp \
+    error_term.cpp \
+    regularization_term.cpp \
     performance_functional.cpp \
     outputs_integrals.cpp \
     normalized_squared_error.cpp \
@@ -162,9 +159,6 @@ SOURCES += \
     mean_squared_error.cpp \
     weighted_squared_error.cpp \
     roc_area_error.cpp \
-    inverse_sum_squared_error.cpp \
-    independent_parameters_error.cpp \
-    final_solutions_error.cpp \
     cross_entropy_error.cpp \
     training_strategy.cpp \
     training_algorithm.cpp \
@@ -194,9 +188,15 @@ SOURCES += \
     matthew_correlation_optimization_threshold.cpp \
     youden_index_optimization_threshold.cpp \
     kappa_coefficient_optimization_threshold.cpp \
-    roc_curve_optimization_threshold.cpp
+    roc_curve_optimization_threshold.cpp \
+    selective_pruning.cpp
 
-# CUDA (To uncomment: the following DEFINES, include(../cuda.pri) at the end of this file, neuralengine.pro > include(../opennn/cuda.pri) and tinyxml2.pro > #include(../cuda.pri) )
+# CUDA - To uncomment:
+    #the following DEFINES
+    #include(../cuda.pri) at the end of this file
+    #neuralengine.pro > include(../opennn/cuda.pri)
+    #tinyxml2.pro > #include(../cuda.pri)
+    #test.pro > #include(../cuda.pri)
 
 #DEFINES += __OPENNN_CUDA__
 
@@ -265,6 +265,21 @@ else {
     QMAKE_EXTRA_COMPILERS += cuda
 }
 
-include(../cuda.pri)
+#include(../cuda.pri)
 
 }
+
+
+
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
+else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
+
+INCLUDEPATH += $$PWD/../tinyxml2
+DEPENDPATH += $$PWD/../tinyxml2
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
+else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a

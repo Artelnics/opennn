@@ -2105,7 +2105,7 @@ void NeuralNetwork::resize_outputs_number(const size_t&)
 /// Returns the number of layers in the neural network.
 /// That includes perceptron, scaling, unscaling, bounding, probabilistic or conditions layers. 
 
-size_t NeuralNetwork::get_layers_number(void)
+size_t NeuralNetwork::get_layers_number(void) const
 {
     size_t layers_number = 0;
 
@@ -2410,6 +2410,149 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
 
     set_parameters(parameters);
 }
+
+
+// Vector<double> calculate_inputs_importance(const size_t&) const method
+
+/// Calculates the inputs importance for a neural network with only one hidden layer.
+/// Returns a vector containing the importance for each of the inputs with respect to a given output.
+/// The size of the vector is the number of inputs of the neural network.
+/// @param output_index Index of the output.
+
+Vector<double> NeuralNetwork::calculate_inputs_importance(const size_t& output_index) const
+{
+    #ifdef __OPENNN_DEBUG__
+
+    if(get_layers_number() != 2)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Vector<double> calculate_inputs_importance(void) const method.\n"
+               << "Number of layers must be 2.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    const size_t inputs_number = get_inputs_number();
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(output_index >= get_outputs_number() || output_index < 0)
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Vector<double> calculate_inputs_importance(void) const method.\n"
+               << "Not valid output index.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    Vector<double> inputs_importance(inputs_number, 0.0);
+
+//    const size_t layers_number = get_layers_number();
+
+    Vector<PerceptronLayer> layers = multilayer_perceptron_pointer->get_layers();
+
+    const Vector<size_t> layers_size = multilayer_perceptron_pointer->arrange_architecture();
+    const size_t layers_number = layers_size.size();
+
+//    std::cout << "Architecture: " << layers_size << std::endl;
+
+    const Vector< Matrix<double> > layers_synaptic_weights = multilayer_perceptron_pointer->arrange_layers_synaptic_weights();
+
+    const size_t hidden_layer_neurons_number = layers_synaptic_weights[0].get_rows_number();
+
+    // Relative weights
+
+    //Matrix<double> products(layers_size[1], layers_number-2);
+
+    size_t products_number = 1;
+
+    for(size_t i = 1; i < layers_number-1; i++)
+    {
+        products_number *= products_number*layers_size[i];
+    }
+
+//    std::cout << "products number: " << products_number << std::endl;
+//    std::cout << "layers number: " << layers.size() << std::endl;
+
+//    std::cout << "layer 0 weight: " << layers[0].arrange_synaptic_weights() << std::endl;
+//    std::cout << "layer 1 weight: " << layers[1].arrange_synaptic_weights() << std::endl;
+
+//    Vector<double> products(products_number, 1.0);
+
+//    for(size_t i = 1; i < layers_number; i++)
+//    {
+//       for(size_t j = 0; j < layers_size[i]; j++)
+//       {
+//           for(size_t k = 0; k < layers[i].arrange_synaptic_weights().size(); k++)
+//           {
+
+//           }
+//       }
+//    }
+
+    // Relative importance
+
+    double numerator = 0.0;
+    double first_term_numerator = 0.0;
+
+    double denominator = 0.0;
+    double first_term_denominator = 0.0;
+    double second_term_denominator = 0.0;
+
+    for(size_t k = 0; k < inputs_number; k++)
+    {
+        numerator = 0.0;
+        denominator = 0.0;
+
+        // Numerator
+
+        for(size_t i = 0; i < hidden_layer_neurons_number; i++)
+        {
+            first_term_numerator = 0.0;
+
+            for(size_t j = 0; j < inputs_number; j++)
+            {
+                first_term_numerator += fabs(layers_synaptic_weights[0](i,j));
+            }
+
+            numerator += fabs(layers_synaptic_weights[0](i,k))/first_term_numerator*fabs(layers_synaptic_weights[1](output_index,i));
+        }
+
+        // Denominator
+
+        for(size_t j = 0; j < inputs_number; j++)
+        {
+            second_term_denominator = 0.0;
+
+            for(size_t i = 0; i < hidden_layer_neurons_number; i++)
+            {
+                first_term_denominator = 0.0;
+
+                for(size_t l = 0; l < inputs_number; l++)
+                {
+                    first_term_denominator += fabs(layers_synaptic_weights[0](i,l));
+                }
+
+                second_term_denominator += fabs(layers_synaptic_weights[0](i,j))/first_term_denominator*fabs(layers_synaptic_weights[1](output_index,i));
+            }
+
+            denominator += second_term_denominator;
+        }
+
+        inputs_importance[k] = numerator/denominator/**100.0*/;
+    }
+
+    return inputs_importance;
+}
+
 
 // Vector<double> calculate_outputs(const Vector<double>&) method method
 
@@ -3086,7 +3229,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 {
     tinyxml2::XMLDocument* pmml_document = new tinyxml2::XMLDocument;
 
-    tinyxml2::XMLDeclaration* pmml_declaration = pmml_document->NewDeclaration("xml version=\"1.0\" encoding=\"utf-8\"");
+    tinyxml2::XMLDeclaration* pmml_declaration = pmml_document->NewDeclaration("xml version=\"1.0\" encoding=\"UTF-8\"");
     pmml_document->LinkEndChild(pmml_declaration);
 
     tinyxml2::XMLElement* root_element = pmml_document->NewElement("PMML");
@@ -3110,7 +3253,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
     application->SetAttribute("name", "Neural Designer");
 
 
-    //Error checking
+    // Check null pointers
 
     if(!inputs_pointer || !outputs_pointer)
     {
@@ -3165,7 +3308,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
         outputs_pointer->to_PMML(data_dictionary,is_probabilistic);
     }
 
-    // Error checking
+    // Check null pointer
 
     if(!multilayer_perceptron_pointer)
     {
@@ -3221,11 +3364,9 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
     inputs_pointer->to_PMML(neural_inputs,is_data_scaled);
 
-
     // Neural network - neural layers markups
 
     multilayer_perceptron_pointer->to_PMML(neural_network);
-
 
     // Neural network - neural outputs markup
 
@@ -3239,7 +3380,51 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
     if(is_probabilistic)
     {
-        probabilistic_layer_pointer->to_PMML(neural_network);
+        if(probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::ProbabilisticMethod::Softmax)
+        {
+            tinyxml2::XMLElement* probabilistic_layer = neural_network->LastChildElement("NeuralLayer");
+
+            // PMML defines softmax normalization method
+            probabilistic_layer->SetAttribute("normalizationMethod","softmax");
+        }
+        else
+        {
+            // Classification network with only one output (binary output)
+            if(outputs_number == 1)
+            {
+                const std::string output_display_name(outputs_pointer->get_name(0));
+                const std::string output_name(output_display_name + "*");
+
+                tinyxml2::XMLElement* derived_field = pmml_document->NewElement("DerivedField");
+                transformation_dictionary->LinkEndChild(derived_field);
+
+                derived_field->SetAttribute("displayName",output_display_name.c_str());
+                derived_field->SetAttribute("name",output_name.c_str());
+                derived_field->SetAttribute("dataType","double");
+                derived_field->SetAttribute("optype","continuous");
+
+
+                tinyxml2::XMLElement* norm_continuous = pmml_document->NewElement("NormContinuous");
+                derived_field->LinkEndChild(norm_continuous);
+
+                norm_continuous->SetAttribute("field",output_display_name.c_str());
+
+
+                tinyxml2::XMLElement* linear_norm_begin = pmml_document->NewElement("LinearNorm");
+                norm_continuous->LinkEndChild(linear_norm_begin);
+
+                linear_norm_begin->SetAttribute("norm", "0.0");
+                linear_norm_begin->SetAttribute("orig", "0.0");
+
+
+                tinyxml2::XMLElement* linear_norm_end = pmml_document->NewElement("LinearNorm");
+                norm_continuous->LinkEndChild(linear_norm_end);
+
+                linear_norm_end->SetAttribute("norm", "1.0");
+                linear_norm_end->SetAttribute("orig", "1.0");
+            }
+        }
+        //probabilistic_layer_pointer->to_PMML(neural_network);
     }
     else
     {
@@ -3254,6 +3439,283 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
 
     return pmml_document;
+}
+
+
+// void write_PMML(std::string) const method
+
+/// Serializes the neural network object into a PMML file without memory load.
+
+void NeuralNetwork::write_PMML(const std::string& file_name) const
+{
+    std::ostringstream buffer;
+
+    // Required for XMLPrinter constructor
+
+    FILE* pmml_file;
+    pmml_file = fopen(file_name.c_str(), "w");
+
+    if(pmml_file == NULL)
+    {
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "void write_PMML(const std::string&) method.\n"
+               << "File " << file_name << " is NULL.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    tinyxml2::XMLPrinter file_stream(pmml_file);
+
+    file_stream.PushDeclaration("xml version=\"1.0\" encoding=\"UTF-8\"");
+
+    file_stream.OpenElement("PMML");
+
+    file_stream.PushAttribute("version", 4.2);
+    file_stream.PushAttribute("xmlns", "http://www.dmg.org/PMML-4_2");
+    file_stream.PushAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+
+
+    file_stream.OpenElement("Header");
+
+    file_stream.PushAttribute("copyright", "Artelnics");
+
+
+    file_stream.OpenElement("Application");
+
+    file_stream.PushAttribute("name", "Neural Designer");
+
+    // Close Application
+    file_stream.CloseElement();
+
+    // Close Header
+    file_stream.CloseElement();
+
+    // Check null pointers
+
+    if(!inputs_pointer || !outputs_pointer)
+    {
+        file_stream.CloseElement();
+        fclose(pmml_file);
+        return;
+    }
+
+
+    const size_t inputs_number = inputs_pointer->get_inputs_number();
+    const size_t outputs_number = outputs_pointer->get_outputs_number();
+
+    const bool is_probabilistic = has_probabilistic_layer();
+
+    const bool is_data_scaled = has_scaling_layer() && (scaling_layer_pointer->get_scaling_method() != ScalingLayer::ScalingMethod::NoScaling);
+    const bool is_data_unscaled = has_unscaling_layer() && (unscaling_layer_pointer->get_unscaling_method() != UnscalingLayer::UnscalingMethod::NoUnscaling);
+
+    // Data dictionary
+
+    file_stream.OpenElement("DataDictionary");
+
+    size_t number_of_fields;
+
+    if(is_probabilistic)
+    {
+        number_of_fields = inputs_number + 1;
+    }
+    else
+    {
+        number_of_fields = inputs_number + outputs_number;
+    }
+
+    // DataDictionary attribute
+    file_stream.PushAttribute("numberOfFields", (unsigned)number_of_fields);
+
+
+    Vector<Statistics<double>> inputs_statistics = get_scaling_layer_pointer()->get_statistics();
+
+    inputs_pointer->write_PMML_data_dictionary(file_stream, inputs_statistics);
+
+    Vector<Statistics<double>> outputs_statistics = get_unscaling_layer_pointer()->get_statistics();
+
+    outputs_pointer->write_PMML_data_dictionary(file_stream,is_probabilistic, outputs_statistics);
+
+    // Close DataDictionary
+    file_stream.CloseElement();
+
+    // Check null pointer
+
+    if(!multilayer_perceptron_pointer)
+    {
+        file_stream.CloseElement();
+        fclose(pmml_file);
+        return;
+    }
+
+    // Transformation dictionary
+
+    file_stream.OpenElement("TransformationDictionary");
+
+    if(is_data_scaled)
+    {
+        const Vector<std::string> inputs_names = inputs_pointer->arrange_names();
+
+        scaling_layer_pointer->write_PMML(file_stream, inputs_names);
+    }
+
+    if(is_data_unscaled)
+    {
+        const Vector<std::string> outputs_names = outputs_pointer->arrange_names();
+
+        unscaling_layer_pointer->write_PMML(file_stream, outputs_names);
+    }
+
+    // Define no normalization for probabilistic binary output
+    // but SPSS requires next fields
+    if(is_probabilistic && (outputs_number == 1))
+    {
+        const std::string output_display_name(outputs_pointer->get_name(0));
+        const std::string output_name(output_display_name + "*");
+
+        file_stream.OpenElement("DerivedField");
+
+        file_stream.PushAttribute("displayName",output_display_name.c_str());
+        file_stream.PushAttribute("name",output_name.c_str());
+        file_stream.PushAttribute("dataType","double");
+        file_stream.PushAttribute("optype","continuous");
+
+
+        file_stream.OpenElement("NormContinuous");
+
+        file_stream.PushAttribute("field",output_display_name.c_str());
+
+        // Normalization range begin
+
+        file_stream.OpenElement("LinearNorm");
+
+        file_stream.PushAttribute("orig", "0.0");
+        file_stream.PushAttribute("norm", "0.0");
+
+        file_stream.CloseElement();
+
+        // Normalization range end
+
+        file_stream.OpenElement("LinearNorm");
+
+        file_stream.PushAttribute("orig", "1.0");
+        file_stream.PushAttribute("norm", "1.0");
+
+        file_stream.CloseElement();
+
+        // Close NormContinuous
+        file_stream.CloseElement();
+
+        // Close DerivedField
+        file_stream.CloseElement();
+    }
+
+    // Close TransformationDictionary
+    file_stream.CloseElement();
+
+
+    // Neural network markup
+
+    file_stream.OpenElement("NeuralNetwork");
+
+    if(is_probabilistic)
+    {
+        file_stream.PushAttribute("functionName", "classification");
+    }
+    else
+    {
+        file_stream.PushAttribute("functionName", "regression");
+    }
+
+    const size_t number_of_layers = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers().size();
+
+    file_stream.PushAttribute("numberOfLayers",(unsigned)number_of_layers);
+
+    Perceptron::ActivationFunction neural_network_activation_function = multilayer_perceptron_pointer->get_layers_activation_function().at(0);
+
+    switch(neural_network_activation_function)
+    {
+    case Perceptron::ActivationFunction::Threshold:
+        file_stream.PushAttribute("activationFunction","threshold");
+        break;
+
+    case Perceptron::ActivationFunction::Logistic:
+        file_stream.PushAttribute("activationFunction","logistic");
+        break;
+
+    case Perceptron::ActivationFunction::HyperbolicTangent:
+        file_stream.PushAttribute("activationFunction","tanh");
+        break;
+
+    case Perceptron::ActivationFunction::Linear:
+        file_stream.PushAttribute("activationFunction","identity");
+        break;
+    }
+
+
+
+    // Neural network - mining schema markup
+
+    file_stream.OpenElement("MiningSchema");
+
+    // Mining schema inputs
+
+    for(size_t i = 0 ; i< inputs_number; i++)
+    {
+        file_stream.OpenElement("MiningField");
+
+        file_stream.PushAttribute("name", inputs_pointer->get_name(i).c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Mining schema outputs
+
+    outputs_pointer->write_PMML_mining_schema(file_stream,is_probabilistic);
+
+    // Close MiningSchema
+
+    file_stream.CloseElement();
+
+
+    // Neural network - neural inputs markup
+
+    file_stream.OpenElement("NeuralInputs");
+
+    file_stream.PushAttribute("numberOfInputs", (unsigned)inputs_number);
+
+    inputs_pointer->write_PMML_neural_inputs(file_stream,is_data_scaled);
+
+    // Close NeuralInputs
+    file_stream.CloseElement();
+
+
+    // Neural network - neural layers markups
+
+    const bool is_softmax_normalization_method = (is_probabilistic && (probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::ProbabilisticMethod::Softmax));
+
+    multilayer_perceptron_pointer->write_PMML(file_stream, is_softmax_normalization_method);
+
+
+    // Neural network - neural outputs markup
+
+    file_stream.OpenElement("NeuralOutputs");
+
+    file_stream.PushAttribute("numberOfOutputs", (unsigned) outputs_number);
+
+    outputs_pointer->write_PMML_neural_outputs(file_stream, number_of_layers ,is_probabilistic, is_data_unscaled);
+
+    // Close NeuralOutputs
+    file_stream.CloseElement();
+
+
+    // Close NeuralNetwork
+    file_stream.CloseElement();
+
+
+    // Close PMML
+    file_stream.CloseElement();
+
+    fclose(pmml_file);
 }
 
 
@@ -4043,6 +4505,80 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML(void) const
 }
 
 
+// void write_XML(tinyxml2::XMLPrinter&) const method
+
+void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    file_stream.OpenElement("NeuralNetwork");
+
+    // Inputs
+
+    if(inputs_pointer)
+    {
+        inputs_pointer->write_XML(file_stream);
+    }
+
+    // Scaling layer
+
+    if(scaling_layer_pointer)
+    {
+        scaling_layer_pointer->write_XML(file_stream);
+    }
+
+    // Multilayer perceptron
+
+    if(multilayer_perceptron_pointer)
+    {
+        multilayer_perceptron_pointer->write_XML(file_stream);
+    }
+
+    // Unscaling layer
+
+    if(unscaling_layer_pointer)
+    {
+        unscaling_layer_pointer->write_XML(file_stream);
+    }
+
+    // Probabilistic layer
+
+    if(probabilistic_layer_pointer)
+    {
+        probabilistic_layer_pointer->write_XML(file_stream);
+    }
+
+    // Bounding layer
+
+    if(bounding_layer_pointer)
+    {
+        bounding_layer_pointer->write_XML(file_stream);
+    }
+
+    // Conditions layer
+
+    if(conditions_layer_pointer)
+    {
+        conditions_layer_pointer->write_XML(file_stream);
+    }
+
+    // Outputs
+
+    if(outputs_pointer)
+    {
+        outputs_pointer->write_XML(file_stream);
+    }
+
+    // Independent parameters
+
+    if(independent_parameters_pointer)
+    {
+        independent_parameters_pointer->write_XML(file_stream);
+    }
+
+
+    file_stream.CloseElement();
+}
+
+
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this neural network object.
@@ -4632,6 +5168,17 @@ std::string NeuralNetwork::write_expression(void) const
 
     search = "\n+";
     replace = "+";
+
+    while((pos = expression.find(search, pos)) != std::string::npos)
+    {
+        expression.replace(pos, search.length(), replace);
+        pos += replace.length();
+    }
+
+    pos = 0;
+
+    search = "\"";
+    replace = "";
 
     while((pos = expression.find(search, pos)) != std::string::npos)
     {
