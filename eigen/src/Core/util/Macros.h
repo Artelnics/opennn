@@ -313,7 +313,7 @@ namespace Eigen {
 // just an empty macro !
 #define EIGEN_EMPTY
 
-#if defined(_MSC_VER) && (!defined(__INTEL_COMPILER))
+#if defined(_MSC_VER) && (!defined(__INTEL_COMPILER)) && (_MSC_VER < 1800) // for older MSVC versions using the base operator is sufficient (https://bitbucket.org/eigen/eigen/commits/45ad4b2fd2)
 #define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
   using Base::operator =;
 #elif defined(__clang__) // workaround clang bug (see http://forum.kde.org/viewtopic.php?f=74&t=102653)
