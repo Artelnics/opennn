@@ -1207,7 +1207,7 @@ Matrix<size_t> TestingAnalysis::calculate_confusion(void) const
     {
         double decision_threshold;
 
-        if(neural_network_pointer->get_probabilistic_layer_pointer() != NULL)
+        if(neural_network_pointer->has_probabilistic_layer())
         {
             decision_threshold = neural_network_pointer->get_probabilistic_layer_pointer()->get_decision_threshold();
         }
@@ -2293,7 +2293,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
 
     double decision_threshold;
 
-    if(neural_network_pointer->get_probabilistic_layer_pointer() != NULL)
+    if(neural_network_pointer->has_probabilistic_layer())
     {
         decision_threshold = neural_network_pointer->get_probabilistic_layer_pointer()->get_decision_threshold();
     }
