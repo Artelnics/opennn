@@ -981,7 +981,7 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(vo
 
 #endif
 
-    ModelSelectionResults results;
+	ModelSelectionResults results = {};
 
     switch(order_selection_type)
     {

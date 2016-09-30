@@ -123,7 +123,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
     ds.set(data);
 
     uses.set(21,Instances::Training);
-    for (size_t i = 0; i < 11; i++)
+    for (size_t i = 0; i < 10; i++)
         uses[2*i+1] = Instances::Selection;
 
     ds.get_instances_pointer()->set_uses(uses);
@@ -177,7 +177,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
     ds.set(data);
 
     uses.set(21,Instances::Training);
-    for (size_t i = 0; i < 11; i++)
+    for (size_t i = 0; i < 10; i++)
         uses[2*i+1] = Instances::Selection;
 
     ds.get_instances_pointer()->set_uses(uses);
