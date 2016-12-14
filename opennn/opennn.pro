@@ -18,7 +18,8 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-CONFIG += c++11
+greaterThan(QT_MAJOR_VERSION, 4): CONFIG += c++11
+lessThan(QT_MAJOR_VERSION, 5): QMAKE_CXXFLAGS += -std=c++11
 
 CONFIG(debug, debug|release) {
     DEFINES += __OPENNN_DEBUG__
@@ -283,3 +284,5 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tiny
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
+
+QMAKE_CXXFLAGS+="--std=c++11"
