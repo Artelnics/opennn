@@ -33,8 +33,8 @@
 namespace OpenNN
 {
 
-/// This class represents the cross entropy performance term. 
-/// This functional is used in pattern recognition problems.
+/// This class represents the cross entropy error term. 
+/// This functional is used in classification problems.
 
 class CrossEntropyError : public ErrorTerm
 {
@@ -83,20 +83,32 @@ public:
 
    void check(void) const;
 
-   // performance methods
+   // loss methods
 
    double calculate_error(void) const;
    double calculate_error(const Vector<double>&) const;
 
-   double calculate_minimum_performance(void) const;
+   double calculate_minimum_loss(void) const;
 
    double calculate_selection_error(void) const;
    double calculate_minimum_selection_error(void) const;
 
+   double calculate_error_unnormalized(void) const;
+   double calculate_error_unnormalized(const Vector<double>&) const;
+
+   double calculate_minimum_loss_unnormalized(void) const;
+
+   double calculate_selection_error_unnormalized(void) const;
+   double calculate_minimum_selection_error_unnormalized(void) const;
+
    Vector<double> calculate_output_gradient(const Vector<double> &, const Vector<double> &) const;
    Matrix<double> calculate_output_Hessian(const Vector<double> &, const Vector<double> &) const;
 
-   std::string write_performance_term_type(void) const;
+   Vector<double> calculate_output_gradient_unnormalized(const Vector<double> &, const Vector<double> &) const;
+
+   Vector<double> calculate_gradient_unnormalized(void) const;
+
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 

@@ -21,6 +21,9 @@
 #include <iostream>
 #include <cmath>
 
+#ifdef __OPENNN_MPI__
+#include <mpi.h>
+#endif
 // OpenNN includes
 
 #include "vector.h"
@@ -53,90 +56,90 @@
 namespace OpenNN
 {
 
-/// This abstract class represents the concept of performance functional for a neural network. 
-/// A performance functional is composed of two terms: An error term and a regularization term.
-/// Any derived class must implement the calculate_performance(void) method.
+/// This abstract class represents the concept of loss functional for a neural network. 
+/// A loss functional is composed of two terms: An error term and a regularization term.
+/// Any derived class must implement the calculate_loss(void) method.
 
-class PerformanceFunctional
+class LossIndex
 {
 
 public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit PerformanceFunctional(void);
+   explicit LossIndex(void);
 
    // OBJECTIVE FUNCTIONAL CONSTRUCTOR
 
-   explicit PerformanceFunctional(ErrorTerm*);
+   explicit LossIndex(ErrorTerm*);
 
    // NEURAL NETWORK CONSTRUCTOR
 
-   explicit PerformanceFunctional(NeuralNetwork*);
+   explicit LossIndex(NeuralNetwork*);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
-   explicit PerformanceFunctional(NeuralNetwork*, DataSet*);
+   explicit LossIndex(NeuralNetwork*, DataSet*);
 
    // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
 
-   explicit PerformanceFunctional(NeuralNetwork*, MathematicalModel*);
+   explicit LossIndex(NeuralNetwork*, MathematicalModel*);
 
    // NEURAL NETWORK, MATHEMATICAL MODEL AND DATA SET CONSTRUCTOR
 
-   explicit PerformanceFunctional(NeuralNetwork*, MathematicalModel*, DataSet*);
+   explicit LossIndex(NeuralNetwork*, MathematicalModel*, DataSet*);
 
    // FILE CONSTRUCTOR
 
-   explicit PerformanceFunctional(const std::string&);
+   explicit LossIndex(const std::string&);
 
    // XML CONSTRUCTOR
 
-   explicit PerformanceFunctional(const tinyxml2::XMLDocument&);
+   explicit LossIndex(const tinyxml2::XMLDocument&);
 
 
    // COPY CONSTRUCTOR
 
-   PerformanceFunctional(const PerformanceFunctional&);
+   LossIndex(const LossIndex&);
 
    // DESTRUCTOR
 
-   virtual ~PerformanceFunctional(void);
+   virtual ~LossIndex(void);
 
    // STRUCTURES 
 
    /// Performance value of the peformance function.
    /// This is a very simple structure with just one value. 
 
-   struct ZeroOrderperformance
+   struct ZeroOrderloss
    {
       /// Performance value.
 
-      double performance;
+      double loss;
    };
 
-   /// Set of performance value and gradient vector of the peformance function. 
-   /// A method returning this structure might be implemented more efficiently than the performance and gradient methods separately.
+   /// Set of loss value and gradient vector of the peformance function. 
+   /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-   struct FirstOrderperformance
+   struct FirstOrderloss
    {
       /// Performance value.
 
-      double performance;
+      double loss;
 
       /// Performance function gradient vector. 
 
       Vector<double> gradient;
    };
 
-   /// Set of performance value, gradient vector and Hessian matrix of the peformance function. 
-   /// A method returning this structure might be implemented more efficiently than the performance, gradient and Hessian methods separately.
+   /// Set of loss value, gradient vector and Hessian matrix of the peformance function. 
+   /// A method returning this structure might be implemented more efficiently than the loss, gradient and Hessian methods separately.
 
-   struct SecondOrderperformance
+   struct SecondOrderloss
    {
       /// Performance value.
 
-      double performance;
+      double loss;
 
       /// Performance function gradient vector. 
 
@@ -183,11 +186,11 @@ public:
 
    void check_neural_network(void) const;
 
-   void check_performance_terms(void) const;
+   void check_error_terms(void) const;
 
    // Get methods
 
-   /// Returns a pointer to the neural network associated to the performance functional.
+   /// Returns a pointer to the neural network associated to the loss functional.
 
    inline NeuralNetwork* get_neural_network_pointer(void) const 
    {
@@ -197,7 +200,7 @@ public:
       {
            std::ostringstream buffer;
 
-           buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+           buffer << "OpenNN Exception: LossIndex class.\n"
                   << "NeuralNetwork* get_neural_network_pointer(void) const method.\n"
                   << "Neural network pointer is NULL.\n";
 
@@ -209,7 +212,7 @@ public:
       return(neural_network_pointer);
    }
 
-   /// Returns a pointer to the mathematical model associated to the performance functional.
+   /// Returns a pointer to the mathematical model associated to the loss functional.
 
    inline MathematicalModel* get_mathematical_model_pointer(void) const
    {
@@ -219,7 +222,7 @@ public:
         {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "MathematicalModel* get_mathematical_model_pointer(void) const method.\n"
                     << "MathematicalModel pointer is NULL.\n";
 
@@ -231,7 +234,7 @@ public:
       return(mathematical_model_pointer);
    }
 
-   /// Returns a pointer to the data set associated to the performance functional.
+   /// Returns a pointer to the data set associated to the loss functional.
 
    inline DataSet* get_data_set_pointer(void) const
    {
@@ -241,7 +244,7 @@ public:
         {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "DataSet* get_data_set_pointer(void) const method.\n"
                     << "DataSet pointer is NULL.\n";
 
@@ -306,6 +309,10 @@ public:
 
    void set_default(void);
 
+#ifdef __OPENNN_MPI__
+   void set_MPI(DataSet*, NeuralNetwork*, const LossIndex*);
+#endif
+
    // Functionals methods 
 
    void set_error_type(const ErrorType&);
@@ -321,13 +328,21 @@ public:
 
    void set_display(const bool&);
 
-   // Performance functional methods
+   // Loss index methods
 
    double calculate_error(void) const;
    double calculate_regularization(void) const;
 
+#ifdef __OPENNN_MPI__
+   double calculate_error_MPI(void) const;
+#endif
+
    double calculate_error(const Vector<double>&) const;
    double calculate_regularization(const Vector<double>&) const;
+
+#ifdef __OPENNN_MPI__
+   double calculate_error_MPI(const Vector<double>&) const;
+#endif
 
    Vector<double> calculate_error_terms(void) const;
    Matrix<double> calculate_error_terms_Jacobian(void) const;
@@ -335,8 +350,16 @@ public:
    Vector<double> calculate_error_gradient(void) const;
    Vector<double> calculate_regularization_gradient(void) const;
 
+#ifdef __OPENNN_MPI__
+   Vector<double> calculate_error_gradient_MPI(void) const;
+#endif
+
    Vector<double> calculate_error_gradient(const Vector<double>&) const;
    Vector<double> calculate_regularization_gradient(const Vector<double>&) const;
+
+#ifdef __OPENNN_MPI__
+   Vector<double> calculate_error_gradient_MPI(const Vector<double>&) const;
+#endif
 
    Matrix<double> calculate_error_Hessian(void) const;
    Matrix<double> calculate_regularization_Hessian(void) const;
@@ -344,11 +367,11 @@ public:
    Matrix<double> calculate_error_Hessian(const Vector<double>&) const;
    Matrix<double> calculate_regularization_Hessian(const Vector<double>&) const;
 
-   double calculate_performance(void) const;
+   double calculate_loss(void) const;
    Vector<double> calculate_gradient(void) const;
    Matrix<double> calculate_Hessian(void) const;
 
-   double calculate_performance(const Vector<double>&) const;
+   double calculate_loss(const Vector<double>&) const;
    Vector<double> calculate_gradient(const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
@@ -359,15 +382,19 @@ public:
    Vector<double> calculate_terms(void) const;
    Matrix<double> calculate_terms_Jacobian(void) const;
 
-   virtual ZeroOrderperformance calculate_zero_order_performance(void) const;
-   virtual FirstOrderperformance calculate_first_order_performance(void) const;
-   virtual SecondOrderperformance calculate_second_order_performance(void) const;
+   virtual ZeroOrderloss calculate_zero_order_loss(void) const;
+   virtual FirstOrderloss calculate_first_order_loss(void) const;
+   virtual SecondOrderloss calculate_second_order_loss(void) const;
 
    double calculate_selection_error(void) const;
    //double calculate_selection_regularization(void) const;
-   double calculate_selection_constraints(void) const;
+   //double calculate_selection_constraints(void) const;
 
-   virtual double calculate_selection_performance(void) const;
+#ifdef __OPENNN_MPI__
+   double calculate_selection_error_MPI(void) const;
+#endif
+
+   virtual double calculate_selection_loss(void) const;
 
    // Taylor approximation methods
 
@@ -375,11 +402,11 @@ public:
    double calculate_first_order_Taylor_approximation(const Vector<double>&) const;
    double calculate_second_order_Taylor_approximation(const Vector<double>&) const;
 
-   // Directional performance
+   // Directional loss
 
-   double calculate_performance(const Vector<double>&, const double&) const;
-   double calculate_performance_derivative(const Vector<double>&, const double&) const;
-   double calculate_performance_second_derivative(const Vector<double>&, const double&) const;
+   double calculate_loss(const Vector<double>&, const double&) const;
+   double calculate_loss_derivative(const Vector<double>&, const double&) const;
+   double calculate_loss_second_derivative(const Vector<double>&, const double&) const;
 
    // Serialization methods
 
@@ -454,7 +481,7 @@ private:
 
    RocAreaError* roc_area_error_pointer;
 
-   /// Pointer to the user performance term object wich can be used as objective.
+   /// Pointer to the user error term object wich can be used as objective.
 
    ErrorTerm* user_error_pointer;
 
@@ -468,13 +495,18 @@ private:
 
    OutputsIntegrals* outputs_integrals_pointer;
 
-   /// Pointer to a user performance term to be used for regularization.
+   /// Pointer to a user error term to be used for regularization.
 
    RegularizationTerm* user_regularization_pointer;
 
+   // Sparsity terms
+
+   //SparsityTerm
+
    /// Display messages to screen. 
 
-   bool display;  
+   bool display;
+
 };
 
 }

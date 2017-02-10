@@ -78,27 +78,27 @@ void InputsSelectionAlgorithmTest::test_get_training_strategy_pointer(void)
 }
 
 
-void InputsSelectionAlgorithmTest::test_get_performance_calculation_method(void)
+void InputsSelectionAlgorithmTest::test_get_loss_calculation_method(void)
 {
-    message += "test_get_performance_calculation_method\n";
+    message += "test_get_loss_calculation_method\n";
 
     GrowingInputs gi;
 
-    gi.set_performance_calculation_method(InputsSelectionAlgorithm::Minimum);
+    gi.set_loss_calculation_method(InputsSelectionAlgorithm::Minimum);
 
-    assert_true(gi.get_performance_calculation_method() == InputsSelectionAlgorithm::Minimum, LOG);
+    assert_true(gi.get_loss_calculation_method() == InputsSelectionAlgorithm::Minimum, LOG);
 
 }
 
-void InputsSelectionAlgorithmTest::test_write_performance_calculation_method(void)
+void InputsSelectionAlgorithmTest::test_write_loss_calculation_method(void)
 {
-    message += "test_write_performance_calculation_method\n";
+    message += "test_write_loss_calculation_method\n";
 
     GrowingInputs gi;
 
-    gi.set_performance_calculation_method(InputsSelectionAlgorithm::Minimum);
+    gi.set_loss_calculation_method(InputsSelectionAlgorithm::Minimum);
 
-    assert_true(gi.write_performance_calculation_method() == "Minimum", LOG);
+    assert_true(gi.write_loss_calculation_method() == "Minimum", LOG);
 }
 
 // Set methods
@@ -122,9 +122,9 @@ void InputsSelectionAlgorithmTest::test_set_default(void)
 
 }
 
-void InputsSelectionAlgorithmTest::test_set_performance_calculation_method(void)
+void InputsSelectionAlgorithmTest::test_set_loss_calculation_method(void)
 {
-    message += "test_set_performance_calculation_method\n";
+    message += "test_set_loss_calculation_method\n";
 
 }
 
@@ -134,9 +134,11 @@ void InputsSelectionAlgorithmTest::test_set_neural_inputs(void)
 {
     message += "test_set_neural_inputs\n";
 
+    DataSet ds;
+
     NeuralNetwork nn(2,6,1);
 
-    PerformanceFunctional pf(&nn);
+    LossIndex pf(&nn, &ds);
 
     TrainingStrategy ts(&pf);
 
@@ -173,9 +175,9 @@ void InputsSelectionAlgorithmTest::test_perform_mean_model_evaluation(void)
 
 }
 
-void InputsSelectionAlgorithmTest::test_get_final_performances(void)
+void InputsSelectionAlgorithmTest::test_get_final_losss(void)
 {
-    message += "test_get_final_performances\n";
+    message += "test_get_final_losss\n";
 
 }
 
@@ -207,9 +209,9 @@ void InputsSelectionAlgorithmTest::run_test_case(void)
     test_get_training_strategy_pointer();
 
 
-    test_get_performance_calculation_method();
+    test_get_loss_calculation_method();
 
-    test_write_performance_calculation_method();
+    test_write_loss_calculation_method();
 
     // Set methods
 
@@ -217,7 +219,7 @@ void InputsSelectionAlgorithmTest::run_test_case(void)
 
     test_set_default();
 
-    test_set_performance_calculation_method();
+    test_set_loss_calculation_method();
 
     // Performances calculation methods
 
@@ -227,7 +229,7 @@ void InputsSelectionAlgorithmTest::run_test_case(void)
     test_perform_maximum_model_evaluation();
     test_perform_mean_model_evaluation();
 
-    test_get_final_performances();
+    test_get_final_losss();
 
     test_perform_model_evaluation();
 

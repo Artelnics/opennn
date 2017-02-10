@@ -1182,6 +1182,9 @@ tinyxml2::XMLDocument* UnscalingLayer::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the unscaling layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;
@@ -1450,6 +1453,10 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 // void UnscalingLayer::to_PMML(tinyxml2::XMLElement*, const Vector<std::string>& ) method.
 
+/// Serializes the unscaling layer object into a PMML document.
+/// @param element XML element to append the unscaling layer object.
+/// @param outputs_names Names of the outputs variables.
+
 void UnscalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<std::string>& outputs_names) const
 {
     tinyxml2::XMLDocument* pmml_document = element->GetDocument();
@@ -1521,6 +1528,10 @@ void UnscalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<std::st
 
 
 // void write_PMML(tinyxml2::XMLPrinter&, const Vector<std::string>&) const;
+
+/// Serializes the unscaling layer object into a PMML document.
+/// @param file_stream XML file where the unscaling layer object will be serialized.
+/// @param outputs_names Names of the outputs variables.
 
 void UnscalingLayer::write_PMML(tinyxml2::XMLPrinter& file_stream, const Vector<std::string>& outputs_names) const
 {
@@ -1599,6 +1610,8 @@ void UnscalingLayer::write_PMML(tinyxml2::XMLPrinter& file_stream, const Vector<
 
 
 // void from_PMML(const tinyxml2::XMLElement*,const Vector<std::string>&) method
+
+/// Deserializes a PMML document into this unscaling layer object.
 
 void UnscalingLayer::from_PMML(const tinyxml2::XMLElement* element,const Vector<std::string>& outputs_names)
 {
@@ -1724,10 +1737,10 @@ void UnscalingLayer::from_PMML(const tinyxml2::XMLElement* element,const Vector<
             break;
         }
 
-        double orig_begin = std::stod(string_orig_begin);
-        double orig_end = std::stod(string_orig_end);
-        double normalization_range_begin = std::stod(string_normalization_range_begin);
-        double normalization_range_end = std::stod(string_normalization_range_end);
+        double orig_begin = atof(string_orig_begin.c_str());
+        double orig_end = atof(string_orig_end.c_str());
+        double normalization_range_begin = atof(string_normalization_range_begin.c_str());
+        double normalization_range_end = atof(string_normalization_range_end.c_str());
 
         if(orig_begin > orig_end)
         {
@@ -1826,6 +1839,8 @@ std::string UnscalingLayer::write_minimum_maximum_expression(const Vector<std::s
 
     std::ostringstream buffer;
 
+    buffer.precision(10);
+
     Vector<std::string> expressions(unscaling_neurons_number);
 
     for(size_t i = 0; i < unscaling_neurons_number; i++)
@@ -1855,6 +1870,8 @@ std::string UnscalingLayer::write_mean_stadard_deviation_expression(const Vector
     const size_t unscaling_neurons_number = get_unscaling_neurons_number();
 
     std::ostringstream buffer;
+
+    buffer.precision(10);
 
     Vector<std::string> expressions(unscaling_neurons_number);
 

@@ -28,8 +28,8 @@ MockTrainingAlgorithm::MockTrainingAlgorithm(void) : TrainingAlgorithm()
 
 // GENERAL CONSTRUCTOR 
 
-MockTrainingAlgorithm::MockTrainingAlgorithm(PerformanceFunctional* new_performance_functional_pointer)
-: TrainingAlgorithm(new_performance_functional_pointer)
+MockTrainingAlgorithm::MockTrainingAlgorithm(LossIndex* new_loss_index_pointer)
+: TrainingAlgorithm(new_loss_index_pointer)
 {
 }
 

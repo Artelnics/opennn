@@ -39,17 +39,17 @@ void RandomSearchTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
 
    // Default constructor
 
    RandomSearch rs1; 
-   assert_true(rs1.has_performance_functional() == false, LOG);
+   assert_true(rs1.has_loss_index() == false, LOG);
 
-   // Performance functional constructor
+   // Loss index constructor
 
    RandomSearch rs2(&pf); 
-   assert_true(rs2.has_performance_functional() == true, LOG);
+   assert_true(rs2.has_loss_index() == true, LOG);
 }
 
 
@@ -77,9 +77,9 @@ void RandomSearchTest::test_get_reserve_parameters_norm_history(void)
 }
 
 
-void RandomSearchTest::test_get_reserve_performance_history(void)
+void RandomSearchTest::test_get_reserve_loss_history(void)
 {
-   message += "test_get_reserve_performance_history\n";
+   message += "test_get_reserve_loss_history\n";
 }
 
 
@@ -101,9 +101,9 @@ void RandomSearchTest::test_set_reserve_parameters_norm_history(void)
 }
 
 
-void RandomSearchTest::test_set_reserve_performance_history(void)
+void RandomSearchTest::test_set_reserve_loss_history(void)
 {
-   message += "test_set_reserve_performance_history\n";
+   message += "test_set_reserve_loss_history\n";
 }
 
 
@@ -117,9 +117,11 @@ void RandomSearchTest::test_perform_training(void)
 {
    message += "test_perform_training\n";
 
+   DataSet ds;
+
    NeuralNetwork nn;
 
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
 
    RandomSearch rs(&pf);
 
@@ -130,7 +132,7 @@ void RandomSearchTest::test_perform_training(void)
    nn.set(1, 1);
    
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
+   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
 
    rs.set_display(false);
    rs.set_maximum_iterations_number(1),
@@ -185,7 +187,7 @@ void RandomSearchTest::test_from_XML(void)
 
    // Test
 
-   rs1.initialize_random();
+   rs1.set_display(true);
 
    document = rs1.to_XML();
 
@@ -213,7 +215,7 @@ void RandomSearchTest::run_test_case(void)
    test_get_reserve_parameters_history();
    test_get_reserve_parameters_norm_history();
 
-   test_get_reserve_performance_history();
+   test_get_reserve_loss_history();
 
    // Set methods
 
@@ -222,7 +224,7 @@ void RandomSearchTest::run_test_case(void)
    test_set_reserve_parameters_history();
    test_set_reserve_parameters_norm_history();
 
-   test_set_reserve_performance_history();
+   test_set_reserve_loss_history();
 
    // Training methods
 

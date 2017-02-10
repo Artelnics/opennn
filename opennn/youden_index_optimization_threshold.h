@@ -41,7 +41,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents a incremental algorithm for the order selection of a neural network.
+/// This concrete class represents a Youden's index optimization for the threshold selection of a neural network.
 ///
 
 class YoudenIndexOptimizationThreshold : public ThresholdSelectionAlgorithm
@@ -71,7 +71,7 @@ public:
     // STRUCTURES
 
     ///
-    /// This structure contains the training results for the incremental order method.
+    /// This structure contains the selection results for the Youden's index optimization.
     ///
 
     struct YoudenIndexOptimizationThresholdResults : public ThresholdSelectionAlgorithm::ThresholdSelectionResults

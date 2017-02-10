@@ -264,7 +264,7 @@ void ProbabilisticLayerTest::test_to_XML(void)
 
    assert_true(pl.get_probabilistic_neurons_number() == 2, LOG);
    assert_true(pl.get_probabilistic_method() == ProbabilisticLayer::Competitive, LOG);
-   assert_true(pl.get_display() == false, LOG);
+//   assert_true(pl.get_display() == false, LOG);
 
    delete pld;
 }

@@ -171,7 +171,7 @@ TestingAnalysis::TestingAnalysis(const std::string& file_name)
 // DESTRUCTOR
 
 /// Destructor. 
-/// It deletes the function regression testing, pattern recognition testing, time series prediction testing and inverse problem testing objects. 
+/// It deletes the function regression testing, classification testing, time series prediction testing and inverse problem testing objects. 
 
 TestingAnalysis::~TestingAnalysis()
 {
@@ -390,7 +390,7 @@ Vector< Matrix<double> > TestingAnalysis::calculate_target_output_data(void) con
 
    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(testing_input_data);
 
-   // Function regression testing stuff
+   // Approximation testing stuff
 
    Vector< Matrix<double> > target_output_data(outputs_number);
 
@@ -605,6 +605,8 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data(void) const
    Vector<double> targets(testing_instances_number);
    Vector<double> outputs(testing_instances_number);
 
+   Vector<double> difference_absolute_value(testing_instances_number);
+
    for(size_t i = 0; i < outputs_number; i++)
    {
        error_data[i].set(testing_instances_number, 3, 0.0);
@@ -614,15 +616,17 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data(void) const
        targets = target_data.arrange_column(i);
        outputs = output_data.arrange_column(i);
 
-       error_data[i].set_column(0, (targets - outputs).calculate_absolute_value());
+       difference_absolute_value = (targets - outputs).calculate_absolute_value();
+
+       error_data[i].set_column(0, difference_absolute_value);
 
        // Relative error
 
-       error_data[i].set_column(1, (targets - outputs).calculate_absolute_value()/(outputs_maximum[i]-outputs_minimum[i]));
+       error_data[i].set_column(1, difference_absolute_value/std::abs(outputs_maximum[i]-outputs_minimum[i]));
 
        // Percentage error
 
-       error_data[i].set_column(2, (targets - outputs).calculate_absolute_value()*100.0/(outputs_maximum[i]-outputs_minimum[i]));
+       error_data[i].set_column(2, difference_absolute_value*100.0/std::abs(outputs_maximum[i]-outputs_minimum[i]));
     }
 
    return(error_data);
@@ -807,10 +811,10 @@ Vector<double> TestingAnalysis::calculate_testing_errors(void) const
 }
 
 
-// Vector<double> calculate_pattern_recognition_testing_errors(void) const method
+// Vector<double> calculate_classification_testing_errors(void) const method
 
 /// Returns a vector containing the values of the errors between the outputs of the neural network
-/// and the targets for a pattern recognition problem. The vector consists of:
+/// and the targets for a classification problem. The vector consists of:
 /// <ul>
 /// <li> Sum squared error.
 /// <li> Mean squared error.
@@ -819,7 +823,7 @@ Vector<double> TestingAnalysis::calculate_testing_errors(void) const
 /// <li> Cross-entropy error.
 /// </ul>
 
-Vector<double> TestingAnalysis::calculate_pattern_recognition_testing_errors(void) const
+Vector<double> TestingAnalysis::calculate_classification_testing_errors(void) const
 {
     // Data set stuff
 
@@ -871,8 +875,8 @@ Vector<double> TestingAnalysis::calculate_pattern_recognition_testing_errors(voi
 // double calculate_testing_normalized_squared_error(const Matrix<double>&, const Matrix<double>&) const method
 
 /// Returns the normalized squared error between the targets and the outputs of the neural network.
-/// @target_data Testing target data.
-/// @output_data Testing output data.
+/// @param target_data Testing target data.
+/// @param output_data Testing output data.
 
 double TestingAnalysis::calculate_testing_normalized_squared_error(const Matrix<double>& target_data, const Matrix<double>& output_data) const
 {
@@ -896,10 +900,10 @@ double TestingAnalysis::calculate_testing_normalized_squared_error(const Matrix<
 
 // double calculate_testing_cross_entropy_error(const Matrix<double>&, const Matrix<double>&) const method
 
-/// Returns the cross-entropy error between the targets and the outputs of the neural network. It can only be computed for pattern
-/// recognition problems.
-/// @target_data Testing target data.
-/// @output_data Testing output data.
+/// Returns the cross-entropy error between the targets and the outputs of the neural network.
+/// It can only be computed for classification problems.
+/// @param target_data Testing target data.
+/// @param output_data Testing output data.
 
 double TestingAnalysis::calculate_testing_cross_entropy_error(const Matrix<double>& target_data, const Matrix<double>& output_data) const
 {
@@ -938,9 +942,9 @@ double TestingAnalysis::calculate_testing_cross_entropy_error(const Matrix<doubl
 // double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const method
 
 /// Returns the weighted squared error between the targets and the outputs of the neural network. It can only be computed for
-/// binary pattern recognition problems.
-/// @target_data Testing target data.
-/// @output_data Testing output data.
+/// binary classification problems.
+/// @param target_data Testing target data.
+/// @param output_data Testing output data.
 
 double TestingAnalysis::calculate_testing_weighted_squared_error(const Matrix<double>& target_data, const Matrix<double>& output_data) const
 {
@@ -1031,29 +1035,34 @@ Matrix<size_t> TestingAnalysis::calculate_confusion_binary_classification(const 
         {
             false_positive++;
 
-        }else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
+        }
+        else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
         {
             true_positive++;
 
-        }else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
+        }
+        else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
         {
             // True positive
 
             true_positive++;
 
-        }else if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
+        }
+        else if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
         {
             // False negative
 
             false_negative++;
 
-        }else if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
+        }
+        else if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
         {
             // False positive
 
             false_positive++;
 
-        }else if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
+        }
+        else if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
         {
             // True negative
 
@@ -1207,7 +1216,7 @@ Matrix<size_t> TestingAnalysis::calculate_confusion(void) const
     {
         double decision_threshold;
 
-        if(neural_network_pointer->has_probabilistic_layer())
+        if(neural_network_pointer->get_probabilistic_layer_pointer() != NULL)
         {
             decision_threshold = neural_network_pointer->get_probabilistic_layer_pointer()->get_decision_threshold();
         }
@@ -1303,7 +1312,7 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis (void)
 
      roc_analysis_results.roc_curve = calculate_roc_curve(target_data, output_data);
      roc_analysis_results.area_under_curve = calculate_area_under_curve(target_data, output_data);
-     roc_analysis_results.optimal_threshold = calculate_optimal_threshold(target_data, output_data);
+     roc_analysis_results.optimal_threshold = calculate_optimal_threshold(target_data, output_data, roc_analysis_results.roc_curve);
 
      return(roc_analysis_results);
 }
@@ -1336,7 +1345,7 @@ double TestingAnalysis::calculate_Wilcoxon_parameter (const double& x, const dou
 // Matrix<double> calculate_roc_curve (const Matrix<double>& , const Matrix<double>& output_data) const
 
 /// Returns a matrix with the values of a ROC curve for a binary classification problem.
-/// The number of columns is two.
+/// The number of columns is three. The third column contains the decision threshold.
 /// The number of rows is one more than the number of outputs if the number of outputs is lower than 100
 /// or 50 in other case.
 /// @param target_data Testing target data.
@@ -1371,7 +1380,7 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
         throw std::logic_error(buffer.str());
      }
 
-    const size_t maximum_points_number = 100;
+    const size_t maximum_points_number = 1000;
 
     size_t step_size;
 
@@ -1380,16 +1389,14 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
 
     if(testing_instances_number > maximum_points_number)
     {
-        step_size = testing_instances_number/maximum_points_number;
-        points_number = testing_instances_number/step_size;
+        step_size = (size_t)((double)testing_instances_number/(double)maximum_points_number);
+        points_number = (size_t)((double)testing_instances_number/(double)step_size);
     }
     else
     {
         points_number = testing_instances_number;
         step_size = 1;
     }
-
-//    const size_t columns_number = target_data.get_columns_number();
 
     Matrix<double> target_output_data = output_data.assemble_columns(target_data);
 
@@ -1401,7 +1408,7 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
     const Matrix<double> sorted_target_data = sorted_target_output_data.arrange_submatrix_columns(columns_target_indices);
     const Matrix<double> sorted_output_data = sorted_target_output_data.arrange_submatrix_columns(columns_output_indices);
 
-    Matrix<double> roc_curve(points_number+1, 2);
+    Matrix<double> roc_curve(points_number+1, 3, 0.0);
 
     double threshold = 0;
 
@@ -1415,7 +1422,7 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
 
     const size_t step_s = step_size;
 
-#pragma omp parallel for private(i, j, positives, negatives, threshold, current_index)
+#pragma omp parallel for private(i, j, positives, negatives, threshold, current_index) schedule(dynamic)
 
     for(i = 0; i < (int)points_number; i++)
     {
@@ -1440,10 +1447,12 @@ Matrix<double> TestingAnalysis::calculate_roc_curve(const Matrix<double>& target
 
         roc_curve(i,0) = (double)positives/(double)(total_positives);
         roc_curve(i,1) = (double)negatives/(double)(total_negatives);
+        roc_curve(i,2) = (double)threshold;
     }
 
     roc_curve(points_number, 0) = 1.0;
     roc_curve(points_number, 1) = 1.0;
+    roc_curve(points_number, 2) = 1.0;
 
     return (roc_curve);
 }
@@ -1490,13 +1499,15 @@ double TestingAnalysis::calculate_area_under_curve (const Matrix<double>& target
 
     double area_under_curve;
 
-//#pragma omp parallel for private(i, rows_number, target_data?) reduction(+ : sum)
+    int i,j;
 
-    for(size_t i = 0; i < testing_instances_number; i++)
+#pragma omp parallel for private(i, j) reduction(+ : sum) schedule(dynamic)
+
+    for(i = 0; i < testing_instances_number; i++)
     {
         if(target_data(i,0) == 1)
         {
-            for(size_t j = 0; j < testing_instances_number; j++)
+            for(j = 0; j < testing_instances_number; j++)
             {
                 if(target_data(j,0) == 0)
                 {
@@ -1523,7 +1534,7 @@ double TestingAnalysis::calculate_optimal_threshold (const Matrix<double>& targe
     const size_t rows_number = target_data.get_rows_number();
     const size_t columns_number = target_data.get_columns_number();
 
-    const size_t maximum_points_number = 50;
+    const size_t maximum_points_number = 1000;
 
     size_t step_size;
     size_t points_number;
@@ -1552,7 +1563,7 @@ double TestingAnalysis::calculate_optimal_threshold (const Matrix<double>& targe
     const Matrix<double> roc_curve = calculate_roc_curve(sorted_target_data, sorted_output_data);
 
     double threshold = 0.0;
-    double optimal_threshold;
+    double optimal_threshold = 0.5;
 
     double minimun_distance = std::numeric_limits<double>::max();
     double distance;
@@ -1578,6 +1589,64 @@ double TestingAnalysis::calculate_optimal_threshold (const Matrix<double>& targe
     return (optimal_threshold);
 }
 
+// double calculate_optimal_threshold (const Matrix<double>& , const Matrix<double>&, const Matrix<double>&) const
+
+/// Returns the point of optimal classification accuracy, which is the nearest ROC curve point to the upper left corner (0,1).
+/// @param target_data Testing target data.
+/// @param output_data Testing output data.
+/// @param roc_curve ROC curve.
+
+double TestingAnalysis::calculate_optimal_threshold (const Matrix<double>& target_data, const Matrix<double>& output_data, const Matrix<double>& roc_curve) const
+{
+    const size_t rows_number = target_data.get_rows_number();
+    const size_t columns_number = target_data.get_columns_number();
+
+    size_t step_size;
+    const size_t points_number = roc_curve.get_rows_number();
+
+    if(rows_number > points_number)
+    {
+        step_size = rows_number/points_number;
+    }
+    else
+    {
+        step_size = 1;
+    }
+
+    Matrix<double> target_output_data = output_data.assemble_columns(target_data);
+
+    Matrix<double> sorted_target_output_data = target_output_data.sort_less_rows(0);
+
+    const Vector<size_t> columns_output_indices(0, 1, columns_number - 1);
+
+    const Matrix<double> sorted_output_data = sorted_target_output_data.arrange_submatrix_columns(columns_output_indices);
+
+    double threshold = 0.0;
+    double optimal_threshold = 0.5;
+
+    double minimun_distance = std::numeric_limits<double>::max();
+    double distance;
+
+    size_t current_index;
+
+    for(size_t i = 0; i < points_number; i++)
+    {
+        current_index = i*step_size;
+
+        threshold = sorted_output_data(current_index, 0);
+
+        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0));
+
+        if(distance < minimun_distance)
+        {
+            optimal_threshold = threshold;
+
+            minimun_distance = distance;
+        }
+    }
+
+    return (optimal_threshold);
+}
 
 // Matrix<double> perform_cumulative_gain_analysis(void) const
 
@@ -1884,9 +1953,9 @@ Matrix<double> TestingAnalysis::calculate_lift_chart(const Matrix<double>& cumul
     lift_chart(0,0) = 0.0;
     lift_chart(0,1) = 1.0;
 
-// #pragma omp parallel for
+#pragma omp parallel for
 
-    for(size_t i = 1; i < rows_number; i++)
+    for(int i = 1; i < rows_number; i++)
     {
         lift_chart(i, 0) = cumulative_gain(i, 0);
         lift_chart(i, 1) = (double) cumulative_gain(i, 1)/(double)cumulative_gain(i, 0);
@@ -2293,7 +2362,7 @@ TestingAnalysis::BinaryClassifcationRates TestingAnalysis::calculate_binary_clas
 
     double decision_threshold;
 
-    if(neural_network_pointer->has_probabilistic_layer())
+    if(neural_network_pointer->get_probabilistic_layer_pointer() != NULL)
     {
         decision_threshold = neural_network_pointer->get_probabilistic_layer_pointer()->get_decision_threshold();
     }
@@ -3015,7 +3084,7 @@ Vector<double> TestingAnalysis::calculate_binary_classification_tests(void) cons
 
 // double calculate_logloss(void) const method
 
-/// Returns the logloss for a binary pattern recognition problem
+/// Returns the logloss for a binary classification problem
 
 double TestingAnalysis::calculate_logloss(void) const
 {
@@ -3152,6 +3221,9 @@ tinyxml2::XMLDocument* TestingAnalysis::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the testing analysis object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void TestingAnalysis::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

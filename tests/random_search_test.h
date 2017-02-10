@@ -55,7 +55,7 @@ public:
    void test_get_reserve_parameters_history(void);
    void test_get_reserve_parameters_norm_history(void);
 
-   void test_get_reserve_performance_history(void);
+   void test_get_reserve_loss_history(void);
 
    // Set methods
 
@@ -64,7 +64,7 @@ public:
    void test_set_reserve_parameters_history(void);
    void test_set_reserve_parameters_norm_history(void);
 
-   void test_set_reserve_performance_history(void);
+   void test_set_reserve_loss_history(void);
 
    // Training methods
 

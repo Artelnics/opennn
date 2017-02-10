@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a evolutionary training algorithm not associated to any performance functional.
+/// It creates a evolutionary training algorithm not associated to any loss functional.
 /// It also initializes the class members to their default values.
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithm(void) : TrainingAlgorithm()
@@ -32,13 +32,13 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm(void) : TrainingAlgorithm()
 
 // PERFORMANCE FUNCTIONAL CONSTRUCTOR 
 
-/// Performance functional constructor. 
-/// It creates a evolutionary training algorithm associated to a performance functional.
+/// Loss index constructor. 
+/// It creates a evolutionary training algorithm associated to a loss functional.
 /// It also initializes the class members to their default values.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-EvolutionaryAlgorithm::EvolutionaryAlgorithm(PerformanceFunctional* new_performance_functional_pointer)
-: TrainingAlgorithm(new_performance_functional_pointer)
+EvolutionaryAlgorithm::EvolutionaryAlgorithm(LossIndex* new_loss_index_pointer)
+: TrainingAlgorithm(new_loss_index_pointer)
 {
    set_default();
 }
@@ -47,7 +47,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithm(PerformanceFunctional* new_performa
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a evolutionary training algorithm not associated to any performance functional.
+/// It creates a evolutionary training algorithm not associated to any loss functional.
 /// It also loads the class members from a XML document.
 /// @param evolutionary_algorithm_document TinyXML document with the evolutionary algorithm object members.
 
@@ -257,13 +257,13 @@ const Matrix<double>& EvolutionaryAlgorithm::get_population(void) const
 }
 
 
-// const Vector<double>& get_performance(void) const method
+// const Vector<double>& get_loss(void) const method
 
-/// Returns the actual performance value of all individuals in the population.
+/// Returns the actual loss value of all individuals in the population.
 
-const Vector<double>& EvolutionaryAlgorithm::get_performance(void) const
+const Vector<double>& EvolutionaryAlgorithm::get_loss(void) const
 {
-   return(performance);
+   return(loss);
 }
 
 
@@ -309,24 +309,24 @@ const double& EvolutionaryAlgorithm::get_error_parameters_norm(void) const
 }
 
 
-// const double& get_best_performance_goal(void) const method
+// const double& get_best_loss_goal(void) const method
 
-/// Returns the goal value for the performance. 
+/// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& EvolutionaryAlgorithm::get_best_performance_goal(void) const
+const double& EvolutionaryAlgorithm::get_best_loss_goal(void) const
 {
-   return(best_performance_goal);
+   return(best_loss_goal);
 }
 
 
-// const size_t& get_maximum_selection_performance_decreases(void) const method
+// const size_t& get_maximum_selection_loss_decreases(void) const method
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& EvolutionaryAlgorithm::get_maximum_selection_performance_decreases(void) const
+const size_t& EvolutionaryAlgorithm::get_maximum_selection_loss_decreases(void) const
 {
-   return(maximum_selection_performance_decreases);
+   return(maximum_selection_loss_decreases);
 }
 
 
@@ -350,13 +350,13 @@ const bool& EvolutionaryAlgorithm::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_selection_performance_history(void) const method
+// const bool& get_reserve_selection_loss_history(void) const method
 
-/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
+/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& EvolutionaryAlgorithm::get_reserve_selection_performance_history(void) const
+const bool& EvolutionaryAlgorithm::get_reserve_selection_loss_history(void) const
 {
-   return(reserve_selection_performance_history);
+   return(reserve_selection_loss_history);
 }
 
 
@@ -412,58 +412,58 @@ const bool& EvolutionaryAlgorithm::get_reserve_best_norm_history(void) const
 }
 
 
-// const bool& get_reserve_mean_performance_history(void) const method
+// const bool& get_reserve_mean_loss_history(void) const method
 
-/// Returns true if the mean performance history vector is to be reserved, and false otherwise.
+/// Returns true if the mean loss history vector is to be reserved, and false otherwise.
 
-const bool& EvolutionaryAlgorithm::get_reserve_mean_performance_history(void) const
+const bool& EvolutionaryAlgorithm::get_reserve_mean_loss_history(void) const
 {
-   return(reserve_mean_performance_history);
+   return(reserve_mean_loss_history);
 }
 
 
-// const bool& get_reserve_standard_deviation_performance_history(void) const method
+// const bool& get_reserve_standard_deviation_loss_history(void) const method
 
-/// Returns true if the standard deviation of the performance history vector is to be reserved,
+/// Returns true if the standard deviation of the loss history vector is to be reserved,
 /// and false otherwise.
 
-const bool& EvolutionaryAlgorithm::get_reserve_standard_deviation_performance_history(void) const
+const bool& EvolutionaryAlgorithm::get_reserve_standard_deviation_loss_history(void) const
 {
-   return(reserve_standard_deviation_performance_history);
+   return(reserve_standard_deviation_loss_history);
 }
 
 
-// const bool& get_reserve_best_performance_history(void) const method
+// const bool& get_reserve_best_loss_history(void) const method
 
-/// Returns true if the best performance history vector is to be reserved, and false otherwise.
+/// Returns true if the best loss history vector is to be reserved, and false otherwise.
 
-const bool& EvolutionaryAlgorithm::get_reserve_best_performance_history(void) const
+const bool& EvolutionaryAlgorithm::get_reserve_best_loss_history(void) const
 {
-   return(reserve_best_performance_history);
+   return(reserve_best_loss_history);
 }
 
 
 // void set(void) method
 
-/// Sets the performance functional pointer of this object to NULL. 
+/// Sets the loss functional pointer of this object to NULL. 
 /// It also sets the rest of members to their default values. 
 
 void EvolutionaryAlgorithm::set(void)
 {
-   performance_functional_pointer = NULL;
+   loss_index_pointer = NULL;
 
    set_default();
 }
 
 
-// void set(PerformanceFunctional*) method
+// void set(LossIndex*) method
 
-/// Sets a new performance functional pointer to the evolutionary algorithm object. 
+/// Sets a new loss functional pointer to the evolutionary algorithm object. 
 /// It also sets the rest of members to their default values. 
 
-void EvolutionaryAlgorithm::set(PerformanceFunctional* new_performance_functional_pointer)
+void EvolutionaryAlgorithm::set(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
    set_default();
 }
@@ -491,8 +491,8 @@ void EvolutionaryAlgorithm::set(PerformanceFunctional* new_performance_functiona
 /// Stopping criteria:
 /// <ul> 
 /// <li> Performance goal: -1.0e99.
-/// <li> Mean performance goal: -1.0e99.
-/// <li> Standard deviation of performance goal: -1.0e99.
+/// <li> Mean loss goal: -1.0e99.
+/// <li> Standard deviation of loss goal: -1.0e99.
 /// <li> Maximum training time: 1.0e6.
 /// <li> Maximum number of generations: 100. 
 /// </ul> 
@@ -502,9 +502,9 @@ void EvolutionaryAlgorithm::set(PerformanceFunctional* new_performance_functiona
 /// <li> Mean norm = false.
 /// <li> Standard deviation norm = false.
 /// <li> Best norm = false.
-/// <li> Mean performance = false.
-/// <li> Standard deviation performance = false.
-/// <li> Best performance = false.
+/// <li> Mean loss = false.
+/// <li> Standard deviation loss = false.
+/// <li> Best loss = false.
 /// </ul> 
 /// User stuff: 
 /// <ul>
@@ -544,9 +544,9 @@ void EvolutionaryAlgorithm::set_default(void)
 
    // Stopping criteria
 
-   mean_performance_goal = -1.0e99;
-   standard_deviation_performance_goal = 0.0;
-   best_performance_goal = -1.0e99;
+   mean_loss_goal = -1.0e99;
+   standard_deviation_loss_goal = 0.0;
+   best_loss_goal = -1.0e99;
 
    maximum_time = 1.0e6;
 
@@ -562,9 +562,9 @@ void EvolutionaryAlgorithm::set_default(void)
    reserve_standard_deviation_norm_history = false;
    reserve_best_norm_history = false;
 
-   reserve_mean_performance_history = false;
-   reserve_standard_deviation_performance_history = false;
-   reserve_best_performance_history = false;
+   reserve_mean_loss_history = false;
+   reserve_standard_deviation_loss_history = false;
+   reserve_best_loss_history = false;
 
    reserve_elapsed_time_history = false;
 
@@ -588,7 +588,7 @@ void EvolutionaryAlgorithm::set_population_size(const size_t& new_population_siz
     {
         population.set();
 
-        performance.set();
+        loss.set();
 
         fitness.set();
 
@@ -604,7 +604,7 @@ void EvolutionaryAlgorithm::set_population_size(const size_t& new_population_siz
 
        #endif
 
-       const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+       const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
        // Control sentence (if debug)
 
@@ -653,9 +653,9 @@ void EvolutionaryAlgorithm::set_population_size(const size_t& new_population_siz
 
           randomize_population_normal();
 
-          // Set performance vector
+          // Set loss vector
 
-          performance.resize(new_population_size);
+          loss.resize(new_population_size);
 
           // Set fitness vector
 
@@ -812,7 +812,7 @@ void EvolutionaryAlgorithm::set_population(const Matrix<double>& new_population)
 
     check();
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();   
 
@@ -845,13 +845,13 @@ void EvolutionaryAlgorithm::set_population(const Matrix<double>& new_population)
 }
 
 
-// void set_performance(const Vector<double>&) method
+// void set_loss(const Vector<double>&) method
 
-/// Sets a new population performance vector.
+/// Sets a new population loss vector.
 ///
-/// @param new_performance Population performance values.
+/// @param new_loss Population loss values.
 
-void EvolutionaryAlgorithm::set_performance(const Vector<double>& new_performance)
+void EvolutionaryAlgorithm::set_loss(const Vector<double>& new_loss)
 {
    // Control sentence (if debug)
 
@@ -859,12 +859,12 @@ void EvolutionaryAlgorithm::set_performance(const Vector<double>& new_performanc
 
    const size_t population_size = get_population_size();
 
-   if(new_performance.size() != population_size)
+   if(new_loss.size() != population_size)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: EvolutionaryAlgorithm class.\n"
-             << "void set_performance(const Vector<double>&) method.\n"
+             << "void set_loss(const Vector<double>&) method.\n"
              << "Size is not equal to population size.\n";
 
       throw std::logic_error(buffer.str());	  
@@ -872,9 +872,9 @@ void EvolutionaryAlgorithm::set_performance(const Vector<double>& new_performanc
 
    #endif
 
-   // Set performance
+   // Set loss
 
-   performance = new_performance;
+   loss = new_loss;
 }
 
 
@@ -1006,43 +1006,43 @@ void EvolutionaryAlgorithm::set_reserve_best_norm_history(const bool& new_reserv
 }
 
 
-// void set_reserve_mean_performance_history(bool) method
+// void set_reserve_mean_loss_history(bool) method
 
-/// Makes the mean performance history vector to be reseved or not in memory.
+/// Makes the mean loss history vector to be reseved or not in memory.
 ///
-/// @param new_reserve_mean_performance_history True if the mean performance history vector is to be reserved, false 
+/// @param new_reserve_mean_loss_history True if the mean loss history vector is to be reserved, false 
 /// otherwise.
 
-void EvolutionaryAlgorithm::set_reserve_mean_performance_history(const bool& new_reserve_mean_performance_history) 
+void EvolutionaryAlgorithm::set_reserve_mean_loss_history(const bool& new_reserve_mean_loss_history) 
 {
-   reserve_mean_performance_history = new_reserve_mean_performance_history;
+   reserve_mean_loss_history = new_reserve_mean_loss_history;
 }
 
 
-// void set_reserve_standard_deviation_performance_history(bool) method
+// void set_reserve_standard_deviation_loss_history(bool) method
 
-/// Makes the standard deviation performance history vector to be reseved or not in memory.
+/// Makes the standard deviation loss history vector to be reseved or not in memory.
 ///
-/// @param new_reserve_standard_deviation_performance_history True if the standard deviation performance history vector 
+/// @param new_reserve_standard_deviation_loss_history True if the standard deviation loss history vector 
 /// is to be reserved, false otherwise.
 
 void EvolutionaryAlgorithm
-::set_reserve_standard_deviation_performance_history(const bool& new_reserve_standard_deviation_performance_history)
+::set_reserve_standard_deviation_loss_history(const bool& new_reserve_standard_deviation_loss_history)
 {
-   reserve_standard_deviation_performance_history = new_reserve_standard_deviation_performance_history;
+   reserve_standard_deviation_loss_history = new_reserve_standard_deviation_loss_history;
 }
 
 
-// void set_reserve_best_performance_history(bool) method
+// void set_reserve_best_loss_history(bool) method
 
-/// Makes the best performance history vector to be reseved or not in memory.
+/// Makes the best loss history vector to be reseved or not in memory.
 ///
-/// @param new_reserve_best_performance_history True if the best performance history vector is to be reserved, 
+/// @param new_reserve_best_loss_history True if the best loss history vector is to be reserved, 
 /// false otherwise.
 
-void EvolutionaryAlgorithm::set_reserve_best_performance_history(const bool& new_reserve_best_performance_history)
+void EvolutionaryAlgorithm::set_reserve_best_loss_history(const bool& new_reserve_best_loss_history)
 {
-   reserve_best_performance_history = new_reserve_best_performance_history;
+   reserve_best_loss_history = new_reserve_best_loss_history;
 }
 
 
@@ -1067,9 +1067,9 @@ void EvolutionaryAlgorithm::set_reserve_all_training_history(const bool& new_res
 
    // Objective functional
 
-   reserve_mean_performance_history = new_reserve_all_training_history;
-   reserve_standard_deviation_performance_history = new_reserve_all_training_history;
-   reserve_best_performance_history = new_reserve_all_training_history;
+   reserve_mean_loss_history = new_reserve_all_training_history;
+   reserve_standard_deviation_loss_history = new_reserve_all_training_history;
+   reserve_best_loss_history = new_reserve_all_training_history;
 
    // Training algorithm 
 
@@ -1127,7 +1127,7 @@ void EvolutionaryAlgorithm::set_individual(const size_t& i, const Vector<double>
  
    const size_t size = individual.size();
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1234,26 +1234,26 @@ void EvolutionaryAlgorithm::set_error_parameters_norm(const double& new_error_pa
 }
 
 
-// void set_best_performance_goal(const double&) method
+// void set_best_loss_goal(const double&) method
 
-/// Sets a new goal value for the performance.
+/// Sets a new goal value for the loss.
 /// This is used as a stopping criterion when training a multilayer perceptron.
-/// @param new_best_performance_goal Goal value for the performance.
+/// @param new_best_loss_goal Goal value for the loss.
 
-void EvolutionaryAlgorithm::set_best_performance_goal(const double& new_best_performance_goal)
+void EvolutionaryAlgorithm::set_best_loss_goal(const double& new_best_loss_goal)
 {
-   best_performance_goal = new_best_performance_goal;
+   best_loss_goal = new_best_loss_goal;
 }
 
 
-// void set_maximum_selection_performance_decreases(const size_t&) method
+// void set_maximum_selection_loss_decreases(const size_t&) method
 
 /// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases. 
+/// @param new_maximum_selection_loss_decreases Maximum number of iterations in which the selection evalutation decreases. 
 
-void EvolutionaryAlgorithm::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
+void EvolutionaryAlgorithm::set_maximum_selection_loss_decreases(const size_t& new_maximum_selection_loss_decreases)
 {
-   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
+   maximum_selection_loss_decreases = new_maximum_selection_loss_decreases;
 }
 
 
@@ -1299,15 +1299,15 @@ void EvolutionaryAlgorithm::set_reserve_elapsed_time_history(const bool& new_res
 }
 
 
-// void set_reserve_selection_performance_history(const bool&) method
+// void set_reserve_selection_loss_history(const bool&) method
 
-/// Makes the Selection performance history to be reserved or not in memory. 
+/// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_loss_history True if the selection loss history is to be reserved, false otherwise.
 
-void EvolutionaryAlgorithm::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
+void EvolutionaryAlgorithm::set_reserve_selection_loss_history(const bool& new_reserve_selection_loss_history)  
 {
-   reserve_selection_performance_history = new_reserve_selection_performance_history;
+   reserve_selection_loss_history = new_reserve_selection_loss_history;
 }
 
 
@@ -1351,7 +1351,7 @@ Vector<double> EvolutionaryAlgorithm::calculate_population_norm(void) const
 
    Vector<double> population_norm(population_size);
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1368,23 +1368,23 @@ Vector<double> EvolutionaryAlgorithm::calculate_population_norm(void) const
 }
 
 
-// double calculate_mean_performance(void) const method
+// double calculate_mean_loss(void) const method
 
-/// Returns the mean value of the individuals performance. 
+/// Returns the mean value of the individuals loss. 
 
-double EvolutionaryAlgorithm::calculate_mean_performance(void) const
+double EvolutionaryAlgorithm::calculate_mean_loss(void) const
 {
-   return(performance.calculate_mean());
+   return(loss.calculate_mean());
 }
 
 
-// double calculate_standard_deviation_performance(void) const method
+// double calculate_standard_deviation_loss(void) const method
 
-/// Returns the standard deviation value of the individuals performance. 
+/// Returns the standard deviation value of the individuals loss. 
 
-double EvolutionaryAlgorithm::calculate_standard_deviation_performance(void) const
+double EvolutionaryAlgorithm::calculate_standard_deviation_loss(void) const
 {
-   return(performance.calculate_standard_deviation());
+   return(loss.calculate_standard_deviation());
 }
 
 
@@ -1440,23 +1440,23 @@ const double& EvolutionaryAlgorithm::get_mutation_range(void) const
 }
 
 
-// const double& get_mean_performance_goal(void) const method
+// const double& get_mean_loss_goal(void) const method
 
-/// Returns the mean performance value of the population at which training will stop.
+/// Returns the mean loss value of the population at which training will stop.
 
-const double& EvolutionaryAlgorithm::get_mean_performance_goal(void) const
+const double& EvolutionaryAlgorithm::get_mean_loss_goal(void) const
 {
-   return(mean_performance_goal);
+   return(mean_loss_goal);
 }
 
 
-// const double& get_standard_deviation_performance_goal(void) const method
+// const double& get_standard_deviation_loss_goal(void) const method
 
-/// Returns the standard deviation of the performance at which training will stop.
+/// Returns the standard deviation of the loss at which training will stop.
 
-const double& EvolutionaryAlgorithm::get_standard_deviation_performance_goal(void) const
+const double& EvolutionaryAlgorithm::get_standard_deviation_loss_goal(void) const
 {
-   return(standard_deviation_performance_goal);
+   return(standard_deviation_loss_goal);
 }
 
 
@@ -1634,44 +1634,44 @@ void EvolutionaryAlgorithm::set_maximum_generations_number(const size_t& new_max
 
 
 
-// void set_mean_performance_goal(const double&) method
+// void set_mean_loss_goal(const double&) method
 
-/// Sets a new value for the mean performance goal stopping criterion.
-/// @param new_mean_performance_goal Goal value for the mean performance of the population. 
+/// Sets a new value for the mean loss goal stopping criterion.
+/// @param new_mean_loss_goal Goal value for the mean loss of the population. 
 
-void EvolutionaryAlgorithm::set_mean_performance_goal(const double& new_mean_performance_goal)
+void EvolutionaryAlgorithm::set_mean_loss_goal(const double& new_mean_loss_goal)
 {
-   mean_performance_goal = new_mean_performance_goal;
+   mean_loss_goal = new_mean_loss_goal;
 }
 
 
-// void set_standard_deviation_performance_goal(const double&) method
+// void set_standard_deviation_loss_goal(const double&) method
 
-/// Sets a new value for the standard deviation performance goal stopping criterion.
-/// @param new_standard_deviation_performance_goal Goal for the standard deviation performance of the population. 
+/// Sets a new value for the standard deviation loss goal stopping criterion.
+/// @param new_standard_deviation_loss_goal Goal for the standard deviation loss of the population. 
 
-void EvolutionaryAlgorithm::set_standard_deviation_performance_goal(const double& new_standard_deviation_performance_goal)
+void EvolutionaryAlgorithm::set_standard_deviation_loss_goal(const double& new_standard_deviation_loss_goal)
 {
    // Control sentence (if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_standard_deviation_performance_goal < 0.0)
+   if(new_standard_deviation_loss_goal < 0.0)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: EvolutionaryAlgorithm class.\n"
-             << "void set_standard_deviation_performance_goal(const double&) method.\n"
-             << "Standard deviation of performance goal must be equal or greater than 0.\n";
+             << "void set_standard_deviation_loss_goal(const double&) method.\n"
+             << "Standard deviation of loss goal must be equal or greater than 0.\n";
 
       throw std::logic_error(buffer.str());	  
    }
 
    #endif
 
-   // Set standard deviation of performance goal
+   // Set standard deviation of loss goal
 
-   standard_deviation_performance_goal = new_standard_deviation_performance_goal;
+   standard_deviation_loss_goal = new_standard_deviation_loss_goal;
 
 }
 
@@ -1772,7 +1772,7 @@ void EvolutionaryAlgorithm::randomize_population_uniform(const double& minimum, 
 
 void EvolutionaryAlgorithm::randomize_population_uniform(const Vector<double>& minimum, const Vector<double>& maximum)
 {
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();   
 
@@ -1845,7 +1845,7 @@ void EvolutionaryAlgorithm::randomize_population_normal(const double& mean, cons
 void EvolutionaryAlgorithm::
 randomize_population_normal(const Vector<double>& mean, const Vector<double>& standard_deviation)
 {
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();   
 
@@ -2058,8 +2058,8 @@ void EvolutionaryAlgorithm::evolve_population(void)
 
 // void evaluate_population(void) method
 
-/// Evaluates the performance functional of all individuals in the population.
-/// Results are stored in the performance vector.
+/// Evaluates the loss functional of all individuals in the population.
+/// Results are stored in the loss vector.
 
 void EvolutionaryAlgorithm::evaluate_population(void)
 {
@@ -2067,13 +2067,13 @@ void EvolutionaryAlgorithm::evaluate_population(void)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(performance_functional_pointer == NULL)   
+   if(loss_index_pointer == NULL)   
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: EvolutionaryAlgorithm class.\n"
              << "void evaluate_population(void).\n"
-             << "Performance functional pointer is NULL.\n";
+             << "Loss index pointer is NULL.\n";
  
       throw std::logic_error(buffer.str());	  
    }
@@ -2082,7 +2082,7 @@ void EvolutionaryAlgorithm::evaluate_population(void)
 
    // Neural network
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    // Control sentence (if debug)
 
@@ -2105,7 +2105,7 @@ void EvolutionaryAlgorithm::evaluate_population(void)
 
    Vector<double> individual(parameters_number);
 
-   // Evaluate performance functional for all individuals
+   // Evaluate loss functional for all individuals
 
    const size_t population_size = get_population_size();
 
@@ -2113,9 +2113,9 @@ void EvolutionaryAlgorithm::evaluate_population(void)
    {
       individual = get_individual(i);
 
-      performance[i] = performance_functional_pointer->calculate_performance(individual);
+      loss[i] = loss_index_pointer->calculate_loss(individual);
       
-      if(!(performance[i] > -1.0e99 && performance[i] < 1.0e99))
+      if(!(loss[i] > -1.0e99 && loss[i] < 1.0e99))
       {
          std::ostringstream buffer;
 
@@ -2131,18 +2131,18 @@ void EvolutionaryAlgorithm::evaluate_population(void)
 
 // void perform_linear_ranking_fitness_assignment(void) method
 
-/// Ranks all individuals in the population by their performance,
+/// Ranks all individuals in the population by their loss,
 /// so that the least fit individual has rank 1 and the fittest individual has rank [population size].
 /// It then assigns them a fitness value linearly proportional to their rank.
-/// The smallest fitness corresponds to the smallest performance,
-/// and the greatest fitness to the greatest performance.
+/// The smallest fitness corresponds to the smallest loss,
+/// and the greatest fitness to the greatest loss.
 /// Results are stored in the fitness vector.
 
 void EvolutionaryAlgorithm::perform_linear_ranking_fitness_assignment(void)
 {
-   // Sorted performance vector
+   // Sorted loss vector
 
-   const Vector<size_t> rank = performance.calculate_greater_rank();
+   const Vector<size_t> rank = loss.calculate_greater_rank();
 
    // Perform linear ranking fitness assignment
    // Cannot do that without loop because of different types of fitness and rank vectors
@@ -2251,8 +2251,7 @@ void EvolutionaryAlgorithm::perform_roulette_wheel_selection(void)
 
 // void perform_intermediate_recombination(void) method
 
-/// Performs inediate recombination between pairs of selected individuals to generate a new
-/// population. 
+/// Performs intermediate recombination between pairs of selected individuals to generate a new population.
 /// Each selected individual is to be recombined with two other selected individuals chosen at random. 
 /// Results are stored in the population matrix.
 
@@ -2275,7 +2274,7 @@ void EvolutionaryAlgorithm::perform_intermediate_recombination(void)
 
     #endif
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
      
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -2403,7 +2402,7 @@ void EvolutionaryAlgorithm::perform_line_recombination(void)
 
     #endif
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
      
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -2513,7 +2512,7 @@ void EvolutionaryAlgorithm::perform_normal_mutation(void)
 {
    const size_t population_size = get_population_size();
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
      
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -2551,7 +2550,7 @@ void EvolutionaryAlgorithm::perform_uniform_mutation(void)
 {
    const size_t population_size = get_population_size();
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
      
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
    
@@ -2634,44 +2633,44 @@ std::string EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::to_string(void)
               << best_norm_history << "\n"; 
    }
 
-   // performance history
+   // loss history
 
-   if(!performance_history.empty())
+   if(!loss_history.empty())
    {
-       buffer << "% performance history:\n"
-              << performance_history << "\n"; 
+       buffer << "% loss history:\n"
+              << loss_history << "\n"; 
    }
 
-   // Mean performance history
+   // Mean loss history
 
-   if(!mean_performance_history.empty())
+   if(!mean_loss_history.empty())
    {
-       buffer << "% Mean performance history:\n"
-              << mean_performance_history << "\n"; 
+       buffer << "% Mean loss history:\n"
+              << mean_loss_history << "\n"; 
    }
 
-   // Standard deviation performance history
+   // Standard deviation loss history
 
-   if(!standard_deviation_performance_history.empty())
+   if(!standard_deviation_loss_history.empty())
    {
-       buffer << "% Standard deviation performance history:\n"
-              << standard_deviation_performance_history << "\n"; 
+       buffer << "% Standard deviation loss history:\n"
+              << standard_deviation_loss_history << "\n"; 
    }
 
-   // Best performance history
+   // Best loss history
 
-   if(!best_performance_history.empty())
+   if(!best_loss_history.empty())
    {
-       buffer << "% Best performance history:\n"
-              << best_performance_history << "\n"; 
+       buffer << "% Best loss history:\n"
+              << best_loss_history << "\n"; 
    }
 
-   // Selection performance history
+   // Selection loss history
 
-   if(!selection_performance_history.empty())
+   if(!selection_loss_history.empty())
    {
-       buffer << "% Selection performance history:\n"
-              << selection_performance_history << "\n"; 
+       buffer << "% Selection loss history:\n"
+              << selection_loss_history << "\n"; 
    }
 
    // Elapsed time history   
@@ -2722,24 +2721,24 @@ void EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::resize_training_histor
         best_norm_history.resize(new_size);
     }
 
-    if(evolutionary_algorithm_pointer->get_reserve_mean_performance_history())
+    if(evolutionary_algorithm_pointer->get_reserve_mean_loss_history())
     {
-        mean_performance_history.resize(new_size);
+        mean_loss_history.resize(new_size);
     }
 
-    if(evolutionary_algorithm_pointer->get_reserve_standard_deviation_performance_history())
+    if(evolutionary_algorithm_pointer->get_reserve_standard_deviation_loss_history())
     {
-        standard_deviation_performance_history.resize(new_size);
+        standard_deviation_loss_history.resize(new_size);
     }
 // Bug?
-    if(evolutionary_algorithm_pointer->get_reserve_best_performance_history())
+    if(evolutionary_algorithm_pointer->get_reserve_best_loss_history())
     {
-        best_performance_history.resize(new_size);
+        best_loss_history.resize(new_size);
     }
 //
-    if(evolutionary_algorithm_pointer->get_reserve_selection_performance_history())
+    if(evolutionary_algorithm_pointer->get_reserve_selection_loss_history())
     {
-        selection_performance_history.resize(new_size);
+        selection_loss_history.resize(new_size);
     }
 
     if(evolutionary_algorithm_pointer->get_reserve_elapsed_time_history())
@@ -2785,43 +2784,43 @@ Matrix<std::string> EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::write_f
 
    values.push_back(buffer.str());
 
-   // Final mean population performance.
+   // Final mean population loss.
 
-   names.push_back("Final mean performance");
+   names.push_back("Final mean loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_mean_performance;
+   buffer << std::setprecision(precision) << final_mean_loss;
 
    values.push_back(buffer.str());
 
-   // Final standard deviation of the population performance.
+   // Final standard deviation of the population loss.
 
-   names.push_back("Final standard deviation performance");
+   names.push_back("Final standard deviation loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_standard_deviation_performance;
+   buffer << std::setprecision(precision) << final_standard_deviation_loss;
 
    values.push_back(buffer.str());
 
    // Performance of the best individual ever
 
-   names.push_back("Final best performance");
+   names.push_back("Final best loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_best_performance;
+   buffer << std::setprecision(precision) << final_best_loss;
 
    values.push_back(buffer.str());
 
-   // Final selection performance
+   // Final selection loss
 
-   const PerformanceFunctional* performance_functional_pointer = evolutionary_algorithm_pointer->get_performance_functional_pointer();
+   const LossIndex* loss_index_pointer = evolutionary_algorithm_pointer->get_loss_index_pointer();
 
-   if(performance_functional_pointer->has_selection())
+   if(loss_index_pointer->has_selection())
    {
-       names.push_back("Final selection performance");
+       names.push_back("Final selection loss");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_selection_performance;
+       buffer << std::setprecision(precision) << final_selection_loss;
 
        values.push_back(buffer.str());
     }
@@ -2860,7 +2859,7 @@ Matrix<std::string> EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::write_f
 
 // EvolutionaryAlgorithmResults* perform_training(void) method
 
-/// Trains a neural network with an associated performance function according to the evolutionary algorithm.
+/// Trains a neural network with an associated loss function according to the evolutionary algorithm.
 /// Training occurs according to the training operators and their related parameters.
 
 EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perform_training(void)
@@ -2901,7 +2900,7 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
    bool stop_training = false;
 
-   // Performance functional
+   // Loss index
 
    Vector<double> population_norm;
 
@@ -2912,16 +2911,16 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
    size_t best_individual_index;
    double best_norm = 0.0;
 
-   double best_performance_ever = 1.0e99;
+   double best_loss_ever = 1.0e99;
 
-   double best_generation_performance = 1.0e99;
+   double best_generation_loss = 1.0e99;
 
-   double selection_performance = 0.0; 
-//   double old_selection_performance = 0.0;
+   double selection_loss = 0.0; 
+//   double old_selection_loss = 0.0;
 
     // Neural network stuff
 
-   NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    // Main loop
 
@@ -2958,11 +2957,11 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
       evaluate_population();
 
-      best_generation_performance = performance.calculate_minimum();
+      best_generation_loss = loss.calculate_minimum();
 
-     if(best_generation_performance < best_performance_ever)
+     if(best_generation_loss < best_loss_ever)
      {
-         best_individual_index = performance.calculate_minimal_index();
+         best_individual_index = loss.calculate_minimal_index();
 
          best_individual = get_individual(best_individual_index);
 
@@ -2970,11 +2969,11 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
         best_norm = best_individual.calculate_norm();
 
-        best_performance_ever = best_generation_performance;
+        best_loss_ever = best_generation_loss;
 
-        //old_selection_performance = selection_performance;
+        //old_selection_loss = selection_loss;
 
-        selection_performance = performance_functional_pointer->calculate_selection_performance();
+        selection_loss = loss_index_pointer->calculate_selection_loss();
      }
 
       // Best individual 
@@ -2991,36 +2990,36 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
          results_pointer->best_norm_history[generation] = best_norm;
       }
 
-      // Mean performance
+      // Mean loss
 
-      const double mean_performance = performance.calculate_mean();
+      const double mean_loss = loss.calculate_mean();
 
-      if(reserve_mean_performance_history)
+      if(reserve_mean_loss_history)
       {
-         results_pointer->mean_performance_history[generation] = mean_performance;
+         results_pointer->mean_loss_history[generation] = mean_loss;
       }
 
-      // Standard deviation of performance
+      // Standard deviation of loss
 
-      const double standard_deviation_performance = performance.calculate_standard_deviation();
+      const double standard_deviation_loss = loss.calculate_standard_deviation();
 
-      if(reserve_standard_deviation_performance_history)
+      if(reserve_standard_deviation_loss_history)
       {
-         results_pointer->standard_deviation_performance_history[generation] = standard_deviation_performance;
+         results_pointer->standard_deviation_loss_history[generation] = standard_deviation_loss;
       }
 
-      // Best performance
+      // Best loss
 
-      if(reserve_best_performance_history)
+      if(reserve_best_loss_history)
       {
-         results_pointer->best_performance_history[generation] = best_performance_ever;
+         results_pointer->best_loss_history[generation] = best_loss_ever;
       }
 
-      // Selection performance
+      // selection loss
 
-      if(reserve_selection_performance_history)
+      if(reserve_selection_loss_history)
       {
-         results_pointer->selection_performance_history[generation] = selection_performance;
+         results_pointer->selection_loss_history[generation] = selection_loss;
       }
 
       // Elapsed time
@@ -3062,19 +3061,19 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
       // Training history training algorithm
 
-      if(reserve_mean_performance_history)
+      if(reserve_mean_loss_history)
       {
-         results_pointer->mean_performance_history[generation] = mean_performance;
+         results_pointer->mean_loss_history[generation] = mean_loss;
       }
 
-      if(reserve_standard_deviation_performance_history)
+      if(reserve_standard_deviation_loss_history)
       {
-         results_pointer->standard_deviation_performance_history[generation] = standard_deviation_performance;
+         results_pointer->standard_deviation_loss_history[generation] = standard_deviation_loss;
       }
 
-      if(reserve_best_performance_history)
+      if(reserve_best_loss_history)
       {
-         results_pointer->best_performance_history[generation] = best_performance_ever;
+         results_pointer->best_loss_history[generation] = best_loss_ever;
       }
 
       if(reserve_elapsed_time_history)
@@ -3084,43 +3083,43 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
 
       // Stopping criteria
 
-      if(best_performance_ever <= best_performance_goal)
+      if(best_loss_ever <= best_loss_goal)
       {
          if(display)
          {
             std::cout << "Generation " << generation << ": Performance goal reached.\n"
-                      << performance_functional_pointer->write_information();
+                      << loss_index_pointer->write_information();
          }
 
 		 stop_training = true;
       }
 
-      if(mean_performance <= mean_performance_goal)
+      if(mean_loss <= mean_loss_goal)
       {
          if(display)
          {
-            std::cout << "Generation " << generation << ": Mean performance goal reached.\n";
-         }
-         
-		 stop_training = true;
-      }
-
-      if(standard_deviation_performance <= standard_deviation_performance_goal)
-      {
-         if(display)
-         {
-            std::cout << "Generation " << generation << ": Standard deviation of performance goal reached.\n";
+            std::cout << "Generation " << generation << ": Mean loss goal reached.\n";
          }
          
 		 stop_training = true;
       }
 
-      else if(selection_failures > maximum_selection_performance_decreases)
+      if(standard_deviation_loss <= standard_deviation_loss_goal)
       {
          if(display)
          {
-            std::cout << "Generation " << generation << ": Maximum selection performance decreases reached.\n";
-            std::cout << "Selection performance decreases: "<< selection_failures << std::endl;
+            std::cout << "Generation " << generation << ": Standard deviation of loss goal reached.\n";
+         }
+         
+		 stop_training = true;
+      }
+
+      else if(selection_failures > maximum_selection_loss_decreases)
+      {
+         if(display)
+         {
+            std::cout << "Generation " << generation << ": Maximum selection loss increases reached.\n";
+            std::cout << "Selection loss increases: "<< selection_failures << std::endl;
          }
 
          stop_training = true;
@@ -3158,10 +3157,10 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
              std::cout << "Mean norm: " << mean_norm << "\n"
                        << "Standard deviation of norm: " << standard_deviation_norm << "\n"
                        << "Best norm: " << best_norm << "\n"
-                       << "Mean performance: " << mean_performance << "\n"
-                       << "Standard deviation of performance: " << standard_deviation_performance << "\n"
-                       << "Best performance: " << best_performance_ever << "\n"
-                       << performance_functional_pointer->write_information()
+                       << "Mean loss: " << mean_loss << "\n"
+                       << "Standard deviation of loss: " << standard_deviation_loss << "\n"
+                       << "Best loss: " << best_loss_ever << "\n"
+                       << loss_index_pointer->write_information()
                        << "Elapsed time: " << elapsed_time << ";\n";
           }
 
@@ -3170,10 +3169,10 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
          results_pointer->final_mean_norm = mean_norm;
          results_pointer->final_standard_deviation_norm = standard_deviation_norm;
          results_pointer->final_best_norm = best_norm;
-         results_pointer->final_mean_performance = mean_performance;
-         results_pointer->final_standard_deviation_performance = standard_deviation_performance;
-         results_pointer->final_best_performance = best_performance_ever;
-         results_pointer->final_selection_performance = selection_performance;
+         results_pointer->final_mean_loss = mean_loss;
+         results_pointer->final_standard_deviation_loss = standard_deviation_loss;
+         results_pointer->final_best_loss = best_loss_ever;
+         results_pointer->final_selection_loss = selection_loss;
          results_pointer->elapsed_time = elapsed_time;
          results_pointer->generations_number = generation;
 
@@ -3185,16 +3184,16 @@ EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* EvolutionaryAlgorithm::perf
                    << "Mean norm: " << mean_norm << "\n" 
                    << "Standard deviation of norm: " << standard_deviation_norm << "\n"
                    << "Best norm: " << best_norm << "\n"
-                   << "Mean performance: " << mean_performance << "\n"
-                   << "Standard deviation of performance: " << standard_deviation_performance << "\n"
-                   << "Best performance: " << best_performance_ever << "\n"
-                   << performance_functional_pointer->write_information()
+                   << "Mean loss: " << mean_loss << "\n"
+                   << "Standard deviation of loss: " << standard_deviation_loss << "\n"
+                   << "Best loss: " << best_loss_ever << "\n"
+                   << loss_index_pointer->write_information()
                    << "Elapsed time: " << elapsed_time << ";\n";
       }
 
       // Update stuff
 
- //     old_selection_performance = selection_performance;
+ //     old_selection_loss = selection_loss;
 
       selection.initialize(false);
 
@@ -3216,7 +3215,7 @@ std::string EvolutionaryAlgorithm::write_training_algorithm_type(void) const
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
 {
@@ -3299,12 +3298,12 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
 
     values.push_back(buffer.str());
 
-   // Best performance goal
+   // Best loss goal
 
-   labels.push_back("Best performance goal");
+   labels.push_back("Best loss goal");
 
    buffer.str("");
-   buffer << best_performance_goal;
+   buffer << best_loss_goal;
 
    values.push_back(buffer.str());
 
@@ -3313,7 +3312,7 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
    labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    values.push_back(buffer.str());
 
@@ -3335,12 +3334,12 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   labels.push_back("Reserve selection performance history");
+   labels.push_back("Reserve selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    values.push_back(buffer.str());
 
@@ -3389,8 +3388,8 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
 /// Stopping criteria:
 /// <ul> 
 /// <li> Performance goal.
-/// <li> Mean performance goal.
-/// <li> Standard deviation of performance goal.
+/// <li> Mean loss goal.
+/// <li> Standard deviation of loss goal.
 /// <li> Maximum time.
 /// <li> Maximum number of generations. 
 /// </ul> 
@@ -3403,9 +3402,9 @@ Matrix<std::string> EvolutionaryAlgorithm::to_string_matrix(void) const
 /// <li> Reserve mean norm history.
 /// <li> Reserve standard deviation of norm history.
 /// <li> Reserve best norm history.
-/// <li> Reserve mean performance history.
-/// <li> Reserve standard deviation of performance history.
-/// <li> Reserve best performance history.
+/// <li> Reserve mean loss history.
+/// <li> Reserve standard deviation of loss history.
+/// <li> Reserve best loss history.
 /// </ul>
 ///
 /// Population matrix. 
@@ -3522,46 +3521,46 @@ tinyxml2::XMLDocument* EvolutionaryAlgorithm::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
     
-   // Mean performance goal
+   // Mean loss goal
 
    element = document->NewElement("MeanPerformanceGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << mean_performance_goal;
+   buffer << mean_loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Standard deviation performance goal
+   // Standard deviation loss goal
 
    element = document->NewElement("StandardDeviationPerformanceGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << standard_deviation_performance_goal;
+   buffer << standard_deviation_loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Best performance goal
+   // Best loss goal
 
    element = document->NewElement("BestPerformanceGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << best_performance_goal;
+   buffer << best_loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
 
-   element = document->NewElement("MaximumSelectionPerformanceDecreases");
+   element = document->NewElement("MaximumSelectionLossDecreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -3621,46 +3620,46 @@ tinyxml2::XMLDocument* EvolutionaryAlgorithm::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve mean performance history
+   // Reserve mean loss history
 
    element = document->NewElement("ReserveMeanPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_mean_performance_history;
+   buffer << reserve_mean_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve standard deviation performance history
+   // Reserve standard deviation loss history
 
    element = document->NewElement("ReserveStandardDeviationPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_standard_deviation_performance_history;
+   buffer << reserve_standard_deviation_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve best performance history
+   // Reserve best loss history
 
    element = document->NewElement("ReserveBestPerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_best_performance_history;
+   buffer << reserve_best_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -3670,6 +3669,9 @@ tinyxml2::XMLDocument* EvolutionaryAlgorithm::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the evolutionary algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void EvolutionaryAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -3772,45 +3774,45 @@ void EvolutionaryAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Mean performance goal
+    // Mean loss goal
 
     file_stream.OpenElement("MeanPerformanceGoal");
 
     buffer.str("");
-    buffer << mean_performance_goal;
+    buffer << mean_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Standard deviation performance goal
+    // Standard deviation loss goal
 
     file_stream.OpenElement("StandardDeviationPerformanceGoal");
 
     buffer.str("");
-    buffer << standard_deviation_performance_goal;
+    buffer << standard_deviation_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Best performance goal
+    // Best loss goal
 
     file_stream.OpenElement("BestPerformanceGoal");
 
     buffer.str("");
-    buffer << best_performance_goal;
+    buffer << best_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Maximum selection performance decreases
+    // Maximum selection loss decreases
 
-    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+    file_stream.OpenElement("MaximumSelectionLossDecreases");
 
     buffer.str("");
-    buffer << maximum_selection_performance_decreases;
+    buffer << maximum_selection_loss_decreases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -3871,45 +3873,45 @@ void EvolutionaryAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve mean performance history
+    // Reserve mean loss history
 
     file_stream.OpenElement("ReserveMeanPerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_mean_performance_history;
+    buffer << reserve_mean_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve standard deviation performance history
+    // Reserve standard deviation loss history
 
     file_stream.OpenElement("ReserveStandardDeviationPerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_standard_deviation_performance_history;
+    buffer << reserve_standard_deviation_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve best performance history
+    // Reserve best loss history
 
     file_stream.OpenElement("ReserveBestPerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_best_performance_history;
+    buffer << reserve_best_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance history
+    // Reserve selection loss history
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_history;
+    buffer << reserve_selection_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -4136,17 +4138,17 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Mean performance goal
+   // Mean loss goal
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MeanPerformanceGoal");
 
        if(element)
        {
-          const double new_mean_performance_goal = atof(element->GetText());
+          const double new_mean_loss_goal = atof(element->GetText());
 
           try
           {
-             set_mean_performance_goal(new_mean_performance_goal);
+             set_mean_loss_goal(new_mean_loss_goal);
           }
           catch(const std::logic_error& e)
           {
@@ -4155,17 +4157,17 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Standard deviation performance goal
+   // Standard deviation loss goal
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("StandardDeviationPerformanceGoal");
 
        if(element)
        {
-          const double new_standard_deviation_performance_goal = atof(element->GetText());
+          const double new_standard_deviation_loss_goal = atof(element->GetText());
 
           try
           {
-             set_standard_deviation_performance_goal(new_standard_deviation_performance_goal);
+             set_standard_deviation_loss_goal(new_standard_deviation_loss_goal);
           }
           catch(const std::logic_error& e)
           {
@@ -4174,17 +4176,17 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Best performance goal
+   // Best loss goal
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("BestPerformanceGoal");
 
        if(element)
        {
-          const double new_best_performance_goal = atof(element->GetText());
+          const double new_best_loss_goal = atof(element->GetText());
 
           try
           {
-             set_best_performance_goal(new_best_performance_goal);
+             set_best_loss_goal(new_best_loss_goal);
           }
           catch(const std::logic_error& e)
           {
@@ -4193,17 +4195,17 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
 
        if(element)
        {
-          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_loss_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
+             set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -4283,47 +4285,47 @@ void EvolutionaryAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve mean performance history
+   // Reserve mean loss history
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveMeanPerformanceHistory");
 
        if(element)
        {
-          const bool new_mean_performance_history = (atoi(element->GetText()) != 0);
-          set_reserve_mean_performance_history(new_mean_performance_history);
+          const bool new_mean_loss_history = (atoi(element->GetText()) != 0);
+          set_reserve_mean_loss_history(new_mean_loss_history);
        }
    }
 
-   // Reserve standard deviation performance history
+   // Reserve standard deviation loss history
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveStandardDeviationPerformanceHistory");
 
        if(element)
        {
-          const bool new_standard_deviation_performance_history = (atoi(element->GetText()) != 0);
-          set_reserve_standard_deviation_performance_history(new_standard_deviation_performance_history);
+          const bool new_standard_deviation_loss_history = (atoi(element->GetText()) != 0);
+          set_reserve_standard_deviation_loss_history(new_standard_deviation_loss_history);
        }
    }
 
-   // Reserve best performance history
+   // Reserve best loss history
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveBestPerformanceHistory");
 
        if(element)
        {
-          const bool new_best_performance_history = (atoi(element->GetText()) != 0);
-          set_reserve_best_performance_history(new_best_performance_history);
+          const bool new_best_loss_history = (atoi(element->GetText()) != 0);
+          set_reserve_best_loss_history(new_best_loss_history);
        }
    }
 
-   // Reserve selection performance history
+   // Reserve selection loss history
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
        if(element)
        {
-          const bool new_selection_performance_history = (atoi(element->GetText()) != 0);
-          set_reserve_selection_performance_history(new_selection_performance_history);
+          const bool new_selection_loss_history = (atoi(element->GetText()) != 0);
+          set_reserve_selection_loss_history(new_selection_loss_history);
        }
    }
 }

@@ -1331,6 +1331,9 @@ tinyxml2::XMLDocument* OrdinaryDifferentialEquations::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the ordinary differential equations object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void OrdinaryDifferentialEquations::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;

@@ -38,17 +38,17 @@ void GradientDescentTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
 
    // Default constructor
 
    GradientDescent gd1; 
-   assert_true(gd1.has_performance_functional() == false, LOG);
+   assert_true(gd1.has_loss_index() == false, LOG);
 
-   // Performance functional constructor
+   // Loss index constructor
 
    GradientDescent gd2(&pf); 
-   assert_true(gd2.has_performance_functional() == true, LOG);
+   assert_true(gd2.has_loss_index() == true, LOG);
 }
 
 
@@ -69,12 +69,12 @@ void GradientDescentTest::test_set_reserve_all_training_history(void)
    assert_true(gd.get_reserve_elapsed_time_history() == true, LOG);
    assert_true(gd.get_reserve_parameters_history() == true, LOG);
    assert_true(gd.get_reserve_parameters_norm_history() == true, LOG);
-   assert_true(gd.get_reserve_performance_history() == true, LOG);
+   assert_true(gd.get_reserve_loss_history() == true, LOG);
    assert_true(gd.get_reserve_gradient_history() == true, LOG);
    assert_true(gd.get_reserve_gradient_norm_history() == true, LOG);
    assert_true(gd.get_reserve_training_direction_history() == true, LOG);
    assert_true(gd.get_reserve_training_rate_history() == true, LOG);
-   assert_true(gd.get_reserve_selection_performance_history() == true, LOG);
+   assert_true(gd.get_reserve_selection_loss_history() == true, LOG);
 }
 
 
@@ -88,25 +88,25 @@ void GradientDescentTest::test_perform_training(void)
    NeuralNetwork nn(1, 1);
    nn.randomize_parameters_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    pf.destruct_all_terms();
-   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
    GradientDescent gd(&pf);
 
    // Test
 
-   double old_performance = pf.calculate_performance();
+   double old_loss = pf.calculate_loss();
 
    gd.set_display(false);
    gd.set_maximum_iterations_number(1);
 
    gd.perform_training();
 
-   double performance = pf.calculate_performance();
+   double loss = pf.calculate_loss();
 
-   assert_true(performance < old_performance, LOG);
+   assert_true(loss < old_loss, LOG);
 
    // Minimum parameters increment norm
 
@@ -115,8 +115,8 @@ void GradientDescentTest::test_perform_training(void)
    double minimum_parameters_increment_norm = 0.1;
 
    gd.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   gd.set_performance_goal(0.0);
-   gd.set_minimum_performance_increase(0.0);
+   gd.set_loss_goal(0.0);
+   gd.set_minimum_loss_increase(0.0);
    gd.set_gradient_norm_goal(0.0);
    gd.set_maximum_iterations_number(1000);
    gd.set_maximum_time(1000.0);
@@ -127,28 +127,28 @@ void GradientDescentTest::test_perform_training(void)
 
    nn.initialize_parameters(-1.0);
 
-   double performance_goal = 0.1;
+   double loss_goal = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
-   gd.set_performance_goal(performance_goal);
-   gd.set_minimum_performance_increase(0.0);
+   gd.set_loss_goal(loss_goal);
+   gd.set_minimum_loss_increase(0.0);
    gd.set_gradient_norm_goal(0.0);
    gd.set_maximum_iterations_number(1000);
    gd.set_maximum_time(1000.0);
 
    gd.perform_training();
 
-   performance = pf.calculate_performance();
+   loss = pf.calculate_loss();
 
-   // Minimum performance increase
+   // Minimum loss increase
 
    nn.initialize_parameters(-1.0);
 
-   double minimum_performance_increase = 0.1;
+   double minimum_loss_increase = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
-   gd.set_performance_goal(0.0);
-   gd.set_minimum_performance_increase(minimum_performance_increase);
+   gd.set_loss_goal(0.0);
+   gd.set_minimum_loss_increase(minimum_loss_increase);
    gd.set_gradient_norm_goal(0.0);
    gd.set_maximum_iterations_number(1000);
    gd.set_maximum_time(1000.0);
@@ -162,8 +162,8 @@ void GradientDescentTest::test_perform_training(void)
    double gradient_norm_goal = 0.1;
 
    gd.set_minimum_parameters_increment_norm(0.0);
-   gd.set_performance_goal(0.0);
-   gd.set_minimum_performance_increase(0.0);
+   gd.set_loss_goal(0.0);
+   gd.set_minimum_loss_increase(0.0);
    gd.set_gradient_norm_goal(gradient_norm_goal);
    gd.set_maximum_iterations_number(1000);
    gd.set_maximum_time(1000.0);
@@ -190,10 +190,10 @@ void GradientDescentTest::test_resize_training_history(void)
    assert_true(gdtr.parameters_history.size() == 1, LOG);
    assert_true(gdtr.parameters_norm_history.size() == 1, LOG);
 
-   assert_true(gdtr.performance_history.size() == 1, LOG);
+   assert_true(gdtr.loss_history.size() == 1, LOG);
    assert_true(gdtr.gradient_history.size() == 1, LOG);
    assert_true(gdtr.gradient_norm_history.size() == 1, LOG);
-   assert_true(gdtr.selection_performance_history.size() == 1, LOG);
+   assert_true(gdtr.selection_loss_history.size() == 1, LOG);
 
    assert_true(gdtr.training_direction_history.size() == 1, LOG);
    assert_true(gdtr.training_rate_history.size() == 1, LOG);

@@ -80,7 +80,7 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     NeuralNetwork nn;
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
@@ -107,7 +107,7 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     pi.set_display(false);
 
-    pi.set_function_regression(true);
+    pi.set_approximation(true);
 
     pir = pi.perform_inputs_selection();
 
@@ -115,43 +115,43 @@ void PruningInputsTest::test_perform_inputs_selection(void)
 
     pi.delete_selection_history();
     pi.delete_parameters_history();
-    pi.delete_performance_history();
+    pi.delete_loss_history();
 
     // Test
 
-    size_t j = -10;
+//    size_t j = -10;
 
-    for (size_t i = 0; i < 10; i++)
-    {
-        data(i,0) = (double)i;
-        data(i,1) = 10.0;
-        data(i,2) = 1.0;
-        j+=1;
-    }
-    for (size_t i = 10; i < 20; i++)
-    {
-        data(i,0) = (double)i;
-        data(i,1) = 10.0;
-        data(i,2) = 0.0;
-    }
+//    for (size_t i = 0; i < 10; i++)
+//    {
+//        data(i,0) = (double)i;
+//        data(i,1) = rand();
+//        data(i,2) = 1.0;
+//        j+=1;
+//    }
+//    for (size_t i = 10; i < 20; i++)
+//    {
+//        data(i,0) = (double)i;
+//        data(i,1) = rand();
+//        data(i,2) = 0.0;
+//    }
 
-    ds.set(data);
+//    ds.set(data);
 
-    nn.set(2,6,1);
+//    nn.set(2,6,1);
 
-    ts.set_display(false);
+//    ts.set_display(false);
 
-    pi.set_display(false);
+//    pi.set_display(false);
 
-    pi.set_function_regression(false);
+//    pi.set_approximation(false);
 
-    pir = pi.perform_inputs_selection();
+//    pir = pi.perform_inputs_selection();
 
-    assert_true(pir->optimal_inputs[0] == 1, LOG);
+//    assert_true(pir->optimal_inputs[0] == 1, LOG);
 
-    pi.delete_selection_history();
-    pi.delete_parameters_history();
-    pi.delete_performance_history();
+//    pi.delete_selection_history();
+//    pi.delete_parameters_history();
+//    pi.delete_loss_history();
 
 }
 

@@ -44,7 +44,7 @@ InputsSelectionAlgorithm::InputsSelectionAlgorithm(TrainingStrategy* new_trainin
 // FILE CONSTRUCTOR
 
 /// File constructor.
-/// @param file_name Name of XML inputs selection file.
+/*/// @param file_name Name of XML inputs selection file.*/
 
 InputsSelectionAlgorithm::InputsSelectionAlgorithm(const std::string&)
     : training_strategy_pointer(NULL)
@@ -55,7 +55,7 @@ InputsSelectionAlgorithm::InputsSelectionAlgorithm(const std::string&)
 // XML CONSTRUCTOR
 
 /// XML constructor.
-/// @param inputs_selection_document Pointer to a TinyXML document containing the inputs selection algorithm data.
+/*/// @param inputs_selection_document Pointer to a TinyXML document containing the inputs selection algorithm data.*/
 
 InputsSelectionAlgorithm::InputsSelectionAlgorithm(const tinyxml2::XMLDocument&)
     : training_strategy_pointer(NULL)
@@ -74,13 +74,13 @@ InputsSelectionAlgorithm::~InputsSelectionAlgorithm(void)
 
 // METHODS
 
-// const bool& get_function_regression(void) const method
+// const bool& get_approximation(void) const method
 
 /// Returns whether the problem is of function regression type.
 
-const bool& InputsSelectionAlgorithm::get_function_regression(void) const
+const bool& InputsSelectionAlgorithm::get_approximation(void) const
 {
-    return function_regression;
+    return approximation;
 }
 
 // TrainingStrategy* get_training_strategy_pointer(void) const method
@@ -142,42 +142,42 @@ const bool& InputsSelectionAlgorithm::get_reserve_parameters_data(void) const
 }
 
 
-// const bool& get_reserve_performance_data(void) const method
+// const bool& get_reserve_loss_data(void) const method
 
-/// Returns true if the performance functional performances are to be reserved, and false otherwise.
+/// Returns true if the loss functional losss are to be reserved, and false otherwise.
 
-const bool& InputsSelectionAlgorithm::get_reserve_performance_data(void) const
+const bool& InputsSelectionAlgorithm::get_reserve_loss_data(void) const
 {
-    return(reserve_performance_data);
+    return(reserve_loss_data);
 }
 
 
-// const bool& get_reserve_selection_performance_data(void) const method
+// const bool& get_reserve_selection_loss_data(void) const method
 
-/// Returns true if the selection performances are to be reserved, and false otherwise.
+/// Returns true if the selection losss are to be reserved, and false otherwise.
 
-const bool& InputsSelectionAlgorithm::get_reserve_selection_performance_data(void) const
+const bool& InputsSelectionAlgorithm::get_reserve_selection_loss_data(void) const
 {
-    return(reserve_selection_performance_data);
+    return(reserve_selection_loss_data);
 }
 
 
 // const bool& get_reserve_minimal_parameters(void) const method
 
-/// Returns true if the parameters vector of the neural network with minimum selection performance is to be reserved, and false otherwise.
+/// Returns true if the parameters vector of the neural network with minimum selection loss is to be reserved, and false otherwise.
 
 const bool& InputsSelectionAlgorithm::get_reserve_minimal_parameters(void) const
 {
     return(reserve_minimal_parameters);
 }
 
-// const PerformanceCalculationMethod& get_performance_calculation_method(void) const method
+// const PerformanceCalculationMethod& get_loss_calculation_method(void) const method
 
-/// Returns the method for the calculation of the performance and the selection performance.
+/// Returns the method for the calculation of the loss and the selection loss.
 
-const InputsSelectionAlgorithm::PerformanceCalculationMethod& InputsSelectionAlgorithm::get_performance_calculation_method(void) const
+const InputsSelectionAlgorithm::PerformanceCalculationMethod& InputsSelectionAlgorithm::get_loss_calculation_method(void) const
 {
-    return(performance_calculation_method);
+    return(loss_calculation_method);
 }
 
 // const bool& get_display(void) const method
@@ -190,13 +190,13 @@ const bool& InputsSelectionAlgorithm::get_display(void) const
     return(display);
 }
 
-// const double& get_selection_performance_goal(void) const method
+// const double& get_selection_loss_goal(void) const method
 
-/// Returns the goal for the selection performance in the inputs selection algorithm.
+/// Returns the goal for the selection loss in the inputs selection algorithm.
 
-const double& InputsSelectionAlgorithm::get_selection_performance_goal(void) const
+const double& InputsSelectionAlgorithm::get_selection_loss_goal(void) const
 {
-    return(selection_performance_goal);
+    return(selection_loss_goal);
 }
 
 
@@ -246,13 +246,13 @@ const double& InputsSelectionAlgorithm::get_tolerance(void) const
     return(tolerance);
 }
 
-// std::string write_performance_calculation_method(void) const method
+// std::string write_loss_calculation_method(void) const method
 
-/// Return a string with the performance calculation method of this inputs selection algorithm.
+/// Return a string with the loss calculation method of this inputs selection algorithm.
 
-std::string InputsSelectionAlgorithm::write_performance_calculation_method(void) const
+std::string InputsSelectionAlgorithm::write_loss_calculation_method(void) const
 {
-    switch (performance_calculation_method)
+    switch (loss_calculation_method)
     {
     case Maximum:
     {
@@ -271,8 +271,8 @@ std::string InputsSelectionAlgorithm::write_performance_calculation_method(void)
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
-               << "std::string write_performance_calculation_method(void) const method.\n"
-               << "Unknown performance calculation method.\n";
+               << "std::string write_loss_calculation_method(void) const method.\n"
+               << "Unknown loss calculation method.\n";
 
         throw std::logic_error(buffer.str());
 
@@ -281,16 +281,16 @@ std::string InputsSelectionAlgorithm::write_performance_calculation_method(void)
     }
 }
 
-// void set_function_regression(const bool&) method
+// void set_approximation(const bool&) method
 
 /// Sets a new regression value.
 /// If it is set to true the problem will be taken as a function regression;
-/// if it is set to false the problem will be taken as a pattern recognition.
-/// @param new_regression Regression value.
+/// if it is set to false the problem will be taken as a classification.
+/// @param new_approximation Regression value.
 
-void InputsSelectionAlgorithm::set_function_regression(const bool& new_function_regression)
+void InputsSelectionAlgorithm::set_approximation(const bool& new_approximation)
 {
-    function_regression = new_function_regression;
+    approximation = new_approximation;
 }
 
 
@@ -319,17 +319,17 @@ void InputsSelectionAlgorithm::set_default(void)
     // inputs selection results
 
     reserve_parameters_data = true;
-    reserve_performance_data = true;
-    reserve_selection_performance_data = true;
+    reserve_loss_data = true;
+    reserve_selection_loss_data = true;
     reserve_minimal_parameters = true;
 
-    performance_calculation_method = Minimum;
+    loss_calculation_method = Minimum;
 
     display = true;
 
     // STOPPING CRITERIA
 
-    selection_performance_goal = 0.0;
+    selection_loss_goal = 0.0;
 
     maximum_iterations_number = 1000;
 
@@ -378,25 +378,25 @@ void InputsSelectionAlgorithm::set_reserve_parameters_data(const bool& new_reser
 }
 
 
-// void set_reserve_performance_data(const bool&) method
+// void set_reserve_loss_data(const bool&) method
 
-/// Sets the reserve flag for the performance data.
-/// @param new_reserve_performance_data Flag value.
+/// Sets the reserve flag for the loss data.
+/// @param new_reserve_loss_data Flag value.
 
-void InputsSelectionAlgorithm::set_reserve_performance_data(const bool& new_reserve_performance_data)
+void InputsSelectionAlgorithm::set_reserve_loss_data(const bool& new_reserve_loss_data)
 {
-    reserve_performance_data = new_reserve_performance_data;
+    reserve_loss_data = new_reserve_loss_data;
 }
 
 
-// void set_reserve_selection_performance_data(const bool&) method
+// void set_reserve_selection_loss_data(const bool&) method
 
-/// Sets the reserve flag for the selection performance data.
-/// @param new_reserve_selection_performance_data Flag value.
+/// Sets the reserve flag for the selection loss data.
+/// @param new_reserve_selection_loss_data Flag value.
 
-void InputsSelectionAlgorithm::set_reserve_selection_performance_data(const bool& new_reserve_selection_performance_data)
+void InputsSelectionAlgorithm::set_reserve_selection_loss_data(const bool& new_reserve_selection_loss_data)
 {
-    reserve_selection_performance_data = new_reserve_selection_performance_data;
+    reserve_selection_loss_data = new_reserve_selection_loss_data;
 }
 
 
@@ -410,41 +410,44 @@ void InputsSelectionAlgorithm::set_reserve_minimal_parameters(const bool& new_re
     reserve_minimal_parameters = new_reserve_minimal_parameters;
 }
 
-// void set_performance_calculation_method(const PerformanceCalculationMethod&) method
+// void set_loss_calculation_method(const PerformanceCalculationMethod&) method
 
-/// Sets a new method to calculate the performance and the selection performance.
-/// @param new_performance_calculation_method Method to calculate the performance (Minimum, Maximum or Mean).
+/// Sets a new method to calculate the loss and the selection loss.
+/// @param new_loss_calculation_method Method to calculate the loss (Minimum, Maximum or Mean).
 
-void InputsSelectionAlgorithm::set_performance_calculation_method(const InputsSelectionAlgorithm::PerformanceCalculationMethod& new_performance_calculation_method)
+void InputsSelectionAlgorithm::set_loss_calculation_method(const InputsSelectionAlgorithm::PerformanceCalculationMethod& new_loss_calculation_method)
 {
-    performance_calculation_method = new_performance_calculation_method;
+    loss_calculation_method = new_loss_calculation_method;
 }
 
-// void set_performance_calculation_method(const std::string&) method
+// void set_loss_calculation_method(const std::string&) method
 
-/// Sets a new performance calculation method from a string.
-/// @param new_performance_calculation_method String with the performance calculation method.
+/// Sets a new loss calculation method from a string.
+/// @param new_loss_calculation_method String with the loss calculation method.
 
-void InputsSelectionAlgorithm::set_performance_calculation_method(const std::string& new_performance_calculation_method)
+void InputsSelectionAlgorithm::set_loss_calculation_method(const std::string& new_loss_calculation_method)
 {
-    if(new_performance_calculation_method == "Maximum")
+    if(new_loss_calculation_method == "Maximum")
     {
-        performance_calculation_method = Maximum;
+        loss_calculation_method = Maximum;
 
-    }else if(new_performance_calculation_method == "Minimum")
+    }
+    else if(new_loss_calculation_method == "Minimum")
     {
-        performance_calculation_method = Minimum;
+        loss_calculation_method = Minimum;
 
-    }else if(new_performance_calculation_method == "Mean")
+    }
+    else if(new_loss_calculation_method == "Mean")
     {
-        performance_calculation_method = Mean;
+        loss_calculation_method = Mean;
 
-    }else{
+    }
+    else{
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
-               << "void set_performance_calculation_method(const std::string&) method.\n"
-               << "Unknown performance calculation method.\n";
+               << "void set_loss_calculation_method(const std::string&) method.\n"
+               << "Unknown loss calculation method.\n";
 
         throw std::logic_error(buffer.str());
 
@@ -464,29 +467,29 @@ void InputsSelectionAlgorithm::set_display(const bool& new_display)
     display = new_display;
 }
 
-// void set_selection_performance_goal(const double&) method
+// void set_selection_loss_goal(const double&) method
 
-/// Sets the Selection performance goal for the inputs selection algorithm.
-/// @param new_selection_performance_goal Goal of the selection performance.
+/// Sets the selection loss goal for the inputs selection algorithm.
+/// @param new_selection_loss_goal Goal of the selection loss.
 
-void InputsSelectionAlgorithm::set_selection_performance_goal(const double& new_selection_performance_goal)
+void InputsSelectionAlgorithm::set_selection_loss_goal(const double& new_selection_loss_goal)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_selection_performance_goal < 0)
+    if(new_selection_loss_goal < 0)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
-               << "void set_selection_performance_goal(const double&) method.\n"
-               << "Selection performance goal must be greater or equal than 0.\n";
+               << "void set_selection_loss_goal(const double&) method.\n"
+               << "Selection loss goal must be greater or equal than 0.\n";
 
         throw std::logic_error(buffer.str());
     }
 
 #endif
 
-    selection_performance_goal = new_selection_performance_goal;
+    selection_loss_goal = new_selection_loss_goal;
 }
 
 
@@ -626,19 +629,19 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
         throw std::logic_error(buffer.str());
     }
 
-    // Performance functional stuff
+    // Loss index stuff
 
 
-    if(!training_strategy_pointer->has_performance_functional())
+    if(!training_strategy_pointer->has_loss_index())
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
-               << "Pointer to performance functional is NULL.\n";
+               << "Pointer to loss functional is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
-    if(!training_strategy_pointer->get_performance_functional_pointer()->has_data_set())
+    if(!training_strategy_pointer->get_loss_index_pointer()->has_data_set())
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
@@ -651,9 +654,9 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
     // Problem stuff
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    const DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -678,6 +681,14 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
         for(size_t j = 0; j < targets_number; j++)
         {
             const Vector<double> targets = data_set_pointer->get_variable(target_indices[j]);
+
+            if (inputs.is_binary())
+            {
+
+                correlations(i,j) = targets.calculate_linear_correlation(inputs);
+
+                continue;
+            }
 
             Matrix<double> data(instances_number, 2);
 
@@ -706,11 +717,33 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
             multilayer_perceptron_pointer->set_layer_activation_function(0, Perceptron::Logistic);
 
-            PerformanceFunctional performance_functional(&neural_network, &data_set);
+            LossIndex loss_index(&neural_network, &data_set);
 
-            performance_functional.set_error_type(PerformanceFunctional::WEIGHTED_SQUARED_ERROR);
+            loss_index.set_error_type(LossIndex::WEIGHTED_SQUARED_ERROR);
 
-            TrainingStrategy training_strategy(&performance_functional);
+#ifdef __OPENNN_MPI__
+            neural_network.set_MPI(&neural_network);
+
+            TrainingStrategy training_strategy(&loss_index);
+
+            training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+
+            QuasiNewtonMethod* quasi_newton_method = training_strategy.get_quasi_Newton_method_pointer();
+
+            quasi_newton_method->set_minimum_parameters_increment_norm(1.0e-3);
+
+            quasi_newton_method->set_gradient_norm_goal(1.0e-4);
+
+            quasi_newton_method->set_minimum_loss_increase(1.0e-12);
+
+            quasi_newton_method->set_maximum_iterations_number(100);
+
+            training_strategy.set_display(false);
+
+            training_strategy.perform_training();
+
+#else
+            TrainingStrategy training_strategy(&loss_index);
 
             training_strategy.set_main_type(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
@@ -720,7 +753,7 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
             levenberg_marquardt_algorithm->set_gradient_norm_goal(1.0e-4);
 
-            levenberg_marquardt_algorithm->set_minimum_performance_increase(1.0e-12);
+            levenberg_marquardt_algorithm->set_minimum_loss_increase(1.0e-12);
 
             levenberg_marquardt_algorithm->set_maximum_iterations_number(100);
 
@@ -728,6 +761,7 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
             training_strategy.perform_training();
 
+#endif
             scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
 
             const Vector<double> outputs = neural_network.calculate_output_data(inputs.to_column_matrix()).to_vector();
@@ -750,7 +784,7 @@ Matrix<double> InputsSelectionAlgorithm::calculate_logistic_correlations(void) c
 
 // Vector<double> calculate_final_correlations(void) const method
 
-/// Calculate the correlation depending on whether the problem is a linear regression or a pattern recognition.
+/// Calculate the correlation depending on whether the problem is a linear regression or a classification.
 /// Return the absolute value of the correlation.
 /// If there are many targets in the data set it returns the sum of the absolute values.
 
@@ -759,12 +793,13 @@ Vector<double> InputsSelectionAlgorithm::calculate_final_correlations(void) cons
     Vector<double> final_correlations;
     Matrix<double> correlations;
 
-    DataSet* data_set = training_strategy_pointer->get_performance_functional_pointer()->get_data_set_pointer();
+    DataSet* data_set = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
 
-    if(function_regression)
+    if(approximation)
     {
         correlations = data_set->calculate_linear_correlations();
-    }else
+    }
+    else
     {
         correlations = calculate_logistic_correlations();
     }
@@ -795,8 +830,8 @@ Vector<double> InputsSelectionAlgorithm::calculate_final_correlations(void) cons
 
 void InputsSelectionAlgorithm::set_neural_inputs(const Vector<bool>& inputs)
 {
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t current_inputs_number = inputs.count_occurrences(true);
     const size_t neural_network_inputs_number = neural_network_pointer->get_inputs_number();
@@ -807,7 +842,8 @@ void InputsSelectionAlgorithm::set_neural_inputs(const Vector<bool>& inputs)
         {
             neural_network_pointer->prune_input(0);
         }
-    }else
+    }
+    else
     {
         for (size_t j = neural_network_inputs_number; j < current_inputs_number; j++)
         {
@@ -815,13 +851,16 @@ void InputsSelectionAlgorithm::set_neural_inputs(const Vector<bool>& inputs)
         }
     }
 
-    neural_network_pointer->perturbate_parameters(200);
+    neural_network_pointer->perturbate_parameters(0.001);
+#ifdef __OPENNN_MPI__
+    neural_network_pointer->set_MPI(neural_network_pointer);
+#endif
 }
 
 
 // Vector<double> perform_minimum_model_evaluation(const Vector<bool>&) const method
 
-/// Returns the minimum of the performance and selection performance in trials_number trainings.
+/// Returns the minimum of the loss and selection loss in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const Vector<bool>& inputs)
@@ -852,7 +891,7 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
 
 #endif
 
-    NeuralNetwork* neural_network = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
+    NeuralNetwork* neural_network = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
 
     TrainingStrategy::Results training_strategy_results;
 
@@ -860,19 +899,19 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
     final[0] = 10;
     final[1] = 10;
 
-    Vector<double> current_performance(2);
+    Vector<double> current_loss(2);
 
     Vector<double> final_parameters;
 
-    bool flag_performance = false;
+    bool flag_loss = false;
     bool flag_selection = false;
 
     for (size_t i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
-            final[0] = performance_history[i];
-            flag_performance = true;
+            final[0] = loss_history[i];
+            flag_loss = true;
         }
     }
 
@@ -880,23 +919,28 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
     {
         if(inputs_history[i] == inputs)
         {
-            final[1] = selection_performance_history[i];
+            final[1] = selection_loss_history[i];
             flag_selection = true;
         }
     }
 
-    if(flag_performance && flag_selection)
+    if(flag_loss && flag_selection)
     {
         return(final);
     }
 
-    neural_network->perturbate_parameters(0.5);
+    neural_network->perturbate_parameters(0.001);
+#ifdef __OPENNN_MPI__
+
+        neural_network->set_MPI(neural_network);
+
+#endif
     training_strategy_results = training_strategy_pointer->perform_training();
 
-    current_performance = get_final_performances(training_strategy_results);
+    current_loss = get_final_losss(training_strategy_results);
 
-    final[0] = current_performance[0];
-    final[1] = current_performance[1];
+    final[0] = current_loss[0];
+    final[1] = current_loss[1];
 
     final_parameters.set(neural_network->arrange_parameters());
 
@@ -905,26 +949,30 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
         if(display)
         {
             std::cout << "Trial number: " << i << std::endl;
-            std::cout << "Training performance: " << final[0] << std::endl;
-            std::cout << "Selection performance: " << final[1] << std::endl;
+            std::cout << "Training loss: " << final[0] << std::endl;
+            std::cout << "Selection loss: " << final[1] << std::endl;
         }
 
         neural_network->randomize_parameters_normal();
 
+#ifdef __OPENNN_MPI__
+        neural_network->set_MPI(neural_network);
+#endif
+
         training_strategy_results = training_strategy_pointer->perform_training();
 
-        current_performance = get_final_performances(training_strategy_results);
+        current_loss = get_final_losss(training_strategy_results);
 
-        if(!flag_performance && final[0] > current_performance[0])
+        if(!flag_loss && final[0] > current_loss[0])
         {
-            final[0] = current_performance[0];
+            final[0] = current_loss[0];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if(!flag_selection && final[1] > current_performance[1])
+        if(!flag_selection && final[1] > current_loss[1])
         {
-            final[1] = current_performance[1];
+            final[1] = current_loss[1];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
@@ -932,16 +980,16 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
         if(i == trials_number - 1 && display)
         {
             std::cout << "Trial number: " << trials_number << std::endl;
-            std::cout << "Training performance: " << final[0] << std::endl;
-            std::cout << "Selection performance: " << final[1] << std::endl;
+            std::cout << "Training loss: " << final[0] << std::endl;
+            std::cout << "Selection loss: " << final[1] << std::endl;
         }
     }
 
     inputs_history.push_back(inputs);
 
-    performance_history.push_back(final[0]);
+    loss_history.push_back(final[0]);
 
-    selection_performance_history.push_back(final[1]);
+    selection_loss_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -951,7 +999,7 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
 
 // Vector<double> perform_maximum_model_evaluation(const Vector<bool>&) method
 
-/// Returns the maximum of the performance and selection performance in trials_number trainings.
+/// Returns the maximum of the loss and selection loss in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const Vector<bool>& inputs)
@@ -982,7 +1030,7 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
 
 #endif
 
-    NeuralNetwork* neural_network = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
+    NeuralNetwork* neural_network = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
 
     TrainingStrategy::Results training_strategy_results;
 
@@ -990,19 +1038,19 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
     final[0] = 0;
     final[1] = 0;
 
-    Vector<double> current_performance(2);
+    Vector<double> current_loss(2);
 
     Vector<double> final_parameters;
 
-    bool flag_performance = false;
+    bool flag_loss = false;
     bool flag_selection = false;
 
     for (size_t i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
-            final[0] = performance_history[i];
-            flag_performance = true;
+            final[0] = loss_history[i];
+            flag_loss = true;
         }
     }
 
@@ -1010,23 +1058,28 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
     {
         if(inputs_history[i] == inputs)
         {
-            final[1] = selection_performance_history[i];
+            final[1] = selection_loss_history[i];
             flag_selection = true;
         }
     }
 
-    if(flag_performance && flag_selection)
+    if(flag_loss && flag_selection)
     {
         return(final);
     }
 
-    neural_network->perturbate_parameters(0.5);
+    neural_network->perturbate_parameters(0.001);
+#ifdef __OPENNN_MPI__
+
+        neural_network->set_MPI(neural_network);
+
+#endif
     training_strategy_results = training_strategy_pointer->perform_training();
 
-    current_performance = get_final_performances(training_strategy_results);
+    current_loss = get_final_losss(training_strategy_results);
 
-    final[0] = current_performance[0];
-    final[1] = current_performance[1];
+    final[0] = current_loss[0];
+    final[1] = current_loss[1];
 
     final_parameters.set(neural_network->arrange_parameters());
 
@@ -1035,26 +1088,26 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
         if(display)
         {
             std::cout << "Trial number: " << i << std::endl;
-            std::cout << "Training performance: " << final[0] << std::endl;
-            std::cout << "Selection performance: " << final[1] << std::endl;
+            std::cout << "Training loss: " << final[0] << std::endl;
+            std::cout << "Selection loss: " << final[1] << std::endl;
         }
 
         neural_network->randomize_parameters_normal();
 
         training_strategy_results = training_strategy_pointer->perform_training();
 
-        current_performance = get_final_performances(training_strategy_results);
+        current_loss = get_final_losss(training_strategy_results);
 
-        if(!flag_performance && final[0] < current_performance[0])
+        if(!flag_loss && final[0] < current_loss[0])
         {
-            final[0] = current_performance[0];
+            final[0] = current_loss[0];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
 
-        if(!flag_selection && final[1] < current_performance[1])
+        if(!flag_selection && final[1] < current_loss[1])
         {
-            final[1] = current_performance[1];
+            final[1] = current_loss[1];
 
             final_parameters.set(neural_network->arrange_parameters());
         }
@@ -1062,16 +1115,16 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
         if(i == trials_number - 1 && display)
         {
             std::cout << "Trial number: " << trials_number << std::endl;
-            std::cout << "Training performance: " << final[0] << std::endl;
-            std::cout << "Selection performance: " << final[1] << std::endl;
+            std::cout << "Training loss: " << final[0] << std::endl;
+            std::cout << "Selection loss: " << final[1] << std::endl;
         }
     }
 
     inputs_history.push_back(inputs);
 
-    performance_history.push_back(final[0]);
+    loss_history.push_back(final[0]);
 
-    selection_performance_history.push_back(final[1]);
+    selection_loss_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
 
@@ -1081,7 +1134,7 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
 
 // Vector<double> perform_mean_model_evaluation(const Vector<bool>&) method
 
-/// Returns the mean of the performance and selection performance in trials_number trainings.
+/// Returns the mean of the loss and selection loss in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vector<bool> &inputs)
@@ -1112,7 +1165,7 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
 
 #endif
 
-    NeuralNetwork* neural_network = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
+    NeuralNetwork* neural_network = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
 
     TrainingStrategy::Results training_strategy_results;
 
@@ -1120,19 +1173,19 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
     mean_final[0] = 0;
     mean_final[1] = 0;
 
-    Vector<double> current_performance(2);
+    Vector<double> current_loss(2);
 
     Vector<double> final_parameters;
 
-    bool flag_performance = false;
+    bool flag_loss = false;
     bool flag_selection = false;
 
     for (size_t i = 0; i < inputs_history.size(); i++)
     {
         if(inputs_history[i] == inputs)
         {
-            mean_final[0] = performance_history[i];
-            flag_performance = true;
+            mean_final[0] = loss_history[i];
+            flag_loss = true;
         }
     }
 
@@ -1140,23 +1193,28 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
     {
         if(inputs_history[i] == inputs)
         {
-            mean_final[1] = selection_performance_history[i];
+            mean_final[1] = selection_loss_history[i];
             flag_selection = true;
         }
     }
 
-    if(flag_performance && flag_selection)
+    if(flag_loss && flag_selection)
     {
         return(mean_final);
     }
 
-    neural_network->perturbate_parameters(0.5);
+    neural_network->perturbate_parameters(0.001);
+#ifdef __OPENNN_MPI__
+
+        neural_network->set_MPI(neural_network);
+
+#endif
     training_strategy_results = training_strategy_pointer->perform_training();
 
-    current_performance = get_final_performances(training_strategy_results);
+    current_loss = get_final_losss(training_strategy_results);
 
-    mean_final[0] = current_performance[0];
-    mean_final[1] = current_performance[1];
+    mean_final[0] = current_loss[0];
+    mean_final[1] = current_loss[1];
 
     final_parameters.set(neural_network->arrange_parameters());
 
@@ -1165,89 +1223,89 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
         if(display)
         {
             std::cout << "Trial number: " << i << std::endl;
-            std::cout << "Training performance: " << mean_final[0] << std::endl;
-            std::cout << "Selection performance: " << mean_final[1] << std::endl;
+            std::cout << "Training loss: " << mean_final[0] << std::endl;
+            std::cout << "Selection loss: " << mean_final[1] << std::endl;
         }
 
         neural_network->randomize_parameters_normal();
 
         training_strategy_results = training_strategy_pointer->perform_training();
 
-        current_performance = get_final_performances(training_strategy_results);
+        current_loss = get_final_losss(training_strategy_results);
 
-        if(!flag_performance)
+        if(!flag_loss)
         {
-            mean_final[0] += current_performance[0]/trials_number;
+            mean_final[0] += current_loss[0]/trials_number;
         }
 
         if(!flag_selection)
         {
-            mean_final[1] += current_performance[1]/trials_number;
+            mean_final[1] += current_loss[1]/trials_number;
         }
 
         if(i == trials_number - 1 && display)
         {
             std::cout << "Trial number: " << trials_number << std::endl;
-            std::cout << "Training performance: " << mean_final[0] << std::endl;
-            std::cout << "Selection performance: " << mean_final[1] << std::endl;
+            std::cout << "Training loss: " << mean_final[0] << std::endl;
+            std::cout << "Selection loss: " << mean_final[1] << std::endl;
         }
     }
 
     inputs_history.push_back(inputs);
 
-    performance_history.push_back(mean_final[0]);
+    loss_history.push_back(mean_final[0]);
 
-    selection_performance_history.push_back(mean_final[1]);
+    selection_loss_history.push_back(mean_final[1]);
 
     parameters_history.push_back(final_parameters);
 
     return mean_final;
 }
 
-// Vector<double> get_final_performances(const TrainingStrategy::Results&) const method
+// Vector<double> get_final_losss(const TrainingStrategy::Results&) const method
 
-/// Return final training performance and final selection performance depending on the training method.
+/// Return final training loss and final selection loss depending on the training method.
 /// @param results Results of the perform_training method.
 
-Vector<double> InputsSelectionAlgorithm::get_final_performances(const TrainingStrategy::Results& results) const
+Vector<double> InputsSelectionAlgorithm::get_final_losss(const TrainingStrategy::Results& results) const
 {
-    Vector<double> performances(2);
+    Vector<double> losss(2);
     switch(training_strategy_pointer->get_main_type())
     {
     case TrainingStrategy::NO_MAIN:
     {
-        performances[0] = 0;
-        performances[1] = 0;
+        losss[0] = 0;
+        losss[1] = 0;
         break;
     }
     case TrainingStrategy::GRADIENT_DESCENT:
     {
-        performances[0] = results.gradient_descent_results_pointer->final_performance;
-        performances[1] = results.gradient_descent_results_pointer->final_selection_performance;
+        losss[0] = results.gradient_descent_results_pointer->final_loss;
+        losss[1] = results.gradient_descent_results_pointer->final_selection_loss;
         break;
     }
     case TrainingStrategy::CONJUGATE_GRADIENT:
     {
-        performances[0] = results.conjugate_gradient_results_pointer->final_performance;
-        performances[1] = results.conjugate_gradient_results_pointer->final_selection_performance;
+        losss[0] = results.conjugate_gradient_results_pointer->final_loss;
+        losss[1] = results.conjugate_gradient_results_pointer->final_selection_loss;
         break;
     }
     case TrainingStrategy::QUASI_NEWTON_METHOD:
     {
-        performances[0] = results.quasi_Newton_method_results_pointer->final_performance;
-        performances[1] = results.quasi_Newton_method_results_pointer->final_selection_performance;
+        losss[0] = results.quasi_Newton_method_results_pointer->final_loss;
+        losss[1] = results.quasi_Newton_method_results_pointer->final_selection_loss;
         break;
     }
     case TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
     {
-        performances[0] = results.Levenberg_Marquardt_algorithm_results_pointer->final_performance;
-        performances[1] = results.Levenberg_Marquardt_algorithm_results_pointer->final_selection_performance;
+        losss[0] = results.Levenberg_Marquardt_algorithm_results_pointer->final_loss;
+        losss[1] = results.Levenberg_Marquardt_algorithm_results_pointer->final_selection_loss;
         break;
     }
     case TrainingStrategy::USER_MAIN:
     {
-        performances[0] = 0;
-        performances[1] = 0;
+        losss[0] = 0;
+        losss[1] = 0;
         break;
     }
     default:
@@ -1255,26 +1313,26 @@ Vector<double> InputsSelectionAlgorithm::get_final_performances(const TrainingSt
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
-               << "Vector<double> get_final_performances(const TrainingStrategy::Results) method.\n"
+               << "Vector<double> get_final_losss(const TrainingStrategy::Results) method.\n"
                << "Unknown main type method.\n";
 
         throw std::logic_error(buffer.str());
     }
     }
 
-    return(performances);
+    return(losss);
 }
 
 // Vector<double> perform_model_evaluation(const Vector<bool>&) method
 
-/// Return performance and selection depending on the performance calculation method.
+/// Return loss and selection depending on the loss calculation method.
 /// @param inputs Vector of inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_model_evaluation(const Vector<bool>& inputs)
 {
     set_neural_inputs(inputs);
 
-    switch (performance_calculation_method)
+    switch (loss_calculation_method)
     {
     case Maximum:
     {
@@ -1294,7 +1352,7 @@ Vector<double> InputsSelectionAlgorithm::perform_model_evaluation(const Vector<b
 
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "Vector<double> perform_model_evaluation(const size_t) method.\n"
-               << "Unknown performance calculation method.\n";
+               << "Unknown loss calculation method.\n";
 
         throw std::logic_error(buffer.str());
     }
@@ -1345,21 +1403,21 @@ Vector<double> InputsSelectionAlgorithm::get_parameters_inputs(const Vector<bool
 
 // void delete_selection_history(void) method
 
-/// Delete the history of the selection performance values.
+/// Delete the history of the selection loss values.
 
 void InputsSelectionAlgorithm::delete_selection_history(void)
 {
-    selection_performance_history.set();
+    selection_loss_history.set();
 }
 
 
-// void delete_performance_history(void) method
+// void delete_loss_history(void) method
 
-/// Delete the history of the performance values.
+/// Delete the history of the loss values.
 
-void InputsSelectionAlgorithm::delete_performance_history(void)
+void InputsSelectionAlgorithm::delete_loss_history(void)
 {
-    performance_history.set();
+    loss_history.set();
 }
 
 // void delete_parameters_history(void) method
@@ -1390,23 +1448,23 @@ void InputsSelectionAlgorithm::check(void) const
         throw std::logic_error(buffer.str());
     }
 
-    // Performance functional stuff
+    // Loss index stuff
 
 
-    if(!training_strategy_pointer->has_performance_functional())
+    if(!training_strategy_pointer->has_loss_index())
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
-               << "Pointer to performance functional is NULL.\n";
+               << "Pointer to loss functional is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
     // Neural network stuff
 
-    if(!performance_functional_pointer->has_neural_network())
+    if(!loss_index_pointer->has_neural_network())
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
@@ -1415,7 +1473,7 @@ void InputsSelectionAlgorithm::check(void) const
         throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     if(!neural_network_pointer->has_multilayer_perceptron())
     {
@@ -1452,7 +1510,7 @@ void InputsSelectionAlgorithm::check(void) const
     // Data set stuff
 
 
-    if(!performance_functional_pointer->has_data_set())
+    if(!loss_index_pointer->has_data_set())
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
@@ -1461,7 +1519,7 @@ void InputsSelectionAlgorithm::check(void) const
         throw std::logic_error(buffer.str());
     }
 
-    const DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     const Instances& instances = data_set_pointer->get_instances();
 
@@ -1640,9 +1698,9 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::write_stopping_con
     {
         return ("MaximumTime");
     }
-    case SelectionPerformanceGoal:
+    case SelectionLossGoal:
     {
-        return("SelectionPerformanceGoal");
+        return("SelectionLossGoal");
     }
     case MaximumInputs:
     {
@@ -1712,18 +1770,18 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) co
 
    // Performance history
 
-   if(!performance_data.empty())
+   if(!loss_data.empty())
    {
        buffer << "% Performance history:\n"
-              << performance_data.to_row_matrix() << "\n";
+              << loss_data.to_row_matrix() << "\n";
    }
 
-   // Selection performance history
+   // Selection loss history
 
-   if(!selection_performance_data.empty())
+   if(!selection_loss_data.empty())
    {
-       buffer << "% Selection performance history:\n"
-              << selection_performance_data.to_row_matrix() << "\n";
+       buffer << "% Selection loss history:\n"
+              << selection_loss_data.to_row_matrix() << "\n";
    }
 
    // Minimal parameters
@@ -1739,20 +1797,20 @@ std::string InputsSelectionAlgorithm::InputsSelectionResults::to_string(void) co
    buffer << "% Stopping condition\n"
           << write_stopping_condition() << "\n";
 
-   // Optimum selection performance
+   // Optimum selection loss
 
-   if(final_selection_performance != 0)
+   if(final_selection_loss != 0)
    {
-       buffer << "% Optimum selection performance:\n"
-              << final_selection_performance << "\n";
+       buffer << "% Optimum selection loss:\n"
+              << final_selection_loss << "\n";
    }
 
-   // Final performance
+   // Final loss
 
-   if(final_performance != 0)
+   if(final_loss != 0)
    {
-       buffer << "% Final performance:\n"
-              << final_performance << "\n";
+       buffer << "% Final loss:\n"
+              << final_loss << "\n";
    }
 
    // Optimal input
@@ -1810,11 +1868,13 @@ size_t InputsSelectionAlgorithm::get_input_index(const Vector<Variables::Use> us
             input_number == j)
         {
             break;
-        }else if(uses[i] == Variables::Input)
+        }
+        else if(uses[i] == Variables::Input)
         {
             i++;
             j++;
-        }else
+        }
+        else
         {
             i++;
         }

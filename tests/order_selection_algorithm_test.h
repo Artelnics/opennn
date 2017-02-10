@@ -52,9 +52,9 @@ public:
    void test_get_training_strategy_pointer(void);
 
 
-   void test_get_performance_calculation_method(void);
+   void test_get_loss_calculation_method(void);
 
-   void test_write_performance_calculation_method(void) ;
+   void test_write_loss_calculation_method(void) ;
 
    // Set methods
 
@@ -62,7 +62,7 @@ public:
 
    void test_set_default(void);
 
-   void test_set_performance_calculation_method(void);
+   void test_set_loss_calculation_method(void);
 
    // Performances calculation methods
 
@@ -70,7 +70,7 @@ public:
    void test_perform_maximum_model_evaluation(void);
    void test_perform_mean_model_evaluation(void);
 
-   void test_get_final_performances(void);
+   void test_get_final_losss(void);
 
    void test_perform_model_evaluation(void);
 

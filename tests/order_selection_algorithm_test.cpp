@@ -78,27 +78,27 @@ void OrderSelectionAlgorithmTest::test_get_training_strategy_pointer(void)
 }
 
 
-void OrderSelectionAlgorithmTest::test_get_performance_calculation_method(void)
+void OrderSelectionAlgorithmTest::test_get_loss_calculation_method(void)
 {
-    message += "test_get_performance_calculation_method\n";
+    message += "test_get_loss_calculation_method\n";
 
     IncrementalOrder io;
 
-    io.set_performance_calculation_method(OrderSelectionAlgorithm::Minimum);
+    io.set_loss_calculation_method(OrderSelectionAlgorithm::Minimum);
 
-    assert_true(io.get_performance_calculation_method() == OrderSelectionAlgorithm::Minimum, LOG);
+    assert_true(io.get_loss_calculation_method() == OrderSelectionAlgorithm::Minimum, LOG);
 
 }
 
-void OrderSelectionAlgorithmTest::test_write_performance_calculation_method(void)
+void OrderSelectionAlgorithmTest::test_write_loss_calculation_method(void)
 {
-    message += "test_write_performance_calculation_method\n";
+    message += "test_write_loss_calculation_method\n";
 
     IncrementalOrder io;
 
-    io.set_performance_calculation_method(OrderSelectionAlgorithm::Minimum);
+    io.set_loss_calculation_method(OrderSelectionAlgorithm::Minimum);
 
-    assert_true(io.write_performance_calculation_method() == "Minimum", LOG);
+    assert_true(io.write_loss_calculation_method() == "Minimum", LOG);
 }
 
 // Set methods
@@ -122,9 +122,9 @@ void OrderSelectionAlgorithmTest::test_set_default(void)
 
 }
 
-void OrderSelectionAlgorithmTest::test_set_performance_calculation_method(void)
+void OrderSelectionAlgorithmTest::test_set_loss_calculation_method(void)
 {
-    message += "test_set_performance_calculation_method\n";
+    message += "test_set_loss_calculation_method\n";
 
 }
 
@@ -148,9 +148,9 @@ void OrderSelectionAlgorithmTest::test_perform_mean_model_evaluation(void)
 
 }
 
-void OrderSelectionAlgorithmTest::test_get_final_performances(void)
+void OrderSelectionAlgorithmTest::test_get_final_losss(void)
 {
-    message += "test_get_final_performances\n";
+    message += "test_get_final_losss\n";
 
 }
 
@@ -182,9 +182,9 @@ void OrderSelectionAlgorithmTest::run_test_case(void)
     test_get_training_strategy_pointer();
 
 
-    test_get_performance_calculation_method();
+    test_get_loss_calculation_method();
 
-    test_write_performance_calculation_method();
+    test_write_loss_calculation_method();
 
     // Set methods
 
@@ -192,7 +192,7 @@ void OrderSelectionAlgorithmTest::run_test_case(void)
 
     test_set_default();
 
-    test_set_performance_calculation_method();
+    test_set_loss_calculation_method();
 
     // Performances calculation methods
 
@@ -200,7 +200,7 @@ void OrderSelectionAlgorithmTest::run_test_case(void)
     test_perform_maximum_model_evaluation();
     test_perform_mean_model_evaluation();
 
-    test_get_final_performances();
+    test_get_final_losss();
 
     test_perform_model_evaluation();
 

@@ -252,7 +252,7 @@ Vector<std::string> Instances::write_abbreviated_uses(void) const
       }
       else if(uses[i] == Selection)
       {
-         uses_string[i] = "Gen.";
+         uses_string[i] = "Sel.";
       }
       else if(uses[i] == Testing)
       {
@@ -591,7 +591,7 @@ Vector<size_t> Instances::arrange_training_indices(void) const
 }
 
 
-// Vector<size_t> arrange_selection_indices(void) const method
+// Vector<int> arrange_selection_indices_int(void) const method
 
 /// Returns the indices of the instances which will be used for selection.
 
@@ -609,7 +609,7 @@ Vector<size_t> Instances::arrange_selection_indices(void) const
    {
       if(items[i].use == Selection)
 	  {
-	     selection_indices[count] = i;
+         selection_indices[count] = i;
 		 count++;
 	  }
    }
@@ -636,7 +636,7 @@ Vector<size_t> Instances::arrange_testing_indices(void) const
    {
       if(items[i].use == Testing)
 	  {
-	     testing_indices[count] = i;
+         testing_indices[count] = i;
 		 count++;
 	  }
    }
@@ -644,6 +644,58 @@ Vector<size_t> Instances::arrange_testing_indices(void) const
    return(testing_indices);
 }
 
+// Vector<int> arrange_training_indices_int(void) const method
+
+/// Returns the indices of the instances which will be used for training.
+
+Vector<int> Instances::arrange_training_indices_int(void) const
+{
+   const size_t instances_number = get_instances_number();
+
+   const size_t training_instances_number = count_training_instances_number();
+
+   Vector<int> training_indices(training_instances_number);
+
+   size_t count = 0;
+
+   for(size_t i = 0; i < instances_number; i++)
+   {
+      if(items[i].use == Training)
+      {
+         training_indices[count] = (int)i;
+         count++;
+      }
+   }
+
+   return(training_indices);
+}
+
+
+// Vector<int> arrange_selection_indices_int(void) const method
+
+/// Returns the indices of the instances which will be used for selection.
+
+Vector<int> Instances::arrange_selection_indices_int(void) const
+{
+   const size_t instances_number = get_instances_number();
+
+   const size_t selection_instances_number = count_selection_instances_number();
+
+   Vector<int> selection_indices(selection_instances_number);
+
+   size_t count = 0;
+
+   for(size_t i = 0; i < instances_number; i++)
+   {
+      if(items[i].use == Selection)
+      {
+         selection_indices[count] = (int)i;
+         count++;
+      }
+   }
+
+   return(selection_indices);
+}
 
 // const bool& get_display(void) const method
 
@@ -863,7 +915,9 @@ void Instances::set_unused(const Vector<size_t> & indices)
 {
     size_t index;
 
-    for(size_t i = 0; i < indices.size(); i++)
+#pragma omp parallel for private(index)
+
+    for(int i = 0; i < indices.size(); i++)
     {
         index = indices[i];
 
@@ -1001,14 +1055,15 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
        use_element->LinkEndChild(use_text);
 */
 
-       std::string item_use_string(std::to_string((size_t) get_use(i)));
+       std::string item_use_string(number_to_string((size_t) get_use(i)));
 
        items_uses.append(item_use_string);
 
-       items_uses.append(" ");
+       if(i != instances_number - 1)
+       {
+           items_uses.append(" ");
+       }
    }
-
-   items_uses.pop_back();
 
    tinyxml2::XMLText* items_uses_text = document->NewText(items_uses.c_str());
    element->LinkEndChild(items_uses_text);
@@ -1030,6 +1085,9 @@ tinyxml2::XMLDocument* Instances::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the instances object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void Instances::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1056,14 +1114,15 @@ void Instances::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(size_t i = 0; i < instances_number; i++)
     {
-        std::string item_use_string(std::to_string((size_t) get_use(i)));
+        std::string item_use_string(number_to_string((size_t) get_use(i)));
 
         items_uses.append(item_use_string);
 
-        items_uses.append(" ");
+        if(i != instances_number - 1)
+        {
+            items_uses.append(" ");
+        }
     }
-
-    items_uses.pop_back();
 
     file_stream.OpenElement("ItemsUses");
 

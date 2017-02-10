@@ -49,13 +49,13 @@ public:
 
    // Get methods
 
-   void test_get_performance_functional_pointer(void);
+   void test_get_loss_index_pointer(void);
 
    void test_get_display(void);
 
    // Set methods
 
-   void test_set_performance_functional_pointer(void);
+   void test_set_loss_index_pointer(void);
 
    void test_set_display(void);
 

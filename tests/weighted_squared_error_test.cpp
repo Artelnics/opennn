@@ -69,9 +69,9 @@ void WeightedSquaredErrorTest::test_destructor(void)
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_performance(void)
+void WeightedSquaredErrorTest::test_calculate_loss(void)
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 
    Vector<double> parameters;
 
@@ -290,9 +290,9 @@ void WeightedSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_selection_performance(void)
+void WeightedSquaredErrorTest::test_calculate_selection_loss(void)
 {
-   message += "test_calculate_selection_performance\n";
+   message += "test_calculate_selection_loss\n";
 
    NeuralNetwork nn(1, 1, 1);
 
@@ -306,9 +306,9 @@ void WeightedSquaredErrorTest::test_calculate_selection_performance(void)
 
    WeightedSquaredError wse(&nn, &ds);
 
-   double selection_performance = wse.calculate_selection_error();
+   double selection_loss = wse.calculate_selection_error();
 
-   assert_true(selection_performance == 0.0, LOG);
+   assert_true(selection_loss == 0.0, LOG);
 }
 
 
@@ -512,9 +512,9 @@ void WeightedSquaredErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();
+   test_calculate_loss();
 
-   test_calculate_selection_performance();
+   test_calculate_selection_loss();
 
    test_calculate_gradient();
 

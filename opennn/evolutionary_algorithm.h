@@ -28,13 +28,13 @@
 // OpenNN includes
 
 #include "training_algorithm.h"
-#include "performance_functional.h"
+#include "loss_index.h"
 
 namespace OpenNN
 {
 
 ///
-/// This concrete class represents an evolutionary training algorithm for a performance functional of a neural network.
+/// This concrete class represents an evolutionary training algorithm for a loss functional of a neural network.
 ///
 
 class EvolutionaryAlgorithm : public TrainingAlgorithm
@@ -67,7 +67,7 @@ public:
 
     // GENERAL CONSTRUCTOR
 
-   explicit EvolutionaryAlgorithm(PerformanceFunctional*);
+   explicit EvolutionaryAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
 
@@ -132,25 +132,25 @@ public:
 
       Vector<double> best_norm_history;
 
-      /// History of the population performance over the generations. 
+      /// History of the population loss over the generations. 
 
-      Vector< Vector<double> > performance_history;
+      Vector< Vector<double> > loss_history;
 
-      /// History of the mean performance of the individuals over the generations. 
+      /// History of the mean loss of the individuals over the generations. 
 
-      Vector<double> mean_performance_history;
+      Vector<double> mean_loss_history;
 
-      /// History of the standard deviation of the population performance over the generations. 
+      /// History of the standard deviation of the population loss over the generations. 
 
-      Vector<double> standard_deviation_performance_history;
+      Vector<double> standard_deviation_loss_history;
 
-      /// History of the performance of the best individual over each generations. 
+      /// History of the loss of the best individual over each generations. 
 
-      Vector<double> best_performance_history;
+      Vector<double> best_loss_history;
 
-      /// History of the selection performance of the best individual over each generations. 
+      /// History of the selection loss of the best individual over each generations.
 
-      Vector<double> selection_performance_history;
+      Vector<double> selection_loss_history;
 
       /// History of the elapsed time over the generations.
 
@@ -170,21 +170,21 @@ public:
 
       double final_best_norm;
 
-      /// Final mean population performance. 
+      /// Final mean population loss. 
 
-      double final_mean_performance;
+      double final_mean_loss;
 
-      /// Final standard deviation of the population performance. 
+      /// Final standard deviation of the population loss. 
 
-      double final_standard_deviation_performance;
+      double final_standard_deviation_loss;
 
       /// Performance of the best individual ever. 
 
-      double final_best_performance;
+      double final_best_loss;
 
-      /// Selection performance after training.
+      /// Selection loss after training.
 
-      double final_selection_performance;
+      double final_selection_loss;
 
       /// Total elapsed time in the training process.
 
@@ -212,15 +212,15 @@ public:
 
    // Stopping criteria
 
-   const double& get_best_performance_goal(void) const;
-   const size_t& get_maximum_selection_performance_decreases(void) const;
+   const double& get_best_loss_goal(void) const;
+   const size_t& get_maximum_selection_loss_decreases(void) const;
 
    const size_t& get_maximum_generations_number(void) const;
    const double& get_maximum_time(void) const;
 
    // Reserve training history
 
-   const bool& get_reserve_selection_performance_history(void) const;
+   const bool& get_reserve_selection_loss_history(void) const;
 
    const bool& get_reserve_elapsed_time_history(void) const;
 
@@ -246,7 +246,7 @@ public:
 
    // Population values
 
-   const Vector<double>& get_performance(void) const;
+   const Vector<double>& get_loss(void) const;
    const Vector<double>& get_fitness(void) const;
    const Vector<bool>& get_selection(void) const;
 
@@ -256,8 +256,8 @@ public:
    const double& get_recombination_size(void) const;
    const double& get_mutation_rate(void) const;
    const double& get_mutation_range(void) const;    
-   const double& get_mean_performance_goal(void) const;
-   const double& get_standard_deviation_performance_goal(void) const;
+   const double& get_mean_loss_goal(void) const;
+   const double& get_standard_deviation_loss_goal(void) const;
 
    const bool& get_reserve_population_history(void) const;
    const bool& get_reserve_best_individual_history(void) const;
@@ -265,14 +265,14 @@ public:
    const bool& get_reserve_standard_deviation_norm_history(void) const;
    const bool& get_reserve_best_norm_history(void) const;
 
-   const bool& get_reserve_mean_performance_history(void) const;
-   const bool& get_reserve_standard_deviation_performance_history(void) const;
-   const bool& get_reserve_best_performance_history(void) const;
+   const bool& get_reserve_mean_loss_history(void) const;
+   const bool& get_reserve_standard_deviation_loss_history(void) const;
+   const bool& get_reserve_best_loss_history(void) const;
 
    // Set methods
 
    void set(void);
-   void set(PerformanceFunctional*);
+   void set(LossIndex*);
 
    void set_default(void);
 
@@ -292,7 +292,7 @@ public:
 
    void set_population(const Matrix<double>&);
 
-   void set_performance(const Vector<double>&);
+   void set_loss(const Vector<double>&);
    void set_fitness(const Vector<double>&);
    void set_selection(const Vector<bool>&);
 
@@ -304,8 +304,8 @@ public:
    void set_mutation_range(const double&);
 
    void set_maximum_generations_number(const size_t&);
-   void set_mean_performance_goal(const double&);
-   void set_standard_deviation_performance_goal(const double&);
+   void set_mean_loss_goal(const double&);
+   void set_standard_deviation_loss_goal(const double&);
 
    void set_reserve_population_history(const bool&);
 
@@ -315,9 +315,9 @@ public:
    void set_reserve_standard_deviation_norm_history(const bool&);
    void set_reserve_best_norm_history(const bool&);
 
-   void set_reserve_mean_performance_history(const bool&);
-   void set_reserve_standard_deviation_performance_history(const bool&);
-   void set_reserve_best_performance_history(const bool&);
+   void set_reserve_mean_loss_history(const bool&);
+   void set_reserve_standard_deviation_loss_history(const bool&);
+   void set_reserve_best_loss_history(const bool&);
 
    void set_reserve_all_training_history(const bool&);
 
@@ -329,14 +329,14 @@ public:
 
    // Stopping criteria
 
-   void set_best_performance_goal(const double&);
-   void set_maximum_selection_performance_decreases(const size_t&);
+   void set_best_loss_goal(const double&);
+   void set_maximum_selection_loss_decreases(const size_t&);
 
    void set_maximum_time(const double&);
 
    // Reserve training history
 
-   void set_reserve_selection_performance_history(const bool&);
+   void set_reserve_selection_loss_history(const bool&);
 
    void set_reserve_elapsed_time_history(const bool&);
 
@@ -351,8 +351,8 @@ public:
 
    size_t calculate_best_individual_index(void) const;
 
-   double calculate_mean_performance(void) const;
-   double calculate_standard_deviation_performance(void) const;
+   double calculate_mean_loss(void) const;
+   double calculate_standard_deviation_loss(void) const;
 
    // Initialization methods
 
@@ -370,7 +370,7 @@ public:
 
    Vector<double> calculate_population_norm(void) const;
 
-   // Population performance methods
+   // Population loss methods
 
    void perform_fitness_assignment(void);
    void perform_selection(void);
@@ -429,7 +429,7 @@ private:
 
    /// Performance of population.
 
-   Vector<double> performance;
+   Vector<double> loss;
 
    /// Fitness of population.
 
@@ -498,28 +498,28 @@ private:
 
    // STOPPING CRITERIA
 
-   /// Target value for the mean performance of the population.
+   /// Target value for the mean loss of the population.
    /// It is used as a stopping criterion.
 
-   double mean_performance_goal;
+   double mean_loss_goal;
 
-   /// Target value for the standard deviation of the population performance.
+   /// Target value for the standard deviation of the population loss.
    /// It is used as a stopping criterion.
 
-   double standard_deviation_performance_goal;
+   double standard_deviation_loss_goal;
 
-   /// Best goal value for the performance. It is used as a stopping criterion.
+   /// Best goal value for the loss. It is used as a stopping criterion.
 
-   double best_performance_goal;
+   double best_loss_goal;
 
    /// Maximum number of generations to perform_training.
 
    size_t maximum_generations_number;
 
-   /// Number of generations where the selection performance decreases.
+   /// Number of generations where the selection loss increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_performance_decreases;
+   size_t maximum_selection_loss_decreases;
 
    /// Maximum training time. It is used as a stopping criterion.
 
@@ -550,25 +550,25 @@ private:
 
    bool reserve_best_norm_history;
 
-   /// True if the mean performance history vector is to be reserved, false otherwise.
+   /// True if the mean loss history vector is to be reserved, false otherwise.
 
-   bool reserve_mean_performance_history;
+   bool reserve_mean_loss_history;
 
-   /// True if the standard deviation of performance history vector is to be reserved, false otherwise.
+   /// True if the standard deviation of loss history vector is to be reserved, false otherwise.
 
-   bool reserve_standard_deviation_performance_history;
+   bool reserve_standard_deviation_loss_history;
 
-   /// True if the best performance history vector is to be reserved, false otherwise.
+   /// True if the best loss history vector is to be reserved, false otherwise.
 
-   bool reserve_best_performance_history;
+   bool reserve_best_loss_history;
 
    /// True if the elapsed time history vector is to be reserved, false otherwise.
 
    bool reserve_elapsed_time_history;
 
-   /// True if the Selection performance history vector is to be reserved, false otherwise.
+   /// True if the selection loss history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_performance_history;
+   bool reserve_selection_loss_history;
 };
 
 }

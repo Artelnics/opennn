@@ -390,7 +390,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
                                                               output_Hessian,
                                                               layers_delta);
 
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_combinations, 1, combinations);
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss_combinations, 1, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -412,7 +412,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
 
    interlayers_Delta = mpt.calculate_interlayers_Delta();
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_combinations, combinations);
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss_combinations, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
 */
@@ -433,7 +433,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
 
    interlayers_Delta = mpt.calculate_interlayers_Delta();
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss_output_combinations, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
 */
@@ -453,7 +453,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
 
    interlayers_Delta = mpt.calculate_interlayers_Delta();
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss_output_combinations, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
 */
@@ -473,7 +473,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
 
    interlayers_Delta = mpt.calculate_interlayers_Delta();
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_output_combinations, combinations);
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss_output_combinations, combinations);
 
    assert_true((interlayers_Delta[0] - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -509,7 +509,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
 
    const size_t index_1 = 1;
 
-   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance_combination, index_1, combinations);
+   numerical_interlayers_Delta = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss_combination, index_1, combinations);
 
    assert_true((output_interlayers_Delta - numerical_interlayers_Delta).calculate_absolute_value() < 1.0e-3, LOG);
    */
@@ -923,7 +923,7 @@ void ErrorTermTest::test_write_information(void)
 
 void ErrorTermTest::run_test_case(void)
 {
-   message += "Running performance term test case...\n";
+   message += "Running error term test case...\n";
 
    // Constructor and destructor methods
 
@@ -985,7 +985,7 @@ void ErrorTermTest::run_test_case(void)
 
    test_write_information();
 
-   message += "End of performance term test case.\n";
+   message += "End of error term test case.\n";
 }
 
 

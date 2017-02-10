@@ -32,119 +32,196 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Leukemia Application." << std::endl;
+        int rank = 0;
+
+#ifdef __OPENNN_MPI__
+
+        int size = 1;
+
+        MPI_Init(NULL,NULL);
+
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+#endif
+
+        if(rank == 0)
+        {
+            std::cout << "OpenNN. Leukemia Application." << std::endl;
+        }
 
         srand((unsigned)time(NULL));
 
-        // Data set
+        // Global variables
 
         DataSet data_set;
 
-        data_set.set_data_file_name("../data/leukemia.dat");
+        NeuralNetwork neural_network;
 
-        data_set.set_separator("Space");
+        LossIndex loss_index;
 
-        data_set.load_data();
+        TrainingStrategy training_strategy;
 
-        data_set.balance_binary_targets_distribution();
+        ModelSelection model_selection;
 
-        // Variables
+        // Local variables
 
-        Variables* variables_pointer = data_set.get_variables_pointer();
+        DataSet local_data_set;
 
-        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        NeuralNetwork local_neural_network;
 
-        // Instances
+        LossIndex local_loss_index;
 
-        Instances* instances_pointer = data_set.get_instances_pointer();
+        TrainingStrategy local_training_strategy;
 
-        instances_pointer->split_random_indices();
+        ModelSelection local_model_selection;
 
-        const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+        if(rank == 0)
+        {
 
-        // Neural network
+            // Data set
 
-        NeuralNetwork neural_network(1, 1, 1);
+            data_set.set_data_file_name("../data/leukemia.dat");
 
-        Inputs* inputs_pointer = neural_network.get_inputs_pointer();
+            data_set.set_separator("Space");
 
-        inputs_pointer->set_information(inputs_information);
+            data_set.load_data();
 
-        Outputs* outputs_pointer = neural_network.get_outputs_pointer();
+            data_set.balance_binary_targets_distribution();
 
-        outputs_pointer->set_information(targets_information);
+            // Variables
 
-        neural_network.construct_scaling_layer();
+            Variables* variables_pointer = data_set.get_variables_pointer();
 
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-        scaling_layer_pointer->set_statistics(inputs_statistics);
+            const size_t inputs_number = variables_pointer->count_inputs_number();
+            const size_t targets_number = variables_pointer->count_targets_number();
 
-        scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+            // Instances
 
-        neural_network.construct_probabilistic_layer();
+            Instances* instances_pointer = data_set.get_instances_pointer();
 
-        ProbabilisticLayer* probabilistic_layer_pointer = neural_network.get_probabilistic_layer_pointer();
+            instances_pointer->split_random_indices();
 
-        probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Probability);
+            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
-        // Performance functional
+            // Neural network
 
-        PerformanceFunctional performance_functional(&neural_network, &data_set);
+            neural_network.set(inputs_number, 1, targets_number);
 
-        // Training strategy
+            Inputs* inputs_pointer = neural_network.get_inputs_pointer();
 
-        TrainingStrategy training_strategy(&performance_functional);
+            inputs_pointer->set_information(inputs_information);
 
-        training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+            Outputs* outputs_pointer = neural_network.get_outputs_pointer();
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+            outputs_pointer->set_information(targets_information);
 
-        quasi_Newton_method_pointer->set_minimum_performance_increase(1.0e-6);
+            neural_network.construct_scaling_layer();
 
-        quasi_Newton_method_pointer->set_display(false);
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        // Model selection
+            scaling_layer_pointer->set_statistics(inputs_statistics);
 
-        ModelSelection model_selection(&training_strategy);
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
 
-        ModelSelection::ModelSelectionResults model_selection_results;
+            neural_network.construct_probabilistic_layer();
 
-        model_selection.set_inputs_selection_type(ModelSelection::GROWING_INPUTS);
+            ProbabilisticLayer* probabilistic_layer_pointer = neural_network.get_probabilistic_layer_pointer();
 
-        GrowingInputs* growing_inputs_pointer = model_selection.get_growing_inputs_pointer();
+            probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Probability);
 
-        growing_inputs_pointer->set_function_regression(false);
+            // Loss index
 
-        growing_inputs_pointer->set_maximum_selection_failures(3);
+            loss_index.set_data_set_pointer(&data_set);
+            loss_index.set_neural_network_pointer(&neural_network);
 
-        model_selection_results = model_selection.perform_inputs_selection();
+            // Training strategy
 
-        // Testing analysis
+            training_strategy.set(&loss_index);
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+            training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-        instances_pointer->set_testing();
+            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+            quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
 
-        // Save results
+            training_strategy.set_display(false);
 
-        scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+            // Model selection
 
-        data_set.save("../data/data_set.xml");
+            model_selection.set_training_strategy_pointer(&training_strategy);
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+            model_selection.set_inputs_selection_type(ModelSelection::GROWING_INPUTS);
 
-        training_strategy.save("../data/training_strategy.xml");
+            GrowingInputs* growing_inputs_pointer = model_selection.get_growing_inputs_pointer();
 
-        model_selection.save("../data/model_selection.xml");
-        model_selection_results.save("../data/model_selection_results.dat");
+            growing_inputs_pointer->set_approximation(false);
 
-        confusion.save("../data/confusion.dat");
+            growing_inputs_pointer->set_maximum_selection_failures(3);
+        }
 
+#ifdef __OPENNN_MPI__
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        local_data_set.set_MPI(&data_set);
+
+        local_neural_network.set_MPI(&neural_network);
+
+        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
+
+        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
+
+        local_model_selection.set_MPI(&local_training_strategy, &model_selection);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        local_training_strategy.set_display(false);
+
+        local_model_selection.set_approximation(false);
+
+        ModelSelection::ModelSelectionResults model_selection_results = local_model_selection.perform_inputs_selection();
+#else
+        ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_inputs_selection();
+#endif
+
+        if(rank == 0)
+        {
+#ifdef __OPENNN_MPI__
+            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
+#endif
+            // Testing analysis
+
+            TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+            const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+
+            // Save results
+
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+
+            data_set.save("../data/data_set.xml");
+
+            neural_network.save("../data/neural_network.xml");
+
+            training_strategy.save("../data/training_strategy.xml");
+
+            model_selection.save("../data/model_selection.xml");
+            //        model_selection_results.save("../data/model_selection_results.dat");
+
+            confusion.save("../data/confusion.dat");
+        }
+#ifdef __OPENNN_MPI__
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Finalize();
+#endif
         return(0);
     }
     catch(std::exception& e)

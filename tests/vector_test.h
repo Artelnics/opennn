@@ -193,6 +193,9 @@ public:
    void test_scale_minimum_maximum(void);
    void test_scale_mean_standard_deviation(void);
 
+   void test_unscale_minimum_maximum(void);
+   void test_unscale_mean_standard_deviation(void);
+
    // Parsing methods
 
    void test_parse(void);

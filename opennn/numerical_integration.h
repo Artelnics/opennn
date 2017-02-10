@@ -233,13 +233,13 @@ class NumericalIntegration
 
    /// This method evaluates the integral of a function given as a class member method. 
    /// @param t : Object constructor containing the member method to integrate.  
-   /// @param f: Pointer to the member method.
+   /*/// @param f: Pointer to the member method.*/
    /// @param a: Lower integration limit. 
    /// @param b: Upper integration limit. 
    /// @param n: Number of intervals. 
 
    template<class T> 
-   double calculate_integral(const T& t, double (T::*)(const double&) const , const double& a, const double& b, const size_t& n) const
+   double calculate_integral(const T& t,/* double (T::*)(const double&) const , */const double& a, const double& b, const size_t& n) const
    {
       switch(numerical_integration_method)
       {
@@ -275,13 +275,13 @@ class NumericalIntegration
 
    /// This method evaluates the integral of a vector function given as a class member method with n intervals. 
    /// @param t : Object constructor containing the member method to integrate.  
-   /// @param f: Pointer to the member method.
+   /*/// @param f: Pointer to the member method.*/
    /// @param a: Lower integration limit. 
    /// @param b: Upper integration limit. 
    /// @param n: Number of intervals. 
 
    template<class T> 
-   Vector<double> calculate_integral(const T& t, Vector<double> (T::*)(const double&) const , const double& a, const double& b, const size_t& n) const
+   Vector<double> calculate_integral(const T& t,/* Vector<double> (T::*)(const double&) const , */const double& a, const double& b, const size_t& n) const
    {
       switch(numerical_integration_method)
       {

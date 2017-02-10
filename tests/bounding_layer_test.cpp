@@ -186,6 +186,7 @@ void BoundingLayerTest::test_calculate_outputs(void)
    BoundingLayer bl(1);
    bl.set_lower_bound(0, -1.0);
    bl.set_upper_bound(0,  1.0);
+   bl.set_bounding_method("Bounding");
    Vector<double> inputs(1);
 
    // Test

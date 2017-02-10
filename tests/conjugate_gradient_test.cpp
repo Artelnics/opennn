@@ -37,17 +37,17 @@ void ConjugateGradientTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
 
    // Default constructor
 
    ConjugateGradient cg1; 
-   assert_true(cg1.has_performance_functional() == false, LOG);
+   assert_true(cg1.has_loss_index() == false, LOG);
 
-   // Performance functional constructor
+   // Loss index constructor
 
    ConjugateGradient cg2(&pf); 
-   assert_true(cg2.has_performance_functional() == true, LOG);
+   assert_true(cg2.has_loss_index() == true, LOG);
 }
 
 
@@ -101,14 +101,14 @@ void ConjugateGradientTest::test_set_reserve_all_training_history(void)
    assert_true(cg.get_reserve_parameters_history() == true, LOG);
    assert_true(cg.get_reserve_parameters_norm_history() == true, LOG);
 
-   assert_true(cg.get_reserve_performance_history() == true, LOG);
+   assert_true(cg.get_reserve_loss_history() == true, LOG);
    assert_true(cg.get_reserve_gradient_history() == true, LOG);
    assert_true(cg.get_reserve_gradient_norm_history() == true, LOG);
 
    assert_true(cg.get_reserve_training_direction_history() == true, LOG);
    assert_true(cg.get_reserve_training_rate_history() == true, LOG);
    assert_true(cg.get_reserve_elapsed_time_history() == true, LOG);
-   assert_true(cg.get_reserve_selection_performance_history() == true, LOG);
+   assert_true(cg.get_reserve_selection_loss_history() == true, LOG);
 }
 
 
@@ -120,8 +120,10 @@ void ConjugateGradientTest::test_calculate_PR_parameter(void)
    ds.randomize_data_normal();
 
    NeuralNetwork nn(1 ,1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    ConjugateGradient cg(&pf);
+
+   pf.set_error_type("SUM_SQUARED_ERROR");
 
    nn.initialize_parameters(2.0);
    Vector<double> old_gradient = pf.calculate_gradient();
@@ -143,8 +145,10 @@ void ConjugateGradientTest::test_calculate_FR_parameter(void)
    DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
    NeuralNetwork nn(1 ,1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    ConjugateGradient cg(&pf);
+
+   pf.set_error_type("SUM_SQUARED_ERROR");
 
    nn.initialize_parameters(2.0);
    Vector<double> old_gradient = pf.calculate_gradient();
@@ -166,8 +170,10 @@ void ConjugateGradientTest::test_calculate_PR_training_direction(void)
    DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
    NeuralNetwork nn(1 ,1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    ConjugateGradient cg(&pf);
+
+   pf.set_error_type("SUM_SQUARED_ERROR");
 
    nn.initialize_parameters(2.0);
    Vector<double> old_gradient = pf.calculate_gradient();
@@ -192,8 +198,10 @@ void ConjugateGradientTest::test_calculate_FR_training_direction(void)
    DataSet ds(1, 1, 2);
    ds.randomize_data_normal();
    NeuralNetwork nn(1 ,1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    ConjugateGradient cg(&pf);
+
+   pf.set_error_type("SUM_SQUARED_ERROR");
 
    nn.initialize_parameters(2.0);
    Vector<double> old_gradient = pf.calculate_gradient();
@@ -227,14 +235,14 @@ void ConjugateGradientTest::test_perform_training(void)
 
    NeuralNetwork nn(1, 1, 1);
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
-   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
-   double old_performance;
-   double performance;
+   double old_loss;
+   double loss;
 
-   double performance_goal;
+   double loss_goal;
 
    ConjugateGradient cg(&pf);
 
@@ -244,16 +252,16 @@ void ConjugateGradientTest::test_perform_training(void)
 
    nn.randomize_parameters_normal();
 
-   old_performance = pf.calculate_performance();
+   old_loss = pf.calculate_loss();
 
    cg.set_display(false);
    cg.set_maximum_iterations_number(1);
 
    cg.perform_training();
 
-   performance = pf.calculate_performance();
+   loss = pf.calculate_loss();
 
-   assert_true(performance < old_performance, LOG);
+   assert_true(loss < old_loss, LOG);
 
    // Minimum parameters increment norm
 
@@ -262,8 +270,8 @@ void ConjugateGradientTest::test_perform_training(void)
    minimum_parameters_increment_norm = 0.1;
 
    cg.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   cg.set_performance_goal(0.0);
-   cg.set_minimum_performance_increase(0.0);
+   cg.set_loss_goal(0.0);
+   cg.set_minimum_loss_increase(0.0);
    cg.set_gradient_norm_goal(0.0);
    cg.set_maximum_iterations_number(1000);
    cg.set_maximum_time(1000.0);
@@ -274,30 +282,30 @@ void ConjugateGradientTest::test_perform_training(void)
 
    nn.initialize_parameters(-1.0);
 
-   performance_goal = 0.1;
+   loss_goal = 0.1;
 
    cg.set_minimum_parameters_increment_norm(0.0);
-   cg.set_performance_goal(performance_goal);
-   cg.set_minimum_performance_increase(0.0);
+   cg.set_loss_goal(loss_goal);
+   cg.set_minimum_loss_increase(0.0);
    cg.set_gradient_norm_goal(0.0);
    cg.set_maximum_iterations_number(1000);
    cg.set_maximum_time(1000.0);
 
    cg.perform_training();
 
-   performance = pf.calculate_performance();
+   loss = pf.calculate_loss();
 
-   assert_true(performance < performance_goal, LOG);
+   assert_true(loss < loss_goal, LOG);
 
    // Minimum evaluation improvement
 
    nn.initialize_parameters(-1.0);
 
-   double minimum_performance_increase = 0.1;
+   double minimum_loss_increase = 0.1;
 
    cg.set_minimum_parameters_increment_norm(0.0);
-   cg.set_performance_goal(0.0);
-   cg.set_minimum_performance_increase(minimum_performance_increase);
+   cg.set_loss_goal(0.0);
+   cg.set_minimum_loss_increase(minimum_loss_increase);
    cg.set_gradient_norm_goal(0.0);
    cg.set_maximum_iterations_number(1000);
    cg.set_maximum_time(1000.0);
@@ -311,8 +319,8 @@ void ConjugateGradientTest::test_perform_training(void)
    double gradient_norm_goal = 0.1;
 
    cg.set_minimum_parameters_increment_norm(0.0);
-   cg.set_performance_goal(0.0);
-   cg.set_minimum_performance_increase(0.0);
+   cg.set_loss_goal(0.0);
+   cg.set_minimum_loss_increase(0.0);
    cg.set_gradient_norm_goal(gradient_norm_goal);
    cg.set_maximum_iterations_number(1000);
    cg.set_maximum_time(1000.0);
@@ -348,7 +356,7 @@ void ConjugateGradientTest::test_from_XML(void)
 
    // Test
 
-   cg1.initialize_random();
+   cg1.set_display(true);
 
    document = cg1.to_XML();
 

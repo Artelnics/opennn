@@ -42,19 +42,19 @@ void TrainingAlgorithmTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
 
    // Test
 
    MockTrainingAlgorithm mta1;
 
-   assert_true(mta1.has_performance_functional() == false, LOG);
+   assert_true(mta1.has_loss_index() == false, LOG);
 
    // Test
 
    MockTrainingAlgorithm mta2(&pf);
 
-   assert_true(mta2.has_performance_functional() == true, LOG);
+   assert_true(mta2.has_loss_index() == true, LOG);
 }
 
 
@@ -68,15 +68,15 @@ void TrainingAlgorithmTest::test_destructor(void)
 }
 
 
-void TrainingAlgorithmTest::test_get_performance_functional_pointer(void)
+void TrainingAlgorithmTest::test_get_loss_index_pointer(void)
 {
-   message += "test_get_performance_functional_pointer\n"; 
+   message += "test_get_loss_index_pointer\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
    
    MockTrainingAlgorithm mta(&pf);
 
-   assert_true(mta.get_performance_functional_pointer() != NULL, LOG);
+   assert_true(mta.get_loss_index_pointer() != NULL, LOG);
 }
 
 
@@ -104,9 +104,9 @@ void TrainingAlgorithmTest::test_set_default(void)
 }
 
 
-void TrainingAlgorithmTest::test_set_performance_functional_pointer(void)
+void TrainingAlgorithmTest::test_set_loss_index_pointer(void)
 {
-   message += "test_set_performance_functional_pointer\n"; 
+   message += "test_set_loss_index_pointer\n"; 
 }
 
 
@@ -174,12 +174,12 @@ void TrainingAlgorithmTest::run_test_case(void)
 
    // Get methods
 
-   test_get_performance_functional_pointer();
+   test_get_loss_index_pointer();
    test_get_display();
 
    // Set methods
 
-   test_set_performance_functional_pointer();
+   test_set_loss_index_pointer();
    test_set_display();
 
    test_set();

@@ -566,8 +566,17 @@ public:
 
    // Matrix<double> calculate_second_derivative(const T& , double (T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& , const Vector<double>& ) const
 
+   /// Returns the second derivative of a vector function using the forward differences method.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy_1: Dummy integer for the method prototype.
+   /// @param x1: Input vector.
+   /// @param dummy_2: Dummy integer for the method prototype.
+   /// @param x2: Input vector.
+
    template<class T>
-   Matrix<double> calculate_forward_differences_second_derivative(const T& t, double (T::*f)(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const, const size_t& dummy_1, const Vector<double>& x1, const size_t& dummy_2,const Vector<double>& x2) const
+   Matrix<double> calculate_forward_differences_second_derivative(const T& t, double (T::*f)(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const,
+                                                                  const size_t& dummy_1, const Vector<double>& x1, const size_t& dummy_2,const Vector<double>& x2) const
    {
        const size_t n = x1.size();
        const size_t m = x2.size();

@@ -370,6 +370,9 @@ tinyxml2::XMLDocument* MathematicalModel::to_XML(void) const
 
 // virtual void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the mathematical model object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void MathematicalModel::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;

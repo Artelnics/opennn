@@ -1111,6 +1111,9 @@ tinyxml2::XMLDocument* ProbabilisticLayer::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;

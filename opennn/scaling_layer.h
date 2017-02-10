@@ -89,15 +89,21 @@ public:
 
    Matrix<double> arrange_statistics(void) const;
 
+   Vector<double> arrange_minimums(void) const;
+   Vector<double> arrange_maximums(void) const;
    Vector<double> arrange_means(void) const;
    Vector<double> arrange_standard_deviations(void) const;
 
    // Variables scaling and unscaling
 
    const ScalingMethod& get_scaling_method(void) const;
+   const Vector<ScalingMethod> get_scaling_methods(void) const;
 
    std::string write_scaling_method(void) const;
    std::string write_scaling_method_text(void) const;
+
+   Vector<std::string> write_scaling_methods(void) const;
+   Vector<std::string> write_scaling_methods_text(void) const;
 
    // Display messages
 
@@ -127,6 +133,9 @@ public:
 
    void set_scaling_method(const ScalingMethod&);
    void set_scaling_method(const std::string&);
+
+   void set_scaling_methods(const Vector<ScalingMethod>&);
+   void set_scaling_methods(const Vector<std::string>&);
 
    // Display messages
 
@@ -201,6 +210,10 @@ protected:
    /// Method for scaling the input variables.
 
    ScalingMethod scaling_method;
+
+   /// Vector of scaling methods for each variable.
+
+   Vector<ScalingMethod> scaling_methods;
 
    /// Display warning messages to screen. 
 

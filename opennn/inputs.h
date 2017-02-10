@@ -173,8 +173,8 @@ public:
    // virtual void read_XML(   );
 
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) const;
-   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) const;
+   void to_PMML(tinyxml2::XMLElement*, const bool& is_data_scaled = false, const Vector< Statistics<double> >& inputs_statistics = Vector< Statistics<double> >() ) const;
+   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const Vector< Statistics<double> >& inputs_statistics = Vector< Statistics<double> >() ) const;
    void write_PMML_mining_schema(tinyxml2::XMLPrinter&) const;
    void write_PMML_neural_inputs(tinyxml2::XMLPrinter&, const bool& is_data_scaled = false) const;
 

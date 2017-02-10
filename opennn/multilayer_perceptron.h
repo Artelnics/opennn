@@ -61,7 +61,8 @@ public:
 
    // NETWORK ARCHITECTURE CONSTRUCTOR
 
-   explicit MultilayerPerceptron(const Vector<size_t>&);
+    explicit MultilayerPerceptron(const Vector<size_t>&);
+    explicit MultilayerPerceptron(const Vector<int>&);
 
    // ONE LAYER CONSTRUCTOR 
 
@@ -122,6 +123,38 @@ public:
       return(architecture);
    }
 
+   /// Returns a vector with the architecture of the multilayer perceptron.
+   /// The elements of this vector are as follows;
+   /// <UL>
+   /// <LI> Number of inputs.</LI>
+   /// <LI> Size of the first hidden layer.</LI>
+   /// <LI> ...</LI>
+   /// <LI> Number of output perceptrons.</LI>
+   /// </UL>
+
+   inline Vector<int> arrange_architecture_int(void) const
+   {
+      const size_t layers_number = get_layers_number();
+
+      Vector<int> architecture;
+
+      if(layers_number != 0)
+      {
+         const size_t inputs_number = get_inputs_number();
+         architecture.resize(1+layers_number);
+
+         architecture[0] = (int)inputs_number;
+
+         Vector<size_t> layers_size = arrange_layers_perceptrons_numbers();
+
+         for(size_t i = 0; i < layers_number; i++)
+         {
+            architecture[i+1] = (int)layers_size[i];
+         }
+      }
+
+      return(architecture);
+   }
 
    /// Returns a vector with the sizes of the hidden layers in the multilayer perceptron.
 
@@ -240,6 +273,8 @@ public:
    size_t count_parameters_number(void) const;
    Vector<double> arrange_parameters(void) const;   
    
+   Vector<double> arrange_parameters_statistics(void) const;
+
    Vector<size_t> count_layers_parameters_numbers(void) const;
 
    size_t get_layer_index(const size_t&) const;
@@ -265,6 +300,7 @@ public:
    void set(void);
    void set(const Vector<PerceptronLayer>&);
    void set(const Vector<size_t>&);
+   void set(const Vector<int>&);
    void set(const size_t&, const size_t&);
    void set(const size_t&, const size_t&, const size_t&);
    void set(const MultilayerPerceptron&);

@@ -26,7 +26,7 @@ variables.h
     root_mean_squared_error.h 
     error_term.h 
     regularization_term.h 
-    performance_functional.h 
+    loss_index.h 
     outputs_integrals.h 
     normalized_squared_error.h 
     neural_parameters_norm.h 
@@ -94,7 +94,7 @@ variables.cpp
     root_mean_squared_error.cpp 
     error_term.cpp 
     regularization_term.cpp 
-    performance_functional.cpp 
+    loss_index.cpp 
     outputs_integrals.cpp 
     normalized_squared_error.cpp 
     neural_parameters_norm.cpp 

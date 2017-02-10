@@ -68,7 +68,7 @@ public:
 
     // ENUMERATIONS
 
-    /// Enumeration of available methods for the calculus of the performances.
+    /// Enumeration of available methods for the calculus of the losss.
 
     enum PerformanceCalculationMethod{Minimum, Maximum, Mean};
 
@@ -76,7 +76,7 @@ public:
 
     enum StoppingCondition{
         MaximumTime,
-        SelectionPerformanceGoal,
+        SelectionLossGoal,
         MaximumInputs,
         MinimumInputs,
         MaximumIterations,
@@ -116,25 +116,25 @@ public:
 
        /// Performance of the different neural networks.
 
-       Vector<double> performance_data;
+       Vector<double> loss_data;
 
-       /// Selection performance of the different neural networks.
+       /// Selection loss of the different neural networks.
 
-       Vector<double> selection_performance_data;
+       Vector<double> selection_loss_data;
 
-       /// Vector of parameters for the neural network with minimum selection performance.
+       /// Vector of parameters for the neural network with minimum selection loss.
 
        Vector<double> minimal_parameters;
 
-       /// Value of minimum selection performance.
+       /// Value of minimum selection loss.
 
-       double final_selection_performance;
+       double final_selection_loss;
 
-       /// Value of performance for the neural network with minimum selection performance.
+       /// Value of loss for the neural network with minimum selection loss.
 
-       double final_performance;
+       double final_loss;
 
-       /// Inputs of the neural network with minimum selection performance.
+       /// Inputs of the neural network with minimum selection loss.
 
        Vector<bool> optimal_inputs;
 
@@ -146,7 +146,7 @@ public:
 
        StoppingCondition stopping_condition;
 
-       /// Elapsed time during the performance of the algortihm.
+       /// Elapsed time during the loss of the algortihm.
 
        double elapsed_time;
     };
@@ -155,7 +155,7 @@ public:
 
     // Get methods
 
-    const bool& get_function_regression(void) const;
+    const bool& get_approximation(void) const;
 
     TrainingStrategy* get_training_strategy_pointer(void) const;
 
@@ -164,26 +164,26 @@ public:
     const size_t& get_trials_number(void) const;
 
     const bool& get_reserve_parameters_data(void) const;
-    const bool& get_reserve_performance_data(void) const;
-    const bool& get_reserve_selection_performance_data(void) const;
+    const bool& get_reserve_loss_data(void) const;
+    const bool& get_reserve_selection_loss_data(void) const;
     const bool& get_reserve_minimal_parameters(void) const;
 
-    const PerformanceCalculationMethod& get_performance_calculation_method(void) const;
+    const PerformanceCalculationMethod& get_loss_calculation_method(void) const;
 
     const bool& get_display(void) const;
 
-    const double& get_selection_performance_goal(void) const;
+    const double& get_selection_loss_goal(void) const;
     const size_t& get_maximum_iterations_number(void) const;
     const double& get_maximum_time(void) const;
     const double& get_maximum_correlation(void) const;
     const double& get_minimum_correlation(void) const;
     const double& get_tolerance(void) const;
 
-    std::string write_performance_calculation_method(void) const;
+    std::string write_loss_calculation_method(void) const;
 
     // Set methods
 
-    void set_function_regression(const bool&);
+    void set_approximation(const bool&);
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
@@ -192,16 +192,16 @@ public:
     void set_trials_number(const size_t&);
 
     void set_reserve_parameters_data(const bool&);
-    void set_reserve_performance_data(const bool&);
-    void set_reserve_selection_performance_data(const bool&);
+    void set_reserve_loss_data(const bool&);
+    void set_reserve_selection_loss_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
-    void set_performance_calculation_method(const PerformanceCalculationMethod&);
-    void set_performance_calculation_method(const std::string&);
+    void set_loss_calculation_method(const PerformanceCalculationMethod&);
+    void set_loss_calculation_method(const std::string&);
 
     void set_display(const bool&);
 
-    void set_selection_performance_goal(const double&);
+    void set_selection_loss_goal(const double&);
     void set_maximum_iterations_number(const size_t&);
     void set_maximum_time(const double&);
     void set_maximum_correlation(const double&);
@@ -222,7 +222,7 @@ public:
     Vector<double> perform_maximum_model_evaluation(const Vector<bool>&);
     Vector<double> perform_mean_model_evaluation(const Vector<bool>&) ;
 
-    Vector<double> get_final_performances(const TrainingStrategy::Results&) const;
+    Vector<double> get_final_losss(const TrainingStrategy::Results&) const;
 
     Vector<double> perform_model_evaluation(const Vector<bool>&);
 
@@ -231,7 +231,7 @@ public:
     // inputs selection methods
 
     void delete_selection_history(void);
-    void delete_performance_history(void);
+    void delete_loss_history(void);
     void delete_parameters_history(void);
     void check(void) const;
 
@@ -248,7 +248,7 @@ protected:
 
     /// True if this is a function regression problem.
 
-    bool function_regression;
+    bool approximation;
 
     /// Pointer to a training strategy object.
 
@@ -258,13 +258,13 @@ protected:
 
     Vector< Vector<bool> > inputs_history;
 
-    /// Selection performance of all the neural networks trained.
+    /// Selection loss of all the neural networks trained.
 
-    Vector<double> selection_performance_history;
+    Vector<double> selection_loss_history;
 
     /// Performance of all the neural networks trained.
 
-    Vector<double> performance_history;
+    Vector<double> loss_history;
 
     /// Parameters of all the neural network trained.
 
@@ -274,9 +274,9 @@ protected:
 
     size_t trials_number;
 
-    /// Method used for the calculation of the performance and the generalizaton performance.
+    /// Method used for the calculation of the loss and the generalizaton loss.
 
-    PerformanceCalculationMethod performance_calculation_method;
+    PerformanceCalculationMethod loss_calculation_method;
 
     // Inputs selection results
 
@@ -284,15 +284,15 @@ protected:
 
     bool reserve_parameters_data;
 
-    /// True if the performance of all neural networks are to be reserved.
+    /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_performance_data;
+    bool reserve_loss_data;
 
-    /// True if the selection performance of all neural networks are to be reserved.
+    /// True if the selection loss of all neural networks are to be reserved.
 
-    bool reserve_selection_performance_data;
+    bool reserve_selection_loss_data;
 
-    /// True if the vector parameters of the neural network presenting minimum selection performance is to be reserved.
+    /// True if the vector parameters of the neural network presenting minimum selection loss is to be reserved.
 
     bool reserve_minimal_parameters;
 
@@ -302,9 +302,9 @@ protected:
 
     // STOPPING CRITERIA
 
-    /// Goal value for the selection performance. It is used as a stopping criterion.
+    /// Goal value for the selection loss. It is used as a stopping criterion.
 
-    double selection_performance_goal;
+    double selection_loss_goal;
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 

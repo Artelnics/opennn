@@ -11,7 +11,6 @@
 /*                                                                                                              */
 /****************************************************************************************************************/
 
-
 // OpenNN includes
 
 #include "threshold_selection_algorithm.h"
@@ -44,7 +43,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(TrainingStrategy* new_t
 // FILE CONSTRUCTOR
 
 /// File constructor.
-/// @param file_name Name of XML order selection file.
+/*/// @param file_name Name of XML order selection file.*/
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const std::string&)
     : training_strategy_pointer(NULL)
@@ -56,7 +55,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const std::string&)
 // XML CONSTRUCTOR
 
 /// XML constructor.
-/// @param threshold_selection_document Pointer to a TinyXML document containing the threshold selection algorithm data.
+/*/// @param threshold_selection_document Pointer to a TinyXML document containing the threshold selection algorithm data.*/
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const tinyxml2::XMLDocument& )
     : training_strategy_pointer(NULL)
@@ -203,6 +202,10 @@ void ThresholdSelectionAlgorithm::set_display(const bool& new_display)
 
 // Errors calculation methods
 
+/// Returns the confusion matrix of a neural network on the testing instances of a data set.
+/// If the number of outputs is one, the size of the confusion matrix is two.
+/// If the number of outputs is greater than one, the size of the confusion matrix is the number of outputs.
+
 Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& decision_threshold) const
 {
     #ifdef __OPENNN_DEBUG__
@@ -210,11 +213,11 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
     check();
     #endif
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    const DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -274,8 +277,8 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
     }
     #endif
 
-     const Matrix<double> input_data = data_set_pointer->get_selection_input_data();
-     const Matrix<double> target_data = data_set_pointer->get_selection_target_data();
+     const Matrix<double> input_data = data_set_pointer->arrange_selection_input_data();
+     const Matrix<double> target_data = data_set_pointer->arrange_selection_target_data();
 
      const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
@@ -294,29 +297,34 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
          {
              false_positive++;
 
-         }else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
+         }
+         else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
          {
              true_positive++;
 
-         }else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
+         }
+         else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
          {
              // True positive
 
              true_positive++;
 
-         }else if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
+         }
+         else if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
          {
              // False negative
 
              false_negative++;
 
-         }else if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
+         }
+         else if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
          {
              // False positive
 
              false_positive++;
 
-         }else if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
+         }
+         else if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
          {
              // True negative
 
@@ -342,6 +350,9 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
      return(confusion);
 }
+
+/// Returns the results of a binary classification test in a single vector.
+/// The size of that vector is fifteen.
 
 Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test(const Matrix<size_t>& confusion) const
 {
@@ -617,22 +628,22 @@ void ThresholdSelectionAlgorithm::check(void) const
         throw std::logic_error(buffer.str());
     }
 
-    // Performance functional stuff
+    // Loss index stuff
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "void check(void) const method.\n"
-               << "Pointer to performance functional is NULL.\n";
+               << "Pointer to loss functional is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
     // Neural network stuff
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     if(!neural_network_pointer)
     {
@@ -656,7 +667,7 @@ void ThresholdSelectionAlgorithm::check(void) const
 
     // Data set stuff
 
-    const DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     if(!data_set_pointer)
     {

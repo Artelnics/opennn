@@ -28,7 +28,7 @@
 
 // OpenNN includes
 
-#include "performance_functional.h"
+#include "loss_index.h"
 
 #include "training_algorithm.h"
 #include "training_rate_algorithm.h"
@@ -41,7 +41,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents a conjugate gradient training algorithm for a performance functional of a neural network. 
+/// This concrete class represents a conjugate gradient training algorithm for a loss functional of a neural network. 
 ///
 
 class ConjugateGradient : public TrainingAlgorithm
@@ -62,7 +62,7 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit ConjugateGradient(PerformanceFunctional*);
+   explicit ConjugateGradient(LossIndex*);
 
 
    // XML CONSTRUCTOR
@@ -117,15 +117,15 @@ public:
 
       Vector<double> parameters_norm_history;
 
-      /// History of the performance function performance over the training iterations. 
+      /// History of the loss function loss over the training iterations. 
 
-      Vector<double> performance_history;
+      Vector<double> loss_history;
 
-      /// History of the selection performance over the training iterations. 
+      /// History of the selection loss over the training iterations.
 
-      Vector<double> selection_performance_history;
+      Vector<double> selection_loss_history;
 
-      /// History of the performance function gradient over the training iterations. 
+      /// History of the loss function gradient over the training iterations. 
 
       Vector< Vector<double> > gradient_history;
 
@@ -155,15 +155,15 @@ public:
 
       double final_parameters_norm;
 
-      /// Final performance function evaluation.
+      /// Final loss function evaluation.
 
-      double final_performance;
+      double final_loss;
 
-      /// Final selection performance. 
+      /// Final selection loss.
 
-      double final_selection_performance;
+      double final_selection_loss;
 
-      /// Final performance function gradient. 
+      /// Final loss function gradient. 
 
       Vector<double> final_gradient;
 
@@ -220,21 +220,23 @@ public:
 
    const double& get_minimum_parameters_increment_norm(void) const;
 
-   const double& get_minimum_performance_increase(void) const;
-   const double& get_performance_goal(void) const;
-   const size_t& get_maximum_selection_performance_decreases(void) const;
+   const double& get_minimum_loss_increase(void) const;
+   const double& get_loss_goal(void) const;
+   const size_t& get_maximum_selection_loss_decreases(void) const;
    const double& get_gradient_norm_goal(void) const;
 
    const size_t& get_maximum_iterations_number(void) const;
    const double& get_maximum_time(void) const;
+
+   const bool& get_return_minimum_selection_error_neural_network(void) const;
 
    // Reserve training history
 
    const bool& get_reserve_parameters_history(void) const;
    const bool& get_reserve_parameters_norm_history(void) const;
 
-   const bool& get_reserve_performance_history(void) const;
-   const bool& get_reserve_selection_performance_history(void) const;
+   const bool& get_reserve_loss_history(void) const;
+   const bool& get_reserve_selection_loss_history(void) const;
    const bool& get_reserve_gradient_history(void) const;
    const bool& get_reserve_gradient_norm_history(void) const;
 
@@ -246,7 +248,7 @@ public:
 
    void set_default(void);
 
-   void set_performance_functional_pointer(PerformanceFunctional*);
+   void set_loss_index_pointer(LossIndex*);
 
    // Training operators
 
@@ -267,21 +269,23 @@ public:
 
    void set_minimum_parameters_increment_norm(const double&);
 
-   void set_performance_goal(const double&);
-   void set_minimum_performance_increase(const double&);
-   void set_maximum_selection_performance_decreases(const size_t&);
+   void set_loss_goal(const double&);
+   void set_minimum_loss_increase(const double&);
+   void set_maximum_selection_loss_decreases(const size_t&);
    void set_gradient_norm_goal(const double&);
 
    void set_maximum_iterations_number(const size_t&);
    void set_maximum_time(const double&);
+
+   void set_return_minimum_selection_error_neural_network(const bool&);
 
    // Reserve training history
 
    void set_reserve_parameters_history(const bool&);
    void set_reserve_parameters_norm_history(const bool&);
 
-   void set_reserve_performance_history(const bool&);
-   void set_reserve_selection_performance_history(const bool&);
+   void set_reserve_loss_history(const bool&);
+   void set_reserve_selection_loss_history(const bool&);
    void set_reserve_gradient_history(const bool&);
    void set_reserve_gradient_norm_history(const bool&);
 
@@ -365,22 +369,22 @@ private:
 
    double minimum_parameters_increment_norm;
 
-   /// Minimum performance improvement between two successive iterations. It is used as a stopping criterion.
+   /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   double minimum_performance_increase;
+   double minimum_loss_increase;
 
-   /// Goal value for the performance. It is used as a stopping criterion.
+   /// Goal value for the loss. It is used as a stopping criterion.
 
-   double performance_goal;
+   double loss_goal;
 
    /// Goal value for the norm of the objective function gradient. It is used as a stopping criterion.
 
    double gradient_norm_goal;
 
-   /// Maximum number of iterations at which the selection performance decreases.
+   /// Maximum number of iterations at which the selection loss increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_performance_decreases;
+   size_t maximum_selection_loss_decreases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 
@@ -389,6 +393,10 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    double maximum_time;
+
+   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
+
+   bool return_minimum_selection_error_neural_network;
 
    // TRAINING HISTORY
 
@@ -400,9 +408,9 @@ private:
 
    bool reserve_parameters_norm_history;
 
-   /// True if the performance history vector is to be reserved, false otherwise.
+   /// True if the loss history vector is to be reserved, false otherwise.
 
-   bool reserve_performance_history;
+   bool reserve_loss_history;
 
    /// True if the gradient history matrix is to be reserved, false otherwise.
 
@@ -424,9 +432,9 @@ private:
 
    bool reserve_elapsed_time_history;
 
-   /// True if the Selection performance history vector is to be reserved, false otherwise. 
+   /// True if the selection loss history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_performance_history;
+   bool reserve_selection_loss_history;
 
 
 };

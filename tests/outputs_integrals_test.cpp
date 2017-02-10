@@ -55,25 +55,25 @@ void OutputsIntegralsTest::test_destructor(void)
 
 // @todo
 
-void OutputsIntegralsTest::test_calculate_performance(void)   
+void OutputsIntegralsTest::test_calculate_loss(void)   
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 /*
    NeuralNetwork nn;
    Vector<double> network_parameters;
 
    OutputsIntegrals oi(&nn);
 
-   double performance;
+   double loss;
 
    // Test
 
    nn.set(1, 1);
    nn.initialize_parameters(0.0);
 
-   performance = oi.calculate_performance();
+   loss = oi.calculate_loss();
 
-   assert_true(performance == 0.0, LOG);
+   assert_true(loss == 0.0, LOG);
 */
 }
 
@@ -123,7 +123,7 @@ void OutputsIntegralsTest::test_calculate_gradient(void)
 //   parameters = nn.arrange_parameters();
 
 //   gradient = nnoi.calculate_gradient();
-//   numerical_gradient = nd.calculate_gradient(nnoi, &OutputsIntegrals::calculate_performance, parameters);
+//   numerical_gradient = nd.calculate_gradient(nnoi, &OutputsIntegrals::calculate_loss, parameters);
 //   error = (gradient - numerical_gradient).calculate_absolute_value();
 //   assert_true(error < 1.0e-3, LOG);
 }
@@ -163,7 +163,7 @@ void OutputsIntegralsTest::run_test_case(void)
 
    // Evaluation methods
 
-   test_calculate_performance();   
+   test_calculate_loss();   
 
    test_calculate_gradient();
 

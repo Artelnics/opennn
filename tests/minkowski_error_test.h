@@ -58,8 +58,8 @@ public:
 
    // Objective methods
 
-   void test_calculate_performance(void);   
-   void test_calculate_selection_performance(void);
+   void test_calculate_loss(void);   
+   void test_calculate_selection_loss(void);
 
    void test_calculate_gradient(void);
 

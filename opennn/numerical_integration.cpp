@@ -370,6 +370,9 @@ tinyxml2::XMLDocument* NumericalIntegration::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the numerical integration object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void NumericalIntegration::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;

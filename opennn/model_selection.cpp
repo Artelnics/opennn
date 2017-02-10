@@ -115,6 +115,25 @@ ModelSelection::ModelSelection(const tinyxml2::XMLDocument& model_selection_docu
 
 ModelSelection::~ModelSelection(void)
 {
+    // Delete inputs selection algorithms
+
+    delete growing_inputs_pointer;
+    delete pruning_inputs_pointer;
+    delete genetic_algorithm_pointer;
+
+    // Delete order selection algorithms
+
+    delete incremental_order_pointer;
+    delete golden_section_order_pointer;
+    delete simulated_annelaing_order_pointer;
+
+    // Delete threshold selection algorithms
+
+    delete f1_score_optimization_threshold_pointer;
+    delete matthew_correlation_optimization_threshold_pointer;
+    delete youden_index_optimization_threshold_pointer;
+    delete kappa_coefficient_optimization_threshold_pointer;
+    delete roc_curve_optimization_threshold_pointer;
 }
 
 
@@ -296,6 +315,128 @@ void ModelSelection::set_default(void)
     set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
     set_inputs_selection_type(ModelSelection::GROWING_INPUTS);
     set_threshold_selection_type(ModelSelection::YOUDEN_INDEX);
+
+    display = true;
+}
+
+// void set_display(const bool&) method
+
+/// Sets a new display value.
+/// If it is set to true messages from this class are to be displayed on the screen;
+/// if it is set to false messages from this class are not to be displayed on the screen.
+/// @param new_display Display value.
+
+void ModelSelection::set_display(const bool& new_display)
+{
+    display = new_display;
+
+    switch (inputs_selection_type)
+    {
+    case NO_INPUTS_SELECTION:
+    {
+        // do nothing
+
+        break;
+    }
+    case GROWING_INPUTS:
+    {
+        growing_inputs_pointer->set_display(new_display);
+
+        break;
+    }
+    case PRUNING_INPUTS:
+    {
+        pruning_inputs_pointer->set_display(new_display);
+
+        break;
+    }
+    case GENETIC_ALGORITHM:
+    {
+        genetic_algorithm_pointer->set_display(new_display);
+
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+
+    switch (order_selection_type)
+    {
+    case NO_ORDER_SELECTION:
+    {
+        // do nothing
+
+        break;
+    }
+    case INCREMENTAL_ORDER:
+    {
+        incremental_order_pointer->set_display(new_display);
+
+        break;
+    }
+    case GOLDEN_SECTION:
+    {
+        golden_section_order_pointer->set_display(new_display);
+
+        break;
+    }
+    case SIMULATED_ANNEALING:
+    {
+        simulated_annelaing_order_pointer->set_display(new_display);
+
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+
+    switch (threshold_selection_type)
+    {
+    case NO_THRESHOLD_SELECTION:
+    {
+        // do nothing
+
+        break;
+    }
+    case F1_SCORE_OPTIMIZATION:
+    {
+        f1_score_optimization_threshold_pointer->set_display(new_display);
+
+        break;
+    }
+    case MATTHEW_CORRELATION:
+    {
+        matthew_correlation_optimization_threshold_pointer->set_display(new_display);
+
+        break;
+    }
+    case YOUDEN_INDEX:
+    {
+        youden_index_optimization_threshold_pointer->set_display(new_display);
+
+        break;
+    }
+    case KAPPA_COEFFICIENT:
+    {
+        kappa_coefficient_optimization_threshold_pointer->set_display(new_display);
+
+        break;
+    }
+    case ROC_CURVE_DISTANCE:
+    {
+        roc_curve_optimization_threshold_pointer->set_display(new_display);
+
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
 }
 
 // void set_order_selection_type(const OrderSelectionType&) method
@@ -541,7 +682,7 @@ void ModelSelection::set_threshold_selection_type(const ModelSelection::Threshol
 // void set_threshold_selection_type(const std::string&) method
 
 /// Sets a new threshold selection algorithm from a string.
-/// @param new_inputs_selection_type String with the inputs selection type.
+/// @param new_threshold_selection_type String with the threshold selection type.
 
 void ModelSelection::set_threshold_selection_type(const std::string& new_threshold_selection_type)
 {
@@ -581,14 +722,14 @@ void ModelSelection::set_threshold_selection_type(const std::string& new_thresho
     }
 }
 
-// void set_function_regression(const bool&) method
+// void set_approximation(const bool&) method
 
 /// Sets a new regression value.
-/// If it is set to true the problem will be taken as a function regression;
-/// if it is set to false the problem will be taken as a pattern recognition.
-/// @param new_regression Regression value.
+/// If it is set to true the problem will be taken as a approximation;
+/// if it is set to false the problem will be taken as a classification.
+/// @param new_approximation Approximation value.
 
-void ModelSelection::set_function_regression(const bool& new_function_regression)
+void ModelSelection::set_approximation(const bool& new_approximation)
 {
     switch (inputs_selection_type)
     {
@@ -600,19 +741,19 @@ void ModelSelection::set_function_regression(const bool& new_function_regression
     }
     case GROWING_INPUTS:
     {
-        growing_inputs_pointer->set_function_regression(new_function_regression);
+        growing_inputs_pointer->set_approximation(new_approximation);
 
         break;
     }
     case PRUNING_INPUTS:
     {
-        pruning_inputs_pointer->set_function_regression(new_function_regression);
+        pruning_inputs_pointer->set_approximation(new_approximation);
 
         break;
     }
     case GENETIC_ALGORITHM:
     {
-        genetic_algorithm_pointer->set_function_regression(new_function_regression);
+        genetic_algorithm_pointer->set_approximation(new_approximation);
 
         break;
     }
@@ -621,7 +762,7 @@ void ModelSelection::set_function_regression(const bool& new_function_regression
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_function_regression(const bool&) const method.\n"
+               << "void set_approximation(const bool&) const method.\n"
                << "Unknow inputs selection method.\n";
 
         throw std::logic_error(buffer.str());
@@ -756,6 +897,756 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
     }
 }
 
+#ifdef __OPENNN_MPI__
+
+void ModelSelection::set_MPI(TrainingStrategy* new_training_strategy, const ModelSelection* model_selection)
+{
+
+    set_training_strategy_pointer(new_training_strategy);
+
+    // Inputs selection
+
+    set_inputs_selection_MPI(model_selection);
+
+    // Order Selection
+
+    set_order_selection_MPI(model_selection);
+
+    // Threshold selection
+
+    set_threshold_selection_MPI(model_selection);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if(rank != 0)
+    {
+        set_display(false);
+    }
+}
+
+void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_selection)
+{
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int original_inputs_selection_type;
+
+    // Growing/Pruning inputs parameters
+
+    int maximum_selection_failures;
+    int max_min_inputs_number;
+    double minimum_correlation;
+    double maximum_correlation;
+
+    // Genetic algorithm parameters
+
+    int population_size;
+    int initialization_method;
+    int fitness_assignment_method;
+    int crossover_method;
+    int elitism_size;
+    double selective_pressure;
+    double mutation_rate;
+    int reserve_generation_mean_history;
+    int reserve_generation_standard_deviation_history;
+
+    // General parameters
+
+    int trials_number;
+    double tolerance;
+    double selection_loss_goal;
+    int maximum_iterations_number;
+    int maximum_time;
+    int reserve_loss_loss_history;
+    int reserve_selection_loss_loss_history;
+
+    if(rank == 0)
+    {
+        // Variables to send initialization
+
+        original_inputs_selection_type = (int)model_selection->get_inputs_selection_type();
+
+        switch (original_inputs_selection_type)
+        {
+            case (int)ModelSelection::GROWING_INPUTS:
+            {
+                GrowingInputs* original_growing_inputs = model_selection->get_growing_inputs_pointer();
+
+                trials_number = (int)original_growing_inputs->get_trials_number();
+                tolerance = original_growing_inputs->get_tolerance();
+                selection_loss_goal = original_growing_inputs->get_selection_loss_goal();
+                maximum_selection_failures = (int)original_growing_inputs->get_maximum_selection_failures();
+                max_min_inputs_number = (int)original_growing_inputs->get_maximum_inputs_number();
+                minimum_correlation = original_growing_inputs->get_minimum_correlation();
+                maximum_correlation = original_growing_inputs->get_maximum_correlation();
+                maximum_iterations_number = (int)original_growing_inputs->get_maximum_iterations_number();
+                maximum_time = (int)original_growing_inputs->get_maximum_time();
+                reserve_loss_loss_history = original_growing_inputs->get_reserve_loss_data();
+                reserve_selection_loss_loss_history = original_growing_inputs->get_reserve_selection_loss_data();
+            }
+            break;
+
+            case (int)ModelSelection::PRUNING_INPUTS:
+            {
+                PruningInputs* original_pruning_inputs = model_selection->get_pruning_inputs_pointer();
+
+                trials_number = (int)original_pruning_inputs->get_trials_number();
+                tolerance = original_pruning_inputs->get_tolerance();
+                selection_loss_goal = original_pruning_inputs->get_selection_loss_goal();
+                maximum_selection_failures = (int)original_pruning_inputs->get_maximum_selection_failures();
+                max_min_inputs_number = (int)original_pruning_inputs->get_minimum_inputs_number();
+                minimum_correlation = original_pruning_inputs->get_minimum_correlation();
+                maximum_correlation = original_pruning_inputs->get_maximum_correlation();
+                maximum_iterations_number = (int)original_pruning_inputs->get_maximum_iterations_number();
+                maximum_time = (int)original_pruning_inputs->get_maximum_time();
+                reserve_loss_loss_history = original_pruning_inputs->get_reserve_loss_data();
+                reserve_selection_loss_loss_history = original_pruning_inputs->get_reserve_selection_loss_data();
+            }
+            break;
+
+            case (int)ModelSelection::GENETIC_ALGORITHM:
+            {
+                GeneticAlgorithm* original_genetic_algorithm = model_selection->get_genetic_algorithm_pointer();
+
+                trials_number = (int)original_genetic_algorithm->get_trials_number();
+                tolerance = original_genetic_algorithm->get_tolerance();
+                population_size = (int)original_genetic_algorithm->get_population_size();
+                initialization_method = original_genetic_algorithm->get_initialization_method();
+                fitness_assignment_method = original_genetic_algorithm->get_fitness_assignment_method();
+                crossover_method = original_genetic_algorithm->get_crossover_method();
+                elitism_size = (int)original_genetic_algorithm->get_elitism_size();
+                selective_pressure = original_genetic_algorithm->get_selective_pressure();
+                mutation_rate = original_genetic_algorithm->get_mutation_rate();
+                selection_loss_goal = original_genetic_algorithm->get_selection_loss_goal();
+                maximum_iterations_number = (int)original_genetic_algorithm->get_maximum_iterations_number();
+                maximum_time = (int)original_genetic_algorithm->get_maximum_time();
+                reserve_loss_loss_history  = original_genetic_algorithm->get_reserve_loss_data();
+                reserve_selection_loss_loss_history = original_genetic_algorithm->get_reserve_selection_loss_data();
+                reserve_generation_mean_history = original_genetic_algorithm->get_reserve_generation_mean();
+                reserve_generation_standard_deviation_history = original_genetic_algorithm->get_reserve_generation_standard_deviation();
+            }
+            break;
+
+            default:
+                break;
+        }
+    }
+
+    // Send variables
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank > 0)
+    {
+        MPI_Recv(&original_inputs_selection_type, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        MPI_Request req[9];
+
+        switch (original_inputs_selection_type)
+        {
+            case (int)ModelSelection::GROWING_INPUTS:
+
+                MPI_Irecv(&maximum_selection_failures, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&max_min_inputs_number, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Irecv(&minimum_correlation, 1, MPI_DOUBLE, rank-1, 3, MPI_COMM_WORLD, &req[2]);
+                MPI_Irecv(&maximum_correlation, 1, MPI_DOUBLE, rank-1, 4, MPI_COMM_WORLD, &req[3]);
+
+                MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)ModelSelection::PRUNING_INPUTS:
+
+                MPI_Irecv(&maximum_selection_failures, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&max_min_inputs_number, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Irecv(&minimum_correlation, 1, MPI_DOUBLE, rank-1, 3, MPI_COMM_WORLD, &req[2]);
+                MPI_Irecv(&maximum_correlation, 1, MPI_DOUBLE, rank-1, 4, MPI_COMM_WORLD, &req[3]);
+
+                MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)ModelSelection::GENETIC_ALGORITHM:
+
+                MPI_Irecv(&population_size, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&initialization_method, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Irecv(&fitness_assignment_method, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[2]);
+                MPI_Irecv(&crossover_method, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[3]);
+                MPI_Irecv(&elitism_size, 1, MPI_INT, rank-1, 5, MPI_COMM_WORLD, &req[4]);
+                MPI_Irecv(&selective_pressure, 1, MPI_DOUBLE, rank-1, 6, MPI_COMM_WORLD, &req[5]);
+                MPI_Irecv(&mutation_rate, 1, MPI_DOUBLE, rank-1, 7, MPI_COMM_WORLD, &req[6]);
+                MPI_Irecv(&reserve_generation_mean_history, 1, MPI_INT, rank-1, 8, MPI_COMM_WORLD, &req[7]);
+                MPI_Irecv(&reserve_generation_standard_deviation_history, 1, MPI_INT, rank-1, 9, MPI_COMM_WORLD, &req[8]);
+
+                MPI_Waitall(9, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            default:
+                break;
+        }
+
+        MPI_Irecv(&trials_number, 1, MPI_INT, rank-1, 10, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(&tolerance, 1, MPI_DOUBLE, rank-1, 11, MPI_COMM_WORLD, &req[1]);
+        MPI_Irecv(&selection_loss_goal, 1, MPI_DOUBLE, rank-1, 12, MPI_COMM_WORLD, &req[2]);
+        MPI_Irecv(&maximum_iterations_number, 1, MPI_INT, rank-1, 13, MPI_COMM_WORLD, &req[3]);
+        MPI_Irecv(&maximum_time, 1, MPI_INT, rank-1, 14, MPI_COMM_WORLD, &req[4]);
+        MPI_Irecv(&reserve_loss_loss_history, 1, MPI_INT, rank-1, 15, MPI_COMM_WORLD, &req[5]);
+        MPI_Irecv(&reserve_selection_loss_loss_history, 1, MPI_INT, rank-1, 16, MPI_COMM_WORLD, &req[6]);
+
+        MPI_Waitall(7, req, MPI_STATUS_IGNORE);
+    }
+
+    if(rank < size-1)
+    {
+        MPI_Send(&original_inputs_selection_type, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+
+        MPI_Request req[9];
+
+        switch (original_inputs_selection_type)
+        {
+            case (int)ModelSelection::GROWING_INPUTS:
+
+                MPI_Isend(&maximum_selection_failures, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&max_min_inputs_number, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Isend(&minimum_correlation, 1, MPI_DOUBLE, rank+1, 3, MPI_COMM_WORLD, &req[2]);
+                MPI_Isend(&maximum_correlation, 1, MPI_DOUBLE, rank+1, 4, MPI_COMM_WORLD, &req[3]);
+
+                MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)ModelSelection::PRUNING_INPUTS:
+
+                MPI_Isend(&maximum_selection_failures, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&max_min_inputs_number, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Isend(&minimum_correlation, 1, MPI_DOUBLE, rank+1, 3, MPI_COMM_WORLD, &req[2]);
+                MPI_Isend(&maximum_correlation, 1, MPI_DOUBLE, rank+1, 4, MPI_COMM_WORLD, &req[3]);
+
+                MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)ModelSelection::GENETIC_ALGORITHM:
+
+                MPI_Isend(&population_size, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&initialization_method, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Isend(&fitness_assignment_method, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[2]);
+                MPI_Isend(&crossover_method, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[3]);
+                MPI_Isend(&elitism_size, 1, MPI_INT, rank+1, 5, MPI_COMM_WORLD, &req[4]);
+                MPI_Isend(&selective_pressure, 1, MPI_DOUBLE, rank+1, 6, MPI_COMM_WORLD, &req[5]);
+                MPI_Isend(&mutation_rate, 1, MPI_DOUBLE, rank+1, 7, MPI_COMM_WORLD, &req[6]);
+                MPI_Isend(&reserve_generation_mean_history, 1, MPI_INT, rank+1, 8, MPI_COMM_WORLD, &req[7]);
+                MPI_Isend(&reserve_generation_standard_deviation_history, 1, MPI_INT, rank+1, 9, MPI_COMM_WORLD, &req[8]);
+
+                MPI_Waitall(9, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            default:
+                break;
+        }
+
+        MPI_Isend(&trials_number, 1, MPI_INT, rank+1, 10, MPI_COMM_WORLD, &req[0]);
+        MPI_Isend(&tolerance, 1, MPI_DOUBLE, rank+1, 11, MPI_COMM_WORLD, &req[1]);
+        MPI_Isend(&selection_loss_goal, 1, MPI_DOUBLE, rank+1, 12, MPI_COMM_WORLD, &req[2]);
+        MPI_Isend(&maximum_iterations_number, 1, MPI_INT, rank+1, 13, MPI_COMM_WORLD, &req[3]);
+        MPI_Isend(&maximum_time, 1, MPI_INT, rank+1, 14, MPI_COMM_WORLD, &req[4]);
+        MPI_Isend(&reserve_loss_loss_history, 1, MPI_INT, rank+1, 15, MPI_COMM_WORLD, &req[5]);
+        MPI_Isend(&reserve_selection_loss_loss_history, 1, MPI_INT, rank+1, 16, MPI_COMM_WORLD, &req[6]);
+
+        MPI_Waitall(7, req, MPI_STATUS_IGNORE);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Set variables
+
+    set_inputs_selection_type((ModelSelection::InputsSelectionType)original_inputs_selection_type);
+
+    switch (original_inputs_selection_type)
+    {
+        case (int)ModelSelection::GROWING_INPUTS:
+        {
+            growing_inputs_pointer->set_trials_number(trials_number);
+            growing_inputs_pointer->set_tolerance(tolerance);
+            growing_inputs_pointer->set_selection_loss_goal(selection_loss_goal);
+            growing_inputs_pointer->set_maximum_selection_failures(maximum_selection_failures);
+            growing_inputs_pointer->set_maximum_inputs_number(max_min_inputs_number);
+            growing_inputs_pointer->set_minimum_correlation(minimum_correlation);
+            growing_inputs_pointer->set_maximum_correlation(maximum_correlation);
+            growing_inputs_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            growing_inputs_pointer->set_maximum_time(maximum_time);
+            growing_inputs_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            growing_inputs_pointer->set_reserve_selection_loss_data(reserve_selection_loss_loss_history == 1);
+        }
+        break;
+
+        case (int)ModelSelection::PRUNING_INPUTS:
+        {
+            pruning_inputs_pointer->set_trials_number(trials_number);
+            pruning_inputs_pointer->set_tolerance(tolerance);
+            pruning_inputs_pointer->set_selection_loss_goal(selection_loss_goal);
+            pruning_inputs_pointer->set_maximum_selection_failures(maximum_selection_failures);
+            pruning_inputs_pointer->set_minimum_inputs_number(max_min_inputs_number);
+            pruning_inputs_pointer->set_minimum_correlation(minimum_correlation);
+            pruning_inputs_pointer->set_maximum_correlation(maximum_correlation);
+            pruning_inputs_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            pruning_inputs_pointer->set_maximum_time(maximum_time);
+            pruning_inputs_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            pruning_inputs_pointer->set_reserve_selection_loss_data(reserve_selection_loss_loss_history == 1);
+        }
+        break;
+
+        case (int)ModelSelection::GENETIC_ALGORITHM:
+        {
+            genetic_algorithm_pointer->set_trials_number(trials_number);
+            genetic_algorithm_pointer->set_tolerance(tolerance);
+            genetic_algorithm_pointer->set_population_size(population_size);
+            genetic_algorithm_pointer->set_inicialization_method((GeneticAlgorithm::InitializationMethod)initialization_method);
+            genetic_algorithm_pointer->set_fitness_assignment_method((GeneticAlgorithm::FitnessAssignment)fitness_assignment_method);
+            genetic_algorithm_pointer->set_crossover_method((GeneticAlgorithm::CrossoverMethod)crossover_method);
+            genetic_algorithm_pointer->set_elitism_size(elitism_size);
+            genetic_algorithm_pointer->set_selective_pressure(selective_pressure);
+            genetic_algorithm_pointer->set_mutation_rate(mutation_rate);
+            genetic_algorithm_pointer->set_selection_loss_goal(selection_loss_goal);
+            genetic_algorithm_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            genetic_algorithm_pointer->set_maximum_time(maximum_time);
+            genetic_algorithm_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            genetic_algorithm_pointer->set_reserve_selection_loss_data(reserve_selection_loss_loss_history == 1);
+            genetic_algorithm_pointer->set_reserve_generation_mean(reserve_generation_mean_history == 1);
+            genetic_algorithm_pointer->set_reserve_generation_standard_deviation(reserve_generation_standard_deviation_history == 1);
+        }
+        break;
+
+        default:
+            break;
+    }
+}
+
+void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selection)
+{
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int original_order_selection_type;
+
+    // Incremental order parameters
+
+    int step;
+    int maximum_selection_failures;
+
+    // Simulated annealing parameters
+
+    double cooling_rate;
+    double minimum_temperature;
+    int maximum_iterations_number;
+
+    // General parameters
+
+    int minimum_order;
+    int maximum_order;
+    int trials_number;
+    double tolerance;
+    double selection_loss_goal;
+    int maximum_time;
+    int reserve_loss_loss_history;
+    int reserve_selection_loss_loss_history;
+
+    if(rank == 0)
+    {
+        // Variables to send initialization
+
+        original_order_selection_type = (int)model_selection->get_order_selection_type();
+
+        switch (original_order_selection_type)
+        {
+            case (int)ModelSelection::INCREMENTAL_ORDER:
+            {
+                IncrementalOrder* original_incremental_order = model_selection->get_incremental_order_pointer();
+
+                minimum_order = (int)original_incremental_order->get_minimum_order();
+                maximum_order = (int)original_incremental_order->get_maximum_order();
+                step = (int)original_incremental_order->get_step();
+                trials_number = (int)original_incremental_order->get_trials_number();
+                tolerance = original_incremental_order->get_tolerance();
+                selection_loss_goal = original_incremental_order->get_selection_loss_goal();
+                maximum_selection_failures = (int)original_incremental_order->get_maximum_selection_failures();
+                maximum_time = (int)original_incremental_order->get_maximum_time();
+                reserve_loss_loss_history = original_incremental_order->get_reserve_loss_data();
+                reserve_selection_loss_loss_history = original_incremental_order->get_reserve_selection_loss_data();
+            }
+            break;
+
+            case (int)ModelSelection::GOLDEN_SECTION:
+            {
+                GoldenSectionOrder* original_golden_section_order = model_selection->get_golden_section_order_pointer();
+
+                minimum_order = (int)original_golden_section_order->get_minimum_order();
+                maximum_order = (int)original_golden_section_order->get_maximum_order();
+                trials_number = (int)original_golden_section_order->get_trials_number();
+                tolerance = original_golden_section_order->get_tolerance();
+                selection_loss_goal = original_golden_section_order->get_selection_loss_goal();
+                maximum_time = (int)original_golden_section_order->get_maximum_time();
+                reserve_loss_loss_history = original_golden_section_order->get_reserve_loss_data();
+                reserve_selection_loss_loss_history = original_golden_section_order->get_reserve_selection_loss_data();
+            }
+            break;
+
+            case (int)ModelSelection::SIMULATED_ANNEALING:
+            {
+                SimulatedAnnealingOrder* original_simulated_annealing = model_selection->get_simulated_annealing_order_pointer();
+
+                minimum_order = (int)original_simulated_annealing->get_minimum_order();
+                maximum_order = (int)original_simulated_annealing->get_maximum_order();
+                cooling_rate = original_simulated_annealing->get_cooling_rate();
+                trials_number = (int)original_simulated_annealing->get_trials_number();
+                tolerance = original_simulated_annealing->get_tolerance();
+                selection_loss_goal = original_simulated_annealing->get_selection_loss_goal();
+                minimum_temperature = original_simulated_annealing->get_minimum_temperature();
+                maximum_iterations_number = (int)original_simulated_annealing->get_maximum_iterations_number();
+                maximum_time = (int)original_simulated_annealing->get_maximum_time();
+                reserve_loss_loss_history = original_simulated_annealing->get_reserve_loss_data();
+                reserve_selection_loss_loss_history = original_simulated_annealing->get_reserve_selection_loss_data();
+            }
+            break;
+
+            default:
+                break;
+        }
+    }
+
+    // Send variables
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank > 0)
+    {
+        MPI_Recv(&original_order_selection_type, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        MPI_Request req[8];
+
+        switch (original_order_selection_type)
+        {
+            case (int)ModelSelection::INCREMENTAL_ORDER:
+
+                MPI_Irecv(&step, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&maximum_selection_failures, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)ModelSelection::SIMULATED_ANNEALING:
+
+                MPI_Irecv(&cooling_rate, 1, MPI_DOUBLE, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&minimum_temperature, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Irecv(&maximum_iterations_number, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[2]);
+
+                MPI_Waitall(3, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            default:
+                break;
+        }
+
+        MPI_Irecv(&minimum_order, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(&maximum_order, 1, MPI_INT, rank-1, 5, MPI_COMM_WORLD, &req[1]);
+        MPI_Irecv(&trials_number, 1, MPI_INT, rank-1, 6, MPI_COMM_WORLD, &req[2]);
+        MPI_Irecv(&tolerance, 1, MPI_DOUBLE, rank-1, 7, MPI_COMM_WORLD, &req[3]);
+        MPI_Irecv(&selection_loss_goal, 1, MPI_DOUBLE, rank-1, 8, MPI_COMM_WORLD, &req[4]);
+        MPI_Irecv(&maximum_time, 1, MPI_INT, rank-1, 9, MPI_COMM_WORLD, &req[5]);
+        MPI_Irecv(&reserve_loss_loss_history, 1, MPI_INT, rank-1, 10, MPI_COMM_WORLD, &req[6]);
+        MPI_Irecv(&reserve_selection_loss_loss_history, 1, MPI_INT, rank-1, 11, MPI_COMM_WORLD, &req[7]);
+
+        MPI_Waitall(8, req, MPI_STATUS_IGNORE);
+    }
+
+    if(rank < size-1)
+    {
+        MPI_Send(&original_order_selection_type, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+
+        MPI_Request req[8];
+
+        switch (original_order_selection_type)
+        {
+            case (int)ModelSelection::INCREMENTAL_ORDER:
+
+                MPI_Isend(&step, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&maximum_selection_failures, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)ModelSelection::SIMULATED_ANNEALING:
+
+                MPI_Isend(&cooling_rate, 1, MPI_DOUBLE, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&minimum_temperature, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+                MPI_Isend(&maximum_iterations_number, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[2]);
+
+                MPI_Waitall(3, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            default:
+                break;
+        }
+
+        MPI_Isend(&minimum_order, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[0]);
+        MPI_Isend(&maximum_order, 1, MPI_INT, rank+1, 5, MPI_COMM_WORLD, &req[1]);
+        MPI_Isend(&trials_number, 1, MPI_INT, rank+1, 6, MPI_COMM_WORLD, &req[2]);
+        MPI_Isend(&tolerance, 1, MPI_DOUBLE, rank+1, 7, MPI_COMM_WORLD, &req[3]);
+        MPI_Isend(&selection_loss_goal, 1, MPI_DOUBLE, rank+1, 8, MPI_COMM_WORLD, &req[4]);
+        MPI_Isend(&maximum_time, 1, MPI_INT, rank+1, 9, MPI_COMM_WORLD, &req[5]);
+        MPI_Isend(&reserve_loss_loss_history, 1, MPI_INT, rank+1, 10, MPI_COMM_WORLD, &req[6]);
+        MPI_Isend(&reserve_selection_loss_loss_history, 1, MPI_INT, rank+1, 11, MPI_COMM_WORLD, &req[7]);
+
+        MPI_Waitall(8, req, MPI_STATUS_IGNORE);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Set variables
+
+    set_order_selection_type((ModelSelection::OrderSelectionType)original_order_selection_type);
+
+    switch (original_order_selection_type)
+    {
+        case (int)ModelSelection::INCREMENTAL_ORDER:
+        {
+            incremental_order_pointer->set_minimum_order(minimum_order);
+            incremental_order_pointer->set_maximum_order(maximum_order);
+            incremental_order_pointer->set_step(step);
+            incremental_order_pointer->set_trials_number(trials_number);
+            incremental_order_pointer->set_tolerance(tolerance);
+            incremental_order_pointer->set_selection_loss_goal(selection_loss_goal);
+            incremental_order_pointer->set_maximum_selection_failures(maximum_selection_failures);
+            incremental_order_pointer->set_maximum_time(maximum_time);
+            incremental_order_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            incremental_order_pointer->set_reserve_selection_loss_data(reserve_selection_loss_loss_history == 1);
+        }
+        break;
+
+        case (int)ModelSelection::GOLDEN_SECTION:
+        {
+            golden_section_order_pointer->set_minimum_order(minimum_order);
+            golden_section_order_pointer->set_maximum_order(maximum_order);
+            golden_section_order_pointer->set_trials_number(trials_number);
+            golden_section_order_pointer->set_tolerance(tolerance);
+            golden_section_order_pointer->set_selection_loss_goal(selection_loss_goal);
+            golden_section_order_pointer->set_maximum_time(maximum_time);
+            golden_section_order_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            golden_section_order_pointer->set_reserve_selection_loss_data(reserve_selection_loss_loss_history == 1);
+        }
+        break;
+
+        case (int)ModelSelection::SIMULATED_ANNEALING:
+        {
+            simulated_annelaing_order_pointer->set_minimum_order(minimum_order);
+            simulated_annelaing_order_pointer->set_maximum_order(maximum_order);
+            simulated_annelaing_order_pointer->set_cooling_rate(cooling_rate);
+            simulated_annelaing_order_pointer->set_trials_number(trials_number);
+            simulated_annelaing_order_pointer->set_tolerance(tolerance);
+            simulated_annelaing_order_pointer->set_selection_loss_goal(selection_loss_goal);
+            simulated_annelaing_order_pointer->set_minimum_temperature(minimum_temperature);
+            simulated_annelaing_order_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            simulated_annelaing_order_pointer->set_maximum_time(maximum_time);
+            simulated_annelaing_order_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            simulated_annelaing_order_pointer->set_reserve_selection_loss_data(reserve_selection_loss_loss_history == 1);
+        }
+        break;
+
+        default:
+            break;
+    }
+}
+
+void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_selection)
+{
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int original_threshold_selection_type;
+
+    // General parameters
+
+    double minimum_threshold;
+    double maximum_threshold;
+    double step;
+    int reserve_function_history;
+
+    if(rank == 0)
+    {
+        // Variables to send initialization
+
+        original_threshold_selection_type = (int)model_selection->get_threshold_selection_type();
+
+        switch (original_threshold_selection_type)
+        {
+            case (int)ModelSelection::F1_SCORE_OPTIMIZATION:
+            {
+                F1ScoreOptimizationThreshold* original_f1_score_optimization = model_selection->get_f1_score_optimization_threshold_pointer();
+
+                minimum_threshold = original_f1_score_optimization->get_minimum_threshold();
+                maximum_threshold = original_f1_score_optimization->get_maximum_threshold();
+                step = original_f1_score_optimization->get_step();
+                reserve_function_history = original_f1_score_optimization->get_reserve_function_data();
+            }
+            break;
+
+            case (int)ModelSelection::MATTHEW_CORRELATION:
+            {
+                MatthewCorrelationOptimizationThreshold* original_matthew_correlation_optimization = model_selection->get_matthew_correlation_optimization_threshold();
+
+                minimum_threshold = original_matthew_correlation_optimization->get_minimum_threshold();
+                maximum_threshold = original_matthew_correlation_optimization->get_maximum_threshold();
+                step = original_matthew_correlation_optimization->get_step();
+                reserve_function_history = original_matthew_correlation_optimization->get_reserve_function_data();
+            }
+            break;
+
+            case (int)ModelSelection::YOUDEN_INDEX:
+            {
+                YoudenIndexOptimizationThreshold* original_youden_index_optimization = model_selection->get_youden_index_optimization_threshold();
+
+                minimum_threshold = original_youden_index_optimization->get_minimum_threshold();
+                maximum_threshold = original_youden_index_optimization->get_maximum_threshold();
+                step = original_youden_index_optimization->get_step();
+                reserve_function_history = original_youden_index_optimization->get_reserve_function_data();
+            }
+            break;
+
+            case (int)ModelSelection::KAPPA_COEFFICIENT:
+            {
+                KappaCoefficientOptimizationThreshold* original_kappa_coefficient_optimization = model_selection->get_kappa_coefficient_optimization_threshold();
+
+                minimum_threshold = original_kappa_coefficient_optimization->get_minimum_threshold();
+                maximum_threshold = original_kappa_coefficient_optimization->get_maximum_threshold();
+                step = original_kappa_coefficient_optimization->get_step();
+                reserve_function_history = original_kappa_coefficient_optimization->get_reserve_function_data();
+            }
+            break;
+
+            case (int)ModelSelection::ROC_CURVE_DISTANCE:
+            {
+                ROCCurveOptimizationThreshold* original_roc_curve_optimization = model_selection->get_roc_curve_optimization_threshold();
+
+                minimum_threshold = original_roc_curve_optimization->get_minimum_threshold();
+                maximum_threshold = original_roc_curve_optimization->get_maximum_threshold();
+                step = original_roc_curve_optimization->get_step();
+                reserve_function_history = original_roc_curve_optimization->get_reserve_function_data();
+            }
+            break;
+
+            default:
+                break;
+        }
+    }
+
+    // Send variables
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank > 0)
+    {
+        MPI_Recv(&original_threshold_selection_type, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        MPI_Request req[4];
+
+        MPI_Irecv(&minimum_threshold, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(&maximum_threshold, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[1]);
+        MPI_Irecv(&step, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[2]);
+        MPI_Irecv(&reserve_function_history, 1, MPI_INT, rank-1, 5, MPI_COMM_WORLD, &req[3]);
+
+        MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+    }
+
+    if(rank < size-1)
+    {
+        MPI_Send(&original_threshold_selection_type, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+
+        MPI_Request req[4];
+
+        MPI_Isend(&minimum_threshold, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[0]);
+        MPI_Isend(&maximum_threshold, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[1]);
+        MPI_Isend(&step, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[2]);
+        MPI_Isend(&reserve_function_history, 1, MPI_INT, rank+1, 5, MPI_COMM_WORLD, &req[3]);
+
+        MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Set variables
+
+    set_threshold_selection_type((ModelSelection::ThresholdSelectionType)original_threshold_selection_type);
+
+    switch (original_threshold_selection_type)
+    {
+        case (int)ModelSelection::F1_SCORE_OPTIMIZATION:
+        {
+            f1_score_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
+            f1_score_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
+            f1_score_optimization_threshold_pointer->set_step(step);
+            f1_score_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
+        }
+        break;
+
+        case (int)ModelSelection::MATTHEW_CORRELATION:
+        {
+            matthew_correlation_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
+            matthew_correlation_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
+            matthew_correlation_optimization_threshold_pointer->set_step(step);
+            matthew_correlation_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
+        }
+            break;
+
+        case (int)ModelSelection::YOUDEN_INDEX:
+        {
+            youden_index_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
+            youden_index_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
+            youden_index_optimization_threshold_pointer->set_step(step);
+            youden_index_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
+        }
+            break;
+
+        case (int)ModelSelection::KAPPA_COEFFICIENT:
+        {
+            kappa_coefficient_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
+            kappa_coefficient_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
+            kappa_coefficient_optimization_threshold_pointer->set_step(step);
+            kappa_coefficient_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
+        }
+            break;
+
+        case (int)ModelSelection::ROC_CURVE_DISTANCE:
+        {
+            roc_curve_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
+            roc_curve_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
+            roc_curve_optimization_threshold_pointer->set_step(step);
+            roc_curve_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
+        }
+        break;
+
+        default:
+            break;
+    }
+}
+#endif
+
 // void destruct_order_selection(void) method
 
 /// This method deletes the order selection algorithm object which composes this model selection object.
@@ -831,22 +1722,22 @@ void ModelSelection::check(void) const
         throw std::logic_error(buffer.str());
     }
 
-    // Performance functional stuff
+    // Loss index stuff
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void check(void) const method.\n"
-               << "Pointer to performance functional is NULL.\n";
+               << "Pointer to loss functional is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
     // Neural network stuff
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     if(!neural_network_pointer)
     {
@@ -879,7 +1770,7 @@ void ModelSelection::check(void) const
 
     // Data set stuff
 
-    const DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     if(!data_set_pointer)
     {
@@ -907,7 +1798,7 @@ void ModelSelection::check(void) const
 
 // Vector<double> calculate_inputs_importance(void) const method
 
-/// Calculate the importance of the inputs, returns a vector with the selection error of the neural network removing one input.
+/// Calculate the importance of the inputs, returns a vector with the selection loss of the neural network removing one input.
 
 Vector<double> ModelSelection::calculate_inputs_importance(void) const
 {
@@ -917,9 +1808,9 @@ Vector<double> ModelSelection::calculate_inputs_importance(void) const
 
 #endif
 
-    PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t inputs_number = neural_network_pointer->get_inputs_number();
 
@@ -929,24 +1820,55 @@ Vector<double> ModelSelection::calculate_inputs_importance(void) const
 
     const bool has_scaling_layer = neural_network_pointer->has_scaling_layer();
 
+    NeuralNetwork neural_network_copy(*neural_network_pointer);
+
+    LossIndex loss_index_copy(*loss_index_pointer);
+
+    loss_index_copy.set_neural_network_pointer(&neural_network_copy);
+
+    TrainingStrategy training_strategy_copy(&loss_index_copy);
+
+    const size_t parameters_number = neural_network_copy.count_parameters_number();
+
+    neural_network_copy.set_parameters(Vector<double>(parameters_number, 0.0));
+
     if(has_scaling_layer)
     {
         statistics = neural_network_pointer->get_scaling_layer_pointer()->get_statistics();
     }
 
-    training_strategy_pointer->perform_training();
+    training_strategy_copy.set_display(false);
 
-    const Vector<double> parameters = neural_network_pointer->arrange_parameters();
+    neural_network_copy.randomize_parameters_normal(0.0, 1.0);
+
+    training_strategy_copy.perform_training();
+
+    const Vector<double> parameters = neural_network_copy.arrange_parameters();
+
+    const double trained_selection_error = loss_index_copy.calculate_selection_error();
 
     for (size_t i = 0; i < inputs_number; i++)
     {
-        neural_network_pointer->prune_input(i);
+        neural_network_copy.prune_input(i);
 
-        input_importance[i] = performance_functional_pointer->calculate_selection_error();
+        const double current_selection_error = loss_index_copy.calculate_selection_error();
 
-        neural_network_pointer->grow_input();
+        if(current_selection_error > trained_selection_error)
+        {
+            input_importance[i] = 1;
+        }
+        else if(current_selection_error < trained_selection_error)
+        {
+            input_importance[i] = 0;
+        }
+        else
+        {
+            input_importance[i] = current_selection_error/trained_selection_error;
+        }
 
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_copy.grow_input();
+
+        neural_network_copy.set_parameters(parameters);
     }
 
     if(has_scaling_layer)
@@ -981,22 +1903,28 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(vo
 
 #endif
 
-	ModelSelectionResults results = {};
+    ModelSelectionResults results;
 
     switch(order_selection_type)
     {
     case INCREMENTAL_ORDER:
     {
+        incremental_order_pointer->set_display(display);
+
         results.incremental_order_results_pointer = incremental_order_pointer->perform_order_selection();
         break;
     }
     case GOLDEN_SECTION:
     {
+        golden_section_order_pointer->set_display(display);
+
         results.golden_section_order_results_pointer = golden_section_order_pointer->perform_order_selection();
         break;
     }
     case SIMULATED_ANNEALING:
     {
+        simulated_annelaing_order_pointer->set_display(display);
+
         results.simulated_annealing_order_results_pointer = simulated_annelaing_order_pointer->perform_order_selection();
         break;
     }
@@ -1047,18 +1975,24 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
     {
         case GROWING_INPUTS:
         {
+            growing_inputs_pointer->set_display(display);
+
             results.growing_inputs_results_pointer = growing_inputs_pointer->perform_inputs_selection();
 
             break;
         }
         case PRUNING_INPUTS:
         {
+            pruning_inputs_pointer->set_display(display);
+
             results.pruning_inputs_results_pointer = pruning_inputs_pointer->perform_inputs_selection();
 
             break;
         }
         case GENETIC_ALGORITHM:
         {
+            genetic_algorithm_pointer->set_display(display);
+
             results.genetic_algorithm_results_pointer = genetic_algorithm_pointer->perform_inputs_selection();
 
             break;
@@ -1110,30 +2044,40 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
     {
         case F1_SCORE_OPTIMIZATION:
         {
+            f1_score_optimization_threshold_pointer->set_display(display);
+
             results.f1_score_opimization_results_pointer = f1_score_optimization_threshold_pointer->perform_threshold_selection();
 
             break;
         }
         case MATTHEW_CORRELATION:
         {
+            matthew_correlation_optimization_threshold_pointer->set_display(display);
+
             results.matthew_correlation_optimization_results_pointer = matthew_correlation_optimization_threshold_pointer->perform_threshold_selection();
 
             break;
         }
         case YOUDEN_INDEX:
         {
+            youden_index_optimization_threshold_pointer->set_display(display);
+
             results.youden_index_optimization_results_pointer = youden_index_optimization_threshold_pointer->perform_threshold_selection();
 
             break;
         }
         case KAPPA_COEFFICIENT:
         {
+            kappa_coefficient_optimization_threshold_pointer->set_display(display);
+
             results.kappa_coefficient_optimization_results_pointer = kappa_coefficient_optimization_threshold_pointer->perform_threshold_selection();
 
             break;
         }
         case ROC_CURVE_DISTANCE:
         {
+            roc_curve_optimization_threshold_pointer->set_display(display);
+
             results.roc_curve_optimization_results_pointer = roc_curve_optimization_threshold_pointer->perform_threshold_selection();
 
             break;
@@ -1457,6 +2401,9 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the model selection object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

@@ -38,19 +38,19 @@ void TrainingStrategyTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
 
    // Test
 
    TrainingStrategy ts1(&pf); 
 
-   assert_true(ts1.has_performance_functional() == true, LOG);
+   assert_true(ts1.has_loss_index() == true, LOG);
 
    // Test
 
    TrainingStrategy ts2; 
 
-   assert_true(ts2.has_performance_functional() == false, LOG);
+   assert_true(ts2.has_loss_index() == false, LOG);
 }
 
 
@@ -64,15 +64,15 @@ void TrainingStrategyTest::test_destructor(void)
 }
 
 
-void TrainingStrategyTest::test_get_performance_functional_pointer(void)
+void TrainingStrategyTest::test_get_loss_index_pointer(void)
 {
-   message += "test_get_performance_functional_pointer\n"; 
+   message += "test_get_loss_index_pointer\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
    
    TrainingStrategy ts(&pf);
 
-   PerformanceFunctional* pfp = ts.get_performance_functional_pointer();
+   LossIndex* pfp = ts.get_loss_index_pointer();
 
    assert_true(pfp != NULL, LOG);
 }
@@ -102,9 +102,9 @@ void TrainingStrategyTest::test_set_default(void)
 }
 
 
-void TrainingStrategyTest::test_set_performance_functional_pointer(void)
+void TrainingStrategyTest::test_set_loss_index_pointer(void)
 {
-   message += "test_set_performance_functional_pointer\n"; 
+   message += "test_set_loss_index_pointer\n"; 
 }
 
 
@@ -124,7 +124,7 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
     Vector<size_t> architecture;
     NeuralNetwork nn;
 
-    PerformanceFunctional pf(&nn, &ds);
+    LossIndex pf(&nn, &ds);
     TrainingStrategy ts(&pf);
 
     // Test
@@ -150,7 +150,7 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
 
 //    system("pause");
 
-//    assert_true(performance < old_performance, LOG);
+//    assert_true(loss < old_loss, LOG);
  /*
     // Minimum parameters increment norm
 
@@ -159,8 +159,8 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
     double minimum_parameters_increment_norm = 0.1;
 
     qnm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-    qnm.set_performance_goal(0.0);
-    qnm.set_minimum_performance_increase(0.0);
+    qnm.set_loss_goal(0.0);
+    qnm.set_minimum_loss_increase(0.0);
     qnm.set_gradient_norm_goal(0.0);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
@@ -171,30 +171,30 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
 
     nn.initialize_parameters(3.1415927);
 
-    double performance_goal = 100.0;
+    double loss_goal = 100.0;
 
     qnm.set_minimum_parameters_increment_norm(0.0);
-    qnm.set_performance_goal(performance_goal);
-    qnm.set_minimum_performance_increase(0.0);
+    qnm.set_loss_goal(loss_goal);
+    qnm.set_minimum_loss_increase(0.0);
     qnm.set_gradient_norm_goal(0.0);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
 
     qnm.perform_training();
 
-    performance = pf.calculate_performance();
+    loss = pf.calculate_loss();
 
-    assert_true(performance < performance_goal, LOG);
+    assert_true(loss < loss_goal, LOG);
 
     // Minimum evaluation improvement
 
     nn.initialize_parameters(3.1415927);
 
-    double minimum_performance_increase = 100.0;
+    double minimum_loss_increase = 100.0;
 
     qnm.set_minimum_parameters_increment_norm(0.0);
-    qnm.set_performance_goal(0.0);
-    qnm.set_minimum_performance_increase(minimum_performance_increase);
+    qnm.set_loss_goal(0.0);
+    qnm.set_minimum_loss_increase(minimum_loss_increase);
     qnm.set_gradient_norm_goal(0.0);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
@@ -208,8 +208,8 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
     double gradient_norm_goal = 100.0;
 
     qnm.set_minimum_parameters_increment_norm(0.0);
-    qnm.set_performance_goal(0.0);
-    qnm.set_minimum_performance_increase(0.0);
+    qnm.set_loss_goal(0.0);
+    qnm.set_minimum_loss_increase(0.0);
     qnm.set_gradient_norm_goal(gradient_norm_goal);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
@@ -228,7 +228,7 @@ void TrainingStrategyTest::test_perform_training(void)
 
     NeuralNetwork nn;
     DataSet ds;
-    PerformanceFunctional pf(&nn, &ds);
+    LossIndex pf(&nn, &ds);
     TrainingStrategy ts(&pf);
 
     // Test
@@ -356,7 +356,7 @@ void TrainingStrategyTest::run_test_case(void)
 
    // Get methods
 
-   test_get_performance_functional_pointer();
+   test_get_loss_index_pointer();
 
    // Utilities
    
@@ -367,7 +367,7 @@ void TrainingStrategyTest::run_test_case(void)
    test_set();
    test_set_default();   
 
-   test_set_performance_functional_pointer();
+   test_set_loss_index_pointer();
 
    // Utilities
 

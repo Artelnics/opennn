@@ -103,19 +103,19 @@ public:
 
         std::string to_string(void) const;
 
-        /// Values of the minimum performance in each generation.
+        /// Values of the minimum loss in each generation.
 
-        Vector<double> generation_optimum_performance_history;
+        Vector<double> generation_optimum_loss_history;
 
-        /// Values of the minimum selection performance in each generation.
+        /// Values of the minimum selection loss in each generation.
 
         Vector<double> generation_minimum_selection_history;
 
-        /// Mean of the selection performance in each generation.
+        /// Mean of the selection loss in each generation.
 
         Vector<double> generation_mean_history;
 
-        /// Standard deviation of the selection performance in each generation.
+        /// Standard deviation of the selection loss in each generation.
 
         Vector<double> generation_standard_deviation_history;
     };
@@ -126,7 +126,7 @@ public:
 
     const Vector< Vector<bool> >& get_population(void) const;
 
-    const Matrix<double>& get_performance(void) const;
+    const Matrix<double>& get_loss(void) const;
 
     const Vector<double>& get_fitness(void) const;
 
@@ -156,7 +156,7 @@ public:
 
     const bool& get_reserve_generation_minimum_selection(void) const;
 
-    const bool& get_reserve_generation_optimum_performance(void) const;
+    const bool& get_reserve_generation_optimum_loss(void) const;
 
     std::string write_initialization_method(void) const;
 
@@ -170,7 +170,7 @@ public:
 
     void set_population(const Vector< Vector<bool> >&);
 
-    void set_performance(const Matrix<double>&);
+    void set_loss(const Matrix<double>&);
 
     void set_fitness(const Vector<double>&);
 
@@ -202,7 +202,7 @@ public:
 
     void set_reserve_generation_minimum_selection(const bool&);
 
-    void set_reserve_generation_optimum_performance(const bool&);
+    void set_reserve_generation_optimum_loss(const bool&);
 
     // GENETIC METHODS
 
@@ -273,7 +273,7 @@ private:
 
     /// Performance of population.
 
-    Matrix<double> performance;
+    Matrix<double> loss;
 
     /// Fitness of population.
 
@@ -335,21 +335,21 @@ private:
 
     // Inputs selection results
 
-    /// True if the mean of selection performance are to be reserved in each generation.
+    /// True if the mean of selection loss are to be reserved in each generation.
 
     bool reserve_generation_mean;
 
-    /// True if the standard deviation of selection performance are to be reserved in each generation.
+    /// True if the standard deviation of selection loss are to be reserved in each generation.
 
     bool reserve_generation_standard_deviation;
 
-    /// True if the minimum of selection performance are to be reserved in each generation.
+    /// True if the minimum of selection loss are to be reserved in each generation.
 
     bool reserve_generation_minimum_selection;
 
-    /// True if the optimum of performance are to be reserved in each generation.
+    /// True if the optimum of loss are to be reserved in each generation.
 
-    bool reserve_generation_optimum_performance;
+    bool reserve_generation_optimum_loss;
 
 };
 

@@ -275,9 +275,9 @@ double MeanSquaredError::calculate_error(void) const
 
 // double calculate_error(const Vector<double>&) const method
 
-/// Returns which would be the performance term of a neural network for an hypothetical
+/// Returns which would be the error term of a neural network for an hypothetical
 /// vector of parameters. It does not set that vector of parameters to the neural network. 
-/// @param parameters Vector of potential parameters for the neural network associated to the performance term.
+/// @param parameters Vector of potential parameters for the neural network associated to the error term.
 
 double MeanSquaredError::calculate_error(const Vector<double>& parameters) const
 {
@@ -410,11 +410,11 @@ double MeanSquaredError::calculate_selection_error(void) const
       Vector<double> outputs(outputs_number);
       Vector<double> targets(outputs_number);
 
-      double selection_performance = 0.0;
+      double selection_loss = 0.0;
 
       int i = 0;
 
-      #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+:selection_performance)
+      #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+:selection_loss)
 
       for(i = 0; i < (int)selection_instances_number; i++)
       {
@@ -434,10 +434,10 @@ double MeanSquaredError::calculate_selection_error(void) const
 
          // Sum of squares error
 
-         selection_performance += outputs.calculate_sum_squared_error(targets);
+         selection_loss += outputs.calculate_sum_squared_error(targets);
       }
 
-      return(selection_performance/(double)selection_instances_number);
+      return(selection_loss/(double)selection_instances_number);
 }
 
 
@@ -472,11 +472,11 @@ Matrix<double> MeanSquaredError::calculate_output_Hessian(const Vector<double>&,
 }
 
 
-// FirstOrderPerformance calculate_first_order_performance(void) const method
+// FirstOrderPerformance calculate_first_order_loss(void) const method
 
 /// @todo
 
-ErrorTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_performance(void) const
+ErrorTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_loss(void) const
 {
     // Control sentence
 
@@ -486,20 +486,20 @@ ErrorTerm::FirstOrderPerformance MeanSquaredError::calculate_first_order_perform
 
     #endif
 
-   FirstOrderPerformance first_order_performance;
+   FirstOrderPerformance first_order_loss;
 
-   first_order_performance.performance = calculate_error();
-   first_order_performance.gradient = calculate_gradient();
+   first_order_loss.loss = calculate_error();
+   first_order_loss.gradient = calculate_gradient();
 
-   return(first_order_performance);
+   return(first_order_loss);
 }
 
 
-// SecondOrderperformance calculate_second_order_performance(void) const method
+// SecondOrderloss calculate_second_order_loss(void) const method
 
 /// @todo
 
-ErrorTerm::SecondOrderPerformance MeanSquaredError::calculate_second_order_performance(void) const
+ErrorTerm::SecondOrderPerformance MeanSquaredError::calculate_second_order_loss(void) const
 {
     // Control sentence
 
@@ -509,19 +509,19 @@ ErrorTerm::SecondOrderPerformance MeanSquaredError::calculate_second_order_perfo
 
     #endif
 
-   SecondOrderPerformance second_order_performance;
+   SecondOrderPerformance second_order_loss;
 
-   second_order_performance.performance = calculate_error();
-   second_order_performance.gradient = calculate_gradient();
-   second_order_performance.Hessian = calculate_Hessian();
+   second_order_loss.loss = calculate_error();
+   second_order_loss.gradient = calculate_gradient();
+   second_order_loss.Hessian = calculate_Hessian();
 
-   return(second_order_performance);
+   return(second_order_loss);
 }
 
 
 // Vector<double> calculate_terms(void) const method
 
-/// Returns performance vector of the performance terms function for the mean squared error.
+/// Returns loss vector of the error terms function for the mean squared error.
 /// It uses the error back-propagation method.
 
 Vector<double> MeanSquaredError::calculate_terms(void) const
@@ -558,7 +558,7 @@ Vector<double> MeanSquaredError::calculate_terms(void) const
 
    // Mean squared error stuff
 
-   Vector<double> performance_terms(training_instances_number);
+   Vector<double> error_terms(training_instances_number);
 
    Vector<double> inputs(inputs_number);
    Vector<double> outputs(outputs_number);
@@ -586,18 +586,18 @@ Vector<double> MeanSquaredError::calculate_terms(void) const
 
       // Error
 
-      performance_terms[i] = outputs.calculate_distance(targets);
+      error_terms[i] = outputs.calculate_distance(targets);
    }
 
-   return(performance_terms/sqrt((double)training_instances_number));
+   return(error_terms/sqrt((double)training_instances_number));
 }
 
 
 // Vector<double> calculate_terms(const Vector<double>&) const method
 
-/// Returns which would be the performance terms performance vector of a multilayer perceptron for an hypothetical vector of multilayer perceptron parameters.
+/// Returns which would be the error terms loss vector of a multilayer perceptron for an hypothetical vector of multilayer perceptron parameters.
 /// It does not set that vector of parameters to the multilayer perceptron. 
-/// @param network_parameters Vector of a potential multilayer_perceptron_pointer parameters for the multilayer perceptron associated to the performance functional.
+/// @param network_parameters Vector of a potential multilayer_perceptron_pointer parameters for the multilayer perceptron associated to the loss functional.
 
 Vector<double> MeanSquaredError::calculate_terms(const Vector<double>& network_parameters) const
 {
@@ -693,7 +693,7 @@ Matrix<double> MeanSquaredError::calculate_terms_Jacobian(void) const
    Vector<double> inputs(inputs_number);
    Vector<double> targets(outputs_number);
 
-   // Performance functional
+   // Loss index
 
    Vector<double> term(outputs_number);
    double term_norm;
@@ -774,7 +774,7 @@ Matrix<double> MeanSquaredError::calculate_terms_Jacobian(void) const
 
 // FirstOrderTerms calculate_first_order_terms(void) const method
 
-/// Returns a first order terms performance structure, which contains the values and the Jacobian of the performance terms function.
+/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 
 /// @todo
 
@@ -798,11 +798,11 @@ MeanSquaredError::FirstOrderTerms MeanSquaredError::calculate_first_order_terms(
 }
 
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the name of the mean squared error performance type, "MEAN_SQUARED_ERROR".
+/// Returns a string with the name of the mean squared error loss type, "MEAN_SQUARED_ERROR".
 
-std::string MeanSquaredError::write_performance_term_type(void) const
+std::string MeanSquaredError::write_error_term_type(void) const
 {
    return("MEAN_SQUARED_ERROR");
 }
@@ -843,7 +843,7 @@ tinyxml2::XMLDocument* MeanSquaredError::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter &) const method
 
-void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void MeanSquaredError::write_XML(tinyxml2::XMLPrinter&) const
 {
     //file_stream.OpenElement("MeanSquaredError");
 

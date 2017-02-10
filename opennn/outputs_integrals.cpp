@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates an outputs integrals performance term not associated to any neural network.
+/// It creates an outputs integrals error term not associated to any neural network.
 /// It also initializes all the rest of class members to their default values.
 
 OutputsIntegrals::OutputsIntegrals(void) 
@@ -34,7 +34,7 @@ OutputsIntegrals::OutputsIntegrals(void)
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates an outputs integrals performance term associated to a neural network.
+/// It creates an outputs integrals error term associated to a neural network.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
@@ -48,7 +48,7 @@ OutputsIntegrals::OutputsIntegrals(NeuralNetwork* new_neural_network_pointer)
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates an outputs integrals performance term not associated to any neural network.
+/// It creates an outputs integrals error term not associated to any neural network.
 /// The class members are loaded from a XML document. 
 /// @param outputs_integrals_document Pointer to a TinyXML document with the object data.
 
@@ -177,7 +177,7 @@ void OutputsIntegrals::set_default(void)
 
 // void check(void) const method
 
-/// Checks that there are a neural network and a mathematical model associated to the outputs integrals performance term,
+/// Checks that there are a neural network and a mathematical model associated to the outputs integrals error term,
 /// and that there is a multilayer perceptron in the neural network. 
 /// It also checks that the number of inputs in the neural network is 1. 
 /// If some of the above conditions is not hold, the method throws an exception. 
@@ -263,23 +263,23 @@ double OutputsIntegrals::calculate_regularization(void) const
 
    // Outputs integrals
 
-   double performance = 0;
+   double loss = 0;
 
    for(size_t i = 0; i < outputs_number; i++)
    {
-      performance += 0.0;
+      loss += 0.0;
    }
 
-   return(performance);
+   return(loss);
 */
 }
 
 
 // double calculate_regularization(const Vector<double>&) const method
 
-/// Returns which would be the performance of a neural network for an hypothetical vector of parameters. 
+/// Returns which would be the loss of a neural network for an hypothetical vector of parameters. 
 /// It does not set that vector of parameters to the neural network. 
-// @param parameters Vector of potential parameters for the neural network associated to the performance functional.
+// @param parameters Vector of potential parameters for the neural network associated to the loss functional.
 
 double OutputsIntegrals::calculate_regularization(const Vector<double>&) const
 {
@@ -326,7 +326,7 @@ double OutputsIntegrals::calculate_regularization(const Vector<double>&) const
 
    sum_squared_error_copy.set_neural_network_pointer(&neural_network_copy);
 
-   return(sum_squared_error_copy.calculate_performance());
+   return(sum_squared_error_copy.calculate_loss());
 */
 }
 
@@ -375,11 +375,11 @@ Matrix<double> OutputsIntegrals::calculate_Hessian(void) const
 }
 
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the name of the outputs integrals performance type, "OUTPUTS_INTEGRALS".
+/// Returns a string with the name of the outputs integrals loss type, "OUTPUTS_INTEGRALS".
 
-std::string OutputsIntegrals::write_performance_term_type(void) const
+std::string OutputsIntegrals::write_error_term_type(void) const
 {
    return("OUTPUTS_INTEGRALS");
 }
@@ -438,6 +438,9 @@ tinyxml2::XMLDocument* OutputsIntegrals::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the outputs integrals object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void OutputsIntegrals::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

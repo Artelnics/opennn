@@ -247,7 +247,7 @@ void MinkowskiError::check(void) const
 
 // double calculate_error(void) const method
 
-/// Returns the Minkowski error performance.
+/// Returns the Minkowski error loss.
 
 double MinkowskiError::calculate_error(void) const
 {
@@ -444,17 +444,17 @@ double MinkowskiError::calculate_selection_error(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   // Performance functional
+   // Loss index
 
    Vector<double> inputs(inputs_number);
    Vector<double> outputs(outputs_number);
    Vector<double> targets(outputs_number);
 
-   double selection_performance = 0.0;
+   double selection_loss = 0.0;
 
    int i = 0;
 
-   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_performance)
+   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_loss)
 
    for(i = 0; i < (int)selection_instances_number; i++)
    {
@@ -474,10 +474,10 @@ double MinkowskiError::calculate_selection_error(void) const
 
       // Minkowski error
 
-      selection_performance += (outputs-targets).calculate_p_norm(Minkowski_parameter);
+      selection_loss += (outputs-targets).calculate_p_norm(Minkowski_parameter);
    }
 
-   return(selection_performance);
+   return(selection_loss);
 }
 
 
@@ -506,11 +506,11 @@ Matrix<double> MinkowskiError::calculate_output_Hessian(const Vector<double>& , 
 
 
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the name of the Minkowski error performance type, "MINKOWSKI_ERROR".
+/// Returns a string with the name of the Minkowski error loss type, "MINKOWSKI_ERROR".
 
-std::string MinkowskiError::write_performance_term_type(void) const
+std::string MinkowskiError::write_error_term_type(void) const
 {
    return("MINKOWSKI_ERROR");
 }

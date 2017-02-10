@@ -242,8 +242,16 @@ const std::string& Outputs::get_description(const size_t& index) const
 
 Vector<std::string> Outputs::arrange_units(void) const
 {
-    return(units);
-}
+    const size_t outputs_number = get_outputs_number();
+
+    Vector<std::string> units(outputs_number);
+
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+        units[i] = items[i].units;
+    }
+
+    return(units);}
 
 
 // const std::string& get_unit(const size_t&) const method
@@ -836,6 +844,9 @@ tinyxml2::XMLDocument* Outputs::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the outputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     const size_t outputs_number = get_outputs_number();
@@ -1001,9 +1012,15 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-// void to_PMML(tinyxml2::XMLElement*, const bool&, const bool&, const Vector<Statistics<double>>&) method
+// void to_PMML(tinyxml2::XMLElement*, const bool&, const bool&, const Vector< Statistics<double> >&) method
 
-void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilistic, const bool& is_data_unscaled, const Vector<Statistics<double>>& outputs_statistics)
+/// Serializes the outputs object into a PMML document.
+/// @param element XML element to append the outputs object.
+/// @param is_probabilistic True if the output is a probability, false otherwise.
+/// @param is_data_unscaled True if the data is unscaled, false otherwise.
+/// @param outputs_statistics Statistics of the outputs variables.
+
+void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilistic, const bool& is_data_unscaled, const Vector< Statistics<double> >& outputs_statistics)
 {
     std::string element_name(element->Name());
 
@@ -1099,9 +1116,9 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
             tinyxml2::XMLElement* neural_output = pmml_document->NewElement("NeuralOutput");
             element->LinkEndChild(neural_output);
 
-            std::string neural_output_id = std::to_string(number_of_layers);
+            std::string neural_output_id = number_to_string(number_of_layers);
             neural_output_id.append(",");
-            neural_output_id.append(std::to_string(i));
+            neural_output_id.append(number_to_string(i));
 
             neural_output->SetAttribute("outputNeuron",neural_output_id.c_str());
 
@@ -1143,9 +1160,14 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
 }
 
 
-// void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() ) method
+// void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool&, const Vector< Statistics<double> >&) method
 
-void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const bool& is_probabilistic, const Vector<Statistics<double>>& outputs_statistics )
+/// Serializes the outputs data dictonary into a PMML document.
+/// @param file_stream TinyXML file to append the data dictionary.
+/// @param is_probabilistic True if the output is a probability, false otherwise.
+/// @param outputs_statistics Statistics of the output variables.
+
+void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const bool& is_probabilistic, const Vector< Statistics<double> >& outputs_statistics )
 {
     const size_t outputs_number = get_outputs_number();
 
@@ -1199,7 +1221,11 @@ void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, cons
 }
 
 
-// void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() ) method
+// void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool&) method
+
+/// Serializes the outputs mining schema into a PMML document.
+/// @param file_stream TinyXML file to append the mining schema.
+/// @param is_probabilistic True if the output is a probability, false otherwise.
 
 void Outputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream, const bool& is_probabilistic)
 {
@@ -1231,7 +1257,13 @@ void Outputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream, const 
 }
 
 
-// void write_PMML_neural_outputs(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() ) method
+// void write_PMML_neural_outputs(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >() ) method
+
+/// Serializes the neural outputs into a PMML document.
+/// @param file_stream TinyXML file to append the neural outputs.
+/// @param number_of_layers Number of layers of the multilayer perceptron.
+/// @param is_probabilistic True if the output is a probability, false otherwise.
+/// @param is_data_unscaled True if the data is unscaled, false otherwise.
 
 void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_t number_of_layers, const bool& is_probabilistic, bool is_data_unscaled )
 {
@@ -1243,9 +1275,9 @@ void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_
 
         file_stream.OpenElement("NeuralOutput");
 
-        std::string neural_output_id = std::to_string(number_of_layers);
+        std::string neural_output_id = number_to_string(number_of_layers);
         neural_output_id.append(",");
-        neural_output_id.append(std::to_string(i));
+        neural_output_id.append(number_to_string(i));
 
         file_stream.PushAttribute("outputNeuron",neural_output_id.c_str());
 

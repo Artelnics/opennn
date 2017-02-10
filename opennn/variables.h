@@ -156,10 +156,14 @@ public:
    Vector<size_t> arrange_targets_indices(void) const;
    Vector<size_t> arrange_unused_indices(void) const;
 
+   Vector<int> arrange_inputs_indices_int(void) const;
+   Vector<int> arrange_targets_indices_int(void) const;
+
    // Information methods
 
    Vector<std::string> arrange_names(void) const;
    Vector<std::string> arrange_used_names(void) const;
+   Vector<std::string> arrange_used_units(void) const;
    const std::string& get_name(const size_t&) const;
 
    bool has_names(void) const;
@@ -199,6 +203,13 @@ public:
    void set_target(void);
    void set_unuse(void);
 
+   void set_input_indices(const Vector<size_t>&);
+   void set_target_indices(const Vector<size_t>&);
+   void set_unuse_indices(const Vector<size_t>&);
+
+   void set_input_indices(const Vector<int>&);
+   void set_target_indices(const Vector<int>&);
+
    void set_default_uses(void);
 
    // Information methods
@@ -231,7 +242,7 @@ public:
    Matrix<std::string> arrange_targets_information(void) const;
 
    void convert_time_series(const size_t&);
-   void convert_autoassociation(void);
+   void convert_association(void);
 
    // Serialization methods
 

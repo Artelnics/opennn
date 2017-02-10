@@ -108,7 +108,7 @@ public:
 
     // Order selection methods
 
-    size_t get_optimal_selection_performance_index(void) const;
+    size_t get_optimal_selection_loss_index(void) const;
 
     SimulatedAnnealingOrderResults* perform_order_selection(void);
 

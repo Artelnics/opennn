@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a Newton method training algorithm object not associated to any performance functional object.
+/// It creates a Newton method training algorithm object not associated to any loss functional object.
 /// It also initializes the class members to their default values.
 
 NewtonMethod::NewtonMethod(void) 
@@ -34,14 +34,14 @@ NewtonMethod::NewtonMethod(void)
 // PERFORMANCE FUNCTIONAL CONSTRUCTOR 
 
 /// General constructor. 
-/// It creates a Newton method training algorithm object associated to a performance functional object.
+/// It creates a Newton method training algorithm object associated to a loss functional object.
 /// It also initializes the class members to their default values.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-NewtonMethod::NewtonMethod(PerformanceFunctional* new_performance_functional_pointer)
-: TrainingAlgorithm(new_performance_functional_pointer)
+NewtonMethod::NewtonMethod(LossIndex* new_loss_index_pointer)
+: TrainingAlgorithm(new_loss_index_pointer)
 {
-   training_rate_algorithm.set_performance_functional_pointer(new_performance_functional_pointer);
+   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 
    set_default();
 }
@@ -169,24 +169,24 @@ const double& NewtonMethod::get_minimum_parameters_increment_norm(void) const
 }
 
 
-// const double& get_minimum_performance_increase(void) const method
+// const double& get_minimum_loss_increase(void) const method
 
-/// Returns the minimum performance improvement during training.  
+/// Returns the minimum loss improvement during training.  
 
-const double& NewtonMethod::get_minimum_performance_increase(void) const
+const double& NewtonMethod::get_minimum_loss_increase(void) const
 {
-   return(minimum_performance_increase);
+   return(minimum_loss_increase);
 }
 
 
-// const double& get_performance_goal(void) const method
+// const double& get_loss_goal(void) const method
 
-/// Returns the goal value for the performance. 
+/// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& NewtonMethod::get_performance_goal(void) const
+const double& NewtonMethod::get_loss_goal(void) const
 {
-   return(performance_goal);
+   return(loss_goal);
 }
 
 
@@ -201,13 +201,13 @@ const double& NewtonMethod::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_selection_performance_decreases(void) const method
+// const size_t& get_maximum_selection_loss_decreases(void) const method
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& NewtonMethod::get_maximum_selection_performance_decreases(void) const
+const size_t& NewtonMethod::get_maximum_selection_loss_decreases(void) const
 {
-   return(maximum_selection_performance_decreases);
+   return(maximum_selection_loss_decreases);
 }
 
 
@@ -251,13 +251,13 @@ const bool& NewtonMethod::get_reserve_parameters_norm_history(void) const
 }
 
 
-// const bool& get_reserve_performance_history(void) const method
+// const bool& get_reserve_loss_history(void) const method
 
-/// Returns true if the performance history vector is to be reserved, and false otherwise.
+/// Returns true if the loss history vector is to be reserved, and false otherwise.
 
-const bool& NewtonMethod::get_reserve_performance_history(void) const
+const bool& NewtonMethod::get_reserve_loss_history(void) const
 {
-   return(reserve_performance_history);     
+   return(reserve_loss_history);     
 }
 
 
@@ -321,27 +321,27 @@ const bool& NewtonMethod::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_selection_performance_history(void) const method
+// const bool& get_reserve_selection_loss_history(void) const method
 
-/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
+/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& NewtonMethod::get_reserve_selection_performance_history(void) const
+const bool& NewtonMethod::get_reserve_selection_loss_history(void) const
 {
-   return(reserve_selection_performance_history);
+   return(reserve_selection_loss_history);
 }
 
 
-// void set_performance_functional_pointer(PerformanceFunctional*) method
+// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a performance functional object to be associated to the Newton method object.
-/// It also sets that performance functional to the training rate algorithm.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// Sets a pointer to a loss functional object to be associated to the Newton method object.
+/// It also sets that loss functional to the training rate algorithm.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-void NewtonMethod::set_performance_functional_pointer(PerformanceFunctional* new_performance_functional_pointer)
+void NewtonMethod::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
-   training_rate_algorithm.set_performance_functional_pointer(new_performance_functional_pointer);
+   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
 
@@ -363,10 +363,10 @@ void NewtonMethod::set_default(void)
 
    minimum_parameters_increment_norm = 0.0;
 
-   minimum_performance_increase = 0.0;
-   performance_goal = -1.0e99;
+   minimum_loss_increase = 0.0;
+   loss_goal = -1.0e99;
    gradient_norm_goal = 0.0;
-   maximum_selection_performance_decreases = 1000000;
+   maximum_selection_loss_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
@@ -376,10 +376,10 @@ void NewtonMethod::set_default(void)
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_performance_history = true;
+   reserve_loss_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_selection_performance_history = false;
+   reserve_selection_loss_history = false;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -607,45 +607,45 @@ void NewtonMethod::set_minimum_parameters_increment_norm(const double& new_minim
 }
 
 
-// void set_minimum_performance_increase(const double&) method
+// void set_minimum_loss_increase(const double&) method
 
-/// Sets a new minimum performance improvement during training.  
-/// @param new_minimum_performance_increase Minimum improvement in the performance between two iterations.
+/// Sets a new minimum loss improvement during training.  
+/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
-void NewtonMethod::set_minimum_performance_increase(const double& new_minimum_performance_increase)
+void NewtonMethod::set_minimum_loss_increase(const double& new_minimum_loss_increase)
 {
    // Control sentence (if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_performance_increase < 0.0)
+   if(new_minimum_loss_increase < 0.0)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: NewtonMethod class.\n"
-             << "void set_minimum_performance_increase(const double&) method.\n"
-             << "Minimum performance improvement must be equal or greater than 0.\n";
+             << "void set_minimum_loss_increase(const double&) method.\n"
+             << "Minimum loss improvement must be equal or greater than 0.\n";
 
       throw std::logic_error(buffer.str());	  
    }
 
    #endif
 
-   // Set minimum performance improvement
+   // Set minimum loss improvement
 
-   minimum_performance_increase = new_minimum_performance_increase;
+   minimum_loss_increase = new_minimum_loss_increase;
 }
 
 
-// void set_performance_goal(const double&) method
+// void set_loss_goal(const double&) method
 
-/// Sets a new goal value for the performance. 
+/// Sets a new goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
-/// @param new_performance_goal Goal value for the performance.
+/// @param new_loss_goal Goal value for the loss.
 
-void NewtonMethod::set_performance_goal(const double& new_performance_goal)
+void NewtonMethod::set_loss_goal(const double& new_loss_goal)
 {
-   performance_goal = new_performance_goal;
+   loss_goal = new_loss_goal;
 }
 
 
@@ -680,14 +680,14 @@ void NewtonMethod::set_gradient_norm_goal(const double& new_gradient_norm_goal)
 }
 
 
-// void set_maximum_selection_performance_decreases(const size_t&) method
+// void set_maximum_selection_loss_decreases(const size_t&) method
 
 /// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases. 
+/// @param new_maximum_selection_loss_decreases Maximum number of iterations in which the selection evalutation decreases. 
 
-void NewtonMethod::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
+void NewtonMethod::set_maximum_selection_loss_decreases(const size_t& new_maximum_selection_loss_decreases)
 {
-   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
+   maximum_selection_loss_decreases = new_maximum_selection_loss_decreases;
 }
 
 
@@ -754,14 +754,14 @@ void NewtonMethod::set_reserve_parameters_norm_history(const bool& new_reserve_p
 }
 
 
-// void set_reserve_performance_history(bool) method
+// void set_reserve_loss_history(bool) method
 
-/// Makes the performance history vector to be reseved or not in memory.
-/// @param new_reserve_performance_history True if the performance history vector is to be reserved, false otherwise.
+/// Makes the loss history vector to be reseved or not in memory.
+/// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
 
-void NewtonMethod::set_reserve_performance_history(const bool& new_reserve_performance_history)
+void NewtonMethod::set_reserve_loss_history(const bool& new_reserve_loss_history)
 {
-   reserve_performance_history = new_reserve_performance_history;     
+   reserve_loss_history = new_reserve_loss_history;     
 }
 
 
@@ -836,15 +836,15 @@ void NewtonMethod::set_reserve_elapsed_time_history(const bool& new_reserve_elap
 }
 
 
-// void set_reserve_selection_performance_history(bool) method
+// void set_reserve_selection_loss_history(bool) method
 
-/// Makes the Selection performance history to be reserved or not in memory. 
+/// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_loss_history True if the selection loss history is to be reserved, false otherwise.
 
-void NewtonMethod::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
+void NewtonMethod::set_reserve_selection_loss_history(const bool& new_reserve_selection_loss_history)  
 {
-   reserve_selection_performance_history = new_reserve_selection_performance_history;
+   reserve_selection_loss_history = new_reserve_selection_loss_history;
 }
 
 
@@ -891,16 +891,16 @@ Vector<double> NewtonMethod::calculate_gradient_descent_training_direction(const
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: NewtonMethod class.\n"
               << "Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const method.\n"
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -925,12 +925,14 @@ Vector<double> NewtonMethod::calculate_gradient_descent_training_direction(const
 
 /// Returns the Newton method training direction, which has been previously normalized.
 /// @param gradient Gradient vector. 
-/// @param inverse_Hessian Inverse Hessian matrix. 
+/// @param Hessian Hessian matrix.
 
 Vector<double> NewtonMethod::calculate_training_direction
-(const Vector<double>& gradient, const Matrix<double>& inverse_Hessian) const
+(const Vector<double>& gradient, const Matrix<double>& Hessian) const
 {
-   return((inverse_Hessian.dot(gradient)*(-1.0)).calculate_normalized());
+    return((Hessian.solve_LDLT(gradient)).calculate_normalized());
+
+   //return((inverse_Hessian.dot(gradient)*(-1.0)).calculate_normalized());
 }
 
 
@@ -968,14 +970,14 @@ void NewtonMethod::NewtonMethodResults::resize_training_history(const size_t& ne
         parameters_norm_history.resize(new_size);
     }
 
-    if(Newton_method_pointer->get_reserve_performance_history())
+    if(Newton_method_pointer->get_reserve_loss_history())
     {
-        performance_history.resize(new_size);
+        loss_history.resize(new_size);
     }
 
-    if(Newton_method_pointer->get_reserve_selection_performance_history())
+    if(Newton_method_pointer->get_reserve_selection_loss_history())
     {
-        selection_performance_history.resize(new_size);
+        selection_loss_history.resize(new_size);
     }
 
     if(Newton_method_pointer->get_reserve_gradient_history())
@@ -1037,20 +1039,20 @@ std::string NewtonMethod::NewtonMethodResults::to_string(void) const
               << parameters_norm_history << "\n"; 
    }
    
-   // performance history   
+   // loss history   
 
-   if(!performance_history.empty())
+   if(!loss_history.empty())
    {
-       buffer << "% performance history:\n"
-              << performance_history << "\n"; 
+       buffer << "% loss history:\n"
+              << loss_history << "\n"; 
    }
 
-   // Selection performance history
+   // Selection loss history
 
-   if(!selection_performance_history.empty())
+   if(!selection_loss_history.empty())
    {
-       buffer << "% Selection performance history:\n"
-              << selection_performance_history << "\n"; 
+       buffer << "% Selection loss history:\n"
+              << selection_loss_history << "\n"; 
    }
 
    // Gradient history 
@@ -1132,25 +1134,25 @@ Matrix<std::string> NewtonMethod::NewtonMethodResults::write_final_results(const
 
    values.push_back(buffer.str());
 
-   // Final performance
+   // Final loss
 
-   names.push_back("Final performance");
+   names.push_back("Final loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_performance;
+   buffer << std::setprecision(precision) << final_loss;
 
    values.push_back(buffer.str());
 
-   // Final selection performance
+   // Final selection loss
 
-   const PerformanceFunctional* performance_functional_pointer = Newton_method_pointer->get_performance_functional_pointer();
+   const LossIndex* loss_index_pointer = Newton_method_pointer->get_loss_index_pointer();
 
-   if(performance_functional_pointer->has_selection())
+   if(loss_index_pointer->has_selection())
    {
-       names.push_back("Final selection performance");
+       names.push_back("Final selection loss");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_selection_performance;
+       buffer << std::setprecision(precision) << final_selection_loss;
 
        values.push_back(buffer.str());
    }
@@ -1205,7 +1207,7 @@ Matrix<std::string> NewtonMethod::NewtonMethodResults::write_final_results(const
 
 // NewtonMethodResults* perform_training(void) method
 
-/// Trains a neural network with an associated performance functional according to the Newton method algorithm.
+/// Trains a neural network with an associated loss functional according to the Newton method algorithm.
 /// Training occurs according to the training operators, the training parameters and the stopping criteria. 
 /// @todo
 
@@ -1245,7 +1247,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
    // Neural network stuff
 
-   NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1255,15 +1257,15 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
    Vector<double> parameters_increment(parameters_number);
    double parameters_increment_norm;
 
-   // Performance functional stuff
+   // Loss index stuff
 
-   double selection_performance = 0.0; 
-   double old_selection_performance = 0.0;
-   double selection_performance_increment = 0.0;
+   double selection_loss = 0.0; 
+   double old_selection_loss = 0.0;
+   double selection_loss_increment = 0.0;
       
-   double performance = 0.0;
-   double old_performance = 0.0;
-   double performance_increase = 0.0;
+   double loss = 0.0;
+   double old_loss = 0.0;
+   double loss_increase = 0.0;
 
    Vector<double> gradient(parameters_number);
    double gradient_norm;
@@ -1304,31 +1306,31 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";          
       }
 
-      // Performance functional stuff
+      // Loss index stuff
 
       if(iteration == 0)
       {      
-         performance = performance_functional_pointer->calculate_performance();
-         performance_increase = 0.0; 
+         loss = loss_index_pointer->calculate_loss();
+         loss_increase = 0.0; 
       }
       else
       {
-         performance = directional_point[1];
-         performance_increase = old_performance - performance; 
+         loss = directional_point[1];
+         loss_increase = old_loss - loss; 
       }
 
-      selection_performance = performance_functional_pointer->calculate_selection_performance();
+      selection_loss = loss_index_pointer->calculate_selection_loss();
 
       if(iteration == 0)
       {
-         selection_performance_increment = 0.0;
+         selection_loss_increment = 0.0;
       }
       else 
       {
-         selection_performance_increment = selection_performance - old_selection_performance;
+         selection_loss_increment = selection_loss - old_selection_loss;
       }
 
-      gradient = performance_functional_pointer->calculate_gradient();
+      gradient = loss_index_pointer->calculate_gradient();
 
       gradient_norm = gradient.calculate_norm();
 
@@ -1337,13 +1339,13 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
 
-      inverse_Hessian = performance_functional_pointer->calculate_inverse_Hessian();
+      inverse_Hessian = loss_index_pointer->calculate_inverse_Hessian();
 
       // Training algorithm 
 
       training_direction = calculate_training_direction(gradient, inverse_Hessian);
 
-      // Calculate performance training_slope
+      // Calculate loss training_slope
 
       training_slope = (gradient/gradient_norm).dot(training_direction);
 
@@ -1370,7 +1372,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 //         initial_training_rate = old_training_rate;
       }    
       
-//	  directional_point = calculate_directional_point(performance, training_direction, initial_training_rate);
+//	  directional_point = calculate_directional_point(loss, training_direction, initial_training_rate);
 
 	  training_rate = directional_point[0];
 
@@ -1394,16 +1396,16 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          Newton_method_results_pointer->parameters_norm_history[iteration] = parameters_norm; 
       }
 
-      // Training history performance functional
+      // Training history loss functional
 
-//      if(reserve_performance_history)
+//      if(reserve_loss_history)
 //      {
-//         Newton_method_results_pointer->performance_history[iteration] = performance;
+//         Newton_method_results_pointer->loss_history[iteration] = loss;
 //      }
 
-//      if(reserve_selection_performance_history)
+//      if(reserve_selection_loss_history)
 //      {
-//         Newton_method_results_pointer->selection_performance_history[iteration] = selection_performance;
+//         Newton_method_results_pointer->selection_loss_history[iteration] = selection_loss;
 //      }
 
 //      if(reserve_gradient_history)
@@ -1451,7 +1453,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          stop_training = true;
       }
 
-      else if(performance <= performance_goal)
+      else if(loss <= loss_goal)
       {
          if(display)
          {
@@ -1461,23 +1463,23 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          stop_training = true;
       }
 
-      else if(iteration != 0 && performance_increase <= minimum_performance_increase)
+      else if(iteration != 0 && loss_increase <= minimum_loss_increase)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Minimum performance increase reached.\n"
-                      << "Performance improvement: " << performance_increase << std::endl;
+            std::cout << "Iteration " << iteration << ": Minimum loss increase reached.\n"
+                      << "Performance improvement: " << loss_increase << std::endl;
          }
 
          stop_training = true;
       }
 
-      else if(iteration != 0 && selection_performance_increment < 0.0)
+      else if(iteration != 0 && selection_loss_increment < 0.0)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Selection performance stopped improving.\n";
-            std::cout << "Selection performance increment: "<< selection_performance_increment << std::endl;
+            std::cout << "Iteration " << iteration << ": Selection loss stopped improving.\n";
+            std::cout << "Selection loss increment: "<< selection_loss_increment << std::endl;
          }
 
          stop_training = true;
@@ -1523,8 +1525,8 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          Newton_method_results_pointer->final_parameters = parameters;
          Newton_method_results_pointer->final_parameters_norm = parameters_norm;
 
-         Newton_method_results_pointer->final_performance = performance;
-         Newton_method_results_pointer->final_selection_performance = selection_performance;
+         Newton_method_results_pointer->final_loss = loss;
+         Newton_method_results_pointer->final_selection_loss = selection_loss;
 
          Newton_method_results_pointer->final_gradient = gradient;
          Newton_method_results_pointer->final_gradient_norm = gradient_norm;
@@ -1536,15 +1538,15 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
          if(display)
 		 {
             std::cout << "Parameters norm: " << parameters_norm << "\n"
-                      << "Training performance: " << performance << "\n"
+                      << "Training loss: " << loss << "\n"
 					  << "Gradient norm: " << gradient_norm << "\n"
-                      << performance_functional_pointer->write_information()
+                      << loss_index_pointer->write_information()
                       << "Training rate: " << training_rate << "\n"
                       << "Elapsed time: " << elapsed_time << std::endl; 
 
-            if(selection_performance != 0)
+            if(selection_loss != 0)
             {
-               std::cout << "Selection performance: " << selection_performance << std::endl;
+               std::cout << "Selection loss: " << selection_loss << std::endl;
             }
 		 }   
  
@@ -1554,15 +1556,15 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
       {
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "Training performance: " << performance << "\n"
+                   << "Training loss: " << loss << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
-                   << performance_functional_pointer->write_information()
+                   << loss_index_pointer->write_information()
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl; 
 
-         if(selection_performance != 0)
+         if(selection_loss != 0)
          {
-            std::cout << "Selection performance: " << selection_performance << std::endl;
+            std::cout << "Selection loss: " << selection_loss << std::endl;
          }
       }
 
@@ -1574,8 +1576,8 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
       // Update stuff
 
-      old_performance = performance;
-      old_selection_performance = selection_performance;
+      old_loss = loss;
+      old_selection_loss = selection_loss;
    
       //old_training_rate = training_rate;
    } 
@@ -1605,7 +1607,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
     // Neural network stuff
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1616,20 +1618,21 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
     Vector<double> parameters_increment(parameters_number);
     double parameters_increment_norm;
 
-    // Performance functional stuff
+    // Loss index stuff
 
-    double performance = 0.0;
-    double old_performance = 0.0;
-    double performance_increase = 0.0;
+    double loss = 0.0;
+    double old_loss = 0.0;
+    double loss_increase = 0.0;
 
     Vector<double> gradient(parameters_number);
     Vector<double> old_gradient(parameters_number);
     double gradient_norm;
 
-    Matrix<double> inverse_Hessian(parameters_number, parameters_number);
+//    Matrix<double> inverse_Hessian(parameters_number, parameters_number);
+    Matrix<double> Hessian(parameters_number, parameters_number);
 
-    double selection_performance = 0.0;
-    double old_selection_performance = 0.0;
+    double selection_loss = 0.0;
+    double old_selection_loss = 0.0;
 
     // Training algorithm stuff
 
@@ -1673,20 +1676,20 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
        }
 
-       // Performance functional stuff
+       // Loss index stuff
 
        if(iteration == 0)
        {
-          performance = performance_functional_pointer->calculate_performance();
-          performance_increase = 0.0;
+          loss = loss_index_pointer->calculate_loss();
+          loss_increase = 0.0;
        }
        else
        {
-          performance = directional_point[1];
-          performance_increase = old_performance - performance;
+          loss = directional_point[1];
+          loss_increase = old_loss - loss;
        }
 
-       gradient = performance_functional_pointer->calculate_gradient();
+       gradient = loss_index_pointer->calculate_gradient();
 
        gradient_norm = gradient.calculate_norm();
 
@@ -1695,20 +1698,23 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
        }
 
-       performance_functional_pointer->calculate_inverse_Hessian();
+       //inverse_Hessian = loss_index_pointer->calculate_inverse_Hessian();
 
-       selection_performance = performance_functional_pointer->calculate_selection_performance();
+       Hessian = loss_index_pointer->calculate_Hessian();
 
-       if(iteration != 0 && selection_performance > old_selection_performance)
+       selection_loss = loss_index_pointer->calculate_selection_loss();
+
+       if(iteration != 0 && selection_loss > old_selection_loss)
        {
           selection_failures++;
        }
 
        // Training algorithm
 
-       training_direction = calculate_training_direction(gradient, inverse_Hessian);
+//       training_direction = calculate_training_direction(gradient, inverse_Hessian);
+       training_direction = calculate_training_direction(gradient, Hessian);
 
-       // Calculate performance training slope
+       // Calculate loss training slope
 
        training_slope = (gradient/gradient_norm).dot(training_direction);
 
@@ -1732,7 +1738,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           initial_training_rate = old_training_rate;
        }
 
-       directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, initial_training_rate);
+       directional_point = training_rate_algorithm.calculate_directional_point(loss, training_direction, initial_training_rate);
 
        training_rate = directional_point[0];
 
@@ -1743,7 +1749,7 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
            training_direction = calculate_gradient_descent_training_direction(gradient);
 
-           directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, first_training_rate);
+           directional_point = training_rate_algorithm.calculate_directional_point(loss, training_direction, first_training_rate);
 
            training_rate = directional_point[0];
        }
@@ -1768,14 +1774,14 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           newton_method_results_pointer->parameters_norm_history[iteration] = parameters_norm;
        }
 
-       if(reserve_performance_history)
+       if(reserve_loss_history)
        {
-          newton_method_results_pointer->performance_history[iteration] = performance;
+          newton_method_results_pointer->loss_history[iteration] = loss;
        }
 
-       if(reserve_selection_performance_history)
+       if(reserve_selection_loss_history)
        {
-          newton_method_results_pointer->selection_performance_history[iteration] = selection_performance;
+          newton_method_results_pointer->selection_loss_history[iteration] = selection_loss;
        }
 
        if(reserve_gradient_history)
@@ -1788,10 +1794,10 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           newton_method_results_pointer->gradient_norm_history[iteration] = gradient_norm;
        }
 
-       if(reserve_inverse_Hessian_history)
-       {
-          newton_method_results_pointer->inverse_Hessian_history[iteration] = inverse_Hessian;
-       }
+//       if(reserve_inverse_Hessian_history)
+//       {
+//          newton_method_results_pointer->inverse_Hessian_history[iteration] = inverse_Hessian;
+//       }
 
        // Training history training algorithm
 
@@ -1823,18 +1829,18 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           stop_training = true;
        }
 
-       else if(iteration != 0 && performance_increase <= minimum_performance_increase)
+       else if(iteration != 0 && loss_increase <= minimum_loss_increase)
        {
           if(display)
           {
-             std::cout << "Iteration " << iteration << ": Minimum performance increase reached.\n"
-                       << "Performance increase: " << performance_increase << std::endl;
+             std::cout << "Iteration " << iteration << ": Minimum loss increase reached.\n"
+                       << "Performance increase: " << loss_increase << std::endl;
           }
 
           stop_training = true;
        }
 
-       else if(performance <= performance_goal)
+       else if(loss <= loss_goal)
        {
           if(display)
           {
@@ -1854,12 +1860,12 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           stop_training = true;
        }
 
-       else if(selection_failures >= maximum_selection_performance_decreases)
+       else if(selection_failures >= maximum_selection_loss_decreases)
        {
           if(display)
           {
-             std::cout << "Iteration " << iteration << ": Maximum selection performance decreases reached.\n"
-                       << "Selection performance decreases: "<< selection_failures << std::endl;
+             std::cout << "Iteration " << iteration << ": Maximum selection loss increases reached.\n"
+                       << "Selection loss increases: "<< selection_failures << std::endl;
           }
 
           stop_training = true;
@@ -1895,8 +1901,8 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           newton_method_results_pointer->final_parameters = parameters;
           newton_method_results_pointer->final_parameters_norm = parameters_norm;
 
-          newton_method_results_pointer->final_performance = performance;
-          newton_method_results_pointer->final_selection_performance = selection_performance;
+          newton_method_results_pointer->final_loss = loss;
+          newton_method_results_pointer->final_selection_loss = selection_loss;
 
           newton_method_results_pointer->final_gradient = gradient;
           newton_method_results_pointer->final_gradient_norm = gradient_norm;
@@ -1912,15 +1918,15 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
           if(display)
           {
              std::cout << "Parameters norm: " << parameters_norm << "\n"
-                       << "Training performance: " << performance <<  "\n"
+                       << "Training loss: " << loss <<  "\n"
                        << "Gradient norm: " << gradient_norm <<  "\n"
-                       << performance_functional_pointer->write_information()
+                       << loss_index_pointer->write_information()
                        << "Training rate: " << training_rate <<  "\n"
                        << "Elapsed time: " << elapsed_time << std::endl;
 
-             if(selection_performance != 0)
+             if(selection_loss != 0)
              {
-                std::cout << "Selection performance: " << selection_performance << std::endl;
+                std::cout << "Selection loss: " << selection_loss << std::endl;
              }
           }
 
@@ -1930,15 +1936,15 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
        {
           std::cout << "Iteration " << iteration << ";\n"
                     << "Parameters norm: " << parameters_norm << "\n"
-                    << "Training performance: " << performance << "\n"
+                    << "Training loss: " << loss << "\n"
                     << "Gradient norm: " << gradient_norm << "\n"
-                    << performance_functional_pointer->write_information()
+                    << loss_index_pointer->write_information()
                     << "Training rate: " << training_rate << "\n"
                     << "Elapsed time: " << elapsed_time << std::endl;
 
-          if(selection_performance != 0)
+          if(selection_loss != 0)
           {
-             std::cout << "Selection performance: " << selection_performance << std::endl;
+             std::cout << "Selection loss: " << selection_loss << std::endl;
           }
        }
 
@@ -1946,11 +1952,11 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
 
        old_parameters = parameters;
 
-       old_performance = performance;
+       old_loss = loss;
 
        old_gradient = gradient;
 
-       old_selection_performance = selection_performance;
+       old_selection_loss = selection_loss;
 
        old_training_rate = training_rate;
 
@@ -1964,8 +1970,8 @@ NewtonMethod::NewtonMethodResults* NewtonMethod::perform_training(void)
     newton_method_results_pointer->final_parameters = parameters;
     newton_method_results_pointer->final_parameters_norm = parameters_norm;
 
-    newton_method_results_pointer->final_performance = performance;
-    newton_method_results_pointer->final_selection_performance = selection_performance;
+    newton_method_results_pointer->final_loss = loss;
+    newton_method_results_pointer->final_selection_loss = selection_loss;
 
     newton_method_results_pointer->final_gradient = gradient;
     newton_method_results_pointer->final_gradient_norm = gradient_norm;
@@ -1992,7 +1998,7 @@ std::string NewtonMethod::write_training_algorithm_type(void) const
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> NewtonMethod::to_string_matrix(void) const
 {
@@ -2027,12 +2033,12 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Minimum performance increase
+   // Minimum loss increase
 
-   labels.push_back("Minimum performance increase");
+   labels.push_back("Minimum loss increase");
 
    buffer.str("");
-   buffer << minimum_performance_increase;
+   buffer << minimum_loss_increase;
 
    values.push_back(buffer.str());
 
@@ -2041,7 +2047,7 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
    labels.push_back("Performance goal");
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    values.push_back(buffer.str());
 
@@ -2059,7 +2065,7 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
    labels.push_back("Maximum selection failures");
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    values.push_back(buffer.str());
 
@@ -2090,12 +2096,12 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve performance history
+   // Reserve loss history
 
-   labels.push_back("Reserve performance history");
+   labels.push_back("Reserve loss history");
 
    buffer.str("");
-   buffer << reserve_performance_history;
+   buffer << reserve_loss_history;
 
    values.push_back(buffer.str());
 
@@ -2108,12 +2114,12 @@ Matrix<std::string> NewtonMethod::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   labels.push_back("Reserve selection performance history");
+   labels.push_back("Reserve selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    values.push_back(buffer.str());
 
@@ -2284,13 +2290,13 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Minimum performance increase 
+   // Minimum loss increase 
    {
    element = document->NewElement("MinimumPerformanceIncrease");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << minimum_performance_increase;
+   buffer << minimum_loss_increase;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2302,7 +2308,7 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2320,13 +2326,13 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-   element = document->NewElement("MaximumSelectionPerformanceDecreases");
+   element = document->NewElement("MaximumSelectionLossDecreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2380,13 +2386,13 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve performance history 
+   // Reserve loss history 
    {
    element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_performance_history;
+   buffer << reserve_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2464,13 +2470,13 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve selection performance history 
+   // Reserve selection loss history
    {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2526,6 +2532,9 @@ tinyxml2::XMLDocument* NewtonMethod::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the newton method object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void NewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -2614,12 +2623,12 @@ void NewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Minimum performance increase
+    // Minimum loss increase
 
     file_stream.OpenElement("MinimumPerformanceIncrease");
 
     buffer.str("");
-    buffer << minimum_performance_increase;
+    buffer << minimum_loss_increase;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2630,7 +2639,7 @@ void NewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("PerformanceGoal");
 
     buffer.str("");
-    buffer << performance_goal;
+    buffer << loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2647,12 +2656,12 @@ void NewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Maximum selection performance decreases
+    // Maximum selection loss decreases
 
-    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+    file_stream.OpenElement("MaximumSelectionLossDecreases");
 
     buffer.str("");
-    buffer << maximum_selection_performance_decreases;
+    buffer << maximum_selection_loss_decreases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2702,12 +2711,12 @@ void NewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance history
+    // Reserve loss history
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_history;
+    buffer << reserve_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2779,12 +2788,12 @@ void NewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve selection performance history
+    // Reserve selection loss history
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_history;
+    buffer << reserve_selection_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2992,17 +3001,17 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Minimum performance increase 
+   // Minimum loss increase 
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumPerformanceIncrease");
 
        if(element)
        {
-          const double new_minimum_performance_increase = atof(element->GetText());
+          const double new_minimum_loss_increase = atof(element->GetText());
 
           try
           {
-             set_minimum_performance_increase(new_minimum_performance_increase);
+             set_minimum_loss_increase(new_minimum_loss_increase);
           }
           catch(const std::logic_error& e)
           {
@@ -3017,11 +3026,11 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_performance_goal = atof(element->GetText());
+          const double new_loss_goal = atof(element->GetText());
 
           try
           {
-             set_performance_goal(new_performance_goal);
+             set_loss_goal(new_loss_goal);
           }
           catch(const std::logic_error& e)
           {
@@ -3049,17 +3058,17 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
 
        if(element)
        {
-          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_loss_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
+             set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -3144,17 +3153,17 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve performance history 
+   // Reserve loss history 
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
        if(element)
        {
-          const std::string new_reserve_performance_history = element->GetText();
+          const std::string new_reserve_loss_history = element->GetText();
 
           try
           {
-             set_reserve_performance_history(new_reserve_performance_history != "0");
+             set_reserve_loss_history(new_reserve_loss_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -3258,17 +3267,17 @@ void NewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve selection performance history 
+   // Reserve selection loss history
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
        if(element)
        {
-          const std::string new_reserve_selection_performance_history = element->GetText();
+          const std::string new_reserve_selection_loss_history = element->GetText();
 
           try
           {
-             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
+             set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -3362,7 +3371,7 @@ void NewtonMethod::set_reserve_all_training_history(const bool& new_reserve_all_
    reserve_parameters_history = new_reserve_all_training_history;
    reserve_parameters_norm_history = new_reserve_all_training_history;
 
-   reserve_performance_history = new_reserve_all_training_history;
+   reserve_loss_history = new_reserve_all_training_history;
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
    reserve_inverse_Hessian_history = new_reserve_all_training_history;
@@ -3371,7 +3380,7 @@ void NewtonMethod::set_reserve_all_training_history(const bool& new_reserve_all_
    reserve_training_rate_history = new_reserve_all_training_history;
    reserve_elapsed_time_history = new_reserve_all_training_history;
 
-   reserve_selection_performance_history = new_reserve_all_training_history;
+   reserve_selection_loss_history = new_reserve_all_training_history;
 }
 
 }

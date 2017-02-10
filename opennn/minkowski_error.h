@@ -36,7 +36,7 @@ namespace OpenNN
 
 /// This class represents the Minkowski error term. 
 /// The Minkowski error measures the difference between the outputs of a neural network and the targets in a data set. 
-/// This performance term is used in data modeling problems.
+/// This error term is used in data modeling problems.
 /// It can be more useful when the data set presents outliers. 
 
 class MinkowskiError : public ErrorTerm
@@ -85,7 +85,7 @@ public:
 
    void check(void) const;
 
-   // performance methods
+   // loss methods
 
    double calculate_error(void) const;
    double calculate_error(const Vector<double>&) const;
@@ -94,7 +94,7 @@ public:
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
    Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 

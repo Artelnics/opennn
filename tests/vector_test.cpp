@@ -1008,8 +1008,6 @@ void VectorTest::test_calculate_explained_variance(void)
 
     explained_variance = v.calculate_explained_variance();
 
-    std::cout << explained_variance.calculate_sum() << std::endl;
-
     assert_true(explained_variance.size() == 100, LOG);
     assert_true(explained_variance.calculate_sum() - 100.0 < 1.0e-12, LOG);
 }
@@ -1999,6 +1997,50 @@ void VectorTest::test_scale_mean_standard_deviation(void)
 }
 
 
+void VectorTest::test_unscale_minimum_maximum(void)
+{
+    message += "test_unscale_minimum_maximum\n";
+
+    Vector<double> v;
+    Vector<double> copy;
+    Statistics<double> statistics;
+
+    // Test
+
+    v.set(2);
+    v.randomize_uniform(-2000.0, 2000.0);
+
+    copy = v;
+
+    statistics = v.scale_minimum_maximum();
+
+    v.unscale_minimum_maximum(Vector<double>(2,statistics.minimum), Vector<double>(2,statistics.maximum));
+
+    assert_true((v - copy).calculate_absolute_value() < 1.0e-3 , LOG);
+}
+
+void VectorTest::test_unscale_mean_standard_deviation(void)
+{
+    message += "test_unscale_mean_standard_deviation\n";
+
+    Vector<double> v;
+    Vector<double> copy;
+    Statistics<double> statistics;
+
+    // Test
+
+    v.set(2);
+    v.randomize_uniform(-2000.0, 2000.0);
+
+    copy = v;
+
+    statistics = v.scale_mean_standard_deviation();
+
+    v.unscale_mean_standard_deviation(Vector<double>(2,statistics.mean), Vector<double>(2,statistics.standard_deviation));
+
+    assert_true((v - copy).calculate_absolute_value() < 1.0e-3 , LOG);
+}
+
 void VectorTest::test_parse(void)
 {
    message += "test_parse\n";
@@ -2218,6 +2260,9 @@ void VectorTest::run_test_case(void)
 
    test_scale_minimum_maximum();
    test_scale_mean_standard_deviation();
+
+   test_unscale_minimum_maximum();
+   test_unscale_mean_standard_deviation();
 
    // Parsing methods
 

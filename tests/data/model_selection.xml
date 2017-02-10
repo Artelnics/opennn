@@ -1,37 +1,32 @@
 <ModelSelection>
+    <InputsSelection Type="GROWING_INPUTS">
+        <TrialsNumber>1</TrialsNumber>
+        <Tolerance>0.001</Tolerance>
+        <SelectionLossGoal>0</SelectionLossGoal>
+        <MaximumSelectionFailures>3</MaximumSelectionFailures>
+        <MaximumInputsNumber>100</MaximumInputsNumber>
+        <MinimumCorrelation>0</MinimumCorrelation>
+        <MaximumCorrelation>1e+020</MaximumCorrelation>
+        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
+        <MaximumTime>10000</MaximumTime>
+        <ReservePerformanceHistory>1</ReservePerformanceHistory>
+        <ReserveSelectionLossHistory>1</ReserveSelectionLossHistory>
+    </InputsSelection>
     <OrderSelection Type="INCREMENTAL_ORDER">
         <MinimumOrder>1</MinimumOrder>
         <MaximumOrder>0</MaximumOrder>
-        <TrialsNumber>1</TrialsNumber>
-        <PerformanceCalculationMethod>Minimum</PerformanceCalculationMethod>
         <Step>1</Step>
-        <ReserveParametersData>1</ReserveParametersData>
-        <ReservePerformanceHistory>1</ReservePerformanceHistory>
-        <ReserveSelectionPerformanceHistory>1</ReserveSelectionPerformanceHistory>
-        <ReserveMinimalParameters>1</ReserveMinimalParameters>
-        <Display>1</Display>
-        <SelectionPerformanceGoal>0</SelectionPerformanceGoal>
-        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
-        <MaximumTime>10000</MaximumTime>
-        <Tolerance>0.001</Tolerance>
-        <MaximumSelectionFailures>3</MaximumSelectionFailures>
-        <MaximumSelectionFailures>3</MaximumSelectionFailures>
-    </OrderSelection>
-    <InputsSelection Type="GROWING_INPUTS">
-        <Regression>0</Regression>
         <TrialsNumber>1</TrialsNumber>
-        <PerformanceCalculationMethod>Minimum</PerformanceCalculationMethod>
-        <ReserveParametersData>1</ReserveParametersData>
-        <ReservePerformanceHistory>1</ReservePerformanceHistory>
-        <ReserveSelectionPerformanceHistory>1</ReserveSelectionPerformanceHistory>
-        <ReserveMinimalParameters>1</ReserveMinimalParameters>
-        <Display>1</Display>
-        <SelectionPerformanceGoal>0</SelectionPerformanceGoal>
-        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
-        <MaximumCorrelation>1e+20</MaximumCorrelation>
-        <MinimumCorrelation>0</MinimumCorrelation>
-        <MaximumTime>10000</MaximumTime>
         <Tolerance>0.001</Tolerance>
-        <MaximumSelectionFailures>3</MaximumSelectionFailures>
-    </InputsSelection>
+        <SelectionLossGoal>0</SelectionLossGoal>
+        <MaximumSelectionFailures>10</MaximumSelectionFailures>
+        <MaximumTime>10000</MaximumTime>
+        <ReservePerformanceHistory>1</ReservePerformanceHistory>
+        <ReserveSelectionLossHistory>1</ReserveSelectionLossHistory>
+    </OrderSelection>
+    <ThresholdSelection Type="YOUDEN_INDEX">
+        <MinimumThreshold>0</MinimumThreshold>
+        <MaximumThreshold>1</MaximumThreshold>
+        <Step>0.001</Step>
+    </ThresholdSelection>
 </ModelSelection>

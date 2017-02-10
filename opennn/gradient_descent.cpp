@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a gradient descent training algorithm not associated to any performance functional object.
+/// It creates a gradient descent training algorithm not associated to any loss functional object.
 /// It also initializes the class members to their default values.
 
 GradientDescent::GradientDescent(void) 
@@ -33,15 +33,15 @@ GradientDescent::GradientDescent(void)
 
 // PERFORMANCE FUNCTIONAL CONSTRUCTOR 
 
-/// Performance functional constructor. 
-/// It creates a gradient descent training algorithm associated to a performance functional.
+/// Loss index constructor. 
+/// It creates a gradient descent training algorithm associated to a loss functional.
 /// It also initializes the class members to their default values.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-GradientDescent::GradientDescent(PerformanceFunctional* new_performance_functional_pointer)
-: TrainingAlgorithm(new_performance_functional_pointer)
+GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
+: TrainingAlgorithm(new_loss_index_pointer)
 {
-   training_rate_algorithm.set_performance_functional_pointer(new_performance_functional_pointer);
+   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 
    set_default();
 }
@@ -50,7 +50,7 @@ GradientDescent::GradientDescent(PerformanceFunctional* new_performance_function
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a gradient descent training algorithm not associated to any performance functional object.
+/// It creates a gradient descent training algorithm not associated to any loss functional object.
 /// It also loads the class members from a XML document.
 /// @param document TinyXML document with the members of a gradient descent object.
 
@@ -169,24 +169,24 @@ const double& GradientDescent::get_minimum_parameters_increment_norm(void) const
 }
 
 
-// const double& get_minimum_performance_increase(void) const method
+// const double& get_minimum_loss_increase(void) const method
 
-/// Returns the minimum performance improvement during training.  
+/// Returns the minimum loss improvement during training.  
 
-const double& GradientDescent::get_minimum_performance_increase(void) const
+const double& GradientDescent::get_minimum_loss_increase(void) const
 {
-   return(minimum_performance_increase);
+   return(minimum_loss_increase);
 }
 
 
-// const double& get_performance_goal(void) const method
+// const double& get_loss_goal(void) const method
 
-/// Returns the goal value for the performance. 
+/// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& GradientDescent::get_performance_goal(void) const
+const double& GradientDescent::get_loss_goal(void) const
 {
-   return(performance_goal);
+   return(loss_goal);
 }
 
 
@@ -201,13 +201,13 @@ const double& GradientDescent::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_selection_performance_decreases(void) const method
+// const size_t& get_maximum_selection_loss_decreases(void) const method
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& GradientDescent::get_maximum_selection_performance_decreases(void) const
+const size_t& GradientDescent::get_maximum_selection_loss_decreases(void) const
 {
-   return(maximum_selection_performance_decreases);
+   return(maximum_selection_loss_decreases);
 }
 
 
@@ -230,6 +230,14 @@ const double& GradientDescent::get_maximum_time(void) const
    return(maximum_time);
 }
 
+// const bool& get_return_minimum_selection_error_neural_network(void) const method
+
+/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
+
+const bool& GradientDescent::get_return_minimum_selection_error_neural_network(void) const
+{
+    return(return_minimum_selection_error_neural_network);
+}
 
 // const bool& get_reserve_parameters_history(void) const method
 
@@ -251,13 +259,13 @@ const bool& GradientDescent::get_reserve_parameters_norm_history(void) const
 }
 
 
-// const bool& get_reserve_performance_history(void) const method
+// const bool& get_reserve_loss_history(void) const method
 
-/// Returns true if the performance history vector is to be reserved, and false otherwise.
+/// Returns true if the loss history vector is to be reserved, and false otherwise.
 
-const bool& GradientDescent::get_reserve_performance_history(void) const
+const bool& GradientDescent::get_reserve_loss_history(void) const
 {
-   return(reserve_performance_history);     
+   return(reserve_loss_history);     
 }
 
 
@@ -311,13 +319,13 @@ const bool& GradientDescent::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_selection_performance_history(void) const method
+// const bool& get_reserve_selection_loss_history(void) const method
 
-/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
+/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& GradientDescent::get_reserve_selection_performance_history(void) const
+const bool& GradientDescent::get_reserve_selection_loss_history(void) const
 {
-   return(reserve_selection_performance_history);
+   return(reserve_selection_loss_history);
 }
 
 
@@ -332,17 +340,17 @@ void GradientDescent::set_training_rate_algorithm(const TrainingRateAlgorithm& n
 }
 
 
-// void set_performance_functional_pointer(PerformanceFunctional*) method
+// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a performance functional object to be associated to the gradient descent object.
-/// It also sets that performance functional to the training rate algorithm.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// Sets a pointer to a loss functional object to be associated to the gradient descent object.
+/// It also sets that loss functional to the training rate algorithm.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-void GradientDescent::set_performance_functional_pointer(PerformanceFunctional* new_performance_functional_pointer)
+void GradientDescent::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
-   training_rate_algorithm.set_performance_functional_pointer(new_performance_functional_pointer);
+   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
 
@@ -364,23 +372,25 @@ void GradientDescent::set_default(void)
 
    minimum_parameters_increment_norm = 0.0;
 
-   minimum_performance_increase = 0.0;
-   performance_goal = -1.0e99;
+   minimum_loss_increase = 0.0;
+   loss_goal = -1.0e99;
    gradient_norm_goal = 0.0;
-   maximum_selection_performance_decreases = 1000000;
+   maximum_selection_loss_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
+
+   return_minimum_selection_error_neural_network = false;
 
    // TRAINING HISTORY
 
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_performance_history = true;
+   reserve_loss_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_selection_performance_history = false;
+   reserve_selection_loss_history = false;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -402,7 +412,7 @@ void GradientDescent::set_default(void)
 /// <li> Performance.
 /// <li> Gradient. 
 /// <li> Gradient norm. 
-/// <li> Selection performance. 
+/// <li> Selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm. 
 /// <li> Training rate.
@@ -416,13 +426,13 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
    reserve_parameters_history = new_reserve_all_training_history;
    reserve_parameters_norm_history = new_reserve_all_training_history;
    
-   // Performance functional
+   // Loss index
 
-   reserve_performance_history = new_reserve_all_training_history;
+   reserve_loss_history = new_reserve_all_training_history;
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
 
-   reserve_selection_performance_history = new_reserve_all_training_history;
+   reserve_selection_loss_history = new_reserve_all_training_history;
 
    // Training algorithm
 
@@ -647,45 +657,45 @@ void GradientDescent::set_minimum_parameters_increment_norm(const double& new_mi
 }
 
 
-// void set_minimum_performance_increase(const double&) method
+// void set_minimum_loss_increase(const double&) method
 
-/// Sets a new minimum performance improvement during training.  
-/// @param new_minimum_performance_increase Minimum improvement in the performance between two iterations.
+/// Sets a new minimum loss improvement during training.  
+/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
-void GradientDescent::set_minimum_performance_increase(const double& new_minimum_performance_increase)
+void GradientDescent::set_minimum_loss_increase(const double& new_minimum_loss_increase)
 {
    // Control sentence (if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_performance_increase < 0.0)
+   if(new_minimum_loss_increase < 0.0)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_minimum_performance_increase(const double&) method.\n"
-             << "Minimum performance improvement must be equal or greater than 0.\n";
+             << "void set_minimum_loss_increase(const double&) method.\n"
+             << "Minimum loss improvement must be equal or greater than 0.\n";
 
       throw std::logic_error(buffer.str());	  
    }
 
    #endif
 
-   // Set minimum performance improvement
+   // Set minimum loss improvement
 
-   minimum_performance_increase = new_minimum_performance_increase;
+   minimum_loss_increase = new_minimum_loss_increase;
 }
 
 
-// void set_performance_goal(const double&) method
+// void set_loss_goal(const double&) method
 
-/// Sets a new goal value for the performance. 
+/// Sets a new goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
-/// @param new_performance_goal Goal value for the performance.
+/// @param new_loss_goal Goal value for the loss.
 
-void GradientDescent::set_performance_goal(const double& new_performance_goal)
+void GradientDescent::set_loss_goal(const double& new_loss_goal)
 {
-   performance_goal = new_performance_goal;
+   loss_goal = new_loss_goal;
 }
 
 
@@ -720,14 +730,14 @@ void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goa
 }
 
 
-// void set_maximum_selection_performance_decreases(const size_t&) method
+// void set_maximum_selection_loss_decreases(const size_t&) method
 
 /// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// @param new_maximum_selection_loss_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void GradientDescent::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
+void GradientDescent::set_maximum_selection_loss_decreases(const size_t& new_maximum_selection_loss_decreases)
 {
-   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
+   maximum_selection_loss_decreases = new_maximum_selection_loss_decreases;
 }
 
 
@@ -771,6 +781,15 @@ void GradientDescent::set_maximum_time(const double& new_maximum_time)
    maximum_time = new_maximum_time;
 }
 
+// void set_return_minimum_selection_error_neural_network(const bool&) method
+
+/// Makes the minimum selection error neural network of all the iterations to be returned or not.
+/// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
+
+void GradientDescent::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
+{
+   return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
+}
 
 // void set_reserve_parameters_history(bool) method
 
@@ -794,14 +813,14 @@ void GradientDescent::set_reserve_parameters_norm_history(const bool& new_reserv
 }
 
 
-// void set_reserve_performance_history(bool) method
+// void set_reserve_loss_history(bool) method
 
-/// Makes the performance history vector to be reseved or not in memory.
-/// @param new_reserve_performance_history True if the performance history vector is to be reserved, false otherwise.
+/// Makes the loss history vector to be reseved or not in memory.
+/// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
 
-void GradientDescent::set_reserve_performance_history(const bool& new_reserve_performance_history)
+void GradientDescent::set_reserve_loss_history(const bool& new_reserve_loss_history)
 {
-   reserve_performance_history = new_reserve_performance_history;     
+   reserve_loss_history = new_reserve_loss_history;     
 }
 
 
@@ -864,15 +883,15 @@ void GradientDescent::set_reserve_elapsed_time_history(const bool& new_reserve_e
 }
 
 
-// void set_reserve_selection_performance_history(bool) method
+// void set_reserve_selection_loss_history(bool) method
 
-/// Makes the Selection performance history to be reserved or not in memory. 
+/// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_loss_history True if the selection loss history is to be reserved, false otherwise.
 
-void GradientDescent::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
+void GradientDescent::set_reserve_selection_loss_history(const bool& new_reserve_selection_loss_history)  
 {
-   reserve_selection_performance_history = new_reserve_selection_performance_history;
+   reserve_selection_loss_history = new_reserve_selection_loss_history;
 }
 
 
@@ -919,16 +938,16 @@ Vector<double> GradientDescent::calculate_training_direction(const Vector<double
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: GradientDescent class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&) const method.\n"
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -976,18 +995,18 @@ std::string GradientDescent::GradientDescentResults::to_string(void) const
 
    // Performance history   
 
-   if(!performance_history.empty())
+   if(!loss_history.empty())
    {
        buffer << "% Performance history:\n"
-              << performance_history << "\n"; 
+              << loss_history << "\n"; 
    }
 
-   // Selection performance history
+   // Selection loss history
 
-   if(!selection_performance_history.empty())
+   if(!selection_loss_history.empty())
    {
-       buffer << "% Selection performance history:\n"
-              << selection_performance_history << "\n"; 
+       buffer << "% Selection loss history:\n"
+              << selection_loss_history << "\n"; 
    }
 
    // Gradient history 
@@ -1066,25 +1085,25 @@ Matrix<std::string> GradientDescent::GradientDescentResults::write_final_results
 
    values.push_back(buffer.str());
 
-   // Final performance
+   // Final loss
 
-   names.push_back("Final performance");
+   names.push_back("Final loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_performance;
+   buffer << std::setprecision(precision) << final_loss;
 
    values.push_back(buffer.str());
 
-   // Final selection performance
+   // Final selection loss
 
-   const PerformanceFunctional* performance_functional_pointer = gradient_descent_pointer->get_performance_functional_pointer();
+   const LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
 
-   if(performance_functional_pointer->has_selection())
+   if(loss_index_pointer->has_selection())
    {
-       names.push_back("Final selection performance");
+       names.push_back("Final selection loss");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_selection_performance;
+       buffer << std::setprecision(precision) << final_selection_loss;
 
        values.push_back(buffer.str());
     }
@@ -1124,6 +1143,12 @@ Matrix<std::string> GradientDescent::GradientDescentResults::write_final_results
    buffer << elapsed_time;
 
    values.push_back(buffer.str());
+
+   // Stopping criteria
+
+   names.push_back("Stopping criterion");
+
+   values.push_back(write_stopping_condition());
 
    const size_t rows_number = names.size();
    const size_t columns_number = 2;
@@ -1171,14 +1196,14 @@ void GradientDescent::GradientDescentResults::resize_training_history(const size
         parameters_norm_history.resize(new_size);
     }
 
-    if(gradient_descent_pointer->get_reserve_performance_history())
+    if(gradient_descent_pointer->get_reserve_loss_history())
     {
-        performance_history.resize(new_size);
+        loss_history.resize(new_size);
     }
 
-    if(gradient_descent_pointer->get_reserve_selection_performance_history())
+    if(gradient_descent_pointer->get_reserve_selection_loss_history())
     {
-        selection_performance_history.resize(new_size);
+        selection_loss_history.resize(new_size);
     }
 
     if(gradient_descent_pointer->get_reserve_gradient_history())
@@ -1210,7 +1235,7 @@ void GradientDescent::GradientDescentResults::resize_training_history(const size
 
 // GradientDescentResults* perform_training(void) method
 
-/// Trains a neural network with an associated performance functional,
+/// Trains a neural network with an associated loss functional,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
@@ -1236,7 +1261,7 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
 
    // Neural network stuff
 
-   NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1246,19 +1271,19 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
    Vector<double> parameters_increment(parameters_number);
    double parameters_increment_norm;
 
-   // Performance functional stuff
+   // Loss index stuff
 
-   double selection_performance = 0.0; 
-   double old_selection_performance = 0.0;
+   double selection_loss = 0.0; 
+   double old_selection_loss = 0.0;
       
-   double performance = 0.0;
-   double old_performance = 0.0;
-   double performance_increase = 0.0;
+   double loss = 0.0;
+   double old_loss = 0.0;
+   double loss_increase = 0.0;
 
    Vector<double> gradient(parameters_number);
    double gradient_norm;
 
-   PerformanceFunctional::FirstOrderperformance first_order_performance;
+   LossIndex::FirstOrderloss first_order_loss;
 
    // Training algorithm stuff 
 
@@ -1273,6 +1298,9 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
    double old_training_rate = 0.0;
 
    Vector<double> directional_point(2, 0.0);
+
+   Vector<double> minimum_selection_error_parameters(parameters_number);
+   double minimum_selection_error;
 
    bool stop_training = false;
 
@@ -1297,20 +1325,20 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";          
       }
 
-      // Performance functional stuff
-      
+      // Loss index stuff
+
       if(iteration == 0)
       {      
-         performance = performance_functional_pointer->calculate_performance();
-         performance_increase = 1.0e99;
+         loss = loss_index_pointer->calculate_loss();
+         loss_increase = 1.0e99;
       }
       else
       {
-         performance = directional_point[1];
-         performance_increase = old_performance - performance; 
+         loss = directional_point[1];
+         loss_increase = old_loss - loss; 
       }
 
-      gradient = performance_functional_pointer->calculate_gradient();
+      gradient = loss_index_pointer->calculate_gradient();
 
       gradient_norm = gradient.calculate_norm();
 
@@ -1319,12 +1347,24 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
 
-      selection_performance = performance_functional_pointer->calculate_selection_performance();
+      selection_loss = loss_index_pointer->calculate_selection_loss();
 
-      if(iteration != 0 && selection_performance > old_selection_performance)
-	  {
+      if(iteration == 0)
+      {
+          minimum_selection_error = selection_loss;
+
+          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
+      }
+      else if(iteration != 0 && selection_loss > old_selection_loss)
+      {
          selection_failures++;
-	  }
+      }
+      else if(selection_loss < minimum_selection_error)
+      {
+          minimum_selection_error = selection_loss;
+
+          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
+      }
 
       // Training algorithm 
 
@@ -1338,8 +1378,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
       {
          initial_training_rate = old_training_rate;
       }    
-      
-	  directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, initial_training_rate);
+
+      directional_point = training_rate_algorithm.calculate_directional_point(loss, training_direction, initial_training_rate);
 
       training_rate = directional_point[0];
 
@@ -1363,11 +1403,11 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          results_pointer->parameters_norm_history[iteration] = parameters_norm;
       }
 
-      // Training history performance functional
+      // Training history loss functional
 
-      if(reserve_performance_history)
+      if(reserve_loss_history)
       {
-         results_pointer->performance_history[iteration] = performance;
+         results_pointer->loss_history[iteration] = loss;
       }
 
       if(reserve_gradient_history)
@@ -1380,9 +1420,9 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          results_pointer->gradient_norm_history[iteration] = gradient_norm;
       }
 
-      if(reserve_selection_performance_history)
+      if(reserve_selection_loss_history)
       {
-         results_pointer->selection_performance_history[iteration] = selection_performance;
+         results_pointer->selection_loss_history[iteration] = selection_loss;
       }
 
       // Training history training algorithm
@@ -1413,20 +1453,24 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MinimumParametersIncrementNorm;
       }
 
-      else if(iteration != 0 && performance_increase <= minimum_performance_increase)
+      else if(iteration != 0 && loss_increase <= minimum_loss_increase)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Minimum performance increase reached.\n"
-                      << "Performance increase: " << performance_increase << std::endl;
+            std::cout << "Iteration " << iteration << ": Minimum loss increase reached.\n"
+                      << "Performance increase: " << loss_increase << std::endl;
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MinimumPerformanceIncrease;
       }
 
-      else if(performance <= performance_goal)
+      else if(loss <= loss_goal)
       {
          if(display)
          {
@@ -1434,9 +1478,11 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = PerformanceGoal;
       }
 
-      else if(selection_failures >= maximum_selection_performance_decreases)
+      else if(selection_failures >= maximum_selection_loss_decreases)
       {
          if(display)
          {
@@ -1445,6 +1491,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MaximumSelectionPerformanceDecreases;
       }
 
       else if(gradient_norm <= gradient_norm_goal)
@@ -1455,6 +1503,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = GradientNormGoal;
       }
 
       else if(iteration == maximum_iterations_number)
@@ -1465,6 +1515,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MaximumIterationsNumber;
       }
 
       else if(elapsed_time >= maximum_time)
@@ -1475,6 +1527,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MaximumTime;
       }
 
       if(iteration != 0 && iteration % save_period == 0)
@@ -1487,15 +1541,15 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
          if(display)
 		 {
             std::cout << "Parameters norm: " << parameters_norm << "\n"
-                      << "Training performance: " << performance << "\n"
+                      << "Training loss: " << loss << "\n"
                       << "Gradient norm: " << gradient_norm << "\n"
-			          << performance_functional_pointer->write_information() 
+                      << loss_index_pointer->write_information()
                       << "Training rate: " << training_rate << "\n"
                       << "Elapsed time: " << elapsed_time << std::endl; 
 
-            if(selection_performance != 0)
+            if(selection_loss != 0)
             {
-               std::cout << "Selection performance: " << selection_performance << std::endl;
+               std::cout << "Selection loss: " << selection_loss << std::endl;
             }
 		 }
     
@@ -1505,9 +1559,9 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
 
          results_pointer->final_parameters_norm = parameters_norm;
 
-         results_pointer->final_performance = performance;
+         results_pointer->final_loss = loss;
 
-         results_pointer->final_selection_performance = selection_performance;
+         results_pointer->final_selection_loss = selection_loss;
 
          results_pointer->final_gradient = gradient;
 
@@ -1527,15 +1581,15 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
       {
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "Training performance: " << performance << "\n"
+                   << "Training loss: " << loss << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
-                   << performance_functional_pointer->write_information()
+                   << loss_index_pointer->write_information()
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl;
 
-         if(selection_performance != 0)
+         if(selection_loss != 0)
          {
-            std::cout << "Selection performance: " << selection_performance << std::endl;
+            std::cout << "Selection loss: " << selection_loss << std::endl;
          }
       }
 
@@ -1547,11 +1601,33 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training(void)
 
       // Update stuff
 
-      old_performance = performance;
-      old_selection_performance = selection_performance;
+      old_loss = loss;
+      old_selection_loss = selection_loss;
    
       old_training_rate = training_rate;
    } 
+
+   if(return_minimum_selection_error_neural_network)
+   {
+       parameters = minimum_selection_error_parameters;
+       parameters_norm = parameters.calculate_norm();
+
+       neural_network_pointer->set_parameters(parameters);
+
+       loss = loss_index_pointer->calculate_loss();
+       selection_loss = minimum_selection_error;
+   }
+
+   results_pointer->final_parameters = parameters;
+   results_pointer->final_parameters_norm = parameters_norm;
+
+   results_pointer->final_loss = loss;
+   results_pointer->final_selection_loss = selection_loss;
+
+   results_pointer->final_gradient = gradient;
+   results_pointer->final_gradient_norm = gradient_norm;
+
+   results_pointer->elapsed_time = elapsed_time;
 
    return(results_pointer);
 }
@@ -1567,7 +1643,7 @@ std::string GradientDescent::write_training_algorithm_type(void) const
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> GradientDescent::to_string_matrix(void) const
 {
@@ -1602,12 +1678,12 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Minimum performance increase
+   // Minimum loss increase
 
-   labels.push_back("Minimum performance increase");
+   labels.push_back("Minimum loss increase");
 
    buffer.str("");
-   buffer << minimum_performance_increase;
+   buffer << minimum_loss_increase;
 
    values.push_back(buffer.str());
 
@@ -1616,7 +1692,7 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
    labels.push_back("Performance goal");
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    values.push_back(buffer.str());
 
@@ -1629,12 +1705,12 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
 
-   labels.push_back("Maximum selection performance decreases");
+   labels.push_back("Maximum selection loss increases");
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    values.push_back(buffer.str());
 
@@ -1661,25 +1737,49 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
    labels.push_back("Reserve parameters norm history");
 
    buffer.str("");
-   buffer << reserve_parameters_norm_history;
+
+   if(reserve_parameters_norm_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Reserve performance history
+   // Reserve loss history
 
-   labels.push_back("Reserve performance history");
+   labels.push_back("Reserve loss history");
 
    buffer.str("");
-   buffer << reserve_performance_history;
+
+   if(reserve_loss_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   labels.push_back("Reserve selection performance history");
+   labels.push_back("Reserve selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+
+   if(reserve_selection_loss_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -1688,7 +1788,15 @@ Matrix<std::string> GradientDescent::to_string_matrix(void) const
    labels.push_back("Reserve gradient norm history");
 
    buffer.str("");
-   buffer << reserve_gradient_norm_history;
+
+   if(reserve_gradient_norm_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -1763,6 +1871,17 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
       delete training_rate_algorithm_document;
    }
 
+
+   // Return minimum selection error neural network
+
+   element = document->NewElement("ReturnMinimumSelectionErrorNN");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << return_minimum_selection_error_neural_network;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
    // Warning parameters norm
 
@@ -1841,13 +1960,13 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Minimum performance increase 
+   // Minimum loss increase 
 
    element = document->NewElement("MinimumPerformanceIncrease");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << minimum_performance_increase;
+   buffer << minimum_loss_increase;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1858,7 +1977,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1874,13 +1993,13 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
 
-   element = document->NewElement("MaximumSelectionPerformanceDecreases");
+   element = document->NewElement("MaximumSelectionLossDecreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1929,24 +2048,24 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
 
-   // Reserve performance history 
+   // Reserve loss history 
 
    element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_performance_history;
+   buffer << reserve_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2006,13 +2125,13 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
 
-   // Reserve selection performance history 
+   // Reserve selection loss history
 
-//   element = document->NewElement("ReserveSelectionPerformanceHistory");
+//   element = document->NewElement("ReserveSelectionLossHistory");
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
-//   buffer << reserve_selection_performance_history;
+//   buffer << reserve_selection_loss_history;
 
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
@@ -2064,6 +2183,9 @@ tinyxml2::XMLDocument* GradientDescent::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;
@@ -2073,6 +2195,17 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Training rate algorithm
 
     training_rate_algorithm.write_XML(file_stream);
+
+    // Return minimum selection error neural network
+
+    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
+
+    buffer.str("");
+    buffer << return_minimum_selection_error_neural_network;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     // Minimum parameters increment norm
 
@@ -2085,12 +2218,12 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Minimum performance increase
+    // Minimum loss increase
 
     file_stream.OpenElement("MinimumPerformanceIncrease");
 
     buffer.str("");
-    buffer << minimum_performance_increase;
+    buffer << minimum_loss_increase;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2101,7 +2234,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("PerformanceGoal");
 
     buffer.str("");
-    buffer << performance_goal;
+    buffer << loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2118,12 +2251,12 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Maximum selection performance decreases
+    // Maximum selection loss decreases
 
-    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+    file_stream.OpenElement("MaximumSelectionLossDecreases");
 
     buffer.str("");
-    buffer << maximum_selection_performance_decreases;
+    buffer << maximum_selection_loss_decreases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2162,23 +2295,23 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance history
+    // Reserve loss history
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_history;
+    buffer << reserve_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance history
+    // Reserve selection loss history
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_history;
+    buffer << reserve_selection_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2348,6 +2481,25 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
+    // Return minimum selection error neural network
+
+    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+
+    if(return_minimum_selection_error_neural_network_element)
+    {
+        std::string new_return_minimum_selection_error_neural_network = return_minimum_selection_error_neural_network_element->GetText();
+
+        try
+        {
+           set_return_minimum_selection_error_neural_network(new_return_minimum_selection_error_neural_network != "0");
+        }
+        catch(const std::logic_error& e)
+        {
+           std::cout << e.what() << std::endl;
+        }
+    }
+
+
    // Minimum parameters increment norm
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
@@ -2367,17 +2519,17 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Minimum performance increase 
+   // Minimum loss increase 
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumPerformanceIncrease");
 
        if(element)
        {
-          const double new_minimum_performance_increase = atof(element->GetText());
+          const double new_minimum_loss_increase = atof(element->GetText());
 
           try
           {
-             set_minimum_performance_increase(new_minimum_performance_increase);
+             set_minimum_loss_increase(new_minimum_loss_increase);
           }
           catch(const std::logic_error& e)
           {
@@ -2392,11 +2544,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_performance_goal = atof(element->GetText());
+          const double new_loss_goal = atof(element->GetText());
 
           try
           {
-             set_performance_goal(new_performance_goal);
+             set_loss_goal(new_loss_goal);
           }
           catch(const std::logic_error& e)
           {
@@ -2424,17 +2576,17 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
 
        if(element)
        {
-          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_loss_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
+             set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -2519,17 +2671,17 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve performance history 
+   // Reserve loss history 
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
        if(element)
        {
-          const std::string new_reserve_performance_history = element->GetText();
+          const std::string new_reserve_loss_history = element->GetText();
 
           try
           {
-             set_reserve_performance_history(new_reserve_performance_history != "0");
+             set_reserve_loss_history(new_reserve_loss_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -2538,17 +2690,17 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-    // Reserve selection performance history
+    // Reserve selection loss history
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
         if(element)
         {
-           const std::string new_reserve_selection_performance_history = element->GetText();
+           const std::string new_reserve_selection_loss_history = element->GetText();
 
            try
            {
-              set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
+              set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -2652,17 +2804,17 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve selection performance history 
+   // Reserve selection loss history
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
        if(element)
        {
-          const std::string new_reserve_selection_performance_history = element->GetText();
+          const std::string new_reserve_selection_loss_history = element->GetText();
 
           try
           {
-             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
+             set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
           }
           catch(const std::logic_error& e)
           {

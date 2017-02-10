@@ -36,7 +36,7 @@ namespace OpenNN
 {
 
 /// This class contains tools for testing neural networks in different learning tasks. 
-/// In particular, it can be used for testing function regression, pattern recognition
+/// In particular, it can be used for testing function regression, classification
 /// or time series prediction problems.
 
 class TestingAnalysis
@@ -206,7 +206,7 @@ public:
    Vector< Vector<size_t> > calculate_maximal_errors(const size_t& = 10) const;
 
    Vector<double> calculate_testing_errors(void) const;
-   Vector<double> calculate_pattern_recognition_testing_errors(void) const;
+   Vector<double> calculate_classification_testing_errors(void) const;
 
    double calculate_testing_normalized_squared_error(const Matrix<double>&, const Matrix<double>&) const;
    double calculate_testing_cross_entropy_error(const Matrix<double>&, const Matrix<double>&) const;
@@ -242,6 +242,7 @@ public:
    Matrix<double> calculate_roc_curve(const Matrix<double>& ,const Matrix<double>&) const;
    double calculate_area_under_curve(const Matrix<double>& ,const Matrix<double>&) const;
    double calculate_optimal_threshold(const Matrix<double>& ,const Matrix<double>&) const;
+   double calculate_optimal_threshold(const Matrix<double>& ,const Matrix<double>&, const Matrix<double>&) const;
 
    // Lift Chart
 
@@ -280,7 +281,7 @@ public:
 
    Matrix< Vector<size_t> > calculate_multiple_classification_rates(const Matrix<double>&, const Matrix<double>&, const Vector<size_t>&) const;
 
-   // Time series prediction methods
+   // Forecasting methods
 
    Vector< Vector<double> > calculate_error_autocorrelation(const size_t& = 10) const;
    Vector< Vector<double> > calculate_input_error_cross_correlation(const size_t& = 10) const;

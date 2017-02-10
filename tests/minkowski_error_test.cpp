@@ -89,9 +89,9 @@ void MinkowskiErrorTest::test_set_Minkowski_parameter(void)
 }
 
 
-void MinkowskiErrorTest::test_calculate_performance(void)
+void MinkowskiErrorTest::test_calculate_loss(void)
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 
    Vector<double> parameters;
 
@@ -119,9 +119,9 @@ void MinkowskiErrorTest::test_calculate_performance(void)
 }
 
 
-void MinkowskiErrorTest::test_calculate_selection_performance(void)
+void MinkowskiErrorTest::test_calculate_selection_loss(void)
 {
-   message += "test_calculate_selection_performance\n";  
+   message += "test_calculate_selection_loss\n";  
 }
 
 
@@ -256,14 +256,14 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
 
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
-   // Test 
+   // Test
 
    nn.set(5,4,3);
    nn.randomize_parameters_normal();
 
    parameters = nn.arrange_parameters();
 
-   ds.set(5,3,2);
+   ds.set(2,5,3);
    ds.randomize_data_normal();
 
    me.set_Minkowski_parameter(1.75);
@@ -271,7 +271,6 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
    gradient = me.calculate_gradient();
    numerical_gradient = nd.calculate_gradient(me, &MinkowskiError::calculate_error, parameters);
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-
 }
 
 
@@ -315,7 +314,6 @@ void MinkowskiErrorTest::test_from_XML(void)
   delete document;
 
   assert_true(me2.get_Minkowski_parameter() == 1.33, LOG);
-  assert_true(me2.get_display() == false, LOG);
 }
 
 
@@ -338,8 +336,8 @@ void MinkowskiErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();   
-   test_calculate_selection_performance();
+   test_calculate_loss();   
+   test_calculate_selection_loss();
    test_calculate_gradient();
 
    // Serialization methods

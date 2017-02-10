@@ -938,52 +938,52 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
 
     delete_pointers();
 
-    if(other_neural_network.multilayer_perceptron_pointer)
+    if(other_neural_network.has_multilayer_perceptron())
     {
         multilayer_perceptron_pointer = new MultilayerPerceptron(*other_neural_network.multilayer_perceptron_pointer);
     }
 
-    if(other_neural_network.scaling_layer_pointer)
+    if(other_neural_network.has_scaling_layer())
     {
         scaling_layer_pointer = new ScalingLayer(*other_neural_network.scaling_layer_pointer);
     }
 
-    if(other_neural_network.principal_components_layer_pointer)
+    if(other_neural_network.has_principal_components_layer())
     {
         principal_components_layer_pointer = new PrincipalComponentsLayer(*other_neural_network.principal_components_layer_pointer);
     }
 
-    if(other_neural_network.unscaling_layer_pointer)
+    if(other_neural_network.has_unscaling_layer())
     {
         unscaling_layer_pointer = new UnscalingLayer(*other_neural_network.unscaling_layer_pointer);
     }
 
-    if(other_neural_network.bounding_layer_pointer)
+    if(other_neural_network.has_bounding_layer())
     {
         bounding_layer_pointer = new BoundingLayer(*other_neural_network.bounding_layer_pointer);
     }
 
-    if(other_neural_network.probabilistic_layer_pointer)
+    if(other_neural_network.has_probabilistic_layer())
     {
         probabilistic_layer_pointer = new ProbabilisticLayer(*other_neural_network.probabilistic_layer_pointer);
     }
 
-    if(other_neural_network.conditions_layer_pointer)
+    if(other_neural_network.has_conditions_layer())
     {
         conditions_layer_pointer = new ConditionsLayer(*other_neural_network.conditions_layer_pointer);
     }
 
-    if(other_neural_network.inputs_pointer)
+    if(other_neural_network.has_inputs())
     {
         inputs_pointer = new Inputs(*other_neural_network.inputs_pointer);
     }
 
-    if(other_neural_network.outputs_pointer)
+    if(other_neural_network.has_outputs())
     {
         outputs_pointer = new Outputs(*other_neural_network.outputs_pointer);
     }
 
-    if(other_neural_network.independent_parameters_pointer)
+    if(other_neural_network.has_independent_parameters())
     {
         independent_parameters_pointer = new IndependentParameters(*other_neural_network.independent_parameters_pointer);
     }
@@ -1003,6 +1003,133 @@ void NeuralNetwork::set_default(void)
     display = true;
 }
 
+#ifdef __OPENNN_MPI__
+
+void NeuralNetwork::set_MPI(const NeuralNetwork* neural_network)
+{
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int layers_number;
+    Vector<int> architecture;
+
+    int parameters_number;
+    Vector<double> parameters;
+
+    int inputs_number;
+    int outputs_number;
+
+    int* activation_functions;
+
+    if(rank == 0)
+    {
+        // Variables to send initialization
+
+        const MultilayerPerceptron* original_multilayer_perceptron_pointer = neural_network->get_multilayer_perceptron_pointer();
+
+        layers_number = (int)original_multilayer_perceptron_pointer->get_layers_number();
+        architecture = original_multilayer_perceptron_pointer->arrange_architecture_int();
+
+        parameters = original_multilayer_perceptron_pointer->arrange_parameters();
+        parameters_number = (int)parameters.size();
+
+        const Vector<Perceptron::ActivationFunction> layers_activation_functions = original_multilayer_perceptron_pointer->get_layers_activation_function();
+
+        activation_functions = (int *)malloc(layers_number*sizeof(int));
+
+        for(int i = 0; i < layers_number; i++)
+        {
+            activation_functions[i] = (int)layers_activation_functions[i];
+        }
+
+        inputs_number = (int)original_multilayer_perceptron_pointer->get_inputs_number();
+        outputs_number = (int)original_multilayer_perceptron_pointer->get_outputs_number();
+    }
+
+    // Send variables
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank > 0)
+    {
+        MPI_Request req[2];
+
+        MPI_Irecv(&layers_number, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(&parameters_number, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[1]);
+
+        MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+        architecture.set(layers_number+1);
+        parameters.set(parameters_number);
+
+        MPI_Irecv(architecture.data(), (int)layers_number+1, MPI_INT, rank-1, 9, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(parameters.data(), (int)parameters_number, MPI_DOUBLE, rank-1, 10, MPI_COMM_WORLD, &req[1]);
+
+        MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+        MPI_Request* req_activations = (MPI_Request*)malloc(layers_number*sizeof(MPI_Request));
+
+        activation_functions = (int *)malloc(layers_number*sizeof(int));
+
+        for(int i = 0; i < layers_number; i++)
+        {
+            MPI_Irecv(&activation_functions[i], 1, MPI_INT, rank-1, 11+i, MPI_COMM_WORLD, &req_activations[i]);
+        }
+
+        MPI_Waitall((int)layers_number, req_activations, MPI_STATUS_IGNORE);
+
+        free(req_activations);
+    }
+
+    if(rank < size-1)
+    {
+        MPI_Request req[4];
+
+        MPI_Isend(&layers_number, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[0]);
+        MPI_Isend(&parameters_number, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[1]);
+
+        MPI_Isend(architecture.data(), (int)layers_number+1, MPI_INT, rank+1, 9, MPI_COMM_WORLD, &req[2]);
+        MPI_Isend(parameters.data(), (int)parameters_number, MPI_DOUBLE, rank+1, 10, MPI_COMM_WORLD, &req[3]);
+
+        MPI_Waitall(4, req, MPI_STATUS_IGNORE);
+
+        MPI_Request* req_activations = (MPI_Request*)malloc(layers_number*sizeof(MPI_Request));
+
+        for(int i = 0; i < layers_number; i++)
+        {
+            MPI_Isend(&activation_functions[i], 1, MPI_INT, rank+1, 11+i, MPI_COMM_WORLD, &req_activations[i]);
+        }
+
+        MPI_Waitall((int)layers_number, req_activations, MPI_STATUS_IGNORE);
+
+        free(req_activations);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(!has_multilayer_perceptron())
+    {
+        multilayer_perceptron_pointer = new MultilayerPerceptron(architecture);
+    }
+    else
+    {
+        multilayer_perceptron_pointer->set(architecture);
+    }
+
+    multilayer_perceptron_pointer->set_parameters(parameters);
+
+    for(int i = 0; i < layers_number; i++)
+    {
+        multilayer_perceptron_pointer->set_layer_activation_function(i, (Perceptron::ActivationFunction)activation_functions[i]);
+    }
+
+    free(activation_functions);
+}
+#endif
 
 // void set_multilayer_perceptron_pointer(MultilayerPerceptron*) method
 
@@ -1301,7 +1428,10 @@ Vector<size_t> NeuralNetwork::arrange_architecture(void) const
 
     if(principal_components_layer_pointer)
     {
-        architecture.push_back(principal_components_layer_pointer->get_principal_components_neurons_number());
+        if(principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
+        {
+            architecture.push_back(principal_components_layer_pointer->get_principal_components_number());
+        }
     }
 
     // Multilayer perceptron
@@ -1558,13 +1688,14 @@ void NeuralNetwork::construct_principal_components_layer(void)
     if(!principal_components_layer_pointer)
     {
         size_t inputs_number = 0;
+        size_t principal_components_number = 0;
 
         if(multilayer_perceptron_pointer)
         {
             inputs_number = multilayer_perceptron_pointer->get_inputs_number();
         }
 
-        principal_components_layer_pointer = new PrincipalComponentsLayer(inputs_number);
+        principal_components_layer_pointer = new PrincipalComponentsLayer(inputs_number, principal_components_number);
     }
 }
 
@@ -2378,7 +2509,7 @@ Histogram<double> NeuralNetwork::calculate_parameters_histogram(const size_t& bi
     return(parameters.calculate_histogram(bins_number));
 }
 
-// void perturbater_parameters(const double&) method
+// void perturbate_parameters(const double&) method
 
 /// Perturbate parameters of the multilayer perceptron.
 /// @param perturbation Maximum distance of perturbation.
@@ -2412,14 +2543,14 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
 }
 
 
-// Vector<double> calculate_inputs_importance(const size_t&) const method
+// Vector<double> calculate_inputs_importance_parameters(const size_t&) const method
 
 /// Calculates the inputs importance for a neural network with only one hidden layer.
 /// Returns a vector containing the importance for each of the inputs with respect to a given output.
 /// The size of the vector is the number of inputs of the neural network.
 /// @param output_index Index of the output.
 
-Vector<double> NeuralNetwork::calculate_inputs_importance(const size_t& output_index) const
+Vector<double> NeuralNetwork::calculate_inputs_importance_parameters(const size_t& output_index) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -2428,7 +2559,7 @@ Vector<double> NeuralNetwork::calculate_inputs_importance(const size_t& output_i
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Vector<double> calculate_inputs_importance(void) const method.\n"
+               << "Vector<double> calculate_inputs_importance_parameters(void) const method.\n"
                << "Number of layers must be 2.\n";
 
         throw std::logic_error(buffer.str());
@@ -2445,7 +2576,7 @@ Vector<double> NeuralNetwork::calculate_inputs_importance(const size_t& output_i
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Vector<double> calculate_inputs_importance(void) const method.\n"
+               << "Vector<double> calculate_inputs_importance_parameters(void) const method.\n"
                << "Not valid output index.\n";
 
         throw std::logic_error(buffer.str());
@@ -2605,10 +2736,10 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs) co
 
     // Principal components layer
 
-//    if(principal_components_layer_pointer)
-//    {
-//       outputs = principal_components_layer_pointer->calculate_outputs(outputs);
-//    }
+    if(principal_components_layer_pointer)
+    {
+       outputs = principal_components_layer_pointer->calculate_outputs(outputs);
+    }
 
     // Multilayer perceptron
 
@@ -2736,10 +2867,19 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, co
         outputs = scaling_layer_pointer->calculate_outputs(inputs);
     }
 
+    // Principal components layer
+
+    if(principal_components_layer_pointer)
+    {
+        outputs = principal_components_layer_pointer->calculate_outputs(inputs);
+    }
+
     // Multilayer perceptron
 
     if(multilayer_perceptron_pointer)
     {
+        std::cout << "Inputs multilayer: " << multilayer_perceptron_pointer->get_inputs_number() << std::endl;
+
         outputs = multilayer_perceptron_pointer->calculate_outputs(outputs, parameters);
     }
 
@@ -2812,7 +2952,9 @@ Matrix<double> NeuralNetwork::calculate_output_data(const Matrix<double>& input_
     Vector<double> inputs(inputs_number);
     Vector<double> outputs(outputs_number);
 
-    for(size_t i = 0; i < input_vectors_number; i++)
+#pragma omp parallel for private(inputs, outputs)
+
+    for(int i = 0; i < input_vectors_number; i++)
     {
         inputs = input_data.arrange_row(i);
         outputs = calculate_outputs(inputs);
@@ -2828,7 +2970,6 @@ Matrix<double> NeuralNetwork::calculate_output_data(const Matrix<double>& input_
 /// Calculates a set of outputs from the neural network in response to a set of inputs containing missing values.
 /// The format is a matrix, where each row contains the output for a single input.
 /// @param input_data Matrix of inputs to the neural network.
-/// @param missing_values_flag Missing values flag.
 
 Matrix<double> NeuralNetwork::calculate_output_data_missing_values(const Matrix<double>& input_data/*, const double& missing_values_flag*/) const
 {
@@ -2903,6 +3044,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
     Vector<double> outputs(inputs);
 
     Matrix<double> scaling_layer_Jacobian;
+    Matrix<double> principal_components_layer_Jacobian;
     Matrix<double> unscaling_layer_Jacobian;
     Matrix<double> multilayer_perceptron_Jacobian;
     Matrix<double> bounding_layer_Jacobian;
@@ -2917,6 +3059,15 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
         scaling_layer_Jacobian = scaling_layer_pointer->arrange_Jacobian(scaling_layer_derivative);
 
         outputs = scaling_layer_pointer->calculate_outputs(outputs);
+    }
+
+    // Principal components layer
+
+    if(principal_components_layer_pointer)
+    {
+        principal_components_layer_Jacobian = principal_components_layer_pointer->calculate_Jacobian(outputs);
+
+        outputs = principal_components_layer_pointer->calculate_outputs(outputs);
     }
 
     // Multilayer perceptron
@@ -2991,6 +3142,13 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
         Jacobian = Jacobian.dot(multilayer_perceptron_Jacobian);
     }
 
+    // Principal components layer
+
+    if(principal_components_layer_pointer)
+    {
+        Jacobian = Jacobian.dot(principal_components_layer_Jacobian);
+    }
+
     // Scaling layer
 
     if(scaling_layer_pointer)
@@ -3042,6 +3200,11 @@ Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian_data(const Matrix<dou
     return(Jacobian_data);
 }
 
+// Vector< Histogram<double> > calculate_outputs_histograms(const size_t&, const size_t&) const;
+
+/// Calculates the histogram of the outputs with random inputs.
+/// @param points_number Number of random instances to evaluate the neural network.
+/// @param bins_number Number of bins for the histograms.
 
 Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const size_t& points_number, const size_t& bins_number) const
 {
@@ -3100,6 +3263,10 @@ Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const si
 
 
 // Vector< Histogram<double> > calculate_outputs_histograms(const Matrix<double>&, const size_t& = 2) const method
+
+/// Calculates the histogram of the outputs with a matrix of given inputs.
+/// @param input_data Matrix of the data to evaluate the neural network.
+/// @param bins_number Number of bins for the histograms.
 
 Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const Matrix<double>& input_data, const size_t& bins_number) const
 {
@@ -3266,8 +3433,8 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
     const bool is_probabilistic = has_probabilistic_layer();
 
-    const bool is_data_scaled = has_scaling_layer() && (scaling_layer_pointer->get_scaling_method() != ScalingLayer::ScalingMethod::NoScaling);
-    const bool is_data_unscaled = has_unscaling_layer() && (unscaling_layer_pointer->get_unscaling_method() != UnscalingLayer::UnscalingMethod::NoUnscaling);
+    const bool is_data_scaled = has_scaling_layer() && (scaling_layer_pointer->get_scaling_method() != ScalingLayer::NoScaling);
+    const bool is_data_unscaled = has_unscaling_layer() && (unscaling_layer_pointer->get_unscaling_method() != UnscalingLayer::NoUnscaling);
 
 
     // Data dictionary markup
@@ -3290,7 +3457,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
     if(is_data_scaled)
     {
-        Vector<Statistics<double>> inputs_statistics = get_scaling_layer_pointer()->get_statistics();
+        Vector< Statistics<double> > inputs_statistics = get_scaling_layer_pointer()->get_statistics();
         inputs_pointer->to_PMML(data_dictionary, is_data_scaled, inputs_statistics);
     }
     else
@@ -3300,7 +3467,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
     if(is_data_unscaled)
     {
-        Vector<Statistics<double>> outputs_statistics = get_unscaling_layer_pointer()->get_statistics();
+        Vector< Statistics<double> > outputs_statistics = get_unscaling_layer_pointer()->get_statistics();
         outputs_pointer->to_PMML(data_dictionary,is_probabilistic, is_data_unscaled , outputs_statistics);
     }
     else
@@ -3380,7 +3547,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML(void) const
 
     if(is_probabilistic)
     {
-        if(probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::ProbabilisticMethod::Softmax)
+        if(probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::Softmax)
         {
             tinyxml2::XMLElement* probabilistic_layer = neural_network->LastChildElement("NeuralLayer");
 
@@ -3453,6 +3620,7 @@ void NeuralNetwork::write_PMML(const std::string& file_name) const
     // Required for XMLPrinter constructor
 
     FILE* pmml_file;
+
     pmml_file = fopen(file_name.c_str(), "w");
 
     if(pmml_file == NULL)
@@ -3499,14 +3667,13 @@ void NeuralNetwork::write_PMML(const std::string& file_name) const
         return;
     }
 
-
     const size_t inputs_number = inputs_pointer->get_inputs_number();
     const size_t outputs_number = outputs_pointer->get_outputs_number();
 
     const bool is_probabilistic = has_probabilistic_layer();
 
-    const bool is_data_scaled = has_scaling_layer() && (scaling_layer_pointer->get_scaling_method() != ScalingLayer::ScalingMethod::NoScaling);
-    const bool is_data_unscaled = has_unscaling_layer() && (unscaling_layer_pointer->get_unscaling_method() != UnscalingLayer::UnscalingMethod::NoUnscaling);
+    const bool is_data_scaled = has_scaling_layer() && (scaling_layer_pointer->get_scaling_method() != ScalingLayer::NoScaling);
+    const bool is_data_unscaled = has_unscaling_layer() && (unscaling_layer_pointer->get_unscaling_method() != UnscalingLayer::NoUnscaling);
 
     // Data dictionary
 
@@ -3526,14 +3693,27 @@ void NeuralNetwork::write_PMML(const std::string& file_name) const
     // DataDictionary attribute
     file_stream.PushAttribute("numberOfFields", (unsigned)number_of_fields);
 
+    if(has_scaling_layer())
+    {
+        Vector< Statistics<double> > inputs_statistics = get_scaling_layer_pointer()->get_statistics();
 
-    Vector<Statistics<double>> inputs_statistics = get_scaling_layer_pointer()->get_statistics();
+        inputs_pointer->write_PMML_data_dictionary(file_stream, inputs_statistics);
+    }
+    else
+    {
+        inputs_pointer->write_PMML_data_dictionary(file_stream);
+    }
 
-    inputs_pointer->write_PMML_data_dictionary(file_stream, inputs_statistics);
+    if(has_unscaling_layer())
+    {
+        Vector< Statistics<double> > outputs_statistics = get_unscaling_layer_pointer()->get_statistics();
 
-    Vector<Statistics<double>> outputs_statistics = get_unscaling_layer_pointer()->get_statistics();
-
-    outputs_pointer->write_PMML_data_dictionary(file_stream,is_probabilistic, outputs_statistics);
+        outputs_pointer->write_PMML_data_dictionary(file_stream,is_probabilistic, outputs_statistics);
+    }
+    else
+    {
+        outputs_pointer->write_PMML_data_dictionary(file_stream,is_probabilistic);
+    }
 
     // Close DataDictionary
     file_stream.CloseElement();
@@ -3634,19 +3814,19 @@ void NeuralNetwork::write_PMML(const std::string& file_name) const
 
     switch(neural_network_activation_function)
     {
-    case Perceptron::ActivationFunction::Threshold:
+    case Perceptron::Threshold:
         file_stream.PushAttribute("activationFunction","threshold");
         break;
 
-    case Perceptron::ActivationFunction::Logistic:
+    case Perceptron::Logistic:
         file_stream.PushAttribute("activationFunction","logistic");
         break;
 
-    case Perceptron::ActivationFunction::HyperbolicTangent:
+    case Perceptron::HyperbolicTangent:
         file_stream.PushAttribute("activationFunction","tanh");
         break;
 
-    case Perceptron::ActivationFunction::Linear:
+    case Perceptron::Linear:
         file_stream.PushAttribute("activationFunction","identity");
         break;
     }
@@ -3691,7 +3871,7 @@ void NeuralNetwork::write_PMML(const std::string& file_name) const
 
     // Neural network - neural layers markups
 
-    const bool is_softmax_normalization_method = (is_probabilistic && (probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::ProbabilisticMethod::Softmax));
+    const bool is_softmax_normalization_method = (is_probabilistic && (probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::Softmax));
 
     multilayer_perceptron_pointer->write_PMML(file_stream, is_softmax_normalization_method);
 
@@ -3873,8 +4053,8 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         throw std::logic_error(buffer.str());
     }
 
-    Vector<Statistics<double>> inputs_statistics;
-    Vector<Statistics<double>> outputs_statistics;
+    Vector< Statistics<double> > inputs_statistics;
+    Vector< Statistics<double> > outputs_statistics;
 
     Vector<std::string> output_classification_fields;
 
@@ -3995,8 +4175,8 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
                     throw std::logic_error(buffer.str());
                 }
 
-                const double left_margin = std::stod(left_margin_string);
-                const double right_margin = std::stod(right_margin_string);
+                const double left_margin = atof(left_margin_string.c_str());
+                const double right_margin = atof(right_margin_string.c_str());
 
                 if(right_margin < left_margin)
                 {
@@ -4096,7 +4276,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     //            throw std::logic_error(buffer.str());
     //        }
 
-    //        int input_id = std::stoi(id_string);
+    //        int input_id = atoi(id_string);
 
     //        if(input_id < 0 || input_id >= inputs_number)
     //        {
@@ -4265,7 +4445,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         }
         else
         {
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::ScalingMethod::NoScaling);
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
         }
     }
 
@@ -4283,7 +4463,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
 
             if(probabilistic_layer_normalization_method == "softmax" )
             {
-                probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::ProbabilisticMethod::Softmax);
+                probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Softmax);
             }
             else
             {
@@ -4297,7 +4477,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         else
         {
             // Add binary and competitive probabilistic outputs
-            probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::ProbabilisticMethod::NoProbabilistic);
+            probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::NoProbabilistic);
         }
     }
 
@@ -4324,7 +4504,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
             }
             else
             {
-                unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::UnscalingMethod::NoUnscaling);
+                unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
             }
         }
     }
@@ -4507,6 +4687,9 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the neural network object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("NeuralNetwork");
@@ -4523,6 +4706,13 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
     if(scaling_layer_pointer)
     {
         scaling_layer_pointer->write_XML(file_stream);
+    }
+
+    // Principal components layer
+
+    if(principal_components_layer_pointer)
+    {
+        principal_components_layer_pointer->write_XML(file_stream);
     }
 
     // Multilayer perceptron
@@ -4684,6 +4874,28 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             DeepClone(element_clone, element, &scaling_layer_document, NULL);
 
             scaling_layer_pointer->from_XML(scaling_layer_document);
+        }
+    }
+
+    // Principal components layer
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("PrincipalComponentsLayer");
+
+        if(element)
+        {
+            if(!principal_components_layer_pointer)
+            {
+                principal_components_layer_pointer = new PrincipalComponentsLayer();
+            }
+
+            tinyxml2::XMLDocument principal_components_layer_document;
+
+            tinyxml2::XMLElement* element_clone = principal_components_layer_document.NewElement("PrincipalComponentsLayer");
+            principal_components_layer_document.InsertFirstChild(element_clone);
+
+            DeepClone(element_clone, element, &principal_components_layer_document, NULL);
+
+            principal_components_layer_pointer->from_XML(principal_components_layer_document);
         }
     }
 
@@ -4996,6 +5208,17 @@ std::string NeuralNetwork::write_expression(void) const
     {
         pos = 0;
 
+        search = " (";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
         search = " ";
         replace = "_";
 
@@ -5008,6 +5231,17 @@ std::string NeuralNetwork::write_expression(void) const
         pos = 0;
 
         search = "-";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
+        search = "(";
         replace = "_";
 
         while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
@@ -5021,12 +5255,23 @@ std::string NeuralNetwork::write_expression(void) const
     {
         pos = 0;
 
+        search = " (";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
         search = " ";
         replace = "_";
 
-        while((pos = outputs_name[i].find(search, pos)) != std::string::npos)
+        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
         {
-            outputs_name[i].replace(pos, search.length(), replace);
+            inputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
 
@@ -5035,24 +5280,48 @@ std::string NeuralNetwork::write_expression(void) const
         search = "-";
         replace = "_";
 
-        while((pos = outputs_name[i].find(search, pos)) != std::string::npos)
+        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
         {
-            outputs_name[i].replace(pos, search.length(), replace);
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
+        search = "(";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
     }
 
     // Scaled inputs
 
-    Vector<std::string> scaled_inputs_name(inputs_number);
+    Vector<std::string> scaled_inputs_name(/*inputs_number*/inputs_name.size());
 
-    for(size_t i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_name.size()/*inputs_number*/; i++)
     {
         buffer.str("");
 
         buffer << "scaled_" << inputs_name[i];
 
         scaled_inputs_name[i] = buffer.str();
+    }
+
+    // Principal components
+
+    Vector<std::string> principal_components_name(inputs_number);
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        buffer.str("");
+
+        buffer << "principal_component_" << (i+1);
+
+        principal_components_name[i] = buffer.str();
     }
 
     // Scaled outputs
@@ -5085,22 +5354,43 @@ std::string NeuralNetwork::write_expression(void) const
 
     // Scaling layer
 
-    if(scaling_layer_pointer)
+    if(has_scaling_layer())
     {
         buffer << scaling_layer_pointer->write_expression(inputs_name, scaled_inputs_name);
     }
 
+    // Principal components layer
+
+    if(has_principal_components_layer())
+    {
+        buffer << principal_components_layer_pointer->write_expression(scaled_inputs_name, principal_components_name);
+    }
+
     // Multilayer perceptron
 
-    if(multilayer_perceptron_pointer)
+    if(has_multilayer_perceptron())
     {
         if(scaling_layer_pointer && unscaling_layer_pointer)
         {
-            buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, scaled_outputs_name);
+            if(has_principal_components_layer() && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
+            {
+                buffer << multilayer_perceptron_pointer->write_expression(principal_components_name, scaled_outputs_name);
+            }
+            else
+            {
+                buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, scaled_outputs_name);
+            }
         }
         else if(scaling_layer_pointer && probabilistic_layer_pointer)
         {
-            buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, non_probabilistic_outputs_name);
+            if(has_principal_components_layer() && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
+            {
+                buffer << multilayer_perceptron_pointer->write_expression(principal_components_name, scaled_outputs_name);
+            }
+            else
+            {
+                buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, non_probabilistic_outputs_name);
+            }
         }
         else
         {
@@ -5110,16 +5400,23 @@ std::string NeuralNetwork::write_expression(void) const
 
     // Outputs unscaling
 
-    if(unscaling_layer_pointer)
+    if(has_unscaling_layer())
     {
         buffer << unscaling_layer_pointer->write_expression(scaled_outputs_name, outputs_name);
     }
 
     // Probabilistic layer
 
-    if(probabilistic_layer_pointer)
+    if(has_probabilistic_layer())
     {
         buffer << probabilistic_layer_pointer->write_expression(non_probabilistic_outputs_name, outputs_name);
+    }
+
+    // Bounding layer
+
+    if(has_bounding_layer())
+    {
+        buffer << bounding_layer_pointer->write_expression(outputs_name, outputs_name);
     }
 
     // Conditions layer
@@ -5271,7 +5568,7 @@ std::string NeuralNetwork::write_expression_python(void) const
 
     if(activations.contains(Perceptron::Threshold))
     {
-        buffer << "def threshold (x) : \n"
+        buffer << "def Threshold (x) : \n"
                   "    if x < 0 : \n"
                   "        return 0\n"
                   "    else : \n"
@@ -5280,7 +5577,7 @@ std::string NeuralNetwork::write_expression_python(void) const
 
     if(activations.contains(Perceptron::SymmetricThreshold))
     {
-        buffer << "def symmetric_threshold (x) : \n"
+        buffer << "def SymmetricThreshold (x) : \n"
                   "    if x < 0 : \n"
                   "        return -1\n"
                   "    else : \n"
@@ -5290,7 +5587,7 @@ std::string NeuralNetwork::write_expression_python(void) const
     if(activations.contains(Perceptron::Logistic))
     {
         buffer << "from math import exp\n"
-                  "def logistic (x) : \n"
+                  "def Logistic (x) : \n"
                   "    return (1/(1+exp(-x))) \n\n";
     }
 
@@ -5546,7 +5843,7 @@ std::string NeuralNetwork::write_expression_R(void) const
 
     if(activations.contains(Perceptron::Threshold))
     {
-        buffer << "threshold <- function(x) { \n"
+        buffer << "Threshold <- function(x) { \n"
                   "    if(x < 0)  0 \n"
                   "    else 1 \n"
                   "}\n\n";
@@ -5554,7 +5851,7 @@ std::string NeuralNetwork::write_expression_R(void) const
 
     if(activations.contains(Perceptron::SymmetricThreshold))
     {
-        buffer << "symmetric_threshold <- function(x) { \n"
+        buffer << "SymmetricThreshold <- function(x) { \n"
                   "    if(x < 0)  -1 \n"
                   "    else 1 \n"
                   "}\n\n";
@@ -5562,7 +5859,7 @@ std::string NeuralNetwork::write_expression_R(void) const
 
     if(activations.contains(Perceptron::Logistic))
     {
-        buffer << "logistic <- function(x) { \n"
+        buffer << "Logistic <- function(x) { \n"
                   "    1/(1+exp(-x))\n"
                   "}\n\n";
     }
@@ -5782,7 +6079,8 @@ std::string NeuralNetwork::write_expression_R(void) const
         }
 
         buffer << neural_network_expression;
-    }else if(has_unscaling_layer())
+    }
+    else if(has_unscaling_layer())
     {
         outputs << "(" << outputs_name.to_string(",") << ") <- (";
 
@@ -5799,7 +6097,8 @@ std::string NeuralNetwork::write_expression_R(void) const
 
         buffer << neural_network_expression;
 
-    }else
+    }
+    else
     {
         outputs << "outputs <- c(";
 

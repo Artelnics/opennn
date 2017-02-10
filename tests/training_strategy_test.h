@@ -49,7 +49,7 @@ public:
 
    // Get methods
 
-   void test_get_performance_functional_pointer(void);
+   void test_get_loss_index_pointer(void);
 
    // Utilities
 
@@ -60,7 +60,7 @@ public:
    void test_set(void);
    void test_set_default(void);
 
-   void test_set_performance_functional_pointer(void);
+   void test_set_loss_index_pointer(void);
 
     // Utilities
 

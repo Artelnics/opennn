@@ -124,7 +124,7 @@ void NormalizedSquaredErrorTest::test_calculate_selection_error(void)
 
    NormalizedSquaredError nse(&nn, &ds);  
 
-   double selection_performance;
+   double selection_loss;
 
    // Test
 
@@ -136,9 +136,9 @@ void NormalizedSquaredErrorTest::test_calculate_selection_error(void)
 
    ds.randomize_data_normal();
 
-   selection_performance = nse.calculate_selection_error();
+   selection_loss = nse.calculate_selection_error();
 
-   assert_true(selection_performance != 0.0, LOG);
+   assert_true(selection_loss != 0.0, LOG);
 
 }
 

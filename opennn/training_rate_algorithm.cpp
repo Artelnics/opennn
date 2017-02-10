@@ -21,11 +21,11 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a training rate algorithm object not associated to any performance functional object.  
+/// It creates a training rate algorithm object not associated to any loss functional object.  
 /// It also initializes the class members to their default values. 
 
 TrainingRateAlgorithm::TrainingRateAlgorithm(void)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
 { 
    set_default();
 }
@@ -34,12 +34,12 @@ TrainingRateAlgorithm::TrainingRateAlgorithm(void)
 // GENERAL CONSTRUCTOR
 
 /// General constructor. 
-/// It creates a training rate algorithm associated to a performance functional.
+/// It creates a training rate algorithm associated to a loss functional.
 /// It also initializes the class members to their default values. 
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-TrainingRateAlgorithm::TrainingRateAlgorithm(PerformanceFunctional* new_performance_functional_pointer)
- : performance_functional_pointer(new_performance_functional_pointer)
+TrainingRateAlgorithm::TrainingRateAlgorithm(LossIndex* new_loss_index_pointer)
+ : loss_index_pointer(new_loss_index_pointer)
 {
    set_default();
 }
@@ -48,12 +48,12 @@ TrainingRateAlgorithm::TrainingRateAlgorithm(PerformanceFunctional* new_performa
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a training rate algorithm object not associated to any performance functional object.  
+/// It creates a training rate algorithm object not associated to any loss functional object.  
 /// It also loads the class members from a XML document. 
 /// @param document Pointer to a TinyXML document->
 
 TrainingRateAlgorithm::TrainingRateAlgorithm(const tinyxml2::XMLDocument& document)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
 { 
    from_XML(document);
 }
@@ -70,41 +70,41 @@ TrainingRateAlgorithm::~TrainingRateAlgorithm(void)
 
 // METHODS
 
-// PerformanceFunctional* get_performance_functional_pointer(void) const method
+// LossIndex* get_loss_index_pointer(void) const method
 
-/// Returns a pointer to the performance functional object
+/// Returns a pointer to the loss functional object
 /// to which the training rate algorithm is associated.
-/// If the performance functional pointer is NULL, this method throws an exception.
+/// If the loss functional pointer is NULL, this method throws an exception.
 
-PerformanceFunctional* TrainingRateAlgorithm::get_performance_functional_pointer(void) const
+LossIndex* TrainingRateAlgorithm::get_loss_index_pointer(void) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingRateAlgorithm class.\n"
-               << "PerformanceFunctional* get_performance_functional_pointer(void) const method.\n"
-               << "Performance functional pointer is NULL.\n";
+               << "LossIndex* get_loss_index_pointer(void) const method.\n"
+               << "Loss index pointer is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
     #endif
 
-   return(performance_functional_pointer);
+   return(loss_index_pointer);
 }
 
 
-// bool has_performance_functional(void) const method
+// bool has_loss_index(void) const method
 
-/// Returns true if this training rate algorithm has an associated performance functional,
+/// Returns true if this training rate algorithm has an associated loss functional,
 /// and false otherwise.
 
-bool TrainingRateAlgorithm::has_performance_functional(void) const
+bool TrainingRateAlgorithm::has_loss_index(void) const
 {
-    if(performance_functional_pointer)
+    if(loss_index_pointer)
     {
         return(true);
     }
@@ -221,25 +221,25 @@ const bool& TrainingRateAlgorithm::get_display(void) const
 
 // void set(void) method
 
-/// Sets the performance functional pointer to NULL.
+/// Sets the loss functional pointer to NULL.
 /// It also sets the rest of members to their default values. 
 
 void TrainingRateAlgorithm::set(void)
 {
-   performance_functional_pointer = NULL;
+   loss_index_pointer = NULL;
    set_default();
 }
 
 
-// void set(PerformanceFunctional*) method
+// void set(LossIndex*) method
 
-/// Sets a new performance functional pointer.
+/// Sets a new loss functional pointer.
 /// It also sets the rest of members to their default values. 
-/// @param new_performance_functional_pointer Pointer to a performance functional object. 
+/// @param new_loss_index_pointer Pointer to a loss functional object. 
 
-void TrainingRateAlgorithm::set(PerformanceFunctional* new_performance_functional_pointer)
+void TrainingRateAlgorithm::set(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
    set_default();
 }
 
@@ -270,14 +270,14 @@ void TrainingRateAlgorithm::set_default(void)
 }
 
 
-// void set_performance_functional_pointer(PerformanceFunctional*) method
+// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a performance functional object to be associated to the training algorithm.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// Sets a pointer to a loss functional object to be associated to the training algorithm.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-void TrainingRateAlgorithm::set_performance_functional_pointer(PerformanceFunctional* new_performance_functional_pointer)
+void TrainingRateAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 }
 
 
@@ -459,22 +459,22 @@ void TrainingRateAlgorithm::set_display(const bool& new_display)
 
 /// Returns a vector with two elements:
 /// (i) the training rate calculated by means of the corresponding algorithm, and
-/// (ii) the performance for that training rate.
-/// @param performance Initial Performance value.
+/// (ii) the loss for that training rate.
+/// @param loss Initial Performance value.
 /// @param training_direction Initial training direction.
 /// @param initial_training_rate Initial training rate to start the algorithm. 
 
-Vector<double> TrainingRateAlgorithm::calculate_directional_point(const double& performance, const Vector<double>& training_direction, const double& initial_training_rate) const 
+Vector<double> TrainingRateAlgorithm::calculate_directional_point(const double& loss, const Vector<double>& training_direction, const double& initial_training_rate) const 
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   if(performance_functional_pointer == NULL)
+   if(loss_index_pointer == NULL)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Error: TrainingRateAlgorithm class.\n"
              << "Vector<double> calculate_directional_point(const double&, const Vector<double>&, const double&) const method.\n"
-             << "Pointer to performance functional is NULL.\n";
+             << "Pointer to loss functional is NULL.\n";
 
       throw std::logic_error(buffer.str());
    }
@@ -483,7 +483,7 @@ Vector<double> TrainingRateAlgorithm::calculate_directional_point(const double& 
 
    #ifdef __OPENNN_DEBUG__ 
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    if(neural_network_pointer == NULL)
    {
@@ -502,19 +502,19 @@ Vector<double> TrainingRateAlgorithm::calculate_directional_point(const double& 
    {
       case TrainingRateAlgorithm::Fixed:
       {
-         return(calculate_fixed_directional_point(performance, training_direction, initial_training_rate));
+         return(calculate_fixed_directional_point(loss, training_direction, initial_training_rate));
       }
       break;
 
       case TrainingRateAlgorithm::GoldenSection:
       {
-         return(calculate_golden_section_directional_point(performance, training_direction, initial_training_rate));
+         return(calculate_golden_section_directional_point(loss, training_direction, initial_training_rate));
       }
       break;
 
       case TrainingRateAlgorithm::BrentMethod:
       {
-         return(calculate_Brent_method_directional_point(performance, training_direction, initial_training_rate));
+         return(calculate_Brent_method_directional_point(loss, training_direction, initial_training_rate));
       }
       break;
 
@@ -536,12 +536,12 @@ Vector<double> TrainingRateAlgorithm::calculate_directional_point(const double& 
 
 /// Returns bracketing triplet.
 /// This algorithm is used by line minimization algorithms. 
-/// @param performance Initial Performance value.
+/// @param loss Initial Performance value.
 /// @param training_direction Initial training direction.
 /// @param initial_training_rate Initial training rate to start the algorithm. 
 
 TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_triplet(
-        const double& performance,
+        const double& loss,
         const Vector<double>& training_direction,
         const double& initial_training_rate) const
 {    
@@ -550,7 +550,7 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
    if(training_direction == 0.0)
    {
        triplet.A[0] = 0.0;
-       triplet.A[1] = performance;
+       triplet.A[1] = loss;
 
        triplet.U = triplet.A;
 
@@ -562,7 +562,7 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
    if(initial_training_rate == 0.0)
    {
        triplet.A[0] = 0.0;
-       triplet.A[1] = performance;
+       triplet.A[1] = loss;
 
        triplet.U = triplet.A;
 
@@ -574,19 +574,19 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
    // Left point
 
    triplet.A[0] = 0.0;
-   triplet.A[1] = performance;
+   triplet.A[1] = loss;
 
    // Right point
 
    triplet.B[0] = initial_training_rate;
-   triplet.B[1] = performance_functional_pointer->calculate_performance(training_direction, triplet.B[0]);
+   triplet.B[1] = loss_index_pointer->calculate_loss(training_direction, triplet.B[0]);
 
    while(triplet.A[1] > triplet.B[1])
    {
       triplet.A = triplet.B;
 
       triplet.B[0] *= bracketing_factor;
-      triplet.B[1] = performance_functional_pointer->calculate_performance(training_direction, triplet.B[0]);
+      triplet.B[1] = loss_index_pointer->calculate_loss(training_direction, triplet.B[0]);
 
       if(triplet.B[0] > error_training_rate)
       {
@@ -596,7 +596,7 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
                  << "Vector<double> calculate_bracketing_triplet(double, const Vector<double>&, double) const method\n."
                  << "Right point is " << triplet.B[0] << "." << std::endl;
 
-          buffer << "Training performance: " << performance << "\n"
+          buffer << "Training loss: " << loss << "\n"
                  << "Training direction: " << training_direction << "\n"
                  << "Initial training rate: " << initial_training_rate << std::endl;
 
@@ -609,12 +609,12 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
     // Interior point
 
    triplet.U[0] = triplet.A[0] + (triplet.B[0] - triplet.A[0])/2.0;
-   triplet.U[1] = performance_functional_pointer->calculate_performance(training_direction, triplet.U[0]);
+   triplet.U[1] = loss_index_pointer->calculate_loss(training_direction, triplet.U[0]);
 
    while(triplet.A[1] < triplet.U[1])
    {
       triplet.U[0] = triplet.A[0] + (triplet.U[0]-triplet.A[0])/bracketing_factor;
-      triplet.U[1] = performance_functional_pointer->calculate_performance(training_direction, triplet.U[0]);
+      triplet.U[1] = loss_index_pointer->calculate_loss(training_direction, triplet.U[0]);
 
       if(triplet.U[0] - triplet.A[0] <= training_rate_tolerance)
       {
@@ -636,7 +636,7 @@ TrainingRateAlgorithm::Triplet TrainingRateAlgorithm::calculate_bracketing_tripl
 // Vector<double> calculate_fixed_directional_point(const double&, const Vector<double>&, const double&) const method
 
 /// Returns a vector with two elements, a fixed training rate,
-/// and the performance for that training rate. 
+/// and the loss for that training rate. 
 /// @param training_direction Training direction for the directional point.
 /// @param initial_training_rate Training rate for the directional point.
 
@@ -646,7 +646,7 @@ Vector<double> TrainingRateAlgorithm::calculate_fixed_directional_point(const do
    Vector<double> directional_point(2);
 
    directional_point[0] = initial_training_rate;
-   directional_point[1] = performance_functional_pointer->calculate_performance(training_direction, initial_training_rate);
+   directional_point[1] = loss_index_pointer->calculate_loss(training_direction, initial_training_rate);
 
    return(directional_point);
 }
@@ -656,12 +656,12 @@ Vector<double> TrainingRateAlgorithm::calculate_fixed_directional_point(const do
 
 /// Returns the training rate by searching in a given direction to locate the minimum of the objective
 /// function in that direction. It uses the golden section method.
-/// @param performance Neural multilayer_perceptron_pointer's performance value.
+/// @param loss Neural multilayer_perceptron_pointer's loss value.
 /// @param training_direction Training direction vector.
 /// @param initial_training_rate Initial training rate in line minimization.
 
 Vector<double> TrainingRateAlgorithm::calculate_golden_section_directional_point
-(const double& performance, const Vector<double>& training_direction, const double& initial_training_rate) const
+(const double& loss, const Vector<double>& training_direction, const double& initial_training_rate) const
 {
    std::ostringstream buffer;
 
@@ -669,7 +669,7 @@ Vector<double> TrainingRateAlgorithm::calculate_golden_section_directional_point
 
    try
    {
-      Triplet triplet = calculate_bracketing_triplet(performance, training_direction, initial_training_rate);
+      Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_training_rate);
 
       if(triplet.has_length_zero())
 	  {
@@ -683,7 +683,7 @@ Vector<double> TrainingRateAlgorithm::calculate_golden_section_directional_point
       do
       {
          V[0] = calculate_golden_section_training_rate(triplet);
-         V[1] = performance_functional_pointer->calculate_performance(training_direction, V[0]);
+         V[1] = loss_index_pointer->calculate_loss(training_direction, V[0]);
 
          // Update points
  
@@ -748,9 +748,9 @@ Vector<double> TrainingRateAlgorithm::calculate_golden_section_directional_point
 
 	  Vector<double> X(2);
       X[0] = initial_training_rate;
-      X[1] = performance_functional_pointer->calculate_performance(training_direction, X[0]);
+      X[1] = loss_index_pointer->calculate_loss(training_direction, X[0]);
 
-	   if(X[1] > performance)
+	   if(X[1] > loss)
 	   {
 	      X[0] = 0.0;
 	      X[1] = 0.0;
@@ -763,14 +763,14 @@ Vector<double> TrainingRateAlgorithm::calculate_golden_section_directional_point
 
 // Vector<double> calculate_Brent_method_directional_point(const double&, const Vector<double>, const double&) const method
 
-/// Returns the training rate by searching in a given direction to locate the minimum of the performance
+/// Returns the training rate by searching in a given direction to locate the minimum of the loss
 /// function in that direction. It uses the Brent's method.
-/// @param performance Neural network performance value.
+/// @param loss Neural network loss value.
 /// @param training_direction Training direction vector.
 /// @param initial_training_rate Initial training rate in line minimization.
 
 Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
-(const double& performance, const Vector<double>& training_direction, const double& initial_training_rate) const 
+(const double& loss, const Vector<double>& training_direction, const double& initial_training_rate) const 
 {
    std::ostringstream buffer;
 
@@ -778,7 +778,7 @@ Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
 
    try
    {
-      Triplet triplet = calculate_bracketing_triplet(performance, training_direction, initial_training_rate);
+      Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_training_rate);
 
       if(triplet.A == triplet.B)
 	  {
@@ -800,9 +800,9 @@ Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
             V[0] = calculate_golden_section_training_rate(triplet);
 	      }
 
-         // Calculate performance for V
+         // Calculate loss for V
 
-         V[1] = performance_functional_pointer->calculate_performance(training_direction, V[0]);
+         V[1] = loss_index_pointer->calculate_loss(training_direction, V[0]);
 
          // Update points
  
@@ -864,7 +864,7 @@ Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
 
       Vector<double> A(2);
       A[0] = 0.0;
-      A[1] = performance;
+      A[1] = loss;
 
       return(A);
    }
@@ -874,9 +874,9 @@ Vector<double> TrainingRateAlgorithm::calculate_Brent_method_directional_point
 
 	  Vector<double> X(2);
       X[0] = initial_training_rate;
-      X[1] = performance_functional_pointer->calculate_performance(training_direction, X[0]);
+      X[1] = loss_index_pointer->calculate_loss(training_direction, X[0]);
 
-      if(X[1] > performance)
+      if(X[1] > loss)
 	  {
 	     X[0] = 0.0;
 	     X[1] = 0.0;
@@ -1086,6 +1086,9 @@ tinyxml2::XMLDocument* TrainingRateAlgorithm::to_XML(void) const
 
 
 //void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the training rate algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void TrainingRateAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

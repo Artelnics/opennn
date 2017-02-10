@@ -13,7 +13,7 @@
 
 // OpenNN includes
 
-#include "performance_functional.h"
+#include "loss_index.h"
 
 namespace OpenNN
 {
@@ -21,10 +21,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor.  
-/// It creates a performance functional object with all pointers initialized to NULL. 
+/// It creates a loss functional object with all pointers initialized to NULL. 
 /// It also initializes all the rest of class members to their default values.
 
-PerformanceFunctional::PerformanceFunctional(void)
+LossIndex::LossIndex(void)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -51,12 +51,12 @@ PerformanceFunctional::PerformanceFunctional(void)
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a performance functional object associated to a neural network object. 
+/// It creates a loss functional object associated to a neural network object. 
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 
-PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_pointer)
+LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer)
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -68,6 +68,7 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
  , cross_entropy_error_pointer(NULL)
  , weighted_squared_error_pointer(NULL)
  , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
  , neural_parameters_norm_pointer(NULL)
  , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
@@ -82,13 +83,13 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
-/// It creates a performance functional object associated to a neural network and a data set objects. 
+/// It creates a loss functional object associated to a neural network and a data set objects. 
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
-PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(new_data_set_pointer)
  , mathematical_model_pointer(NULL)
@@ -116,13 +117,13 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
 // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
 
 /// Neural network and mathematical model constructor. 
-/// It creates a performance functional object associated to a neural network and a mathematical model objects. 
+/// It creates a loss functional object associated to a neural network and a mathematical model objects. 
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_mathematical_model_pointer Pointer to a mathematical model object.
 
-PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_pointer, MathematicalModel* new_mathematical_model_pointer)
+LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, MathematicalModel* new_mathematical_model_pointer)
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(new_mathematical_model_pointer)
@@ -149,14 +150,14 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
 // NEURAL NETWORK, MATHEMATICAL MODEL AND DATA SET CONSTRUCTOR
 
 /// Neural network, mathematical model and data set constructor. 
-/// It creates a performance functional object associated to a neural network, a mathematical model and a data set objects. 
+/// It creates a loss functional object associated to a neural network, a mathematical model and a data set objects. 
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_mathematical_model_pointer Pointer to a mathematical model object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
-PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_pointer, MathematicalModel* new_mathematical_model_pointer, DataSet* new_data_set_pointer)
+LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, MathematicalModel* new_mathematical_model_pointer, DataSet* new_data_set_pointer)
  : neural_network_pointer(new_neural_network_pointer)
  , data_set_pointer(new_data_set_pointer)
  , mathematical_model_pointer(new_mathematical_model_pointer)
@@ -183,11 +184,11 @@ PerformanceFunctional::PerformanceFunctional(NeuralNetwork* new_neural_network_p
 // USER OBJECTIVE TERM CONSTRUCTOR
 
 /// Objective term constructor. 
-/// It creates a performance functional object with a given objective functional.
+/// It creates a loss functional object with a given objective functional.
 /// The rest of pointers are initialized to NULL. 
 /// The other members are set to their default values, but the error term type, which is set to USER_PERFORMANCE_TERM. 
 
-PerformanceFunctional::PerformanceFunctional(ErrorTerm* new_user_error_pointer)
+LossIndex::LossIndex(ErrorTerm* new_user_error_pointer)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -214,11 +215,11 @@ PerformanceFunctional::PerformanceFunctional(ErrorTerm* new_user_error_pointer)
 // FILE CONSTRUCTOR
 
 /// File constructor. 
-/// It creates a performance functional object by loading its members from an XML-type file.
+/// It creates a loss functional object by loading its members from an XML-type file.
 /// Please be careful with the format of that file, which is specified in the OpenNN manual.
-/// @param file_name Name of performance functional file.
+/// @param file_name Name of loss functional file.
 
-PerformanceFunctional::PerformanceFunctional(const std::string& file_name)
+LossIndex::LossIndex(const std::string& file_name)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -247,10 +248,10 @@ PerformanceFunctional::PerformanceFunctional(const std::string& file_name)
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a performance functional object by loading its members from an XML document->
-/// @param performance_functional_document Pointer to a TinyXML document containing the performance functional data.
+/// It creates a loss functional object by loading its members from an XML document->
+/// @param loss_index_document Pointer to a TinyXML document containing the loss functional data.
 
-PerformanceFunctional::PerformanceFunctional(const tinyxml2::XMLDocument& performance_functional_document)
+LossIndex::LossIndex(const tinyxml2::XMLDocument& loss_index_document)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -272,18 +273,18 @@ PerformanceFunctional::PerformanceFunctional(const tinyxml2::XMLDocument& perfor
 
    set_default();
 
-   from_XML(performance_functional_document);
+   from_XML(loss_index_document);
 }
 
 
 // COPY CONSTRUCTOR
 
 /// Copy constructor. 
-/// It creates a copy of an existing performance functional object. 
-/// @param other_performance_functional Performance functional object to be copied.
+/// It creates a copy of an existing loss functional object. 
+/// @param other_loss_index Loss index object to be copied.
 /// @todo
 
-PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_performance_functional)
+LossIndex::LossIndex(const LossIndex& other_loss_index)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -300,12 +301,12 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
  , outputs_integrals_pointer(NULL)
  , user_regularization_pointer(NULL)
 {
-    neural_network_pointer = other_performance_functional.neural_network_pointer;
-    data_set_pointer = other_performance_functional.data_set_pointer;
-    mathematical_model_pointer = other_performance_functional.mathematical_model_pointer;
+    neural_network_pointer = other_loss_index.neural_network_pointer;
+    data_set_pointer = other_loss_index.data_set_pointer;
+    mathematical_model_pointer = other_loss_index.mathematical_model_pointer;
 
-   error_type = other_performance_functional.error_type;
-   regularization_type = other_performance_functional.regularization_type;
+   error_type = other_loss_index.error_type;
+   regularization_type = other_loss_index.regularization_type;
 
    // Objective
 
@@ -319,49 +320,49 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
 
         case SUM_SQUARED_ERROR:
         {
-            sum_squared_error_pointer = new SumSquaredError(*other_performance_functional.sum_squared_error_pointer);
+            sum_squared_error_pointer = new SumSquaredError(*other_loss_index.sum_squared_error_pointer);
         }
         break;
 
         case MEAN_SQUARED_ERROR:
         {
-            mean_squared_error_pointer = new MeanSquaredError(*other_performance_functional.mean_squared_error_pointer);
+            mean_squared_error_pointer = new MeanSquaredError(*other_loss_index.mean_squared_error_pointer);
         }
         break;
 
         case ROOT_MEAN_SQUARED_ERROR:
         {
-            root_mean_squared_error_pointer = new RootMeanSquaredError(*other_performance_functional.root_mean_squared_error_pointer);
+            root_mean_squared_error_pointer = new RootMeanSquaredError(*other_loss_index.root_mean_squared_error_pointer);
         }
         break;
 
         case NORMALIZED_SQUARED_ERROR:
         {
-            normalized_squared_error_pointer = new NormalizedSquaredError(*other_performance_functional.normalized_squared_error_pointer);
+            normalized_squared_error_pointer = new NormalizedSquaredError(*other_loss_index.normalized_squared_error_pointer);
         }
         break;
 
         case WEIGHTED_SQUARED_ERROR:
         {
-            weighted_squared_error_pointer = new WeightedSquaredError(*other_performance_functional.weighted_squared_error_pointer);
+            weighted_squared_error_pointer = new WeightedSquaredError(*other_loss_index.weighted_squared_error_pointer);
         }
         break;
 
         case ROC_AREA_ERROR:
         {
-            roc_area_error_pointer = new RocAreaError(*other_performance_functional.roc_area_error_pointer);
+            roc_area_error_pointer = new RocAreaError(*other_loss_index.roc_area_error_pointer);
         }
         break;
 
         case MINKOWSKI_ERROR:
         {
-            Minkowski_error_pointer = new MinkowskiError(*other_performance_functional.Minkowski_error_pointer);
+            Minkowski_error_pointer = new MinkowskiError(*other_loss_index.Minkowski_error_pointer);
         }
         break;
 
         case CROSS_ENTROPY_ERROR:
         {
-            cross_entropy_error_pointer = new CrossEntropyError(*other_performance_functional.cross_entropy_error_pointer);
+            cross_entropy_error_pointer = new CrossEntropyError(*other_loss_index.cross_entropy_error_pointer);
         }
         break;
 
@@ -374,7 +375,7 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "Copy constructor.\n"
                    << "Unknown error type.\n";
 
@@ -395,19 +396,19 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
 
         case NEURAL_PARAMETERS_NORM:
         {
-            neural_parameters_norm_pointer = new NeuralParametersNorm(*other_performance_functional.neural_parameters_norm_pointer);
+            neural_parameters_norm_pointer = new NeuralParametersNorm(*other_loss_index.neural_parameters_norm_pointer);
         }
         break;
 
         case OUTPUTS_INTEGRALS:
         {
-            outputs_integrals_pointer = new OutputsIntegrals(*other_performance_functional.outputs_integrals_pointer);
+            outputs_integrals_pointer = new OutputsIntegrals(*other_loss_index.outputs_integrals_pointer);
         }
         break;
 
         case USER_REGULARIZATION:
         {
-            //user_regularization_pointer = new ErrorTerm(*other_performance_functional.user_regularization_pointer);
+            //user_regularization_pointer = new ErrorTerm(*other_loss_index.user_regularization_pointer);
         }
         break;
 
@@ -415,7 +416,7 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "Copy constructor.\n"
                    << "Unknown regularization type.\n";
 
@@ -424,7 +425,7 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
         break;
     }
 
-   display = other_performance_functional.display;  
+   display = other_loss_index.display;  
 }
 
 
@@ -433,7 +434,7 @@ PerformanceFunctional::PerformanceFunctional(const PerformanceFunctional& other_
 /// Destructor.
 /// It deletes the objective, regularization and constraints terms. 
 
-PerformanceFunctional::~PerformanceFunctional(void)
+LossIndex::~LossIndex(void)
 {
    // Delete error terms
 
@@ -444,7 +445,7 @@ PerformanceFunctional::~PerformanceFunctional(void)
    delete Minkowski_error_pointer;
    delete cross_entropy_error_pointer;
    delete weighted_squared_error_pointer;
-   delete outputs_integrals_pointer;
+   delete roc_area_error_pointer;
    delete user_error_pointer;
 
     // Delete regularization terms
@@ -460,10 +461,10 @@ PerformanceFunctional::~PerformanceFunctional(void)
 
 // bool has_neural_network(void) const method
 
-/// Returns true if this performance functional has a neural network associated,
+/// Returns true if this loss functional has a neural network associated,
 /// and false otherwise.
 
-bool PerformanceFunctional::has_neural_network(void) const
+bool LossIndex::has_neural_network(void) const
 {
     if(neural_network_pointer)
     {
@@ -478,10 +479,10 @@ bool PerformanceFunctional::has_neural_network(void) const
 
 // bool has_mathematical_model(void) const method
 
-/// Returns true if this performance functional has a mathematical model associated,
+/// Returns true if this loss functional has a mathematical model associated,
 /// and false otherwise.
 
-bool PerformanceFunctional::has_mathematical_model(void) const
+bool LossIndex::has_mathematical_model(void) const
 {
     if(mathematical_model_pointer)
     {
@@ -496,10 +497,10 @@ bool PerformanceFunctional::has_mathematical_model(void) const
 
 // bool has_data_set(void) const method
 
-/// Returns true if this performance functional has a data set associated,
+/// Returns true if this loss functional has a data set associated,
 /// and false otherwise.
 
-bool PerformanceFunctional::has_data_set(void) const
+bool LossIndex::has_data_set(void) const
 {
     if(data_set_pointer)
     {
@@ -514,10 +515,10 @@ bool PerformanceFunctional::has_data_set(void) const
 
 // bool has_selection(void) const method
 
-/// Returns true if this performance functional has a selection method defined,
+/// Returns true if this loss functional has a selection method defined,
 /// and false otherwise.
 
-bool PerformanceFunctional::has_selection(void) const
+bool LossIndex::has_selection(void) const
 {
     if(!data_set_pointer)
     {
@@ -539,10 +540,10 @@ bool PerformanceFunctional::has_selection(void) const
 
 // bool is_sum_squared_terms(void) const method
 
-/// Returns true if the performance functional can be expressed as the sum of squared terms.
-/// Only those performance functionals are suitable for the Levenberg-Marquardt training algorithm.
+/// Returns true if the loss functional can be expressed as the sum of squared terms.
+/// Only those loss functionals are suitable for the Levenberg-Marquardt training algorithm.
 
-bool PerformanceFunctional::is_sum_squared_terms(void) const
+bool LossIndex::is_sum_squared_terms(void) const
 {
     if(error_type == ROOT_MEAN_SQUARED_ERROR
     || error_type == MINKOWSKI_ERROR
@@ -563,15 +564,15 @@ bool PerformanceFunctional::is_sum_squared_terms(void) const
 
 // void check_neural_network(void) const method
 
-/// Throws an exception if no neural network is associated to the performance functional.
+/// Throws an exception if no neural network is associated to the loss functional.
 
-void PerformanceFunctional::check_neural_network(void) const
+void LossIndex::check_neural_network(void) const
 {
     if(!neural_network_pointer)
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "void check_neural_network(void) const.\n"
               << "Pointer to neural network is NULL.\n";
 
@@ -580,20 +581,20 @@ void PerformanceFunctional::check_neural_network(void) const
 }
 
 
-// void check_performance_terms(void) const method
+// void check_error_terms(void) const method
 
-/// Throws an exception if the performance functional has not got any
+/// Throws an exception if the loss functional has not got any
 /// objective, regularization or constraints terms.
 
-void PerformanceFunctional::check_performance_terms(void) const
+void LossIndex::check_error_terms(void) const
 {
     if(error_type == NO_ERROR
     && regularization_type == NO_REGULARIZATION)
     {
         std::ostringstream buffer;
 
-        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-               << "void check_performance_terms(void) const method.\n"
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void check_error_terms(void) const method.\n"
                << "None objective, regularization or constraints terms are used.\n";
 
         throw std::logic_error(buffer.str());
@@ -607,7 +608,7 @@ void PerformanceFunctional::check_performance_terms(void) const
 /// Returns a pointer to the sum squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-SumSquaredError* PerformanceFunctional::get_sum_squared_error_pointer(void) const
+SumSquaredError* LossIndex::get_sum_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -617,7 +618,7 @@ SumSquaredError* PerformanceFunctional::get_sum_squared_error_pointer(void) cons
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "SumSquaredError* get_sum_squared_error_pointer(void) const method.\n"
               << "Pointer to sum squared error objective is NULL.\n";
 
@@ -635,7 +636,7 @@ SumSquaredError* PerformanceFunctional::get_sum_squared_error_pointer(void) cons
 /// Returns a pointer to the mean squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-MeanSquaredError* PerformanceFunctional::get_mean_squared_error_pointer(void) const
+MeanSquaredError* LossIndex::get_mean_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -645,7 +646,7 @@ MeanSquaredError* PerformanceFunctional::get_mean_squared_error_pointer(void) co
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "MeanSquaredError* get_mean_squared_error_pointer(void) const method.\n"
               << "Pointer to mean squared error objective is NULL.\n";
 
@@ -663,7 +664,7 @@ MeanSquaredError* PerformanceFunctional::get_mean_squared_error_pointer(void) co
 /// Returns a pointer to the root mean squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-RootMeanSquaredError* PerformanceFunctional::get_root_mean_squared_error_pointer(void) const
+RootMeanSquaredError* LossIndex::get_root_mean_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -673,7 +674,7 @@ RootMeanSquaredError* PerformanceFunctional::get_root_mean_squared_error_pointer
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const method.\n"
               << "Pointer to root mean squared error objective is NULL.\n";
 
@@ -691,7 +692,7 @@ RootMeanSquaredError* PerformanceFunctional::get_root_mean_squared_error_pointer
 /// Returns a pointer to the normalized squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-NormalizedSquaredError* PerformanceFunctional::get_normalized_squared_error_pointer(void) const
+NormalizedSquaredError* LossIndex::get_normalized_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -701,7 +702,7 @@ NormalizedSquaredError* PerformanceFunctional::get_normalized_squared_error_poin
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "NormalizedSquaredError* get_normalized_squared_error_pointer(void) const method.\n"
               << "Pointer to normalized squared error objective is NULL.\n";
 
@@ -719,7 +720,7 @@ NormalizedSquaredError* PerformanceFunctional::get_normalized_squared_error_poin
 /// Returns a pointer to the Minkowski error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-MinkowskiError* PerformanceFunctional::get_Minkowski_error_pointer(void) const
+MinkowskiError* LossIndex::get_Minkowski_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -729,7 +730,7 @@ MinkowskiError* PerformanceFunctional::get_Minkowski_error_pointer(void) const
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "MinkowskiError* get_Minkowski_error_pointer(void) const method.\n"
               << "Pointer to Minkowski error objective is NULL.\n";
 
@@ -747,7 +748,7 @@ MinkowskiError* PerformanceFunctional::get_Minkowski_error_pointer(void) const
 /// Returns a pointer to the cross entropy error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_pointer(void) const
+CrossEntropyError* LossIndex::get_cross_entropy_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -757,7 +758,7 @@ CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_pointer(void) 
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "CrossEntropyError* get_cross_entropy_error_pointer(void) const method.\n"
               << "Pointer to cross entropy error objective is NULL.\n";
 
@@ -775,7 +776,7 @@ CrossEntropyError* PerformanceFunctional::get_cross_entropy_error_pointer(void) 
 /// Returns a pointer to the weighted squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_pointer(void) const
+WeightedSquaredError* LossIndex::get_weighted_squared_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -785,7 +786,7 @@ WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_pointer(
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "WeightedSquaredError* get_weighted_squared_error_pointer(void) const method.\n"
               << "Pointer to weighted squared error objective is NULL.\n";
 
@@ -803,7 +804,7 @@ WeightedSquaredError* PerformanceFunctional::get_weighted_squared_error_pointer(
 /// Returns a pointer to the ROC area error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-RocAreaError* PerformanceFunctional::get_roc_area_error_pointer(void) const
+RocAreaError* LossIndex::get_roc_area_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -813,7 +814,7 @@ RocAreaError* PerformanceFunctional::get_roc_area_error_pointer(void) const
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "RocAreaError* get_roc_area_error_pointer(void) const method.\n"
               << "Pointer to ROC area error objective is NULL.\n";
 
@@ -833,7 +834,7 @@ RocAreaError* PerformanceFunctional::get_roc_area_error_pointer(void) const
 /// If that object does not exists, an exception is thrown.
 
 
-OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_pointer(void) const
+OutputsIntegrals* LossIndex::get_outputs_integrals_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -843,7 +844,7 @@ OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_pointer(void) con
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "OutputsIntegrals* get_outputs_integrals_pointer(void) const method.\n"
               << "Pointer to outputs integrals objective is NULL.\n";
 
@@ -858,10 +859,10 @@ OutputsIntegrals* PerformanceFunctional::get_outputs_integrals_pointer(void) con
 
 // ErrorTerm* get_user_error_pointer(void) const method
 
-/// Returns a pointer to the user performance term which is used as objective.
+/// Returns a pointer to the user error term which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-ErrorTerm* PerformanceFunctional::get_user_error_pointer(void) const
+ErrorTerm* LossIndex::get_user_error_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -871,7 +872,7 @@ ErrorTerm* PerformanceFunctional::get_user_error_pointer(void) const
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "ErrorTerm* get_user_error_pointer(void) const method.\n"
               << "Pointer to user objective is NULL.\n";
 
@@ -889,7 +890,7 @@ ErrorTerm* PerformanceFunctional::get_user_error_pointer(void) const
 /// Returns a pointer to the neural parameters norm functional which is used as regularization.
 /// If that object does not exists, an exception is thrown.
 
-NeuralParametersNorm* PerformanceFunctional::get_neural_parameters_norm_pointer(void) const
+NeuralParametersNorm* LossIndex::get_neural_parameters_norm_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -899,7 +900,7 @@ NeuralParametersNorm* PerformanceFunctional::get_neural_parameters_norm_pointer(
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const method.\n"
               << "Pointer to neural parameters norm regularization is NULL.\n";
 
@@ -917,7 +918,7 @@ NeuralParametersNorm* PerformanceFunctional::get_neural_parameters_norm_pointer(
 /// Returns a pointer to the user regularization functional.
 /// If that object does not exists, an exception is thrown.
 
-RegularizationTerm* PerformanceFunctional::get_user_regularization_pointer(void) const
+RegularizationTerm* LossIndex::get_user_regularization_pointer(void) const
 {
     // Control sentence (if debug)
 
@@ -927,7 +928,7 @@ RegularizationTerm* PerformanceFunctional::get_user_regularization_pointer(void)
     {
        std::ostringstream buffer;
 
-       buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+       buffer << "OpenNN Exception: LossIndex class.\n"
               << "ErrorTerm* get_user_regularization_pointer(void) const method.\n"
               << "Pointer to user regularization is NULL.\n";
 
@@ -942,9 +943,9 @@ RegularizationTerm* PerformanceFunctional::get_user_regularization_pointer(void)
 
 // const ErrorType& get_error_type(void) const method
 
-/// Returns the type of objective term used in the performance functional expression.
+/// Returns the type of objective term used in the loss functional expression.
 
-const PerformanceFunctional::ErrorType& PerformanceFunctional::get_error_type(void) const
+const LossIndex::ErrorType& LossIndex::get_error_type(void) const
 {
    return(error_type);
 }
@@ -952,9 +953,9 @@ const PerformanceFunctional::ErrorType& PerformanceFunctional::get_error_type(vo
 
 // const RegularizationType& get_regularization_type(void) const method
 
-/// Returns the type of regularization term used in the performance functional expression.
+/// Returns the type of regularization term used in the loss functional expression.
 
-const PerformanceFunctional::RegularizationType& PerformanceFunctional::get_regularization_type(void) const
+const LossIndex::RegularizationType& LossIndex::get_regularization_type(void) const
 {
    return(regularization_type);
 }
@@ -962,9 +963,9 @@ const PerformanceFunctional::RegularizationType& PerformanceFunctional::get_regu
 
 // std::string write_error_type(void) const
 
-/// Returns a string with the type of objective term used in the performance functional expression.
+/// Returns a string with the type of objective term used in the loss functional expression.
 
-std::string PerformanceFunctional::write_error_type(void) const
+std::string LossIndex::write_error_type(void) const
 {
    if(error_type == NO_ERROR)
    {
@@ -1006,7 +1007,7 @@ std::string PerformanceFunctional::write_error_type(void) const
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "std::string write_error_type(void) const method.\n"
              << "Unknown error type.\n";
  
@@ -1017,9 +1018,9 @@ std::string PerformanceFunctional::write_error_type(void) const
 
 // std::string write_regularization_type(void) const method
 
-/// Returns a string with the type of regularization term used in the performance functional expression.
+/// Returns a string with the type of regularization term used in the loss functional expression.
 
-std::string PerformanceFunctional::write_regularization_type(void) const
+std::string LossIndex::write_regularization_type(void) const
 {
    if(regularization_type == NO_REGULARIZATION)
    {
@@ -1041,7 +1042,7 @@ std::string PerformanceFunctional::write_regularization_type(void) const
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "std::string write_regularization_type(void) const method.\n"
              << "Unknown regularization type.\n";
  
@@ -1052,9 +1053,9 @@ std::string PerformanceFunctional::write_regularization_type(void) const
 
 // std::string write_error_type_text(void) const
 
-/// Returns a string in text format with the type of objective term used in the performance functional expression.
+/// Returns a string in text format with the type of objective term used in the loss functional expression.
 
-std::string PerformanceFunctional::write_error_type_text(void) const
+std::string LossIndex::write_error_type_text(void) const
 {
    if(error_type == NO_ERROR)
    {
@@ -1096,7 +1097,7 @@ std::string PerformanceFunctional::write_error_type_text(void) const
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "std::string write_error_type_text(void) const method.\n"
              << "Unknown error type.\n";
 
@@ -1107,9 +1108,9 @@ std::string PerformanceFunctional::write_error_type_text(void) const
 
 // std::string write_regularization_type_text(void) const method
 
-/// Returns a string in text format with the type of regularization term used in the performance functional expression.
+/// Returns a string in text format with the type of regularization term used in the loss functional expression.
 
-std::string PerformanceFunctional::write_regularization_type_text(void) const
+std::string LossIndex::write_regularization_type_text(void) const
 {
    if(regularization_type == NO_REGULARIZATION)
    {
@@ -1131,7 +1132,7 @@ std::string PerformanceFunctional::write_regularization_type_text(void) const
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "std::string write_regularization_type_text(void) const method.\n"
              << "Unknown regularization type.\n";
 
@@ -1145,7 +1146,7 @@ std::string PerformanceFunctional::write_regularization_type_text(void) const
 /// Returns true if messages from this class can be displayed on the screen, or false if messages
 /// from this class can't be displayed on the screen.
 
-const bool& PerformanceFunctional::get_display(void) const
+const bool& LossIndex::get_display(void) const
 {
    return(display);
 }
@@ -1153,10 +1154,10 @@ const bool& PerformanceFunctional::get_display(void) const
 
 // void set_neural_network_pointer(NeuralNetwork*) method
 
-/// Sets a pointer to a multilayer perceptron object which is to be associated to the performance functional.
-/// @param new_neural_network_pointer Pointer to a neural network object to be associated to the performance functional.
+/// Sets a pointer to a multilayer perceptron object which is to be associated to the loss functional.
+/// @param new_neural_network_pointer Pointer to a neural network object to be associated to the loss functional.
 
-void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+void LossIndex::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
 {
    neural_network_pointer = new_neural_network_pointer;
 
@@ -1222,7 +1223,7 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_neural_network_pointer(NeuralNetwork*) method.\n"
                    << "Unknown error type.\n";
 
@@ -1263,7 +1264,7 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_neural_network_pointer(NeuralNetwork*) method.\n"
                    << "Unknown regularization type.\n";
 
@@ -1276,10 +1277,10 @@ void PerformanceFunctional::set_neural_network_pointer(NeuralNetwork* new_neural
 
 // void set_mathematical_model_pointer(MathematicalModel*) method
 
-/// Sets a new mathematical model on which it will be measured the performance functional.
+/// Sets a new mathematical model on which it will be measured the loss functional.
 /// @param new_mathematical_model_pointer Pointer to an external mathematical model object.
 
-void PerformanceFunctional::set_mathematical_model_pointer(MathematicalModel* new_mathematical_model_pointer)
+void LossIndex::set_mathematical_model_pointer(MathematicalModel* new_mathematical_model_pointer)
 {
    mathematical_model_pointer = new_mathematical_model_pointer;
 }
@@ -1287,10 +1288,10 @@ void PerformanceFunctional::set_mathematical_model_pointer(MathematicalModel* ne
 
 // void set_data_set_pointer(DataSet*) method
 
-/// Sets a new data set on which it will be measured the performance functional.
+/// Sets a new data set on which it will be measured the loss functional.
 /// @param new_data_set_pointer Pointer to an external data set object.
 
-void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
+void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
    data_set_pointer = new_data_set_pointer;
 
@@ -1369,7 +1370,7 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_data_set_pointer(DataSet*) method.\n"
                    << "Unknown error type.\n";
 
@@ -1383,9 +1384,9 @@ void PerformanceFunctional::set_data_set_pointer(DataSet* new_data_set_pointer)
 // void set_user_error_pointer(ErrorTerm*) method
 
 /// Sets the error term to be a specialized one provided by the user.
-/// @param new_user_error_pointer Pointer to a performance term object.
+/// @param new_user_error_pointer Pointer to a error term object.
 
-void PerformanceFunctional::set_user_error_pointer(ErrorTerm* new_user_error_pointer)
+void LossIndex::set_user_error_pointer(ErrorTerm* new_user_error_pointer)
 {
     destruct_error_term();
 
@@ -1400,7 +1401,7 @@ void PerformanceFunctional::set_user_error_pointer(ErrorTerm* new_user_error_poi
 /// Sets the regularization term to be a specialized one provided by the user.
 /// @param new_user_regularization_pointer Pointer to a regularization term object.
 
-void PerformanceFunctional::set_user_regularization_pointer(RegularizationTerm* new_user_regularization_pointer)
+void LossIndex::set_user_regularization_pointer(RegularizationTerm* new_user_regularization_pointer)
 {
     destruct_regularization_term();
 
@@ -1412,20 +1413,153 @@ void PerformanceFunctional::set_user_regularization_pointer(RegularizationTerm* 
 
 // void set_default(void) method
 
-/// Sets the members of the performance functional object to their default values.
+/// Sets the members of the loss functional object to their default values.
 
-void PerformanceFunctional::set_default(void)
+void LossIndex::set_default(void)
 {
    display = true;
 }
 
+#ifdef __OPENNN_MPI__
+// void set_MPI(DataSet*, NeuralNetwork*, const LossIndex*) method
+
+///
+/// @param new_data_set
+/// @param new_neural_network
+/// @param loss_index
+
+void LossIndex::set_MPI(DataSet* new_data_set, NeuralNetwork* new_neural_network, const LossIndex* loss_index)
+{
+    set_data_set_pointer(new_data_set);
+    set_neural_network_pointer(new_neural_network);
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int original_error_type;
+    int original_regularization_type;
+
+    double positives_weight, negatives_weight;
+    double minkowski_parameter;
+
+    double regularization_weight;
+
+    if(rank == 0)
+    {
+        // Variables to send initialization
+
+        original_error_type = (int)loss_index->get_error_type();
+        original_regularization_type = (int)loss_index->get_regularization_type();
+
+        if(loss_index->get_error_type() == LossIndex::WEIGHTED_SQUARED_ERROR)
+        {
+            positives_weight = loss_index->get_weighted_squared_error_pointer()->get_positives_weight();
+            negatives_weight = loss_index->get_weighted_squared_error_pointer()->get_negatives_weight();
+        }
+        else if(loss_index->get_error_type() == LossIndex::MINKOWSKI_ERROR)
+        {
+            minkowski_parameter = loss_index->get_Minkowski_error_pointer()->get_Minkowski_parameter();
+        }
+
+        if(loss_index->get_regularization_type() == LossIndex::NEURAL_PARAMETERS_NORM)
+        {
+            regularization_weight = loss_index->get_neural_parameters_norm_pointer()->get_neural_parameters_norm_weight();
+        }
+    }
+
+    // Send variables
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank > 0)
+    {
+        MPI_Request req[2];
+
+        MPI_Irecv(&original_error_type, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(&original_regularization_type, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+
+        MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+        if(original_error_type == (int)LossIndex::WEIGHTED_SQUARED_ERROR)
+        {
+            MPI_Irecv(&positives_weight, 1, MPI_DOUBLE, rank-1, 3, MPI_COMM_WORLD, &req[0]);
+            MPI_Irecv(&negatives_weight, 1, MPI_DOUBLE, rank-1, 4, MPI_COMM_WORLD, &req[1]);
+
+            MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+        }
+        else if(original_error_type == (int)LossIndex::MINKOWSKI_ERROR)
+        {
+            MPI_Irecv(&minkowski_parameter, 1, MPI_DOUBLE, rank-1, 3, MPI_COMM_WORLD, &req[0]);
+
+            MPI_Waitall(1, req, MPI_STATUS_IGNORE);
+        }
+
+        if(original_regularization_type == (int)LossIndex::NEURAL_PARAMETERS_NORM)
+        {
+            MPI_Recv(&regularization_weight, 1, MPI_DOUBLE, rank-1, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+    }
+
+    if(rank < size-1)
+    {
+        MPI_Request req[4];
+
+        MPI_Isend(&original_error_type, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+        MPI_Isend(&original_regularization_type, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+
+        MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+        if(original_error_type == (int)LossIndex::WEIGHTED_SQUARED_ERROR)
+        {
+            MPI_Isend(&positives_weight, 1, MPI_DOUBLE, rank+1, 3, MPI_COMM_WORLD, &req[0]);
+            MPI_Isend(&negatives_weight, 1, MPI_DOUBLE, rank+1, 4, MPI_COMM_WORLD, &req[1]);
+
+            MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+        }
+        else if(original_error_type == (int)LossIndex::MINKOWSKI_ERROR)
+        {
+            MPI_Isend(&minkowski_parameter, 1, MPI_DOUBLE, rank+1, 3, MPI_COMM_WORLD, &req[0]);
+
+            MPI_Waitall(1, req, MPI_STATUS_IGNORE);
+        }
+
+        if(original_regularization_type == (int)LossIndex::NEURAL_PARAMETERS_NORM)
+        {
+            MPI_Send(&regularization_weight, 1, MPI_DOUBLE, rank+1, 5, MPI_COMM_WORLD);
+        }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    set_error_type((LossIndex::ErrorType)original_error_type);
+    set_regularization_type((LossIndex::RegularizationType)original_regularization_type);
+
+    if(original_error_type == (int)LossIndex::WEIGHTED_SQUARED_ERROR)
+    {
+        get_weighted_squared_error_pointer()->set_positives_weight(positives_weight);
+        get_weighted_squared_error_pointer()->set_negatives_weight(negatives_weight);
+    }
+    else if(original_error_type == (int)LossIndex::MINKOWSKI_ERROR)
+    {
+        get_Minkowski_error_pointer()->set_Minkowski_parameter(minkowski_parameter);
+    }
+
+    if(original_regularization_type == (int)LossIndex::NEURAL_PARAMETERS_NORM)
+    {
+        get_neural_parameters_norm_pointer()->set_neural_parameters_norm_weight(regularization_weight);
+    }
+}
+#endif
 
 // void set_error_type(const std::string&) method
 
 /// Sets a new type for the error term from a string.
 /// @param new_error_type String with the type of objective term.
 
-void PerformanceFunctional::set_error_type(const std::string& new_error_type)
+void LossIndex::set_error_type(const std::string& new_error_type)
 {
    if(new_error_type == "NO_ERROR")
    {
@@ -1471,7 +1605,7 @@ void PerformanceFunctional::set_error_type(const std::string& new_error_type)
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "void set_error_type(const std::string&) method.\n"
              << "Unknown objective type: " << new_error_type << ".\n";
 
@@ -1485,7 +1619,7 @@ void PerformanceFunctional::set_error_type(const std::string& new_error_type)
 /// Sets a new type for the regularization term from a string.
 /// @param new_regularization_type String with the type of regularization term.
 
-void PerformanceFunctional::set_regularization_type(const std::string& new_regularization_type)
+void LossIndex::set_regularization_type(const std::string& new_regularization_type)
 {
    if(new_regularization_type == "NO_REGULARIZATION")
    {
@@ -1503,7 +1637,7 @@ void PerformanceFunctional::set_regularization_type(const std::string& new_regul
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "void set_regularization_type(const std::string&) method.\n"
              << "Unknown regularization type: " << new_regularization_type << ".\n";
 
@@ -1519,7 +1653,7 @@ void PerformanceFunctional::set_regularization_type(const std::string& new_regul
 /// if it is set to false messages from this class are not to be displayed on the screen.
 /// @param new_display Display value.
 
-void PerformanceFunctional::set_display(const bool& new_display)
+void LossIndex::set_display(const bool& new_display)
 {
    display = new_display;
 }
@@ -1527,98 +1661,99 @@ void PerformanceFunctional::set_display(const bool& new_display)
 
 // void set_error_type(const ErrorType&) method
 
-/// Creates a new objective term inside the performance functional of a given performance term type.
+/// Creates a new objective term inside the loss functional of a given error term type.
 /// @param new_error_type Type of objective term to be created.
 
-void PerformanceFunctional::set_error_type(const ErrorType& new_error_type)
+void LossIndex::set_error_type(const ErrorType& new_error_type)
 {
     destruct_error_term();
 
-   error_type = new_error_type;
+    error_type = new_error_type;
 
-   switch(new_error_type)
-   {
-      case NO_ERROR:
-      {
-         // Do nothing
-      }
-      break;
+    switch(new_error_type)
+    {
+        case NO_ERROR:
+        {
+            // Do nothing
+        }
+            break;
 
-      case SUM_SQUARED_ERROR:
-      {
-         sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
-      }
-      break;
+        case SUM_SQUARED_ERROR:
+        {
+                sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-      case MEAN_SQUARED_ERROR:
-      {
-         mean_squared_error_pointer = new MeanSquaredError(neural_network_pointer, data_set_pointer);
-      }
-      break;
+        case MEAN_SQUARED_ERROR:
+        {
+                mean_squared_error_pointer = new MeanSquaredError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-      case ROOT_MEAN_SQUARED_ERROR:
-      {
-         root_mean_squared_error_pointer = new RootMeanSquaredError(neural_network_pointer, data_set_pointer);
-      }
-      break;
+        case ROOT_MEAN_SQUARED_ERROR:
+        {
+                root_mean_squared_error_pointer = new RootMeanSquaredError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-      case NORMALIZED_SQUARED_ERROR:
-      {
-         normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
-      }
-      break;
+        case NORMALIZED_SQUARED_ERROR:
+        {
+                normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-       case WEIGHTED_SQUARED_ERROR:
-       {
-          weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
-       }
-       break;
+        case WEIGHTED_SQUARED_ERROR:
+        {
+                weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-       case ROC_AREA_ERROR:
-       {
-          roc_area_error_pointer = new RocAreaError(neural_network_pointer, data_set_pointer);
-       }
-       break;
+        case ROC_AREA_ERROR:
+        {
+                roc_area_error_pointer = new RocAreaError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-      case MINKOWSKI_ERROR:
-      {
-         Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
-      }
-      break;
+        case MINKOWSKI_ERROR:
+        {
 
-      case CROSS_ENTROPY_ERROR:
-      {
-         cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
-      }
-      break;
+                Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-      case USER_ERROR:
-      {
-         //user_error_pointer = NULL;
-      }
-      break;
+        case CROSS_ENTROPY_ERROR:
+        {
+            cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
+        }
+            break;
 
-      default:
-      {
-         std::ostringstream buffer;
+        case USER_ERROR:
+        {
+            //user_error_pointer = NULL;
+        }
+            break;
 
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-                << "void set_error_type(const ErrorType&) method.\n"
-                << "Unknown error type.\n";
- 
-         throw std::logic_error(buffer.str());	     
-      }
-      break;
-   }
+        default:
+        {
+            std::ostringstream buffer;
+
+            buffer << "OpenNN Exception: LossIndex class.\n"
+                   << "void set_error_type(const ErrorType&) method.\n"
+                   << "Unknown error type.\n";
+
+            throw std::logic_error(buffer.str());
+        }
+            break;
+    }
 }
 
 
 // void set_regularization_type(const RegularizationType&) method
 
-/// Creates a new regularization term inside the performance functional of a given performance term type.
+/// Creates a new regularization term inside the loss functional of a given error term type.
 /// @param new_regularization_type Type of regularization term to be created.
 
-void PerformanceFunctional::set_regularization_type(const RegularizationType& new_regularization_type)
+void LossIndex::set_regularization_type(const RegularizationType& new_regularization_type)
 {
     destruct_regularization_term();
 
@@ -1654,7 +1789,7 @@ void PerformanceFunctional::set_regularization_type(const RegularizationType& ne
       {
          std::ostringstream buffer;
 
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+         buffer << "OpenNN Exception: LossIndex class.\n"
                 << "void set_regularization_type(const RegularizationType&) method.\n"
                 << "Unknown regularization type.\n";
  
@@ -1670,7 +1805,7 @@ void PerformanceFunctional::set_regularization_type(const RegularizationType& ne
 /// This method deletes the error term object. 
 /// It also sets the error term type to NONE and the corresponding flag to false. 
 
-void PerformanceFunctional::destruct_error_term(void)
+void LossIndex::destruct_error_term(void)
 {
     delete sum_squared_error_pointer;
     delete mean_squared_error_pointer;
@@ -1699,7 +1834,7 @@ void PerformanceFunctional::destruct_error_term(void)
 /// This method deletes the regularization term object. 
 /// It also sets the regularization term type to NONE and the corresponding flag to false. 
 
-void PerformanceFunctional::destruct_regularization_term(void)
+void LossIndex::destruct_regularization_term(void)
 {
     delete neural_parameters_norm_pointer;
     delete outputs_integrals_pointer;
@@ -1717,7 +1852,7 @@ void PerformanceFunctional::destruct_regularization_term(void)
 
 /// This method destructs the objective, regularization and constraints terms. 
 
-void PerformanceFunctional::destruct_all_terms(void)
+void LossIndex::destruct_all_terms(void)
 {
    destruct_error_term();
    destruct_regularization_term();
@@ -1727,9 +1862,9 @@ void PerformanceFunctional::destruct_all_terms(void)
 // double calculate_error(void) const method
 
 /// Returns the objective evaluation,
-/// according to the respective objective type used in the performance functional expression.
+/// according to the respective objective type used in the loss functional expression.
 
-double PerformanceFunctional::calculate_error(void) const
+double LossIndex::calculate_error(void) const
 {
     // Control sentence (if debug)
 
@@ -1809,7 +1944,7 @@ double PerformanceFunctional::calculate_error(void) const
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "double calculate_error(void) const method.\n"
                     << "Unknown error type.\n";
 
@@ -1825,9 +1960,9 @@ double PerformanceFunctional::calculate_error(void) const
 // double calculate_error(const Vector<double>&) const method
 
 /// Returns the objective evaluation,
-/// according to the respective objective type used in the performance functional expression.
+/// according to the respective objective type used in the loss functional expression.
 
-double PerformanceFunctional::calculate_error(const Vector<double>& parameters) const
+double LossIndex::calculate_error(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -1907,7 +2042,7 @@ double PerformanceFunctional::calculate_error(const Vector<double>& parameters) 
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "double calculate_error(const Vector<double>&) const method.\n"
                     << "Unknown error type.\n";
 
@@ -1919,13 +2054,442 @@ double PerformanceFunctional::calculate_error(const Vector<double>& parameters) 
      return(objective);
 }
 
+#ifdef __OPENNN_MPI__
+
+double LossIndex::calculate_error_MPI(void) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    check_neural_network();
+
+    #endif
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int training_instances_number = 0;
+    int local_training_instances_number = 0;
+
+    if(has_data_set() && data_set_pointer->has_data())
+    {
+        local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+    }
+    MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    if(training_instances_number == 0)
+    {
+        return 0.0;
+    }
+
+    size = std::min(size,training_instances_number);
+
+    // Get the group of processes in MPI_COMM_WORLD
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+    int* ranks = (int*)malloc(size*sizeof(int));
+
+    for(int i = 0; i < size; i++)
+    {
+        ranks[i] = i;
+    }
+
+    // Construct a group containing all of the prime ranks in world_group
+    MPI_Group error_group;
+    MPI_Group_incl(world_group, size, ranks, &error_group);
+
+    // Create a new communicator based on the group
+    MPI_Comm current_comm;
+    MPI_Comm_create(MPI_COMM_WORLD, error_group, &current_comm);
+
+    double global_objective = 0.0;
+
+    double local_objective = 0.0;
+
+    double normalization_coefficient = 0.0;
+
+    // Objective
+
+    if(rank < size)
+    {
+         switch(error_type)
+         {
+             case NO_ERROR:
+             {
+                 // Do nothing
+             }
+             break;
+
+             case SUM_SQUARED_ERROR:
+             {
+                local_objective = sum_squared_error_pointer->calculate_error();
+             }
+             break;
+
+             case MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_objective = temp_loss_index.calculate_error();
+
+                 local_objective /= training_instances_number;
+             }
+             break;
+
+             case ROOT_MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_objective = temp_loss_index.calculate_error();
+
+                 local_objective /= training_instances_number;
+             }
+             break;
+
+             case NORMALIZED_SQUARED_ERROR:
+             {
+                 const size_t targets_number = data_set_pointer->get_variables_pointer()->count_targets_number();
+
+                 Vector<double> training_target_data_mean(targets_number, 0.0);
+
+                 const Vector<double> local_training_target_data_mean = data_set_pointer->arrange_training_target_data().calculate_rows_sum();
+
+                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+
+                 training_target_data_mean /= training_instances_number;
+
+                 const Vector<double> error_normalization = get_normalized_squared_error_pointer()->calculate_error_normalization(training_target_data_mean);
+
+                 MPI_Reduce(&error_normalization[1], &normalization_coefficient, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+                 local_objective = error_normalization[0];
+             }
+             break;
+
+             case WEIGHTED_SQUARED_ERROR:
+             {
+                 const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
+
+                 const int local_training_negatives = (int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
+
+                 int negatives = 0;
+                 MPI_Allreduce(&local_training_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
+
+                 normalization_coefficient = negatives*weighted_squared_error_pointer->get_negatives_weight()*0.5;
+                 local_objective = weighted_squared_error_pointer->calculate_error(normalization_coefficient);
+             }
+             break;
+
+             case ROC_AREA_ERROR: // todo
+             {
+    //             local_objective = roc_area_error_pointer->calculate_error();
+             }
+             break;
+
+             case MINKOWSKI_ERROR:
+             {
+                 local_objective = Minkowski_error_pointer->calculate_error();
+             }
+             break;
+
+             case CROSS_ENTROPY_ERROR:
+             {
+                 local_objective = cross_entropy_error_pointer->calculate_error_unnormalized();
+
+                 local_objective /= training_instances_number;
+             }
+             break;
+
+             case USER_ERROR:
+             {
+                 local_objective = user_error_pointer->calculate_error();
+             }
+             break;
+
+             default:
+             {
+                 std::ostringstream buffer;
+
+                 buffer << "OpenNN Exception: LossIndex class.\n"
+                        << "double calculate_error_MPI(void) const method.\n"
+                        << "Unknown error type.\n";
+
+                 MPI_Abort(MPI_COMM_WORLD, 1);
+
+                 throw std::logic_error(buffer.str());
+             }
+             break;
+         }
+
+         MPI_Reduce(&local_objective, &global_objective, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+         MPI_Barrier(current_comm);
+    }
+     if(rank == 0)
+     {
+         if(error_type == (int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
+         {
+             global_objective = sqrt(global_objective);
+         }
+         else if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+         {
+             if(normalization_coefficient < 1.0e-99)
+             {
+                std::ostringstream buffer;
+
+                buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
+                       << "double calculate_selection_loss(void) const method.\n"
+                       << "Normalization coefficient is zero.\n"
+                       << "Unuse constant target variables or choose another error functional. ";
+
+                MPI_Abort(MPI_COMM_WORLD, 1);
+
+                throw std::logic_error(buffer.str());
+             }
+
+             global_objective /= normalization_coefficient;
+         }
+     }
+
+     MPI_Barrier(MPI_COMM_WORLD);
+     MPI_Comm_free(&current_comm);
+     MPI_Group_free(&error_group);
+     free(ranks);
+
+     return(global_objective);
+}
+
+double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    check_neural_network();
+
+    int initialized;
+
+    MPI_Initialized(&initialized);
+
+    if(!initialized)
+    {
+      MPI_Init(NULL, NULL);
+    }
+
+    #endif
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int training_instances_number = 0;
+    int local_training_instances_number = 0;
+
+    if(has_data_set() && data_set_pointer->has_data())
+    {
+        local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+    }
+    MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    size = std::min(size,training_instances_number);
+
+    // Get the group of processes in MPI_COMM_WORLD
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+    int* ranks = (int*)malloc(size*sizeof(int));
+
+    for(int i = 0; i < size; i++)
+    {
+        ranks[i] = i;
+    }
+
+    // Construct a group containing all of the prime ranks in world_group
+    MPI_Group error_group;
+    MPI_Group_incl(world_group, size, ranks, &error_group);
+
+    // Create a new communicator based on the group
+    MPI_Comm current_comm;
+    MPI_Comm_create(MPI_COMM_WORLD, error_group, &current_comm);
+
+    double global_objective = 0.0;
+
+    double local_objective = 0.0;
+
+    double normalization_coefficient = 0.0;
+
+    // Objective
+
+    if(rank < size)
+    {
+         switch(error_type)
+         {
+             case NO_ERROR:
+             {
+                 // Do nothing
+             }
+             break;
+
+             case SUM_SQUARED_ERROR:
+             {
+                local_objective = sum_squared_error_pointer->calculate_error(parameters);
+             }
+             break;
+
+             case MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_objective = temp_loss_index.calculate_error(parameters);
+
+                 local_objective /= training_instances_number;
+             }
+             break;
+
+             case ROOT_MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_objective = temp_loss_index.calculate_error(parameters);
+
+                 local_objective /= training_instances_number;
+             }
+             break;
+
+             case NORMALIZED_SQUARED_ERROR:
+             {
+                 const size_t targets_number = data_set_pointer->get_variables_pointer()->count_targets_number();
+
+                 Vector<double> training_target_data_mean(targets_number, 0.0);
+
+                 const Vector<double> local_training_target_data_mean = data_set_pointer->arrange_training_target_data().calculate_rows_sum();
+
+                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+
+                 training_target_data_mean /= training_instances_number;
+
+                 const Vector<double> error_normalization = get_normalized_squared_error_pointer()->calculate_error_normalization(parameters, training_target_data_mean);
+
+                 MPI_Reduce(&error_normalization[1], &normalization_coefficient, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+                 local_objective = error_normalization[0];
+             }
+             break;
+
+             case WEIGHTED_SQUARED_ERROR:
+             {
+                 const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
+
+                 const int local_training_negatives = (int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
+
+                 int negatives = 0;
+                 MPI_Allreduce(&local_training_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
+
+                 normalization_coefficient = negatives*weighted_squared_error_pointer->get_negatives_weight()*0.5;
+                 local_objective = weighted_squared_error_pointer->calculate_error(parameters, normalization_coefficient);
+             }
+             break;
+
+             case ROC_AREA_ERROR: // todo
+             {
+    //             local_objective = roc_area_error_pointer->calculate_error();
+             }
+             break;
+
+             case MINKOWSKI_ERROR:
+             {
+                 local_objective = Minkowski_error_pointer->calculate_error(parameters);
+             }
+             break;
+
+             case CROSS_ENTROPY_ERROR:
+             {
+                 local_objective = cross_entropy_error_pointer->calculate_error_unnormalized(parameters);
+
+                 local_objective /= training_instances_number;
+             }
+             break;
+
+             case USER_ERROR:
+             {
+                 local_objective = user_error_pointer->calculate_error(parameters);
+             }
+             break;
+
+             default:
+             {
+                 std::ostringstream buffer;
+
+                 buffer << "OpenNN Exception: LossIndex class.\n"
+                        << "double calculate_error_MPI(const Vector<double>&) const method.\n"
+                        << "Unknown error type.\n";
+
+                 MPI_Abort(MPI_COMM_WORLD, 1);
+
+                 throw std::logic_error(buffer.str());
+             }
+             break;
+         }
+
+         MPI_Reduce(&local_objective, &global_objective, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+
+         MPI_Barrier(current_comm);
+    }
+
+     if(rank == 0)
+     {
+         if(error_type == (int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
+         {
+             global_objective = sqrt(global_objective);
+         }
+         else if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+         {
+             if(normalization_coefficient < 1.0e-99)
+             {
+                std::ostringstream buffer;
+
+                buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
+                       << "double calculate_selection_loss(void) const method.\n"
+                       << "Normalization coefficient is zero.\n"
+                       << "Unuse constant target variables or choose another error functional. ";
+
+                MPI_Abort(MPI_COMM_WORLD, 1);
+
+                throw std::logic_error(buffer.str());
+             }
+
+             global_objective /= normalization_coefficient;
+         }
+     }
+
+     MPI_Barrier(MPI_COMM_WORLD);
+     MPI_Comm_free(&current_comm);
+     MPI_Group_free(&error_group);
+     free(ranks);
+
+     return(global_objective);
+}
+#endif
+
 
 // double calculate_regularization(void) const method
 
 /// Returns the regularization evaluation,
-/// according to the respective regularization type used in the performance functional expression.
+/// according to the respective regularization type used in the loss functional expression.
 
-double PerformanceFunctional::calculate_regularization(void) const
+double LossIndex::calculate_regularization(void) const
 {
     // Control sentence (if debug)
 
@@ -1967,7 +2531,7 @@ double PerformanceFunctional::calculate_regularization(void) const
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "double calculate_regularization(void) const method.\n"
                    << "Unknown regularization type.\n";
 
@@ -1979,13 +2543,12 @@ double PerformanceFunctional::calculate_regularization(void) const
     return(regularization);
 }
 
-
 // double calculate_regularization(const Vector<double>&) const method
 
 /// Returns the regularization evaluation,
-/// according to the respective regularization type used in the performance functional expression.
+/// according to the respective regularization type used in the loss functional expression.
 
-double PerformanceFunctional::calculate_regularization(const Vector<double>& parameters) const
+double LossIndex::calculate_regularization(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -2027,7 +2590,7 @@ double PerformanceFunctional::calculate_regularization(const Vector<double>& par
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "double calculate_regularization(const Vector<double>&) const method.\n"
                    << "Unknown regularization type.\n";
 
@@ -2039,15 +2602,13 @@ double PerformanceFunctional::calculate_regularization(const Vector<double>& par
     return(regularization);
 }
 
-
-
 // Vector<double> calculate_error_terms(void) const method
 
 /// Returns the evaluation of all the error terms,
-/// according to the respective objective type used in the performance functional expression.
+/// according to the respective objective type used in the loss functional expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 
-Vector<double> PerformanceFunctional::calculate_error_terms(void) const
+Vector<double> LossIndex::calculate_error_terms(void) const
 {
     // Control sentence (if debug)
 
@@ -2089,9 +2650,9 @@ Vector<double> PerformanceFunctional::calculate_error_terms(void) const
 
          case ROOT_MEAN_SQUARED_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for root mean squared error objective.\n";
+                    << "Cannot calculate error terms for root mean squared error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -2111,9 +2672,9 @@ Vector<double> PerformanceFunctional::calculate_error_terms(void) const
 
          case MINKOWSKI_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for Minkowski error objective.\n";
+                    << "Cannot calculate error terms for Minkowski error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -2121,9 +2682,9 @@ Vector<double> PerformanceFunctional::calculate_error_terms(void) const
 
          case CROSS_ENTROPY_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_terms(void) const method.\n"
-                    << "Cannot calculate performance terms for cross-entropy error objective.\n";
+                    << "Cannot calculate error terms for cross-entropy error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -2137,7 +2698,7 @@ Vector<double> PerformanceFunctional::calculate_error_terms(void) const
 
          default:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_terms(void) const method.\n"
                     << "Unknown error type.\n";
 
@@ -2153,13 +2714,13 @@ Vector<double> PerformanceFunctional::calculate_error_terms(void) const
 // Matrix<double> calculate_error_terms_Jacobian(void) const method
 
 /// Returns the Jacobian of the error terms function,
-/// according to the objective type used in the performance functional expression.
+/// according to the objective type used in the loss functional expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters,
 /// and the number of columns the number of terms composing the objective.
 
-Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
+Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
 {
     // Control sentence (if debug)
 
@@ -2197,9 +2758,9 @@ Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
 
          case ROOT_MEAN_SQUARED_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for root mean squared error objective.\n";
+                    << "Cannot calculate error terms for root mean squared error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -2219,9 +2780,9 @@ Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
 
          case MINKOWSKI_ERROR:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
-                    << "Cannot calculate performance terms for Minkowski error objective.\n";
+                    << "Cannot calculate error terms for Minkowski error objective.\n";
 
              throw std::logic_error(buffer.str());
          }
@@ -2229,9 +2790,9 @@ Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
 
      case CROSS_ENTROPY_ERROR:
      {
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+         buffer << "OpenNN Exception: LossIndex class.\n"
                 << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
-                << "Cannot calculate performance terms for cross-entropy error objective.\n";
+                << "Cannot calculate error terms for cross-entropy error objective.\n";
 
          throw std::logic_error(buffer.str());
      }
@@ -2246,7 +2807,7 @@ Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
 
          default:
          {
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
                     << "Unknown error type.\n";
 
@@ -2265,7 +2826,7 @@ Matrix<double> PerformanceFunctional::calculate_error_terms_Jacobian(void) const
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> PerformanceFunctional::calculate_error_gradient(void) const
+Vector<double> LossIndex::calculate_error_gradient(void) const
 {
     // Control sentence (if debug)
 
@@ -2347,7 +2908,7 @@ Vector<double> PerformanceFunctional::calculate_error_gradient(void) const
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_gradient(void) const method.\n"
                     << "Unknown error type.\n";
 
@@ -2366,7 +2927,7 @@ Vector<double> PerformanceFunctional::calculate_error_gradient(void) const
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> PerformanceFunctional::calculate_error_gradient(const Vector<double>& parameters) const
+Vector<double> LossIndex::calculate_error_gradient(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -2442,7 +3003,7 @@ Vector<double> PerformanceFunctional::calculate_error_gradient(const Vector<doub
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_gradient(const Vector<double>&) const method.\n"
                     << "Unknown error type.\n";
 
@@ -2454,6 +3015,323 @@ Vector<double> PerformanceFunctional::calculate_error_gradient(const Vector<doub
      return(gradient);
 }
 
+#ifdef __OPENNN_MPI__
+
+Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
+{
+
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    check_neural_network();
+
+    #endif
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int training_instances_number = 0;
+    int local_training_instances_number = 0;
+
+    if(has_data_set() && data_set_pointer->has_data())
+    {
+        local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+    }
+    MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    size = std::min(size,training_instances_number);
+
+    // Get the group of processes in MPI_COMM_WORLD
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+    int* ranks = (int*)malloc(size*sizeof(int));
+
+    for(int i = 0; i < size; i++)
+    {
+        ranks[i] = i;
+    }
+
+    // Construct a group containing all of the prime ranks in world_group
+    MPI_Group error_group;
+    MPI_Group_incl(world_group, size, ranks, &error_group);
+
+    // Create a new communicator based on the group
+    MPI_Comm current_comm;
+    MPI_Comm_create(MPI_COMM_WORLD, error_group, &current_comm);
+
+    const size_t parameters_number = neural_network_pointer->count_parameters_number();
+
+    Vector<double> local_gradient(parameters_number, 0.0);
+    Vector<double> global_gradient(parameters_number, 0.0);
+
+    double normalization_coefficient = 0.0;
+    double error = 0.0;
+
+    if(error_type == ROOT_MEAN_SQUARED_ERROR)
+    {
+        error = calculate_error_MPI();
+
+        MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
+
+    // Objective
+
+    if(rank < size)
+    {
+        // Objective
+
+         switch(error_type)
+         {
+             case NO_ERROR:
+             {
+                 // Do nothing
+             }
+             break;
+
+             case SUM_SQUARED_ERROR:
+             {
+                 local_gradient = sum_squared_error_pointer->calculate_gradient();
+             }
+             break;
+
+             case MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_gradient = temp_loss_index.get_sum_squared_error_pointer()->calculate_gradient();
+
+                 local_gradient /= training_instances_number;
+             }
+             break;
+
+             case ROOT_MEAN_SQUARED_ERROR:
+             {
+                 local_gradient = root_mean_squared_error_pointer->calculate_gradient(training_instances_number, error);
+             }
+             break;
+
+             case NORMALIZED_SQUARED_ERROR:
+             {
+                 const size_t targets_number = data_set_pointer->get_variables_pointer()->count_targets_number();
+
+                 Vector<double> training_target_data_mean(targets_number, 0.0);
+
+                 const Vector<double> local_training_target_data_mean = data_set_pointer->arrange_training_target_data().calculate_rows_sum();
+
+                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+
+                 training_target_data_mean /= training_instances_number;
+
+                 Vector<double> error_normalization = normalized_squared_error_pointer->calculate_gradient_normalization(training_target_data_mean);
+
+                 const double local_normalization_coefficient = error_normalization[error_normalization.size() - 1];
+
+                 MPI_Reduce(&local_normalization_coefficient, &normalization_coefficient, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+                 error_normalization.pop_back();
+                 local_gradient = error_normalization;
+             }
+             break;
+
+             case WEIGHTED_SQUARED_ERROR:
+             {
+                 const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
+
+                 const int local_training_negatives = (int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
+
+                 int negatives = 0;
+                 MPI_Allreduce(&local_training_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
+
+                 normalization_coefficient = negatives*weighted_squared_error_pointer->get_negatives_weight()*0.5;
+
+                 local_gradient = weighted_squared_error_pointer->calculate_gradient_with_normalization(normalization_coefficient);
+             }
+             break;
+
+             case ROC_AREA_ERROR: // todo
+             {
+//                 local_gradient = roc_area_error_pointer->calculate_gradient();
+             }
+             break;
+
+             case MINKOWSKI_ERROR:
+             {
+                 local_gradient = Minkowski_error_pointer->calculate_gradient();
+             }
+             break;
+
+             case CROSS_ENTROPY_ERROR: // todo
+             {
+                 const int local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+                 int training_instances_number = 0;
+
+                 MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, current_comm);
+
+                 local_gradient = cross_entropy_error_pointer->calculate_gradient_unnormalized();
+
+                 local_gradient /= training_instances_number;
+             }
+             break;
+
+             case USER_ERROR:
+             {
+                 local_gradient = user_error_pointer->calculate_gradient();
+             }
+             break;
+
+             default:
+             {
+                 std::ostringstream buffer;
+
+                 buffer << "OpenNN Exception: LossIndex class.\n"
+                        << "Vector<double> calculate_error_gradient_MPI(void) const method.\n"
+                        << "Unknown error type.\n";
+
+                 MPI_Abort(MPI_COMM_WORLD, 1);
+
+                 throw std::logic_error(buffer.str());
+             }
+             break;
+         }
+
+         MPI_Reduce(local_gradient.data(), global_gradient.data(), (int)parameters_number, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+         MPI_Barrier(current_comm);
+    }
+
+    if(rank == 0)
+    {
+        if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+        {
+            if(normalization_coefficient < 1.0e-99)
+            {
+               std::ostringstream buffer;
+
+               buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
+                      << "double calculate_selection_loss(void) const method.\n"
+                      << "Normalization coefficient is zero.\n"
+                      << "Unuse constant target variables or choose another error functional. ";
+
+               MPI_Abort(MPI_COMM_WORLD, 1);
+
+               throw std::logic_error(buffer.str());
+            }
+
+            global_gradient /= normalization_coefficient;
+        }
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Comm_free(&current_comm);
+    MPI_Group_free(&error_group);
+    free(ranks);
+
+    return(global_gradient);
+
+}
+
+Vector<double> LossIndex::calculate_error_gradient_MPI(const Vector<double>& parameters) const
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    check_neural_network();
+
+    #endif
+
+    const size_t parameters_number = neural_network_pointer->count_parameters_number();
+
+    Vector<double> gradient(parameters_number, 0.0);
+
+    // Objective
+
+     switch(error_type)
+     {
+         case NO_ERROR:
+         {
+             // Do nothing
+         }
+         break;
+
+         case SUM_SQUARED_ERROR:
+         {
+//             gradient = sum_squared_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case MEAN_SQUARED_ERROR:
+         {
+//             gradient = mean_squared_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case ROOT_MEAN_SQUARED_ERROR:
+         {
+//             gradient = root_mean_squared_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case NORMALIZED_SQUARED_ERROR:
+         {
+//             gradient = normalized_squared_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case WEIGHTED_SQUARED_ERROR:
+         {
+//             gradient = weighted_squared_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case ROC_AREA_ERROR:
+         {
+//             gradient = roc_area_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case MINKOWSKI_ERROR:
+         {
+//             gradient = Minkowski_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case CROSS_ENTROPY_ERROR:
+         {
+//             gradient = cross_entropy_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         case USER_ERROR:
+         {
+             gradient = user_error_pointer->calculate_gradient(parameters);
+         }
+         break;
+
+         default:
+         {
+             std::ostringstream buffer;
+
+             buffer << "OpenNN Exception: LossIndex class.\n"
+                    << "Vector<double> calculate_error_gradient_MPI(const Vector<double>&) const method.\n"
+                    << "Unknown error type.\n";
+
+             MPI_Abort(MPI_COMM_WORLD, 1);
+
+             throw std::logic_error(buffer.str());
+         }
+         break;
+     }
+
+     return(gradient);
+}
+#endif
 
 // Vector<double> calculate_regularization_gradient(void) const method
 
@@ -2461,7 +3339,7 @@ Vector<double> PerformanceFunctional::calculate_error_gradient(const Vector<doub
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> PerformanceFunctional::calculate_regularization_gradient(void) const
+Vector<double> LossIndex::calculate_regularization_gradient(void) const
 {
     // Control sentence (if debug)
 
@@ -2507,7 +3385,7 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(void) co
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_regularization_gradient(void) const method.\n"
                     << "Unknown regularization type.\n";
 
@@ -2526,7 +3404,7 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(void) co
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> PerformanceFunctional::calculate_regularization_gradient(const Vector<double>& parameters) const
+Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -2572,7 +3450,7 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(const Ve
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_regularization_gradient(const Vector<double>&) const method.\n"
                     << "Unknown regularization type.\n";
 
@@ -2591,7 +3469,7 @@ Vector<double> PerformanceFunctional::calculate_regularization_gradient(const Ve
 /// That Hessian is the matrix of second partial derivatives of the objective with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 
-Matrix<double> PerformanceFunctional::calculate_error_Hessian(void) const
+Matrix<double> LossIndex::calculate_error_Hessian(void) const
 {
     // Control sentence (if debug)
 
@@ -2667,7 +3545,7 @@ Matrix<double> PerformanceFunctional::calculate_error_Hessian(void) const
          {
              std::ostringstream buffer;
 
-             buffer << "Matrix<double> Exception: PerformanceFunctional class.\n"
+             buffer << "Matrix<double> Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_error_Hessian(void) const method.\n"
                     << "Unknown error type.\n";
 
@@ -2687,7 +3565,7 @@ Matrix<double> PerformanceFunctional::calculate_error_Hessian(void) const
 /// That matrix is symmetric, with size the number of parameters.
 /// @todo
 
-Matrix<double> PerformanceFunctional::calculate_error_Hessian(const Vector<double>& parameters) const
+Matrix<double> LossIndex::calculate_error_Hessian(const Vector<double>& parameters) const
 {
     // Control sentence (if debug)
 
@@ -2763,7 +3641,7 @@ Matrix<double> PerformanceFunctional::calculate_error_Hessian(const Vector<doubl
          {
              std::ostringstream buffer;
 
-             buffer << "Matrix<double> Exception: PerformanceFunctional class.\n"
+             buffer << "Matrix<double> Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_error_Hessian(const Vector<double>&) const method.\n"
                     << "Unknown error type.\n";
 
@@ -2782,7 +3660,7 @@ Matrix<double> PerformanceFunctional::calculate_error_Hessian(const Vector<doubl
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 
-Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(void) const
+Matrix<double> LossIndex::calculate_regularization_Hessian(void) const
 {
     // Control sentence (if debug)
 
@@ -2828,7 +3706,7 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(void) con
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_regularization_Hessian(void) const method.\n"
                     << "Unknown regularization type.\n";
 
@@ -2848,7 +3726,7 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(void) con
 /// That matrix is symmetric, with size the number of parameters.
 /// @todo
 
-Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(const Vector<double>&) const
+Matrix<double> LossIndex::calculate_regularization_Hessian(const Vector<double>&) const
 {
     // Control sentence (if debug)
 
@@ -2894,7 +3772,7 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(const Vec
          {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_regularization_Hessian(const Vector<double>&) const method.\n"
                     << "Unknown regularization type.\n";
 
@@ -2907,12 +3785,12 @@ Matrix<double> PerformanceFunctional::calculate_regularization_Hessian(const Vec
 }
 
 
-// double calculate_performance(void) const method
+// double calculate_loss(void) const method
 
-/// Calculates the evaluation value of the performance functional,
+/// Calculates the evaluation value of the loss functional,
 /// as the sum of the objective, regularization and constraints functionals.
 
-double PerformanceFunctional::calculate_performance(void) const 
+double LossIndex::calculate_loss(void) const 
 {
    // Control sentence (if debug)
 
@@ -2920,21 +3798,65 @@ double PerformanceFunctional::calculate_performance(void) const
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
    #endif
 
+#ifdef __OPENNN_MPI__
+
+#ifdef __OPENNN_DEBUG__
+
+    int initialized;
+
+    MPI_Initialized(&initialized);
+
+    if(!initialized)
+    {
+      MPI_Init(NULL, NULL);
+    }
+
+#endif
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    double loss = 0.0;
+    double error = 0.0;
+    double regularization = 0.0;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank == 0)
+    {
+        error = calculate_error_MPI();
+
+        regularization = calculate_regularization();
+
+        loss = error + regularization;
+    }
+    else
+    {
+        calculate_error_MPI();
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(&loss, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    return(loss);
+
+#else
    return(calculate_error() + calculate_regularization());
+#endif
 }
 
 
-// double calculate_performance(const Vector<double>&) const method
+// double calculate_loss(const Vector<double>&) const method
 
-/// Returns the performance of a neural network for a given vector of parameters.
+/// Returns the loss of a neural network for a given vector of parameters.
 /// It does not set that vector of parameters to the neural network. 
-/// @param parameters Vector of parameters for the neural network associated to the performance functional.
+/// @param parameters Vector of parameters for the neural network associated to the loss functional.
 
-double PerformanceFunctional::calculate_performance(const Vector<double>& parameters) const
+double LossIndex::calculate_loss(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -2942,7 +3864,7 @@ double PerformanceFunctional::calculate_performance(const Vector<double>& parame
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
    const size_t size = parameters.size();
 
@@ -2952,8 +3874,8 @@ double PerformanceFunctional::calculate_performance(const Vector<double>& parame
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
-             << "double calculate_performance(const Vector<double>&) method.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
+             << "double calculate_loss(const Vector<double>&) method.\n"
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
       throw std::logic_error(buffer.str());	  
@@ -2961,7 +3883,49 @@ double PerformanceFunctional::calculate_performance(const Vector<double>& parame
 
    #endif
 
+#ifdef __OPENNN_MPI__
+
+#ifdef __OPENNN_DEBUG__
+
+    int initialized;
+
+    MPI_Initialized(&initialized);
+
+    if(!initialized)
+    {
+      MPI_Init(NULL, NULL);
+    }
+
+#endif
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    double loss = 0.0;
+    double error = 0.0;
+    double regularization = 0.0;
+
+    if(rank == 0)
+    {
+        error = calculate_error_MPI(parameters);
+
+        regularization = calculate_regularization(parameters);
+
+        loss = error + regularization;
+    }
+    else
+    {
+        calculate_error_MPI(parameters);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(&loss, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    return(loss);
+
+#else
    return(calculate_error(parameters) + calculate_regularization(parameters));
+#endif
 }
 
 
@@ -2969,7 +3933,7 @@ double PerformanceFunctional::calculate_performance(const Vector<double>& parame
 
 /// Returns the evaluation of the error term on the selection instances of the associated data set.
 
-double PerformanceFunctional::calculate_selection_error(void) const
+double LossIndex::calculate_selection_error(void) const
 {
     double selection_error = 0.0;
 
@@ -3039,7 +4003,7 @@ double PerformanceFunctional::calculate_selection_error(void) const
         {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "double calculate_selection_error(void) const method.\n"
                    << "Unknown error type.\n";
 
@@ -3051,33 +4015,286 @@ double PerformanceFunctional::calculate_selection_error(void) const
     return(selection_error);
 }
 
+#ifdef __OPENNN_MPI__
 
-// double calculate_selection_performance(void) const method method
-
-/// Calculates the selection performance,
-/// as the sum of the objective and the regularization terms. 
-
-double PerformanceFunctional::calculate_selection_performance(void) const 
+double LossIndex::calculate_selection_error_MPI(void) const
 {
-   // Control sentence (if debug)
+    // Control sentence (if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+    #ifdef __OPENNN_DEBUG__
 
     check_neural_network();
 
-    check_performance_terms();
+    #endif
 
-   #endif
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-   return(calculate_selection_error());
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int selection_instances_number = 0;
+    int local_selection_instances_number = 0;
+
+    if(has_data_set() && data_set_pointer->has_data())
+    {
+        local_selection_instances_number = (int)data_set_pointer->get_instances_pointer()->count_selection_instances_number();
+    }
+    MPI_Allreduce(&local_selection_instances_number, &selection_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    if(selection_instances_number == 0)
+    {
+        return 0.0;
+    }
+
+    size = std::min(size,selection_instances_number);
+
+    // Get the group of processes in MPI_COMM_WORLD
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+
+    int* ranks = (int*)malloc(size*sizeof(int));
+
+    for(int i = 0; i < size; i++)
+    {
+        ranks[i] = i;
+    }
+
+    // Construct a group containing all of the prime ranks in world_group
+    MPI_Group error_group;
+    MPI_Group_incl(world_group, size, ranks, &error_group);
+
+    // Create a new communicator based on the group
+    MPI_Comm current_comm;
+    MPI_Comm_create(MPI_COMM_WORLD, error_group, &current_comm);
+
+
+    double global_selection_objective = 0.0;
+
+    double local_selection_objective = 0.0;
+
+    double normalization_coefficient = 0.0;
+
+    // Objective
+
+    if(rank < size)
+    {
+         switch(error_type)
+         {
+             case NO_ERROR:
+             {
+                 // Do nothing
+             }
+             break;
+
+             case SUM_SQUARED_ERROR:
+             {
+                local_selection_objective = sum_squared_error_pointer->calculate_error();
+             }
+             break;
+
+             case MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_selection_objective = temp_loss_index.calculate_selection_error();
+
+                 local_selection_objective /= selection_instances_number;
+             }
+             break;
+
+             case ROOT_MEAN_SQUARED_ERROR:
+             {
+                 LossIndex temp_loss_index(*this);
+                 temp_loss_index.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+
+                 local_selection_objective = temp_loss_index.calculate_selection_error();
+
+                 local_selection_objective /= selection_instances_number;
+             }
+             break;
+
+             case NORMALIZED_SQUARED_ERROR:
+             {
+                 const size_t targets_number = data_set_pointer->get_variables_pointer()->count_targets_number();
+
+                 Vector<double> selection_target_data_mean(targets_number, 0.0);
+
+                 const Vector<double> local_selection_target_data_mean = data_set_pointer->arrange_selection_target_data().calculate_rows_sum();
+
+                 MPI_Allreduce(local_selection_target_data_mean.data(), selection_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+
+                 selection_target_data_mean /= selection_instances_number;
+
+                 const Vector<double> error_normalization = get_normalized_squared_error_pointer()->calculate_selection_error_normalization(selection_target_data_mean);
+
+                 MPI_Reduce(&error_normalization[1], &normalization_coefficient, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+                 local_selection_objective = error_normalization[0];
+             }
+             break;
+
+             case WEIGHTED_SQUARED_ERROR:
+             {
+                 const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
+
+                 const int local_selection_negatives = (int)data_set_pointer->calculate_selection_negatives(targets_indices[0]);
+
+                 int negatives = 0;
+                 MPI_Allreduce(&local_selection_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
+
+                 normalization_coefficient = negatives*weighted_squared_error_pointer->get_negatives_weight()*0.5;
+                 local_selection_objective = weighted_squared_error_pointer->calculate_selection_error(normalization_coefficient);
+             }
+             break;
+
+             case ROC_AREA_ERROR: // todo
+             {
+    //             local_objective = roc_area_error_pointer->calculate_error();
+             }
+             break;
+
+             case MINKOWSKI_ERROR:
+             {
+                 local_selection_objective = Minkowski_error_pointer->calculate_selection_error();
+             }
+             break;
+
+             case CROSS_ENTROPY_ERROR:
+             {
+                 local_selection_objective = cross_entropy_error_pointer->calculate_selection_error_unnormalized();
+
+                 local_selection_objective /= selection_instances_number;
+             }
+             break;
+
+             case USER_ERROR:
+             {
+                 local_selection_objective = user_error_pointer->calculate_selection_error();
+             }
+             break;
+
+             default:
+             {
+                 std::ostringstream buffer;
+
+                 buffer << "OpenNN Exception: LossIndex class.\n"
+                        << "double calculate_selection_error_MPI(void) const method.\n"
+                        << "Unknown error type.\n";
+
+                 MPI_Abort(MPI_COMM_WORLD, 1);
+
+                 throw std::logic_error(buffer.str());
+             }
+             break;
+         }
+
+         MPI_Reduce(&local_selection_objective, &global_selection_objective, 1, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+
+         MPI_Barrier(current_comm);
+    }
+
+     if(rank == 0)
+     {
+         if(error_type == (int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
+         {
+             global_selection_objective = sqrt(global_selection_objective);
+         }
+         else if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+         {
+             if(normalization_coefficient < 1.0e-99)
+             {
+                std::ostringstream buffer;
+
+                buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
+                       << "double calculate_selection_loss(void) const method.\n"
+                       << "Normalization coefficient is zero.\n"
+                       << "Unuse constant target variables or choose another error functional. ";
+
+                MPI_Abort(MPI_COMM_WORLD, 1);
+
+                throw std::logic_error(buffer.str());
+             }
+
+             global_selection_objective /= normalization_coefficient;
+         }
+     }
+
+     MPI_Barrier(MPI_COMM_WORLD);
+     MPI_Comm_free(&current_comm);
+     MPI_Group_free(&error_group);
+     free(ranks);
+
+     return(global_selection_objective);
+
+}
+#endif
+
+// double calculate_selection_loss(void) const method method
+
+/// Calculates the selection loss,
+/// as the sum of the objective and the regularization terms. 
+
+double LossIndex::calculate_selection_loss(void) const 
+{
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    check_neural_network();
+
+    check_error_terms();
+
+    #endif
+
+ #ifdef __OPENNN_MPI__
+
+ #ifdef __OPENNN_DEBUG__
+
+     int initialized;
+
+     MPI_Initialized(&initialized);
+
+     if(!initialized)
+     {
+       MPI_Init(NULL, NULL);
+     }
+
+ #endif
+
+     int rank;
+     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+     double error = 0.0;
+
+     MPI_Barrier(MPI_COMM_WORLD);
+
+     if(rank == 0)
+     {
+         error = calculate_selection_error_MPI();
+     }
+     else
+     {
+         calculate_selection_error_MPI();
+     }
+
+     MPI_Barrier(MPI_COMM_WORLD);
+     MPI_Bcast(&error, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+     return(error);
+
+ #else
+    return(calculate_selection_error());
+ #endif
 }
 
 
 // Vector<double> calculate_gradient(void) const method
 
-/// Returns the performance function gradient, as the sum of the objective and the regularization gradient vectors.
+/// Returns the loss function gradient, as the sum of the objective and the regularization gradient vectors.
 
-Vector<double> PerformanceFunctional::calculate_gradient(void) const
+Vector<double> LossIndex::calculate_gradient(void) const
 {
    // Control sentence (if debug)
 
@@ -3085,27 +4302,74 @@ Vector<double> PerformanceFunctional::calculate_gradient(void) const
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
    #endif
 
-   return(calculate_error_gradient() + calculate_regularization_gradient());
+#ifdef __OPENNN_MPI__
+
+#ifdef __OPENNN_DEBUG__
+
+    int initialized;
+
+    MPI_Initialized(&initialized);
+
+    if(!initialized)
+    {
+      MPI_Init(NULL, NULL);
+    }
+
+#endif
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    const int parameters_number = (int)neural_network_pointer->count_parameters_number();
+
+    Vector<double> gradient(parameters_number);
+
+    Vector<double> error_gradient;
+    Vector<double> regularization_gradient;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank == 0)
+    {
+        error_gradient = calculate_error_gradient_MPI();
+
+        regularization_gradient = calculate_regularization_gradient();
+
+        gradient = error_gradient + regularization_gradient;
+    }
+    else
+    {
+        calculate_error_gradient_MPI();
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(gradient.data(), parameters_number, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    return(gradient);
+
+#else
+    return(calculate_error_gradient() + calculate_regularization_gradient());
+#endif
 }
 
 
 // Vector<double> calculate_gradient(const Vector<double>&) const method
 
-/// Returns the performance gradient for a given vector of parameters.
+/// Returns the loss gradient for a given vector of parameters.
 /// It does not set that vector of parameters to the neural network.
-/// @param parameters Vector of parameters for the neural network associated to the performance functional.
+/// @param parameters Vector of parameters for the neural network associated to the loss functional.
 
-Vector<double> PerformanceFunctional::calculate_gradient(const Vector<double>& parameters) const
+Vector<double> LossIndex::calculate_gradient(const Vector<double>& parameters) const
 {
    #ifdef __OPENNN_DEBUG__ 
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
    #endif
 
@@ -3119,7 +4383,7 @@ Vector<double> PerformanceFunctional::calculate_gradient(const Vector<double>& p
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "Vector<double> calculate_gradient(const Vector<double>&) const method.\n"
              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
@@ -3138,13 +4402,13 @@ Vector<double> PerformanceFunctional::calculate_gradient(const Vector<double>& p
 /// Returns the default objective function Hessian matrix,
 /// which is computed as the sum of the objective, regularization and constraints Hessians.
 
-Matrix<double> PerformanceFunctional::calculate_Hessian(void) const
+Matrix<double> LossIndex::calculate_Hessian(void) const
 {
     #ifdef __OPENNN_DEBUG__
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
     #endif
 
@@ -3158,9 +4422,9 @@ Matrix<double> PerformanceFunctional::calculate_Hessian(void) const
 /// hypothetical vector of parameters.
 /// It does not set that vector of parameters to the neural network.
 /// @param parameters Vector of potential parameters for the neural network associated
-/// to this performance functional.
+/// to this loss functional.
 
-Matrix<double> PerformanceFunctional::calculate_Hessian(const Vector<double>& parameters) const
+Matrix<double> LossIndex::calculate_Hessian(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -3168,7 +4432,7 @@ Matrix<double> PerformanceFunctional::calculate_Hessian(const Vector<double>& pa
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
    const size_t size = parameters.size();
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
@@ -3177,7 +4441,7 @@ Matrix<double> PerformanceFunctional::calculate_Hessian(const Vector<double>& pa
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_Hessian(const Vector<double>&) method.\n"
              << "Size must be equal to number of parameters.\n";
 
@@ -3193,9 +4457,9 @@ Matrix<double> PerformanceFunctional::calculate_Hessian(const Vector<double>& pa
 // Vector<double> calculate_terms(void) const method
 
 /// Evaluates the objective, regularization and constraints terms functions,
-/// and returns the total performance terms as the assembly of that three vectors.
+/// and returns the total error terms as the assembly of that three vectors.
 
-Vector<double> PerformanceFunctional::calculate_terms(void) const
+Vector<double> LossIndex::calculate_terms(void) const
 {
     // Control sentence (if debug)
 
@@ -3203,7 +4467,7 @@ Vector<double> PerformanceFunctional::calculate_terms(void) const
 
      check_neural_network();
 
-     check_performance_terms();
+     check_error_terms();
 
     #endif
 
@@ -3217,7 +4481,7 @@ Vector<double> PerformanceFunctional::calculate_terms(void) const
 
 /// @todo
 
-Matrix<double> PerformanceFunctional::calculate_terms_Jacobian(void) const
+Matrix<double> LossIndex::calculate_terms_Jacobian(void) const
 {
     // Control sentence (if debug)
 
@@ -3225,7 +4489,7 @@ Matrix<double> PerformanceFunctional::calculate_terms_Jacobian(void) const
 
      check_neural_network();
 
-     check_performance_terms();
+     check_error_terms();
 
     #endif
 
@@ -3252,7 +4516,7 @@ Matrix<double> PerformanceFunctional::calculate_terms_Jacobian(void) const
 /// It first computes the Hessian matrix and then computes its inverse. 
 /// @todo
 
-Matrix<double> PerformanceFunctional::calculate_inverse_Hessian(void) const
+Matrix<double> LossIndex::calculate_inverse_Hessian(void) const
 {  
    // Control sentence (if debug)
 
@@ -3260,7 +4524,7 @@ Matrix<double> PerformanceFunctional::calculate_inverse_Hessian(void) const
 
     check_neural_network();
 
-    check_performance_terms();
+    check_error_terms();
 
    #endif
 
@@ -3277,7 +4541,7 @@ Matrix<double> PerformanceFunctional::calculate_inverse_Hessian(void) const
 /// @param vector Vector in the dot product. 
 /// @todo
 
-Vector<double> PerformanceFunctional::calculate_vector_dot_Hessian(const Vector<double>& vector) const
+Vector<double> LossIndex::calculate_vector_dot_Hessian(const Vector<double>& vector) const
 {
     // Control sentence (if debug)
 
@@ -3285,7 +4549,7 @@ Vector<double> PerformanceFunctional::calculate_vector_dot_Hessian(const Vector<
 
      check_neural_network();
 
-     check_performance_terms();
+     check_error_terms();
 
     #endif
 
@@ -3300,7 +4564,7 @@ Vector<double> PerformanceFunctional::calculate_vector_dot_Hessian(const Vector<
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "Vector<double> calculate_vector_dot_Hessian(Vector<double>) method.\n"
              << "Size of vector must be equal to number of parameters.\n";
 
@@ -3315,69 +4579,69 @@ Vector<double> PerformanceFunctional::calculate_vector_dot_Hessian(const Vector<
 }
 
 
-// ZeroOrderperformance calculate_zero_order_performance(void) const method
+// ZeroOrderloss calculate_zero_order_loss(void) const method
 
-/// Returns a zero order performance structure, which just contains the performance value of the performance function.
+/// Returns a zero order loss structure, which just contains the loss value of the loss function.
 
-PerformanceFunctional::ZeroOrderperformance PerformanceFunctional::calculate_zero_order_performance(void) const
+LossIndex::ZeroOrderloss LossIndex::calculate_zero_order_loss(void) const
 {
-   ZeroOrderperformance zero_order_performance;
+   ZeroOrderloss zero_order_loss;
 
-   zero_order_performance.performance = calculate_performance();
+   zero_order_loss.loss = calculate_loss();
 
-   return(zero_order_performance);
+   return(zero_order_loss);
 }
 
 
-// FirstOrderperformance calculate_first_order_performance(void) const method
+// FirstOrderloss calculate_first_order_loss(void) const method
 
-/// Returns a first order performance structure, which contains the value and the gradient of the performance function.
+/// Returns a first order loss structure, which contains the value and the gradient of the loss function.
 
-PerformanceFunctional::FirstOrderperformance PerformanceFunctional::calculate_first_order_performance(void) const
+LossIndex::FirstOrderloss LossIndex::calculate_first_order_loss(void) const
 {
-   FirstOrderperformance first_order_performance;
+   FirstOrderloss first_order_loss;
 
-   first_order_performance.performance = calculate_performance();
-   first_order_performance.gradient = calculate_gradient();
+   first_order_loss.loss = calculate_loss();
+   first_order_loss.gradient = calculate_gradient();
 
-   return(first_order_performance);
+   return(first_order_loss);
 }
 
 
-// SecondOrderperformance calculate_second_order_performance(void) const method
+// SecondOrderloss calculate_second_order_loss(void) const method
 
-/// Returns a second order performance structure, which contains the value, the gradient and the Hessian of the performance function.
+/// Returns a second order loss structure, which contains the value, the gradient and the Hessian of the loss function.
 
-PerformanceFunctional::SecondOrderperformance PerformanceFunctional::calculate_second_order_performance(void) const
+LossIndex::SecondOrderloss LossIndex::calculate_second_order_loss(void) const
 {
-   SecondOrderperformance second_order_performance;
+   SecondOrderloss second_order_loss;
 
-   second_order_performance.performance = calculate_performance();
-   second_order_performance.gradient = calculate_gradient();
-   second_order_performance.Hessian = calculate_Hessian();
+   second_order_loss.loss = calculate_loss();
+   second_order_loss.gradient = calculate_gradient();
+   second_order_loss.Hessian = calculate_Hessian();
 
-   return(second_order_performance);
+   return(second_order_loss);
 }
 
 
 // double calculate_zero_order_Taylor_approximation(const Vector<double>&) const method
 
-/// Returns the Taylor approximation of the performance function at some point near the parameters.
-/// The order of the approximation here is zero, i.e., only the performance value is used. 
+/// Returns the Taylor approximation of the loss function at some point near the parameters.
+/// The order of the approximation here is zero, i.e., only the loss value is used. 
 
-double PerformanceFunctional::calculate_zero_order_Taylor_approximation(const Vector<double>&) const 
+double LossIndex::calculate_zero_order_Taylor_approximation(const Vector<double>&) const 
 {
-   return(calculate_performance());
+   return(calculate_loss());
 }
 
 
 // double calculate_first_order_Taylor_approximation(const Vector<double>&) const method
 
-/// Returns the Taylor approximation of the performance function at some point near the parameters.
-/// The order of the approximation here is one, i.e., both the performance value and the performance gradient are used. 
+/// Returns the Taylor approximation of the loss function at some point near the parameters.
+/// The order of the approximation here is one, i.e., both the loss value and the loss gradient are used. 
 /// @param parameters Approximation point. 
 
-double PerformanceFunctional::calculate_first_order_Taylor_approximation(const Vector<double>& parameters) const
+double LossIndex::calculate_first_order_Taylor_approximation(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -3390,7 +4654,7 @@ double PerformanceFunctional::calculate_first_order_Taylor_approximation(const V
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_first_order_Taylor_approximation(const Vector<double>&) const method.\n"
              << "Size of potential parameters must be equal to number of parameters.\n";
 
@@ -3401,10 +4665,10 @@ double PerformanceFunctional::calculate_first_order_Taylor_approximation(const V
 
    const Vector<double> original_parameters = neural_network_pointer->arrange_parameters();
 
-   const double performance = calculate_performance();
+   const double loss = calculate_loss();
    const Vector<double> gradient = calculate_gradient();
 
-   const double first_order_Taylor_approximation = performance + gradient.dot(parameters-parameters);
+   const double first_order_Taylor_approximation = loss + gradient.dot(parameters-parameters);
 
    return(first_order_Taylor_approximation);
 }
@@ -3412,11 +4676,11 @@ double PerformanceFunctional::calculate_first_order_Taylor_approximation(const V
 
 // double calculate_second_order_Taylor_approximation(const Vector<double>&) const method
 
-/// Returns the Taylor approximation of the performance function at some point near the parameters.
-/// The order of the approximation here is two, i.e., the performance value, the performance gradient and the performance Hessian are used. 
+/// Returns the Taylor approximation of the loss function at some point near the parameters.
+/// The order of the approximation here is two, i.e., the loss value, the loss gradient and the loss Hessian are used. 
 /// @param parameters Approximation point. 
 
-double PerformanceFunctional::calculate_second_order_Taylor_approximation(const Vector<double>& parameters) const
+double LossIndex::calculate_second_order_Taylor_approximation(const Vector<double>& parameters) const
 {
    // Control sentence (if debug)
 
@@ -3429,7 +4693,7 @@ double PerformanceFunctional::calculate_second_order_Taylor_approximation(const 
    {
       std::ostringstream buffer;
 
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_second_order_Taylor_approximation(const Vector<double>&) const method.\n"
              << "Size of potential parameters must be equal to number of parameters.\n";
 
@@ -3445,11 +4709,11 @@ double PerformanceFunctional::calculate_second_order_Taylor_approximation(const 
 
    // Performance functioal stuff
 
-   const double performance = calculate_performance();
+   const double loss = calculate_loss();
    const Vector<double> gradient = calculate_gradient();
    const Matrix<double> Hessian = calculate_Hessian();
    
-   const double second_order_Taylor_approximation = performance 
+   const double second_order_Taylor_approximation = loss 
    + gradient.dot(parameters_difference) 
    + parameters_difference.dot(Hessian).dot(parameters_difference)/2.0;
 
@@ -3457,28 +4721,28 @@ double PerformanceFunctional::calculate_second_order_Taylor_approximation(const 
 }
 
 
-// double calculate_performance(const Vector<double>&, const double&) const method
+// double calculate_loss(const Vector<double>&, const double&) const method
 
-/// Returns the value of the performance function at some step along some direction.
+/// Returns the value of the loss function at some step along some direction.
 /// @param direction Direction vector.
 /// @param rate Step value. 
 
-double PerformanceFunctional::calculate_performance(const Vector<double>& direction, const double& rate) const
+double LossIndex::calculate_loss(const Vector<double>& direction, const double& rate) const
 {
    const Vector<double> parameters = neural_network_pointer->arrange_parameters();
    const Vector<double> increment = direction*rate;
 
-   return(calculate_performance(parameters + increment));
+   return(calculate_loss(parameters + increment));
 }
 
 
-// double calculate_performance_derivative(const Vector<double>&, const double&) const method
+// double calculate_loss_derivative(const Vector<double>&, const double&) const method
 
-/// Returns the derivative of the performance function at some step along some direction.
+/// Returns the derivative of the loss function at some step along some direction.
 /// @param direction Direction vector.
 /// @param rate Step value. 
 
-double PerformanceFunctional::calculate_performance_derivative(const Vector<double>& direction, const double& rate) const
+double LossIndex::calculate_loss_derivative(const Vector<double>& direction, const double& rate) const
 {
     if(direction == 0.0)
     {
@@ -3496,13 +4760,13 @@ double PerformanceFunctional::calculate_performance_derivative(const Vector<doub
 }
 
 
-// double calculate_performance_second_derivative(const Vector<double>&, double) const method
+// double calculate_loss_second_derivative(const Vector<double>&, double) const method
 
-/// Returns the second derivative of the performance function at some step along some direction.
+/// Returns the second derivative of the loss function at some step along some direction.
 /// @param direction Direction vector.
 /// @param rate Step value. 
 
-double PerformanceFunctional::calculate_performance_second_derivative(const Vector<double>& direction, const double& rate) const
+double LossIndex::calculate_loss_second_derivative(const Vector<double>& direction, const double& rate) const
 {
     if(direction == 0.0)
     {
@@ -3522,20 +4786,20 @@ double PerformanceFunctional::calculate_performance_second_derivative(const Vect
 
 // tinyxml2::XMLDocument* to_XML(void) const method 
 
-/// Serializes a default performance functional object into a XML document of the TinyXML library.
+/// Serializes a default loss functional object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element. 
 
-tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
+tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 {
    std::ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Performance functional
+   // Loss index
 
-   tinyxml2::XMLElement* performance_functional_element = document->NewElement("PerformanceFunctional");
+   tinyxml2::XMLElement* loss_index_element = document->NewElement("LossIndex");
 
-   document->InsertFirstChild(performance_functional_element);
+   document->InsertFirstChild(loss_index_element);
 
    // Objective
 
@@ -3544,7 +4808,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case NO_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
            objective_element->SetAttribute("Type", "NO_ERROR");
       }
@@ -3553,7 +4817,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case SUM_SQUARED_ERROR:
       {                
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
            objective_element->SetAttribute("Type", "SUM_SQUARED_ERROR");
 
@@ -3570,7 +4834,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case MEAN_SQUARED_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
             objective_element->SetAttribute("Type", "MEAN_SQUARED_ERROR");
 
@@ -3587,7 +4851,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case ROOT_MEAN_SQUARED_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
             objective_element->SetAttribute("Type", "ROOT_MEAN_SQUARED_ERROR");
 
@@ -3604,7 +4868,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case NORMALIZED_SQUARED_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
            objective_element->SetAttribute("Type", "NORMALIZED_SQUARED_ERROR");
 
@@ -3621,7 +4885,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
        case WEIGHTED_SQUARED_ERROR:
        {
             tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-            performance_functional_element->LinkEndChild(objective_element);
+            loss_index_element->LinkEndChild(objective_element);
 
             objective_element->SetAttribute("Type", "WEIGHTED_SQUARED_ERROR");
 
@@ -3638,7 +4902,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case MINKOWSKI_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
            objective_element->SetAttribute("Type", "MINKOWSKI_ERROR");
 
@@ -3655,7 +4919,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case CROSS_ENTROPY_ERROR:
       {
            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           performance_functional_element->LinkEndChild(objective_element);
+           loss_index_element->LinkEndChild(objective_element);
 
            objective_element->SetAttribute("Type", "CROSS_ENTROPY_ERROR");
 
@@ -3679,7 +4943,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       {
          std::ostringstream buffer;
 
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+         buffer << "OpenNN Exception: LossIndex class.\n"
                 << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
                 << "Unknown error type.\n";
 
@@ -3695,7 +4959,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case NO_REGULARIZATION:
       {
            tinyxml2::XMLElement* regularization_element = document->NewElement("Regularization");
-           performance_functional_element->LinkEndChild(regularization_element);
+           loss_index_element->LinkEndChild(regularization_element);
 
            regularization_element->SetAttribute("Type", "NO_REGULARIZATION");
       }
@@ -3704,7 +4968,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case NEURAL_PARAMETERS_NORM:
       {
            tinyxml2::XMLElement* regularization_element = document->NewElement("Regularization");
-           performance_functional_element->LinkEndChild(regularization_element);
+           loss_index_element->LinkEndChild(regularization_element);
 
            regularization_element->SetAttribute("Type", "NEURAL_PARAMETERS_NORM");
 
@@ -3721,7 +4985,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       case OUTPUTS_INTEGRALS:
       {
            tinyxml2::XMLElement* regularization_element = document->NewElement("OUTPUTS_INTEGRALS");
-           performance_functional_element->LinkEndChild(regularization_element);
+           loss_index_element->LinkEndChild(regularization_element);
 
            regularization_element->SetAttribute("Type", "OUTPUTS_INTEGRALS");
 
@@ -3745,7 +5009,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
       {
          std::ostringstream buffer;
 
-         buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+         buffer << "OpenNN Exception: LossIndex class.\n"
                 << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
                 << "Unknown regularization type.\n";
 
@@ -3757,7 +5021,7 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
    // Display
 
 //   tinyxml2::XMLElement* display_element = document->NewElement("Display");
-//   performance_functional_element->LinkEndChild(display_element);
+//   loss_index_element->LinkEndChild(display_element);
 
 //   buffer.str("");
 //   buffer << display;
@@ -3771,11 +5035,14 @@ tinyxml2::XMLDocument* PerformanceFunctional::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
-void PerformanceFunctional::write_XML(tinyxml2::XMLPrinter& file_stream) const
+/// Serializes the loss index object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
+void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;
 
-    file_stream.OpenElement("PerformanceFunctional");
+    file_stream.OpenElement("LossIndex");
 
     // Objective
 
@@ -3887,7 +5154,7 @@ void PerformanceFunctional::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
           file_stream.CloseElement();
 
-          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+          buffer << "OpenNN Exception: LossIndex class.\n"
                  << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                  << "Unknown error type.\n";
 
@@ -3946,7 +5213,7 @@ void PerformanceFunctional::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
           file_stream.CloseElement();
 
-          buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+          buffer << "OpenNN Exception: LossIndex class.\n"
                  << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                  << "Unknown regularization type.\n";
 
@@ -3961,27 +5228,27 @@ void PerformanceFunctional::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 // void from_XML(const tinyxml2::XMLDocument&) method
 
-/// Sets the performance functional member data from an XML document.
-/// @param document Pointer to a TinyXML document with the performance functional data.
+/// Sets the loss functional member data from an XML document.
+/// @param document Pointer to a TinyXML document with the loss functional data.
 
-void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
+void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* performance_functional_element = document.FirstChildElement("PerformanceFunctional");
+    const tinyxml2::XMLElement* loss_index_element = document.FirstChildElement("LossIndex");
 
-    if(!performance_functional_element)
+    if(!loss_index_element)
     {
         std::ostringstream buffer;
 
-        buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+        buffer << "OpenNN Exception: LossIndex class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Performance functional element is NULL.\n";
+               << "Loss index element is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
    // Objective type
 
-   const tinyxml2::XMLElement* objective_element = performance_functional_element->FirstChildElement("Objective");
+   const tinyxml2::XMLElement* objective_element = loss_index_element->FirstChildElement("Objective");
 
    if(objective_element)
    {
@@ -4098,7 +5365,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
           {
              std::ostringstream buffer;
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                     << "Unknown error type.\n";
 
@@ -4110,7 +5377,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
    // Regularization type
 
-   const tinyxml2::XMLElement* regularization_element = performance_functional_element->FirstChildElement("Regularization");
+   const tinyxml2::XMLElement* regularization_element = loss_index_element->FirstChildElement("Regularization");
 
    if(regularization_element)
    {
@@ -4162,7 +5429,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
          {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Unknown regularization type.\n";
 
@@ -4174,7 +5441,7 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
     }
     // Display
 
-   const tinyxml2::XMLElement* display_element = performance_functional_element->FirstChildElement("Display");
+   const tinyxml2::XMLElement* display_element = loss_index_element->FirstChildElement("Display");
 
    if(display_element)
    {
@@ -4194,13 +5461,13 @@ void PerformanceFunctional::from_XML(const tinyxml2::XMLDocument& document)
 
 // std::string to_string(void) method
 
-/// Writes to a string the members of the performance functional object in text format.
+/// Writes to a string the members of the loss functional object in text format.
 
-std::string PerformanceFunctional::to_string(void) const
+std::string LossIndex::to_string(void) const
 {
     std::ostringstream buffer;
 
-    buffer << "Performance functional\n"
+    buffer << "Loss index\n"
            << "Objective type: " << write_error_type() << "\n";
 
     // Objective
@@ -4271,7 +5538,7 @@ std::string PerformanceFunctional::to_string(void) const
          {
              buffer.str("");
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "std::string to_string(void) method.\n"
                     << "Unknown error type.\n";
 
@@ -4314,7 +5581,7 @@ std::string PerformanceFunctional::to_string(void) const
          {
              buffer.str("");
 
-             buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+             buffer << "OpenNN Exception: LossIndex class.\n"
                     << "std::string to_string(void) method.\n"
                     << "Unknown regularization type.\n";
 
@@ -4331,10 +5598,10 @@ std::string PerformanceFunctional::to_string(void) const
 
 // void save(const std::string&) const method
 
-/// Saves to a XML-type file a string representation of the performance functional object.
-/// @param file_name Name of XML-type performance functional file. 
+/// Saves to a XML-type file a string representation of the loss functional object.
+/// @param file_name Name of XML-type loss functional file. 
 
-void PerformanceFunctional::save(const std::string& file_name) const
+void LossIndex::save(const std::string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -4343,7 +5610,7 @@ void PerformanceFunctional::save(const std::string& file_name) const
 //   TiXmlDeclaration* declaration = new TiXmlDeclaration("1.0", "", "");
 //   document->LinkEndChild(declaration);
 
-   // Performance functional
+   // Loss index
 
    document->SaveFile(file_name.c_str());
 
@@ -4353,10 +5620,10 @@ void PerformanceFunctional::save(const std::string& file_name) const
 
 // void load(const std::string&) method
 
-/// Loads a default performance functional XML-type file.
-/// @param file_name Name of default XML-type performance functional file. 
+/// Loads a default loss functional XML-type file.
+/// @param file_name Name of default XML-type loss functional file. 
 
-void PerformanceFunctional::load(const std::string& file_name)
+void LossIndex::load(const std::string& file_name)
 {
    std::ostringstream buffer;
 
@@ -4364,7 +5631,7 @@ void PerformanceFunctional::load(const std::string& file_name)
 
    if(document.LoadFile(file_name.c_str()))
    {
-      buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+      buffer << "OpenNN Exception: LossIndex class.\n"
              << "void load(const std::string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
@@ -4380,10 +5647,10 @@ void PerformanceFunctional::load(const std::string& file_name)
 /// Returns any useful information about the objective function during training.
 /// By default it is an empty string.
 
-std::string PerformanceFunctional::write_information(void)  
+std::string LossIndex::write_information(void)  
 {
-   std::ostringstream buffer;
-   
+    std::ostringstream buffer;
+
    // Objective
 
     switch(error_type)
@@ -4452,7 +5719,7 @@ std::string PerformanceFunctional::write_information(void)
         {
             buffer.str("");
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "std::string write_information(void) method.\n"
                    << "Unknown error type.\n";
 
@@ -4493,7 +5760,7 @@ std::string PerformanceFunctional::write_information(void)
         {
             buffer.str("");
 
-            buffer << "OpenNN Exception: PerformanceFunctional class.\n"
+            buffer << "OpenNN Exception: LossIndex class.\n"
                    << "std::string write_information(void) method.\n"
                    << "Unknown regularization type.\n";
 
@@ -4501,7 +5768,6 @@ std::string PerformanceFunctional::write_information(void)
         }
         break;
     }
-
 
    return(buffer.str());
 }
@@ -4511,7 +5777,7 @@ std::string PerformanceFunctional::write_information(void)
 
 /// Print the members of this object to the standard output.
 
-void PerformanceFunctional::print(void) const
+void LossIndex::print(void) const
 {
     std::cout << to_string();
 }

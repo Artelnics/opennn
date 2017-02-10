@@ -69,7 +69,7 @@ public:
 
    // Training methods
 
-   void test_calculate_performance(void);
+   void test_calculate_loss(void);
    void test_calculate_gradient(void);
    void test_calculate_Hessian_approximation(void);
 

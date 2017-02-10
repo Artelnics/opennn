@@ -24,7 +24,7 @@ unit_testing.cpp
     root_mean_squared_error_test.cpp 
     error_term_test.cpp 
     mock_error_term.cpp 
-    performance_functional_test.cpp 
+    loss_index_test.cpp 
     outputs_integrals_test.cpp 
     normalized_squared_error_test.cpp 
     weighted_squared_error_test.cpp 
@@ -85,7 +85,7 @@ unit_testing.h
     root_mean_squared_error_test.h 
     error_term_test.h 
     mock_error_term.h 
-    performance_functional_test.h 
+    loss_index_test.h 
     outputs_integrals_test.h 
     normalized_squared_error_test.h 
     weighted_squared_error_test.h 

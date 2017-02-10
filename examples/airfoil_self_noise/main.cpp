@@ -30,150 +30,221 @@ using namespace OpenNN;
 
 int main(void)
 {
-   try
-   {
-      std::cout << "OpenNN. Airfoil Self-Noise Application." << std::endl;
+    try
+    {
+        int rank = 0;
 
-      srand((unsigned)time(NULL));
+#ifdef __OPENNN_MPI__
 
-      // Data set
+        int size = 1;
 
-      DataSet data_set;
+        MPI_Init(NULL,NULL);
 
-      data_set.set_data_file_name("../data/airfoil_self_noise.dat");
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-      data_set.set_separator("Tab");
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-      data_set.load_data();
+#endif
 
-      // Variables
+        if(rank == 0)
+        {
+            std::cout << "OpenNN. Airfoil Self-Noise Application." << std::endl;
+        }
 
-      Variables* variables_pointer = data_set.get_variables_pointer();
+        srand((unsigned)time(NULL));
 
-      Vector< Variables::Item > variables_items(6);
+        // Global variables
 
-      variables_items[0].name = "frequency";
-      variables_items[0].units = "hertzs";
-      variables_items[0].use = Variables::Input;
+        DataSet data_set;
 
-      variables_items[1].name = "angle_of_attack";
-      variables_items[1].units = "degrees";
-      variables_items[1].use = Variables::Input;
+        NeuralNetwork neural_network;
 
-      variables_items[2].name = "chord_length";
-      variables_items[2].units = "meters";
-      variables_items[2].use = Variables::Input;
+        LossIndex loss_index;
 
-      variables_items[3].name = "free_stream_velocity";
-      variables_items[3].units = "meters per second";
-      variables_items[3].use = Variables::Input;
+        TrainingStrategy training_strategy;
 
-      variables_items[4].name = "suction_side_displacement_thickness";
-      variables_items[4].units = "meters";
-      variables_items[4].use = Variables::Input;
+        // Local variables
 
-      variables_items[5].name = "scaled_sound_pressure_level";
-      variables_items[5].units = "decibels";
-      variables_items[5].use = Variables::Target;
+        DataSet local_data_set;
 
-      variables_pointer->set_items(variables_items);
+        NeuralNetwork local_neural_network;
 
-      const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-      const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        LossIndex local_loss_index;
 
-      // Instances
+        TrainingStrategy local_training_strategy;
 
-      Instances* instances_pointer = data_set.get_instances_pointer();
+        if(rank == 0)
+        {
+            // Data set
 
-      instances_pointer->split_random_indices();
+            data_set.set_data_file_name("../data/airfoil_self_noise.dat");
 
-      const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
-      const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
+            data_set.set_separator("Tab");
 
-      // Neural network
+            data_set.load_data();
 
-      const size_t inputs_number = variables_pointer->count_inputs_number();
-      const size_t hidden_perceptrons_number = 9;
-      const size_t outputs_number = variables_pointer->count_targets_number();
+            // Variables
 
-      NeuralNetwork neural_network(inputs_number, hidden_perceptrons_number, outputs_number);
+            Variables* variables_pointer = data_set.get_variables_pointer();
 
-      Inputs* inputs = neural_network.get_inputs_pointer();
+            Vector< Variables::Item > variables_items(6);
 
-      inputs->set_information(inputs_information);
+            variables_items[0].name = "frequency";
+            variables_items[0].units = "hertzs";
+            variables_items[0].use = Variables::Input;
 
-      Outputs* outputs = neural_network.get_outputs_pointer();
+            variables_items[1].name = "angle_of_attack";
+            variables_items[1].units = "degrees";
+            variables_items[1].use = Variables::Input;
 
-      outputs->set_information(targets_information);
+            variables_items[2].name = "chord_length";
+            variables_items[2].units = "meters";
+            variables_items[2].use = Variables::Input;
 
-      neural_network.construct_scaling_layer();
+            variables_items[3].name = "free_stream_velocity";
+            variables_items[3].units = "meters per second";
+            variables_items[3].use = Variables::Input;
 
-      ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+            variables_items[4].name = "suction_side_displacement_thickness";
+            variables_items[4].units = "meters";
+            variables_items[4].use = Variables::Input;
 
-      scaling_layer_pointer->set_statistics(inputs_statistics);
+            variables_items[5].name = "scaled_sound_pressure_level";
+            variables_items[5].units = "decibels";
+            variables_items[5].use = Variables::Target;
 
-      scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+            variables_pointer->set_items(variables_items);
 
-      neural_network.construct_unscaling_layer();
+            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-      UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+            // Instances
 
-      unscaling_layer_pointer->set_statistics(targets_statistics);
+            Instances* instances_pointer = data_set.get_instances_pointer();
 
-      unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
+            instances_pointer->split_random_indices();
 
-      // Performance functional
+            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+            const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
 
-      PerformanceFunctional performance_functional(&neural_network, &data_set);
+            // Neural network
 
-      performance_functional.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
+            const size_t inputs_number = variables_pointer->count_inputs_number();
+            const size_t hidden_perceptrons_number = 9;
+            const size_t outputs_number = variables_pointer->count_targets_number();
 
-      // Training strategy object
+            neural_network.set(inputs_number, hidden_perceptrons_number, outputs_number);
 
-      TrainingStrategy training_strategy(&performance_functional);
+            Inputs* inputs = neural_network.get_inputs_pointer();
 
-      QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+            inputs->set_information(inputs_information);
 
-      quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
-      quasi_Newton_method_pointer->set_display_period(10);
+            Outputs* outputs = neural_network.get_outputs_pointer();
 
-      quasi_Newton_method_pointer->set_minimum_performance_increase(1.0e-6);
+            outputs->set_information(targets_information);
 
-      quasi_Newton_method_pointer->set_reserve_performance_history(true);
+            neural_network.construct_scaling_layer();
 
-      TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-      // Testing analysis
+            scaling_layer_pointer->set_statistics(inputs_statistics);
 
-      TestingAnalysis testing_analysis(&neural_network, &data_set);
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
 
-      TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
+            neural_network.construct_unscaling_layer();
 
-      // Save results
+            UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
 
-      scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
-      unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+            unscaling_layer_pointer->set_statistics(targets_statistics);
 
-      data_set.save("../data/data_set.xml");
+            unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-      neural_network.save("../data/neural_network.xml");
-      neural_network.save_expression("../data/expression.txt");
+            // Loss index
 
-      performance_functional.save("../data/performance_functional.xml");
+            loss_index.set_data_set_pointer(&data_set);
+            loss_index.set_neural_network_pointer(&neural_network);
 
-      training_strategy.save("../data/training_strategy.xml");
-      training_strategy_results.save("../data/training_strategy_results.dat");
+            loss_index.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
 
-      linear_regression_results.save("../data/linear_regression_analysis_results.dat");
+            // Training strategy object
 
-      return(0);
-   }
-   catch(std::exception& e)
-   {
-      std::cerr << e.what() << std::endl;
+            training_strategy.set(&loss_index);
 
-      return(1);
-   }
+            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+
+            quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
+            quasi_Newton_method_pointer->set_display_period(10);
+
+            quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
+
+            quasi_Newton_method_pointer->set_reserve_loss_history(true);
+        }
+
+#ifdef __OPENNN_MPI__
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        local_data_set.set_MPI(&data_set);
+
+        local_neural_network.set_MPI(&neural_network);
+
+        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
+
+        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        TrainingStrategy::Results training_strategy_results = local_training_strategy.perform_training();
+#else
+        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+#endif
+
+        if(rank == 0)
+        {
+#ifdef __OPENNN_MPI__
+            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
+#endif
+            // Testing analysis
+
+            TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+            TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
+
+            // Save results
+
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+            UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+            unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+
+            data_set.save("../data/data_set.xml");
+
+            neural_network.save("../data/neural_network.xml");
+            neural_network.save_expression("../data/expression.txt");
+
+            loss_index.save("../data/loss_index.xml");
+
+            training_strategy.save("../data/training_strategy.xml");
+            training_strategy_results.save("../data/training_strategy_results.dat");
+
+            linear_regression_results.save("../data/linear_regression_analysis_results.dat");
+        }
+
+#ifdef __OPENNN_MPI__
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Finalize();
+
+#endif
+        return(0);
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+
+        return(1);
+    }
 }
 
 

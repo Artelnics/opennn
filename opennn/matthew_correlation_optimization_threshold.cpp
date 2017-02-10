@@ -203,9 +203,9 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
 
     MatthewCorrelationOptimizationThresholdResults* results = new MatthewCorrelationOptimizationThresholdResults();
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     double current_threshold = minimum_threshold;
 
@@ -264,7 +264,8 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
             }
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
-        }else if (current_threshold == maximum_threshold)
+        }
+        else if (current_threshold == maximum_threshold)
         {
             end = true;
 
@@ -310,7 +311,7 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> MatthewCorrelationOptimizationThreshold::to_string_matrix(void) const
 {
@@ -419,7 +420,7 @@ tinyxml2::XMLDocument* MatthewCorrelationOptimizationThreshold::to_XML(void) con
 //   element = document->NewElement("PerformanceCalculationMethod");
 //   root_element->LinkEndChild(element);
 
-//   text = document->NewText(write_performance_calculation_method().c_str());
+//   text = document->NewText(write_loss_calculation_method().c_str());
 //   element->LinkEndChild(text);
 //   }
 
@@ -464,6 +465,9 @@ tinyxml2::XMLDocument* MatthewCorrelationOptimizationThreshold::to_XML(void) con
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the Matthew's correlation optimization threshold object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void MatthewCorrelationOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

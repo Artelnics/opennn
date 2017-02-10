@@ -86,7 +86,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
 
     DataSet ds;
 
-    PerformanceFunctional pf(&nn, &ds);
+    LossIndex pf(&nn, &ds);
 
     TrainingStrategy ts(&pf);
 
@@ -131,7 +131,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
@@ -139,14 +139,14 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
 
     gs.set_trials_number(1);
     gs.set_maximum_order(7);
-    gs.set_selection_performance_goal(1.0e-3);
+    gs.set_selection_loss_goal(1.0e-3);
     gs.set_display(false);
 
     results = gs.perform_order_selection();
 
     assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::SelectionPerformanceGoal, LOG);
+                OrderSelectionAlgorithm::SelectionLossGoal, LOG);
 
     // Test
 
@@ -185,7 +185,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
@@ -193,7 +193,7 @@ void GoldenSectionOrderTest::test_perform_order_selection(void)
 
     gs.set_trials_number(1);
     gs.set_maximum_order(7);
-    gs.set_selection_performance_goal(0.0);
+    gs.set_selection_loss_goal(0.0);
     gs.set_display(false);
 
     results = gs.perform_order_selection();

@@ -26,126 +26,199 @@ using namespace OpenNN;
 
 int main(void)
 {
-   try
-   {
-      std::cout << "OpenNN. Pima Indians Diabetes Application." << std::endl;	 
+    try
+    {
+        int rank = 0;
 
-      srand((unsigned)time(NULL));
+#ifdef __OPENNN_MPI__
 
-      // Data set 
+        int size = 1;
 
-      DataSet data_set;
+        MPI_Init(NULL,NULL);
 
-      data_set.set_data_file_name("../data/pima_indians_diabetes.dat");
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-      data_set.load_data();
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	  // Variables
+#endif
 
-      Variables* variables_pointer = data_set.get_variables_pointer(); 
+        if(rank == 0)
+        {
+            std::cout << "OpenNN. Pima Indians Diabetes Application." << std::endl;
+        }
 
-      variables_pointer->set_name(0, "pregnant");
+        srand((unsigned)time(NULL));
 
-      variables_pointer->set_name(1, "glucose");
+        // Global variables
 
-      variables_pointer->set_name(2, "pressure");
-      variables_pointer->set_units(2, "mmHg");
+        DataSet data_set;
 
-      variables_pointer->set_name(3, "thickness");
-      variables_pointer->set_units(3, "mm");
+        NeuralNetwork neural_network;
 
-      variables_pointer->set_name(4, "insulin");
-      variables_pointer->set_units(4, "muU/ml");
+        LossIndex loss_index;
 
-      variables_pointer->set_name(5, "mass_index");
-      variables_pointer->set_units(5, "kg/m2");
+        TrainingStrategy training_strategy;
 
-      variables_pointer->set_name(6, "pedigree");
+        // Local variables
 
-      variables_pointer->set_name(7, "age");
+        DataSet local_data_set;
 
-      variables_pointer->set_name(8, "diabetes");
+        NeuralNetwork local_neural_network;
 
-	  // Instances 
+        LossIndex local_loss_index;
 
-      Instances* instances_pointer = data_set.get_instances_pointer();
+        TrainingStrategy local_training_strategy;
 
-      instances_pointer->split_random_indices(0.75,0.0,0.25);
+        if(rank == 0)
+        {
+            // Data set
 
-      const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-      const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+            data_set.set_data_file_name("../data/pima_indians_diabetes.dat");
 
-      const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+            data_set.load_data();
 
-      // Neural network 
-	  
-      NeuralNetwork neural_network(8, 6, 1);
+            // Variables
 
-      Inputs* inputs_pointer = neural_network.get_inputs_pointer();
+            Variables* variables_pointer = data_set.get_variables_pointer();
 
-      inputs_pointer->set_information(inputs_information);
+            variables_pointer->set_name(0, "pregnant");
 
-      neural_network.construct_scaling_layer();
+            variables_pointer->set_name(1, "glucose");
 
-      ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+            variables_pointer->set_name(2, "pressure");
+            variables_pointer->set_units(2, "mmHg");
 
-      scaling_layer_pointer->set_statistics(inputs_statistics);
+            variables_pointer->set_name(3, "thickness");
+            variables_pointer->set_units(3, "mm");
 
-      scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+            variables_pointer->set_name(4, "insulin");
+            variables_pointer->set_units(4, "muU/ml");
 
-      MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
+            variables_pointer->set_name(5, "mass_index");
+            variables_pointer->set_units(5, "kg/m2");
 
-      multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::Logistic);
+            variables_pointer->set_name(6, "pedigree");
 
-      Outputs* outputs_pointer = neural_network.get_outputs_pointer();
+            variables_pointer->set_name(7, "age");
 
-      outputs_pointer->set_information(targets_information);
+            variables_pointer->set_name(8, "diabetes");
 
-      // Performance functional
+            // Instances
 
-      PerformanceFunctional performance_functional(&neural_network, &data_set);
+            Instances* instances_pointer = data_set.get_instances_pointer();
 
-      // Training strategy
+            instances_pointer->split_random_indices(0.75,0.0,0.25);
 
-      TrainingStrategy training_strategy(&performance_functional);
+            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-      QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
-      quasi_Newton_method_pointer->set_minimum_performance_increase(1.0e-6);
+            // Neural network
 
-      TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
-      // Testing analysis
+            neural_network.set(8, 6, 1);
 
-      TestingAnalysis testing_analysis(&neural_network, &data_set);
+            Inputs* inputs_pointer = neural_network.get_inputs_pointer();
 
-      Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+            inputs_pointer->set_information(inputs_information);
 
-      Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+            neural_network.construct_scaling_layer();
 
-      // Save results
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-      scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+            scaling_layer_pointer->set_statistics(inputs_statistics);
 
-      data_set.save("../data/data_set.xml");
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
 
-      neural_network.save("../data/neural_network.xml");
-      neural_network.save_expression("../data/expression.txt");
+            MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
 
-      training_strategy.save("../data/training_strategy.xml");
-      training_strategy_results.save("../data/training_strategy_results.dat");
+            multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::Logistic);
 
-      confusion.save("../data/confusion.dat");
-      binary_classification_tests.save("../data/binary_classification_tests.dat");
+            Outputs* outputs_pointer = neural_network.get_outputs_pointer();
 
-      return(0);
-   }
-   catch(std::exception& e)
-   {
-      std::cerr << e.what() << std::endl;
+            outputs_pointer->set_information(targets_information);
 
-      return(1);
-   }
-}  
+            // Loss index
+
+            loss_index.set_data_set_pointer(&data_set);
+            loss_index.set_neural_network_pointer(&neural_network);
+
+            // Training strategy
+
+            training_strategy.set(&loss_index);
+
+            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+
+            quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
+        }
+
+#ifdef __OPENNN_MPI__
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        local_data_set.set_MPI(&data_set);
+
+        local_neural_network.set_MPI(&neural_network);
+
+        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
+
+        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        TrainingStrategy::Results training_strategy_results = local_training_strategy.perform_training();
+#else
+        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+#endif
+
+        if(rank == 0)
+        {
+#ifdef __OPENNN_MPI__
+            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
+#endif
+
+            // Testing analysis
+
+            TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+            Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+
+            Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+
+            // Save results
+
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+
+            data_set.save("../data/data_set.xml");
+
+            neural_network.save("../data/neural_network.xml");
+            neural_network.save_expression("../data/expression.txt");
+
+            training_strategy.save("../data/training_strategy.xml");
+            training_strategy_results.save("../data/training_strategy_results.dat");
+
+            confusion.save("../data/confusion.dat");
+            binary_classification_tests.save("../data/binary_classification_tests.dat");
+        }
+
+#ifdef __OPENNN_MPI__
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Finalize();
+
+#endif
+
+        return(0);
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+
+        return(1);
+    }
+}
 
 
 // OpenNN: Open Neural Networks Library.

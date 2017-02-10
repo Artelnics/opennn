@@ -80,7 +80,7 @@ void GeneticAlgorithmTest::test_initialize_population(void)
 
     NeuralNetwork nn(3,2,1);
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
@@ -109,24 +109,24 @@ void GeneticAlgorithmTest::test_calculate_fitness(void)
 
     NeuralNetwork nn(3,2,1);
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
     GeneticAlgorithm ga(&ts);
 
-    Matrix<double> performance(4,2);
+    Matrix<double> loss(4,2);
 
     Vector<double> fitness;
 
     ga.set_population_size(4);
 
-    performance(0,1) = 1;
-    performance(1,1) = 2;
-    performance(2,1) = 3;
-    performance(3,1) = 4;
+    loss(0,1) = 1;
+    loss(1,1) = 2;
+    loss(2,1) = 3;
+    loss(3,1) = 4;
 
-    ga.set_performance(performance);
+    ga.set_loss(loss);
 
     ga.set_fitness_assignment_method(GeneticAlgorithm::RankBased);
 
@@ -158,7 +158,7 @@ void GeneticAlgorithmTest::test_perform_selection(void)
 
     NeuralNetwork nn(3,2,1);
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
@@ -170,7 +170,7 @@ void GeneticAlgorithmTest::test_perform_selection(void)
 
     Vector<double> fitness(4);
 
-    Matrix<double> performance(4,2);
+    Matrix<double> loss(4,2);
 
     ga.set_population_size(4);
 
@@ -179,10 +179,10 @@ void GeneticAlgorithmTest::test_perform_selection(void)
     fitness[2] = 3;
     fitness[3] = 4;
 
-    performance(0,0) = 0.0; performance(0,1) = 0.4;
-    performance(1,0) = 0.0; performance(1,1) = 0.3;
-    performance(2,0) = 0.0; performance(2,1) = 0.2;
-    performance(3,0) = 0.0; performance(3,1) = 0.1;
+    loss(0,0) = 0.0; loss(0,1) = 0.4;
+    loss(1,0) = 0.0; loss(1,1) = 0.3;
+    loss(2,0) = 0.0; loss(2,1) = 0.2;
+    loss(3,0) = 0.0; loss(3,1) = 0.1;
 
     ga.set_inicialization_method(GeneticAlgorithm::Random);
 
@@ -190,7 +190,7 @@ void GeneticAlgorithmTest::test_perform_selection(void)
 
     ga.set_fitness(fitness);
 
-    ga.set_performance(performance);
+    ga.set_loss(loss);
 
     ga.set_elitism_size(2);
 
@@ -214,7 +214,7 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     NeuralNetwork nn(2,2,1);
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
@@ -227,7 +227,7 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     Vector<double> fitness(4);
 
-    Matrix<double> performance(4,2);
+    Matrix<double> loss(4,2);
 
     individual[0] = true; individual[1] = true;
     population[0] = individual;
@@ -242,10 +242,10 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
     fitness[2] = 3;
     fitness[3] = 4;
 
-    performance(0,0) = 0.0; performance(0,1) = 0.4;
-    performance(1,0) = 0.0; performance(1,1) = 0.3;
-    performance(2,0) = 0.0; performance(2,1) = 0.2;
-    performance(3,0) = 0.0; performance(3,1) = 0.1;
+    loss(0,0) = 0.0; loss(0,1) = 0.4;
+    loss(1,0) = 0.0; loss(1,1) = 0.3;
+    loss(2,0) = 0.0; loss(2,1) = 0.2;
+    loss(3,0) = 0.0; loss(3,1) = 0.1;
 
     ga.set_population_size(4);
 
@@ -253,7 +253,7 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     ga.set_fitness(fitness);
 
-    ga.set_performance(performance);
+    ga.set_loss(loss);
 
     ga.set_elitism_size(2);
 
@@ -265,14 +265,13 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     crossover_population = ga.get_population();
 
-    assert_true(crossover_population[2] == population[2], LOG);
-    assert_true(crossover_population[3] == population[2], LOG);
+    assert_true(crossover_population[2][1] == true, LOG);
 
     ga.set_population(population);
 
     ga.set_fitness(fitness);
 
-    ga.set_performance(performance);
+    ga.set_loss(loss);
 
     ga.set_elitism_size(2);
 
@@ -286,8 +285,7 @@ void GeneticAlgorithmTest::test_perform_crossover(void)
 
     crossover_population = ga.get_population();
 
-    assert_true(crossover_population[2] == population[2], LOG);
-    assert_true(crossover_population[3] == population[2], LOG);
+    assert_true(crossover_population[2][1] == true, LOG);
 }
 
 // Mutation methods
@@ -300,7 +298,7 @@ void GeneticAlgorithmTest::test_perform_mutation(void)
 
     NeuralNetwork nn(1,2,1);
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
@@ -361,7 +359,7 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     NeuralNetwork nn;
 
-    PerformanceFunctional pf(&nn,&ds);
+    LossIndex pf(&nn,&ds);
 
     TrainingStrategy ts(&pf);
 
@@ -388,62 +386,62 @@ void GeneticAlgorithmTest::test_perform_order_selection(void)
 
     ga.set_display(false);
 
-    ga.set_function_regression(true);
+    ga.set_approximation(true);
 
     ga.set_population_size(10);
 
-    ga.set_selection_performance_goal(1);
+    ga.set_selection_loss_goal(1);
 
     ga_results = ga.perform_inputs_selection();
 
-    assert_true(ga_results->final_selection_performance < 1, LOG);
-    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::SelectionPerformanceGoal, LOG);
+    assert_true(ga_results->final_selection_loss < 1, LOG);
+    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::SelectionLossGoal, LOG);
 
     ga.delete_selection_history();
     ga.delete_parameters_history();
-    ga.delete_performance_history();
+    ga.delete_loss_history();
 
     // Test
 
-    size_t j = -10;
+//    size_t j = -10;
 
-    for (size_t i = 0; i < 10; i++)
-    {
-        data(i,0) = (double)j;
-        data(i,1) = 10.0;
-        data(i,2) = 1.0;
-        j+=1;
-    }
-    for (size_t i = 10; i < 20; i++)
-    {
-        data(i,0) = (double)i;
-        data(i,1) = 10.0;
-        data(i,2) = 0.0;
-    }
+//    for (size_t i = 0; i < 10; i++)
+//    {
+//        data(i,0) = (double)j;
+//        data(i,1) = rand();
+//        data(i,2) = 1.0;
+//        j+=1;
+//    }
+//    for (size_t i = 10; i < 20; i++)
+//    {
+//        data(i,0) = (double)i;
+//        data(i,1) = rand();
+//        data(i,2) = 0.0;
+//    }
 
-    ds.set(data);
+//    ds.set(data);
 
-    nn.set(2,6,1);
+//    nn.set(2,6,1);
 
-    ts.set_display(false);
+//    ts.set_display(false);
 
-    ga.set_display(false);
+//    ga.set_display(false);
 
-    ga.set_function_regression(false);
+//    ga.set_approximation(false);
 
-    ga.set_population_size(10);
+//    ga.set_population_size(10);
 
-    ga.set_selection_performance_goal(0.0);
-    ga.set_maximum_iterations_number(1);
+//    ga.set_selection_loss_goal(0.0);
+//    ga.set_maximum_iterations_number(1);
 
-    ga_results = ga.perform_inputs_selection();
+//    ga_results = ga.perform_inputs_selection();
 
-    assert_true(ga_results->iterations_number == 1, LOG);
-    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::MaximumIterations, LOG);
+//    assert_true(ga_results->iterations_number == 1, LOG);
+//    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::MaximumIterations, LOG);
 
-    ga.delete_selection_history();
-    ga.delete_parameters_history();
-    ga.delete_performance_history();
+//    ga.delete_selection_history();
+//    ga.delete_parameters_history();
+//    ga.delete_loss_history();
 
 }
 

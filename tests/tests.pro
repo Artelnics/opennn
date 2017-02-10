@@ -51,7 +51,7 @@ SOURCES += \
     root_mean_squared_error_test.cpp \
     error_term_test.cpp \
     mock_error_term.cpp \
-    performance_functional_test.cpp \
+    loss_index_test.cpp \
     outputs_integrals_test.cpp \
     normalized_squared_error_test.cpp \
     weighted_squared_error_test.cpp \
@@ -71,14 +71,14 @@ SOURCES += \
     evolutionary_algorithm_test.cpp \
     conjugate_gradient_test.cpp \
     model_selection_test.cpp \
-    order_selection_algorithm_test.cpp\
-    incremental_order_test.cpp\
-    golden_section_order_test.cpp\
-    simulated_annealing_order_test.cpp\
-    inputs_selection_algorithm_test.cpp\
-    growing_inputs_test.cpp\
-    pruning_inputs_test.cpp\
-    genetic_algorithm_test.cpp\
+    order_selection_algorithm_test.cpp \
+    incremental_order_test.cpp \
+    golden_section_order_test.cpp \
+    simulated_annealing_order_test.cpp \
+    inputs_selection_algorithm_test.cpp \
+    growing_inputs_test.cpp \
+    pruning_inputs_test.cpp \
+    genetic_algorithm_test.cpp \
     testing_analysis_test.cpp \
     vector_test.cpp \
     matrix_test.cpp \
@@ -111,7 +111,7 @@ HEADERS += \
     root_mean_squared_error_test.h \
     error_term_test.h \
     mock_error_term.h \
-    performance_functional_test.h \
+    loss_index_test.h \
     outputs_integrals_test.h \
     normalized_squared_error_test.h \
     weighted_squared_error_test.h \
@@ -131,15 +131,15 @@ HEADERS += \
     evolutionary_algorithm_test.h \
     conjugate_gradient_test.h \
     model_selection_test.h \
-    order_selection_algorithm_test.h\
-    incremental_order_test.h\
-    golden_section_order_test.h\
-    simulated_annealing_order_test.h\
-    inputs_selection_algorithm_test.h\
-    growing_inputs_test.h\
-    pruning_inputs_test.h\
-    genetic_algorithm_test.h\
-    testing_analysis_test.h \
+    order_selection_algorithm_test.h \
+    incremental_order_test.h \
+    golden_section_order_test.h \
+    simulated_annealing_order_test.h \
+    inputs_selection_algorithm_test.h \
+    growing_inputs_test.h \
+    pruning_inputs_test.h \
+    genetic_algorithm_test.h \
+    testing_analysis_test.h  \
     vector_test.h \
     matrix_test.h \
     numerical_integration_test.h \
@@ -205,6 +205,9 @@ mac{
 INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
+
+# MPI libraries
+#include(../mpi.pri)
 
 # CUDA libraries
 #include(../cuda.pri)

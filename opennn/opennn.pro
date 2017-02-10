@@ -26,26 +26,12 @@ CONFIG(debug, debug|release) {
 
 #DEFINES += __Cpp11__
 
-# TinyXML2 library
-
-#win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
-#else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
-#else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
-
-#INCLUDEPATH += $$PWD/../tinyxml2
-#DEPENDPATH += $$PWD/../tinyxml2
-
-#win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
-#else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
-#else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
-#else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
-#else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
-
 # Eigen library
 
 INCLUDEPATH += eigen
 
 # OpenMP library
+
 win32:!win32-g++{
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS   += -openmp
@@ -68,14 +54,14 @@ HEADERS += \
     plug_in.h \
     ordinary_differential_equations.h \
     mathematical_model.h \
-    inputs.h \
-    outputs.h \
-    unscaling_layer.h \
-    scaling_layer.h \
-    probabilistic_layer.h \
-    perceptron_layer.h \
-    perceptron.h \
-    neural_network.h \
+        inputs.h \
+        outputs.h \
+        unscaling_layer.h \
+        scaling_layer.h \
+        probabilistic_layer.h \
+        perceptron_layer.h \
+        perceptron.h \
+        neural_network.h \
     multilayer_perceptron.h \
     independent_parameters.h \
     conditions_layer.h \
@@ -84,7 +70,7 @@ HEADERS += \
     root_mean_squared_error.h \
     error_term.h \
     regularization_term.h \
-    performance_functional.h \
+    loss_index.h \
     outputs_integrals.h \
     normalized_squared_error.h \
     neural_parameters_norm.h \
@@ -108,6 +94,7 @@ HEADERS += \
     incremental_order.h \
     golden_section_order.h \
     simulated_annealing_order.h \
+    ant_colony_optimization.h \
     inputs_selection_algorithm.h \
     growing_inputs.h \
     pruning_inputs.h \
@@ -151,7 +138,7 @@ SOURCES += \
     root_mean_squared_error.cpp \
     error_term.cpp \
     regularization_term.cpp \
-    performance_functional.cpp \
+    loss_index.cpp \
     outputs_integrals.cpp \
     normalized_squared_error.cpp \
     neural_parameters_norm.cpp \
@@ -175,6 +162,7 @@ SOURCES += \
     incremental_order.cpp \
     golden_section_order.cpp \
     simulated_annealing_order.cpp \
+    ant_colony_optimization.cpp \
     inputs_selection_algorithm.cpp \
     growing_inputs.cpp \
     pruning_inputs.cpp \
@@ -191,12 +179,39 @@ SOURCES += \
     roc_curve_optimization_threshold.cpp \
     selective_pruning.cpp
 
+# TinyXML2 library
+
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
+else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
+
+INCLUDEPATH += $$PWD/../tinyxml2
+DEPENDPATH += $$PWD/../tinyxml2
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
+else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
+
+# MPI libraries
+#DEFINES += __OPENNN_MPI__
+
+contains(DEFINES, __OPENNN_MPI__){
+include(../mpi.pri)
+}
+
 # CUDA - To uncomment:
     #the following DEFINES
     #include(../cuda.pri) at the end of this file
     #neuralengine.pro > include(../opennn/cuda.pri)
+    #neuralreader < include(../cuda.pri)
     #tinyxml2.pro > #include(../cuda.pri)
     #test.pro > #include(../cuda.pri)
+    #don't use this include in neuraleditor.pro for the Qt 5.4.0 version
+
+
+
 
 #DEFINES += __OPENNN_CUDA__
 
@@ -205,7 +220,7 @@ contains(DEFINES, __OPENNN_CUDA__){
 OTHER_FILES +=  utilities.cu
 
 windows{
-CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v7.5            # Path to cuda toolkit install
+CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v8.0            # Path to cuda toolkit install
 }else:mac{
 CUDA_DIR = /Developer/NVIDIA/CUDA-7.5
 }else:unix{
@@ -224,7 +239,6 @@ DEPENDPATH += $$CUDA_DIR/lib/x64
 win32:!win32-g++: PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/cudart.lib
 else:win32-g++: PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcudart.a
 
-
 win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcublas.a
 else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/libcublas.a
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$CUDA_DIR/lib/x64/cublas.lib
@@ -235,9 +249,9 @@ INCLUDEPATH += $$CUDA_DIR/include
 # CUDA settings <-- may change depending on your system
 
 CUDA_SOURCES += utilities.cu
-SYSTEM_NAME = x64         # Depending on your system either 'Win32', 'x64', or 'Win64'
+SYSTEM_NAME = x64           # Depending on your system either 'Win32', 'x64', or 'Win64'
 SYSTEM_TYPE = 64            # '32' or '64', depending on your system
-CUDA_ARCH = sm_20           # Type of CUDA architecture, for example 'compute_10', 'compute_11', 'sm_10'
+CUDA_ARCH = sm_35           # Type of CUDA architecture, for example 'compute_10', 'compute_11', 'sm_10'
 NVCC_OPTIONS = --use_fast_math
 
 CUDA_LIBS += -lcuda -lcudart -lcublas
@@ -270,16 +284,3 @@ else {
 }
 
 
-
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
-else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
-
-INCLUDEPATH += $$PWD/../tinyxml2
-DEPENDPATH += $$PWD/../tinyxml2
-
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
-else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a

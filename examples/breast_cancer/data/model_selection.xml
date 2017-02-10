@@ -1,0 +1,33 @@
+<ModelSelection>
+    <InputsSelection Type="GROWING_INPUTS">
+        <TrialsNumber>1</TrialsNumber>
+        <Tolerance>0.001</Tolerance>
+        <SelectionLossGoal>0</SelectionLossGoal>
+        <MaximumSelectionFailures>3</MaximumSelectionFailures>
+        <MaximumInputsNumber>100</MaximumInputsNumber>
+        <MinimumCorrelation>0</MinimumCorrelation>
+        <MaximumCorrelation>1e+020</MaximumCorrelation>
+        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
+        <MaximumTime>10000</MaximumTime>
+        <ReservePerformanceHistory>1</ReservePerformanceHistory>
+        <ReserveSelectionLossHistory>1</ReserveSelectionLossHistory>
+    </InputsSelection>
+    <OrderSelection Type="SIMULATED_ANNEALING">
+        <MinimumOrder>1</MinimumOrder>
+        <MaximumOrder>20</MaximumOrder>
+        <CoolingRate>0.9</CoolingRate>
+        <TrialsNumber>1</TrialsNumber>
+        <Tolerance>0.001</Tolerance>
+        <SelectionLossGoal>0</SelectionLossGoal>
+        <MinimumTemperature>0.001</MinimumTemperature>
+        <MaximumIterationsNumber>15</MaximumIterationsNumber>
+        <MaximumTime>10000</MaximumTime>
+        <ReservePerformanceHistory>1</ReservePerformanceHistory>
+        <ReserveSelectionLossHistory>1</ReserveSelectionLossHistory>
+    </OrderSelection>
+    <ThresholdSelection Type="YOUDEN_INDEX">
+        <MinimumThreshold>0</MinimumThreshold>
+        <MaximumThreshold>1</MaximumThreshold>
+        <Step>0.001</Step>
+    </ThresholdSelection>
+</ModelSelection>

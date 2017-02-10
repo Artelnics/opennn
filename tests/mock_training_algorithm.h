@@ -33,7 +33,7 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit MockTrainingAlgorithm(PerformanceFunctional*); 
+   explicit MockTrainingAlgorithm(LossIndex*); 
 
 
    // DESTRUCTOR

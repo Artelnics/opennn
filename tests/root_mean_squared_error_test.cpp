@@ -74,9 +74,9 @@ void RootMeanSquaredErrorTest::test_destructor(void)
 }
 
 
-void RootMeanSquaredErrorTest::test_calculate_performance(void)
+void RootMeanSquaredErrorTest::test_calculate_loss(void)
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 
    Vector<double> parameters;
 
@@ -106,65 +106,79 @@ void RootMeanSquaredErrorTest::test_calculate_performance(void)
 
 
 void RootMeanSquaredErrorTest::test_calculate_gradient(void)
-{
-   message += "test_calculate_gradient\n";
+{NumericalDifferentiation nd;
 
-   NumericalDifferentiation nd;
+    NeuralNetwork nn;
 
-   NeuralNetwork nn;
+    Vector<double> network_parameters;
 
-   Vector<double> network_parameters;
+    DataSet ds;
+    Matrix<double> data;
 
-   DataSet ds;
+    RootMeanSquaredError nse(&nn, &ds);
 
-   RootMeanSquaredError rmse(&nn, &ds);
+    Vector<double> objective_gradient;
+    Vector<double> numerical_objective_gradient;
 
-   Vector<double> objective_gradient;
-   Vector<double> numerical_objective_gradient;
+    // Test
 
-   // Test
+    nn.set(1,1,1);
 
-   nn.set(2, 4, 5);
-   nn.initialize_parameters(0.0);
+    nn.initialize_parameters(0.0);
 
-   ds.set(3, 2, 5);
-   ds.initialize_data(0.0);
+    ds.set(2, 1, 1);
 
-   // Test
+    data.set(2, 2);
+    data(0,0) = -1.0;
+    data(0,1) = -1.0;
+    data(1,0) = 1.0;
+    data(1,1) = 1.0;
 
-   nn.set(2, 4, 5);
-   nn.initialize_parameters(1.0);
+    ds.set_data(data);
 
-   network_parameters = nn.arrange_parameters();
+    objective_gradient = nse.calculate_gradient();
 
-   ds.set(3, 2, 5);
-   ds.initialize_data(1.0);
+    assert_true(objective_gradient.size() == nn.count_parameters_number(), LOG);
+    assert_true(objective_gradient == 0.0, LOG);
 
-   objective_gradient = rmse.calculate_gradient();
-   numerical_objective_gradient = nd.calculate_gradient(rmse, &RootMeanSquaredError::calculate_error, network_parameters);
+    // Test
 
-   assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+    nn.set(5, 4, 2);
+    nn.randomize_parameters_normal();
 
-   // Test
+    network_parameters = nn.arrange_parameters();
 
-   nn.set(1,1,1);
+    ds.set(3, 5, 2);
+    ds.randomize_data_normal();
 
-   network_parameters = nn.arrange_parameters();
+    objective_gradient = nse.calculate_gradient();
+    numerical_objective_gradient = nd.calculate_gradient(nse, &RootMeanSquaredError::calculate_error, network_parameters);
 
-   ds.set(1,1,1);
-   ds.initialize_data(1.0);
+    assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
-   rmse.set_neural_network_pointer(&nn);
+    // Test
 
-   objective_gradient = rmse.calculate_gradient();
-   numerical_objective_gradient = nd.calculate_gradient(rmse, &RootMeanSquaredError::calculate_error, network_parameters);
-   assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+    nn.set(5, 4, 2);
+    nn.randomize_parameters_normal();
+
+    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
+    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
+
+    network_parameters = nn.arrange_parameters();
+
+    ds.set(3, 5, 2);
+    ds.randomize_data_normal();
+
+    objective_gradient = nse.calculate_gradient();
+    numerical_objective_gradient = nd.calculate_gradient(nse, &RootMeanSquaredError::calculate_error, network_parameters);
+
+    assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
 
-void RootMeanSquaredErrorTest::test_calculate_selection_performance(void)
+void RootMeanSquaredErrorTest::test_calculate_selection_loss(void)
 {
-   message += "test_calculate_selection_performance\n";
+   message += "test_calculate_selection_loss\n";
 
    NeuralNetwork nn(1,1,1);
 
@@ -207,8 +221,8 @@ void RootMeanSquaredErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();
-   test_calculate_selection_performance();
+   test_calculate_loss();
+   test_calculate_selection_loss();
 
    test_calculate_gradient();
 

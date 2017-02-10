@@ -76,7 +76,7 @@ public:
 
    /// Enumeration of available methods for bounding the output variables.
 
-   enum BoundingMethod{NoBounding, Boundind};
+   enum BoundingMethod{NoBounding, Bounding};
 
    // METHODS
 
@@ -85,6 +85,10 @@ public:
    size_t get_bounding_neurons_number(void) const;
 
    // Variables bounds
+
+   const BoundingMethod& get_bounding_method(void) const;
+
+   std::string write_bounding_method(void) const;
 
    const Vector<double>& get_lower_bounds(void) const;
    double get_lower_bound(const size_t&) const;
@@ -100,6 +104,9 @@ public:
    void set(const size_t&);
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
+
+   void set_bounding_method(const BoundingMethod&);
+   void set_bounding_method(const std::string&);
 
    void set_lower_bounds(const Vector<double>&);
    void set_lower_bound(const size_t&, const double&);
@@ -147,6 +154,10 @@ public:
 protected:
 
    // MEMBERS
+
+   /// Method used to bound the values.
+
+   BoundingMethod bounding_method;
 
    /// Lower bounds of output variables
 

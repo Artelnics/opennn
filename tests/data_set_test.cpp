@@ -71,14 +71,14 @@ void DataSetTest::test_constructor(void)
 
    // File constructor
 
-   const std::string file_name = "../data/data_set.xml";
+//   const std::string file_name = "../data/data_set.xml";
 
-   ds1.save(file_name);
+//   ds1.save(file_name);
 
-   DataSet ds5(file_name);
+//   DataSet ds5(file_name);
 
-   assert_true(ds5.get_variables().get_variables_number() == 0, LOG);
-   assert_true(ds5.get_instances().get_instances_number() == 0, LOG);
+//   assert_true(ds5.get_variables().get_variables_number() == 0, LOG);
+//   assert_true(ds5.get_instances().get_instances_number() == 0, LOG);
 
    // Copy constructor
 
@@ -1451,7 +1451,7 @@ void DataSetTest::test_balance_function_regression_targets_distribution(void)
     ds.set_instance(8, instance8);
     ds.set_instance(9, instance9);
 
-    unused_instances = ds.balance_function_regression_targets_distribution(10.0);
+    unused_instances = ds.balance_approximation_targets_distribution(10.0);
 
     assert_true(ds.get_instances().count_unused_instances_number() == 1, LOG);
     assert_true(ds.get_instances().count_used_instances_number() == 9, LOG);
@@ -1463,7 +1463,7 @@ void DataSetTest::test_balance_function_regression_targets_distribution(void)
     ds2.set(1000, 5, 10);
     ds2.randomize_data_normal();
 
-    unused_instances = ds2.balance_function_regression_targets_distribution(100.0);
+    unused_instances = ds2.balance_approximation_targets_distribution(100.0);
 
     assert_true(ds2.get_instances().count_used_instances_number() == 0, LOG);
     assert_true(ds2.get_instances().count_unused_instances_number() == 1000, LOG);
@@ -1668,13 +1668,16 @@ void DataSetTest::test_clean_Tukey_outliers(void)
 
     ds.set_instance(9, instance);
 
-    Vector<size_t> unused_instances;
+    const Vector< Vector<size_t> > outliers_indices = ds.calculate_Tukey_outliers(1.5);
 
-    unused_instances = ds.clean_Tukey_outliers(1.5);
+    const Vector<size_t> outliers_instances = outliers_indices[0].calculate_greater_than_indices(0);
+    size_t outliers_number = outliers_instances.size();
+
+    ds.get_instances_pointer()->set_unused(outliers_instances);
 
     assert_true(ds.get_instances().count_unused_instances_number() == 1, LOG);
-    assert_true(unused_instances.size() == 1, LOG);
-    assert_true(unused_instances[0] == 9, LOG);
+    assert_true(outliers_number == 1, LOG);
+    assert_true(outliers_instances[0] == 9, LOG);
 }
 
 
@@ -2431,7 +2434,7 @@ void DataSetTest::test_convert_autoassociation(void)
 
    ds.set_autoassociation(true);
 
-   ds.convert_autoassociation();
+   ds.convert_association();
 
    data = ds.get_data();
 

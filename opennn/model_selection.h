@@ -198,7 +198,17 @@ public:
 
     void set_default(void);
 
+    void set_display(const bool&);
+
     void set_training_strategy_pointer(TrainingStrategy*);
+
+#ifdef __OPENNN_MPI__
+    void set_MPI(TrainingStrategy*, const ModelSelection*);
+
+    void set_inputs_selection_MPI(const ModelSelection*);
+    void set_order_selection_MPI(const ModelSelection*);
+    void set_threshold_selection_MPI(const ModelSelection*);
+#endif
 
     void set_order_selection_type(const OrderSelectionType&);
     void set_order_selection_type(const std::string&);
@@ -209,7 +219,7 @@ public:
     void set_threshold_selection_type(const ThresholdSelectionType&);
     void set_threshold_selection_type(const std::string&);
 
-    void set_function_regression(const bool&);
+    void set_approximation(const bool&);
 
     // Pointer methods
 
@@ -308,6 +318,10 @@ private:
     /// Type of threshold selection algorithm.
 
     ThresholdSelectionType threshold_selection_type;
+
+    /// Display messages to screen.
+
+    bool display;
 };
 
 }

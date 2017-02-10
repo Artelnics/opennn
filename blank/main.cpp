@@ -19,6 +19,10 @@
 #include <string>
 #include <cstring>
 #include <time.h>
+#include <algorithm>
+
+#include <stdint.h>
+#include <limits.h>
 
 // OpenNN includes
 
@@ -28,26 +32,27 @@ using namespace OpenNN;
 
 int main(void)
 {
+
     try
     {
         std::cout << "OpenNN. Blank Application." << std::endl;
 
-        srand((unsigned)time(NULL));
+        srand((unsigned int)time(NULL));
 
         return(0);
     }
-
     catch(std::exception& e)
     {
         std::cout << e.what() << std::endl;
 
         return(1);
     }
+
 }  
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) 2005-2016 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

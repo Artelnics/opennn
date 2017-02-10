@@ -136,6 +136,40 @@ bool BoundingLayer::is_empty(void) const
    }
 }
 
+// const BoundingMethod& get_bounding_method(void) const method
+
+/// Returns the method used for bounding layer.
+
+const BoundingLayer::BoundingMethod& BoundingLayer::get_bounding_method(void) const
+{
+    return(bounding_method);
+}
+
+// std::string write_bounding_method(void) const method
+
+/// Returns a string with the name of the method used for bounding layer.
+
+std::string BoundingLayer::write_bounding_method(void) const
+{
+    if(bounding_method == Bounding)
+    {
+        return("Bounding");
+    }
+    else if(bounding_method == NoBounding)
+    {
+        return("NoBounding");
+    }
+    else
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "std::string write_bounding_method(void) const method.\n"
+               << "Unknown bounding method.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+}
 
 // size_t get_bounding_neurons_number(void) const method
 
@@ -262,6 +296,8 @@ Vector< Vector<double>* > BoundingLayer::get_bounds(void)
 
 void BoundingLayer::set(void)
 {
+   bounding_method = NoBounding;
+
    lower_bounds.set();
    upper_bounds.set();
 
@@ -311,6 +347,42 @@ void BoundingLayer::set(const BoundingLayer& other_bounding_layer)
    display = other_bounding_layer.display;
 }
 
+// void set_boinding_method(const BoundingMethod&) method
+
+/// Sets a new bounding method.
+/// @param new_method New bounding method.
+
+void BoundingLayer::set_bounding_method(const BoundingMethod& new_method)
+{
+    bounding_method = new_method;
+}
+
+// void set_boinding_method(const std::string&) method
+
+/// Sets a new bounding method.
+/// @param new_method_string New bounding method string.
+
+void BoundingLayer::set_bounding_method(const std::string& new_method_string)
+{
+    if(new_method_string == "NoBounding")
+    {
+        bounding_method = NoBounding;
+    }
+    else if(new_method_string == "Bounding")
+    {
+        bounding_method = Bounding;
+    }
+    else
+    {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "void set_bounding_method(const std::string&) method.\n"
+               << "Unknown bounding method: " << new_method_string << ".\n";
+
+        throw std::logic_error(buffer.str());
+    }
+}
 
 // void set_lower_bound(const Vector<double>&) method
 
@@ -575,6 +647,15 @@ void BoundingLayer::initialize_random(void)
 
    lower_bounds.randomize_uniform(random_vector[0], random_vector[1]);
    upper_bounds.randomize_uniform(random_vector[2], random_vector[3]);
+
+   if(rand()%2)
+   {
+       set_bounding_method("Bounding");
+   }
+   else
+   {
+       set_bounding_method("NoBounding");
+   }
 }
 
 
@@ -606,7 +687,26 @@ Vector<double> BoundingLayer::calculate_outputs(const Vector<double>& inputs) co
 
    #endif
 
-   return(inputs.calculate_lower_upper_bounded(lower_bounds, upper_bounds));
+   if (bounding_method == NoBounding)
+   {
+       return(inputs);
+   }
+   else if (bounding_method == Bounding)
+   {
+       return(inputs.calculate_lower_upper_bounded(lower_bounds, upper_bounds));
+   }
+   else
+   {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: BoundingLayer class.\n"
+              << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
+              << "Unknown bounding method.\n";
+
+       throw std::logic_error(buffer.str());
+
+   }
+
 }  
 
 
@@ -740,17 +840,26 @@ Vector< Matrix<double> > BoundingLayer::arrange_Hessian_form(const Vector<double
 
 std::string BoundingLayer::write_expression(const Vector<std::string>& inputs_name, const Vector<std::string>& outputs_name) const
 {
-   std::stringstream expression;
-   
-   const size_t bounding_neurons_number = get_bounding_neurons_number();
+    std::ostringstream buffer;
 
-   for(size_t i = 0; i < bounding_neurons_number; i++)
+   buffer.precision(10);
+
+   if (bounding_method == Bounding)
    {
-      expression << outputs_name[i] << " < " << lower_bounds[i] << " ? " << lower_bounds[i] << " : " << inputs_name[i] << "\n";      
-      expression << outputs_name[i] << " > " << upper_bounds[i] << " ? " << upper_bounds[i] << " : " << inputs_name[i] << "\n";      
+       const size_t bounding_neurons_number = get_bounding_neurons_number();
+
+       for(size_t i = 0; i < bounding_neurons_number; i++)
+       {
+           buffer << outputs_name[i] << " = max(" << lower_bounds[i] << ", " << inputs_name[i] << ")\n";
+           buffer << outputs_name[i] << " = min(" << upper_bounds[i] << ", " << inputs_name[i] << ")\n";
+       }
+   }
+   else
+   {
+       buffer << "";
    }
 
-   return(expression.str());
+   return(buffer.str());
 }
 
 
@@ -778,51 +887,94 @@ std::string BoundingLayer::to_string(void) const
 
 tinyxml2::XMLDocument* BoundingLayer::to_XML(void) const
 {
-   tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   std::ostringstream buffer;
+    std::ostringstream buffer;
 
-   tinyxml2::XMLElement* bounding_layer_element = document->NewElement("BoundingLayer");
+    tinyxml2::XMLElement* bounding_layer_element = document->NewElement("BoundingLayer");
 
-   document->InsertFirstChild(bounding_layer_element);
+    document->InsertFirstChild(bounding_layer_element);
 
-   // Lower bounds
+    // Scaling neurons number
 
-   {
-      tinyxml2::XMLElement* element = document->NewElement("LowerBounds");
-      bounding_layer_element->LinkEndChild(element);
+    tinyxml2::XMLElement* size_element = document->NewElement("BoundingNeuronsNumber");
+    bounding_layer_element->LinkEndChild(size_element);
 
-      buffer.str("");
-      buffer << lower_bounds;
+    const size_t bounding_neurons_number = get_bounding_neurons_number();
 
-      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+    buffer.str("");
+    buffer << bounding_neurons_number;
 
-   // Upper bounds
+    tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
+    size_element->LinkEndChild(size_text);
 
-   {
-      tinyxml2::XMLElement* element = document->NewElement("UpperBounds");
-      bounding_layer_element->LinkEndChild(element);
+    for(size_t i = 0; i < bounding_neurons_number; i++)
+    {
+        tinyxml2::XMLElement* item_element = document->NewElement("Item");
+        item_element->SetAttribute("Index", (unsigned)i+1);
 
-      buffer.str("");
-      buffer << upper_bounds;
+        bounding_layer_element->LinkEndChild(item_element);
 
-      tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
+        // Lower bound
 
-   // Display
-   {
-      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-      bounding_layer_element->LinkEndChild(display_element);
+        tinyxml2::XMLElement* lower_bound_element = document->NewElement("LowerBound");
+        item_element->LinkEndChild(lower_bound_element);
 
-      buffer.str("");
-      buffer << display;
+        buffer.str("");
+        buffer << lower_bounds[i];
 
-      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-      display_element->LinkEndChild(display_text);
-   }
+        tinyxml2::XMLText* lower_bound_text = document->NewText(buffer.str().c_str());
+        lower_bound_element->LinkEndChild(lower_bound_text);
+
+        // Upper bound
+
+        tinyxml2::XMLElement* upper_bound_element = document->NewElement("UpperBound");
+        item_element->LinkEndChild(upper_bound_element);
+
+        buffer.str("");
+        buffer << upper_bounds[i];
+
+        tinyxml2::XMLText* upper_bound_text = document->NewText(buffer.str().c_str());
+        upper_bound_element->LinkEndChild(upper_bound_text);
+    }
+
+    // Bounding method
+
+    tinyxml2::XMLElement* method_element = document->NewElement("UseBoundingLayer");
+    bounding_layer_element->LinkEndChild(method_element);
+
+    if (bounding_method == Bounding)
+    {
+        buffer.str("");
+        buffer << 1;
+    }
+    else if (bounding_method == NoBounding)
+    {
+        buffer.str("");
+        buffer << 0;
+    }
+    else
+    {
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+               << "Unknown bounding method type.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    tinyxml2::XMLText* method_text = document->NewText(buffer.str().c_str());
+    method_element->LinkEndChild(method_text);
+//   // Display
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      bounding_layer_element->LinkEndChild(display_element);
+
+//      buffer.str("");
+//      buffer << display;
+
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
 
    return(document);
 }
@@ -838,44 +990,92 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
    file_stream.OpenElement("BoundingLayer");
 
-   // Lower bounds
+   // Bounding neurons number
 
+   file_stream.OpenElement("BoundingNeuronsNumber");
+
+   const size_t bounding_neurons_number = get_bounding_neurons_number();
+
+   buffer.str("");
+   buffer << bounding_neurons_number;
+
+   file_stream.PushText(buffer.str().c_str());
+
+   file_stream.CloseElement();
+
+   for(size_t i = 0; i < bounding_neurons_number; i++)
    {
-      file_stream.OpenElement("LowerBounds");
+       file_stream.OpenElement("Item");
 
-      buffer.str("");
-      buffer << lower_bounds;
+       file_stream.PushAttribute("Index", (unsigned)i+1);
 
-      file_stream.PushText(buffer.str().c_str());
+       // Lower bound
 
-      file_stream.CloseElement();
+       file_stream.OpenElement("LowerBound");
+
+       buffer.str("");
+       buffer << lower_bounds[i];
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+
+       // Upper bound
+
+       file_stream.OpenElement("UpperBound");
+
+       buffer.str("");
+       buffer << upper_bounds[i];
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+
+
+       file_stream.CloseElement();
    }
 
-   // Upper bounds
+   // Bounding method
 
+   file_stream.OpenElement("UseBoundingLayer");
+
+   if (bounding_method == Bounding)
    {
-      file_stream.OpenElement("UpperBounds");
+       buffer.str("");
+       buffer << 1;
+   }
+   else if (bounding_method == NoBounding)
+   {
+       buffer.str("");
+       buffer << 0;
+   }
+   else
+   {
+       file_stream.CloseElement();
 
-      buffer.str("");
-      buffer << upper_bounds;
+       buffer << "OpenNN Exception: BoundingLayer class.\n"
+              << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
+              << "Unknown bounding method type.\n";
 
-      file_stream.PushText(buffer.str().c_str());
-
-      file_stream.CloseElement();
+       throw std::logic_error(buffer.str());
    }
 
-   // Display
+   file_stream.PushText(buffer.str().c_str());
 
-   {
-      file_stream.OpenElement("Display");
+   file_stream.CloseElement();
 
-      buffer.str("");
-      buffer << display;
+//   // Display
 
-      file_stream.PushText(buffer.str().c_str());
+//   {
+//      file_stream.OpenElement("Display");
 
-      file_stream.CloseElement();
-   }
+//      buffer.str("");
+//      buffer << display;
+
+//      file_stream.PushText(buffer.str().c_str());
+
+//      file_stream.CloseElement();
+//   }
 
    file_stream.CloseElement();
 }
@@ -888,6 +1088,117 @@ void BoundingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
+    std::ostringstream buffer;
+
+    const tinyxml2::XMLElement* bounding_layer_element = document.FirstChildElement("BoundingLayer");
+
+    if(!bounding_layer_element)
+    {
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "BoundingLayer element is NULL.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    // Bounding neurons number
+
+    const tinyxml2::XMLElement* bounding_neurons_number_element = bounding_layer_element->FirstChildElement("BoundingNeuronsNumber");
+
+    if(!bounding_neurons_number_element)
+    {
+        buffer << "OpenNN Exception: BoundingLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "BoundingNeuronsNumber element is NULL.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+
+    const size_t bounding_neurons_number = atoi(bounding_neurons_number_element->GetText());
+
+    set(bounding_neurons_number);
+
+    unsigned index = 0; // size_t does not work
+
+    const tinyxml2::XMLElement* start_element = bounding_neurons_number_element;
+
+    for(size_t i = 0; i < lower_bounds.size(); i++)
+    {
+        const tinyxml2::XMLElement* item_element = start_element->NextSiblingElement("Item");
+        start_element = item_element;
+
+        if(!item_element)
+        {
+            buffer << "OpenNN Exception: BoundingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
+                   << "Item " << i+1 << " is NULL.\n";
+
+            throw std::logic_error(buffer.str());
+        }
+
+        item_element->QueryUnsignedAttribute("Index", &index);
+
+        if(index != i+1)
+        {
+            buffer << "OpenNN Exception: BoundingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLElement*) method.\n"
+                   << "Index " << index << " is not correct.\n";
+
+            throw std::logic_error(buffer.str());
+        }
+
+        // Lower bound
+
+        const tinyxml2::XMLElement* lower_bound_element = item_element->FirstChildElement("LowerBound");
+
+        if(lower_bound_element)
+        {
+            if(lower_bound_element->GetText())
+            {
+                lower_bounds[index-1] = atof(lower_bound_element->GetText());
+            }
+        }
+
+        // Upper bound
+
+        const tinyxml2::XMLElement* upper_bound_element = item_element->FirstChildElement("UpperBound");
+
+        if(upper_bound_element)
+        {
+            if(upper_bound_element->GetText())
+            {
+                upper_bounds[index-1] = atof(upper_bound_element->GetText());
+            }
+        }
+    }
+
+    // Use boundign layer
+    {
+        const tinyxml2::XMLElement* use_bounding_layer_element = bounding_layer_element->FirstChildElement("UseBoundingLayer");
+
+        if(use_bounding_layer_element)
+        {
+            size_t new_method = atoi(use_bounding_layer_element->GetText());
+
+            if (new_method == 1)
+            {
+                bounding_method = Bounding;
+            }
+            else if (new_method == 0)
+            {
+                bounding_method = NoBounding;
+            }
+            else
+            {
+                buffer << "OpenNN Exception: BoundingLayer class.\n"
+                       << "void from_XML(const tinyxml2::XMLElement*) method.\n"
+                       << "Unknown bounding method.\n";
+
+                throw std::logic_error(buffer.str());
+            }
+        }
+    }
+
       // Control sentence 
 //      {
 //         const char* text = bounding_layer_element->GetText();     
@@ -906,74 +1217,74 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 //         }
 //      }
 
-  // Lower bounds
-  {
-     const tinyxml2::XMLElement* lower_bounds_element = document.FirstChildElement("LowerBounds");
+//  // Lower bounds
+//  {
+//     const tinyxml2::XMLElement* lower_bounds_element = document.FirstChildElement("LowerBounds");
 
-     if(lower_bounds_element)
-     {
-        const char* lower_bounds_text = lower_bounds_element->GetText();
+//     if(lower_bounds_element)
+//     {
+//        const char* lower_bounds_text = lower_bounds_element->GetText();
 
-        if(lower_bounds_text)
-        {
-           Vector<double> new_lower_bounds;
-           new_lower_bounds.parse(lower_bounds_text);
+//        if(lower_bounds_text)
+//        {
+//           Vector<double> new_lower_bounds;
+//           new_lower_bounds.parse(lower_bounds_text);
 
-           try
-           {
-              set_lower_bounds(new_lower_bounds);
-           }
-           catch(const std::logic_error& e)
-           {
-              std::cout << e.what() << std::endl;
-           }
-        }
-     }
-  }
+//           try
+//           {
+//              set_lower_bounds(new_lower_bounds);
+//           }
+//           catch(const std::logic_error& e)
+//           {
+//              std::cout << e.what() << std::endl;
+//           }
+//        }
+//     }
+//  }
 
-  // Upper bounds
-  {
-     const tinyxml2::XMLElement* upper_bounds_element = document.FirstChildElement("UpperBounds");
+//  // Upper bounds
+//  {
+//     const tinyxml2::XMLElement* upper_bounds_element = document.FirstChildElement("UpperBounds");
 
-     if(upper_bounds_element)
-     {
-        const char* upper_bounds_text = upper_bounds_element->GetText();
+//     if(upper_bounds_element)
+//     {
+//        const char* upper_bounds_text = upper_bounds_element->GetText();
 
-        if(upper_bounds_text)
-        {
-           Vector<double> new_upper_bounds;
-           new_upper_bounds.parse(upper_bounds_text);
+//        if(upper_bounds_text)
+//        {
+//           Vector<double> new_upper_bounds;
+//           new_upper_bounds.parse(upper_bounds_text);
 
-           try
-           {
-              set_upper_bounds(new_upper_bounds);
-           }
-           catch(const std::logic_error& e)
-           {
-              std::cout << e.what() << std::endl;
-           }
-        }
-     }
-  }
+//           try
+//           {
+//              set_upper_bounds(new_upper_bounds);
+//           }
+//           catch(const std::logic_error& e)
+//           {
+//              std::cout << e.what() << std::endl;
+//           }
+//        }
+//     }
+//  }
 
-  // Display
-  {
-     const tinyxml2::XMLElement* display_element = document.FirstChildElement("Display");
+//  // Display
+//  {
+//     const tinyxml2::XMLElement* display_element = document.FirstChildElement("Display");
 
-     if(display_element)
-     {
-        std::string new_display_string = display_element->GetText();
+//     if(display_element)
+//     {
+//        std::string new_display_string = display_element->GetText();
 
-        try
-        {
-           set_display(new_display_string != "0");
-        }
-        catch(const std::logic_error& e)
-        {
-           std::cout << e.what() << std::endl;
-        }
-     }
-  }
+//        try
+//        {
+//           set_display(new_display_string != "0");
+//        }
+//        catch(const std::logic_error& e)
+//        {
+//           std::cout << e.what() << std::endl;
+//        }
+//     }
+//  }
 }
 
 }

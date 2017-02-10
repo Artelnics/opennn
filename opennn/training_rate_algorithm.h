@@ -27,7 +27,7 @@
 // OpenNN includes
 
 #include "neural_network.h"
-#include "performance_functional.h"
+#include "loss_index.h"
 
 // TinyXml includes
 
@@ -56,7 +56,7 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit TrainingRateAlgorithm(PerformanceFunctional*);
+   explicit TrainingRateAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
 
@@ -120,6 +120,9 @@ public:
               return(false);
            }
        }
+
+       /// Returns true if the interval (A,B) is constant,
+       /// and false otherwise.
 
        inline bool is_constant(void) const
        {
@@ -200,9 +203,9 @@ public:
 
    // Get methods
 
-   PerformanceFunctional* get_performance_functional_pointer(void) const;
+   LossIndex* get_loss_index_pointer(void) const;
 
-   bool has_performance_functional(void) const;
+   bool has_loss_index(void) const;
 
    // Training operators
 
@@ -225,9 +228,9 @@ public:
    // Set methods
 
    void set(void);
-   void set(PerformanceFunctional*);
+   void set(LossIndex*);
 
-   void set_performance_functional_pointer(PerformanceFunctional*);
+   void set_loss_index_pointer(LossIndex*);
 
    // Training operators
 
@@ -274,9 +277,9 @@ protected:
 
    // FIELDS
 
-   /// Pointer to an external performance functional object.
+   /// Pointer to an external loss functional object.
 
-   PerformanceFunctional* performance_functional_pointer;
+   LossIndex* loss_index_pointer;
 
 
    // TRAINING OPERATORS

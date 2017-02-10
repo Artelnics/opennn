@@ -38,7 +38,7 @@ namespace OpenNN
 /// This class represents the mean squared error term.
 /// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
 /// This functional is used in data modeling problems, such as function regression, 
-/// pattern recognition and time series prediction.
+/// classification and time series prediction.
 
 class MeanSquaredError : public ErrorTerm
 {
@@ -96,8 +96,8 @@ public:
 
    Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
-   FirstOrderPerformance calculate_first_order_performance(void) const;
-   SecondOrderPerformance calculate_second_order_performance(void) const;
+   FirstOrderPerformance calculate_first_order_loss(void) const;
+   SecondOrderPerformance calculate_second_order_loss(void) const;
 
    // Objective terms methods
 
@@ -108,7 +108,7 @@ public:
 
    FirstOrderTerms calculate_first_order_terms(void) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 

@@ -59,9 +59,9 @@ void NeuralParametersNormTest::test_destructor(void)
 }
 
 
-void NeuralParametersNormTest::test_calculate_performance(void)   
+void NeuralParametersNormTest::test_calculate_loss(void)   
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 
    NeuralNetwork nn;
    Vector<double> neural_parameters;
@@ -70,16 +70,16 @@ void NeuralParametersNormTest::test_calculate_performance(void)
 
    Vector<double> parameters;
 
-   double performance;
+   double loss;
 
    // Test
 
    nn.set(1, 1);
    nn.initialize_parameters(0.0);
 
-   performance = npn.calculate_regularization();
+   loss = npn.calculate_regularization();
 
-   assert_true(performance == 0.0, LOG);
+   assert_true(loss == 0.0, LOG);
 
    // Test
 
@@ -92,15 +92,15 @@ void NeuralParametersNormTest::test_calculate_performance(void)
 }
 
 /*
-void NeuralParametersNormTest::test_calculate_selection_performance(void)
+void NeuralParametersNormTest::test_calculate_selection_loss(void)
 {
-   message += "test_calculate_selection_performance\n";
+   message += "test_calculate_selection_loss\n";
 
    NeuralNetwork nn;
 
    NeuralParametersNorm npn(&nn);
 
-   double selection_performance;
+   double selection_loss;
 
    // Test
 
@@ -108,9 +108,9 @@ void NeuralParametersNormTest::test_calculate_selection_performance(void)
 
    nn.initialize_parameters(0.0);
 
-   selection_performance = npn.calculate_selection_performance();
+   selection_loss = npn.calculate_selection_loss();
    
-   assert_true(selection_performance == 0.0, LOG);
+   assert_true(selection_loss == 0.0, LOG);
 }
 */
 
@@ -274,7 +274,7 @@ void NeuralParametersNormTest::test_calculate_Hessian(void)
 //   parameters = nn.arrange_parameters();
 
 //   Hessian = npn.calculate_Hessian();
-//   numerical_Hessian = nd.calculate_Hessian(npn, &NeuralParametersNorm::calculate_performance, parameters);
+//   numerical_Hessian = nd.calculate_Hessian(npn, &NeuralParametersNorm::calculate_loss, parameters);
 //   error = (Hessian - numerical_Hessian).calculate_absolute_value();
 
 //   std::cout << error << std::endl;
@@ -342,8 +342,8 @@ void NeuralParametersNormTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();   
-//   test_calculate_selection_performance();
+   test_calculate_loss();   
+//   test_calculate_selection_loss();
 
    test_calculate_gradient();
 

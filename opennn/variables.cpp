@@ -16,6 +16,7 @@
 #include "variables.h"
 
 #include<limits>
+
 #include<climits>
 
 
@@ -704,6 +705,57 @@ Vector<size_t> Variables::arrange_unused_indices(void) const
 }
 
 
+// Vector<int> arrange_inputs_indices_int(void) const method
+
+/// Returns the indices of the input variables.
+
+Vector<int> Variables::arrange_inputs_indices_int(void) const
+{
+   const size_t variables_number = get_variables_number();
+   const size_t inputs_number = count_inputs_number();
+
+   Vector<int> inputs_indices(inputs_number);
+
+   size_t index = 0;
+
+   for(size_t i = 0; i < variables_number; i++)
+   {
+      if(items[i].use == Input)
+      {
+         inputs_indices[index] = (int)i;
+         index++;
+      }
+   }
+
+   return(inputs_indices);
+}
+
+
+// Vector<int> arrange_targets_indices_int(void) const method
+
+/// Returns the indices of the target variables.
+
+Vector<int> Variables::arrange_targets_indices_int(void) const
+{
+   const size_t variables_number = get_variables_number();
+   const size_t targets_number = count_targets_number();
+
+   Vector<int> targets_indices(targets_number);
+
+   size_t index = 0;
+
+   for(size_t i = 0; i < variables_number; i++)
+   {
+      if(items[i].use == Target)
+      {
+         targets_indices[index] = (int)i;
+         index++;
+      }
+   }
+
+   return(targets_indices);
+}
+
 // Vector<std::string> arrange_names(void) const method
 
 /// Returns the names of all the variables in the data set.
@@ -753,6 +805,34 @@ Vector<std::string> Variables::arrange_used_names(void) const
 }
 
 
+// Vector<std::string> arrange_used_units(void) const method
+
+/// Returns the units of the used variables in the data set.
+
+Vector<std::string> Variables::arrange_used_units(void) const
+{
+   const size_t variables_number = get_variables_number();
+
+   const Vector<size_t> used_variables_indices = arrange_used_indices();
+
+   const size_t used_variables_number = count_used_variables_number();
+
+   Vector<std::string> units(used_variables_number);
+
+   size_t index = 0;
+
+   for(size_t i = 0; i < variables_number; i++)
+   {
+       if(used_variables_indices.contains(i))
+       {
+           units[index] = items[i].units;
+
+           index++;
+       }
+   }
+
+   return(units);
+}
 // std::string& get_name(size_t) method
 
 /// Returns the name of a single variable in the data set.
@@ -1392,6 +1472,81 @@ void Variables::set_unuse(void)
     }
 }
 
+// void set_input_indices(const Vector<size_t>&) method
+
+/// Sets the variables of the given indices as inputs.
+/// @param input_indices Indices of the variables to set as intputs.
+
+void Variables::set_input_indices(const Vector<size_t>& input_indices)
+{
+    const size_t indices_size = input_indices.size();
+
+    for(size_t i = 0; i < indices_size; i++)
+    {
+        set_use(input_indices[i], Input);
+    }
+}
+
+// void set_target_indices(const Vector<size_t>&) method
+
+/// Sets the variables of the given indices as inputs.
+/// @param target_indices Indices of the variables to set as targets.
+
+void Variables::set_target_indices(const Vector<size_t>& target_indices)
+{
+    const size_t targets_size = target_indices.size();
+
+    for(size_t i = 0; i < targets_size; i++)
+    {
+        set_use(target_indices[i], Target);
+    }
+}
+
+// void set_input_indices(const Vector<size_t>&) method
+
+/// Sets the variables of the given indices as inputs.
+/// @param input_indices Indices of the variables to set as intputs.
+
+void Variables::set_input_indices(const Vector<int>& input_indices)
+{
+    const size_t indices_size = input_indices.size();
+
+    for(size_t i = 0; i < indices_size; i++)
+    {
+        set_use(input_indices[i], Input);
+    }
+}
+
+// void set_target_indices(const Vector<size_t>&) method
+
+/// Sets the variables of the given indices as targets.
+/// @param target_indices Indices of the variables to set as targets.
+
+void Variables::set_target_indices(const Vector<int>& target_indices)
+{
+    const size_t targets_size = target_indices.size();
+
+    for(size_t i = 0; i < targets_size; i++)
+    {
+        set_use(target_indices[i], Target);
+    }
+}
+
+// void set_unuse_indices(const Vector<size_t>&) method
+
+/// Sets the variables of the given indices as unused.
+/// @param unused_indices Indices of the variables to set as unused.
+
+void Variables::set_unuse_indices(const Vector<size_t>& unused_indices)
+{
+    const size_t unused_size = unused_indices.size();
+
+    for(size_t i = 0; i < unused_size; i++)
+    {
+        set_use(unused_indices[i], Unused);
+    }
+}
+
 // void set_default_uses(void) method
 
 /// Sets the default uses for the input and target variables:
@@ -1789,29 +1944,29 @@ void Variables::convert_time_series(const size_t& lags_number)
 }
 
 
-// void convert_autoassociation(void) method
+// void convert_association(void) method
 
-/// Arranges the variables in a proper format for autoassociation.
+/// Arranges the variables in a proper format for association.
 /// The number of variables is doubled.
 /// The first half will be set as inputs, and the second half as targets.
 
-void Variables::convert_autoassociation(void)
+void Variables::convert_association(void)
 {
     const size_t variables_number = get_variables_number();
 
     set_input();
 
-    Vector<Item> autoassociation_items(variables_number);
+    Vector<Item> association_items(variables_number);
 
     for(size_t i = 0; i < variables_number; i++)
     {
-        autoassociation_items[i].name = prepend("autoassociation_", items[i].name);
-        autoassociation_items[i].units = items[i].units;
-        autoassociation_items[i].description = items[i].description;
-        autoassociation_items[i].use = Variables::Target;
+        association_items[i].name = prepend("association_", items[i].name);
+        association_items[i].units = items[i].units;
+        association_items[i].description = items[i].description;
+        association_items[i].use = Variables::Target;
     }
 
-    set_items(items.assemble(autoassociation_items));
+    set_items(items.assemble(association_items));
 }
 
 
@@ -1955,6 +2110,9 @@ tinyxml2::XMLDocument* Variables::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the variables object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void Variables::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

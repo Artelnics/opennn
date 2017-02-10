@@ -24,9 +24,12 @@
 #include <cmath>
 #include <ctime>
 
+#ifdef __OPENNN_MPI__
+#include <mpi.h>
+#endif
 // OpenNN includes
 
-#include "performance_functional.h"
+#include "loss_index.h"
 
 #include "training_algorithm.h"
 
@@ -66,7 +69,7 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit TrainingStrategy(PerformanceFunctional*);
+   explicit TrainingStrategy(LossIndex*);
 
    // XML CONSTRUCTOR
 
@@ -166,7 +169,7 @@ public:
 
    // Checking methods
 
-   void check_performance_functional(void) const;
+   void check_loss_index(void) const;
    void check_training_algorithms(void) const;
 
    // Initialization methods
@@ -175,9 +178,9 @@ public:
 
    // Get methods
 
-   PerformanceFunctional* get_performance_functional_pointer(void) const;
+   LossIndex* get_loss_index_pointer(void) const;
 
-   bool has_performance_functional(void) const;
+   bool has_loss_index(void) const;
 
    RandomSearch* get_random_search_pointer(void) const;
    EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer(void) const;
@@ -206,10 +209,14 @@ public:
    // Set methods
 
    void set(void);
-   void set(PerformanceFunctional*);
+   void set(LossIndex*);
    virtual void set_default(void);
 
-   void set_performance_functional_pointer(PerformanceFunctional*);
+#ifdef __OPENNN_MPI__
+   void set_MPI(LossIndex*, const TrainingStrategy*);
+#endif
+
+   void set_loss_index_pointer(LossIndex*);
 
    void set_initialization_type(const InitializationType&);
    void set_main_type(const MainType&);
@@ -229,7 +236,7 @@ public:
 
    // Training methods
 
-   // This method trains a neural network which has a performance functional associated. 
+   // This method trains a neural network which has a loss functional associated. 
 
    void initialize_layers_autoencoding(void);
 
@@ -252,9 +259,9 @@ public:
 
 protected:
 
-   /// Pointer to an external performance functional object.
+   /// Pointer to an external loss functional object.
 
-   PerformanceFunctional* performance_functional_pointer;
+   LossIndex* loss_index_pointer;
 
    /// Pointer to a random search object to be used for initialization in the training strategy.
 

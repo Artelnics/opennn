@@ -26,7 +26,7 @@
 
 // OpenNN includes
 
-#include "performance_functional.h"
+#include "loss_index.h"
 
 // TinyXml includes
 
@@ -49,7 +49,7 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit TrainingAlgorithm(PerformanceFunctional*);
+   explicit TrainingAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
 
@@ -67,6 +67,12 @@ public:
 
     virtual bool operator == (const TrainingAlgorithm&) const;
 
+    // ENUMERATIONS
+
+    /// Enumeration of all possibles condition of stop for the algorithms.
+
+    enum StoppingCondition{MinimumParametersIncrementNorm, MinimumPerformanceIncrease, PerformanceGoal, GradientNormGoal,
+                           MaximumSelectionPerformanceDecreases, MaximumIterationsNumber, MaximumTime};
 
    // STRUCTURES
 
@@ -85,6 +91,12 @@ public:
        {
 
        }
+
+       std::string write_stopping_condition(void) const;
+
+       /// Stopping condition of the algorithm.
+
+       StoppingCondition stopping_condition;
 
       /// Returns a string representation of the results structure. 
 
@@ -110,9 +122,9 @@ public:
 
    // Get methods
 
-   PerformanceFunctional* get_performance_functional_pointer(void) const;
+   LossIndex* get_loss_index_pointer(void) const;
 
-   bool has_performance_functional(void) const;
+   bool has_loss_index(void) const;
 
    // Utilities
 
@@ -127,10 +139,10 @@ public:
    // Set methods
 
    void set(void);
-   void set(PerformanceFunctional*);
+   void set(LossIndex*);
    virtual void set_default(void);
 
-   virtual void set_performance_functional_pointer(PerformanceFunctional*);
+   virtual void set_loss_index_pointer(LossIndex*);
 
    void set_display(const bool&);
 
@@ -143,7 +155,7 @@ public:
 
    virtual void check(void) const;
 
-   /// Trains a neural network which has a performance functional associated. 
+   /// Trains a neural network which has a loss functional associated. 
 
    virtual TrainingAlgorithmResults* perform_training(void) = 0;
 
@@ -171,9 +183,9 @@ protected:
 
    // FIELDS
 
-   /// Pointer to a performance functional for a multilayer perceptron object.
+   /// Pointer to a loss functional for a multilayer perceptron object.
 
-   PerformanceFunctional* performance_functional_pointer;
+   LossIndex* loss_index_pointer;
 
    // UTILITIES
 

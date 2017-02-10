@@ -35,10 +35,10 @@
 namespace OpenNN
 {
 
-/// This class represents the outputs integrals performance term. 
+/// This class represents the outputs integrals error term. 
 /// It is defined as the weighted sum of the integrals of the neural network outputs.
 /// The neural network here must have only one input. 
-/// This performance term might be used in optimal control as an objective or a regularization terms. 
+/// This error term might be used in optimal control as an objective or a regularization terms. 
 
 class OutputsIntegrals : public RegularizationTerm
 {
@@ -93,7 +93,7 @@ public:
 
    Matrix<double> calculate_Hessian(void) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 

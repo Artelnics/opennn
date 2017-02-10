@@ -78,7 +78,7 @@ public:
 
    void check(void) const;
 
-   // Performance term performance methods
+   // Error term loss methods
 
    double calculate_error(void) const;
    double calculate_error(const Vector<double>&) const;
@@ -88,7 +88,10 @@ public:
 
    Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
-   std::string write_performance_term_type(void) const;
+   Vector<double> calculate_gradient(void) const;
+   Vector<double> calculate_gradient(const double&, const double&) const;
+
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 

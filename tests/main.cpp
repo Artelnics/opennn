@@ -28,6 +28,28 @@ using namespace OpenNN;
 int main(void)
 {
 
+#ifdef __OPENNN_MPI__
+
+    MPI_Init(NULL, NULL);
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if(rank == 0)
+    {
+        std::cout << "Tests do not work with MPI\n";
+    }
+
+    MPI_Finalize();
+
+    return(1);
+
+#endif
+
+
    std::cout <<
    "Open Neural Networks Library. Test Suite Application.\n"
    "Write test:\n"
@@ -51,9 +73,8 @@ int main(void)
    "conditions_layer\n"
    "bounding_layer\n"
    "sum_squared_error\n"
-   "solutions_error\n"
    "error_term\n"
-   "performance_functional\n"
+   "loss_index\n"
    "outputs_integrals\n"
    "normalized_squared_error\n"
    "weighted_squared_error\n"
@@ -431,14 +452,14 @@ int main(void)
         tests_passed_count += test_outputs_integrals.get_tests_passed_count();
         tests_failed_count += test_outputs_integrals.get_tests_failed_count();
       }
-      else if(test == "performance_functional")
+      else if(test == "loss_index")
       {
-        PerformanceFunctionalTest performance_functional_test;
-        performance_functional_test.run_test_case();
-        message += performance_functional_test.get_message();
-        tests_count += performance_functional_test.get_tests_count();
-        tests_passed_count += performance_functional_test.get_tests_passed_count();
-        tests_failed_count += performance_functional_test.get_tests_failed_count();
+        LossIndexTest loss_index_test;
+        loss_index_test.run_test_case();
+        message += loss_index_test.get_message();
+        tests_count += loss_index_test.get_tests_count();
+        tests_passed_count += loss_index_test.get_tests_passed_count();
+        tests_failed_count += loss_index_test.get_tests_failed_count();
       }
 
       //
@@ -852,14 +873,14 @@ int main(void)
 
           // P E R F O R M A N C E   F U N C T I O N A L   T E S T S
 
-          // performance term
+          // error term
 
-          ErrorTermTest performance_term_test;
-          performance_term_test.run_test_case();
-          message += performance_term_test.get_message();
-          tests_count += performance_term_test.get_tests_count();
-          tests_passed_count += performance_term_test.get_tests_passed_count();
-          tests_failed_count += performance_term_test.get_tests_failed_count();
+          ErrorTermTest error_term_test;
+          error_term_test.run_test_case();
+          message += error_term_test.get_message();
+          tests_count += error_term_test.get_tests_count();
+          tests_passed_count += error_term_test.get_tests_passed_count();
+          tests_failed_count += error_term_test.get_tests_failed_count();
 
           // sum squared error
 
@@ -898,6 +919,7 @@ int main(void)
           tests_failed_count += normalized_squared_error_test.get_tests_failed_count();
 
           // minkowski error
+
           MinkowskiErrorTest Minkowski_error_test;
           Minkowski_error_test.run_test_case();
           message += Minkowski_error_test.get_message();
@@ -932,14 +954,14 @@ int main(void)
           tests_passed_count += test_outputs_integrals.get_tests_passed_count();
           tests_failed_count += test_outputs_integrals.get_tests_failed_count();
 
-          // performance functional
+          // loss functional
 
-          PerformanceFunctionalTest performance_functional_test;
-          performance_functional_test.run_test_case();
-          message += performance_functional_test.get_message();
-          tests_count += performance_functional_test.get_tests_count();
-          tests_passed_count += performance_functional_test.get_tests_passed_count();
-          tests_failed_count += performance_functional_test.get_tests_failed_count();
+          LossIndexTest loss_index_test;
+          loss_index_test.run_test_case();
+          message += loss_index_test.get_message();
+          tests_count += loss_index_test.get_tests_count();
+          tests_passed_count += loss_index_test.get_tests_passed_count();
+          tests_failed_count += loss_index_test.get_tests_failed_count();
 
           // T R A I N I N G   S T R A T E G Y   T E S T S
 
@@ -1146,12 +1168,12 @@ int main(void)
 
       if(tests_failed_count == 0)
       {
-	     std::cout << "Test OK" << std::endl;
+         std::cout << "Test OK" << std::endl;
       }
       else
       {
-	     std::cout << "Test NOT OK. " << tests_failed_count << " tests failed" << std::endl;
-      } 
+         std::cout << "Test NOT OK. " << tests_failed_count << " tests failed" << std::endl;
+      }
 
       return(0);
    }

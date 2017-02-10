@@ -165,17 +165,17 @@ void SimulatedAnnealingOrder::set_minimum_temperature(const double& new_minimum_
 }
 
 
-// size_t get_optimal_selection_performance_index(void) const method
+// size_t get_optimal_selection_loss_index(void) const method
 
 /// Return the index of the optimal individual of the history considering the tolerance.
 
-size_t SimulatedAnnealingOrder::get_optimal_selection_performance_index(void) const
+size_t SimulatedAnnealingOrder::get_optimal_selection_loss_index(void) const
 {
     size_t index = 0;
 
     size_t optimal_order = order_history[0];
 
-    double optimum_error = selection_performance_history[0];
+    double optimum_error = selection_loss_history[0];
 
     size_t current_order;
 
@@ -184,7 +184,7 @@ size_t SimulatedAnnealingOrder::get_optimal_selection_performance_index(void) co
     for (size_t i = 1; i < order_history.size(); i++)
     {
         current_order = order_history[i];
-        current_error = selection_performance_history[i];
+        current_error = selection_loss_history[i];
 
         if((fabs(optimum_error-current_error) < tolerance &&
              optimal_order > current_order) ||
@@ -209,15 +209,15 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 {
     SimulatedAnnealingOrderResults* results = new SimulatedAnnealingOrderResults();
 
-    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     size_t optimal_order, current_order;
-    Vector<double> optimum_performance(2);
-    Vector<double> current_order_performance(2);
+    Vector<double> optimum_loss(2);
+    Vector<double> current_order_loss(2);
     Vector<double> optimum_parameters, current_parameters;
 
-    double current_training_performance, current_selection_performance;
+    double current_training_loss, current_selection_loss;
 
     bool end = false;
     size_t iterations = 0;
@@ -241,24 +241,24 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     optimal_order = (size_t)(minimum_order +
                              calculate_random_uniform(0.,1.)*(maximum_order - minimum_order));
-    optimum_performance = perform_model_evaluation(optimal_order);
+    optimum_loss = perform_model_evaluation(optimal_order);
     optimum_parameters = get_parameters_order(optimal_order);
 
-    current_training_performance = optimum_performance[0];
-    current_selection_performance = optimum_performance[1];
+    current_training_loss = optimum_loss[0];
+    current_selection_loss = optimum_loss[1];
 
-    temperature = current_selection_performance;
+    temperature = current_selection_loss;
 
     results->order_data.push_back(optimal_order);
 
-    if(reserve_performance_data)
+    if(reserve_loss_data)
     {
-        results->performance_data.push_back(current_training_performance);
+        results->loss_data.push_back(current_training_loss);
     }
 
-    if(reserve_selection_performance_data)
+    if(reserve_selection_loss_data)
     {
-        results->selection_performance_data.push_back(current_selection_performance);
+        results->selection_loss_data.push_back(current_selection_loss);
     }
 
     if(reserve_parameters_data)
@@ -273,8 +273,8 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
     {
         std::cout << "Initial values : " << std::endl;
         std::cout << "Hidden perceptrons : " << optimal_order << std::endl;
-        std::cout << "Final selection performance : " << optimum_performance[1] << std::endl;
-        std::cout << "Final Training Performance : " << optimum_performance[0] << std::endl;
+        std::cout << "Final selection loss : " << optimum_loss[1] << std::endl;
+        std::cout << "Final Training loss : " << optimum_loss[0] << std::endl;
         std::cout << "Temperature : " << temperature << std::endl;
         std::cout << "Elapsed time : " << elapsed_time << std::endl;
     }
@@ -285,7 +285,8 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         if(optimal_order <= (maximum_order-minimum_order)/3)
         {
             lower_bound = minimum_order;
-        }else
+        }
+        else
         {
             lower_bound = optimal_order - (maximum_order-minimum_order)/3;
         }
@@ -299,26 +300,37 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
             if(random_failures >= 5 && optimal_order != minimum_order)
             {
                 current_order = optimal_order - 1;
-            }else if(random_failures >= 5 && optimal_order != maximum_order)
+            }
+            else if(random_failures >= 5 && optimal_order != maximum_order)
             {
                 current_order = optimal_order + 1;
             }
         }
 
+#ifdef __OPENNN_MPI__
+        int order_int = (int)current_order;
+        MPI_Bcast(&order_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        current_order = order_int;
+#endif
+
         random_failures = 0;
 
-        current_order_performance = perform_model_evaluation(current_order);
-        current_training_performance = current_order_performance[0];
-        current_selection_performance = current_order_performance[1];
+        current_order_loss = perform_model_evaluation(current_order);
+        current_training_loss = current_order_loss[0];
+        current_selection_loss = current_order_loss[1];
         current_parameters = get_parameters_order(current_order);
 
-        boltzmann_probability = std::min(1.0, exp(-(current_selection_performance-optimum_performance[1])/temperature));
+        boltzmann_probability = std::min(1.0, exp(-(current_selection_loss-optimum_loss[1])/temperature));
         random_uniform = calculate_random_uniform(0.,1.);
+
+#ifdef __OPENNN_MPI__
+        MPI_Bcast(&random_uniform, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
 
         if(boltzmann_probability > random_uniform)
         {
             optimal_order = current_order;
-            optimum_performance = current_order_performance;
+            optimum_loss = current_order_loss;
             optimum_parameters = get_parameters_order(optimal_order);
         }
 
@@ -327,14 +339,14 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
         results->order_data.push_back(current_order);
 
-        if(reserve_performance_data)
+        if(reserve_loss_data)
         {
-            results->performance_data.push_back(current_training_performance);
+            results->loss_data.push_back(current_training_loss);
         }
 
-        if(reserve_selection_performance_data)
+        if(reserve_selection_loss_data)
         {
-            results->selection_performance_data.push_back(current_selection_performance);
+            results->selection_loss_data.push_back(current_selection_loss);
         }
 
         if(reserve_parameters_data)
@@ -358,7 +370,8 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
             }
 
             results->stopping_condition = SimulatedAnnealingOrder::MinimumTemperature;
-        }else if(elapsed_time > maximum_time)
+        }
+        else if(elapsed_time > maximum_time)
         {
             end = true;
 
@@ -368,17 +381,19 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
             }
 
             results->stopping_condition = SimulatedAnnealingOrder::MaximumTime;
-        }else if(optimum_performance[1] <= selection_performance_goal)
+        }
+        else if(optimum_loss[1] <= selection_loss_goal)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Selection performance reached." << std::endl;
+                std::cout << "Selection loss reached." << std::endl;
             }
 
-            results->stopping_condition = SimulatedAnnealingOrder::SelectionPerformanceGoal;
-        }else if(iterations >= maximum_iterations_number)
+            results->stopping_condition = SimulatedAnnealingOrder::SelectionLossGoal;
+        }
+        else if(iterations >= maximum_iterations_number)
         {
             end = true;
 
@@ -394,25 +409,25 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
         {
             std::cout << "Iteration : " << iterations << std::endl;
             std::cout << "Hidden neurons number : " << optimal_order << std::endl;
-            std::cout << "Selection performance : " << optimum_performance[1] << std::endl;
-            std::cout << "Training performance : " << optimum_performance[0] << std::endl;
+            std::cout << "Selection loss : " << optimum_loss[1] << std::endl;
+            std::cout << "Training loss : " << optimum_loss[0] << std::endl;
             std::cout << "Current temperature : " << temperature << std::endl;
             std::cout << "Elapsed time : " << elapsed_time << std::endl;
         }
     }
 
-    size_t optimal_index = get_optimal_selection_performance_index();
+    size_t optimal_index = get_optimal_selection_loss_index();
 
     optimal_order = order_history[optimal_index] ;
-    optimum_performance[0] = performance_history[optimal_index];
-    optimum_performance[1] = selection_performance_history[optimal_index];
+    optimum_loss[0] = loss_history[optimal_index];
+    optimum_loss[1] = selection_loss_history[optimal_index];
     optimum_parameters = get_parameters_order(optimal_order);
 
     if(display)
     {
         std::cout << "Optimal order : " << optimal_order << std::endl;
-        std::cout << "Optimum selection performance : " << optimum_performance[1] << std::endl;
-        std::cout << "Corresponding training performance : " << optimum_performance[0] << std::endl;
+        std::cout << "Optimum selection loss : " << optimum_loss[1] << std::endl;
+        std::cout << "Corresponding training loss : " << optimum_loss[0] << std::endl;
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
@@ -421,7 +436,8 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
     if(optimal_order > perceptrons_number)
     {
         multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
-    }else
+    }
+    else
     {
         for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
         {
@@ -431,14 +447,18 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
+#ifdef __OPENNN_MPI__
+    neural_network_pointer->set_multilayer_perceptron_pointer(multilayer_perceptron_pointer);
+#endif
+
     if(reserve_minimal_parameters)
     {
         results->minimal_parameters = optimum_parameters;
     }
 
     results->optimal_order = optimal_order;
-    results->final_performance = optimum_performance[0];
-    results->final_selection_performance = optimum_performance[1];
+    results->final_loss = optimum_loss[0];
+    results->final_selection_loss = optimum_loss[1];
     results->elapsed_time = elapsed_time;
     results->iterations_number = iterations;
 
@@ -447,7 +467,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> SimulatedAnnealingOrder::to_string_matrix(void) const
 {
@@ -501,12 +521,12 @@ Matrix<std::string> SimulatedAnnealingOrder::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Selection performance goal
+   // selection loss goal
 
-   labels.push_back("Selection performance goal");
+   labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_performance_goal;
+   buffer << selection_loss_goal;
 
    values.push_back(buffer.str());
 
@@ -537,21 +557,37 @@ Matrix<std::string> SimulatedAnnealingOrder::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Plot training performance history
+   // Plot training loss history
 
-   labels.push_back("Plot training performance history");
+   labels.push_back("Plot training loss history");
 
    buffer.str("");
-   buffer << reserve_performance_data;
+
+   if(reserve_loss_data)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Plot selection performance history
+   // Plot selection loss history
 
-   labels.push_back("Plot selection performance history");
+   labels.push_back("Plot selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_data;
+
+   if(reserve_selection_loss_data)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -646,13 +682,13 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Selection performance goal
+   // selection loss goal
    {
-   element = document->NewElement("SelectionPerformanceGoal");
+   element = document->NewElement("SelectionLossGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << selection_performance_goal;
+   buffer << selection_loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -694,25 +730,25 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve performance data
+   // Reserve loss data
    {
    element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_performance_data;
+   buffer << reserve_loss_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection performance data
+   // Reserve selection loss data
    {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_data;
+   buffer << reserve_selection_loss_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -723,7 +759,7 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
 //   element = document->NewElement("PerformanceCalculationMethod");
 //   root_element->LinkEndChild(element);
 
-//   text = document->NewText(write_performance_calculation_method().c_str());
+//   text = document->NewText(write_loss_calculation_method().c_str());
 //   element->LinkEndChild(text);
 //   }
 
@@ -768,6 +804,9 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the simulated annealing order object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void SimulatedAnnealingOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -830,12 +869,12 @@ void SimulatedAnnealingOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Selection performance goal
+    // selection loss goal
 
-    file_stream.OpenElement("SelectionPerformanceGoal");
+    file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_performance_goal;
+    buffer << selection_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -874,23 +913,23 @@ void SimulatedAnnealingOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance data
+    // Reserve loss data
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_data;
+    buffer << reserve_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance data
+    // Reserve selection loss data
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_data;
+    buffer << reserve_selection_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -984,11 +1023,11 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_performance_calculation_method = element->GetText();
+           const std::string new_loss_calculation_method = element->GetText();
 
            try
            {
-              set_performance_calculation_method(new_performance_calculation_method);
+              set_loss_calculation_method(new_loss_calculation_method);
            }
            catch(const std::logic_error& e)
            {
@@ -1035,17 +1074,17 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve performance data
+    // Reserve loss data
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
-           const std::string new_reserve_performance_data = element->GetText();
+           const std::string new_reserve_loss_data = element->GetText();
 
            try
            {
-              set_reserve_performance_data(new_reserve_performance_data != "0");
+              set_reserve_loss_data(new_reserve_loss_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -1054,17 +1093,17 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection performance data
+    // Reserve selection loss data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
         if(element)
         {
-           const std::string new_reserve_selection_performance_data = element->GetText();
+           const std::string new_reserve_selection_loss_data = element->GetText();
 
            try
            {
-              set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
+              set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -1111,17 +1150,17 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Selection performance goal
+    // selection loss goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
 
         if(element)
         {
-           const double new_selection_performance_goal = atof(element->GetText());
+           const double new_selection_loss_goal = atof(element->GetText());
 
            try
            {
-              set_selection_performance_goal(new_selection_performance_goal);
+              set_selection_loss_goal(new_selection_loss_goal);
            }
            catch(const std::logic_error& e)
            {

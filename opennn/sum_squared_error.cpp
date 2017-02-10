@@ -184,7 +184,7 @@ void SumSquaredError::check(void) const
 
 // double calculate_error(void) const method
 
-/// Returns the performance value of a neural network according to the sum squared error on a data set.
+/// Returns the loss value of a neural network according to the sum squared error on a data set.
 
 double SumSquaredError::calculate_error(void) const
 {
@@ -254,9 +254,9 @@ double SumSquaredError::calculate_error(void) const
 
 // double calculate_error(const Vector<double>&) const method
 
-/// Returns which would be the sum squard error performance of a neural network for an hypothetical vector of parameters. 
+/// Returns which would be the sum squard error loss of a neural network for an hypothetical vector of parameters. 
 /// It does not set that vector of parameters to the neural network. 
-/// @param parameters Vector of potential parameters for the neural network associated to the performance term.
+/// @param parameters Vector of potential parameters for the neural network associated to the error term.
 
 double SumSquaredError::calculate_error(const Vector<double>& parameters) const
 {
@@ -350,7 +350,9 @@ double SumSquaredError::calculate_error(const Vector<double>& parameters) const
 
 // Test combination
 
-double SumSquaredError::calculate_performance_combination(const size_t& index, const Vector<double>& combinations) const
+/// @todo
+
+double SumSquaredError::calculate_loss_combination(const size_t& index, const Vector<double>& combinations) const
 {
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -363,8 +365,9 @@ double SumSquaredError::calculate_performance_combination(const size_t& index, c
     return activations.calculate_sum_squared_error(targets);
 }
 
+/// @todo
 
-double SumSquaredError::calculate_performance_combinations(const size_t& index_1, const Vector<double>& combinations_1, const size_t& index_2, const Vector<double>& combinations_2) const
+double SumSquaredError::calculate_loss_combinations(const size_t& index_1, const Vector<double>& combinations_1, const size_t& index_2, const Vector<double>& combinations_2) const
 {
     std::cout << index_1 << combinations_1 << std::endl;
 
@@ -431,11 +434,11 @@ double SumSquaredError::calculate_selection_error(void) const
    Vector<double> outputs(outputs_number);
    Vector<double> targets(outputs_number);
 
-   double selection_performance = 0.0;
+   double selection_loss = 0.0;
 
    int i = 0;
 
-   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_performance)
+   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_loss)
 
    for(i = 0; i < (int)selection_instances_number; i++)
    {
@@ -455,10 +458,10 @@ double SumSquaredError::calculate_selection_error(void) const
 
       // Sum of squares error
 
-      selection_performance += outputs.calculate_sum_squared_error(targets);
+      selection_loss += outputs.calculate_sum_squared_error(targets);
    }
 
-   return(selection_performance);
+   return(selection_loss);
 }
 
 
@@ -735,9 +738,9 @@ Vector<double> SumSquaredError::calculate_terms(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   // Performance functional stuff
+   // Loss index stuff
 
-   Vector<double> performance_terms(training_instances_number);
+   Vector<double> error_terms(training_instances_number);
 
    Vector<double> inputs(inputs_number);
    Vector<double> outputs(outputs_number);
@@ -765,17 +768,17 @@ Vector<double> SumSquaredError::calculate_terms(void) const
 
       // Error
 
-      performance_terms[i] = outputs.calculate_distance(targets);
+      error_terms[i] = outputs.calculate_distance(targets);
    }
 
-   return(performance_terms);
+   return(error_terms);
 }
 
 
 // Vector<double> calculate_terms(const Vector<double>&) const method
 
-/// Returns the performance terms vector for a hypotetical vector of parameters. 
-/// @param parameters Neural network parameters for which the performance terms vector is to be computed. 
+/// Returns the error terms vector for a hypotetical vector of parameters. 
+/// @param parameters Neural network parameters for which the error terms vector is to be computed. 
 
 Vector<double> SumSquaredError::calculate_terms(const Vector<double>& parameters) const
 {
@@ -873,7 +876,7 @@ Matrix<double> SumSquaredError::calculate_terms_Jacobian(void) const
    Vector<double> inputs(inputs_number);
    Vector<double> targets(outputs_number);
 
-   // Performance functional
+   // Loss index
 
    Vector<double> term(outputs_number);
    double term_norm;
@@ -960,8 +963,8 @@ Matrix<double> SumSquaredError::calculate_terms_Jacobian(void) const
 
 // FirstOrderTerms calculate_first_order_terms(void) const method
 
-/// Returns the first order performance of the terms performance function.
-/// This is a structure containing the performance terms vector and the performance terms Jacobian.
+/// Returns the first order loss of the terms loss function.
+/// This is a structure containing the error terms vector and the error terms Jacobian.
 
 ErrorTerm::FirstOrderTerms SumSquaredError::calculate_first_order_terms(void) const
 {
@@ -1012,7 +1015,7 @@ Vector<double> SumSquaredError::calculate_squared_errors(void) const
 
    const MissingValues missing_values = data_set_pointer->get_missing_values();
 
-   // Performance functional
+   // Loss index
 
    Vector<double> squared_errors(training_instances_number);
 
@@ -1049,11 +1052,11 @@ Vector<double> SumSquaredError::calculate_squared_errors(void) const
 }
 
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the name of the sum squared error performance type, "SUM_SQUARED_ERROR".
+/// Returns a string with the name of the sum squared error loss type, "SUM_SQUARED_ERROR".
 
-std::string SumSquaredError::write_performance_term_type(void) const
+std::string SumSquaredError::write_error_term_type(void) const
 {
    return("SUM_SQUARED_ERROR");
 }
@@ -1094,7 +1097,7 @@ tinyxml2::XMLDocument* SumSquaredError::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
-void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void SumSquaredError::write_XML(tinyxml2::XMLPrinter&) const
 {
     //file_stream.OpenElement("SumSquaredError");
 

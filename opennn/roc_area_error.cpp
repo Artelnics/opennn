@@ -73,9 +73,9 @@ RocAreaError::RocAreaError(NeuralNetwork* new_neural_network_pointer, DataSet* n
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a sum squared error not associated to any neural network and not measured on any data set.
+/// It creates a roc arrea error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from a TinyXML document.
-/// @param sum_squared_error_document XML document with the class members.
+/// @param roc_area_error_document XML document with the class members.
 
 RocAreaError::RocAreaError(const tinyxml2::XMLDocument& roc_area_error_document)
  : ErrorTerm(roc_area_error_document)
@@ -87,9 +87,9 @@ RocAreaError::RocAreaError(const tinyxml2::XMLDocument& roc_area_error_document)
 // COPY CONSTRUCTOR
 
 /// Copy constructor. 
-/// It creates a sum squared error not associated to any neural network and not measured on any data set.
+/// It creates a sum roc area error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from another sum squared error object.
-/// @param new_sum_squared_error Object to be copied. 
+/// @param new_roc_area_error Object to be copied.
 
 RocAreaError::RocAreaError(const RocAreaError& new_roc_area_error)
  : ErrorTerm(new_roc_area_error)
@@ -184,7 +184,7 @@ void RocAreaError::check(void) const
 
 // double calculate_error(void) const method
 
-/// Returns the performance value of a neural network according to the sum squared error on a data set.
+/// Returns the loss value of a neural network according to the sum squared error on a data set.
 
 double RocAreaError::calculate_error(void) const
 {
@@ -374,9 +374,9 @@ double RocAreaError::calculate_error(void) const
 
 // double calculate_error(const Vector<double>&) const method
 
-/// Returns which would be the sum squard error performance of a neural network for an hypothetical vector of parameters. 
+/// Returns which would be the sum squard error loss of a neural network for an hypothetical vector of parameters. 
 /// It does not set that vector of parameters to the neural network. 
-/// @param parameters Vector of potential parameters for the neural network associated to the performance term.
+/// @param parameters Vector of potential parameters for the neural network associated to the error term.
 
 double RocAreaError::calculate_error(const Vector<double>& parameters) const
 {
@@ -589,7 +589,7 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
 
 // Test combination
 /*
-double RocAreaError::calculate_performance_combination(const size_t& index, const Vector<double>& combinations) const
+double RocAreaError::calculate_loss_combination(const size_t& index, const Vector<double>& combinations) const
 {
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -603,7 +603,7 @@ double RocAreaError::calculate_performance_combination(const size_t& index, cons
 }
 
 
-double RocAreaError::calculate_performance_combinations(const size_t& index_1, const Vector<double>& combinations_1, const size_t& index_2, const Vector<double>& combinations_2) const
+double RocAreaError::calculate_loss_combinations(const size_t& index_1, const Vector<double>& combinations_1, const size_t& index_2, const Vector<double>& combinations_2) const
 {
     std::cout << index_1 << combinations_1 << std::endl;
 
@@ -631,11 +631,11 @@ double RocAreaError::calculate_performance_combinations(const size_t& index_1, c
 }
 
 
-// double calculate_selection_performance(void) const method
+// double calculate_selection_loss(void) const method
 
 /// Returns the sum squared error of the neural network measured on the selection instances of the data set.
 
-double RocAreaError::calculate_selection_performance(void) const
+double RocAreaError::calculate_selection_loss(void) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -670,11 +670,11 @@ double RocAreaError::calculate_selection_performance(void) const
    Vector<double> outputs(outputs_number);
    Vector<double> targets(outputs_number);
 
-   double selection_performance = 0.0;
+   double selection_loss = 0.0;
 
    int i = 0;
 
-   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_performance)
+   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_loss)
 
    for(i = 0; i < (int)selection_instances_number; i++)
    {
@@ -694,10 +694,10 @@ double RocAreaError::calculate_selection_performance(void) const
 
       // Sum of squares error
 
-      selection_performance += outputs.calculate_sum_squared_error(targets);
+      selection_loss += outputs.calculate_sum_squared_error(targets);
    }
 
-   return(selection_performance);
+   return(selection_loss);
 }
 */
 
@@ -713,7 +713,7 @@ Vector<double> RocAreaError::calculate_output_gradient(const Vector<double>& out
 
 // Vector<double> calculate_gradient(void) const method
 
-/// Calculates the performance term gradient by means of the back-propagation algorithm, 
+/// Calculates the error term gradient by means of the back-propagation algorithm, 
 /// and returns it in a single vector of size the number of neural network parameters. 
 
 Vector<double> RocAreaError::calculate_gradient(void) const
@@ -1214,9 +1214,9 @@ Vector<double> RocAreaError::calculate_terms(void) const
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   // Performance functional stuff
+   // Loss index stuff
 
-   Vector<double> performance_terms(training_instances_number);
+   Vector<double> error_terms(training_instances_number);
 
    Vector<double> inputs(inputs_number);
    Vector<double> outputs(outputs_number);
@@ -1244,17 +1244,17 @@ Vector<double> RocAreaError::calculate_terms(void) const
 
       // Error
 
-      performance_terms[i] = outputs.calculate_distance(targets);
+      error_terms[i] = outputs.calculate_distance(targets);
    }
 
-   return(performance_terms);
+   return(error_terms);
 }
 
 
 // Vector<double> calculate_terms(const Vector<double>&) const method
 
-/// Returns the performance terms vector for a hypotetical vector of parameters. 
-/// @param parameters Neural network parameters for which the performance terms vector is to be computed. 
+/// Returns the error terms vector for a hypotetical vector of parameters. 
+/// @param parameters Neural network parameters for which the error terms vector is to be computed. 
 
 Vector<double> RocAreaError::calculate_terms(const Vector<double>& parameters) const
 {
@@ -1352,7 +1352,7 @@ Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
    Vector<double> inputs(inputs_number);
    Vector<double> targets(outputs_number);
 
-   // Performance functional
+   // Loss index
 
    Vector<double> term(outputs_number);
    double term_norm;
@@ -1439,8 +1439,8 @@ Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
 
 // FirstOrderTerms calculate_first_order_terms(void) const method
 
-/// Returns the first order performance of the terms performance function.
-/// This is a structure containing the performance terms vector and the performance terms Jacobian.
+/// Returns the first order loss of the terms loss function.
+/// This is a structure containing the error terms vector and the error terms Jacobian.
 
 ErrorTerm::FirstOrderTerms RocAreaError::calculate_first_order_terms(void) const
 {
@@ -1491,7 +1491,7 @@ Vector<double> RocAreaError::calculate_squared_errors(void) const
 
    const MissingValues missing_values = data_set_pointer->get_missing_values();
 
-   // Performance functional
+   // Loss index
 
    Vector<double> squared_errors(training_instances_number);
 
@@ -1553,11 +1553,11 @@ Matrix<double> RocAreaError::calculate_Hessian(const Vector<double>&) const
 }
 
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the name of the sum squared error performance type, "SUM_SQUARED_ERROR".
+/// Returns a string with the name of the sum squared error loss type, "SUM_SQUARED_ERROR".
 
-std::string RocAreaError::write_performance_term_type(void) const
+std::string RocAreaError::write_error_term_type(void) const
 {
    return("SUM_SQUARED_ERROR");
 }

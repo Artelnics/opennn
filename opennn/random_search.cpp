@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a random search training algorithm not associated to any performance functional object. 
+/// It creates a random search training algorithm not associated to any loss functional object. 
 /// It also initializes the class members to their default values.
 
 RandomSearch::RandomSearch(void) 
@@ -33,13 +33,13 @@ RandomSearch::RandomSearch(void)
 
 // PERFORMANCE FUNCTIONAL CONSTRUCTOR 
 
-/// Performance functional constructor. 
-/// It creates a random search training algorithm associated to a performance functional object. 
+/// Loss index constructor. 
+/// It creates a random search training algorithm associated to a loss functional object. 
 /// It also initializes the class members to their default values.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-RandomSearch::RandomSearch(PerformanceFunctional* new_performance_functional_pointer)
-: TrainingAlgorithm(new_performance_functional_pointer)
+RandomSearch::RandomSearch(LossIndex* new_loss_index_pointer)
+: TrainingAlgorithm(new_loss_index_pointer)
 {   
    set_default();
 }
@@ -48,7 +48,7 @@ RandomSearch::RandomSearch(PerformanceFunctional* new_performance_functional_poi
 // XML CONSTRUCTOR 
 
 /// XML constructor. 
-/// It creates a random search training algorithm not associated to any performance functional object. 
+/// It creates a random search training algorithm not associated to any loss functional object. 
 /// It also loads the rest of class members from a XML document.
 /// @param document TinyXML document containing the members of a random search object. 
 
@@ -111,24 +111,24 @@ const double& RandomSearch::get_error_training_rate(void) const
 }
 
 
-// const double& get_performance_goal(void) const method
+// const double& get_loss_goal(void) const method
 
-/// Returns the goal value for the performance. 
+/// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& RandomSearch::get_performance_goal(void) const
+const double& RandomSearch::get_loss_goal(void) const
 {
-   return(performance_goal);
+   return(loss_goal);
 }
 
 
-// const size_t& get_maximum_selection_performance_decreases(void) const method
+// const size_t& get_maximum_selection_loss_decreases(void) const method
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& RandomSearch::get_maximum_selection_performance_decreases(void) const
+const size_t& RandomSearch::get_maximum_selection_loss_decreases(void) const
 {
-   return(maximum_selection_performance_decreases);
+   return(maximum_selection_loss_decreases);
 }
 
 
@@ -172,13 +172,13 @@ const bool& RandomSearch::get_reserve_parameters_norm_history(void) const
 }
 
 
-// const bool& get_reserve_performance_history(void) const method
+// const bool& get_reserve_loss_history(void) const method
 
-/// Returns true if the performance history vector is to be reserved, and false otherwise.
+/// Returns true if the loss history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_performance_history(void) const
+const bool& RandomSearch::get_reserve_loss_history(void) const
 {
-   return(reserve_performance_history);     
+   return(reserve_loss_history);     
 }
 
 
@@ -212,13 +212,13 @@ const bool& RandomSearch::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_selection_performance_history(void) const method
+// const bool& get_reserve_selection_loss_history(void) const method
 
-/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
+/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_selection_performance_history(void) const
+const bool& RandomSearch::get_reserve_selection_loss_history(void) const
 {
-   return(reserve_selection_performance_history);
+   return(reserve_selection_loss_history);
 }
 
 
@@ -255,7 +255,7 @@ const size_t& RandomSearch::get_training_rate_reduction_period(void) const
 /// <li> Maximum iterations number: 100
 /// <li> Reserve potential parameters history: False
 /// <li> Reserve potential parameters norm history: False
-/// <li> Reserve performance history: False.
+/// <li> Reserve loss history: False.
 /// <li> Display: True
 /// <li> Display period: 10
 /// </ul>
@@ -271,7 +271,7 @@ void RandomSearch::set_default(void)
 
    // STOPPING CRITERIA
 
-   performance_goal = -1.0e99;
+   loss_goal = -1.0e99;
 
    maximum_iterations_number = 100;
    maximum_time = 1000.0;
@@ -281,7 +281,7 @@ void RandomSearch::set_default(void)
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_performance_history = true;
+   reserve_loss_history = true;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -357,15 +357,15 @@ void RandomSearch::set_reserve_parameters_norm_history(const bool& new_reserve_p
 }
 
 
-// void set_reserve_performance_history(bool) method
+// void set_reserve_loss_history(bool) method
 
-/// Makes the potential performance history vector to be reseved or not in memory.
-/// @param new_reserve_performance_history True if the potential performance history is to be reserved, 
+/// Makes the potential loss history vector to be reseved or not in memory.
+/// @param new_reserve_loss_history True if the potential loss history is to be reserved, 
 /// false otherwise.
 
-void RandomSearch::set_reserve_performance_history(const bool& new_reserve_performance_history)
+void RandomSearch::set_reserve_loss_history(const bool& new_reserve_loss_history)
 {
-   reserve_performance_history = new_reserve_performance_history;
+   reserve_loss_history = new_reserve_loss_history;
 }
 
 
@@ -382,9 +382,9 @@ void RandomSearch::set_reserve_all_training_history(const bool& new_reserve_all_
    reserve_parameters_history = new_reserve_all_training_history;
    reserve_parameters_norm_history = new_reserve_all_training_history;
    
-   // Performance functional
+   // Loss index
 
-   reserve_performance_history = new_reserve_all_training_history;
+   reserve_loss_history = new_reserve_all_training_history;
   
    // Training algorithm
 
@@ -515,28 +515,28 @@ void RandomSearch::set_error_training_rate(const double& new_error_training_rate
 }
 
 
-// void set_performance_goal(const doubleT) method
+// void set_loss_goal(const doubleT) method
 
-/// Sets a new goal value for the performance. 
+/// Sets a new goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
-/// @param new_performance_goal Goal value for the performance.
+/// @param new_loss_goal Goal value for the loss.
 
-void RandomSearch::set_performance_goal(const double& new_performance_goal)
+void RandomSearch::set_loss_goal(const double& new_loss_goal)
 {
-   performance_goal = new_performance_goal;
+   loss_goal = new_loss_goal;
 }
 
 
-// void set_maximum_selection_performance_decreases(const size_t&) method
+// void set_maximum_selection_loss_decreases(const size_t&) method
 
 /// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// @param new_maximum_selection_loss_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void RandomSearch::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
+void RandomSearch::set_maximum_selection_loss_decreases(const size_t& new_maximum_selection_loss_decreases)
 {
    // Set maximum selection performace decrases
 
-   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
+   maximum_selection_loss_decreases = new_maximum_selection_loss_decreases;
 }
 
 
@@ -629,15 +629,15 @@ void RandomSearch::set_reserve_elapsed_time_history(const bool& new_reserve_elap
 }
 
 
-// void set_reserve_selection_performance_history(bool) method
+// void set_reserve_selection_loss_history(bool) method
 
-/// Makes the Selection performance history to be reserved or not in memory. 
+/// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_loss_history True if the selection loss history is to be reserved, false otherwise.
 
-void RandomSearch::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
+void RandomSearch::set_reserve_selection_loss_history(const bool& new_reserve_selection_loss_history)  
 {
-   reserve_selection_performance_history = new_reserve_selection_performance_history;
+   reserve_selection_loss_history = new_reserve_selection_loss_history;
 }
 
 
@@ -677,7 +677,7 @@ void RandomSearch::set_display_period(const size_t& new_display_period)
 
 Vector<double> RandomSearch::calculate_training_direction(void) const
 {   
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -712,14 +712,14 @@ void RandomSearch::RandomSearchResults::resize_training_history(const size_t& ne
         parameters_norm_history.resize(new_size);
     }
 
-    if(random_search_pointer->get_reserve_performance_history())
+    if(random_search_pointer->get_reserve_loss_history())
     {
-        performance_history.resize(new_size);
+        loss_history.resize(new_size);
     }
 
-    if(random_search_pointer->get_reserve_selection_performance_history())
+    if(random_search_pointer->get_reserve_selection_loss_history())
     {
-        selection_performance_history.resize(new_size);
+        selection_loss_history.resize(new_size);
     }
 
     if(random_search_pointer->get_reserve_training_direction_history())
@@ -763,20 +763,20 @@ std::string RandomSearch::RandomSearchResults::to_string(void) const
               << parameters_norm_history << "\n"; 
    }
    
-   // performance history   
+   // loss history   
 
-   if(!performance_history.empty())
+   if(!loss_history.empty())
    {
-       buffer << "% performance history:\n"
-              << performance_history << "\n"; 
+       buffer << "% loss history:\n"
+              << loss_history << "\n"; 
    }
 
-   // Selection performance history
+   // Selection loss history
 
-   if(!selection_performance_history.empty())
+   if(!selection_loss_history.empty())
    {
-       buffer << "% Selection performance history:\n"
-              << selection_performance_history << "\n"; 
+       buffer << "% Selection loss history:\n"
+              << selection_loss_history << "\n"; 
    }
 
    // Training direction history
@@ -828,25 +828,25 @@ Matrix<std::string> RandomSearch::RandomSearchResults::write_final_results(const
 
    values.push_back(buffer.str());
 
-   // Final performance
+   // Final loss
 
-   names.push_back("Final performance");
+   names.push_back("Final loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_performance;
+   buffer << std::setprecision(precision) << final_loss;
 
    values.push_back(buffer.str());
 
-   // Final selection performance
+   // Final selection loss
 
-   const PerformanceFunctional* performance_functional_pointer = random_search_pointer->get_performance_functional_pointer();
+   const LossIndex* loss_index_pointer = random_search_pointer->get_loss_index_pointer();
 
-   if(performance_functional_pointer->has_selection())
+   if(loss_index_pointer->has_selection())
    {
-       names.push_back("Final selection performance");
+       names.push_back("Final selection loss");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_selection_performance;
+       buffer << std::setprecision(precision) << final_selection_loss;
 
        values.push_back(buffer.str());
     }
@@ -892,7 +892,7 @@ Matrix<std::string> RandomSearch::RandomSearchResults::write_final_results(const
 
 // RandomSearchResults* perform_training(void) method
 
-/// Trains a neural network with an associated performance functional according to the random search training algorithm.
+/// Trains a neural network with an associated loss functional according to the random search training algorithm.
 /// Training occurs according to the training parameters. 
 
 RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
@@ -924,20 +924,20 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 
    // Neural network stuff
 
-   NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
    Vector<double> parameters = neural_network_pointer->arrange_parameters();
    double parameters_norm;
 
-   // Performance functional stuff
+   // Loss index stuff
     
-   double performance = 0.0;
-   double potential_performance = 1.0e99;
+   double loss = 0.0;
+   double potential_loss = 1.0e99;
 
-   double selection_performance = 0.0;
-   double old_selection_performance = 0.0;
+   double selection_loss = 0.0;
+   double old_selection_loss = 0.0;
 
    size_t selection_failures = 0;
 
@@ -967,21 +967,21 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
           std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
        }
 
-      // Performance functional stuff
+      // Loss index stuff
 
        if(iteration == 0)
        {
-           performance = performance_functional_pointer->calculate_performance();
-           selection_performance = performance_functional_pointer->calculate_selection_performance();
+           loss = loss_index_pointer->calculate_loss();
+           selection_loss = loss_index_pointer->calculate_selection_loss();
        }
 
 
-      if(iteration != 0 && selection_performance > old_selection_performance)
+      if(iteration != 0 && selection_loss > old_selection_loss)
       {
          selection_failures++;
       }
 
-      potential_performance = performance_functional_pointer->calculate_performance(potential_parameters);
+      potential_loss = loss_index_pointer->calculate_loss(potential_parameters);
 
       // Training algorithm stuff
 
@@ -1013,16 +1013,16 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
          results_pointer->parameters_norm_history[iteration] = parameters_norm;
       }       
 	  
-      // Training history performance functional
+      // Training history loss functional
 
-      if(reserve_performance_history)
+      if(reserve_loss_history)
       {
-         results_pointer->performance_history[iteration] = performance;
+         results_pointer->loss_history[iteration] = loss;
       }
 
-      if(reserve_selection_performance_history)
+      if(reserve_selection_loss_history)
       {
-          results_pointer->selection_performance_history[iteration] = selection_performance;
+          results_pointer->selection_loss_history[iteration] = selection_loss;
       }
 
       // Training history training algorithm
@@ -1055,7 +1055,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 
       // Stopping Criteria
 
-      if(performance <= performance_goal)
+      if(loss <= loss_goal)
       {
          if(display)
          {
@@ -1096,23 +1096,23 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
           {
              std::cout << "Parameters norm: " << parameters_norm << "\n"
                        << "Potential parameters norm: " << potential_parameters_norm << "\n"
-                       << "Training performance: " << performance << "\n"
-                       << performance_functional_pointer->write_information()
-                       << "Potential performance: " << potential_performance << "\n"
+                       << "Training loss: " << loss << "\n"
+                       << loss_index_pointer->write_information()
+                       << "Potential loss: " << potential_loss << "\n"
                        << "Training rate: " << training_rate << "\n"
                        << "Elapsed time: " << elapsed_time << std::endl;
 
-             if(selection_performance != 0)
+             if(selection_loss != 0)
              {
-                std::cout << "Selection performance: " << selection_performance << std::endl;
+                std::cout << "Selection loss: " << selection_loss << std::endl;
              }
           }
 
          results_pointer->final_parameters = parameters;
          results_pointer->final_parameters_norm = parameters_norm;
 
-         results_pointer->final_performance = performance;
-         results_pointer->final_selection_performance = selection_performance;
+         results_pointer->final_loss = loss;
+         results_pointer->final_selection_loss = selection_loss;
   
          results_pointer->final_training_direction = training_direction;
          results_pointer->final_training_rate = training_rate;
@@ -1128,30 +1128,30 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
                    << "Potential parameters norm: " << potential_parameters_norm << "\n"
-                   << "Training performance: " << performance << "\n"
-                   << performance_functional_pointer->write_information()
-                   << "Potential performance: " << potential_performance << "\n"
+                   << "Training loss: " << loss << "\n"
+                   << loss_index_pointer->write_information()
+                   << "Potential loss: " << potential_loss << "\n"
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl; 
 
-         if(selection_performance != 0)
+         if(selection_loss != 0)
          {
-            std::cout << "Selection performance: " << selection_performance << std::endl;
+            std::cout << "Selection loss: " << selection_loss << std::endl;
          }
       }
 
       // Set new parameters
 
-      if(potential_performance < performance)
+      if(potential_loss < loss)
       {
          parameters = potential_parameters;
 
          neural_network_pointer->set_parameters(parameters);
 
-         performance = potential_performance;
+         loss = potential_loss;
 
-         selection_performance = performance_functional_pointer->calculate_selection_performance();
-         old_selection_performance = selection_performance;
+         selection_loss = loss_index_pointer->calculate_selection_loss();
+         old_selection_loss = selection_loss;
       }
    }
 
@@ -1169,7 +1169,7 @@ std::string RandomSearch::write_training_algorithm_type(void) const
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> RandomSearch::to_string_matrix(void) const
 {
@@ -1183,16 +1183,16 @@ Matrix<std::string> RandomSearch::to_string_matrix(void) const
    labels.push_back("Performance goal");
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    values.push_back(buffer.str());
 
    // Maximum selection failures
 
-   labels.push_back("Maximum selection performance decreases");
+   labels.push_back("Maximum selection loss increases");
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    values.push_back(buffer.str());
 
@@ -1223,21 +1223,21 @@ Matrix<std::string> RandomSearch::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Reserve performance history
+   // Reserve loss history
 
-   labels.push_back("Reserve performance history");
+   labels.push_back("Reserve loss history");
 
    buffer.str("");
-   buffer << reserve_performance_history;
+   buffer << reserve_loss_history;
 
    values.push_back(buffer.str());
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   labels.push_back("Reserve selection performance history");
+   labels.push_back("Reserve selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    values.push_back(buffer.str());
 
@@ -1388,19 +1388,19 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-   element = document->NewElement("MaximumSelectionPerformanceDecreases");
+   element = document->NewElement("MaximumSelectionLossDecreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1454,25 +1454,25 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve performance history 
+   // Reserve loss history 
    {
    element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_performance_history;
+   buffer << reserve_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection performance history
+   // Reserve selection loss history
    {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1514,13 +1514,13 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve selection performance history 
+   // Reserve selection loss history
    {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+   buffer << reserve_selection_loss_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1555,6 +1555,9 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
 
 
 //void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the random search object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void RandomSearch::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1644,18 +1647,18 @@ void RandomSearch::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("PerformanceGoal");
 
     buffer.str("");
-    buffer << performance_goal;
+    buffer << loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Maximum selection performance decreases
+    // Maximum selection loss decreases
 
-    file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+    file_stream.OpenElement("MaximumSelectionLossDecreases");
 
     buffer.str("");
-    buffer << maximum_selection_performance_decreases;
+    buffer << maximum_selection_loss_decreases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1705,23 +1708,23 @@ void RandomSearch::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance history
+    // Reserve loss history
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_history;
+    buffer << reserve_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance history
+    // Reserve selection loss history
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_history;
+    buffer << reserve_selection_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1760,12 +1763,12 @@ void RandomSearch::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve selection performance history
+    // Reserve selection loss history
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_history;
+    buffer << reserve_selection_loss_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1943,11 +1946,11 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const double new_performance_goal = atof(element->GetText());
+          const double new_loss_goal = atof(element->GetText());
 
           try
           {
-             set_performance_goal(new_performance_goal);
+             set_loss_goal(new_loss_goal);
           }
           catch(const std::logic_error& e)
           {
@@ -1956,17 +1959,17 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
 
        if(element)
        {
-          const size_t new_maximum_selection_performance_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_loss_decreases = atoi(element->GetText());
 
           try
           {
-             set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
+             set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
           }
           catch(const std::logic_error& e)
           {
@@ -2051,17 +2054,17 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve performance history
+   // Reserve loss history
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
        if(element)
        {
-          const std::string new_reserve_performance_history = element->GetText();
+          const std::string new_reserve_loss_history = element->GetText();
 
           try
           {
-             set_reserve_performance_history(new_reserve_performance_history != "0");
+             set_reserve_loss_history(new_reserve_loss_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -2070,17 +2073,17 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-    // Reserve selection performance history
+    // Reserve selection loss history
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
         if(element)
         {
-           const std::string new_reserve_selection_performance_history = element->GetText();
+           const std::string new_reserve_selection_loss_history = element->GetText();
 
            try
            {
-              set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
+              set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
            }
            catch(const std::logic_error& e)
            {

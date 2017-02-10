@@ -52,7 +52,7 @@ public:
 
    void test_get_population(void);
 
-   void test_get_performance(void);
+   void test_get_loss(void);
    void test_get_fitness(void);
    void test_get_selection(void);
 
@@ -67,9 +67,9 @@ public:
    void test_get_reserve_mean_norm_history(void);
    void test_get_reserve_standard_deviation_norm_history(void);
    void test_get_reserve_best_norm_history(void);
-   void test_get_reserve_mean_performance_history(void);
-   void test_get_reserve_standard_deviation_performance_history(void);
-   void test_get_reserve_best_performance_history(void);
+   void test_get_reserve_mean_loss_history(void);
+   void test_get_reserve_standard_deviation_loss_history(void);
+   void test_get_reserve_best_loss_history(void);
 
    void test_get_fitness_assignment_method(void);
    void test_get_selection_method(void);
@@ -85,7 +85,7 @@ public:
 
    void test_set_population(void);
 
-   void test_set_performance(void);
+   void test_set_loss(void);
    void test_set_fitness(void);
    void test_set_selection(void);
 
@@ -96,8 +96,8 @@ public:
    void test_set_mutation_range(void);
 
    void test_set_maximum_generations_number(void);
-   void test_set_mean_performance_goal(void);
-   void test_set_standard_deviation_performance_goal(void);
+   void test_set_mean_loss_goal(void);
+   void test_set_standard_deviation_loss_goal(void);
 
    void test_set_fitness_assignment_method(void);
    void test_set_selection_method(void);
@@ -108,9 +108,9 @@ public:
    void test_set_reserve_mean_norm_history(void);
    void test_set_reserve_standard_deviation_norm_history(void);
    void test_set_reserve_best_norm_history(void);
-   void test_set_reserve_mean_performance_history(void);
-   void test_set_reserve_standard_deviation_performance_history(void);
-   void test_set_reserve_best_performance_history(void);
+   void test_set_reserve_mean_loss_history(void);
+   void test_set_reserve_standard_deviation_loss_history(void);
+   void test_set_reserve_best_loss_history(void);
 
    void test_set_reserve_all_training_history(void);
 

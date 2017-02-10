@@ -7,7 +7,7 @@
     <BatchFileName>batch.dat</BatchFileName>
     <OutputFileName>output.dat</OutputFileName>
     <InputFlags>input_flag_1 input_flag_2</InputFlags>
-    <OutputRowsNumber>3347429548893761327</OutputRowsNumber>
-    <OutputColumnsNumber>7627108</OutputColumnsNumber>
+    <OutputRowsNumber>0</OutputRowsNumber>
+    <OutputColumnsNumber>0</OutputColumnsNumber>
     <Display>0</Display>
 </PlugIn>

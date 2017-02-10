@@ -24,6 +24,10 @@
 #include <sstream>
 #include <errno.h>
 
+#ifdef __OPENNN_MPI__
+#include <mpi.h>
+#endif
+
 // OpenNN includes
 
 #include "vector.h"
@@ -165,6 +169,10 @@ public:
 
    virtual void set_default(void);
 
+#ifdef __OPENNN_MPI__
+   void set_MPI(const NeuralNetwork*);
+#endif
+
    void set_multilayer_perceptron_pointer(MultilayerPerceptron*);
    void set_scaling_layer_pointer(ScalingLayer*);
    void set_principal_components_layer_pointer(PrincipalComponentsLayer*);
@@ -261,7 +269,7 @@ public:
 
    // Feature importance
 
-   Vector<double> calculate_inputs_importance(const size_t&) const;
+   Vector<double> calculate_inputs_importance_parameters(const size_t&) const;
 
    // Output 
 

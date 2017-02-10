@@ -177,8 +177,8 @@ public:
    // virtual void read_XML(   );
 
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const bool& , const bool& is_data_unscaled = false, const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>());
-   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool& , const Vector<Statistics<double>>& outputs_statistics = Vector<Statistics<double>>() );
+   void to_PMML(tinyxml2::XMLElement*, const bool& , const bool& is_data_unscaled = false, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >());
+   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool& , const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >() );
    void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool&);
    void write_PMML_neural_outputs(tinyxml2::XMLPrinter&, size_t number_of_layers, const bool&, bool is_data_unscaled = false);
 

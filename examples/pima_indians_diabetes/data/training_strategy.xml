@@ -1,0 +1,21 @@
+<TrainingStrategy>
+    <Main Type="QUASI_NEWTON_METHOD">
+        <InverseHessianApproximationMethod>BFGS</InverseHessianApproximationMethod>
+        <TrainingRateAlgorithm>
+            <TrainingRateMethod>BrentMethod</TrainingRateMethod>
+            <TrainingRateTolerance>1e-006</TrainingRateTolerance>
+        </TrainingRateAlgorithm>
+        <ReturnMinimumSelectionErrorNN>0</ReturnMinimumSelectionErrorNN>
+        <MinimumParametersIncrementNorm>0</MinimumParametersIncrementNorm>
+        <MinimumPerformanceIncrease>1e-006</MinimumPerformanceIncrease>
+        <PerformanceGoal>-1e+099</PerformanceGoal>
+        <GradientNormGoal>0</GradientNormGoal>
+        <MaximumSelectionLossDecreases>1000000</MaximumSelectionLossDecreases>
+        <MaximumIterationsNumber>1000</MaximumIterationsNumber>
+        <MaximumTime>1000</MaximumTime>
+        <ReserveParametersNormHistory>0</ReserveParametersNormHistory>
+        <ReservePerformanceHistory>1</ReservePerformanceHistory>
+        <ReserveSelectionLossHistory>0</ReserveSelectionLossHistory>
+        <ReserveGradientNormHistory>0</ReserveGradientNormHistory>
+    </Main>
+</TrainingStrategy>

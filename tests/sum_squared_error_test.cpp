@@ -71,9 +71,9 @@ void SumSquaredErrorTest::test_destructor(void)
 }
 
 
-void SumSquaredErrorTest::test_calculate_performance(void)   
+void SumSquaredErrorTest::test_calculate_loss(void)   
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 
    NeuralNetwork nn;
    Vector<double> parameters;
@@ -84,7 +84,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
 
    SumSquaredError sse(&nn, &ds);
 
-   double performance;
+   double loss;
 
    // Test
 
@@ -94,9 +94,9 @@ void SumSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.initialize_data(0.0);
 
-   performance = sse.calculate_error();
+   loss = sse.calculate_error();
 
-   assert_true(performance == 0.0, LOG);
+   assert_true(loss == 0.0, LOG);
 
    // Test
 
@@ -106,9 +106,9 @@ void SumSquaredErrorTest::test_calculate_performance(void)
    ds.set(1, 1, 1);
    ds.initialize_data(1.0);
 
-   performance = sse.calculate_error();
+   loss = sse.calculate_error();
 
-   assert_true(performance == 1.0, LOG);
+   assert_true(loss == 1.0, LOG);
 
    // Test
 
@@ -146,7 +146,7 @@ void SumSquaredErrorTest::test_calculate_performance(void)
 
    missing_values_pointer->append(0, 0);
 
-//   assert_true(sse.calculate_performance() == 0.0, LOG);
+//   assert_true(sse.calculate_loss() == 0.0, LOG);
 }
 
 
@@ -363,7 +363,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        parameters = nn.arrange_parameters();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -382,7 +382,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        parameters = nn.arrange_parameters();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -401,7 +401,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        parameters = nn.arrange_parameters();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -420,7 +420,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        parameters = nn.arrange_parameters();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -443,7 +443,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        numerical_Hessian.clear();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -464,7 +464,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        numerical_Hessian.clear();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -488,7 +488,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        numerical_Hessian.clear();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -511,7 +511,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        numerical_Hessian.clear();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    }
@@ -531,7 +531,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
    parameters = nn.arrange_parameters();
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
-   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
@@ -551,7 +551,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
 
-   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
@@ -576,7 +576,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
    std::cout << "Single hidden layer Hessian: \n" << Hessian << std::endl;
    std::cout << "Complete Hessian: \n" << complete_Hessian << std::endl;
 
-   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
    assert_true((Hessian - complete_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
@@ -644,7 +644,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
 
-   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+   numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
@@ -692,7 +692,7 @@ void SumSquaredErrorTest::test_calculate_Hessian(void)
        parameters = nn.arrange_parameters();
 
        Hessian = sse.calculate_Hessian();
-       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_performance, parameters);
+       numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
        assert_true((Hessian.arrange_submatrix(rows1, columns1) - numerical_Hessian.arrange_submatrix(rows1, columns1)).calculate_absolute_value() < 1.0e-3, LOG);
        assert_true((Hessian.arrange_submatrix(rows2, columns2) - numerical_Hessian.arrange_submatrix(rows2, columns2)).calculate_absolute_value() < 1.0e-3, LOG);
@@ -827,9 +827,9 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian(void)
 }
 
 
-void SumSquaredErrorTest::test_calculate_selection_performance(void)
+void SumSquaredErrorTest::test_calculate_selection_loss(void)
 {
-   message += "test_calculate_selection_performance\n";
+   message += "test_calculate_selection_loss\n";
 
    NeuralNetwork nn;
    DataSet ds;
@@ -955,8 +955,8 @@ void SumSquaredErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();
-   test_calculate_selection_performance();
+   test_calculate_loss();
+   test_calculate_selection_loss();
 
    test_calculate_gradient();
 

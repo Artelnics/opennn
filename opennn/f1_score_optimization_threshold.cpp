@@ -203,9 +203,9 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
 
     F1ScoreOptimizationThresholdResults* results = new F1ScoreOptimizationThresholdResults();
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     double current_threshold = minimum_threshold;
 
@@ -264,7 +264,8 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
             }
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
-        }else if (current_threshold == maximum_threshold)
+        }
+        else if (current_threshold == maximum_threshold)
         {
             end = true;
 
@@ -310,7 +311,7 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> F1ScoreOptimizationThreshold::to_string_matrix(void) const
 {
@@ -419,7 +420,7 @@ tinyxml2::XMLDocument* F1ScoreOptimizationThreshold::to_XML(void) const
 //   element = document->NewElement("PerformanceCalculationMethod");
 //   root_element->LinkEndChild(element);
 
-//   text = document->NewText(write_performance_calculation_method().c_str());
+//   text = document->NewText(write_loss_calculation_method().c_str());
 //   element->LinkEndChild(text);
 //   }
 
@@ -464,6 +465,9 @@ tinyxml2::XMLDocument* F1ScoreOptimizationThreshold::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the bounding layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void F1ScoreOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

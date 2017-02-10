@@ -41,21 +41,22 @@ void EvolutionaryAlgorithmTest::test_constructor(void)
    // Default constructor
 
    EvolutionaryAlgorithm ea1; 
-   assert_true(ea1.has_performance_functional() == false, LOG);
+   assert_true(ea1.has_loss_index() == false, LOG);
 
-   // Performance functional constructor
+   // Loss index constructor
 
-   PerformanceFunctional pf2;
+   LossIndex pf2;
 
    EvolutionaryAlgorithm ea2(&pf2); 
-   assert_true(ea2.has_performance_functional() == true, LOG);
+   assert_true(ea2.has_loss_index() == true, LOG);
 
+   DataSet ds;
    NeuralNetwork nn3(1, 1);
 
-   PerformanceFunctional mof3(&nn3);
+   LossIndex mof3(&nn3, &ds);
 
    EvolutionaryAlgorithm ea3(&mof3); 
-   assert_true(ea3.has_performance_functional() == true, LOG);
+   assert_true(ea3.has_loss_index() == true, LOG);
 
 }
 
@@ -82,8 +83,9 @@ void EvolutionaryAlgorithmTest::test_get_population(void)
 {
    message += "test_get_population\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn,&ds);
    EvolutionaryAlgorithm ea(&pf);
 
    ea.set_population_size(4);
@@ -98,17 +100,18 @@ void EvolutionaryAlgorithmTest::test_get_population(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_performance(void)
+void EvolutionaryAlgorithmTest::test_get_loss(void)
 {
-   message += "test_get_performance\n";
+   message += "test_get_loss\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    ea.set_population_size(4);
 
-   Vector<double> evaluation = ea.get_performance();
+   Vector<double> evaluation = ea.get_loss();
 
    size_t size = evaluation.size();
 
@@ -121,8 +124,9 @@ void EvolutionaryAlgorithmTest::test_get_fitness(void)
 {
    message += "test_get_fitnesss\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    ea.set_population_size(4);
@@ -140,8 +144,9 @@ void EvolutionaryAlgorithmTest::test_get_selection(void)
 {
    message += "test_get_selection\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn,&ds);
    EvolutionaryAlgorithm ea(&pf);
 
    ea.set_population_size(4);
@@ -281,51 +286,51 @@ void EvolutionaryAlgorithmTest::test_get_reserve_best_norm_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_mean_performance_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_mean_loss_history(void)
 {
-   message += "test_get_reserve_mean_performance_history\n";
+   message += "test_get_reserve_mean_loss_history\n";
 
    EvolutionaryAlgorithm ea;
 
-   ea.set_reserve_mean_performance_history(true);
+   ea.set_reserve_mean_loss_history(true);
 
-   assert_true(ea.get_reserve_mean_performance_history() == true, LOG);
+   assert_true(ea.get_reserve_mean_loss_history() == true, LOG);
 
-   ea.set_reserve_mean_performance_history(false);
+   ea.set_reserve_mean_loss_history(false);
 
-   assert_true(ea.get_reserve_mean_performance_history() == false, LOG);
+   assert_true(ea.get_reserve_mean_loss_history() == false, LOG);
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_performance_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_loss_history(void)
 {
-   message += "test_get_reserve_standard_deviation_performance_history\n";
+   message += "test_get_reserve_standard_deviation_loss_history\n";
 
    EvolutionaryAlgorithm ea;
 
-   ea.set_reserve_standard_deviation_performance_history(true);
+   ea.set_reserve_standard_deviation_loss_history(true);
 
-   assert_true(ea.get_reserve_standard_deviation_performance_history() == true, LOG);
+   assert_true(ea.get_reserve_standard_deviation_loss_history() == true, LOG);
 
-   ea.set_reserve_standard_deviation_performance_history(false);
+   ea.set_reserve_standard_deviation_loss_history(false);
 
-   assert_true(ea.get_reserve_standard_deviation_performance_history() == false, LOG);
+   assert_true(ea.get_reserve_standard_deviation_loss_history() == false, LOG);
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_best_performance_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_best_loss_history(void)
 {
-   message += "test_get_reserve_best_performance_history\n";
+   message += "test_get_reserve_best_loss_history\n";
 
    EvolutionaryAlgorithm ea;
 
-   ea.set_reserve_best_performance_history(true);
+   ea.set_reserve_best_loss_history(true);
 
-   assert_true(ea.get_reserve_best_performance_history() == true, LOG);
+   assert_true(ea.get_reserve_best_loss_history() == true, LOG);
 
-   ea.set_reserve_best_performance_history(false);
+   ea.set_reserve_best_loss_history(false);
 
-   assert_true(ea.get_reserve_best_performance_history() == false, LOG);
+   assert_true(ea.get_reserve_best_loss_history() == false, LOG);
 }
 
 
@@ -401,8 +406,9 @@ void EvolutionaryAlgorithmTest::test_set_default(void)
 {
    message += "test_set_default\n";
 
+   DataSet ds;
    NeuralNetwork nn;
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    // Test
@@ -422,8 +428,9 @@ void EvolutionaryAlgorithmTest::test_set_population_size(void)
 {
    message += "test_set_population_size\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
    
    ea.set_population_size(4);
@@ -437,8 +444,9 @@ void EvolutionaryAlgorithmTest::test_set_population(void)
 {
    message += "test_set_population\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    ea.set_population_size(4);
@@ -455,17 +463,17 @@ void EvolutionaryAlgorithmTest::test_set_population(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_performance(void)
+void EvolutionaryAlgorithmTest::test_set_loss(void)
 {
-   message += "test_set_performance\n";
+   message += "test_set_loss\n";
 
    EvolutionaryAlgorithm ea;
 
    Vector<double> evaluation;
 
-   ea.set_performance(evaluation);
+   ea.set_loss(evaluation);
 
-   assert_true(ea.get_performance() == 0.0, LOG);
+   assert_true(ea.get_loss() == 0.0, LOG);
 }
 
 
@@ -557,27 +565,27 @@ void EvolutionaryAlgorithmTest::test_set_maximum_generations_number(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_mean_performance_goal(void)
+void EvolutionaryAlgorithmTest::test_set_mean_loss_goal(void)
 {
-   message += "test_set_mean_performance_goal\n";
+   message += "test_set_mean_loss_goal\n";
 
    EvolutionaryAlgorithm ea;
 
-   ea.set_mean_performance_goal(1.0);
+   ea.set_mean_loss_goal(1.0);
 
-   assert_true(ea.get_mean_performance_goal() == 1.0, LOG);
+   assert_true(ea.get_mean_loss_goal() == 1.0, LOG);
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_standard_deviation_performance_goal(void)
+void EvolutionaryAlgorithmTest::test_set_standard_deviation_loss_goal(void)
 {
-   message += "test_set_standard_deviation_performance_goal\n";
+   message += "test_set_standard_deviation_loss_goal\n";
 
    EvolutionaryAlgorithm ea;
 
-   ea.set_standard_deviation_performance_goal(1.0);
+   ea.set_standard_deviation_loss_goal(1.0);
 
-   assert_true(ea.get_standard_deviation_performance_goal() == 1.0, LOG);
+   assert_true(ea.get_standard_deviation_loss_goal() == 1.0, LOG);
 }
 
 
@@ -629,21 +637,21 @@ void EvolutionaryAlgorithmTest::test_set_reserve_best_norm_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_mean_performance_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_mean_loss_history(void)
 {
-   message += "test_set_reserve_mean_performance_history\n";
+   message += "test_set_reserve_mean_loss_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_standard_deviation_performance_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_standard_deviation_loss_history(void)
 {
-   message += "test_set_reserve_standard_deviation_performance_history\n";
+   message += "test_set_reserve_standard_deviation_loss_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_best_performance_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_best_loss_history(void)
 {
-   message += "test_set_reserve_best_performance_history\n";
+   message += "test_set_reserve_best_loss_history\n";
 }
 
 
@@ -651,8 +659,9 @@ void EvolutionaryAlgorithmTest::test_get_individual(void)
 {
    message += "test_get_individual\n";
 
+   DataSet ds;
    NeuralNetwork nn(1, 1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    // Test
@@ -670,8 +679,9 @@ void EvolutionaryAlgorithmTest::test_set_individual(void)
 {
    message += "test_set_individual\n";
 
+   DataSet ds;
    NeuralNetwork nn(1, 1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    Vector<double> individual(2, 0.0);
@@ -690,8 +700,9 @@ void EvolutionaryAlgorithmTest::test_randomize_population_uniform(void)
 {
    message += "test_randomize_population_uniform\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    // Test
@@ -716,8 +727,9 @@ void EvolutionaryAlgorithmTest::test_calculate_population_norm(void)
 {
    message += "test_calculate_population_norm\n";
 
+   DataSet ds;
    NeuralNetwork nn(1);
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    EvolutionaryAlgorithm ea(&pf);
 
    // Test
@@ -739,8 +751,8 @@ void EvolutionaryAlgorithmTest::test_evaluate_population(void)
    DataSet ds(1, 1, 1);
    ds.initialize_data(0.0);
 
-   PerformanceFunctional pf(&nn, &ds);
-   pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+   LossIndex pf(&nn, &ds);
+   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -752,7 +764,7 @@ void EvolutionaryAlgorithmTest::test_evaluate_population(void)
 
    ea.evaluate_population();
 
-   assert_true(ea.get_performance() == 0.0, LOG);
+   assert_true(ea.get_loss() == 0.0, LOG);
 }
 
 
@@ -765,7 +777,7 @@ void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment(v
    DataSet ds(3, 1, 1);
    ds.randomize_data_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -773,7 +785,7 @@ void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment(v
 
    double selective_pressure;
 
-   Vector<double> performance;
+   Vector<double> loss;
 
    Vector<double> fitness;
 
@@ -806,14 +818,14 @@ void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment(v
 
    ea.evaluate_population();
 
-   performance = ea.get_performance();
+   loss = ea.get_loss();
 
    ea.perform_linear_ranking_fitness_assignment();
 
    fitness = ea.get_fitness();
 
-   assert_true(performance.calculate_minimal_index() == fitness.calculate_maximal_index(), LOG);
-   assert_true(performance.calculate_maximal_index() == fitness.calculate_minimal_index(), LOG);
+   assert_true(loss.calculate_minimal_index() == fitness.calculate_maximal_index(), LOG);
+   assert_true(loss.calculate_maximal_index() == fitness.calculate_minimal_index(), LOG);
 
    // Test
 
@@ -845,7 +857,7 @@ void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -931,7 +943,7 @@ void EvolutionaryAlgorithmTest::test_perform_intermediate_recombination(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -963,7 +975,7 @@ void EvolutionaryAlgorithmTest::test_perform_line_recombination(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -994,7 +1006,7 @@ void EvolutionaryAlgorithmTest::test_perform_normal_mutation(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -1027,7 +1039,7 @@ void EvolutionaryAlgorithmTest::test_perform_uniform_mutation(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -1060,75 +1072,75 @@ void EvolutionaryAlgorithmTest::test_perform_training(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal(0.0, 1.0e-3);
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
    ea.set_population_size(4);
 
-   double old_performance = pf.calculate_performance();
+   double old_loss = pf.calculate_loss();
 
    ea.set_display(false);
    ea.set_maximum_generations_number(10);
    ea.perform_training();
 
-   double performance = pf.calculate_performance();
+   double loss = pf.calculate_loss();
 
-   assert_true(performance <= old_performance, LOG);
+   assert_true(loss <= old_loss, LOG);
 
    // Performance goal
 
    ea.randomize_population_normal(0.0, 1.0e-3);
 
-   double best_performance_goal = 1000.0;
+   double best_loss_goal = 1000.0;
 
-   ea.set_best_performance_goal(best_performance_goal);
-   ea.set_mean_performance_goal(0.0);
-   ea.set_standard_deviation_performance_goal(0.0);
+   ea.set_best_loss_goal(best_loss_goal);
+   ea.set_mean_loss_goal(0.0);
+   ea.set_standard_deviation_loss_goal(0.0);
    ea.set_maximum_generations_number(10);
    ea.set_maximum_time(10.0);
 
    ea.perform_training();
 
-   performance = pf.calculate_performance();
+   loss = pf.calculate_loss();
 
-   assert_true(performance < best_performance_goal, LOG);
+   assert_true(loss < best_loss_goal, LOG);
 
-   // Mean performance goal
+   // Mean loss goal
    
    ea.randomize_population_normal(0.0, 1.0e-3);
 
-   double mean_performance_goal = 1000.0;
+   double mean_loss_goal = 1000.0;
 
-   ea.set_best_performance_goal(0.0);
-   ea.set_mean_performance_goal(mean_performance_goal);
-   ea.set_standard_deviation_performance_goal(0.0);
+   ea.set_best_loss_goal(0.0);
+   ea.set_mean_loss_goal(mean_loss_goal);
+   ea.set_standard_deviation_loss_goal(0.0);
    ea.set_maximum_generations_number(10);
    ea.set_maximum_time(100.0);
 
    ea.perform_training();
 
-   double mean_performance = ea.calculate_mean_performance();
+   double mean_loss = ea.calculate_mean_loss();
 
-   assert_true(mean_performance < mean_performance_goal, LOG);
+   assert_true(mean_loss < mean_loss_goal, LOG);
 
-   // Standard deviation performance goal
+   // Standard deviation loss goal
 
    ea.randomize_population_normal(0.0, 1.0e-3);
 
-   double standard_deviation_performance_goal = 1000.0;
+   double standard_deviation_loss_goal = 1000.0;
 
-   ea.set_best_performance_goal(0.0);
-   ea.set_mean_performance_goal(0.0);
-   ea.set_standard_deviation_performance_goal(standard_deviation_performance_goal);
+   ea.set_best_loss_goal(0.0);
+   ea.set_mean_loss_goal(0.0);
+   ea.set_standard_deviation_loss_goal(standard_deviation_loss_goal);
    ea.set_maximum_generations_number(10);
    ea.set_maximum_time(10.0);
 
    ea.perform_training();
 
-   double standard_deviation_performance = ea.calculate_standard_deviation_performance();
+   double standard_deviation_loss = ea.calculate_standard_deviation_loss();
 
-   assert_true(standard_deviation_performance < standard_deviation_performance_goal, LOG);
+   assert_true(standard_deviation_loss < standard_deviation_loss_goal, LOG);
 }
 
 
@@ -1155,7 +1167,7 @@ void EvolutionaryAlgorithmTest::test_from_XML(void)
 
    NeuralNetwork nn;
 
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
 
    EvolutionaryAlgorithm ea(&pf);
 
@@ -1227,7 +1239,7 @@ void EvolutionaryAlgorithmTest::run_test_case(void)
 
    test_get_population();
 
-   test_get_performance();
+   test_get_loss();
    test_get_fitness();
    test_get_selection();
 
@@ -1251,9 +1263,9 @@ void EvolutionaryAlgorithmTest::run_test_case(void)
    test_get_reserve_mean_norm_history();
    test_get_reserve_standard_deviation_norm_history();
    test_get_reserve_best_norm_history();
-   test_get_reserve_mean_performance_history();
-   test_get_reserve_standard_deviation_performance_history();
-   test_get_reserve_best_performance_history();
+   test_get_reserve_mean_loss_history();
+   test_get_reserve_standard_deviation_loss_history();
+   test_get_reserve_best_loss_history();
 
    // Set methods
 
@@ -1264,7 +1276,7 @@ void EvolutionaryAlgorithmTest::run_test_case(void)
 
    test_set_population();
 
-   test_set_performance();
+   test_set_loss();
    test_set_fitness();
    test_set_selection();
 
@@ -1275,8 +1287,8 @@ void EvolutionaryAlgorithmTest::run_test_case(void)
    test_set_mutation_range();
 
    test_set_maximum_generations_number();
-   test_set_mean_performance_goal();
-   test_set_standard_deviation_performance_goal();
+   test_set_mean_loss_goal();
+   test_set_standard_deviation_loss_goal();
 
    test_set_fitness_assignment_method();
    test_set_selection_method();
@@ -1287,15 +1299,16 @@ void EvolutionaryAlgorithmTest::run_test_case(void)
    test_set_reserve_mean_norm_history();
    test_set_reserve_standard_deviation_norm_history();
    test_set_reserve_best_norm_history();
-   test_set_reserve_mean_performance_history();
-   test_set_reserve_standard_deviation_performance_history();
-   test_set_reserve_best_performance_history();
+   test_set_reserve_mean_loss_history();
+   test_set_reserve_standard_deviation_loss_history();
+   test_set_reserve_best_loss_history();
 
    test_set_reserve_all_training_history();
 
    // Population methods
 
    test_get_individual();
+
    test_set_individual();
 
    test_randomize_population_uniform();

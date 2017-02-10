@@ -734,6 +734,9 @@ tinyxml2::XMLDocument* PlugIn::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the plug in object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void PlugIn::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;

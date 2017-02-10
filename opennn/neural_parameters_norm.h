@@ -34,8 +34,8 @@
 namespace OpenNN
 {
 
-/// This class represents the neural parameters norm performance term. 
-/// This performance term is very useful as a regularization functional in data modeling, optimal control or inverse problems.
+/// This class represents the neural parameters norm error term. 
+/// This error term is very useful as a regularization functional in data modeling, optimal control or inverse problems.
 
 class NeuralParametersNorm : public RegularizationTerm
 {
@@ -74,7 +74,7 @@ public:
 
    void check(void) const;
 
-   // performance methods
+   // loss methods
 
    double calculate_regularization(void) const;
    Vector<double> calculate_gradient(void) const;
@@ -84,7 +84,7 @@ public:
    Vector<double> calculate_gradient(const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    std::string write_information(void) const;
 

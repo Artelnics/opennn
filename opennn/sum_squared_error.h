@@ -36,8 +36,8 @@ namespace OpenNN
 {
 
 /// This class represents the sum squared peformance term functional. 
-/// This is used as the performance term in data modeling problems, such as function regression, 
-/// pattern recognition or time series prediction.
+/// This is used as the error term in data modeling problems, such as function regression, 
+/// classification or time series prediction.
 
 class SumSquaredError : public ErrorTerm
 {
@@ -82,7 +82,7 @@ public:
 
    void check(void) const;
 
-   // performance methods
+   // loss methods
 
    double calculate_error(void) const;
 
@@ -96,8 +96,8 @@ public:
 
    Matrix<double> calculate_single_hidden_layer_Hessian(void) const;
 
-   double calculate_performance_combination(const size_t&, const Vector<double>&) const;
-   double calculate_performance_combinations(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
+   double calculate_loss_combination(const size_t&, const Vector<double>&) const;
+   double calculate_loss_combinations(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
 
    // Objective terms methods
 
@@ -112,7 +112,7 @@ public:
 
    Vector<double> calculate_squared_errors(void) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 

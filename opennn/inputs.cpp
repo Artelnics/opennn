@@ -817,7 +817,7 @@ std::string Inputs::to_string(void) const
 // tinyxml2::XMLDocument* to_XML(void) const method
 
 /// Serializes the inputs object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document-> 
+/// See the OpenNN manual for more information about the format of this document.
 
 tinyxml2::XMLDocument* Inputs::to_XML(void) const
 {
@@ -895,6 +895,9 @@ tinyxml2::XMLDocument* Inputs::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the inputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void Inputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1061,9 +1064,14 @@ void Inputs::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-// void to_PMML(tinyxml2::XMLElement*, const bool&, const Vector<Statistics<double>>&) method
+// void to_PMML(tinyxml2::XMLElement*, const bool&, const Vector< Statistics<double> >&) method
 
-void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, const Vector<Statistics<double>>& inputs_statistics ) const
+/// Serializes the inputs object into a PMML document.
+/// @param element XML element to append the inputs object.
+/// @param is_data_scaled True if the data is scaled, false otherwise.
+/// @param inputs_statistics Statistics of the inputs variables.
+
+void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, const Vector< Statistics<double> >& inputs_statistics ) const
 {
     std::string element_name(element->Name());
 
@@ -1117,7 +1125,7 @@ void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, 
             tinyxml2::XMLElement* neural_input = pmml_document->NewElement("NeuralInput");
             element->LinkEndChild(neural_input);
 
-            neural_input->SetAttribute("id",("0," + std::to_string(i)).c_str());
+            neural_input->SetAttribute("id",("0," + number_to_string(i)).c_str());
 
             // Derived field
             tinyxml2::XMLElement* derived_field = pmml_document->NewElement("DerivedField");
@@ -1144,9 +1152,13 @@ void Inputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_data_scaled, 
 }
 
 
-// void write_PMML_data_dictionary(tinyxml2::XMLPrinter, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) method
+// void write_PMML_data_dictionary(tinyxml2::XMLPrinter, const Vector< Statistics<double> >& inputs_statistics = Vector< Statistics<double> >() ) method
 
-void Inputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const Vector<Statistics<double>>& inputs_statistics ) const
+/// Serializes the inputs data dictonary into a PMML document.
+/// @param file_stream TinyXML file to append the data dictionary.
+/// @param inputs_statistics Statistics of the input variables.
+
+void Inputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const Vector< Statistics<double> >& inputs_statistics ) const
 {
     const size_t inputs_number = get_inputs_number();
 
@@ -1174,7 +1186,10 @@ void Inputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, const
 }
 
 
-// void write_PMML_mining_schema(tinyxml2::XMLPrinter, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) method
+// void write_PMML_mining_schema(tinyxml2::XMLPrinter) method
+
+/// Serializes the inputs mining schema into a PMML document.
+/// @param file_stream TinyXML file to append the mining schema.
 
 void Inputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1191,7 +1206,11 @@ void Inputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void write_PMML_neural_inputs(tinyxml2::XMLPrinter, const bool& is_data_scaled = false, const Vector<Statistics<double>>& inputs_statistics = Vector<Statistics<double>>() ) method
+// void write_PMML_neural_inputs(tinyxml2::XMLPrinter, const bool& is_data_scaled = false) method
+
+/// Serializes the neural inputs into a PMML document.
+/// @param file_stream TinyXML file to append the neural inputs.
+/// @param is_data_scaled True if the data is scaled, false otherwise.
 
 void Inputs::write_PMML_neural_inputs(tinyxml2::XMLPrinter& file_stream, const bool& is_data_scaled) const
 {
@@ -1201,7 +1220,7 @@ void Inputs::write_PMML_neural_inputs(tinyxml2::XMLPrinter& file_stream, const b
     {
         file_stream.OpenElement("NeuralInput");
 
-        file_stream.PushAttribute("id",("0," + std::to_string(i)).c_str());
+        file_stream.PushAttribute("id",("0," + number_to_string(i)).c_str());
 
         file_stream.OpenElement("DerivedField");
 

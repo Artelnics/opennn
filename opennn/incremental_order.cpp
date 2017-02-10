@@ -142,13 +142,13 @@ void IncrementalOrder::set_step(const size_t& new_step)
 // void set_maximum_selection_failures(const size_t&) method
 
 /// Sets the maximum selection failures for the Incremental order selection algorithm.
-/// @param new_maximum_performance_failures Maximum number of selection failures in the Incremental order selection algorithm.
+/// @param new_maximum_loss_failures Maximum number of selection failures in the Incremental order selection algorithm.
 
-void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
+void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_maximum_performance_failures <= 0)
+    if(new_maximum_loss_failures <= 0)
     {
         std::ostringstream buffer;
 
@@ -161,7 +161,7 @@ void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_
 
 #endif
 
-    maximum_selection_failures = new_maximum_performance_failures;
+    maximum_selection_failures = new_maximum_loss_failures;
 }
 
 // IncrementalOrderResults* perform_order_selection(void) method
@@ -172,19 +172,19 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 {
     IncrementalOrderResults* results = new IncrementalOrderResults();
 
-    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    Vector<double> performance(2);
-    double prev_selection_performance = 1.0e99;
+    Vector<double> loss(2);
+    double prev_selection_loss = 1.0e99;
 
     size_t optimal_order;
     Vector<double> optimum_parameters;
-    double optimum_training_performance;
-    double optimum_selection_performance;
+    double optimum_training_loss;
+    double optimum_selection_loss;
 
     Vector<double> parameters_history_row;
-    double current_training_performance, current_selection_performance;
+    double current_training_loss, current_selection_loss;
 
     size_t order = minimum_order;
     size_t iterations = 0;
@@ -205,23 +205,23 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
     while (!end)
     {
-        performance = perform_model_evaluation(order);
-        current_training_performance = performance[0];
-        current_selection_performance = performance[1];
+        loss = perform_model_evaluation(order);
+        current_training_loss = loss[0];
+        current_selection_loss = loss[1];
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
         results->order_data.push_back(order);
 
-        if(reserve_performance_data)
+        if(reserve_loss_data)
         {
-            results->performance_data.push_back(current_training_performance);
+            results->loss_data.push_back(current_training_loss);
         }
 
-        if(reserve_selection_performance_data)
+        if(reserve_selection_loss_data)
         {
-            results->selection_performance_data.push_back(current_selection_performance);
+            results->selection_loss_data.push_back(current_selection_loss);
         }
 
         if(reserve_parameters_data)
@@ -231,20 +231,21 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         }
 
         if(iterations == 0
-        || (optimum_selection_performance > current_selection_performance
-        && fabs(optimum_selection_performance - current_selection_performance) > tolerance))
+        || (optimum_selection_loss > current_selection_loss
+        && fabs(optimum_selection_loss - current_selection_loss) > tolerance))
         {
             optimal_order = order;
-            optimum_training_performance = current_training_performance;
-            optimum_selection_performance = current_selection_performance;
+            optimum_training_loss = current_training_loss;
+            optimum_selection_loss = current_selection_loss;
             optimum_parameters = get_parameters_order(optimal_order);
 
-        }else if(prev_selection_performance < current_selection_performance)
+        }
+        else if(prev_selection_loss < current_selection_loss)
         {
             selection_failures++;
         }
 
-        prev_selection_performance = current_selection_performance;
+        prev_selection_loss = current_selection_loss;
         iterations++;
 
         // Stopping criteria
@@ -260,18 +261,19 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             results->stopping_condition = IncrementalOrder::MaximumTime;            
         }
-        else if(performance[1] <= selection_performance_goal)
+        else if(loss[1] <= selection_loss_goal)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Selection performance reached." << std::endl;
+                std::cout << "Selection loss reached." << std::endl;
             }
 
-            results->stopping_condition = IncrementalOrder::SelectionPerformanceGoal;
+            results->stopping_condition = IncrementalOrder::SelectionLossGoal;
 
-        }else if(iterations >= maximum_iterations_number)
+        }
+        else if(iterations >= maximum_iterations_number)
         {
             end = true;
 
@@ -309,8 +311,8 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         {
             std::cout << "Iteration: " << iterations << std::endl
                       << "Hidden neurons number: " << order << std::endl
-                      << "Training performance: " << performance[0] << std::endl
-                      << "Selection performance: " << performance[1] << std::endl
+                      << "Training loss: " << loss[0] << std::endl
+                      << "Selection loss: " << loss[1] << std::endl
                       << "Elapsed time: " << elapsed_time << std::endl;
         }
 
@@ -325,8 +327,8 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     {
         std::cout << std::endl
                   << "Optimal order: " << optimal_order << std:: endl
-                  << "Optimum selection performance: " << optimum_selection_performance << std::endl
-                  << "Corresponding training performance: " << optimum_training_performance << std::endl;
+                  << "Optimum selection loss: " << optimum_selection_loss << std::endl
+                  << "Corresponding training loss: " << optimum_training_loss << std::endl;
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
@@ -346,14 +348,18 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
+#ifdef __OPENNN_MPI__
+    neural_network_pointer->set_multilayer_perceptron_pointer(multilayer_perceptron_pointer);
+#endif
+
     if(reserve_minimal_parameters)
     {
         results->minimal_parameters = optimum_parameters;
     }
 
     results->optimal_order = optimal_order;
-    results->final_selection_performance = optimum_selection_performance;
-    results->final_performance = perform_model_evaluation(optimal_order)[0];
+    results->final_selection_loss = optimum_selection_loss;
+    results->final_loss = perform_model_evaluation(optimal_order)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
 
@@ -362,7 +368,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
 {
@@ -416,12 +422,12 @@ Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Selection performance goal
+   // Selection loss goal
 
-   labels.push_back("Selection performance goal");
+   labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_performance_goal;
+   buffer << selection_loss_goal;
 
    values.push_back(buffer.str());
 
@@ -452,21 +458,37 @@ Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Plot training performance history
+   // Plot training loss history
 
-   labels.push_back("Plot training performance history");
+   labels.push_back("Plot training loss history");
 
    buffer.str("");
-   buffer << reserve_performance_data;
+
+   if(reserve_loss_data)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Plot selection performance history
+   // Plot selection loss history
 
-   labels.push_back("Plot selection performance history");
+   labels.push_back("Plot selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_data;
+
+   if(reserve_selection_loss_data)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -555,7 +577,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
 //   element = document->NewElement("PerformanceCalculationMethod");
 //   root_element->LinkEndChild(element);
 
-//   text = document->NewText(write_performance_calculation_method().c_str());
+//   text = document->NewText(write_loss_calculation_method().c_str());
 //   element->LinkEndChild(text);
 //   }
 
@@ -607,13 +629,13 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Selection performance goal
+   // selection loss goal
    {
-   element = document->NewElement("SelectionPerformanceGoal");
+   element = document->NewElement("SelectionLossGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << selection_performance_goal;
+   buffer << selection_loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -655,25 +677,25 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve performance data
+   // Reserve loss data
    {
    element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_performance_data;
+   buffer << reserve_loss_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection performance data
+   // Reserve selection loss data
    {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_data;
+   buffer << reserve_selection_loss_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -684,6 +706,9 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the incremental order object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -746,12 +771,12 @@ void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Selection performance goal
+    // selection loss goal
 
-    file_stream.OpenElement("SelectionPerformanceGoal");
+    file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_performance_goal;
+    buffer << selection_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -779,23 +804,23 @@ void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance data
+    // Reserve loss data
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_data;
+    buffer << reserve_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance data
+    // Reserve selection loss data
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_data;
+    buffer << reserve_selection_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -889,11 +914,11 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_performance_calculation_method = element->GetText();
+           const std::string new_loss_calculation_method = element->GetText();
 
            try
            {
-              set_performance_calculation_method(new_performance_calculation_method);
+              set_loss_calculation_method(new_loss_calculation_method);
            }
            catch(const std::logic_error& e)
            {
@@ -940,17 +965,17 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve performance data
+    // Reserve loss data
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
-           const std::string new_reserve_performance_data = element->GetText();
+           const std::string new_reserve_loss_data = element->GetText();
 
            try
            {
-              set_reserve_performance_data(new_reserve_performance_data != "0");
+              set_reserve_loss_data(new_reserve_loss_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -959,17 +984,17 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection performance data
+    // Reserve selection loss data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
         if(element)
         {
-           const std::string new_reserve_selection_performance_data = element->GetText();
+           const std::string new_reserve_selection_loss_data = element->GetText();
 
            try
            {
-              set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
+              set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -1016,17 +1041,17 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Selection performance goal
+    // selection loss goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
 
         if(element)
         {
-           const double new_selection_performance_goal = atof(element->GetText());
+           const double new_selection_loss_goal = atof(element->GetText());
 
            try
            {
-              set_selection_performance_goal(new_selection_performance_goal);
+              set_selection_loss_goal(new_selection_loss_goal);
            }
            catch(const std::logic_error& e)
            {

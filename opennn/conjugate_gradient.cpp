@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a conjugate gradient training algorithm object not associated to any performance functional object. 
+/// It creates a conjugate gradient training algorithm object not associated to any loss functional object. 
 /// It also initializes the class members to their default values.
 
 ConjugateGradient::ConjugateGradient(void) : TrainingAlgorithm()
@@ -33,14 +33,14 @@ ConjugateGradient::ConjugateGradient(void) : TrainingAlgorithm()
 // GENERAL CONSTRUCTOR
 
 /// General constructor. 
-/// It creates a conjugate gradient training algorithm associated to a performance functional object. 
+/// It creates a conjugate gradient training algorithm associated to a loss functional object. 
 /// It also initializes the rest of class members to their default values.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-ConjugateGradient::ConjugateGradient(PerformanceFunctional* new_performance_functional_pointer)
-: TrainingAlgorithm(new_performance_functional_pointer)
+ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
+: TrainingAlgorithm(new_loss_index_pointer)
 {
-   training_rate_algorithm.set_performance_functional_pointer(new_performance_functional_pointer);   
+   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);   
 
    set_default();
 }
@@ -49,7 +49,7 @@ ConjugateGradient::ConjugateGradient(PerformanceFunctional* new_performance_func
 // XML CONSTRUCTOR 
 
 /// XML constructor. 
-/// It creates a conjugate gradient training algorithm not associated to any performance functional object.
+/// It creates a conjugate gradient training algorithm not associated to any loss functional object.
 /// It also loads the class members from a XML document.
 /// @param conjugate_gradient_document TinyXML document with the members of a conjugate gradient object.
 
@@ -210,24 +210,24 @@ const double& ConjugateGradient::get_minimum_parameters_increment_norm(void) con
 }
 
 
-// const double& get_minimum_performance_increase(void) const method
+// const double& get_minimum_loss_increase(void) const method
 
-/// Returns the minimum performance improvement during training.  
+/// Returns the minimum loss improvement during training.  
 
-const double& ConjugateGradient::get_minimum_performance_increase(void) const
+const double& ConjugateGradient::get_minimum_loss_increase(void) const
 {
-   return(minimum_performance_increase);
+   return(minimum_loss_increase);
 }
 
 
-// const double& get_performance_goal(void) const method
+// const double& get_loss_goal(void) const method
 
-/// Returns the goal value for the performance. 
+/// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& ConjugateGradient::get_performance_goal(void) const
+const double& ConjugateGradient::get_loss_goal(void) const
 {
-   return(performance_goal);
+   return(loss_goal);
 }
 
 
@@ -242,13 +242,13 @@ const double& ConjugateGradient::get_gradient_norm_goal(void) const
 }
 
 
-// const size_t& get_maximum_selection_performance_decreases(void) const method
+// const size_t& get_maximum_selection_loss_decreases(void) const method
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& ConjugateGradient::get_maximum_selection_performance_decreases(void) const
+const size_t& ConjugateGradient::get_maximum_selection_loss_decreases(void) const
 {
-   return(maximum_selection_performance_decreases);
+   return(maximum_selection_loss_decreases);
 }
 
 
@@ -271,6 +271,14 @@ const double& ConjugateGradient::get_maximum_time(void) const
    return(maximum_time);
 }
 
+// const bool& get_return_minimum_selection_error_neural_network(void) const method
+
+/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
+
+const bool& ConjugateGradient::get_return_minimum_selection_error_neural_network(void) const
+{
+    return(return_minimum_selection_error_neural_network);
+}
 
 // const bool& get_reserve_parameters_history(void) const method
 
@@ -292,13 +300,13 @@ const bool& ConjugateGradient::get_reserve_parameters_norm_history(void) const
 }
 
 
-// const bool& get_reserve_performance_history(void) const method
+// const bool& get_reserve_loss_history(void) const method
 
-/// Returns true if the performance history vector is to be reserved, and false otherwise.
+/// Returns true if the loss history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_performance_history(void) const
+const bool& ConjugateGradient::get_reserve_loss_history(void) const
 {
-   return(reserve_performance_history);     
+   return(reserve_loss_history);     
 }
 
 
@@ -353,27 +361,27 @@ const bool& ConjugateGradient::get_reserve_elapsed_time_history(void) const
 }
 
 
-// const bool& get_reserve_selection_performance_history(void) const method
+// const bool& get_reserve_selection_loss_history(void) const method
 
-/// Returns true if the Selection performance history vector is to be reserved, and false otherwise.
+/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_selection_performance_history(void) const
+const bool& ConjugateGradient::get_reserve_selection_loss_history(void) const
 {
-   return(reserve_selection_performance_history);
+   return(reserve_selection_loss_history);
 }
 
 
-// void set_performance_functional_pointer(PerformanceFunctional*) method
+// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a performance functional object to be associated to the conjugate gradient object.
-/// It also sets that performance functional to the training rate algorithm.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// Sets a pointer to a loss functional object to be associated to the conjugate gradient object.
+/// It also sets that loss functional to the training rate algorithm.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-void ConjugateGradient::set_performance_functional_pointer(PerformanceFunctional* new_performance_functional_pointer)
+void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
-   training_rate_algorithm.set_performance_functional_pointer(new_performance_functional_pointer);
+   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
 
@@ -428,10 +436,10 @@ void ConjugateGradient::set_training_direction_method(const std::string& new_tra
 /// <ul>
 /// <li> Parameters.
 /// <li> Parameters norm.
-/// <li> performance.
+/// <li> loss.
 /// <li> Gradient. 
 /// <li> Gradient norm. 
-/// <li> Selection performance. 
+/// <li> selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm. 
 /// <li> Training rate.
@@ -448,13 +456,13 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
    reserve_parameters_history = new_reserve_all_training_history;
    reserve_parameters_norm_history = new_reserve_all_training_history;
    
-   // Performance functional
+   // Loss index
 
-   reserve_performance_history = new_reserve_all_training_history;
+   reserve_loss_history = new_reserve_all_training_history;
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
 
-   reserve_selection_performance_history = new_reserve_all_training_history;
+   reserve_selection_loss_history = new_reserve_all_training_history;
 
    // Training algorithm
 
@@ -517,23 +525,25 @@ void ConjugateGradient::set_default(void)
 
    minimum_parameters_increment_norm = 0.0;
 
-   minimum_performance_increase = 0.0;
-   performance_goal = -1.0e99;
+   minimum_loss_increase = 0.0;
+   loss_goal = -1.0e99;
    gradient_norm_goal = 0.0;
-   maximum_selection_performance_decreases = 1000000;
+   maximum_selection_loss_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
+
+   return_minimum_selection_error_neural_network = false;
 
    // TRAINING HISTORY
 
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_performance_history = true;
+   reserve_loss_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_selection_performance_history = false;
+   reserve_selection_loss_history = false;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -762,45 +772,45 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const double& new_
 }
 
 
-// void set_minimum_performance_increase(const double&) method
+// void set_minimum_loss_increase(const double&) method
 
-/// Sets a new minimum performance improvement during training.  
-/// @param new_minimum_performance_increase Minimum improvement in the performance between two iterations.
+/// Sets a new minimum loss improvement during training.  
+/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
-void ConjugateGradient::set_minimum_performance_increase(const double& new_minimum_performance_increase)
+void ConjugateGradient::set_minimum_loss_increase(const double& new_minimum_loss_increase)
 {
    // Control sentence (if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_minimum_performance_increase < 0.0)
+   if(new_minimum_loss_increase < 0.0)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_minimum_performance_increase(const double&) method.\n"
-             << "Minimum performance improvement must be equal or greater than 0.\n";
+             << "void set_minimum_loss_increase(const double&) method.\n"
+             << "Minimum loss improvement must be equal or greater than 0.\n";
 
       throw std::logic_error(buffer.str());
    }
 
    #endif
 
-   // Set minimum performance improvement
+   // Set minimum loss improvement
 
-   minimum_performance_increase = new_minimum_performance_increase;
+   minimum_loss_increase = new_minimum_loss_increase;
 }
 
 
-// void set_performance_goal(const double&) method
+// void set_loss_goal(const double&) method
 
-/// Sets a new goal value for the performance. 
+/// Sets a new goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
-/// @param new_performance_goal Goal value for the performance.
+/// @param new_loss_goal Goal value for the loss.
 
-void ConjugateGradient::set_performance_goal(const double& new_performance_goal)
+void ConjugateGradient::set_loss_goal(const double& new_loss_goal)
 {
-   performance_goal = new_performance_goal;
+   loss_goal = new_loss_goal;
 }
 
 
@@ -835,14 +845,14 @@ void ConjugateGradient::set_gradient_norm_goal(const double& new_gradient_norm_g
 }
 
 
-// void set_maximum_selection_performance_decreases(const size_t&) method
+// void set_maximum_selection_loss_decreases(const size_t&) method
 
 /// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_performance_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// @param new_maximum_selection_loss_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void ConjugateGradient::set_maximum_selection_performance_decreases(const size_t& new_maximum_selection_performance_decreases)
+void ConjugateGradient::set_maximum_selection_loss_decreases(const size_t& new_maximum_selection_loss_decreases)
 {
-   maximum_selection_performance_decreases = new_maximum_selection_performance_decreases;
+   maximum_selection_loss_decreases = new_maximum_selection_loss_decreases;
 }
 
 
@@ -886,8 +896,17 @@ void ConjugateGradient::set_maximum_time(const double& new_maximum_time)
    maximum_time = new_maximum_time;
 }
 
+// void set_return_minimum_selection_error_neural_network(const bool&) method
 
-// void set_reserve_parameters_history(bool) method
+/// Makes the minimum selection error neural network of all the iterations to be returned or not.
+/// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
+
+void ConjugateGradient::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
+{
+   return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
+}
+
+// void set_reserve_parameters_history(const bool&) method
 
 /// Makes the parameters history vector of vectors to be reseved or not in memory.
 /// @param new_reserve_parameters_history True if the parameters history vector of vectors is to be reserved, false otherwise.
@@ -909,14 +928,14 @@ void ConjugateGradient::set_reserve_parameters_norm_history(const bool& new_rese
 }
 
 
-// void set_reserve_performance_history(bool) method
+// void set_reserve_loss_history(bool) method
 
-/// Makes the performance history vector to be reseved or not in memory.
-/// @param new_reserve_performance_history True if the performance history vector is to be reserved, false otherwise.
+/// Makes the loss history vector to be reseved or not in memory.
+/// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_performance_history(const bool& new_reserve_performance_history)
+void ConjugateGradient::set_reserve_loss_history(const bool& new_reserve_loss_history)
 {
-   reserve_performance_history = new_reserve_performance_history;     
+   reserve_loss_history = new_reserve_loss_history;     
 }
 
 
@@ -979,15 +998,15 @@ void ConjugateGradient::set_reserve_elapsed_time_history(const bool& new_reserve
 }
 
 
-// void set_reserve_selection_performance_history(bool) method
+// void set_reserve_selection_loss_history(bool) method
 
-/// Makes the Selection performance history to be reserved or not in memory.
+/// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_performance_history True if the Selection performance history is to be reserved, false otherwise. 
+/// @param new_reserve_selection_loss_history True if the selection loss history is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_selection_performance_history(const bool& new_reserve_selection_performance_history)  
+void ConjugateGradient::set_reserve_selection_loss_history(const bool& new_reserve_selection_loss_history)  
 {
-   reserve_selection_performance_history = new_reserve_selection_performance_history;
+   reserve_selection_loss_history = new_reserve_selection_loss_history;
 }
 
 
@@ -1064,17 +1083,17 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
               << "double calculate_FR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
 
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1144,17 +1163,17 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
               << "double calculate_PR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
 
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1230,16 +1249,16 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
               << "Vector<double> calculate_PR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1307,16 +1326,16 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
               << "Vector<double> calculate_FR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1378,7 +1397,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 Vector<double> ConjugateGradient::calculate_training_direction
 (const Vector<double>& old_gradient, const Vector<double>& gradient, const Vector<double>& old_training_direction) const
 {
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1388,11 +1407,11 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
@@ -1481,16 +1500,16 @@ Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(
 
     std::ostringstream buffer;
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
               << "Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const method.\n"
-              << "Performance functional pointer is NULL.\n";
+              << "Loss index pointer is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
 
-    const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -1545,14 +1564,14 @@ void ConjugateGradient::ConjugateGradientResults::resize_training_history(const 
         parameters_norm_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_performance_history())
+    if(conjugate_gradient_pointer->get_reserve_loss_history())
     {
-        performance_history.resize(new_size);
+        loss_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_selection_performance_history())
+    if(conjugate_gradient_pointer->get_reserve_selection_loss_history())
     {
-        selection_performance_history.resize(new_size);
+        selection_loss_history.resize(new_size);
     }
 
     if(conjugate_gradient_pointer->get_reserve_gradient_history())
@@ -1607,20 +1626,20 @@ std::string ConjugateGradient::ConjugateGradientResults::to_string(void) const
               << parameters_norm_history << "\n"; 
    }
 
-   // performance history
+   // loss history
 
-   if(!performance_history.empty())
+   if(!loss_history.empty())
    {
-       buffer << "% performance history:\n"
-              << performance_history << "\n"; 
+       buffer << "% loss history:\n"
+              << loss_history << "\n"; 
    }
 
-   // Selection performance history
+   // selection loss history
 
-   if(!selection_performance_history.empty())
+   if(!selection_loss_history.empty())
    {
-       buffer << "% Selection performance history:\n"
-              << selection_performance_history << "\n"; 
+       buffer << "% selection loss history:\n"
+              << selection_loss_history << "\n"; 
    }
 
    // Gradient history
@@ -1696,20 +1715,20 @@ Matrix<std::string> ConjugateGradient::ConjugateGradientResults::write_final_res
    names.push_back("Final training loss");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_performance;
+   buffer << std::setprecision(precision) << final_loss;
 
    values.push_back(buffer.str());
 
    // Final selection loss
 
-   const PerformanceFunctional* performance_functional_pointer = conjugate_gradient_pointer->get_performance_functional_pointer();
+   const LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
 
-   if(performance_functional_pointer->has_selection())
+   if(loss_index_pointer->has_selection())
    {
         names.push_back("Final selection loss");
 
         buffer.str("");
-        buffer << std::setprecision(precision) << final_selection_performance;
+        buffer << std::setprecision(precision) << final_selection_loss;
 
         values.push_back(buffer.str());
    }
@@ -1750,6 +1769,12 @@ Matrix<std::string> ConjugateGradient::ConjugateGradientResults::write_final_res
 
    values.push_back(buffer.str());
 
+   // Stopping criteria
+
+   names.push_back("Stopping criterion");
+
+   values.push_back(write_stopping_condition());
+
    const size_t rows_number = names.size();
    const size_t columns_number = 2;
 
@@ -1764,7 +1789,7 @@ Matrix<std::string> ConjugateGradient::ConjugateGradientResults::write_final_res
 
 // ConjugateGradientResults* perform_training(void) method
 
-/// Trains a neural network with an associated performance functional according to the conjugate gradient algorithm.
+/// Trains a neural network with an associated loss functional according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
 ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training(void)
@@ -1795,24 +1820,24 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
    // Neural network stuff
 
-   NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
    Vector<double> parameters = neural_network_pointer->arrange_parameters();
    double parameters_norm;
 
-   // Performance functional stuff
+   // Loss index stuff
 
-   double performance = 0.0;
-   double old_performance = 0.0;
-   double performance_increase = 0.0;
+   double loss = 0.0;
+   double old_loss = 0.0;
+   double loss_increase = 0.0;
       
    Vector<double> gradient(parameters_number);
    double gradient_norm;
 
-   double selection_performance = 0.0; 
-   double old_selection_performance = 0.0;
+   double selection_loss = 0.0; 
+   double old_selection_loss = 0.0;
 
    std::string information;
 
@@ -1835,6 +1860,9 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
    double old_training_rate = 0.0;
 
    Vector<double> directional_point(2, 0.0);
+
+   Vector<double> minimum_selection_error_parameters(parameters_number);
+   double minimum_selection_error;
 
    bool stop_training = false;
 
@@ -1866,20 +1894,20 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";          
       }
 
-      // Performance functional stuff
+      // Loss index stuff
     
       if(iteration == 0)
       {      
-         performance = performance_functional_pointer->calculate_performance();
-         performance_increase = 0.0; 
+         loss = loss_index_pointer->calculate_loss();
+         loss_increase = 0.0; 
       }
       else
       {
-         performance = directional_point[1];
-         performance_increase = old_performance - performance; 
+         loss = directional_point[1];
+         loss_increase = old_loss - loss; 
       }
 
-      gradient = performance_functional_pointer->calculate_gradient();
+      gradient = loss_index_pointer->calculate_gradient();
 
       gradient_norm = gradient.calculate_norm();
 
@@ -1888,12 +1916,24 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          std::cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
       }
 
-      selection_performance = performance_functional_pointer->calculate_selection_performance();
+      selection_loss = loss_index_pointer->calculate_selection_loss();
 
-	  if(iteration != 0 && selection_performance > old_selection_performance)
-	  {
-	     selection_failures++;	  
-	  }
+      if(iteration == 0)
+      {
+          minimum_selection_error = selection_loss;
+
+          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
+      }
+      else if(iteration != 0 && selection_loss > old_selection_loss)
+      {
+         selection_failures++;
+      }
+      else if(selection_loss < minimum_selection_error)
+      {
+          minimum_selection_error = selection_loss;
+
+          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
+      }
 
       // Training algorithm 
 
@@ -1916,7 +1956,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          training_direction = calculate_training_direction(old_gradient, gradient, old_training_direction);
       }
 
-      // Calculate performance training_slope
+      // Calculate loss training_slope
 
       training_slope = (gradient/gradient_norm).dot(training_direction);
 
@@ -1940,7 +1980,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          initial_training_rate = old_training_rate;
       }
 
-      directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, initial_training_rate);
+      directional_point = training_rate_algorithm.calculate_directional_point(loss, training_direction, initial_training_rate);
 
 	  training_rate = directional_point[0];
 
@@ -1950,7 +1990,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          training_direction = calculate_gradient_descent_training_direction(gradient);         
 
-         directional_point = training_rate_algorithm.calculate_directional_point(performance, training_direction, first_training_rate);
+         directional_point = training_rate_algorithm.calculate_directional_point(loss, training_direction, first_training_rate);
 
 		 training_rate = directional_point[0];
       }
@@ -1975,16 +2015,16 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          results_pointer->parameters_norm_history[iteration] = parameters_norm;
       }
 
-      // Training history performance functional
+      // Training history loss functional
 
-      if(reserve_performance_history)
+      if(reserve_loss_history)
       {
-         results_pointer->performance_history[iteration] = performance;
+         results_pointer->loss_history[iteration] = loss;
       }
 
-      if(reserve_selection_performance_history)
+      if(reserve_selection_loss_history)
       {
-         results_pointer->selection_performance_history[iteration] = selection_performance;
+         results_pointer->selection_loss_history[iteration] = selection_loss;
       }
 
       if(reserve_gradient_history)
@@ -2025,20 +2065,24 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MinimumParametersIncrementNorm;
       }
 
-      else if(iteration != 0 && performance_increase <= minimum_performance_increase)
+      else if(iteration != 0 && loss_increase <= minimum_loss_increase)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Minimum performance increase reached.\n";
-            std::cout << "Performance increase: " << performance_increase << std::endl;
+            std::cout << "Iteration " << iteration << ": Minimum loss increase reached.\n";
+            std::cout << "Performance increase: " << loss_increase << std::endl;
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MinimumPerformanceIncrease;
       }
 
-      else if(performance <= performance_goal)
+      else if(loss <= loss_goal)
       {
          if(display)
          {
@@ -2046,6 +2090,8 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = PerformanceGoal;
       }
 
       else if(gradient_norm <= gradient_norm_goal)
@@ -2056,9 +2102,11 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = GradientNormGoal;
       }
 
-      else if(selection_failures > maximum_selection_performance_decreases)
+      else if(selection_failures > maximum_selection_loss_decreases)
       {
          if(display)
          {
@@ -2067,6 +2115,8 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MaximumSelectionPerformanceDecreases;
       }
 
       else if(iteration == maximum_iterations_number)
@@ -2077,6 +2127,8 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MaximumIterationsNumber;
       }
 
       else if(elapsed_time >= maximum_time)
@@ -2087,6 +2139,8 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          }
 
          stop_training = true;
+
+         results_pointer->stopping_condition = MaximumTime;
       }
 
       if(iteration != 0 && iteration % save_period == 0)
@@ -2098,18 +2152,18 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
       {
           if(display)
           {
-             information = performance_functional_pointer->write_information();
+             information = loss_index_pointer->write_information();
 
              std::cout << "Parameters norm: " << parameters_norm << "\n"
-                       << "Training performance: " << performance << "\n"
+                       << "Training loss: " << loss << "\n"
                        << "Gradient norm: " << gradient_norm << "\n"
                        << information
                        << "Training rate: " << training_rate << "\n"
                        << "Elapsed time: " << elapsed_time << std::endl;
 
-             if(selection_performance != 0)
+             if(selection_loss != 0)
              {
-                std::cout << "Selection performance: " << selection_performance << std::endl;
+                std::cout << "selection loss: " << selection_loss << std::endl;
              }
           }
 
@@ -2118,8 +2172,8 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          results_pointer->final_parameters = parameters;
          results_pointer->final_parameters_norm = parameters_norm;
 
-         results_pointer->final_performance = performance;
-         results_pointer->final_selection_performance = selection_performance;
+         results_pointer->final_loss = loss;
+         results_pointer->final_selection_loss = selection_loss;
 
          results_pointer->final_gradient = gradient;
          results_pointer->final_gradient_norm = gradient_norm;
@@ -2135,19 +2189,19 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
       else if(display && iteration % display_period == 0)
       {
-         information = performance_functional_pointer->write_information();
+         information = loss_index_pointer->write_information();
 
          std::cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
-                   << "Training performance: " << performance << "\n"
+                   << "Training loss: " << loss << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
                    << information 
                    << "Training rate: " << training_rate << "\n"
                    << "Elapsed time: " << elapsed_time << std::endl; 
 
-         if(selection_performance != 0)
+         if(selection_loss != 0)
          {
-            std::cout << "Selection performance: " << selection_performance << std::endl;
+            std::cout << "selection loss: " << selection_loss << std::endl;
          }
       }
 
@@ -2159,13 +2213,35 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
       // Update stuff
 
-      old_performance = performance;
+      old_loss = loss;
       old_gradient = gradient;
-      old_selection_performance = selection_performance;
+      old_selection_loss = selection_loss;
 
       old_training_direction = training_direction;   
       old_training_rate = training_rate;
    } 
+
+   if(return_minimum_selection_error_neural_network)
+   {
+       parameters = minimum_selection_error_parameters;
+       parameters_norm = parameters.calculate_norm();
+
+       neural_network_pointer->set_parameters(parameters);
+
+       loss = loss_index_pointer->calculate_loss();
+       selection_loss = minimum_selection_error;
+   }
+
+   results_pointer->final_parameters = parameters;
+   results_pointer->final_parameters_norm = parameters_norm;
+
+   results_pointer->final_loss = loss;
+   results_pointer->final_selection_loss = selection_loss;
+
+   results_pointer->final_gradient = gradient;
+   results_pointer->final_gradient_norm = gradient_norm;
+
+   results_pointer->elapsed_time = elapsed_time;
 
    return(results_pointer);
 
@@ -2182,7 +2258,7 @@ std::string ConjugateGradient::write_training_algorithm_type(void) const
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
 {
@@ -2225,12 +2301,12 @@ Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Minimum performance increase
+   // Minimum loss increase
 
-   labels.push_back("Minimum performance increase");
+   labels.push_back("Minimum loss increase");
 
    buffer.str("");
-   buffer << minimum_performance_increase;
+   buffer << minimum_loss_increase;
 
    values.push_back(buffer.str());
 
@@ -2239,7 +2315,7 @@ Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
    labels.push_back("Performance goal");
 
    buffer.str("");
-   buffer << performance_goal;
+   buffer << loss_goal;
 
    values.push_back(buffer.str());
 
@@ -2252,12 +2328,12 @@ Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
 
-   labels.push_back("Maximum selection performance decreases");
+   labels.push_back("Maximum selection loss increases");
 
    buffer.str("");
-   buffer << maximum_selection_performance_decreases;
+   buffer << maximum_selection_loss_decreases;
 
    values.push_back(buffer.str());
 
@@ -2284,25 +2360,49 @@ Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
    labels.push_back("Reserve parameters norm history");
 
    buffer.str("");
-   buffer << reserve_parameters_norm_history;
+
+   if(reserve_parameters_norm_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Reserve performance history
+   // Reserve loss history
 
-   labels.push_back("Reserve performance history");
+   labels.push_back("Reserve loss history");
 
    buffer.str("");
-   buffer << reserve_performance_history;
+
+   if(reserve_loss_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
-   labels.push_back("Reserve selection performance history");
+   labels.push_back("Reserve selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_history;
+
+   if(reserve_selection_loss_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -2311,7 +2411,15 @@ Matrix<std::string> ConjugateGradient::to_string_matrix(void) const
    labels.push_back("Reserve gradient norm history");
 
    buffer.str("");
-   buffer << reserve_gradient_norm_history;
+
+   if(reserve_gradient_norm_history)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -2395,6 +2503,17 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 
       delete training_rate_algorithm_document;
    }
+
+   // Return minimum selection error neural network
+
+   element = document->NewElement("ReturnMinimumSelectionErrorNN");
+   root_element->LinkEndChild(element);
+
+   buffer.str("");
+   buffer << return_minimum_selection_error_neural_network;
+
+   text = document->NewText(buffer.str().c_str());
+   element->LinkEndChild(text);
 
    // Warning parameters norm
 //   {
@@ -2480,13 +2599,13 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Minimum performance increase
+   // Minimum loss increase
    {
       element = document->NewElement("MinimumPerformanceIncrease");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << minimum_performance_increase;
+      buffer << minimum_loss_increase;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
@@ -2498,7 +2617,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << performance_goal;
+      buffer << loss_goal;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
@@ -2516,13 +2635,13 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
    {
-      element = document->NewElement("MaximumSelectionPerformanceDecreases");
+      element = document->NewElement("MaximumSelectionLossDecreases");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << maximum_selection_performance_decreases;
+      buffer << maximum_selection_loss_decreases;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
@@ -2576,25 +2695,25 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
       element->LinkEndChild(text);
    }
 
-   // Reserve performance history
+   // Reserve loss history
    {
       element = document->NewElement("ReservePerformanceHistory");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << reserve_performance_history;
+      buffer << reserve_loss_history;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
    }
 
-   // Reserve selection performance history
+   // Reserve selection loss history
    {
-      element = document->NewElement("ReserveSelectionPerformanceHistory");
+      element = document->NewElement("ReserveSelectionLossHistory");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << reserve_selection_performance_history;
+      buffer << reserve_selection_loss_history;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
@@ -2660,13 +2779,13 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML(void) const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 //   {
-//      element = document->NewElement("ReserveSelectionPerformanceHistory");
+//      element = document->NewElement("ReserveSelectionLossHistory");
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
-//      buffer << reserve_selection_performance_history;
+//      buffer << reserve_selection_loss_history;
 
 //      text = document->NewText(buffer.str().c_str());
 //      element->LinkEndChild(text);
@@ -2746,6 +2865,19 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
    training_rate_algorithm.write_XML(file_stream);
 
+   // Return minimum selection error neural network
+
+   {
+       file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
+
+       buffer.str("");
+       buffer << return_minimum_selection_error_neural_network;
+
+       file_stream.PushText(buffer.str().c_str());
+
+       file_stream.CloseElement();
+   }
+
    // Minimum parameters increment norm
 
    {
@@ -2759,13 +2891,13 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Minimum performance increase
+   // Minimum loss increase
 
    {
        file_stream.OpenElement("MinimumPerformanceIncrease");
 
        buffer.str("");
-       buffer << minimum_performance_increase;
+       buffer << minimum_loss_increase;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -2778,7 +2910,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.OpenElement("PerformanceGoal");
 
        buffer.str("");
-       buffer << performance_goal;
+       buffer << loss_goal;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -2798,13 +2930,13 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Maximum selection performance decreases
+   // Maximum selection loss decreases
 
    {
-       file_stream.OpenElement("MaximumSelectionPerformanceDecreases");
+       file_stream.OpenElement("MaximumSelectionLossDecreases");
 
        buffer.str("");
-       buffer << maximum_selection_performance_decreases;
+       buffer << maximum_selection_loss_decreases;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -2850,26 +2982,26 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Reserve performance history
+   // Reserve loss history
 
    {
        file_stream.OpenElement("ReservePerformanceHistory");
 
        buffer.str("");
-       buffer << reserve_performance_history;
+       buffer << reserve_loss_history;
 
        file_stream.PushText(buffer.str().c_str());
 
        file_stream.CloseElement();
    }
 
-   // Reserve selection performance history
+   // Reserve selection loss history
 
    {
-       file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+       file_stream.OpenElement("ReserveSelectionLossHistory");
 
        buffer.str("");
-       buffer << reserve_selection_performance_history;
+       buffer << reserve_selection_loss_history;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -3064,6 +3196,25 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
+    // Return minimum selection error neural network
+
+    const tinyxml2::XMLElement* return_minimum_selection_error_neural_network_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+
+    if(return_minimum_selection_error_neural_network_element)
+    {
+        std::string new_return_minimum_selection_error_neural_network = return_minimum_selection_error_neural_network_element->GetText();
+
+        try
+        {
+            set_return_minimum_selection_error_neural_network(new_return_minimum_selection_error_neural_network != "0");
+        }
+        catch(const std::logic_error& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+    }
+
+
   // Minimum parameters increment norm
   {
      const tinyxml2::XMLElement* minimum_parameters_increment_norm_element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
@@ -3083,17 +3234,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Minimum performance increase
+  // Minimum loss increase
   {
-     const tinyxml2::XMLElement* minimum_performance_increase_element = root_element->FirstChildElement("MinimumPerformanceIncrease");
+     const tinyxml2::XMLElement* minimum_loss_increase_element = root_element->FirstChildElement("MinimumPerformanceIncrease");
 
-     if(minimum_performance_increase_element)
+     if(minimum_loss_increase_element)
      {
-        const double new_minimum_performance_increase = atof(minimum_performance_increase_element->GetText());
+        const double new_minimum_loss_increase = atof(minimum_loss_increase_element->GetText());
 
         try
         {
-           set_minimum_performance_increase(new_minimum_performance_increase);
+           set_minimum_loss_increase(new_minimum_loss_increase);
         }
         catch(const std::logic_error& e)
         {
@@ -3104,15 +3255,15 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Performance goal
   {
-     const tinyxml2::XMLElement* performance_goal_element = root_element->FirstChildElement("PerformanceGoal");
+     const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("PerformanceGoal");
 
-     if(performance_goal_element)
+     if(loss_goal_element)
      {
-        const double new_performance_goal = atof(performance_goal_element->GetText());
+        const double new_loss_goal = atof(loss_goal_element->GetText());
 
         try
         {
-           set_performance_goal(new_performance_goal);
+           set_loss_goal(new_loss_goal);
         }
         catch(const std::logic_error& e)
         {
@@ -3140,17 +3291,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Maximum selection performance decreases
+  // Maximum selection loss decreases
   {
-     const tinyxml2::XMLElement* maximum_selection_performance_decreases_element = root_element->FirstChildElement("MaximumSelectionPerformanceDecreases");
+     const tinyxml2::XMLElement* maximum_selection_loss_decreases_element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
 
-     if(maximum_selection_performance_decreases_element)
+     if(maximum_selection_loss_decreases_element)
      {
-        const size_t new_maximum_selection_performance_decreases = atoi(maximum_selection_performance_decreases_element->GetText());
+        const size_t new_maximum_selection_loss_decreases = atoi(maximum_selection_loss_decreases_element->GetText());
 
         try
         {
-           set_maximum_selection_performance_decreases(new_maximum_selection_performance_decreases);
+           set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
         }
         catch(const std::logic_error& e)
         {
@@ -3235,17 +3386,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Reserve performance history
+  // Reserve loss history
   {
-     const tinyxml2::XMLElement* reserve_performance_history_element = root_element->FirstChildElement("ReservePerformanceHistory");
+     const tinyxml2::XMLElement* reserve_loss_history_element = root_element->FirstChildElement("ReservePerformanceHistory");
 
-     if(reserve_performance_history_element)
+     if(reserve_loss_history_element)
      {
-        const std::string new_reserve_performance_history = reserve_performance_history_element->GetText();
+        const std::string new_reserve_loss_history = reserve_loss_history_element->GetText();
 
         try
         {
-           set_reserve_performance_history(new_reserve_performance_history != "0");
+           set_reserve_loss_history(new_reserve_loss_history != "0");
         }
         catch(const std::logic_error& e)
         {
@@ -3254,17 +3405,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-    // Reserve selection performance history
+    // Reserve selection loss history
     {
-       const tinyxml2::XMLElement* reserve_selection_performance_history_element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+       const tinyxml2::XMLElement* reserve_selection_loss_history_element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
-       if(reserve_selection_performance_history_element)
+       if(reserve_selection_loss_history_element)
        {
-          const std::string new_reserve_selection_performance_history = reserve_selection_performance_history_element->GetText();
+          const std::string new_reserve_selection_loss_history = reserve_selection_loss_history_element->GetText();
 
           try
           {
-             set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
+             set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
           }
           catch(const std::logic_error& e)
           {
@@ -3367,17 +3518,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Reserve selection performance history
+  // Reserve selection loss history
   {
-     const tinyxml2::XMLElement* reserve_selection_performance_history_element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+     const tinyxml2::XMLElement* reserve_selection_loss_history_element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
-     if(reserve_selection_performance_history_element)
+     if(reserve_selection_loss_history_element)
      {
-        const std::string new_reserve_selection_performance_history = reserve_selection_performance_history_element->GetText();
+        const std::string new_reserve_selection_loss_history = reserve_selection_loss_history_element->GetText();
 
         try
         {
-           set_reserve_selection_performance_history(new_reserve_selection_performance_history != "0");
+           set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
         }
         catch(const std::logic_error& e)
         {

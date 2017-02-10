@@ -48,7 +48,7 @@
 
 #include "mock_error_term.h"
 #include "error_term_test.h"
-#include "performance_functional_test.h"
+#include "loss_index_test.h"
 #include "sum_squared_error_test.h"
 #include "mean_squared_error_test.h"
 #include "root_mean_squared_error_test.h"

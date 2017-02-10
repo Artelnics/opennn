@@ -323,7 +323,7 @@ double MockErrorTerm::calculate_error(void) const
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "double calculate_error(void) const method.\n"
                  << "Unknown expression.\n";
 
@@ -353,7 +353,7 @@ Vector<double> MockErrorTerm::calculate_gradient(void) const
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Vector<double> calculate_gradient(void) const method.\n"
                  << "Unknown expression.\n";
 
@@ -385,7 +385,7 @@ Matrix<double> MockErrorTerm::calculate_Hessian(void) const
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Matrix<double> calculate_Hessian(void) const method.\n"
                  << "Unknown expression.\n";
 
@@ -410,7 +410,7 @@ Vector<double> MockErrorTerm::calculate_terms(void) const
        {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+            buffer << "OpenNN Exception: MockLossIndex class\n"
                    << "Vector<double> calculate_terms(void) const method.\n"
                    << "The terms function is not defined for the output integral expression.\n";
 
@@ -422,7 +422,7 @@ Vector<double> MockErrorTerm::calculate_terms(void) const
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Vector<double> calculate_terms(void) const method.\n"
                  << "Unknown expression.\n";
 
@@ -447,7 +447,7 @@ Matrix<double> MockErrorTerm::calculate_terms_Jacobian(void) const
        {
             std::ostringstream buffer;
 
-            buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+            buffer << "OpenNN Exception: MockLossIndex class\n"
                    << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
                    << "The terms function is not defined for the output integral expression.\n";
 
@@ -459,7 +459,7 @@ Matrix<double> MockErrorTerm::calculate_terms_Jacobian(void) const
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
                  << "Unknown expression.\n";
 
@@ -490,7 +490,7 @@ double MockErrorTerm::calculate_error(const Vector<double>& parameters) const
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "double calculate_error(const Vector<double>&) const method.\n"
                  << "Unknown expression.\n";
 
@@ -521,7 +521,7 @@ Vector<double> MockErrorTerm::calculate_gradient(const Vector<double>& parameter
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Vector<double> calculate_gradient(const Vector<double>) const method.\n"
                  << "Unknown expression.\n";
 
@@ -552,7 +552,7 @@ Matrix<double> MockErrorTerm::calculate_Hessian(const Vector<double>& parameters
        {
           std::ostringstream buffer;
 
-          buffer << "OpenNN Exception: MockPerformanceFunctional class\n"
+          buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Vector<double> calculate_Hessian(const Vector<double>&) const method.\n"
                  << "Unknown expression.\n";
 

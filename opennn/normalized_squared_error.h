@@ -37,7 +37,7 @@ namespace OpenNN
 {
 
 /// This class represents the normalized squared error term. 
-/// This performance term is used in data modeling problems.
+/// This error term is used in data modeling problems.
 /// If it has a value of unity then the neural network is predicting the data "in the mean",
 /// A value of zero means perfect prediction of data.
 
@@ -84,17 +84,23 @@ public:
 
    void check(void) const;
 
-   // performance methods
+   // loss methods
 
    double calculate_error(void) const;
    double calculate_error(const Vector<double>&) const;
    double calculate_selection_error(void) const;
 
-//   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
-//   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
+   Vector<double> calculate_error_normalization(const Vector<double>&) const;
+   Vector<double> calculate_error_normalization(const Vector<double>&, const Vector<double>&) const;
+   Vector<double> calculate_selection_error_normalization(const Vector<double>&) const;
+
+   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
+   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
    Vector<double> calculate_gradient(void) const;
-   Matrix<double> calculate_Hessian(void) const;
+//   Matrix<double> calculate_Hessian(void) const;
+
+   Vector<double> calculate_gradient_normalization(const Vector<double>&) const;
 
    // Objective terms methods
 
@@ -111,7 +117,7 @@ public:
 
    Vector<size_t> calculate_maximal_errors(const size_t& = 10) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 
@@ -121,7 +127,7 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
    // void read_XML(   );
 
-   std::string write_information(void) const;
+//   std::string write_information(void) const;
 
 
 private:

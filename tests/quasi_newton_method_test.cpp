@@ -43,17 +43,17 @@ void QuasiNewtonMethodTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional pf;
+   LossIndex pf;
 
    // Default constructor
 
    QuasiNewtonMethod qnm1; 
-   assert_true(qnm1.has_performance_functional() == false, LOG);
+   assert_true(qnm1.has_loss_index() == false, LOG);
 
-   // Performance functional constructor
+   // Loss index constructor
 
    QuasiNewtonMethod qnm2(&pf); 
-   assert_true(qnm2.has_performance_functional() == true, LOG);
+   assert_true(qnm2.has_loss_index() == true, LOG);
 }
 
 
@@ -102,7 +102,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation(voi
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
    NeuralNetwork nn(1, 1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    QuasiNewtonMethod qnm(&pf);
 
    // Test 
@@ -184,12 +184,13 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_Hessian_approximation(vo
 {
    message += "test_calculate_BFGS_inverse_Hessian_approximation\n";
 
+   DataSet ds;
    NeuralNetwork nn(1, 1);
 
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
 
    pf.destruct_all_terms();
-   pf.set_regularization_type(PerformanceFunctional::NEURAL_PARAMETERS_NORM);
+   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
 
    QuasiNewtonMethod qnm(&pf);
 
@@ -221,7 +222,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation(void)
    NeuralNetwork nn(1, 1);
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    QuasiNewtonMethod qnm(&pf);
 
    qnm.set_inverse_Hessian_approximation_method(QuasiNewtonMethod::DFP);
@@ -294,7 +295,7 @@ void QuasiNewtonMethodTest::test_perform_training(void)
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
    NeuralNetwork nn(1, 1, 1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    QuasiNewtonMethod qnm(&pf);
    qnm.set_inverse_Hessian_approximation_method(QuasiNewtonMethod::DFP);
 
@@ -304,16 +305,16 @@ void QuasiNewtonMethodTest::test_perform_training(void)
 
    nn.initialize_parameters(3.1415927);
 
-   double old_performance = pf.calculate_performance();
+   double old_loss = pf.calculate_loss();
 
    qnm.set_maximum_iterations_number(2),
    qnm.set_display(false);
 
    qnm.perform_training();
 
-   double performance = pf.calculate_performance();
+   double loss = pf.calculate_loss();
 
-   assert_true(performance < old_performance, LOG);
+   assert_true(loss < old_loss, LOG);
 
    // Minimum parameters increment norm
 
@@ -322,8 +323,8 @@ void QuasiNewtonMethodTest::test_perform_training(void)
    double minimum_parameters_increment_norm = 0.1;
 
    qnm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   qnm.set_performance_goal(0.0);
-   qnm.set_minimum_performance_increase(0.0);
+   qnm.set_loss_goal(0.0);
+   qnm.set_minimum_loss_increase(0.0);
    qnm.set_gradient_norm_goal(0.0);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
@@ -334,30 +335,30 @@ void QuasiNewtonMethodTest::test_perform_training(void)
 
    nn.initialize_parameters(3.1415927);
 
-   double performance_goal = 100.0;
+   double loss_goal = 100.0;
 
    qnm.set_minimum_parameters_increment_norm(0.0);
-   qnm.set_performance_goal(performance_goal);
-   qnm.set_minimum_performance_increase(0.0);
+   qnm.set_loss_goal(loss_goal);
+   qnm.set_minimum_loss_increase(0.0);
    qnm.set_gradient_norm_goal(0.0);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
 
    qnm.perform_training();
 
-   performance = pf.calculate_performance();
+   loss = pf.calculate_loss();
 
-   assert_true(performance < performance_goal, LOG);
+   assert_true(loss < loss_goal, LOG);
 
    // Minimum evaluation improvement
 
    nn.initialize_parameters(3.1415927);
 
-   double minimum_performance_increase = 100.0;
+   double minimum_loss_increase = 100.0;
 
    qnm.set_minimum_parameters_increment_norm(0.0);
-   qnm.set_performance_goal(0.0);
-   qnm.set_minimum_performance_increase(minimum_performance_increase);
+   qnm.set_loss_goal(0.0);
+   qnm.set_minimum_loss_increase(minimum_loss_increase);
    qnm.set_gradient_norm_goal(0.0);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
@@ -371,8 +372,8 @@ void QuasiNewtonMethodTest::test_perform_training(void)
    double gradient_norm_goal = 100.0;
 
    qnm.set_minimum_parameters_increment_norm(0.0);
-   qnm.set_performance_goal(0.0);
-   qnm.set_minimum_performance_increase(0.0);
+   qnm.set_loss_goal(0.0);
+   qnm.set_minimum_loss_increase(0.0);
    qnm.set_gradient_norm_goal(gradient_norm_goal);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
@@ -402,9 +403,11 @@ void QuasiNewtonMethodTest::test_resize_training_history(void)
 {
     message += "test_resize_training_history\n";
 
+    DataSet ds;
+
     NeuralNetwork nn;
 
-    PerformanceFunctional pf(&nn);
+    LossIndex pf(&nn, &ds);
 
     QuasiNewtonMethod qnm(&pf);
 

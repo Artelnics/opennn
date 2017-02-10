@@ -60,6 +60,29 @@ MultilayerPerceptron::MultilayerPerceptron(const Vector<size_t>& new_architectur
     set(new_architecture);
 }
 
+// NETWORK ARCHITECTURE CONSTRUCTOR
+
+/// Architecture constructor.
+/// It creates a multilayer perceptron object with an arbitrary deep learning architecture.
+/// The architecture is represented by a vector of integers.
+/// The first element is the number of inputs.
+/// The rest of elements are the number of perceptrons in the subsequent layers.
+/// The multilayer perceptron parameters are initialized at random.
+/// @param new_architecture Vector of integers representing the architecture of the multilayer perceptron.
+
+MultilayerPerceptron::MultilayerPerceptron(const Vector<int>& new_architecture)
+{
+    const size_t architecture_size = new_architecture.size();
+
+    Vector<size_t> new_architecture_size_t(architecture_size);
+
+    for(int i = 0; i < architecture_size; i++)
+    {
+        new_architecture_size_t[i] = (size_t)new_architecture[i];
+    }
+
+    set(new_architecture_size_t);
+}
 
 // ONE LAYER CONSTRUCTOR
 
@@ -429,6 +452,24 @@ Vector<double> MultilayerPerceptron::arrange_parameters(void) const
     }
 
     return(parameters);
+}
+
+// Vector<double> arrange_parameters_statistics(void) const method
+
+/// Returns the statistics of all the biases and synaptic weights in the multilayer perceptron.
+
+Vector<double> MultilayerPerceptron::arrange_parameters_statistics(void) const
+{
+    Vector<double> parameters_statistics(4, 0.0);
+
+    const Vector<double> parameters = arrange_parameters();
+
+    parameters_statistics[0] = parameters.calculate_minimum();
+    parameters_statistics[1] = parameters.calculate_maximum();
+    parameters_statistics[2] = parameters.calculate_mean();
+    parameters_statistics[3] = parameters.calculate_standard_deviation();
+
+    return(parameters_statistics);
 }
 
 
@@ -892,6 +933,68 @@ void MultilayerPerceptron::set(const Vector<size_t>& new_architecture)
     }
 }   
 
+// void set(const Vector<int>&) method
+
+/// Sets a deep learning architecture for the multilayer perceptron.
+/// The architecture is represented as a vector of integers.
+/// The number of layers is the size of that vector minus one.
+/// The first element in the vector represents the number of inputs.
+/// The rest of elements represent the corresponding number of perceptrons in each layer.
+/// All the parameters of the multilayer perceptron are initialized at random.
+/// @param new_architecture Architecture of the multilayer perceptron.
+
+void MultilayerPerceptron::set(const Vector<int>& new_architecture)
+{
+    std::ostringstream buffer;
+
+    const size_t new_architecture_size = new_architecture.size();
+
+    if(new_architecture_size == 0)
+    {
+        set();
+    }
+    else if(new_architecture_size == 1)
+    {
+        buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+               << "void set_architecture(const Vector<size_t>&) method.\n"
+               << "Size of architecture cannot be one.\n";
+
+        throw std::logic_error(buffer.str());
+    }
+    else
+    {
+        for(size_t i = 0; i < new_architecture_size; i++)
+        {
+            if(new_architecture[i] == 0)
+            {
+                buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+                       << "void set_architecture(const Vector<size_t>&) method.\n"
+                       << "Size " << i << " must be greater than zero.\n";
+
+                throw std::logic_error(buffer.str());
+            }
+        }
+
+        const size_t new_layers_number = new_architecture_size-1;
+        layers.set(new_layers_number);
+
+        // First layer
+
+        for(size_t i = 0; i < new_layers_number; i++)
+        {
+            layers[i].set(new_architecture[i], new_architecture[i+1]);
+        }
+
+        // Activation
+
+        for(size_t i = 0; i < new_layers_number-1; i++)
+        {
+            layers[i].set_activation_function(Perceptron::HyperbolicTangent);
+        }
+
+        layers[new_layers_number-1].set_activation_function(Perceptron::Linear);
+    }
+}
 
 // void set(const size_t&, const size_t&) method
 
@@ -3604,6 +3707,9 @@ tinyxml2::XMLDocument* MultilayerPerceptron::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the multilayer perceptron object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void MultilayerPerceptron::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("MultilayerPerceptron");
@@ -3775,19 +3881,19 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
     // but is ignored when is defined for each layer
     switch(neural_network_activation_function)
     {
-    case Perceptron::ActivationFunction::Threshold:
+    case Perceptron::Threshold:
         neural_network->SetAttribute("activationFunction","threshold");
         break;
 
-    case Perceptron::ActivationFunction::Logistic:
+    case Perceptron::Logistic:
         neural_network->SetAttribute("activationFunction","logistic");
         break;
 
-    case Perceptron::ActivationFunction::HyperbolicTangent:
+    case Perceptron::HyperbolicTangent:
         neural_network->SetAttribute("activationFunction","tanh");
         break;
 
-    case Perceptron::ActivationFunction::Linear:
+    case Perceptron::Linear:
         neural_network->SetAttribute("activationFunction","identity");
         break;
     }
@@ -3810,19 +3916,19 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
         {
             switch(current_layer.get_activation_function())
             {
-            case Perceptron::ActivationFunction::Threshold:
+            case Perceptron::Threshold:
                 neural_layer->SetAttribute("activationFunction","threshold");
                 break;
 
-            case Perceptron::ActivationFunction::Logistic:
+            case Perceptron::Logistic:
                 neural_layer->SetAttribute("activationFunction","logistic");
                 break;
 
-            case Perceptron::ActivationFunction::HyperbolicTangent:
+            case Perceptron::HyperbolicTangent:
                 neural_layer->SetAttribute("activationFunction","tanh");
                 break;
 
-            case Perceptron::ActivationFunction::Linear:
+            case Perceptron::Linear:
                 neural_layer->SetAttribute("activationFunction","identity");
                 break;
             }
@@ -3841,9 +3947,9 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 
             neuron->SetAttribute("bias",buffer.str().c_str());
 
-            std::string neuron_id = std::to_string(layers_loop_i+1);
+            std::string neuron_id = number_to_string(layers_loop_i+1);
             neuron_id.append(",");
-            neuron_id.append(std::to_string(neurons_loop_i));
+            neuron_id.append(number_to_string(neurons_loop_i));
 
             neuron->SetAttribute("id",neuron_id.c_str());
 
@@ -3855,9 +3961,9 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
                 tinyxml2::XMLElement* con = pmml_document->NewElement("Con");
                 neuron->LinkEndChild(con);
 
-                std::string connection_from = std::to_string(layers_loop_i);
+                std::string connection_from = number_to_string(layers_loop_i);
                 connection_from.append(",");
-                connection_from.append(std::to_string(connections_loop_i));
+                connection_from.append(number_to_string(connections_loop_i));
 
                 con->SetAttribute("from",connection_from.c_str());
 
@@ -3879,6 +3985,10 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 
 
 // void write_PMML(tinyxml2::XMLPrinter&, bool is_softmax_normalization_method) const method
+
+/// Serializes the multilayer perceptron object into a PMML document.
+/// @param file_stream TinyXML file to append the multilayer perceptron object.
+/// @param is_softmax_normalization_method True if softmax normalization is used, false otherwise.
 
 void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is_softmax_normalization_method) const
 {
@@ -3915,19 +4025,19 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
         {
             switch(current_layer.get_activation_function())
             {
-            case Perceptron::ActivationFunction::Threshold:
+            case Perceptron::Threshold:
                 file_stream.PushAttribute("activationFunction", "threshold");
                 break;
 
-            case Perceptron::ActivationFunction::Logistic:
+            case Perceptron::Logistic:
                 file_stream.PushAttribute("activationFunction", "logistic");
                 break;
 
-            case Perceptron::ActivationFunction::HyperbolicTangent:
+            case Perceptron::HyperbolicTangent:
                 file_stream.PushAttribute("activationFunction", "tanh");
                 break;
 
-            case Perceptron::ActivationFunction::Linear:
+            case Perceptron::Linear:
                 file_stream.PushAttribute("activationFunction", "identity");
                 break;
             }
@@ -3950,9 +4060,9 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
 
             file_stream.PushAttribute("bias",buffer.str().c_str());
 
-            std::string neuron_id = std::to_string(layers_loop_i+1);
+            std::string neuron_id = number_to_string(layers_loop_i+1);
             neuron_id.append(",");
-            neuron_id.append(std::to_string(neurons_loop_i));
+            neuron_id.append(number_to_string(neurons_loop_i));
 
             file_stream.PushAttribute("id",neuron_id.c_str());
 
@@ -3963,9 +4073,9 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
             {
                 file_stream.OpenElement("Con");
 
-                std::string connection_from = std::to_string(layers_loop_i);
+                std::string connection_from = number_to_string(layers_loop_i);
                 connection_from.append(",");
-                connection_from.append(std::to_string(connections_loop_i));
+                connection_from.append(number_to_string(connections_loop_i));
 
                 file_stream.PushAttribute("from",connection_from.c_str());
 
@@ -3992,7 +4102,7 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
 
 // void from_PMML(const tinyxml2::XMLElement*) method
 
-/// Deserializes a TinyXML document into this multilayer perceptron object.
+/// Deserializes a PMML document into this multilayer perceptron object.
 
 void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
 {
@@ -4017,9 +4127,9 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
 
     const size_t number_of_layers = get_layers_number();
 
-    Vector<Vector<double>> new_layers_biases(number_of_layers);
+    Vector< Vector<double> > new_layers_biases(number_of_layers);
 
-    Vector<Matrix<double>> new_synaptic_weights(number_of_layers);
+    Vector< Matrix<double> > new_synaptic_weights(number_of_layers);
 
     // layers
     for(size_t layer_i = 0; layer_i < number_of_layers; layer_i++)
@@ -4042,19 +4152,19 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
 
         if(activation_function_value == "tanh")
         {
-            new_activation_function = Perceptron::ActivationFunction::HyperbolicTangent;
+            new_activation_function = Perceptron::HyperbolicTangent;
         }
         else if(activation_function_value == "logistic")
         {
-            new_activation_function = Perceptron::ActivationFunction::Logistic;
+            new_activation_function = Perceptron::Logistic;
         }
         else if(activation_function_value == "identity")
         {
-            new_activation_function = Perceptron::ActivationFunction::Linear;
+            new_activation_function = Perceptron::Linear;
         }
         else if(activation_function_value == "threshold")
         {
-            new_activation_function = Perceptron::ActivationFunction::Threshold;
+            new_activation_function = Perceptron::Threshold;
         }
         else
         {
@@ -4103,7 +4213,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                 throw std::logic_error(buffer.str());
             }
 
-            const double neuron_bias = std::stod(neuron_bias_string);
+            const double neuron_bias = atof(neuron_bias_string.c_str());
 
             current_layer_new_biases.at(neuron_i) = neuron_bias;
 
@@ -4148,7 +4258,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                     throw std::logic_error(buffer.str());
                 }
 
-                const double connection_weight = std::stod(connection_weight_string);
+                const double connection_weight = atof(connection_weight_string.c_str());
 
                 current_perceptron_connections.at(connection_i) = connection_weight;
 

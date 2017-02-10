@@ -47,9 +47,9 @@ public:
 
    explicit PrincipalComponentsLayer(void);
 
-   // INPUTS NUMBER CONSTRUCTOR
+   // INPUTS AND PRINCIPAL COMPONENTS NUMBER CONSTRUCTOR
 
-   explicit PrincipalComponentsLayer(const size_t&);
+   explicit PrincipalComponentsLayer(const size_t&, const size_t&);
 
    // COPY CONSTRUCTOR
 
@@ -61,7 +61,9 @@ public:
 
    // ENUMERATIONS
 
-   enum PrincipalComponentsMethod{NoPrincipalComponents, ActivatedPrincipalComponents};
+   /// Enumeration of available methods for apply the principal components layer.
+
+   enum PrincipalComponentsMethod{NoPrincipalComponents, PrincipalComponents};
 
    // Principal components state methods
 
@@ -72,12 +74,17 @@ public:
 
    // GET METHODS
 
-   Matrix<double> get_eigenvectors(void) const;
+   Matrix<double> get_principal_components(void) const;
    Vector<double> get_means(void) const;
+
+   Vector<double> get_explained_variance(void) const;
+
+   size_t get_inputs_number(void) const;
+   size_t get_principal_components_number(void) const;
 
    // Inputs principal components function
 
-    Vector<double> calculate_ouputs(const Vector<double>&) const;
+//    Vector<double> calculate_ouputs(const Vector<double>&) const;
 
    // Display messages
 
@@ -86,22 +93,24 @@ public:
    // SET METHODS
 
    void set(void);
-   void set(const size_t&);
+   void set(const size_t&, const size_t&);
    void set(const PrincipalComponentsLayer&);
 
-   void set_eigenvectors(const Matrix<double>&);
+   void set_inputs_number(const size_t&);
+   void set_principal_components_number(const size_t&);
+
+   void set_principal_component(const size_t&, const Vector<double>&);
+   void set_principal_components(const Matrix<double>&);
 
    void set_means(const Vector<double>&);
    void set_means(const size_t&, const double&);
+
+   void set_explained_variance(const Vector<double>&);
 
    virtual void set_default(void);
 
    void set_principal_components_method(const PrincipalComponentsMethod&);
    void set_principal_components_method(const std::string&);
-
-   // GET METHODS
-
-   size_t get_principal_components_neurons_number(void) const;
 
    // Display messages
 
@@ -112,11 +121,16 @@ public:
    // Inputs principal components function
 
    Vector<double> calculate_outputs(const Vector<double>&) const;
-   Vector<double> calculate_derivatives(const Vector<double>&) const;
+   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+
+   // Expression methods
+
+   std::string write_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+
+   std::string write_no_principal_components_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   std::string write_principal_components_expression(const Vector<std::string>&, const Vector<std::string>&) const;
 
    // Serialization methods
-
-   std::string to_string(void) const;
 
    tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
@@ -128,13 +142,26 @@ protected:
 
    // MEMBERS
 
+   /// Inputs number
+
+   size_t inputs_number;
+
+   /// Principal components number
+
+   size_t principal_components_number;
+
    /// Means of the input variables
 
    Vector<double> means;
 
-   /// Eigenvectors of the variables in columns.
+   /// Contains all the principal components arranged in rows and sorted
+   /// according to their relative explained variance.
 
-   Matrix<double> eigenvectors;
+   Matrix<double> principal_components;
+
+   /// Explained variances for every of the principal components
+
+   Vector<double> explained_variance;
 
    /// Principal components layer method
 

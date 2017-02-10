@@ -43,7 +43,8 @@ int mallocCUDA(double** A_d, int nBytes)
     if (error != cudaSuccess)
     {
         return 1;
-    }else
+    }
+    else
     {
         return 0;
     }
@@ -58,7 +59,8 @@ int memcpyCUDA(double* A_d, const double* A_h, int nBytes)
     if (error != cudaSuccess)
     {
         return 1;
-    }else
+    }
+    else
     {
         return 0;
     }

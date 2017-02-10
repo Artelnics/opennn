@@ -21,11 +21,11 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a training strategy object not associated to any performance functional object.  
+/// It creates a training strategy object not associated to any loss functional object.  
 /// It also constructs the main training algorithm object. 
 
 TrainingStrategy::TrainingStrategy(void)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
  , random_search_pointer(NULL)
  , evolutionary_algorithm_pointer(NULL)
  , gradient_descent_pointer(NULL)
@@ -44,13 +44,13 @@ TrainingStrategy::TrainingStrategy(void)
 
 // PERFORMANCE FUNCTIONAL CONSTRUCTOR
 
-/// Performance functional constructor. 
-/// It creates a training strategy object associated to a performance functional object.
+/// Loss index constructor. 
+/// It creates a training strategy object associated to a loss functional object.
 /// It also constructs the main training algorithm object. 
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-TrainingStrategy::TrainingStrategy(PerformanceFunctional* new_performance_functional_pointer)
- : performance_functional_pointer(new_performance_functional_pointer)
+TrainingStrategy::TrainingStrategy(LossIndex* new_loss_index_pointer)
+ : loss_index_pointer(new_loss_index_pointer)
  , random_search_pointer(NULL)
  , evolutionary_algorithm_pointer(NULL)
  , gradient_descent_pointer(NULL)
@@ -70,12 +70,12 @@ TrainingStrategy::TrainingStrategy(PerformanceFunctional* new_performance_functi
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a training strategy object not associated to any performance functional object.
+/// It creates a training strategy object not associated to any loss functional object.
 /// It also loads the members of this object from a XML document. 
 /// @param document Document of the TinyXML library.
 
 TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
  , random_search_pointer(NULL)
  , evolutionary_algorithm_pointer(NULL)
  , gradient_descent_pointer(NULL)
@@ -97,12 +97,12 @@ TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
 // FILE CONSTRUCTOR
 
 /// File constructor. 
-/// It creates a training strategy object associated to a performance functional object.
+/// It creates a training strategy object associated to a loss functional object.
 /// It also loads the members of this object from a XML file. 
 /// @param file_name Name of training strategy XML file.
 
 TrainingStrategy::TrainingStrategy(const std::string& file_name)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
  , random_search_pointer(NULL)
  , evolutionary_algorithm_pointer(NULL)
  , gradient_descent_pointer(NULL)
@@ -128,14 +128,17 @@ TrainingStrategy::TrainingStrategy(const std::string& file_name)
 
 TrainingStrategy::~TrainingStrategy(void)
 {
+    // Delete initialization algorithms
+
     delete random_search_pointer;
     delete evolutionary_algorithm_pointer;
+
+    // Delete main algorithms
 
     delete gradient_descent_pointer;
     delete conjugate_gradient_pointer;
     delete quasi_Newton_method_pointer;
     delete Levenberg_Marquardt_algorithm_pointer;
-
     delete Newton_method_pointer;
 }
 
@@ -143,19 +146,19 @@ TrainingStrategy::~TrainingStrategy(void)
 // METHODS
 
 
-// void check_performance_functional(void) const method
+// void check_loss_index(void) const method
 
-/// Throws an exception if the training strategy has not a performance functional associated.
+/// Throws an exception if the training strategy has not a loss functional associated.
 
-void TrainingStrategy::check_performance_functional(void) const
+void TrainingStrategy::check_loss_index(void) const
 {
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
        std::ostringstream buffer;
 
        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-              << "void check_performance_functional(void) const.\n"
-              << "Pointer to performance functional is NULL.\n";
+              << "void check_loss_index(void) const.\n"
+              << "Pointer to loss functional is NULL.\n";
 
        throw std::logic_error(buffer.str());
     }
@@ -225,35 +228,35 @@ void TrainingStrategy::initialize_random(void)
 }
 
 
-// PerformanceFunctional* get_performance_functional_pointer(void) const method
+// LossIndex* get_loss_index_pointer(void) const method
 
-/// Returns a pointer to the performance functional object to which the training strategy is associated.
+/// Returns a pointer to the loss functional object to which the training strategy is associated.
 
-PerformanceFunctional* TrainingStrategy::get_performance_functional_pointer(void) const
+LossIndex* TrainingStrategy::get_loss_index_pointer(void) const
 {
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "PerformanceFunctional* get_performance_functional_pointer(void) const method.\n"
-               << "Performance functional pointer is NULL.\n";
+               << "LossIndex* get_loss_index_pointer(void) const method.\n"
+               << "Loss index pointer is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
-   return(performance_functional_pointer);
+   return(loss_index_pointer);
 }
 
 
-// bool has_performance_functional(void) const method
+// bool has_loss_index(void) const method
 
-/// Returns true if this training strategy has a performance functional associated,
+/// Returns true if this training strategy has a loss functional associated,
 /// and false otherwise.
 
-bool TrainingStrategy::has_performance_functional(void) const
+bool TrainingStrategy::has_loss_index(void) const
 {
-    if(performance_functional_pointer)
+    if(loss_index_pointer)
     {
         return(true);
     }
@@ -679,13 +682,13 @@ const bool& TrainingStrategy::get_display(void) const
 
 // void set(void) method
 
-/// Sets the performance functional pointer to NULL.
+/// Sets the loss functional pointer to NULL.
 /// It also destructs the initialization, main and refinement training algorithms. 
 /// Finally, it sets the rest of members to their default values. 
 
 void TrainingStrategy::set(void)
 {
-   performance_functional_pointer = NULL;
+   loss_index_pointer = NULL;
 
    set_initialization_type(NO_INITIALIZATION);
    set_main_type(QUASI_NEWTON_METHOD);
@@ -695,16 +698,16 @@ void TrainingStrategy::set(void)
 }
 
 
-// void set(PerformanceFunctional*) method
+// void set(LossIndex*) method
 
-/// Sets a new performance functional pointer.
+/// Sets a new loss functional pointer.
 /// It also destructs the initialization, main and refinement training algorithms. 
 /// Finally, it sets the rest of members to their default values. 
-/// @param new_performance_functional_pointer Pointer to a performance functional object. 
+/// @param new_loss_index_pointer Pointer to a loss functional object. 
 
-void TrainingStrategy::set(PerformanceFunctional* new_performance_functional_pointer)
+void TrainingStrategy::set(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
    set_initialization_type(NO_INITIALIZATION);
    set_main_type(QUASI_NEWTON_METHOD);
@@ -735,13 +738,13 @@ void TrainingStrategy::set_initialization_type(const InitializationType& new_ini
 
       case RANDOM_SEARCH:
       {
-         random_search_pointer = new RandomSearch(performance_functional_pointer);
+         random_search_pointer = new RandomSearch(loss_index_pointer);
       }
       break;
 
       case EVOLUTIONARY_ALGORITHM:
       {
-         evolutionary_algorithm_pointer = new EvolutionaryAlgorithm(performance_functional_pointer);
+         evolutionary_algorithm_pointer = new EvolutionaryAlgorithm(loss_index_pointer);
       }
       break;
 
@@ -787,31 +790,31 @@ void TrainingStrategy::set_main_type(const MainType& new_main_type)
 
       case GRADIENT_DESCENT:
       {
-         gradient_descent_pointer = new GradientDescent(performance_functional_pointer);
+         gradient_descent_pointer = new GradientDescent(loss_index_pointer);
       }
       break;
 
       case CONJUGATE_GRADIENT:
       {
-         conjugate_gradient_pointer = new ConjugateGradient(performance_functional_pointer);
+         conjugate_gradient_pointer = new ConjugateGradient(loss_index_pointer);
       }
       break;
 
       case QUASI_NEWTON_METHOD:
       {
-         quasi_Newton_method_pointer = new QuasiNewtonMethod(performance_functional_pointer);
+         quasi_Newton_method_pointer = new QuasiNewtonMethod(loss_index_pointer);
       }
       break;
 
       case NEWTON_METHOD:
       {
-         Newton_method_pointer = new NewtonMethod(performance_functional_pointer);
+         Newton_method_pointer = new NewtonMethod(loss_index_pointer);
       }
       break;
 
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
-         Levenberg_Marquardt_algorithm_pointer = new LevenbergMarquardtAlgorithm(performance_functional_pointer);
+         Levenberg_Marquardt_algorithm_pointer = new LevenbergMarquardtAlgorithm(loss_index_pointer);
       }
       break;
 
@@ -858,7 +861,7 @@ void TrainingStrategy::set_refinement_type(const RefinementType& new_refinement_
 
       case NEWTON_METHOD:
       {
-         Newton_method_pointer = new NewtonMethod(performance_functional_pointer);
+         Newton_method_pointer = new NewtonMethod(loss_index_pointer);
       }
       break;
 
@@ -1000,14 +1003,14 @@ void TrainingStrategy::set_refinement_type(const std::string& new_refinement_typ
 }
 
 
-// void set_performance_functional_pointer(PerformanceFunctional*) method
+// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a performance functional object to be associated to the training strategy.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// Sets a pointer to a loss functional object to be associated to the training strategy.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional* new_performance_functional_pointer)
+void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
    // Initialization
 
@@ -1021,13 +1024,13 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
 
       case RANDOM_SEARCH:
       {
-         random_search_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+         random_search_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
       case EVOLUTIONARY_ALGORITHM:
       {
-         evolutionary_algorithm_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+         evolutionary_algorithm_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
@@ -1042,7 +1045,7 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
          std::ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "void set_performance_functional_pointer(PerformanceFunctional*) method.\n"
+                << "void set_loss_index_pointer(LossIndex*) method.\n"
                 << "Unknown initialization type.\n";
 
          throw std::logic_error(buffer.str());
@@ -1062,25 +1065,25 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
 
       case GRADIENT_DESCENT:
       {
-         gradient_descent_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+         gradient_descent_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
       case CONJUGATE_GRADIENT:
       {
-         conjugate_gradient_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+         conjugate_gradient_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
       case QUASI_NEWTON_METHOD:
       {
-         quasi_Newton_method_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+         quasi_Newton_method_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
-         Levenberg_Marquardt_algorithm_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+         Levenberg_Marquardt_algorithm_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
@@ -1095,7 +1098,7 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
          std::ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "void set_performance_functional_pointer(PerformanceFunctional*) method.\n"
+                << "void set_loss_index_pointer(LossIndex*) method.\n"
                 << "Unknown main type.\n";
 
          throw std::logic_error(buffer.str());
@@ -1115,7 +1118,7 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
 
       case NEWTON_METHOD:
       {
-           Newton_method_pointer->set_performance_functional_pointer(new_performance_functional_pointer);
+           Newton_method_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
 
@@ -1130,7 +1133,7 @@ void TrainingStrategy::set_performance_functional_pointer(PerformanceFunctional*
          std::ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "void set_performance_functional_pointer(PerformanceFunctional) method.\n"
+                << "void set_loss_index_pointer(LossIndex) method.\n"
                 << "Unknown refinement type.\n";
 
          throw std::logic_error(buffer.str());
@@ -1218,6 +1221,12 @@ void TrainingStrategy::set_display(const bool& new_display)
       }
       break;
 
+      case NEWTON_METHOD:
+      {
+           Newton_method_pointer->set_display(display);
+      }
+      break;
+
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
            Levenberg_Marquardt_algorithm_pointer->set_display(display);
@@ -1294,7 +1303,378 @@ void TrainingStrategy::set_default(void)
    display = true;
 }
 
+#ifdef __OPENNN_MPI__
 
+void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy* training_strategy)
+{
+
+    set_loss_index_pointer(new_loss_index);
+
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int original_main_type;
+
+    int training_rate_method;
+    double training_rate_tolerance;
+
+    int training_direction_method;
+
+    int inverse_hessian_method;
+
+    double damping_parameter_factor;
+
+    int return_minimum_selection_loss_model;
+    double minimum_parameters_increment_norm;
+    double minimum_loss_decrease;
+    double loss_goal;
+    double gradient_norm_goal;
+    int maximum_selection_loss_increases;
+    int maximum_iterations_number;
+    int maximum_time;
+    int reserve_parameters_norm_history;
+    int reserve_training_loss_history;
+    int reserve_selection_loss_history;
+    int reserve_gradient_norm_history;
+
+    if(rank == 0)
+    {
+        // Variables to send initialization
+
+        original_main_type = (int)training_strategy->get_main_type();
+
+        switch (original_main_type)
+        {
+            case (int)TrainingStrategy::GRADIENT_DESCENT:
+
+                training_rate_method = (int)training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
+                training_rate_tolerance = training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_tolerance();
+
+                return_minimum_selection_loss_model = training_strategy->get_gradient_descent_pointer()->get_return_minimum_selection_error_neural_network();
+                minimum_parameters_increment_norm = training_strategy->get_gradient_descent_pointer()->get_minimum_parameters_increment_norm();
+                minimum_loss_decrease = training_strategy->get_gradient_descent_pointer()->get_minimum_loss_increase();
+                loss_goal = training_strategy->get_gradient_descent_pointer()->get_loss_goal();
+                gradient_norm_goal = training_strategy->get_gradient_descent_pointer()->get_gradient_norm_goal();
+                maximum_selection_loss_increases = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_iterations_number();
+                maximum_time = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_time();
+                reserve_parameters_norm_history = training_strategy->get_gradient_descent_pointer()->get_reserve_parameters_norm_history();
+                reserve_training_loss_history = training_strategy->get_gradient_descent_pointer()->get_reserve_loss_history();
+                reserve_selection_loss_history = training_strategy->get_gradient_descent_pointer()->get_reserve_selection_loss_history();
+                reserve_gradient_norm_history = training_strategy->get_gradient_descent_pointer()->get_reserve_gradient_norm_history();
+
+                break;
+
+            case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+
+                training_direction_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_training_direction_method();
+
+                training_rate_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
+                training_rate_tolerance = training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_tolerance();
+
+                return_minimum_selection_loss_model = training_strategy->get_conjugate_gradient_pointer()->get_return_minimum_selection_error_neural_network();
+                minimum_parameters_increment_norm = training_strategy->get_conjugate_gradient_pointer()->get_minimum_parameters_increment_norm();
+                minimum_loss_decrease = training_strategy->get_conjugate_gradient_pointer()->get_minimum_loss_increase();
+                loss_goal = training_strategy->get_conjugate_gradient_pointer()->get_loss_goal();
+                gradient_norm_goal = training_strategy->get_conjugate_gradient_pointer()->get_gradient_norm_goal();
+                maximum_selection_loss_increases = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_iterations_number();
+                maximum_time = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_time();
+                reserve_parameters_norm_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_parameters_norm_history();
+                reserve_training_loss_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_loss_history();
+                reserve_selection_loss_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_selection_loss_history();
+                reserve_gradient_norm_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_gradient_norm_history();
+
+                break;
+
+            case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+
+                inverse_hessian_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_inverse_Hessian_approximation_method();
+
+                training_rate_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
+                training_rate_tolerance = training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_tolerance();
+
+                return_minimum_selection_loss_model = training_strategy->get_quasi_Newton_method_pointer()->get_return_minimum_selection_error_neural_network();
+                minimum_parameters_increment_norm = training_strategy->get_quasi_Newton_method_pointer()->get_minimum_parameters_increment_norm();
+                minimum_loss_decrease = training_strategy->get_quasi_Newton_method_pointer()->get_minimum_loss_increase();
+                loss_goal = training_strategy->get_quasi_Newton_method_pointer()->get_loss_goal();
+                gradient_norm_goal = training_strategy->get_quasi_Newton_method_pointer()->get_gradient_norm_goal();
+                maximum_selection_loss_increases = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_iterations_number();
+                maximum_time = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_time();
+                reserve_parameters_norm_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_parameters_norm_history();
+                reserve_training_loss_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_loss_history();
+                reserve_selection_loss_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_selection_loss_history();
+                reserve_gradient_norm_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_gradient_norm_history();
+
+                break;
+
+            case(int)TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
+
+                damping_parameter_factor = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_damping_parameter_factor();
+
+                return_minimum_selection_loss_model = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_return_minimum_selection_error_neural_network();
+                minimum_parameters_increment_norm = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_minimum_parameters_increment_norm();
+                minimum_loss_decrease = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_minimum_loss_increase();
+                loss_goal = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_loss_goal();
+                gradient_norm_goal = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_gradient_norm_goal();
+                maximum_selection_loss_increases = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_iterations_number();
+                maximum_time = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_time();
+                reserve_parameters_norm_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_parameters_norm_history();
+                reserve_training_loss_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_loss_history();
+                reserve_selection_loss_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_selection_loss_history();
+                reserve_gradient_norm_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_gradient_norm_history();
+
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    // Send variables
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if(rank > 0)
+    {
+        MPI_Recv(&original_main_type, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        MPI_Request req[12];
+
+        switch (original_main_type)
+        {
+            case (int)TrainingStrategy::GRADIENT_DESCENT:
+
+                MPI_Irecv(&training_rate_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&training_rate_tolerance, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+
+                MPI_Irecv(&training_rate_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&training_rate_tolerance, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Irecv(&training_direction_method, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[2]);
+
+                MPI_Waitall(3, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+
+                MPI_Irecv(&training_rate_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Irecv(&training_rate_tolerance, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Irecv(&inverse_hessian_method, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[2]);
+
+                MPI_Waitall(3, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case(int)TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
+
+                MPI_Irecv(&damping_parameter_factor, 1, MPI_DOUBLE, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+
+                MPI_Waitall(1, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            default:
+                break;
+        }
+
+        MPI_Irecv(&return_minimum_selection_loss_model, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[0]);
+        MPI_Irecv(&minimum_parameters_increment_norm, 1, MPI_DOUBLE, rank-1, 5, MPI_COMM_WORLD, &req[1]);
+        MPI_Irecv(&minimum_loss_decrease, 1, MPI_DOUBLE, rank-1, 6, MPI_COMM_WORLD, &req[2]);
+        MPI_Irecv(&loss_goal, 1, MPI_DOUBLE, rank-1, 7, MPI_COMM_WORLD, &req[3]);
+        MPI_Irecv(&gradient_norm_goal, 1, MPI_DOUBLE, rank-1, 8, MPI_COMM_WORLD, &req[4]);
+        MPI_Irecv(&maximum_selection_loss_increases, 1, MPI_INT, rank-1, 9, MPI_COMM_WORLD, &req[5]);
+        MPI_Irecv(&maximum_iterations_number, 1, MPI_INT, rank-1, 10, MPI_COMM_WORLD, &req[6]);
+        MPI_Irecv(&maximum_time, 1, MPI_INT, rank-1, 11, MPI_COMM_WORLD, &req[7]);
+        MPI_Irecv(&reserve_parameters_norm_history, 1, MPI_INT, rank-1, 12, MPI_COMM_WORLD, &req[8]);
+        MPI_Irecv(&reserve_training_loss_history, 1, MPI_INT, rank-1, 13, MPI_COMM_WORLD, &req[9]);
+        MPI_Irecv(&reserve_selection_loss_history, 1, MPI_INT, rank-1, 14, MPI_COMM_WORLD, &req[10]);
+        MPI_Irecv(&reserve_gradient_norm_history, 1, MPI_INT, rank-1, 15, MPI_COMM_WORLD, &req[11]);
+
+        MPI_Waitall(12, req, MPI_STATUS_IGNORE);
+    }
+
+    if(rank < size-1)
+    {
+        MPI_Send(&original_main_type, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
+
+        MPI_Request req[12];
+
+        switch (original_main_type)
+        {
+            case (int)TrainingStrategy::GRADIENT_DESCENT:
+
+                MPI_Isend(&training_rate_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&training_rate_tolerance, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Waitall(2, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+
+                MPI_Isend(&training_rate_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&training_rate_tolerance, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Isend(&training_direction_method, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[2]);
+
+                MPI_Waitall(3, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+
+                MPI_Isend(&training_rate_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+                MPI_Isend(&training_rate_tolerance, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
+
+                MPI_Isend(&inverse_hessian_method, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[2]);
+
+                MPI_Waitall(3, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            case(int)TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
+
+                MPI_Isend(&damping_parameter_factor, 1, MPI_DOUBLE, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+
+                MPI_Waitall(1, req, MPI_STATUS_IGNORE);
+
+                break;
+
+            default:
+                break;
+        }
+
+        MPI_Isend(&return_minimum_selection_loss_model, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[0]);
+        MPI_Isend(&minimum_parameters_increment_norm, 1, MPI_DOUBLE, rank+1, 5, MPI_COMM_WORLD, &req[1]);
+        MPI_Isend(&minimum_loss_decrease, 1, MPI_DOUBLE, rank+1, 6, MPI_COMM_WORLD, &req[2]);
+        MPI_Isend(&loss_goal, 1, MPI_DOUBLE, rank+1, 7, MPI_COMM_WORLD, &req[3]);
+        MPI_Isend(&gradient_norm_goal, 1, MPI_DOUBLE, rank+1, 8, MPI_COMM_WORLD, &req[4]);
+        MPI_Isend(&maximum_selection_loss_increases, 1, MPI_INT, rank+1, 9, MPI_COMM_WORLD, &req[5]);
+        MPI_Isend(&maximum_iterations_number, 1, MPI_INT, rank+1, 10, MPI_COMM_WORLD, &req[6]);
+        MPI_Isend(&maximum_time, 1, MPI_INT, rank+1, 11, MPI_COMM_WORLD, &req[7]);
+        MPI_Isend(&reserve_parameters_norm_history, 1, MPI_INT, rank+1, 12, MPI_COMM_WORLD, &req[8]);
+        MPI_Isend(&reserve_training_loss_history, 1, MPI_INT, rank+1, 13, MPI_COMM_WORLD, &req[9]);
+        MPI_Isend(&reserve_selection_loss_history, 1, MPI_INT, rank+1, 14, MPI_COMM_WORLD, &req[10]);
+        MPI_Isend(&reserve_gradient_norm_history, 1, MPI_INT, rank+1, 15, MPI_COMM_WORLD, &req[11]);
+
+        MPI_Waitall(12, req, MPI_STATUS_IGNORE);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Set variables
+
+    set_main_type((TrainingStrategy::MainType)original_main_type);
+
+    switch (original_main_type)
+    {
+        case (int)TrainingStrategy::GRADIENT_DESCENT:
+
+            gradient_descent_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
+            gradient_descent_pointer->get_training_rate_algorithm_pointer()->set_training_rate_tolerance(training_rate_tolerance);
+
+            gradient_descent_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_loss_model == 1);
+            gradient_descent_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+            gradient_descent_pointer->set_minimum_loss_increase(minimum_loss_decrease);
+            gradient_descent_pointer->set_loss_goal(loss_goal);
+            gradient_descent_pointer->set_gradient_norm_goal(gradient_norm_goal);
+            gradient_descent_pointer->set_maximum_selection_loss_decreases(maximum_selection_loss_increases);
+            gradient_descent_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            gradient_descent_pointer->set_maximum_time(maximum_time);
+            gradient_descent_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
+            gradient_descent_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            gradient_descent_pointer->set_reserve_selection_loss_history(reserve_selection_loss_history == 1);
+            gradient_descent_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
+
+            break;
+
+        case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+
+            conjugate_gradient_pointer->set_training_direction_method((ConjugateGradient::TrainingDirectionMethod)training_direction_method);
+
+            conjugate_gradient_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
+            conjugate_gradient_pointer->get_training_rate_algorithm_pointer()->set_training_rate_tolerance(training_rate_tolerance);
+
+            conjugate_gradient_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_loss_model == 1);
+            conjugate_gradient_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+            conjugate_gradient_pointer->set_minimum_loss_increase(minimum_loss_decrease);
+            conjugate_gradient_pointer->set_loss_goal(loss_goal);
+            conjugate_gradient_pointer->set_gradient_norm_goal(gradient_norm_goal);
+            conjugate_gradient_pointer->set_maximum_selection_loss_decreases(maximum_selection_loss_increases);
+            conjugate_gradient_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            conjugate_gradient_pointer->set_maximum_time(maximum_time);
+            conjugate_gradient_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
+            conjugate_gradient_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            conjugate_gradient_pointer->set_reserve_selection_loss_history(reserve_selection_loss_history == 1);
+            conjugate_gradient_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
+
+            break;
+
+        case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+
+            quasi_Newton_method_pointer->set_inverse_Hessian_approximation_method((QuasiNewtonMethod::InverseHessianApproximationMethod)inverse_hessian_method);
+
+            quasi_Newton_method_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
+            quasi_Newton_method_pointer->get_training_rate_algorithm_pointer()->set_training_rate_tolerance(training_rate_tolerance);
+
+            quasi_Newton_method_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_loss_model == 1);
+            quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+            quasi_Newton_method_pointer->set_minimum_loss_increase(minimum_loss_decrease);
+            quasi_Newton_method_pointer->set_loss_goal(loss_goal);
+            quasi_Newton_method_pointer->set_gradient_norm_goal(gradient_norm_goal);
+            quasi_Newton_method_pointer->set_maximum_selection_loss_decreases(maximum_selection_loss_increases);
+            quasi_Newton_method_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            quasi_Newton_method_pointer->set_maximum_time(maximum_time);
+            quasi_Newton_method_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
+            quasi_Newton_method_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            quasi_Newton_method_pointer->set_reserve_selection_loss_history(reserve_selection_loss_history == 1);
+            quasi_Newton_method_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
+
+            break;
+
+        case(int)TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM:
+
+            Levenberg_Marquardt_algorithm_pointer->set_damping_parameter_factor(damping_parameter_factor);
+
+            Levenberg_Marquardt_algorithm_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_loss_model == 1);
+            Levenberg_Marquardt_algorithm_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+            Levenberg_Marquardt_algorithm_pointer->set_minimum_loss_increase(minimum_loss_decrease);
+            Levenberg_Marquardt_algorithm_pointer->set_loss_goal(loss_goal);
+            Levenberg_Marquardt_algorithm_pointer->set_gradient_norm_goal(gradient_norm_goal);
+            Levenberg_Marquardt_algorithm_pointer->set_maximum_selection_loss_decreases(maximum_selection_loss_increases);
+            Levenberg_Marquardt_algorithm_pointer->set_maximum_iterations_number(maximum_iterations_number);
+            Levenberg_Marquardt_algorithm_pointer->set_maximum_time(maximum_time);
+            Levenberg_Marquardt_algorithm_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
+            Levenberg_Marquardt_algorithm_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            Levenberg_Marquardt_algorithm_pointer->set_reserve_selection_loss_history(reserve_selection_loss_history == 1);
+            Levenberg_Marquardt_algorithm_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
+
+            break;
+
+        default:
+            break;
+    }
+
+    if(rank != 0)
+    {
+        set_display(false);
+    }
+}
+#endif
 
 // void destruct_initialization(void) method
 
@@ -1348,11 +1728,13 @@ void TrainingStrategy::destruct_refinement(void)
 
 // void initialize_layers_autoencoding(void) method
 
+/// @todo
+
 void TrainingStrategy::initialize_layers_autoencoding(void)
 {
     // Data set
 
-    DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     Instances* instances_pointer = data_set_pointer->get_instances_pointer();
 
@@ -1360,7 +1742,7 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 
     // Neural network
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
@@ -1379,10 +1761,10 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 
     Vector<double> parameters;
 
-    PerformanceFunctional performance_functional(&neural_network, &data_set);
+    LossIndex loss_index(&neural_network, &data_set);
 
-    QuasiNewtonMethod quasi_Newton_method(&performance_functional);
-    quasi_Newton_method.set_performance_goal(1.0e-3);
+    QuasiNewtonMethod quasi_Newton_method(&loss_index);
+    quasi_Newton_method.set_loss_goal(1.0e-3);
     quasi_Newton_method.set_gradient_norm_goal(1.0e-3);
 
     quasi_Newton_method.set_display_period(1000);
@@ -1432,7 +1814,7 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 // Results perform_training(void) method
 
 /// This is the most important method of this class. 
-/// It optimizes the performance functional of a neural network.
+/// It optimizes the loss functional of a neural network.
 /// The most general training strategy consists of three steps: initialization, main and refinement training processes. 
 /// This method also returns a structure with the results from training. 
 
@@ -1440,7 +1822,7 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
 {
    #ifdef __OPENNN_DEBUG__ 
 
-    check_performance_functional();
+    check_loss_index();
 
     check_training_algorithms();
 
@@ -2022,6 +2404,9 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the training strategy object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

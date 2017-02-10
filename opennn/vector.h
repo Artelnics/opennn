@@ -35,6 +35,9 @@
 #include <vector>
 #include <limits>
 #include <climits>
+#ifdef __OPENNN_MPI__
+#include <mpi.h>
+#endif
 
 // Eigen includes
 
@@ -126,7 +129,9 @@ public:
   void set(const T &, const double &, const T &);
 
   void set(const Vector &);
-
+#ifdef __OPENNN_MPI__
+  void set_MPI(const MPI_Datatype);
+#endif
   // Initialization methods
 
   void initialize(const T &);
@@ -153,6 +158,10 @@ public:
 
   bool is_decrescent(void) const;
 
+  bool is_binary(void) const;
+
+  bool Lillieforts_normality_test(void) const;
+
   // Other methods
 
   size_t count_occurrences(const T &) const;
@@ -163,6 +172,8 @@ public:
 
   size_t count_less_than(const T &) const;
 
+  Vector<size_t> calculate_equal_than_indices(const T &) const;
+
   Vector<size_t> calculate_less_than_indices(const T &) const;
 
   Vector<size_t> calculate_greater_than_indices(const T &) const;
@@ -171,6 +182,8 @@ public:
   calculate_total_frequencies(const Vector< Histogram<T> > &) const;
   Vector<size_t> calculate_total_frequencies_missing_values(
       const Vector<size_t> missing_values, const Vector< Histogram<T> > &) const;
+
+  Vector<double> perform_Box_Cox_transformation(const double& lambda = 1) const;
 
   // Statistics methods
 
@@ -192,6 +205,7 @@ public:
   // Histogram methods
 
   Histogram<T> calculate_histogram(const size_t & = 10) const;
+  Histogram<T> calculate_histogram_binary(void) const;
 
   Histogram<T> calculate_histogram_missing_values(const Vector<size_t> &,
                                                   const size_t & = 10) const;
@@ -246,11 +260,15 @@ public:
 
   Vector<double> calculate_quartiles(void) const;
 
+  Vector<double> calculate_quartiles_missing_values(const Vector<size_t> &) const;
+
   Vector<double> calculate_mean_standard_deviation(void) const;
 
   double calculate_mean_missing_values(const Vector<size_t> &) const;
 
   double calculate_variance_missing_values(const Vector<size_t> &) const;
+
+  double calculate_weighted_mean(const Vector<double> &) const;
 
   double
   calculate_standard_deviation_missing_values(const Vector<size_t> &) const;
@@ -270,6 +288,8 @@ public:
   calculate_shape_parameters_missing_values(const Vector<size_t> &) const;
 
   Vector<double> calculate_box_plots(void) const;
+
+  Vector<double> calculate_box_plots_missing_values(const Vector<size_t> &) const;
 
   // Norm methods
 
@@ -298,7 +318,7 @@ public:
 
   // Correlation methods
 
-  T calculate_linear_correlation(const Vector<T> &) const;
+  double calculate_linear_correlation(const Vector<T> &) const;
 
   T calculate_linear_correlation_missing_values(const Vector<T> &,
                                                 const Vector<size_t> &) const;
@@ -475,7 +495,7 @@ public:
 
   std::string to_string(const std::string & = " ") const;
 
-  Vector<std::string> write_string_vector(const size_t & = 3) const;
+  Vector<std::string> write_string_vector(const size_t & = 5) const;
 
   Matrix<T> to_matrix(const size_t &, const size_t &) const;
 };
@@ -733,6 +753,46 @@ void Vector<T>::set(const T &first, const double &step, const T &last) {
 template <class T> void Vector<T>::set(const Vector &other_vector) {
   *this = other_vector;
 }
+
+#ifdef __OPENNN_MPI__
+// void set_MPI(const MPI_Datatype) method
+
+/// Send the vector to the other MPI processors.
+/// @param mpi_datatype MPI type of this vector.
+
+template <class T> void Vector<T>::set_MPI(const MPI_Datatype mpi_datatype) {
+    int size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    int vector_size;
+
+    if(rank == 0)
+    {
+        vector_size = (int)this->size();
+    }
+
+    if(rank > 0)
+    {
+        MPI_Recv(&vector_size, 1, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        set(vector_size);
+
+        MPI_Recv(data(), vector_size, mpi_datatype, rank - 1, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+
+    if(rank < size - 1)
+    {
+        MPI_Send(&vector_size, 1, MPI_INT, rank + 1, 1, MPI_COMM_WORLD);
+
+        MPI_Send(data(), vector_size, mpi_datatype, rank + 1, 2, MPI_COMM_WORLD);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+}
+#endif
 
 // void initialize(const T&) method
 
@@ -1036,6 +1096,91 @@ template <class T> bool Vector<T>::is_decrescent(void) const {
   return (true);
 }
 
+// bool is_binary(void) const method
+
+/// Returns true if all the elements in the vector have binary values, and false otherwise.
+
+template <class T> bool Vector<T>::is_binary(void) const
+{
+    const size_t this_size = this->size();
+
+    for (size_t i = 0; i < this_size; i++)
+    {
+        if((*this)[i] != 0 && (*this)[i] != 1)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// bool Lillieforts_normality_test(void) const method
+
+/// Returns true if the elements in the vector have a normal distribution.
+
+template <class T> bool Vector<T>::Lillieforts_normality_test(void) const
+{
+#ifndef __Cpp11__
+    const size_t n = this->size();
+
+    const double mean = this->calculate_mean();
+    const double standard_deviation = this->calculate_standard_deviation();
+
+    const double fn = (0.83 + n)/std::sqrt(n) - 0.01;
+    const double Dna = 0.895/fn;
+
+    Vector<T> sorted_vector(*this);
+
+    std::sort(sorted_vector.begin(), sorted_vector.end(), std::less<double>());
+
+    double Fx;
+    double Snx;
+
+    double D = -1;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        Fx = 0.5 * std::erfc((mean - (*this)[i])/(standard_deviation*std::sqrt(2)));
+
+        if((*this)[i] < sorted_vector[0])
+        {
+            Snx = 0.0;
+        }
+        else if((*this)[i] >= sorted_vector[n-1])
+        {
+            Snx = 1.0;
+        }
+        else
+        {
+            for(size_t j = 0; j < n-1; j++)
+            {
+                if((*this)[i] >= sorted_vector[j] && (*this)[i] < sorted_vector[j+1])
+                {
+                    Snx = (double)(j+1)/(double)n;
+                }
+            }
+        }
+
+        if(D < std::abs(Fx - Snx))
+        {
+            D = std::abs(Fx - Snx);
+        }
+    }
+
+    if(D < Dna)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+#else
+    return false;
+#endif
+}
+
 // size_t count_occurrences(const T&) const method
 
 /// Returns the number of times that a certain value is contained in the vector.
@@ -1116,6 +1261,27 @@ template <class T> size_t Vector<T>::count_less_than(const T &value) const {
   }
 
   return (count);
+}
+
+// Vector<size_t> calculate_equal_than_indices(const T&) const method
+
+/// Returns the vector indices at which the vector elements are equal than some
+/// given value.
+/// @param value Value.
+
+template <class T>
+Vector<size_t> Vector<T>::calculate_equal_than_indices(const T &value) const {
+  const size_t this_size = this->size();
+
+  Vector<size_t> equal_than_indices;
+
+  for (size_t i = 0; i < this_size; i++) {
+    if((*this)[i] == value) {
+      equal_than_indices.push_back(i);
+    }
+  }
+
+  return (equal_than_indices);
 }
 
 // Vector<size_t> calculate_less_than_indices(const T&) const method
@@ -1210,6 +1376,33 @@ Vector<size_t> Vector<T>::calculate_total_frequencies_missing_values(
   return (total_frequencies);
 }
 
+// Vector<double> perform_Box_Cox_transformation(const double&) const method
+
+/// Returns vector with the Box-Cox transformation.
+/// @param lambda Exponent of the Box-Cox transformation.
+
+template <class T> Vector<double> Vector<T>::perform_Box_Cox_transformation(const double& lambda) const
+{
+    const size_t size = this->size();
+
+    Vector<double> vector_tranformation(size);
+
+    for(size_t i = 0; i < size; i++)
+    {
+        if(lambda == 0)
+        {
+            vector_tranformation[i] = std::log((double)(*this)[i]);
+        }
+        else
+        {
+            vector_tranformation[i] = (std::pow((double)(*this)[i], lambda) - 1)/lambda;
+
+        }
+    }
+
+    return vector_tranformation;
+}
+
 // T calculate_minimum(void) const method
 
 /// Returns the smallest element in the vector.
@@ -1300,7 +1493,7 @@ T Vector<T>::calculate_minimum_missing_values(
 
   for (size_t i = 0; i < this_size; i++) {
     if((*this)[i] < minimum &&
-        !missing_indices.contains(i)) //&& (*this)[i] != -123.456)
+        !missing_indices.contains(i))// && (*this)[i] != -123.456)
     {
       minimum = (*this)[i];
     }
@@ -1400,7 +1593,7 @@ Vector<T> Vector<T>::calculate_explained_variance(void) const
 
     #endif
 
-    const double this_sum = this->calculate_sum();
+    const double this_sum = this->calculate_absolute_value().calculate_sum();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1436,7 +1629,26 @@ Vector<T> Vector<T>::calculate_explained_variance(void) const
     for(size_t i = 0; i < this_size; i++)
     {
         explained_variance[i] = ((*this)[i]/this_sum)*100.0;
+
+        if(explained_variance[i] - 0.0 < 1.0e-16)
+        {
+            explained_variance[i] = 0.0;
+        }
     }
+
+    #ifdef __OPENNN_DEBUG__
+
+      if(explained_variance.calculate_sum() != 1.0) {
+        std::ostringstream buffer;
+
+        buffer << "OpenNN Exception: Vector Template.\n"
+               << "Vector<T> calculate_explained_variance(void) const method.\n"
+               << "Sum of explained variance must be 1.\n";
+
+        throw std::logic_error(buffer.str());
+      }
+
+    #endif
 
     return explained_variance;
 }
@@ -1488,7 +1700,8 @@ Histogram<T> Vector<T>::calculate_histogram(const size_t &bins_number) const {
 
   // Calculate bins center
 
-  for (size_t i = 1; i < bins_number; i++) {
+  for (size_t i = 1; i < bins_number; i++)
+  {
     minimums[i] = minimums[i - 1] + length;
     maximums[i] = maximums[i - 1] + length;
 
@@ -1513,10 +1726,62 @@ Histogram<T> Vector<T>::calculate_histogram(const size_t &bins_number) const {
 
   Histogram<T> histogram(bins_number);
   histogram.centers = centers;
+  histogram.minimums = minimums;
+  histogram.maximums = maximums;
   histogram.frequencies = frequencies;
 
   return (histogram);
 }
+
+
+// Histogram<T> calculate_histogram_binary(void) const method
+
+/// This method bins the elements of the vector into a given number of equally
+/// spaced containers.
+/// It returns a vector of two vectors.
+/// The size of both subvectors is the number of bins.
+/// The first subvector contains the frequency of the bins.
+/// The second subvector contains the center of the bins.
+
+template <class T>
+Histogram<T> Vector<T>::calculate_histogram_binary(void) const {
+// Control sentence (if debug)
+
+  Vector<T> minimums(2);
+  Vector<T> maximums(2);
+
+  Vector<T> centers(2);
+  Vector<size_t> frequencies(2, 0);
+
+  minimums[0] = 0.0;
+  maximums[0] = 0.0;
+  centers[0] = 0.0;
+
+  minimums[1] = 1.0;
+  maximums[1] = 1.0;
+  centers[1] = 1.0;
+
+  // Calculate bins frequency
+
+  const size_t this_size = this->size();
+
+  for (size_t i = 0; i < this_size; i++) {
+    for (size_t j = 0; j < 2; j++) {
+      if((*this)[i] == minimums[j]) {
+        frequencies[j]++;
+      }
+    }
+  }
+
+  Histogram<T> histogram(2);
+  histogram.centers = centers;
+  histogram.minimums = minimums;
+  histogram.maximums = maximums;
+  histogram.frequencies = frequencies;
+
+  return (histogram);
+}
+
 
 // Histogram<T> calculate_histogram_missing_values(const size_t&) const method
 
@@ -1594,6 +1859,8 @@ Histogram<T> Vector<T>::calculate_histogram_missing_values(
 
   Histogram<T> histogram(bins_number);
   histogram.centers = centers;
+  histogram.minimums = minimums;
+  histogram.maximums = maximums;
   histogram.frequencies = frequencies;
 
   return (histogram);
@@ -2333,6 +2600,49 @@ template <class T> Vector<double> Vector<T>::calculate_quartiles(void) const {
   return (quartiles);
 }
 
+// Vector<double> calculate_quartiles_missing_values(const Vector<size_t>&) const
+
+/// Returns the quarters of the elements in the vector when there are missing values.
+/// @param missing_indices Vector with the indices of the missing values.
+
+template <class T>
+Vector<double> Vector<T>::calculate_quartiles_missing_values(const Vector<size_t> & missing_indices) const
+{
+    const size_t this_size = this->size();
+    const size_t missing_indices_number = missing_indices.size();
+
+    Vector<T> sorted_vector(*this);
+
+    for(size_t i = 0; i < missing_indices_number; i++)
+    {
+        sorted_vector.remove_element(missing_indices[i]);
+    }
+
+    std::sort(sorted_vector.begin(), sorted_vector.end(), std::less<double>());
+
+    const size_t actual_size = this_size - missing_indices_number;
+
+    Vector<double> quartiles(4);
+
+    if(actual_size % 2 == 0) {
+      quartiles[0] = (sorted_vector[actual_size / 4] + sorted_vector[actual_size / 4 + 1]) / 2;
+      quartiles[1] = (sorted_vector[actual_size * 2 / 4] +
+                     sorted_vector[actual_size * 2 / 4 + 1]) /
+                    2;
+      quartiles[2] = (sorted_vector[actual_size * 3 / 4] +
+                     sorted_vector[actual_size * 3 / 4 + 1]) /
+                    2;
+      quartiles[3] = sorted_vector[actual_size - 1];
+    } else {
+      quartiles[0] = sorted_vector[actual_size / 4 /*+ 1*/];
+      quartiles[1] = sorted_vector[actual_size * 2 / 4 /*+ 1*/];
+      quartiles[2] = sorted_vector[actual_size * 3 / 4 /*+ 1*/];
+      quartiles[3] = sorted_vector[actual_size - 1];
+    }
+
+    return (quartiles);
+}
+
 // double calculate_mean_missing_values(const Vector<size_t>&) const method
 
 /// Returns the mean of the elements in the vector.
@@ -2425,6 +2735,58 @@ double Vector<T>::calculate_variance_missing_values(
   return (numerator / denominator);
 }
 
+// double calculate_weighted_mean(const Vector<double>&) const method
+
+/// Returns the weighted mean of the vector.
+/// @param weights Weights of the elements of the vector in the mean.
+
+template <class T>
+double Vector<T>::calculate_weighted_mean(const Vector<double> & weights) const
+{
+    const size_t this_size = this->size();
+
+  // Control sentence (if debug)
+
+  #ifdef __OPENNN_DEBUG__
+
+    if(this_size == 0) {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Vector Template.\n"
+             << "double calculate_weighted_mean(const Vector<double>&) const method.\n"
+             << "Size must be greater than zero.\n";
+
+      throw std::logic_error(buffer.str());
+    }
+
+    const size_t weights_size = weights.size();
+
+    if(this_size != weights_size) {
+      std::ostringstream buffer;
+
+      buffer << "OpenNN Exception: Vector Template.\n"
+             << "double calculate_weighted_mean(const Vector<double>&) "
+                "const method.\n"
+             << "Size of weights must be equal to vector size.\n";
+
+      throw std::logic_error(buffer.str());
+    }
+  #endif
+
+    double weights_sum = 0;
+
+    T sum = 0;
+
+    for (size_t i = 0; i < this_size; i++)
+    {
+        sum += weights[i]*(*this)[i];
+        weights_sum += weights[i];
+    }
+
+    const double mean = sum / weights_sum;
+
+    return (mean);
+}
 
 // double calculate_standard_deviation_missing_values(const Vector<size_t>&)
 // method
@@ -2720,6 +3082,27 @@ Vector<double> Vector<T>::calculate_box_plots(void) const {
   return (box_plots);
 }
 
+// Vector<double> calculate_box_plots_missing_values(const Vector<size_t>&) const
+
+/// Returns the box and whispers for a vector when there are missing values.
+/// @param missing_indices Vector with the indices of the missing values.
+
+template <class T>
+Vector<double> Vector<T>::calculate_box_plots_missing_values(const Vector<size_t> & missing_indices) const
+{
+    Vector<double> box_plots(5);
+
+    Vector<double> quartiles = calculate_quartiles_missing_values(missing_indices);
+
+    box_plots[0] = calculate_minimum();
+    box_plots[1] = quartiles[0];
+    box_plots[2] = quartiles[1];
+    box_plots[3] = quartiles[2];
+    box_plots[4] = quartiles[3];
+
+    return (box_plots);
+}
+
 // double calculate_norm(void) const method
 
 /// Returns the vector norm.
@@ -2977,11 +3360,13 @@ double Vector<T>::calculate_sum_squared_error(
   return (sum_squared_error);
 }
 
-// double calculate_sum_squared_error(const Vector<double>&) const method
+// double calculate_sum_squared_error(const Matrix<T>&, const size_t&, const Vector<size_t>&) const method
 
 /// Returns the sum squared error between the elements of this vector and the
-/// elements of another vector.
-/// @param other_vector Other vector.
+/// elements of a row of a matrix.
+/// @param matrix Matrix to compute the error .
+/// @param row_index Index of the row of the matrix.
+/// @param column_indices Indices of the columns of the matrix to evaluate.
 
 template <class T>
 double Vector<T>::calculate_sum_squared_error(
@@ -2991,22 +3376,21 @@ double Vector<T>::calculate_sum_squared_error(
 // Control sentence (if debug)
 
 #ifdef __OPENNN_DEBUG__
-/*
+
    const size_t this_size = this->size();
-   const size_t other_size = other_vector.size();
+   const size_t other_size = column_indices.size();
 
    if(other_size != this_size)
    {
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: Vector Template.\n"
-             << "double calculate_sum_squared_error(const Vector<double>&) const
-   method.\n"
+             << "double calculate_sum_squared_error(const Matrix<T>&, const size_t&, const Vector<size_t>&) const method.\n"
              << "Size must be equal to this size.\n";
 
       throw std::logic_error(buffer.str());
    }
-*/
+
 #endif
 
   double sum_squared_error = 0.0;
@@ -3094,8 +3478,8 @@ Vector<T>::calculate_Minkowski_error(const Vector<double> &other_vector,
 /// @param other Vector for computing the linear correlation with this vector.
 
 template <class T>
-T Vector<T>::calculate_linear_correlation(const Vector<T> &other) const {
-  const size_t n = this->size();
+double Vector<T>::calculate_linear_correlation(const Vector<T> &other) const {
+  size_t n = this->size();
 
 // Control sentence (if debug)
 
@@ -3115,13 +3499,13 @@ T Vector<T>::calculate_linear_correlation(const Vector<T> &other) const {
 
 #endif
 
-  T s_x = 0;
-  T s_y = 0;
+  double s_x = 0;
+  double s_y = 0;
 
-  T s_xx = 0;
-  T s_yy = 0;
+  double s_xx = 0;
+  double s_yy = 0;
 
-  T s_xy = 0;
+  double s_xy = 0;
 
   for (size_t i = 0; i < n; i++) {
     s_x += other[i];
@@ -3133,7 +3517,34 @@ T Vector<T>::calculate_linear_correlation(const Vector<T> &other) const {
     s_xy += other[i] * (*this)[i];
   }
 
-  T linear_correlation;
+#ifdef __OPENNN_MPI__
+
+  int n_send = (int)n;
+  int n_mpi;
+
+  double s_x_mpi = s_x;
+  double s_y_mpi = s_y;
+
+  double s_xx_mpi = s_xx;
+  double s_yy_mpi = s_yy;
+
+  double s_xy_mpi = s_xy;
+
+  MPI_Allreduce(&n_send,&n_mpi,1,MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+
+  MPI_Allreduce(&s_x_mpi,&s_x,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(&s_y_mpi,&s_y,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+  MPI_Allreduce(&s_xx_mpi,&s_xx,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(&s_yy_mpi,&s_yy,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+  MPI_Allreduce(&s_xy_mpi,&s_xy,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+  n = n_mpi;
+
+#endif
+
+  double linear_correlation;
 
   if(s_x == 0 && s_y == 0 && s_xx == 0 && s_yy == 0 && s_xy == 0) {
     linear_correlation = 1;
@@ -3768,6 +4179,8 @@ void Vector<T>::apply_lower_upper_bounds(const Vector<T> &lower_bound,
 
 // Vector<size_t> sort_less_indices(void) const method
 
+/// Returns the vector of the indices of the vector sorted by less ranks.
+
 template <class T>
 Vector<size_t> Vector<T>::sort_less_indices(void) const
 {
@@ -3794,6 +4207,8 @@ Vector<size_t> Vector<T>::sort_less_indices(void) const
 
 
 // Vector<size_t> sort_greater_indices(void) const method
+
+/// Returns the vector of the indices of the vector sorted by greater ranks.
 
 template <class T>
 Vector<size_t> Vector<T>::sort_greater_indices(void) const
@@ -5812,6 +6227,15 @@ T calculate_random_uniform(const T &minimum, const T &maximum) {
   return (random_uniform);
 }
 
+template <class T>
+std::string number_to_string(const T &value) {
+  std::ostringstream ss;
+
+  ss << value;
+
+  return (ss.str());
+}
+
 // double calculate_random_normal(const double&, const double&) method
 
 /// Returns a random number chosen from a normal distribution.
@@ -6088,6 +6512,14 @@ template <class T> struct Histogram {
   /// Positions of the bins in the histogram.
 
   Vector<T> centers;
+
+  /// Minimum of the bins in the histogram.
+
+  Vector<T> minimums;
+
+  /// Maximum of the bins in the histogram.
+
+  Vector<T> maximums;
 
   /// Population of the bins in the histogram.
 

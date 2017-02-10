@@ -86,7 +86,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     DataSet ds;
 
-    PerformanceFunctional pf(&nn, &ds);
+    LossIndex pf(&nn, &ds);
 
     TrainingStrategy ts(&pf);
 
@@ -131,7 +131,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
@@ -139,14 +139,14 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     sa.set_trials_number(1);
     sa.set_maximum_order(7);
-    sa.set_selection_performance_goal(1.0);
+    sa.set_selection_loss_goal(1.0);
     sa.set_minimum_temperature(0.0);
     sa.set_display(false);
 
     results = sa.perform_order_selection();
 
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::SelectionPerformanceGoal, LOG);
+                OrderSelectionAlgorithm::SelectionLossGoal, LOG);
 
     // Test
 
@@ -185,7 +185,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_error_type(PerformanceFunctional::SUM_SQUARED_ERROR);
+    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
 
     ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
@@ -193,7 +193,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
     sa.set_trials_number(1);
     sa.set_maximum_order(7);
-    sa.set_selection_performance_goal(0.0);
+    sa.set_selection_loss_goal(0.0);
     sa.set_minimum_temperature(0.0);
     sa.set_display(false);
 

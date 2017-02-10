@@ -101,14 +101,15 @@ void GrowingInputs::set_default(void)
     size_t inputs_number ;
 
     if(training_strategy_pointer == NULL
-            || !training_strategy_pointer->has_performance_functional())
+            || !training_strategy_pointer->has_loss_index())
     {
         maximum_selection_failures = 3;
 
         maximum_inputs_number = 100;
-    }else
+    }
+    else
     {
-        inputs_number = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer()->get_inputs_number();
+        inputs_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
         maximum_selection_failures = (size_t)std::max(3.,inputs_number/5.);
 
         maximum_inputs_number = inputs_number;
@@ -144,13 +145,13 @@ void GrowingInputs::set_maximum_inputs_number(const size_t& new_maximum_inputs_n
 // void set_maximum_selection_failures(const size_t&) method
 
 /// Sets the maximum selection failures for the growing inputs selection algorithm.
-/// @param new_maximum_performance_failures Maximum number of selection failures in the growing inputs selection algorithm.
+/// @param new_maximum_loss_failures Maximum number of selection failures in the growing inputs selection algorithm.
 
-void GrowingInputs::set_maximum_selection_failures(const size_t& new_maximum_performance_failures)
+void GrowingInputs::set_maximum_selection_failures(const size_t& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(new_maximum_performance_failures <= 0)
+    if(new_maximum_loss_failures <= 0)
     {
         std::ostringstream buffer;
 
@@ -163,7 +164,7 @@ void GrowingInputs::set_maximum_selection_failures(const size_t& new_maximum_per
 
 #endif
 
-    maximum_selection_failures = new_maximum_performance_failures;
+    maximum_selection_failures = new_maximum_loss_failures;
 }
 
 // GrowingInputsResults* perform_inputs_selection(void) method
@@ -185,11 +186,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     size_t original_index;
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    DataSet* data_set_pointer = performance_functional_pointer->get_data_set_pointer();
+    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     Variables* variables = data_set_pointer->get_variables_pointer();
 
@@ -205,6 +206,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     if(has_scaling_layer)
     {
         original_statistics = neural_network_pointer->get_scaling_layer_pointer()->get_statistics();
+
         original_scaling_method = neural_network_pointer->get_scaling_layer_pointer()->get_scaling_method();
     }
 
@@ -214,7 +216,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     const Vector<Variables::Use> original_uses = current_uses;
 
     double optimum_selection_error = 1e10;
-    double optimum_performance_error;
+    double optimum_loss_error;
     Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
 
@@ -223,8 +225,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     Vector<double> final(2);
     Vector<double> history_row;
 
-    double current_training_performance, current_selection_performance;
-    double previous_selection_performance;
+    double current_training_loss, current_selection_loss;
+    double previous_selection_loss;
 
     bool flag_input = false;
 
@@ -247,7 +249,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     if(display)
     {
-        std::cout << "Correlations : \n";
+        std::cout << "Correlations:\n";
         for(size_t i = 0; i < final_correlations.size(); i++)
         {
             original_index = get_input_index(original_uses, i);
@@ -296,19 +298,19 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
         optimal_inputs = current_inputs;
         optimum_selection_error = final[0];
-        optimum_performance_error = final[1];
+        optimum_loss_error = final[1];
         optimal_parameters = get_parameters_inputs(current_inputs);
 
         results->inputs_data.push_back(current_inputs);
 
-        if(reserve_performance_data)
+        if(reserve_loss_data)
         {
-            results->performance_data.push_back(optimum_selection_error);
+            results->loss_data.push_back(optimum_selection_error);
         }
 
-        if(reserve_selection_performance_data)
+        if(reserve_selection_loss_data)
         {
-            results->selection_performance_data.push_back(optimum_performance_error);
+            results->selection_loss_data.push_back(optimum_loss_error);
         }
 
         if(reserve_parameters_data)
@@ -319,7 +321,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         results->stopping_condition = InputsSelectionAlgorithm::AlgorithmFinished;
 
         end = true;
-    }else
+    }
+    else
     {
         for(size_t i = 0; i < final_correlations.size(); i++)
         {
@@ -354,19 +357,19 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
                     final = perform_model_evaluation(current_inputs);
 
                     optimal_inputs = current_inputs;
-                    optimum_performance_error = final[0];
+                    optimum_loss_error = final[0];
                     optimum_selection_error = final[1];
 
                     results->inputs_data.push_back(current_inputs);
 
-                    if(reserve_performance_data)
+                    if(reserve_loss_data)
                     {
-                        results->performance_data.push_back(optimum_performance_error);
+                        results->loss_data.push_back(optimum_loss_error);
                     }
 
-                    if(reserve_selection_performance_data)
+                    if(reserve_selection_loss_data)
                     {
-                        results->selection_performance_data.push_back(optimum_selection_error);
+                        results->selection_loss_data.push_back(optimum_selection_error);
                     }
 
                     if(reserve_parameters_data)
@@ -421,7 +424,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
                 optimal_inputs = current_inputs;
 
-            }else
+            }
+            else
             {
 
                 final_correlations[index] = -1;
@@ -438,17 +442,17 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
         final = perform_model_evaluation(current_inputs);
 
-        current_training_performance = final[0];
-        current_selection_performance = final[1];
+        current_training_loss = final[0];
+        current_selection_loss = final[1];
 
-        if(fabs(optimum_selection_error - current_selection_performance) < tolerance ||
-                optimum_selection_error > current_selection_performance)
+        if(fabs(optimum_selection_error - current_selection_loss) < tolerance ||
+                optimum_selection_error > current_selection_loss)
         {
             optimal_inputs = current_inputs;
-            optimum_performance_error = current_training_performance;
-            optimum_selection_error = current_selection_performance;
+            optimum_loss_error = current_training_loss;
+            optimum_selection_error = current_selection_loss;
         }
-        else if(optimum_selection_error < current_selection_performance)
+        else if(optimum_selection_error < current_selection_loss)
         {
             selection_failures++;
         }
@@ -456,19 +460,19 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        previous_selection_performance = current_selection_performance;
+        previous_selection_loss = current_selection_loss;
         iterations++;
 
         results->inputs_data.push_back(current_inputs);
 
-        if(reserve_performance_data)
+        if(reserve_loss_data)
         {
-            results->performance_data.push_back(current_training_performance);
+            results->loss_data.push_back(current_training_loss);
         }
 
-        if(reserve_selection_performance_data)
+        if(reserve_selection_loss_data)
         {
-            results->selection_performance_data.push_back(current_selection_performance);
+            results->selection_loss_data.push_back(current_selection_loss);
         }
 
         if(reserve_parameters_data)
@@ -490,17 +494,19 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             }
 
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
-        }else if(final[1] <= selection_performance_goal)
+        }
+        else if(final[1] <= selection_loss_goal)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Selection performance reached." << std::endl;
+                std::cout << "Selection loss reached." << std::endl;
             }
 
-            results->stopping_condition = InputsSelectionAlgorithm::SelectionPerformanceGoal;
-        }else if(iterations >= maximum_iterations_number)
+            results->stopping_condition = InputsSelectionAlgorithm::SelectionLossGoal;
+        }
+        else if(iterations >= maximum_iterations_number)
         {
             end = true;
 
@@ -510,7 +516,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             }
 
             results->stopping_condition = InputsSelectionAlgorithm::MaximumIterations;
-        }else if(selection_failures >= maximum_selection_failures)
+        }
+        else if(selection_failures >= maximum_selection_failures)
         {
             end = true;
 
@@ -520,7 +527,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             }
 
             results->stopping_condition = InputsSelectionAlgorithm::MaximumSelectionFailures;
-        }else if(current_inputs.count_occurrences(true) >= maximum_inputs_number)
+        }
+        else if(current_inputs.count_occurrences(true) >= maximum_inputs_number)
         {
             end = true;
 
@@ -554,8 +562,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
             std::cout << "Current inputs: " <<  variables->arrange_inputs_name().to_string() << std::endl;
             std::cout << "Number of inputs: " << current_inputs.count_occurrences(true) << std::endl;
-            std::cout << "Training performance: " << final[0] << std::endl;
-            std::cout << "Selection performance: " << final[1] << std::endl;
+            std::cout << "Training loss: " << final[0] << std::endl;
+            std::cout << "Selection loss: " << final[1] << std::endl;
             std::cout << "Elapsed time: " << elapsed_time << std::endl;
 
             std::cout << std::endl;
@@ -571,8 +579,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
     }
 
     results->optimal_inputs = optimal_inputs;
-    results->final_selection_performance = optimum_selection_error;
-    results->final_performance = optimum_performance_error;
+    results->final_selection_loss = optimum_selection_error;
+    results->final_loss = optimum_loss_error;
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
 
@@ -587,7 +595,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
             {
                 statistics.push_back(original_statistics[i]);
             }
-        }else
+        }
+        else
         {
             current_uses[original_index] = Variables::Unused;
         }
@@ -597,7 +606,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     set_neural_inputs(optimal_inputs);
     neural_network_pointer->set_parameters(optimal_parameters);
-    neural_network_pointer->get_inputs_pointer()->set_names(variables->arrange_inputs_name());
+
+    if(neural_network_pointer->has_inputs())
+    {
+        neural_network_pointer->get_inputs_pointer()->set_names(variables->arrange_inputs_name());
+    }
 
     if(has_scaling_layer)
     {
@@ -611,10 +624,14 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
     if(display)
     {
-        std::cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
+        if(neural_network_pointer->has_inputs())
+        {
+            std::cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->arrange_names().to_string() << std::endl;
+        }
+
         std::cout << "Optimal number of inputs: " << optimal_inputs.count_occurrences(true) << std::endl;
-        std::cout << "Optimum training performance: " << optimum_performance_error << std::endl;
-        std::cout << "Optimum selection performance: " << optimum_selection_error << std::endl;
+        std::cout << "Optimum training loss: " << optimum_loss_error << std::endl;
+        std::cout << "Optimum selection loss: " << optimum_selection_error << std::endl;
         std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
@@ -623,7 +640,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection(voi
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> GrowingInputs::to_string_matrix(void) const
 {
@@ -650,12 +667,12 @@ Matrix<std::string> GrowingInputs::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Selection performance goal
+   // Selection loss goal
 
-   labels.push_back("Selection performance goal");
+   labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_performance_goal;
+   buffer << selection_loss_goal;
 
    values.push_back(buffer.str());
 
@@ -713,21 +730,37 @@ Matrix<std::string> GrowingInputs::to_string_matrix(void) const
 
    values.push_back(buffer.str());
 
-   // Plot training performance history
+   // Plot training loss history
 
-   labels.push_back("Plot training performance history");
+   labels.push_back("Plot training loss history");
 
    buffer.str("");
-   buffer << reserve_performance_data;
+
+   if(reserve_loss_data)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
-   // Plot selection performance history
+   // Plot selection loss history
 
-   labels.push_back("Plot selection performance history");
+   labels.push_back("Plot selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_performance_data;
+
+   if(reserve_selection_loss_data)
+   {
+       buffer << "true";
+   }
+   else
+   {
+       buffer << "false";
+   }
 
    values.push_back(buffer.str());
 
@@ -764,11 +797,11 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
 
     // Regression
 //    {
-//        element = document->NewElement("FunctionRegression");
+//        element = document->NewElement("Approximation");
 //        root_element->LinkEndChild(element);
 
 //        buffer.str("");
-//        buffer << function_regression;
+//        buffer << approximation;
 
 //        text = document->NewText(buffer.str().c_str());
 //        element->LinkEndChild(text);
@@ -798,13 +831,13 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Selection performance goal
+    // selection loss goal
     {
-        element = document->NewElement("SelectionPerformanceGoal");
+        element = document->NewElement("SelectionLossGoal");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << selection_performance_goal;
+        buffer << selection_loss_goal;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -883,25 +916,25 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
         element->LinkEndChild(text);
     }
 
-    // Reserve performance data
+    // Reserve loss data
     {
         element = document->NewElement("ReservePerformanceHistory");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_performance_data;
+        buffer << reserve_loss_data;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
     }
 
-    // Reserve selection performance data
+    // Reserve selection loss data
     {
-        element = document->NewElement("ReserveSelectionPerformanceHistory");
+        element = document->NewElement("ReserveSelectionLossHistory");
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_selection_performance_data;
+        buffer << reserve_selection_loss_data;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -912,7 +945,7 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
 //        element = document->NewElement("PerformanceCalculationMethod");
 //        root_element->LinkEndChild(element);
 
-//        text = document->NewText(write_performance_calculation_method().c_str());
+//        text = document->NewText(write_loss_calculation_method().c_str());
 //        element->LinkEndChild(text);
 //    }
 
@@ -958,6 +991,9 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the growing inputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;
@@ -986,12 +1022,12 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Selection performance goal
+    // selection loss goal
 
-    file_stream.OpenElement("SelectionPerformanceGoal");
+    file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_performance_goal;
+    buffer << selection_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1063,23 +1099,23 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance data
+    // Reserve loss data
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_data;
+    buffer << reserve_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance data
+    // Reserve selection loss data
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_data;
+    buffer << reserve_selection_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1112,7 +1148,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regression
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("FunctionRegression");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Approximation");
 
         if(element)
         {
@@ -1120,7 +1156,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
             try
             {
-                set_function_regression(new_regression != "0");
+                set_approximation(new_regression != "0");
             }
             catch(const std::logic_error& e)
             {
@@ -1154,11 +1190,11 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const std::string new_performance_calculation_method = element->GetText();
+            const std::string new_loss_calculation_method = element->GetText();
 
             try
             {
-                set_performance_calculation_method(new_performance_calculation_method);
+                set_loss_calculation_method(new_loss_calculation_method);
             }
             catch(const std::logic_error& e)
             {
@@ -1186,17 +1222,17 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve performance data
+    // Reserve loss data
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
-            const std::string new_reserve_performance_data = element->GetText();
+            const std::string new_reserve_loss_data = element->GetText();
 
             try
             {
-                set_reserve_performance_data(new_reserve_performance_data != "0");
+                set_reserve_loss_data(new_reserve_loss_data != "0");
             }
             catch(const std::logic_error& e)
             {
@@ -1205,17 +1241,17 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection performance data
+    // Reserve selection loss data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
         if(element)
         {
-            const std::string new_reserve_selection_performance_data = element->GetText();
+            const std::string new_reserve_selection_loss_data = element->GetText();
 
             try
             {
-                set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
+                set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
             }
             catch(const std::logic_error& e)
             {
@@ -1262,17 +1298,17 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Selection performance goal
+    // selection loss goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
 
         if(element)
         {
-            const double new_selection_performance_goal = atof(element->GetText());
+            const double new_selection_loss_goal = atof(element->GetText());
 
             try
             {
-                set_selection_performance_goal(new_selection_performance_goal);
+                set_selection_loss_goal(new_selection_loss_goal);
             }
             catch(const std::logic_error& e)
             {

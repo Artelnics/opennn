@@ -440,7 +440,7 @@ void TestingAnalysisTest::test_calculate_roc_curve(void)
     assert_true(roc_curve(3, 1) == 1, LOG);
     assert_true(roc_curve(4, 0) == 1, LOG);
     assert_true(roc_curve(4, 1) == 1, LOG);
-    assert_true(roc_curve.get_columns_number() == 2, LOG);
+    assert_true(roc_curve.get_columns_number() == 3, LOG);
     assert_true (roc_curve.get_rows_number() == 5, LOG);
 
     // Test
@@ -471,7 +471,7 @@ void TestingAnalysisTest::test_calculate_roc_curve(void)
     assert_true(roc_curve(3, 1) == 0.5, LOG);
     assert_true(roc_curve(4, 0) == 1, LOG);
     assert_true(roc_curve(4, 1) == 1, LOG);
-    assert_true(roc_curve.get_columns_number() == 2, LOG);
+    assert_true(roc_curve.get_columns_number() == 3, LOG);
     assert_true(roc_curve.get_rows_number() == 5, LOG);
 }
 
@@ -625,7 +625,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold(void)
 
     optimal_threshold = ta.calculate_optimal_threshold(target_data, output_data);
 
-    assert_true(optimal_threshold == 1.0, LOG);
+    assert_true(optimal_threshold == 0.0, LOG);
 
     // Test
 

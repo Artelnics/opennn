@@ -27,6 +27,9 @@
 #include <ctime>
 #include <exception>
 
+#ifdef __OPENNN_MPI__
+#include <mpi.h>
+#endif
 // OpenNN includes
 
 #include "vector.h"
@@ -44,7 +47,7 @@ namespace OpenNN
 {
 
 /// This class represents the concept of data set for data modelling problems, 
-/// such as function regression, pattern recognition and time series prediction.
+/// such as function regression, classification and time series prediction.
 /// It basically consists of a data matrix plus a variables and an instances objects. 
 
 class DataSet 
@@ -100,7 +103,7 @@ public:
 
    /// Enumeration of available methods for scaling and unscaling the data.  
    
-   enum ScalingUnscalingMethod{MinimumMaximum, MeanStandardDeviation};
+   enum ScalingUnscalingMethod{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation};
 
    /// Enumeration of the units used for angular variables.
 
@@ -112,7 +115,7 @@ public:
 
    /// Enumeration of the learning tasks
 
-   enum LearningTask{FunctionRegression, PatternRecognition, TimeSeriesPrediction, Autoassociation};
+   enum ProjectType{Approximation, Classification, Forecasting, Association};
 
    // METHODS
 
@@ -125,7 +128,7 @@ public:
    std::string write_last_cell(void) const;
    size_t write_sheet_number(void) const;
 
-   LearningTask get_learning_task(void) const;
+   ProjectType get_learning_task(void) const;
    std::string write_learning_task(void) const;
 
    const std::string& get_data_file_name(void) const;
@@ -172,6 +175,8 @@ public:
    const Matrix<double>& get_data(void) const;
    const Matrix<double>& get_time_series_data(void) const;
 
+   Matrix<double> get_instances_submatrix_data(const Vector<size_t>&) const;
+
    Matrix<double> arrange_training_data(void) const;
    Matrix<double> arrange_selection_data(void) const;
    Matrix<double> arrange_testing_data(void) const;
@@ -179,10 +184,13 @@ public:
    Matrix<double> arrange_input_data(void) const;
    Matrix<double> arrange_target_data(void) const;
 
+   Matrix<double> arrange_used_input_data(void) const;
+   Matrix<double> arrange_used_target_data(void) const;
+
    Matrix<double> arrange_training_input_data(void) const;
    Matrix<double> arrange_training_target_data(void) const;  
-   Matrix<double> get_selection_input_data(void) const;
-   Matrix<double> get_selection_target_data(void) const;
+   Matrix<double> arrange_selection_input_data(void) const;
+   Matrix<double> arrange_selection_target_data(void) const;
    Matrix<double> arrange_testing_input_data(void) const;
    Matrix<double> arrange_testing_target_data(void) const;
 
@@ -231,7 +239,7 @@ public:
 
    void set_autoassociation(const bool&);
 
-   void set_learning_task(const LearningTask&);
+   void set_learning_task(const ProjectType&);
    void set_learning_task(const std::string&);
 
    void set_angular_variables(const Vector<size_t>&);
@@ -242,6 +250,8 @@ public:
    void set_display(const bool&);
 
    void set_default(void);
+
+   void set_MPI(const DataSet*);
 
    // Instance methods
 
@@ -275,6 +285,9 @@ public:
 
    Matrix<double> calculate_data_statistics_matrix(void) const;
 
+   Matrix<double> calculate_positives_data_statistics_matrix(void) const;
+   Matrix<double> calculate_negatives_data_statistics_matrix(void) const;
+
    Matrix<double> calculate_data_shape_parameters_matrix(void) const;
 
    Vector< Statistics<double> > calculate_training_instances_statistics(void) const;
@@ -301,6 +314,10 @@ public:
    Matrix<double> calculate_covariance_matrix(void) const;
 
    Matrix<double> perform_principal_components_analysis(const double& = 0.0);
+   Matrix<double> perform_principal_components_analysis(const Matrix<double>&, const Vector<double>&, const double& = 0.0);
+   void transform_principal_components_data(const Matrix<double>&);
+
+   void subtract_input_data_mean(void);
 
    // Histrogram methods
 
@@ -327,11 +344,11 @@ public:
 
    Vector< Statistics<double> > scale_data_minimum_maximum(void);
    Vector< Statistics<double> > scale_data_mean_standard_deviation(void);
-
+/*
    void scale_data(const std::string&, const Vector< Statistics<double> >&);
 
    Vector< Statistics<double> > scale_data(const std::string&);
-
+*/
    // Input variables scaling
 
    void scale_inputs_minimum_maximum(const Vector< Statistics<double> >&);
@@ -369,7 +386,7 @@ public:
    void unscale_targets_minimum_maximum(const Vector< Statistics<double> >&);
    void unscale_targets_mean_standard_deviation(const Vector< Statistics<double> >&);
 
-   // Pattern recognition methods
+   // Classification methods
 
    Vector<size_t> calculate_target_distribution(void) const;
 
@@ -380,7 +397,7 @@ public:
 
    Vector<size_t> unuse_most_populated_target(const size_t&);
 
-   Vector<size_t> balance_function_regression_targets_distribution(const double& = 10.0);
+   Vector<size_t> balance_approximation_targets_distribution(const double& = 10.0);
 
    Vector<size_t> arrange_binary_inputs_indices(void) const;
    Vector<size_t> arrange_real_inputs_indices(void) const;
@@ -397,7 +414,10 @@ public:
    Vector<double> calculate_local_outlier_factor(const size_t& = 5) const;
 
    Vector<size_t> clean_local_outlier_factor(const size_t& = 5);
-   Vector<size_t> clean_Tukey_outliers(const double& = 1.5);
+
+   Vector<size_t> calculate_Tukey_outliers(const size_t&, const double& = 1.5) const;
+
+   Vector< Vector<size_t> > calculate_Tukey_outliers(const double& = 1.5) const;
 
    // Time series methods
 
@@ -406,7 +426,7 @@ public:
 
    // Data generation
 
-   void generate_data_function_regression(const size_t&, const size_t&);
+   void generate_data_approximation(const size_t&, const size_t&);
 
    void generate_data_binary_classification(const size_t&, const size_t&);
    void generate_data_multiple_classification(const size_t&, const size_t&);
@@ -442,10 +462,10 @@ public:
 
    Vector<std::string> arrange_time_series_names(const Vector<std::string>&) const;
 
-   Vector<std::string> arrange_autoassociation_names(const Vector<std::string>&) const;
+   Vector<std::string> arrange_association_names(const Vector<std::string>&) const;
 
    void convert_time_series(void);
-   void convert_autoassociation(void);
+   void convert_association(void);
 
    void convert_angular_variable_degrees(const size_t&);
    void convert_angular_variable_radians(const size_t&);
@@ -459,7 +479,6 @@ public:
 
    void scrub_missing_values_unuse(void);
    void scrub_missing_values_mean(void);
-   void scrub_input_missing_values_mean(void);
    void scrub_missing_values(void);
 
    // String utilities
@@ -530,13 +549,13 @@ private:
 
    size_t steps_ahead;
 
-   /// Autoassociation flag.
+   /// Association flag.
 
-    bool autoassociation;
+    bool association;
 
-   /// Learning task
+   /// Project type
 
-    LearningTask learning_task;
+    ProjectType learning_task;
 
    /// Indices of angular variables.
 

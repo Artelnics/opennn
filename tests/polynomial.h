@@ -18,7 +18,7 @@
 
 using namespace OpenNN;
 
-class Polynomial : public PerformanceFunctional
+class Polynomial : public LossIndex
 {
 
 public:

@@ -208,7 +208,7 @@ public:
    Vector< Vector<size_t> > arrange_missing_indices(void) const;
 
    void convert_time_series(const size_t&);
-   void convert_autoassociation(void);
+   void convert_association(void);
 
    // Serialization methods
 

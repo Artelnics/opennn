@@ -30,123 +30,194 @@ using namespace OpenNN;
 
 int main(void)
 {
-   try            
-   {
-      std::cout << "OpenNN. Yacht Resistance Design Application." << std::endl;	
+    try
+    {
+        int rank = 0;
 
-      srand((unsigned)time(NULL));
+#ifdef __OPENNN_MPI__
 
-      // Data set
+        int size = 1;
 
-      DataSet data_set;
+        MPI_Init(NULL,NULL);
 
-      data_set.set_data_file_name("../data/yachtresistance.dat");
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-      data_set.load_data();
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	  // Variables
+#endif
 
-	  Variables* variables_pointer = data_set.get_variables_pointer();
+        if(rank == 0)
+        {
+            std::cout << "OpenNN. Yacht Resistance Design Application." << std::endl;
+        }
 
-	  variables_pointer->set_name(0, "longitudinal_center_buoyancy");
-      variables_pointer->set_name(1, "prismatic_coefficient");
-	  variables_pointer->set_name(2, "length_displacement_ratio");
-	  variables_pointer->set_name(3, "beam_draught_ratio");
-	  variables_pointer->set_name(4, "length_beam_ratio");
-	  variables_pointer->set_name(5, "froude_number");
-	  variables_pointer->set_name(6, "residuary_resistance");
+        srand((unsigned)time(NULL));
 
-      const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-      const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        // Global variables
 
-	  // Instances 
+        DataSet data_set;
 
-	  Instances* instances_pointer = data_set.get_instances_pointer();
+        NeuralNetwork neural_network;
 
-      instances_pointer->split_random_indices();
+        LossIndex loss_index;
 
-      const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
-      const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
+        TrainingStrategy training_strategy;
 
-      // Neural network
+        // Local variables
 
-      const size_t inputs_number = data_set.get_variables().count_inputs_number();
-      const size_t hidden_neurons_number = 30;
-      const size_t outputs_number = data_set.get_variables().count_targets_number();
+        DataSet local_data_set;
 
-      NeuralNetwork neural_network(inputs_number, hidden_neurons_number, outputs_number);
+        NeuralNetwork local_neural_network;
 
-      Inputs* inputs = neural_network.get_inputs_pointer();
+        LossIndex local_loss_index;
 
-      inputs->set_information(inputs_information);
+        TrainingStrategy local_training_strategy;
 
-      Outputs* outputs = neural_network.get_outputs_pointer();
+        if(rank == 0)
+        {
+            // Data set
 
-      outputs->set_information(targets_information);
+            data_set.set_data_file_name("../data/yachtresistance.dat");
 
-      neural_network.construct_scaling_layer();
+            data_set.load_data();
 
-      ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+            // Variables
 
-      scaling_layer_pointer->set_statistics(inputs_statistics);
+            Variables* variables_pointer = data_set.get_variables_pointer();
 
-      scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+            variables_pointer->set_name(0, "longitudinal_center_buoyancy");
+            variables_pointer->set_name(1, "prismatic_coefficient");
+            variables_pointer->set_name(2, "length_displacement_ratio");
+            variables_pointer->set_name(3, "beam_draught_ratio");
+            variables_pointer->set_name(4, "length_beam_ratio");
+            variables_pointer->set_name(5, "froude_number");
+            variables_pointer->set_name(6, "residuary_resistance");
 
-      neural_network.construct_unscaling_layer();
+            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-      UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+            // Instances
 
-      unscaling_layer_pointer->set_statistics(targets_statistics);
+            Instances* instances_pointer = data_set.get_instances_pointer();
 
-      unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
+            instances_pointer->split_random_indices();
 
-	  // Performance functional
+            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+            const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
 
-      PerformanceFunctional performance_functional(&neural_network, &data_set);
+            // Neural network
 
-	  // Training strategy 
+            const size_t inputs_number = data_set.get_variables().count_inputs_number();
+            const size_t hidden_neurons_number = 30;
+            const size_t outputs_number = data_set.get_variables().count_targets_number();
 
-	  TrainingStrategy training_strategy(&performance_functional);
+            neural_network.set(inputs_number, hidden_neurons_number, outputs_number);
 
-      QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+            Inputs* inputs = neural_network.get_inputs_pointer();
 
-      quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
+            inputs->set_information(inputs_information);
 
-      quasi_Newton_method_pointer->set_reserve_performance_history(true);
+            Outputs* outputs = neural_network.get_outputs_pointer();
 
-      quasi_Newton_method_pointer->set_display_period(100);
+            outputs->set_information(targets_information);
 
-      TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+            neural_network.construct_scaling_layer();
 
-	  // Testing analysis
-                  
-      TestingAnalysis testing_analysis(&neural_network, &data_set);
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-      TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
+            scaling_layer_pointer->set_statistics(inputs_statistics);
 
-      // Save results
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
 
-      scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
-      unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+            neural_network.construct_unscaling_layer();
 
-      data_set.save("../data/data_set.xml");
+            UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
 
-      neural_network.save("../data/neural_network.xml");
-      neural_network.save_expression("../data/expression.txt");
+            unscaling_layer_pointer->set_statistics(targets_statistics);
 
-      training_strategy.save("../data/training_strategy.xml");
-      training_strategy_results.save("../data/training_strategy_results.dat");
+            unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-      linear_regression_results.save("../data/linear_regression_analysis_results.dat");
+            // Loss index
 
-      return(0);
-   }
-   catch(std::exception& e)
-   {
-      std::cerr << e.what() << std::endl;
+            loss_index.set_data_set_pointer(&data_set);
+            loss_index.set_neural_network_pointer(&neural_network);
 
-      return(1);
-   }
+            // Training strategy
+
+            training_strategy.set(&loss_index);
+
+            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+
+            quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
+
+            quasi_Newton_method_pointer->set_reserve_loss_history(true);
+
+            quasi_Newton_method_pointer->set_display_period(100);
+        }
+
+#ifdef __OPENNN_MPI__
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        local_data_set.set_MPI(&data_set);
+
+        local_neural_network.set_MPI(&neural_network);
+
+        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
+
+        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        TrainingStrategy::Results training_strategy_results = local_training_strategy.perform_training();
+#else
+        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+#endif
+
+        if(rank == 0)
+        {
+#ifdef __OPENNN_MPI__
+            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
+#endif
+            // Testing analysis
+
+            TestingAnalysis testing_analysis(&neural_network, &data_set);
+
+            TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
+
+            // Save results
+
+            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+            UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+
+            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+            unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+
+            data_set.save("../data/data_set.xml");
+
+            neural_network.save("../data/neural_network.xml");
+            neural_network.save_expression("../data/expression.txt");
+
+            training_strategy.save("../data/training_strategy.xml");
+            training_strategy_results.save("../data/training_strategy_results.dat");
+
+            linear_regression_results.save("../data/linear_regression_analysis_results.dat");
+        }
+
+#ifdef __OPENNN_MPI__
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Finalize();
+
+#endif
+        return(0);
+    }
+    catch(std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+
+        return(1);
+    }
 }  
 
 

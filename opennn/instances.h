@@ -164,6 +164,9 @@ public:
    Vector<size_t> arrange_selection_indices(void) const;
    Vector<size_t> arrange_testing_indices(void) const;
 
+   Vector<int> arrange_training_indices_int(void) const;
+   Vector<int> arrange_selection_indices_int(void) const;
+
    const bool& get_display(void) const;
 
    // Set methods

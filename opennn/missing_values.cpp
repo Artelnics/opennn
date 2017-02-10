@@ -748,15 +748,15 @@ void MissingValues::convert_time_series(const size_t& lags_number)
 }
 
 
-// void convert_autoassociation(void) method
+// void convert_association(void) method
 
 /// @todo Implement this method.
 
-void MissingValues::convert_autoassociation(void)
+void MissingValues::convert_association(void)
 {
     const size_t missing_values_number = get_missing_values_number();
 
-    Vector<Item> autoassociation_items(missing_values_number);
+    Vector<Item> association_items(missing_values_number);
 
 }
 
@@ -875,29 +875,31 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
 
             const size_t instance_index = items[i].instance_index + 1;
 
-            instances_indices_text.append(std::to_string(instance_index));
+            instances_indices_text.append(number_to_string(instance_index));
 
-            instances_indices_text.append(" ");
+            if(i != missing_values_number - 1)
+            {
+                instances_indices_text.append(" ");
+            }
 
             // Variable index
 
             const size_t variable_index = items[i].variable_index + 1;
 
-            variables_indices_text.append(std::to_string(variable_index));
+            variables_indices_text.append(number_to_string(variable_index));
 
-            variables_indices_text.append(" ");
+            if(i != missing_values_number - 1)
+            {
+                variables_indices_text.append(" ");
+            }
         }
 
         // Insert instances indices
-
-        instances_indices_text.pop_back();
 
         text = document->NewText(instances_indices_text.c_str());
         instances_indices_element->LinkEndChild(text);
 
         // Insert variables indices
-
-        variables_indices_text.pop_back();
 
         text = document->NewText(variables_indices_text.c_str());
         variables_indices_element->LinkEndChild(text);
@@ -951,6 +953,9 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the missing values object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -1018,21 +1023,25 @@ void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         const size_t instance_index = items[i].instance_index + 1;
 
-        instances_indices_text.append(std::to_string(instance_index));
+        instances_indices_text.append(number_to_string(instance_index));
 
-        instances_indices_text.append(" ");
+        if(i != missing_values_number - 1)
+        {
+            instances_indices_text.append(" ");
+        }
+
 
         // Variable index
 
         const size_t variable_index = items[i].variable_index + 1;
 
-        variables_indices_text.append(std::to_string(variable_index));
+        variables_indices_text.append(number_to_string(variable_index));
 
-        variables_indices_text.append(" ");
+        if(i != missing_values_number - 1)
+        {
+            variables_indices_text.append(" ");
+        }
     }
-
-    instances_indices_text.pop_back();
-    variables_indices_text.pop_back();
 
     // Instances indices
 

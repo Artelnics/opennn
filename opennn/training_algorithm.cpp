@@ -22,10 +22,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a training algorithm object not associated to any performance functional object.  
+/// It creates a training algorithm object not associated to any loss functional object.  
 
 TrainingAlgorithm::TrainingAlgorithm(void)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
 { 
    set_default();
 }
@@ -34,11 +34,11 @@ TrainingAlgorithm::TrainingAlgorithm(void)
 // GENERAL CONSTRUCTOR
 
 /// General constructor. 
-/// It creates a training algorithm object associated to a performance functional object.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// It creates a training algorithm object associated to a loss functional object.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-TrainingAlgorithm::TrainingAlgorithm(PerformanceFunctional* new_performance_functional_pointer)
- : performance_functional_pointer(new_performance_functional_pointer)
+TrainingAlgorithm::TrainingAlgorithm(LossIndex* new_loss_index_pointer)
+ : loss_index_pointer(new_loss_index_pointer)
 {
    set_default();
 }
@@ -47,11 +47,11 @@ TrainingAlgorithm::TrainingAlgorithm(PerformanceFunctional* new_performance_func
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a training algorithm object not associated to any performance functional object. 
+/// It creates a training algorithm object not associated to any loss functional object. 
 /// It also loads the other members from a XML document.
 
 TrainingAlgorithm::TrainingAlgorithm(const tinyxml2::XMLDocument& document)
- : performance_functional_pointer(NULL)
+ : loss_index_pointer(NULL)
 { 
    from_XML(document);
 }
@@ -76,7 +76,7 @@ TrainingAlgorithm& TrainingAlgorithm::operator = (const TrainingAlgorithm& other
 {
    if(this != &other_training_algorithm)
    {
-      performance_functional_pointer = other_training_algorithm.performance_functional_pointer;
+      loss_index_pointer = other_training_algorithm.loss_index_pointer;
 
       display = other_training_algorithm.display;
    }
@@ -92,7 +92,7 @@ TrainingAlgorithm& TrainingAlgorithm::operator = (const TrainingAlgorithm& other
 
 bool TrainingAlgorithm::operator == (const TrainingAlgorithm& other_training_algorithm) const
 {
-   if(performance_functional_pointer == other_training_algorithm.performance_functional_pointer
+   if(loss_index_pointer == other_training_algorithm.loss_index_pointer
    && display == other_training_algorithm.display)
    {
       return(true);
@@ -106,40 +106,40 @@ bool TrainingAlgorithm::operator == (const TrainingAlgorithm& other_training_alg
 
 // METHODS
 
-// PerformanceFunctional* get_performance_functional_pointer(void) const method
+// LossIndex* get_loss_index_pointer(void) const method
 
-/// Returns a pointer to the performance functional object to which the training algorithm is
+/// Returns a pointer to the loss functional object to which the training algorithm is
 /// associated.
 
-PerformanceFunctional* TrainingAlgorithm::get_performance_functional_pointer(void) const
+LossIndex* TrainingAlgorithm::get_loss_index_pointer(void) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    if(!performance_functional_pointer)
+    if(!loss_index_pointer)
     {
         std::ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
-               << "PerformanceFunctional* get_performance_functional_pointer(void) const method.\n"
-               << "Performance functional pointer is NULL.\n";
+               << "LossIndex* get_loss_index_pointer(void) const method.\n"
+               << "Loss index pointer is NULL.\n";
 
         throw std::logic_error(buffer.str());
     }
 
     #endif
 
-   return(performance_functional_pointer);
+   return(loss_index_pointer);
 }
 
 
-// bool has_performance_functional(void) const method
+// bool has_loss_index(void) const method
 
-/// Returns true if this training algorithm object has an associated performance functional object,
+/// Returns true if this training algorithm object has an associated loss functional object,
 /// and false otherwise.
 
-bool TrainingAlgorithm::has_performance_functional(void) const
+bool TrainingAlgorithm::has_loss_index(void) const
 {
-    if(performance_functional_pointer)
+    if(loss_index_pointer)
     {
         return(true);
     }
@@ -193,39 +193,39 @@ const std::string& TrainingAlgorithm::get_neural_network_file_name(void) const
 
 // void set(void) method
 
-/// Sets the performance functional pointer to NULL.
+/// Sets the loss functional pointer to NULL.
 /// It also sets the rest of members to their default values. 
 
 void TrainingAlgorithm::set(void)
 {
-   performance_functional_pointer = NULL;
+   loss_index_pointer = NULL;
 
    set_default();
 }
 
 
-// void set(PerformanceFunctional*) method
+// void set(LossIndex*) method
 
-/// Sets a new performance functional pointer.
+/// Sets a new loss functional pointer.
 /// It also sets the rest of members to their default values. 
-/// @param new_performance_functional_pointer Pointer to a performance functional object. 
+/// @param new_loss_index_pointer Pointer to a loss functional object. 
 
-void TrainingAlgorithm::set(PerformanceFunctional* new_performance_functional_pointer)
+void TrainingAlgorithm::set(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 
    set_default();
 }
 
 
-// void set_performance_functional_pointer(PerformanceFunctional*) method
+// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a performance functional object to be associated to the training algorithm.
-/// @param new_performance_functional_pointer Pointer to a performance functional object.
+/// Sets a pointer to a loss functional object to be associated to the training algorithm.
+/// @param new_loss_index_pointer Pointer to a loss functional object.
 
-void TrainingAlgorithm::set_performance_functional_pointer(PerformanceFunctional* new_performance_functional_pointer)
+void TrainingAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-   performance_functional_pointer = new_performance_functional_pointer;
+   loss_index_pointer = new_loss_index_pointer;
 }
 
 
@@ -341,24 +341,24 @@ std::string TrainingAlgorithm::write_training_algorithm_type(void) const
 // void check(void) const method
 
 /// Performs a default checking for training algorithms.
-/// In particular, it checks that the performance functional pointer associated to the training algorithm is not NULL,
-/// and that the neural network associated to that performance functional is neither NULL.
+/// In particular, it checks that the loss functional pointer associated to the training algorithm is not NULL,
+/// and that the neural network associated to that loss functional is neither NULL.
 /// If that checkings are not hold, an exception is thrown. 
 
 void TrainingAlgorithm::check(void) const
 {
    std::ostringstream buffer;
 
-   if(!performance_functional_pointer)
+   if(!loss_index_pointer)
    {
       buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
              << "void check(void) const method.\n"
-             << "Pointer to performance functional is NULL.\n";
+             << "Pointer to loss functional is NULL.\n";
 
       throw std::logic_error(buffer.str());	  
    }
 
-   const NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
    if(neural_network_pointer == NULL)
    {
@@ -406,6 +406,9 @@ tinyxml2::XMLDocument* TrainingAlgorithm::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the training algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void TrainingAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;
@@ -431,7 +434,7 @@ void TrainingAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 // void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Loads a default training algorithm from a XML document.
-/// @param document TinyXML document containing the performance term members.
+/// @param document TinyXML document containing the error term members.
 
 void TrainingAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
@@ -557,32 +560,59 @@ void TrainingAlgorithm::load(const std::string& file_name)
 
 void TrainingAlgorithm::initialize_random(void)
 {
-   switch(rand()%2)
-   {
-      case 0:
-      {
-         display = false;
-      }
-      break;
+   display = true;
+}
 
-      case 1:
-      {
-         display = true;
-      }
-      break;
+// std::string write_stopping_condition(void) const method
 
-      default:
-      {
-         std::ostringstream buffer;
+/// Return a string with the stopping condition of the TrainingAlgorithmResults
 
-         buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
-                << "void initialize_random(void) method.\n"
-                << "Unknown display value.\n";
+std::string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_condition(void) const
+{
+    switch (stopping_condition)
+    {
+    case MinimumParametersIncrementNorm:
+    {
+        return ("Minimum parameters increment norm");
+    }
+    case MinimumPerformanceIncrease:
+    {
+        return("Minimum loss increase");
+    }
+    case PerformanceGoal:
+    {
+        return("Performance goal");
+    }
+    case GradientNormGoal:
+    {
+        return("Gradient norm goal");
+    }
+    case MaximumSelectionPerformanceDecreases:
+    {
+        return("Maximum selection failures");
+    }
+    case MaximumIterationsNumber:
+    {
+        return("Maximum number of iterations");
+    }
+    case MaximumTime:
+    {
+        return("Maximum training time");
+    }
+    default:
+    {
+        std::ostringstream buffer;
 
-         throw std::logic_error(buffer.str());
-      }
-      break;
-   }
+        buffer << "OpenNN Exception: TrainingAlgorithmResults struct.\n"
+               << "std::string write_stopping_condition(void) const method.\n"
+               << "Unknown stopping condition type.\n";
+
+        throw std::logic_error(buffer.str());
+
+        break;
+    }
+    }
+
 }
 
 

@@ -203,9 +203,9 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
 
     KappaCoefficientOptimizationThresholdResults* results = new KappaCoefficientOptimizationThresholdResults();
 
-    const PerformanceFunctional* performance_functional_pointer = training_strategy_pointer->get_performance_functional_pointer();
+    const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    NeuralNetwork* neural_network_pointer = performance_functional_pointer->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     double current_threshold = minimum_threshold;
 
@@ -217,7 +217,7 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
 
     double po, pe, prA, prB;
 
-    size_t instances_number = performance_functional_pointer->get_data_set_pointer()->get_selection_target_data().get_rows_number();
+    const size_t instances_number = loss_index_pointer->get_data_set_pointer()->get_instances_pointer()->count_selection_instances_number();
 
     double optimum_threshold;
 
@@ -275,7 +275,8 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
             }
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
-        }else if (current_threshold == maximum_threshold)
+        }
+        else if (current_threshold == maximum_threshold)
         {
             end = true;
 
@@ -321,7 +322,7 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
 
 // Matrix<std::string> to_string_matrix(void) const method
 
-// the most representative
+/// Writes as matrix of strings the most representative atributes.
 
 Matrix<std::string> KappaCoefficientOptimizationThreshold::to_string_matrix(void) const
 {
@@ -430,7 +431,7 @@ tinyxml2::XMLDocument* KappaCoefficientOptimizationThreshold::to_XML(void) const
 //   element = document->NewElement("PerformanceCalculationMethod");
 //   root_element->LinkEndChild(element);
 
-//   text = document->NewText(write_performance_calculation_method().c_str());
+//   text = document->NewText(write_loss_calculation_method().c_str());
 //   element->LinkEndChild(text);
 //   }
 
@@ -475,6 +476,9 @@ tinyxml2::XMLDocument* KappaCoefficientOptimizationThreshold::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the kappa coefficient optimization threshod object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void KappaCoefficientOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

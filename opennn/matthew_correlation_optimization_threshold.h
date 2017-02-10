@@ -41,7 +41,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents a incremental algorithm for the order selection of a neural network.
+/// This concrete class represents a Matthew's correlation optimization for the threshold selection of a neural network.
 ///
 
 class MatthewCorrelationOptimizationThreshold : public ThresholdSelectionAlgorithm
@@ -71,7 +71,7 @@ public:
     // STRUCTURES
 
     ///
-    /// This structure contains the training results for the incremental order method.
+    /// This structure contains the selection results for the Matthew's correlation method.
     ///
 
     struct MatthewCorrelationOptimizationThresholdResults : public ThresholdSelectionAlgorithm::ThresholdSelectionResults

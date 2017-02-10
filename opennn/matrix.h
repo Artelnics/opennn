@@ -319,6 +319,8 @@ public:
 
     Matrix<T> calculate_LU_inverse(void) const;
 
+    Vector<T> solve_LDLT(const Vector<double>&) const;
+
     double calculate_distance(const size_t&, const size_t&) const;
 
     Matrix<T> operator + (const T&) const;
@@ -387,11 +389,12 @@ public:
     bool is_identity(void) const;
 
     bool is_binary(void) const;
+    bool is_column_binary(const size_t&) const;
 
     Matrix<T> filter(const size_t&, const T&, const T&) const;
 
     void convert_time_series(const size_t&);
-    void convert_autoassociation(void);
+    void convert_association(void);
 
     void convert_angular_variables_degrees(const size_t&);
 
@@ -408,7 +411,7 @@ public:
 
     void save_binary(const std::string&) const;
 
-    void save_csv(const std::string&) const;
+    void save_csv(const std::string&, const Vector<std::string>& = Vector<std::string>()) const;
 
     void parse(const std::string&);
 
@@ -2640,8 +2643,10 @@ void Matrix<T>::randomize_uniform(const double& minimum, const double& maximum)
 
 // void randomize_uniform(const Vector<double>&, const Vector<double>&) const method
 
-/// @param minimum Minimum possible values.
-/// @param maximum Maximum possible values.
+/// Initializes all the elements in the matrix with random values comprised between a minimum and a maximum
+/// values for each element.
+/// @param minimums Minimum possible values.
+/// @param maximums Maximum possible values.
 
 template <class T>
 void Matrix<T>::randomize_uniform(const Vector<double>& minimums, const Vector<double>& maximums)
@@ -2766,6 +2771,11 @@ void Matrix<T>::randomize_normal(const double& mean, const double& standard_devi
 
 
 // void randomize_normal(const Vector<double>&, const Vector<double>&) const method
+
+/// Assigns random values to each element in the matrix, taken from a normal distribution with
+/// a given mean and a given standard deviation.
+/// @param means Means values of uniform distribution.
+/// @param standard_deviations Standard deviations values of uniform distribution.
 
 template <class T>
 void Matrix<T>::randomize_normal(const Vector<double>& means, const Vector<double>& standard_deviations)
@@ -4079,7 +4089,9 @@ Vector< Statistics<T> > Matrix<T>::calculate_columns_statistics_missing_values(c
     size_t index;
     Vector<T> column(rows_number);
 
-    for(size_t i = 0; i < column_indices_size; i++)
+#pragma omp parallel for private(index, column)
+
+    for(int i = 0; i < column_indices_size; i++)
     {
         index = column_indices[i];
 
@@ -4401,7 +4413,14 @@ Vector< Histogram<T> > Matrix<T>::calculate_histograms(const size_t& bins_number
    {
       column = arrange_column(i);
 
-      histograms[i] = column.calculate_histogram(bins_number);
+      if (column.is_binary())
+      {
+          histograms[i] = column.calculate_histogram_binary();
+      }
+      else
+      {
+          histograms[i] = column.calculate_histogram(bins_number);
+      }
    }
 
    return(histograms);
@@ -4933,10 +4952,10 @@ void Matrix<T>::unscale_rows_mean_standard_deviation(const Vector< Statistics<T>
 
 // void unscale_columns_mean_standard_deviation(const Vector< Statistics<T> >&, const Vector<size_t>&) method
 
-/// Scales given columns of this matrix with the mean and standard deviation method.
+/// Unscales given columns of this matrix with the mean and standard deviation method.
 /// @param statistics Vector of statistics structure containing the mean and standard deviation values for the scaling.
 /// The size of that vector must be equal to the number of columns in the matrix.
-/// @param column_indices Vector of indices with the columns to be scaled.
+/// @param column_indices Vector of indices with the columns to be unscaled.
 /// The size of that vector must be equal to the number of columns to be scaled.
 
 template <class T>
@@ -5628,6 +5647,55 @@ Matrix<T> Matrix<T>::calculate_LU_inverse(void) const
    inverse_eigen = this_eigen.inverse();
 
    return(inverse);
+}
+
+
+// Vector<T> solve_LDLT(const Vector<double>&) const method
+
+/// Solve a sisem of the form Ax = b, using the Cholesky decomposition.
+/// A is this matrix and must be positive or negative semidefinite.
+/// @param b Independent term of the system.
+
+template <class T>
+Vector<T> Matrix<T>::solve_LDLT(const Vector<double>& b) const
+{
+   // Control sentence (if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+    if(empty())
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "solve_LLT(const Vector<double>&) const method.\n"
+              << "Matrix is empty.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    if(rows_number != columns_number)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "solve_LLT(const Vector<double>&) const method.\n"
+              << "Matrix must be squared.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+   #endif
+
+   Vector<T> solution(rows_number);
+
+   const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
+   const Eigen::Map<Eigen::VectorXd> b_eigen((double*)b.data(),rows_number);
+   Eigen::Map<Eigen::VectorXd> solution_eigen(solution.data(), rows_number);
+
+   solution_eigen = this_eigen.ldlt().solve(b_eigen);
+
+   return(solution);
 }
 
 
@@ -6437,7 +6505,7 @@ Matrix<double> Matrix<T>::dot(const Matrix<double>& other_matrix) const
 }
 
 
-// Matrix<double> calculate_eigen_values(void) const method
+// Matrix<double> calculate_eigenvalues(void) const method
 
 /// Calculates the eigen values of this matrix, which must be squared.
 /// Returns a matrix with only one column and rows the same as this matrix with the eigenvalues.
@@ -6854,6 +6922,47 @@ bool Matrix<T>::is_binary(void) const
 }
 
 
+// bool is_column_binary(const size_t) const method
+
+/// Returns true if a column this matrix has binary values.
+
+template <class T>
+bool Matrix<T>::is_column_binary(const size_t& j) const
+{
+
+    // Control sentence (if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t columns_number = get_columns_number();
+
+    if(j >= columns_number)
+    {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "bool is_column_binary(const size_t) const method method.\n"
+              << "Index of column (" << j << ") must be less than number of columns.\n";
+
+       throw std::logic_error(buffer.str());
+    }
+
+    #endif
+
+    const size_t rows_number = get_rows_number();
+
+   for(size_t i = 0; i < rows_number; i++)
+   {
+         if((*this)(i,j) != 0 && (*this)(i,j) != 1)
+         {
+            return(false);
+         }
+   }
+
+   return(true);
+}
+
+
 // Matrix<T> filter(const size_t&, const T&, const T&) const method
 
 /// Returns a new matrix where a given column has been filtered.
@@ -6924,13 +7033,13 @@ void Matrix<T>::convert_time_series(const size_t& lags_number)
 
 
 
-// void convert_autoassociation(void) method
+// void convert_association(void) method
 
-/// Arranges the matrix in a proper format for autoassociation.
+/// Arranges the matrix in a proper format for association.
 /// Note that this method sets new numbers of columns in the matrix.
 
 template <class T>
-void Matrix<T>::convert_autoassociation(void)
+void Matrix<T>::convert_association(void)
 {
     Matrix<T> copy(*this);
 
@@ -7275,13 +7384,14 @@ void Matrix<T>::save_binary(const std::string& file_name) const
 
 
 
-// void save_csv(const std::string&) const method
+// void save_csv(const std::string&, const Vector<std::string>&) const method
 
 /// Saves the values of the matrix to a data file separated by commas.
 /// @param file_name File name.
+/// @param column_names Names of the columns.
 
 template <class T>
-void Matrix<T>::save_csv(const std::string& file_name) const
+void Matrix<T>::save_csv(const std::string& file_name, const Vector<std::string>& column_names) const
 {
    std::ofstream file(file_name.c_str());
 
@@ -7290,25 +7400,53 @@ void Matrix<T>::save_csv(const std::string& file_name) const
       std::ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix template." << std::endl
-             << "void save(const std::string) method." << std::endl
+             << "void save_csv(const std::string, const Vector<std::string>&) method." << std::endl
              << "Cannot open matrix data file." << std::endl;
 
       throw std::logic_error(buffer.str());
    }
 
+   if(column_names.size() != 0 && column_names.size() != columns_number)
+   {
+       std::ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix template." << std::endl
+              << "void save_csv(const std::string, const Vector<std::string>&) method." << std::endl
+              << "Column names must have size 0 or " << columns_number << "." << std::endl;
+
+       throw std::logic_error(buffer.str());
+   }
+
    // Write file
 
-   for(size_t j = 0; j < columns_number; j++)
+   if(column_names.size() == 0)
    {
-       file << "c" << j+1;
-
-       if(j != columns_number-1)
+       for(size_t j = 0; j < columns_number; j++)
        {
-           file << ",";
+           file << "c" << j+1;
+
+           if(j != columns_number-1)
+           {
+               file << ",";
+           }
+       }
+   }
+   else
+   {
+       for(size_t j = 0; j < columns_number; j++)
+       {
+           file << column_names[j];
+
+           if(j != columns_number-1)
+           {
+               file << ",";
+           }
        }
    }
 
    file << std::endl;
+
+   file.precision(20);
 
    for(size_t i = 0; i < rows_number; i++)
    {
@@ -7611,7 +7749,6 @@ std::ostream& operator << (std::ostream& os, const Matrix< Matrix<T> >& m)
 
    return(os);
 }
-
 } // end namespace
 
 #endif

@@ -38,9 +38,9 @@
 
 namespace OpenNN
 {
-/// This class represents the concept of performance term. 
-/// A performance term is a summand in the performance functional expression. 
-/// Any derived class must implement the calculate_performance(void) method.
+/// This class represents the concept of error term. 
+/// A error term is a summand in the loss functional expression. 
+/// Any derived class must implement the calculate_loss(void) method.
 
 class RegularizationTerm
 {
@@ -54,26 +54,6 @@ public:
    // NEURAL NETWORK CONSTRUCTOR
 
    explicit RegularizationTerm(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
-
-   explicit RegularizationTerm(DataSet*);
-
-   // MATHEMATICAL MODEL CONSTRUCTOR
-
-   explicit RegularizationTerm(MathematicalModel*);
-
-   // NEURAL NETWORK AND DATA SET CONSTRUCTOR
-
-   explicit RegularizationTerm(NeuralNetwork*, DataSet*);
-
-   // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
-
-   explicit RegularizationTerm(NeuralNetwork*, MathematicalModel*);
-
-   // NEURAL NETWORK, MATHEMATICAL MODEL AND DATA SET CONSTRUCTOR
-
-   explicit RegularizationTerm(NeuralNetwork*, MathematicalModel*, DataSet*);
 
    // XML CONSTRUCTOR
 
@@ -97,46 +77,46 @@ public:
 
    // STRUCTURES
 
-   /// This structure contains the zero order performance quantities of a performance term. 
-   /// This only includes the performance itself.
+   /// This structure contains the zero order loss quantities of a error term. 
+   /// This only includes the loss itself.
 
    struct ZerothOrderPerformance
    {
-      /// Performance term evaluation.
+      /// Error term evaluation.
 
-      double performance;
+      double loss;
    };
 
 
-   /// This structure contains the first order performance quantities of a performance term. 
-   /// This includes the performance itself and the gradient vector.
+   /// This structure contains the first order loss quantities of a error term. 
+   /// This includes the loss itself and the gradient vector.
 
    struct FirstOrderPerformance
    {
-      /// Performance term performance. 
+      /// Error term loss. 
 
-      double performance;
+      double loss;
 
-      /// Performance term gradient vector. 
+      /// Error term gradient vector. 
 
       Vector<double> gradient;
    };
 
 
-   /// This structure contains the second order performance quantities of a performance term. 
-   /// This includes the performance itself, the gradient vector and the Hessian matrix.
+   /// This structure contains the second order loss quantities of a error term. 
+   /// This includes the loss itself, the gradient vector and the Hessian matrix.
 
    struct SecondOrderPerformance
    {
-      /// Peformance term performance. 
+      /// Peformance term loss. 
 
-      double performance;
+      double loss;
 
-      /// Performance term gradient vector. 
+      /// Error term gradient vector. 
 
       Vector<double> gradient;
 
-	  /// Performance term Hessian matrix. 
+	  /// Error term Hessian matrix. 
 
       Matrix<double> Hessian;
    };
@@ -148,17 +128,17 @@ public:
 
    struct ZerothOrderTerms
    {
-      /// Subterms performance vector.
+      /// Subterms loss vector.
 
       Vector<double> terms;
    };
 
-   /// Set of subterms vector and subterms Jacobian matrix of the performance term. 
+   /// Set of subterms vector and subterms Jacobian matrix of the error term. 
    /// A method returning this structure might be more efficient than calculating the error terms and the terms Jacobian separately.
 
    struct FirstOrderTerms
    {
-      /// Subterms performance vector. 
+      /// Subterms loss vector. 
 
       Vector<double> terms;
 
@@ -172,7 +152,7 @@ public:
 
    // Get methods
 
-   /// Returns a pointer to the neural network object associated to the performance term.
+   /// Returns a pointer to the neural network object associated to the error term.
 
    inline NeuralNetwork* get_neural_network_pointer(void) const 
    {
@@ -195,7 +175,7 @@ public:
    }
 
 
-   /// Returns a pointer to the numerical differentiation object used in this performance term object. 
+   /// Returns a pointer to the numerical differentiation object used in this error term object. 
 
    inline NumericalDifferentiation* get_numerical_differentiation_pointer(void) const
    {
@@ -249,11 +229,11 @@ public:
 
    // Objective methods
 
-   /// Returns the performance value of the performance term.
+   /// Returns the loss value of the error term.
 
    virtual double calculate_regularization(void) const = 0;
 
-   /// Returns the default performance of a performance term for a given set of neural network parameters. 
+   /// Returns the default loss of a error term for a given set of neural network parameters. 
 
    virtual double calculate_regularization(const Vector<double>&) const = 0;
 
@@ -265,7 +245,7 @@ public:
 
    virtual Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
-   virtual std::string write_performance_term_type(void) const;
+   virtual std::string write_error_term_type(void) const;
 
    virtual std::string write_information(void) const;
 

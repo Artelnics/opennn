@@ -31,8 +31,6 @@ QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
 }
 
-
-
 # OpenNN library
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../../opennn/release/ -lopennn
@@ -64,6 +62,11 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../tinyxml2/libtinyxml2.a
 
 # OpenMP library
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS   += -openmp
+}
+
 !win32{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
@@ -73,6 +76,9 @@ mac{
 INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
+
+# MPI include
+#include(../../mpi.pri)
 
 # CUDA include
 #include(../../cuda.pri)

@@ -11,8 +11,11 @@
 #                                                                                                 #
 ###################################################################################################
 
+QT = # Do not use qt
+
 TEMPLATE = app
 CONFIG += console
+CONFIG += c++11
 
 mac{
     CONFIG-=app_bundle
@@ -32,6 +35,7 @@ QMAKE_LFLAGS += -static
 
 # OpenNN library
 
+
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../opennn/release/ -lopennn
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../opennn/debug/ -lopennn
 else:unix: LIBS += -L$$OUT_PWD/../opennn/ -lopennn
@@ -50,6 +54,7 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
 else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
+
 INCLUDEPATH += $$PWD/../tinyxml2
 DEPENDPATH += $$PWD/../tinyxml2
 
@@ -60,13 +65,23 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
 
 # OpenMP library
-unix: !mac{
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS   += -openmp
+}
+
+!win32{
 QMAKE_CXXFLAGS+= -fopenmp
 QMAKE_LFLAGS +=  -fopenmp
 }
 
-# C++11 flags
-unix: !mac{
-QMAKE_CXXFLAGS+= -std=c++11
-QMAKE_LFLAGS +=  -std=c++11
+mac{
+INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
+LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
+
+# MPI libraries
+#include(../mpi.pri)
+
+# CUDA libraries
+#include(../cuda.pri)

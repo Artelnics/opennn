@@ -88,5 +88,8 @@ INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
 
+# MPI include
+#include(../../mpi.pri)
+
 # CUDA libraries
 #include(../../cuda.pri)

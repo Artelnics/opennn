@@ -142,7 +142,7 @@ std::string Perceptron::write_activation_function(void) const
    {
       case Perceptron::Logistic:   
       {
-         return("logistic");
+         return("Logistic");
       }
       break;
 
@@ -154,13 +154,13 @@ std::string Perceptron::write_activation_function(void) const
 
       case Perceptron::Threshold:   
       {
-         return("threshold");
+         return("Threshold");
       }
       break;
 
       case Perceptron::SymmetricThreshold:   
       {
-         return("symmetric_threshold");
+         return("SymmetricThreshold");
       }
       break;
 
@@ -769,7 +769,7 @@ double Perceptron::calculate_combination(const Vector<double>& inputs, const Vec
 
    #endif
 
-   // Modified for performance.
+   // Modified for loss.
 
    double combination = parameters[0];
 
@@ -1443,23 +1443,32 @@ std::string Perceptron::write_expression(const Vector<std::string>& inputs_name,
 
    std::ostringstream buffer;
 
+   buffer.precision(10);
+
    buffer << output_name << "=" << activation_function_name << "("
-          << bias << "\n";
+          << bias << "\n\n";
 
    for(size_t i = 0; i < inputs_number; i++)
    {
       if(synaptic_weights[i] >= 0)
       {
          buffer << "+";	     
-      }
+      }     
 
       buffer << synaptic_weights[i] << "*" << inputs_name[i];
 
-      if(i != 0 && i%4 == 0 && i != inputs_number-1)
+      if(i != inputs_number-1)
       {
-            buffer << "\n";
+            buffer << "\n\n";
       }
+
+
+//      if(i != 0 && i%4 == 0 && i != inputs_number-1)
+//      {
+//            buffer << "\n";
+//      }
    }
+
 
    buffer << ");\n";
 

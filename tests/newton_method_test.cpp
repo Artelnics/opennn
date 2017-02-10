@@ -36,17 +36,17 @@ void NewtonMethodTest::test_constructor(void)
 {
    message += "test_constructor\n"; 
 
-   PerformanceFunctional mof;
+   LossIndex mof;
 
    // Default constructor
 
    NewtonMethod nm1; 
-   assert_true(nm1.has_performance_functional() == false, LOG);
+   assert_true(nm1.has_loss_index() == false, LOG);
 
    // Objective functional constructor
 
    NewtonMethod nm2(&mof); 
-   assert_true(nm2.has_performance_functional() == true, LOG);
+   assert_true(nm2.has_loss_index() == true, LOG);
 }
 
 
@@ -64,7 +64,7 @@ void NewtonMethodTest::test_calculate_gradient_descent_training_direction(void)
 
    NeuralNetwork nn(1, 1);
    
-   PerformanceFunctional pf(&nn);
+   LossIndex pf(&nn, &ds);
    
    NewtonMethod nm(&pf);
 
@@ -94,20 +94,20 @@ void NewtonMethodTest::test_perform_training(void)
    ds.randomize_data_normal();
 
    NeuralNetwork nn(1, 1);
-   PerformanceFunctional pf(&nn, &ds);
+   LossIndex pf(&nn, &ds);
    NewtonMethod nm(&pf);
 
    nn.initialize_parameters(0.1);
 
-//   double old_performance = pf.calculate_performance();
+//   double old_loss = pf.calculate_loss();
 
    nm.set_display(false);
    nm.set_maximum_iterations_number(1);
 //   nm.perform_training();
 
-//   double performance = pf.calculate_performance();
+//   double loss = pf.calculate_loss();
    
-//   assert_true(evaluation < old_performance, LOG);
+//   assert_true(evaluation < old_loss, LOG);
 
    // Minimum parameters increment norm
 
@@ -116,8 +116,8 @@ void NewtonMethodTest::test_perform_training(void)
    double minimum_parameters_increment_norm = 0.1;
 
    nm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   nm.set_performance_goal(0.0);
-   nm.set_minimum_performance_increase(0.0);
+   nm.set_loss_goal(0.0);
+   nm.set_minimum_loss_increase(0.0);
    nm.set_gradient_norm_goal(0.0);
    nm.set_maximum_iterations_number(1000);
    nm.set_maximum_time(1000.0);
@@ -128,30 +128,30 @@ void NewtonMethodTest::test_perform_training(void)
 
    nn.initialize_parameters(1.0);
 
-   double performance_goal = 0.1;
+   double loss_goal = 0.1;
 
    nm.set_minimum_parameters_increment_norm(0.0);
-   nm.set_performance_goal(performance_goal);
-   nm.set_minimum_performance_increase(0.0);
+   nm.set_loss_goal(loss_goal);
+   nm.set_minimum_loss_increase(0.0);
    nm.set_gradient_norm_goal(0.0);
    nm.set_maximum_iterations_number(1000);
    nm.set_maximum_time(1000.0);
 
 //   nm.perform_training();
 
-//   performance = pf.calculate_performance();
+//   loss = pf.calculate_loss();
 
-//   assert_true(performance < performance_goal, LOG);
+//   assert_true(loss < loss_goal, LOG);
 
    // Minimum evaluation improvement
 
    nn.initialize_parameters(1.0);
 
-   double minimum_performance_increase = 0.1;
+   double minimum_loss_increase = 0.1;
 
    nm.set_minimum_parameters_increment_norm(0.0);
-   nm.set_performance_goal(0.0);
-   nm.set_minimum_performance_increase(minimum_performance_increase);
+   nm.set_loss_goal(0.0);
+   nm.set_minimum_loss_increase(minimum_loss_increase);
    nm.set_gradient_norm_goal(0.0);
    nm.set_maximum_iterations_number(1000);
    nm.set_maximum_time(1000.0);
@@ -165,8 +165,8 @@ void NewtonMethodTest::test_perform_training(void)
    double gradient_norm_goal = 0.1;
 
    nm.set_minimum_parameters_increment_norm(0.0);
-   nm.set_performance_goal(0.0);
-   nm.set_minimum_performance_increase(0.0);
+   nm.set_loss_goal(0.0);
+   nm.set_minimum_loss_increase(0.0);
    nm.set_gradient_norm_goal(gradient_norm_goal);
    nm.set_maximum_iterations_number(1000);
    nm.set_maximum_time(1000.0);
@@ -231,11 +231,11 @@ void NewtonMethodTest::test_resize_training_history(void)
    assert_true(nmtr.parameters_history.size() == 1, LOG);
    assert_true(nmtr.parameters_norm_history.size() == 1, LOG);
 
-   assert_true(nmtr.performance_history.size() == 1, LOG);
+   assert_true(nmtr.loss_history.size() == 1, LOG);
    assert_true(nmtr.gradient_history.size() == 1, LOG);
    assert_true(nmtr.gradient_norm_history.size() == 1, LOG);
    assert_true(nmtr.inverse_Hessian_history.size() == 1, LOG);
-   assert_true(nmtr.selection_performance_history.size() == 1, LOG);  
+   assert_true(nmtr.selection_loss_history.size() == 1, LOG);  
 
    assert_true(nmtr.training_direction_history.size() == 1, LOG);
    assert_true(nmtr.training_rate_history.size() == 1, LOG);
@@ -253,7 +253,7 @@ void NewtonMethodTest::test_set_reserve_all_training_history(void)
    assert_true(nm.get_reserve_parameters_history() == true, LOG);
    assert_true(nm.get_reserve_parameters_norm_history() == true, LOG);
 
-   assert_true(nm.get_reserve_performance_history() == true, LOG);
+   assert_true(nm.get_reserve_loss_history() == true, LOG);
    assert_true(nm.get_reserve_gradient_history() == true, LOG);
    assert_true(nm.get_reserve_gradient_norm_history() == true, LOG);
    assert_true(nm.get_reserve_inverse_Hessian_history() == true, LOG);
@@ -261,7 +261,7 @@ void NewtonMethodTest::test_set_reserve_all_training_history(void)
    assert_true(nm.get_reserve_training_direction_history() == true, LOG);
    assert_true(nm.get_reserve_training_rate_history() == true, LOG);
    assert_true(nm.get_reserve_elapsed_time_history() == true, LOG);
-   assert_true(nm.get_reserve_selection_performance_history() == true, LOG);
+   assert_true(nm.get_reserve_selection_loss_history() == true, LOG);
 }
 
 

@@ -70,9 +70,9 @@ void MeanSquaredErrorTest::test_destructor(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_performance(void)   
+void MeanSquaredErrorTest::test_calculate_loss(void)   
 {
-   message += "test_calculate_performance\n";
+   message += "test_calculate_loss\n";
 
    Vector<double> parameters;
 
@@ -223,9 +223,9 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_selection_performance(void)   
+void MeanSquaredErrorTest::test_calculate_selection_loss(void)   
 {
-   message += "test_calculate_selection_performance\n";
+   message += "test_calculate_selection_loss\n";
 
    NeuralNetwork nn(1, 1, 1);
 
@@ -426,8 +426,8 @@ void MeanSquaredErrorTest::run_test_case(void)
 
    // Objective methods
 
-   test_calculate_performance();   
-   test_calculate_selection_performance();
+   test_calculate_loss();   
+   test_calculate_selection_loss();
 
    test_calculate_gradient();
 

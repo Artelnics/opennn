@@ -21,7 +21,7 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a default performance term object, with all pointers initialized to NULL.
+/// It creates a default error term object, with all pointers initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 
 ErrorTerm::ErrorTerm(void)
@@ -36,7 +36,7 @@ ErrorTerm::ErrorTerm(void)
 // NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
-/// It creates a performance term object associated to a neural network object. 
+/// It creates a error term object associated to a neural network object.
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
@@ -53,7 +53,7 @@ ErrorTerm::ErrorTerm(NeuralNetwork* new_neural_network_pointer)
 // DATA SET CONSTRUCTOR
 
 /// Data set constructor. 
-/// It creates a performance term object associated to a given data set object. 
+/// It creates a error term object associated to a given data set object.
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_data_set_pointer Pointer to a data set object.
@@ -70,7 +70,7 @@ ErrorTerm::ErrorTerm(DataSet* new_data_set_pointer)
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
-/// It creates a performance term object associated to a neural network and to be measured on a data set. 
+/// It creates a error term object associated to a neural network and to be measured on a data set.
 /// The rest of pointers are initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 /// @param new_neural_network_pointer Pointer to a neural network object.
@@ -88,49 +88,49 @@ ErrorTerm::ErrorTerm(NeuralNetwork* new_neural_network_pointer, DataSet* new_dat
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a default performance term object, with all pointers initialized to NULL.
+/// It creates a default error term object, with all pointers initialized to NULL.
 /// It also loads all the rest of class members from a XML document.
-/// @param performance_term_document Pointer to a TinyXML document with the object data.
+/// @param error_term_document Pointer to a TinyXML document with the object data.
 
-ErrorTerm::ErrorTerm(const tinyxml2::XMLDocument& performance_term_document)
+ErrorTerm::ErrorTerm(const tinyxml2::XMLDocument& error_term_document)
  : neural_network_pointer(NULL), 
    data_set_pointer(NULL),
    numerical_differentiation_pointer(NULL)
 {
    set_default();
 
-   from_XML(performance_term_document);
+   from_XML(error_term_document);
 }
 
 
 // COPY CONSTRUCTOR
 
 /// Copy constructor. 
-/// It creates a copy of an existing performance term object. 
-/// @param other_performance_term Performance term object to be copied.
+/// It creates a copy of an existing error term object.
+/// @param other_error_term Error term object to be copied.
 
-ErrorTerm::ErrorTerm(const ErrorTerm& other_performance_term)
+ErrorTerm::ErrorTerm(const ErrorTerm& other_error_term)
  : neural_network_pointer(NULL), 
    data_set_pointer(NULL),
    numerical_differentiation_pointer(NULL)
 {
-   neural_network_pointer = other_performance_term.neural_network_pointer;
+   neural_network_pointer = other_error_term.neural_network_pointer;
 
-   data_set_pointer = other_performance_term.data_set_pointer;
+   data_set_pointer = other_error_term.data_set_pointer;
 
-   if(other_performance_term.numerical_differentiation_pointer)
+   if(other_error_term.numerical_differentiation_pointer)
    {
-      numerical_differentiation_pointer = new NumericalDifferentiation(*other_performance_term.numerical_differentiation_pointer);
+      numerical_differentiation_pointer = new NumericalDifferentiation(*other_error_term.numerical_differentiation_pointer);
    }
 
-   display = other_performance_term.display;  
+   display = other_error_term.display;
 }
 
 
 // DESTRUCTOR
 
 /// Destructor.
-/// It deletes the numerical differentiation object composing this performance term object. 
+/// It deletes the numerical differentiation object composing this error term object.
 
 ErrorTerm::~ErrorTerm(void)
 {
@@ -143,18 +143,18 @@ ErrorTerm::~ErrorTerm(void)
 // ErrorTerm& operator = (const ErrorTerm&) method
 
 /// Assignment operator. 
-/// It assigns to this performance term object the members from another performance term object. 
-/// @param other_performance_term Performance term object to be copied. 
+/// It assigns to this error term object the members from another error term object.
+/// @param other_error_term Error term object to be copied.
 
-ErrorTerm& ErrorTerm::operator = (const ErrorTerm& other_performance_term)
+ErrorTerm& ErrorTerm::operator = (const ErrorTerm& other_error_term)
 {
-   if(this != &other_performance_term) 
+   if(this != &other_error_term)
    {
-      neural_network_pointer = other_performance_term.neural_network_pointer;
+      neural_network_pointer = other_error_term.neural_network_pointer;
 
-      data_set_pointer = other_performance_term.data_set_pointer;
+      data_set_pointer = other_error_term.data_set_pointer;
 
-      if(other_performance_term.numerical_differentiation_pointer == NULL)
+      if(other_error_term.numerical_differentiation_pointer == NULL)
       {
           delete numerical_differentiation_pointer;
 
@@ -162,10 +162,10 @@ ErrorTerm& ErrorTerm::operator = (const ErrorTerm& other_performance_term)
       }
       else
       {
-            numerical_differentiation_pointer = new NumericalDifferentiation(*other_performance_term.numerical_differentiation_pointer);
+            numerical_differentiation_pointer = new NumericalDifferentiation(*other_error_term.numerical_differentiation_pointer);
       }
 
-      display = other_performance_term.display;
+      display = other_error_term.display;
    }
 
    return(*this);
@@ -180,28 +180,28 @@ ErrorTerm& ErrorTerm::operator = (const ErrorTerm& other_performance_term)
 /// It compares this object to another object. 
 /// The return is true if both objects have the same member data, and false otherwise. 
 
-bool ErrorTerm::operator == (const ErrorTerm& other_performance_term) const
+bool ErrorTerm::operator == (const ErrorTerm& other_error_term) const
 {
-   if(neural_network_pointer != other_performance_term.neural_network_pointer
-   || data_set_pointer != other_performance_term.data_set_pointer)
+   if(neural_network_pointer != other_error_term.neural_network_pointer
+   || data_set_pointer != other_error_term.data_set_pointer)
    {
        return(false);
    }
 /*
-   else if((numerical_differentiation_pointer == NULL && other_performance_term.numerical_differentiation_pointer !=NULL)
-        || (numerical_differentiation_pointer != NULL && other_performance_term.numerical_differentiation_pointer ==NULL))
+   else if((numerical_differentiation_pointer == NULL && other_error_term.numerical_differentiation_pointer !=NULL)
+        || (numerical_differentiation_pointer != NULL && other_error_term.numerical_differentiation_pointer ==NULL))
    {
        return(false);
    }
    else if(numerical_differentiation_pointer != NULL)
    {
-       if(&numerical_differentiation_pointer != &other_performance_term.numerical_differentiation_pointer)
+       if(&numerical_differentiation_pointer != &other_error_term.numerical_differentiation_pointer)
        {
             return(false);
        }
    }
 */
-   else if(display != other_performance_term.display)
+   else if(display != other_error_term.display)
    {
       return(false);
    }
@@ -226,7 +226,7 @@ const bool& ErrorTerm::get_display(void) const
 
 // bool has_neural_network(void) const method
 
-/// Returns true if this performance term has a neural network associated,
+/// Returns true if this error term has a neural network associated,
 /// and false otherwise.
 
 bool ErrorTerm::has_neural_network(void) const
@@ -244,7 +244,7 @@ bool ErrorTerm::has_neural_network(void) const
 
 // bool has_data_set(void) const method
 
-/// Returns true if this performance term has a data set associated,
+/// Returns true if this error term has a data set associated,
 /// and false otherwise.
 
 bool ErrorTerm::has_data_set(void) const
@@ -262,7 +262,7 @@ bool ErrorTerm::has_data_set(void) const
 
 // bool has_numerical_differentiation(void) const method
 
-/// Returns true if this performance term object contains a numerical differentiation object,
+/// Returns true if this error term object contains a numerical differentiation object,
 /// and false otherwise.
 
 bool ErrorTerm::has_numerical_differentiation(void) const
@@ -345,28 +345,28 @@ void ErrorTerm::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data
 
 // void set(const ErrorTerm&) method
 
-/// Sets to this performance term object the members of another performance term object.
-/// @param other_performance_term Performance term to be copied. 
+/// Sets to this error term object the members of another error term object.
+/// @param other_error_term Error term to be copied.
 
-void ErrorTerm::set(const ErrorTerm& other_performance_term)
+void ErrorTerm::set(const ErrorTerm& other_error_term)
 {
-   neural_network_pointer = other_performance_term.neural_network_pointer;
+   neural_network_pointer = other_error_term.neural_network_pointer;
 
-   data_set_pointer = other_performance_term.data_set_pointer;
+   data_set_pointer = other_error_term.data_set_pointer;
 
-   if(other_performance_term.numerical_differentiation_pointer)
+   if(other_error_term.numerical_differentiation_pointer)
    {
-      numerical_differentiation_pointer = new NumericalDifferentiation(*other_performance_term.numerical_differentiation_pointer);
+      numerical_differentiation_pointer = new NumericalDifferentiation(*other_error_term.numerical_differentiation_pointer);
    }
 
-   display = other_performance_term.display;  
+   display = other_error_term.display;
 }
 
 
 // void set_neural_network_pointer(NeuralNetwork*) method
 
-/// Sets a pointer to a neural network object which is to be associated to the performance term.
-/// @param new_neural_network_pointer Pointer to a neural network object to be associated to the performance term.
+/// Sets a pointer to a neural network object which is to be associated to the error term.
+/// @param new_neural_network_pointer Pointer to a neural network object to be associated to the error term.
 
 void ErrorTerm::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
 {
@@ -376,7 +376,7 @@ void ErrorTerm::set_neural_network_pointer(NeuralNetwork* new_neural_network_poi
 
 // void set_data_set_pointer(DataSet*) method
 
-/// Sets a new data set on which the performance term is to be measured.
+/// Sets a new data set on which the error term is to be measured.
 
 void ErrorTerm::set_data_set_pointer(DataSet* new_data_set_pointer)
 {
@@ -386,7 +386,7 @@ void ErrorTerm::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 // void set_numerical_differentiation_pointer(NumericalDifferentiation*) method
 
-/// Sets a new numerical differentiation pointer in this performance term object.
+/// Sets a new numerical differentiation pointer in this error term object.
 /// @param new_numerical_differentiation_pointer Pointer to a numerical differentiation object. 
 
 void ErrorTerm::set_numerical_differentiation_pointer(NumericalDifferentiation* new_numerical_differentiation_pointer)
@@ -397,7 +397,7 @@ void ErrorTerm::set_numerical_differentiation_pointer(NumericalDifferentiation* 
 
 // void set_default(void) method
 
-/// Sets the members of the performance term to their default values:
+/// Sets the members of the error term to their default values:
 /// <ul>
 /// <li> Display: true.
 /// </ul>
@@ -423,7 +423,7 @@ void ErrorTerm::set_display(const bool& new_display)
 
 // void construct_numerical_differentiation(void) method
 
-/// This method constructs the numerical differentiation object which composes the performance term class. 
+/// This method constructs the numerical differentiation object which composes the error term class.
 
 void ErrorTerm::construct_numerical_differentiation(void)
 {
@@ -436,7 +436,7 @@ void ErrorTerm::construct_numerical_differentiation(void)
 
 // void delete_numerical_differentiation_pointer(void) method
 
-/// This method deletes the numerical differentiation object which composes the performance term class. 
+/// This method deletes the numerical differentiation object which composes the error term class.
 
 void ErrorTerm::delete_numerical_differentiation_pointer(void)
 {
@@ -448,7 +448,7 @@ void ErrorTerm::delete_numerical_differentiation_pointer(void)
 
 // void check(void) const method
 
-/// Checks that there is a neural network associated to the performance term.
+/// Checks that there is a neural network associated to the error term.
 /// If some of the above conditions is not hold, the method throws an exception. 
 
 void ErrorTerm::check(void) const
@@ -543,7 +543,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
 
    Matrix<double> layer_synaptic_weights;
 
-   // Performance functional stuff
+   // Loss index stuff
 
    Vector< Vector<double> > layers_delta(layers_number);
 
@@ -665,7 +665,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
 
 // Vector<double> calculate_point_gradient(const Vector<double>&, const Vector< Vector<double> >&, const Vector<double>&) const method
 
-/// Returns the gradient of the performance term function at some input point.
+/// Returns the gradient of the error term function at some input point.
 /// @param inputs Input vector. 
 /// @param layers_activation Activations of all layers in the multilayer perceptron 
 /// @param layers_delta Vector of vectors containing the partial derivatives of the outputs objective function with respect to all the combinations of all layers. 
@@ -822,7 +822,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
 
 //  Vector<double> calculate_point_gradient(const Vector< Matrix<double> >&, const Vector< Vector<double> >&) const method
 
-/// Returns the gradient of the performance term function at some input point.
+/// Returns the gradient of the error term function at some input point.
 /// @param layers_combination_parameters_Jacobian
 /// @param layers_delta
 /// @todo
@@ -909,8 +909,9 @@ Vector<double> ErrorTerm::calculate_point_gradient
    return(point_gradient);
 }
 
+/// @todo
 
-double ErrorTerm::calculate_performance_output_combinations(const Vector<double>& combinations) const
+double ErrorTerm::calculate_loss_output_combinations(const Vector<double>& combinations) const
 {
     const size_t outputs_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_outputs_number();
 
@@ -929,6 +930,7 @@ double ErrorTerm::calculate_performance_output_combinations(const Vector<double>
     return activations.calculate_sum_squared_error(targets);
 }
 
+/// @todo
 
 Matrix<double> ErrorTerm::calculate_output_interlayers_Delta(const Vector<double>& output_layer_activation_derivative,
                                                                    const Vector<double>& output_layer_activation_second_derivative,
@@ -949,6 +951,7 @@ Matrix<double> ErrorTerm::calculate_output_interlayers_Delta(const Vector<double
     return(output_interlayers_Delta);
 }
 
+/// @todo
 
 Matrix<double> ErrorTerm::calculate_interlayers_Delta(
         const size_t& index_1,
@@ -1292,7 +1295,7 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
 
 // Matrix<double> calculate_point_Hessian(const Vector<double>&, const Matrix< Matrix<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&) const method
 
-/// Returns the Hessian of the performance term at some input.
+/// Returns the Hessian of the error term at some input.
 /// @param layers_activation_derivative
 /// @param perceptrons_combination_parameters_gradient
 /// @param interlayers_combination_combination_Jacobian
@@ -1497,12 +1500,12 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
 
 // Matrix<double> calculate_single_hidden_layer_point_Hessian(const Vector<double>&, const Matrix< Matrix<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&) const method
 
-/// Returns the Hessian of the performance term at some input for only one hidden layer.
+/// Returns the Hessian of the error term at some input for only one hidden layer.
 /// @param layers_activation_derivative
+/// @param layers_activation_second_derivative
 /// @param perceptrons_combination_parameters_gradient
-/// @param interlayers_combination_combination_Jacobian
 /// @param layers_delta
-/// @param interlayers_Delta
+/// @param output_interlayers_Delta
 /// @todo
 
 Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
@@ -1523,7 +1526,7 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
 
     Matrix<double> single_hidden_layer_point_Hessian(parameters_number, parameters_number, 0.0);
 
-    Vector<size_t> parameter_indices(3);
+//    Vector<size_t> parameter_indices(3);
 
     size_t layer_index_i;
     size_t neuron_index_i;
@@ -1533,21 +1536,22 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
     size_t neuron_index_j;
     size_t parameter_index_j;
 
+    const Matrix<size_t> parameters_indices = multilayer_perceptron_pointer->arrange_parameters_indices();
+
     // Both weights in the second layer
 
     for(size_t i = first_layer_parameters_number; i < second_layer_parameters_number + first_layer_parameters_number; i++)
     {
-        parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
-        layer_index_i = parameter_indices[0];
-        neuron_index_i = parameter_indices[1];
-        parameter_index_i = parameter_indices[2];
+        layer_index_i = parameters_indices(i,0);
+        neuron_index_i = parameters_indices(i,1);
+        parameter_index_i = parameters_indices(i,2);
+
 
         for(size_t j = first_layer_parameters_number; j < second_layer_parameters_number + first_layer_parameters_number; j++)
         {
-            parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
-            layer_index_j = parameter_indices[0];
-            neuron_index_j = parameter_indices[1];
-            parameter_index_j = parameter_indices[2];
+            layer_index_j = parameters_indices(j,0);
+            neuron_index_j = parameters_indices(j,1);
+            parameter_index_j = parameters_indices(j,2);
 
             single_hidden_layer_point_Hessian(i,j) =
             perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
@@ -1559,21 +1563,19 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
 
     // One weight in each layer
 
-    Matrix<double> second_layer_weights = multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights();
+    const Matrix<double> second_layer_weights = multilayer_perceptron_pointer->get_layer(1).arrange_synaptic_weights();
 
     for(size_t i = 0; i < first_layer_parameters_number; i++)
     {
-        parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
-        layer_index_i = parameter_indices[0];
-        neuron_index_i = parameter_indices[1];
-        parameter_index_i = parameter_indices[2];
+        layer_index_i = parameters_indices(i,0);
+        neuron_index_i = parameters_indices(i,1);
+        parameter_index_i = parameters_indices(i,2);
 
         for(size_t j = first_layer_parameters_number; j < first_layer_parameters_number + second_layer_parameters_number ; j++)
         {
-            parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
-            layer_index_j = parameter_indices[0];
-            neuron_index_j = parameter_indices[1];
-            parameter_index_j = parameter_indices[2];
+            layer_index_j = parameters_indices(j,0);
+            neuron_index_j = parameters_indices(j,1);
+            parameter_index_j = parameters_indices(j,2);
 
             single_hidden_layer_point_Hessian(i,j) =
              (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
@@ -1592,17 +1594,15 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
 
     for(size_t i = 0; i < first_layer_parameters_number; i++)
     {
-        parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(i);
-        layer_index_i = parameter_indices[0];
-        neuron_index_i = parameter_indices[1];
-        parameter_index_i = parameter_indices[2];
+        layer_index_i = parameters_indices(i,0);
+        neuron_index_i = parameters_indices(i,1);
+        parameter_index_i = parameters_indices(i,2);
 
         for(size_t j = 0; j < first_layer_parameters_number; j++)
         {
-            parameter_indices = multilayer_perceptron_pointer->arrange_parameter_indices(j);
-            layer_index_j = parameter_indices[0];
-            neuron_index_j = parameter_indices[1];
-            parameter_index_j = parameter_indices[2];
+            layer_index_j = parameters_indices(j,0);
+            neuron_index_j = parameters_indices(j,1);
+            parameter_index_j = parameters_indices(j,2);
 
             double sum = 0.0;
 
@@ -1634,13 +1634,12 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
             single_hidden_layer_point_Hessian(j,i) = single_hidden_layer_point_Hessian(i,j);
         }
     }
-
     return single_hidden_layer_point_Hessian;
 }
 
 // Vector<double> calculate_gradient(void) const method
 
-/// Returns the default gradient vector of the performance term.
+/// Returns the default gradient vector of the error term.
 /// It uses numerical differentiation.
 
 Vector<double> ErrorTerm::calculate_gradient(void) const
@@ -1749,13 +1748,12 @@ Vector<double> ErrorTerm::calculate_gradient(void) const
     }
 
     return(gradient);
-
 }
 
 
 // Vector<double> calculate_gradient(const Vector<double>&) const method
 
-/// Returns the default gradient vector of the performance term.
+/// Returns the default gradient vector of the error term.
 /// It uses numerical differentiation.
 
 Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) const
@@ -1768,7 +1766,7 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 
    #endif
 
-   // Performance functional stuff
+   // Loss index stuff
 
    #ifdef __OPENNN_DEBUG__
 
@@ -1816,11 +1814,11 @@ Matrix<double> ErrorTerm::calculate_Hessian(void) const
 
     if(layers_number == 1)
     {
-//        return(calculate_Hessian_one_layer());
+        return(calculate_Hessian_one_layer());
     }
     else if(layers_number == 2)
     {
-//        return(calculate_Hessian_two_layers);
+        return(calculate_Hessian_two_layers());
     }
     else
     {
@@ -1954,9 +1952,138 @@ Matrix<double> ErrorTerm::calculate_Hessian(const Vector<double>& parameters) co
 }
 
 
+// Matrix<double> calculate_Hessian_one_layer(void) const method
+
+/// @todo
+
+Matrix<double> ErrorTerm::calculate_Hessian_one_layer(void) const
+{
+    Matrix<double> Hessian_one_layer;
+
+    return(Hessian_one_layer);
+}
+
+
+// Matrix<double> calculate_Hessian_two_layers(void) const method
+
+/// @todo
+
+Matrix<double> ErrorTerm::calculate_Hessian_two_layers(void) const
+{
+    // Neural network stuff
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
+
+    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
+
+    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    const size_t parameters_number = multilayer_perceptron_pointer->count_parameters_number();
+
+    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
+
+    Vector< Vector< Vector<double> > > second_order_forward_propagation(3);
+
+    Vector < Vector< Vector<double> > > perceptrons_combination_parameters_gradient(layers_number);
+    Matrix < Matrix<double> > interlayers_combination_combination_Jacobian;
+
+    Vector<double> particular_solution;
+    Vector<double> homogeneous_solution;
+
+    // Data set stuff
+
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const size_t training_instances_number = instances.count_training_instances_number();
+
+    const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    size_t training_index;
+
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+    Vector<double> inputs(inputs_number);
+    Vector<double> targets(outputs_number);
+
+    Vector< Vector<double> > layers_delta(layers_number);
+    Matrix<double> output_interlayers_Delta;
+
+    Vector<double> output_gradient(outputs_number);
+    Matrix<double> output_Hessian(outputs_number, outputs_number);
+
+    Matrix<double> Hessian_two_layers(parameters_number, parameters_number, 0.0);
+
+    for(size_t i = 0; i < training_instances_number; i++)
+    {
+       training_index = training_indices[i];
+
+       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+
+       targets = data_set_pointer->get_instance(training_index, targets_indices);
+
+       second_order_forward_propagation = multilayer_perceptron_pointer->calculate_second_order_forward_propagation(inputs);
+
+       const Vector< Vector<double> >& layers_activation = second_order_forward_propagation[0];
+       const Vector< Vector<double> >& layers_activation_derivative = second_order_forward_propagation[1];
+       const Vector< Vector<double> >& layers_activation_second_derivative = second_order_forward_propagation[2];
+
+       Vector< Vector<double> > layers_inputs(layers_number);
+
+       layers_inputs[0] = inputs;
+
+       for(size_t j = 1; j < layers_number; j++)
+       {
+          layers_inputs[j] = layers_activation[j-1];
+       }
+
+       perceptrons_combination_parameters_gradient = multilayer_perceptron_pointer->calculate_perceptrons_combination_parameters_gradient(layers_inputs);
+
+       interlayers_combination_combination_Jacobian = multilayer_perceptron_pointer->calculate_interlayers_combination_combination_Jacobian(inputs);
+
+       if(!has_conditions_layer)
+       {
+          output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
+          output_Hessian = calculate_output_Hessian(layers_activation[layers_number-1], targets);
+
+          layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+
+          output_interlayers_Delta = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
+                                                                 layers_activation_second_derivative[layers_number-1],
+                                                                 output_gradient,
+                                                                 output_Hessian);
+       }
+       else
+       {
+          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
+          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
+
+          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+
+          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
+       }
+
+       Hessian_two_layers += calculate_single_hidden_layer_point_Hessian(layers_activation_derivative,
+                                                                         layers_activation_second_derivative,
+                                                                         perceptrons_combination_parameters_gradient,
+                                                                         layers_delta,
+                                                                         output_interlayers_Delta);
+    }
+
+    return(Hessian_two_layers);
+}
+
+
 // Vector<double> calculate_terms(void) const method 
 
-/// Returns the performance of all the subterms composing the performance term.
+/// Returns the loss of all the subterms composing the error term.
 
 Vector<double> ErrorTerm::calculate_terms(void) const
 {
@@ -1964,7 +2091,7 @@ Vector<double> ErrorTerm::calculate_terms(void) const
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
            << "Vector<double> calculate_terms(void) const method.\n"
-           << "The terms function is not defined for this performance term.\n";
+           << "The terms function is not defined for this error term.\n";
 
     throw std::logic_error(buffer.str());
 }
@@ -1972,7 +2099,7 @@ Vector<double> ErrorTerm::calculate_terms(void) const
 
 // Vector<double> calculate_terms(const Vector<double>&) const method 
 
-/// Returns the performance of all the subterms composing the performance term.
+/// Returns the loss of all the subterms composing the error term.
 
 Vector<double> ErrorTerm::calculate_terms(const Vector<double>&) const
 {
@@ -1980,7 +2107,7 @@ Vector<double> ErrorTerm::calculate_terms(const Vector<double>&) const
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
            << "Vector<double> calculate_terms(const Vector<double>&) const method.\n"
-           << "The terms function is not defined for this performance term.\n";
+           << "The terms function is not defined for this error term.\n";
 
     throw std::logic_error(buffer.str());
 }
@@ -1988,7 +2115,7 @@ Vector<double> ErrorTerm::calculate_terms(const Vector<double>&) const
 
 // Matrix<double> calculate_terms_Jacobian(void) const method 
 
-/// Returns the Jacobian matrix of the subterms composing the performance term.
+/// Returns the Jacobian matrix of the subterms composing the error term.
 
 Matrix<double> ErrorTerm::calculate_terms_Jacobian(void) const
 {
@@ -1996,7 +2123,7 @@ Matrix<double> ErrorTerm::calculate_terms_Jacobian(void) const
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
            << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
-           << "The terms function is not defined for this performance term.\n";
+           << "The terms function is not defined for this error term.\n";
 
     throw std::logic_error(buffer.str());
 }
@@ -2004,7 +2131,7 @@ Matrix<double> ErrorTerm::calculate_terms_Jacobian(void) const
 
 // ErrorTerm::FirstOrderTerms calculate_first_order_terms(void) const
 
-/// Returns the performance of all the subterms composing the performance term.
+/// Returns the loss of all the subterms composing the error term.
 
 ErrorTerm::FirstOrderTerms ErrorTerm::calculate_first_order_terms(void) const
 {
@@ -2012,17 +2139,17 @@ ErrorTerm::FirstOrderTerms ErrorTerm::calculate_first_order_terms(void) const
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
            << "Vector<double> calculate_terms(void) const method.\n"
-           << "The terms function is not defined for this performance term.\n";
+           << "The terms function is not defined for this error term.\n";
 
     throw std::logic_error(buffer.str());
 }
 
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the default type of performance term, "USER_PERFORMANCE_TERM".
+/// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
 
-std::string ErrorTerm::write_performance_term_type(void) const
+std::string ErrorTerm::write_error_term_type(void) const
 {
    return("USER_PERFORMANCE_TERM");
 }
@@ -2030,7 +2157,7 @@ std::string ErrorTerm::write_performance_term_type(void) const
 
 // std::string write_information(void) const method
 
-/// Returns a string with the default information of the performance term.
+/// Returns a string with the default information of the error term.
 /// It will be used by the training strategy to monitor the training process. 
 /// By default this information is empty. 
 
@@ -2042,13 +2169,13 @@ std::string ErrorTerm::write_information(void) const
 
 // std::string to_string(void) const method
 
-/// Returns the default string representation of a performance term.
+/// Returns the default string representation of a error term.
 
 std::string ErrorTerm::to_string(void) const
 {
    std::ostringstream buffer;
 
-   buffer << "Performance term\n";
+   buffer << "Error term\n";
           //<< "Display: " << display << "\n";
 
    return(buffer.str());
@@ -2057,7 +2184,7 @@ std::string ErrorTerm::to_string(void) const
 
 // tinyxml2::XMLDocument* to_XML(void) const method 
 
-/// Serializes a default performance term object into a XML document of the TinyXML library.
+/// Serializes a default error term object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 
 tinyxml2::XMLDocument* ErrorTerm::to_XML(void) const
@@ -2066,7 +2193,7 @@ tinyxml2::XMLDocument* ErrorTerm::to_XML(void) const
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Performance term
+   // Error term
 
    tinyxml2::XMLElement* root_element = document->NewElement("ErrorTerm");
 
@@ -2077,7 +2204,7 @@ tinyxml2::XMLDocument* ErrorTerm::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
-/// Serializes a default performance term object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes a default error term object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void ErrorTerm::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -2092,8 +2219,8 @@ void ErrorTerm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 // void from_XML(const tinyxml2::XMLDocument&) method
 
-/// Loads a default performance term from a XML document.
-/// @param document TinyXML document containing the performance term members.
+/// Loads a default error term from a XML document.
+/// @param document TinyXML document containing the error term members.
 
 void ErrorTerm::from_XML(const tinyxml2::XMLDocument& document)
 {

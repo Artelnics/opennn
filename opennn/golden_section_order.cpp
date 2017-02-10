@@ -77,11 +77,11 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 {
     GoldenSectionOrderResults* results = new GoldenSectionOrderResults();
 
-    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_performance_functional_pointer()->get_neural_network_pointer();
+    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    Vector<double> mu_performance(2);
-    Vector<double> ln_performance(2);
+    Vector<double> mu_loss(2);
+    Vector<double> ln_loss(2);
 
     Vector<double> a_parameters;
     Vector<double> ln_parameters;
@@ -90,14 +90,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     size_t optimal_order;
     Vector<double> optimum_parameters;
-    Vector<double> optimum_performance(2);
+    Vector<double> optimum_loss(2);
 
     bool end = false;
     Vector<double> minimums(4);
     double minimum;
     size_t iterations = 0;
 
-    double current_training_performance, current_selection_performance;
+    double current_training_loss, current_selection_loss;
 
     time_t beginning_time, current_time;
     double elapsed_time;
@@ -114,21 +114,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     time(&beginning_time);
 
-    mu_performance = perform_model_evaluation(mu);
-    current_training_performance = mu_performance[0];
-    current_selection_performance = mu_performance[1];
+    mu_loss = perform_model_evaluation(mu);
+    current_training_loss = mu_loss[0];
+    current_selection_loss = mu_loss[1];
     mu_parameters = get_parameters_order(mu);
 
     results->order_data.push_back(mu);
 
-    if(reserve_performance_data)
+    if(reserve_loss_data)
     {
-        results->performance_data.push_back(current_training_performance);
+        results->loss_data.push_back(current_training_loss);
     }
 
-    if(reserve_selection_performance_data)
+    if(reserve_selection_loss_data)
     {
-        results->selection_performance_data.push_back(current_selection_performance);
+        results->selection_loss_data.push_back(current_selection_loss);
     }
 
     if(reserve_parameters_data)
@@ -136,21 +136,21 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         results->parameters_data.push_back(mu_parameters);
     }
 
-    ln_performance = perform_model_evaluation(ln);
-    current_training_performance = ln_performance[0];
-    current_selection_performance = ln_performance[1];
+    ln_loss = perform_model_evaluation(ln);
+    current_training_loss = ln_loss[0];
+    current_selection_loss = ln_loss[1];
     ln_parameters = get_parameters_order(ln);
 
     results->order_data.push_back(ln);
 
-    if(reserve_performance_data)
+    if(reserve_loss_data)
     {
-        results->performance_data.push_back(current_training_performance);
+        results->loss_data.push_back(current_training_loss);
     }
 
-    if(reserve_selection_performance_data)
+    if(reserve_selection_loss_data)
     {
-        results->selection_performance_data.push_back(current_selection_performance);
+        results->selection_loss_data.push_back(current_selection_loss);
     }
 
     if(reserve_parameters_data)
@@ -165,10 +165,10 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     {
         std::cout << "Initial values: " << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-        std::cout << "ln final training performance: " << ln_performance[0] << std::endl;
-        std::cout << "ln final selection performance: " << ln_performance[1] << std::endl;
-        std::cout << "mu final training performance: " << mu_performance[0] << std::endl;
-        std::cout << "mu final selection performance: " << mu_performance[1] << std::endl;
+        std::cout << "ln final training loss: " << ln_loss[0] << std::endl;
+        std::cout << "ln final selection loss: " << ln_loss[1] << std::endl;
+        std::cout << "mu final training loss: " << mu_loss[0] << std::endl;
+        std::cout << "mu final selection loss: " << mu_loss[1] << std::endl;
         std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
@@ -186,29 +186,29 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     while(!end){
 
-        if(ln_performance[1] < mu_performance[1]
-        || fabs(ln_performance[1] - mu_performance[1]) < tolerance)
+        if(ln_loss[1] < mu_loss[1]
+        || fabs(ln_loss[1] - mu_loss[1]) < tolerance)
         {
             b = mu;
             mu = ln;
-            mu_performance = ln_performance;
+            mu_loss = ln_loss;
             ln = (int)(a+(1.-0.618)*(b-a));
 
-            ln_performance = perform_model_evaluation(ln);
-            current_training_performance = ln_performance[0];
-            current_selection_performance = ln_performance[1];
+            ln_loss = perform_model_evaluation(ln);
+            current_training_loss = ln_loss[0];
+            current_selection_loss = ln_loss[1];
             ln_parameters = get_parameters_order(ln);
 
             results->order_data.push_back(ln);
 
-            if(reserve_performance_data)
+            if(reserve_loss_data)
             {
-                results->performance_data.push_back(current_training_performance);
+                results->loss_data.push_back(current_training_loss);
             }
 
-            if(reserve_selection_performance_data)
+            if(reserve_selection_loss_data)
             {
-                results->selection_performance_data.push_back(current_selection_performance);
+                results->selection_loss_data.push_back(current_selection_loss);
             }
 
             if(reserve_parameters_data)
@@ -216,28 +216,29 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
                 results->parameters_data.push_back(ln_parameters);
             }
 
-        }else
+        }
+        else
         {
             a = ln;
             ln = mu;
-            ln_performance = mu_performance;
+            ln_loss = mu_loss;
             mu = (int)(a+0.618*(b-a));
 
-            mu_performance = perform_model_evaluation(mu);
-            current_training_performance = mu_performance[0];
-            current_selection_performance = mu_performance[1];
+            mu_loss = perform_model_evaluation(mu);
+            current_training_loss = mu_loss[0];
+            current_selection_loss = mu_loss[1];
             mu_parameters = get_parameters_order(mu);
 
             results->order_data.push_back(mu);
 
-            if(reserve_performance_data)
+            if(reserve_loss_data)
             {
-                results->performance_data.push_back(current_training_performance);
+                results->loss_data.push_back(current_training_loss);
             }
 
-            if(reserve_selection_performance_data)
+            if(reserve_selection_loss_data)
             {
-                results->selection_performance_data.push_back(current_selection_performance);
+                results->selection_loss_data.push_back(current_selection_loss);
             }
 
             if(reserve_parameters_data)
@@ -264,7 +265,8 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             }
 
             results->stopping_condition = GoldenSectionOrder::AlgorithmFinished;
-        }else if(elapsed_time >= maximum_time)
+        }
+        else if(elapsed_time >= maximum_time)
         {
             end = true;
 
@@ -274,17 +276,19 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             }
 
             results->stopping_condition = GoldenSectionOrder::MaximumTime;
-        }else if(std::min(ln_performance[1],mu_performance[1]) <= selection_performance_goal)
+        }
+        else if(std::min(ln_loss[1],mu_loss[1]) <= selection_loss_goal)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Selection performance reached." << std::endl;
+                std::cout << "Selection loss reached." << std::endl;
             }
 
-            results->stopping_condition = GoldenSectionOrder::SelectionPerformanceGoal;
-        }else if(iterations >= maximum_iterations_number)
+            results->stopping_condition = GoldenSectionOrder::SelectionLossGoal;
+        }
+        else if(iterations >= maximum_iterations_number)
         {
             end = true;
 
@@ -301,10 +305,10 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             std::cout << "Iteration: " << iterations << std::endl;
             std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-            std::cout << "ln final training performance: " << ln_performance[0] << std::endl;
-            std::cout << "ln final selection performance: " << ln_performance[1] << std::endl;
-            std::cout << "mu final training performance: " << mu_performance[0] << std::endl;
-            std::cout << "mu final selection performance: " << mu_performance[1] << std::endl;
+            std::cout << "ln final training loss: " << ln_loss[0] << std::endl;
+            std::cout << "ln final selection loss: " << ln_loss[1] << std::endl;
+            std::cout << "mu final training loss: " << mu_loss[0] << std::endl;
+            std::cout << "mu final selection loss: " << mu_loss[1] << std::endl;
             std::cout << "Elapsed time: " << elapsed_time << std::endl;
         }
     }
@@ -328,14 +332,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     {
         std::cout << "Iteration: " << iterations << std::endl;
         std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-        std::cout << "a final training performance: " << perform_model_evaluation(a)[0] << std::endl;
-        std::cout << "a final selection performance: " << perform_model_evaluation(a)[1] << std::endl;
-        std::cout << "ln final training performance: " << ln_performance[0] << std::endl;
-        std::cout << "ln final selection performance: " << ln_performance[1] << std::endl;
-        std::cout << "mu final training performance: " << mu_performance[0] << std::endl;
-        std::cout << "mu final selection performance: " << mu_performance[1] << std::endl;
-        std::cout << "b final training performance: " << perform_model_evaluation(b)[0] << std::endl;
-        std::cout << "b final selection performance: " << perform_model_evaluation(b)[1] << std::endl;
+        std::cout << "a final training loss: " << perform_model_evaluation(a)[0] << std::endl;
+        std::cout << "a final selection loss: " << perform_model_evaluation(a)[1] << std::endl;
+        std::cout << "ln final training loss: " << ln_loss[0] << std::endl;
+        std::cout << "ln final selection loss: " << ln_loss[1] << std::endl;
+        std::cout << "mu final training loss: " << mu_loss[0] << std::endl;
+        std::cout << "mu final selection loss: " << mu_loss[1] << std::endl;
+        std::cout << "b final training loss: " << perform_model_evaluation(b)[0] << std::endl;
+        std::cout << "b final selection loss: " << perform_model_evaluation(b)[1] << std::endl;
         std::cout << "Elapsed time: " << elapsed_time << std::endl;
     }
 
@@ -347,34 +351,37 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
         optimum_parameters = a_parameters;
 
-        optimum_performance[0] = perform_model_evaluation(a)[0];
-        optimum_performance[1] = minimums[0];
+        optimum_loss[0] = perform_model_evaluation(a)[0];
+        optimum_loss[1] = minimums[0];
 
-    }else if(fabs(minimums[1] - minimum) < tolerance)
+    }
+    else if(fabs(minimums[1] - minimum) < tolerance)
     {
         optimal_order = ln;
 
         optimum_parameters = ln_parameters;
 
-        optimum_performance[0] = perform_model_evaluation(ln)[0];
-        optimum_performance[1] = minimums[1];
+        optimum_loss[0] = perform_model_evaluation(ln)[0];
+        optimum_loss[1] = minimums[1];
 
-    }else if(fabs(minimums[2] - minimum) < tolerance)
+    }
+    else if(fabs(minimums[2] - minimum) < tolerance)
     {
         optimal_order = mu;
 
         optimum_parameters = mu_parameters;
 
-        optimum_performance[0] = perform_model_evaluation(mu)[0];
-        optimum_performance[1] = minimums[2];
-    }else
+        optimum_loss[0] = perform_model_evaluation(mu)[0];
+        optimum_loss[1] = minimums[2];
+    }
+    else
     {
         optimal_order = b;
 
         optimum_parameters = b_parameters;
 
-        optimum_performance[0] = perform_model_evaluation(b)[0];
-        optimum_performance[1] = minimums[3];
+        optimum_loss[0] = perform_model_evaluation(b)[0];
+        optimum_loss[1] = minimums[3];
     }
 
     if(display)
@@ -388,7 +395,8 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     if(optimal_order > perceptrons_number)
     {
         multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
-    }else
+    }
+    else
     {
         for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
             multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
@@ -396,14 +404,18 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
+#ifdef __OPENNN_MPI__
+    neural_network_pointer->set_multilayer_perceptron_pointer(multilayer_perceptron_pointer);
+#endif
+
     if(reserve_minimal_parameters)
     {
         results->minimal_parameters = optimum_parameters;
     }
 
     results->optimal_order = optimal_order;
-    results->final_performance = optimum_performance[0];
-    results->final_selection_performance = optimum_performance[1];
+    results->final_loss = optimum_loss[0];
+    results->final_selection_loss = optimum_loss[1];
     results->elapsed_time = elapsed_time;
     results->iterations_number = iterations;
 
@@ -472,7 +484,7 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
    element = document->NewElement("PerformanceCalculationMethod");
    root_element->LinkEndChild(element);
 
-   text = document->NewText(write_performance_calculation_method().c_str());
+   text = document->NewText(write_loss_calculation_method().c_str());
    element->LinkEndChild(text);
    }
 
@@ -488,25 +500,25 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Reserve performance data
+   // Reserve loss data
    {
    element = document->NewElement("ReservePerformanceHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_performance_data;
+   buffer << reserve_loss_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection performance data
+   // Reserve selection loss data
    {
-   element = document->NewElement("ReserveSelectionPerformanceHistory");
+   element = document->NewElement("ReserveSelectionLossHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_performance_data;
+   buffer << reserve_selection_loss_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -536,13 +548,13 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
    element->LinkEndChild(text);
    }
 
-   // Selection performance goal
+   // selection loss goal
    {
-   element = document->NewElement("SelectionPerformanceGoal");
+   element = document->NewElement("SelectionLossGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << selection_performance_goal;
+   buffer << selection_loss_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -590,6 +602,9 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
+/// Serializes the golden section object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
+
 void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     std::ostringstream buffer;
@@ -633,7 +648,7 @@ void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("PerformanceCalculationMethod");
 
-    file_stream.PushText(write_performance_calculation_method().c_str());
+    file_stream.PushText(write_loss_calculation_method().c_str());
 
     file_stream.CloseElement();
 
@@ -648,23 +663,23 @@ void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve performance data
+    // Reserve loss data
 
     file_stream.OpenElement("ReservePerformanceHistory");
 
     buffer.str("");
-    buffer << reserve_performance_data;
+    buffer << reserve_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection performance data
+    // Reserve selection loss data
 
-    file_stream.OpenElement("ReserveSelectionPerformanceHistory");
+    file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_performance_data;
+    buffer << reserve_selection_loss_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -692,12 +707,12 @@ void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Selection performance goal
+    // selection loss goal
 
-    file_stream.OpenElement("SelectionPerformanceGoal");
+    file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_performance_goal;
+    buffer << selection_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -824,11 +839,11 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_performance_calculation_method = element->GetText();
+           const std::string new_loss_calculation_method = element->GetText();
 
            try
            {
-              set_performance_calculation_method(new_performance_calculation_method);
+              set_loss_calculation_method(new_loss_calculation_method);
            }
            catch(const std::logic_error& e)
            {
@@ -856,17 +871,17 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve performance data
+    // Reserve loss data
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
 
         if(element)
         {
-           const std::string new_reserve_performance_data = element->GetText();
+           const std::string new_reserve_loss_data = element->GetText();
 
            try
            {
-              set_reserve_performance_data(new_reserve_performance_data != "0");
+              set_reserve_loss_data(new_reserve_loss_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -875,17 +890,17 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection performance data
+    // Reserve selection loss data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionPerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
         if(element)
         {
-           const std::string new_reserve_selection_performance_data = element->GetText();
+           const std::string new_reserve_selection_loss_data = element->GetText();
 
            try
            {
-              set_reserve_selection_performance_data(new_reserve_selection_performance_data != "0");
+              set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
            }
            catch(const std::logic_error& e)
            {
@@ -932,17 +947,17 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Selection performance goal
+    // selection loss goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionPerformanceGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
 
         if(element)
         {
-           const double new_selection_performance_goal = atof(element->GetText());
+           const double new_selection_loss_goal = atof(element->GetText());
 
            try
            {
-              set_selection_performance_goal(new_selection_performance_goal);
+              set_selection_loss_goal(new_selection_loss_goal);
            }
            catch(const std::logic_error& e)
            {

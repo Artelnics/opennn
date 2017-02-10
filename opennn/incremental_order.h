@@ -41,7 +41,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents a incremental algorithm for the order selection of a neural network.
+/// This concrete class represents an incremental algorithm for the order selection of a neural network.
 ///
 
 class IncrementalOrder : public OrderSelectionAlgorithm
@@ -135,7 +135,7 @@ private:
 
    // STOPPING CRITERIA
 
-   /// Maximum number of iterations at which the selection performance increases.
+   /// Maximum number of iterations at which the selection loss increases.
 
    size_t maximum_selection_failures;
 

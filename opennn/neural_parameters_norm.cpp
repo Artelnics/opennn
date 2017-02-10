@@ -76,7 +76,7 @@ NeuralParametersNorm::~NeuralParametersNorm(void)
 
 // const double& get_neural_parameters_norm_weight(void) const method
 
-/// Returns the weight value for the neural parameters norm in the performance term expression. 
+/// Returns the weight value for the neural parameters norm in the error term expression. 
 
 const double& NeuralParametersNorm::get_neural_parameters_norm_weight(void) const
 {
@@ -86,7 +86,7 @@ const double& NeuralParametersNorm::get_neural_parameters_norm_weight(void) cons
 
 // void set_neural_parameters_norm_weight(const double&) method
 
-/// Sets a new weight value for the neural parameters norm in the performance term expression. 
+/// Sets a new weight value for the neural parameters norm in the error term expression. 
 
 void NeuralParametersNorm::set_neural_parameters_norm_weight(const double& new_neural_parameters_norm_weight)
 {
@@ -112,7 +112,7 @@ void NeuralParametersNorm::set_default(void)
 
 // void check(void) const method
 
-/// Checks that there is a neural network associated to this performance term,
+/// Checks that there is a neural network associated to this error term,
 /// and that there is a multilayer perceptron in the neural network. 
 /// If some of the above conditions is not hold, the method throws an exception. 
 
@@ -168,7 +168,7 @@ void NeuralParametersNorm::check(void) const
 
 // double calculate_regularization(void) const method
 
-/// Returns the performance of this peformance term. 
+/// Returns the loss of this peformance term. 
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
 double NeuralParametersNorm::calculate_regularization(void) const
@@ -244,7 +244,7 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian(void) const
 
 /// Returns the neural parameters norm value of a neural network for a vector of parameters.
 /// It does not set that vector of parameters to the neural network.
-/// @param parameters Vector of parameters for the neural network associated to the performance term.
+/// @param parameters Vector of parameters for the neural network associated to the error term.
 
 double NeuralParametersNorm::calculate_regularization(const Vector<double>& parameters) const
 {
@@ -338,12 +338,12 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian(const Vector<double>& par
 }
 
 /*
-// double calculate_selection_performance(void) const method
+// double calculate_selection_loss(void) const method
 
-/// Returns the selection performance of this peformance term.
+/// Returns the selection loss of this peformance term.
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
-double NeuralParametersNorm::calculate_selection_performance(void) const
+double NeuralParametersNorm::calculate_selection_loss(void) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -359,12 +359,12 @@ double NeuralParametersNorm::calculate_selection_performance(void) const
 }
 */
 
-// std::string write_performance_term_type(void) const method
+// std::string write_error_term_type(void) const method
 
-/// Returns a string with the name of the neural parameters norm performance type,
+/// Returns a string with the name of the neural parameters norm loss type,
 /// "NEURAL_PARAMETERS_NORM".
 
-std::string NeuralParametersNorm::write_performance_term_type(void) const
+std::string NeuralParametersNorm::write_error_term_type(void) const
 {
    return("NEURAL_PARAMETERS_NORM");
 }
@@ -376,7 +376,7 @@ std::string NeuralParametersNorm::write_information(void) const
 {
    std::ostringstream buffer;
    
-   buffer << "Neural parameters norm: " << calculate_regularization() << "\n";
+   buffer << "Regularization norm: " << calculate_regularization() << "\n";
 
    return(buffer.str());
 }
@@ -428,6 +428,9 @@ tinyxml2::XMLDocument* NeuralParametersNorm::to_XML(void) const
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the neural parameters norm object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document.
 
 void NeuralParametersNorm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {

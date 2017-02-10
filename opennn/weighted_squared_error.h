@@ -38,7 +38,7 @@ namespace OpenNN
 /// This class represents the mean squared error term. 
 /// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
 /// This functional is used in data modeling problems, such as function regression, 
-/// pattern recognition and time series prediction.
+/// classification and time series prediction.
 
 class WeightedSquaredError : public ErrorTerm
 {
@@ -89,8 +89,6 @@ public:
 
    void check(void) const;
 
-//   void set_default(void);
-
    // Objective methods
 
    void set_default(void);
@@ -102,18 +100,25 @@ public:
 
    void set_weights(void);
 
-   double calculate_positives_performance(void) const;
-   double calculate_negatives_performance(void) const;
+   double calculate_positives_loss(void) const;
+   double calculate_negatives_loss(void) const;
 
    double calculate_error(void) const;
    double calculate_error(const Vector<double>&) const;
    double calculate_selection_error(void) const;
 
+   double calculate_error(const double&) const;
+   double calculate_error(const Vector<double>&, const double&) const;
+   double calculate_selection_error(const double&) const;
+
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
    Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
 
-   FirstOrderPerformance calculate_first_order_performance(void) const;
-   SecondOrderPerformance calculate_second_order_performance(void) const;
+   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&, const double&) const;
+   Vector<double> calculate_gradient_with_normalization(const double&) const;
+
+   FirstOrderPerformance calculate_first_order_loss(void) const;
+   SecondOrderPerformance calculate_second_order_loss(void) const;
 
    // Objective terms methods
 
@@ -124,7 +129,7 @@ public:
 
    FirstOrderTerms calculate_first_order_terms(void) const;
 
-   std::string write_performance_term_type(void) const;
+   std::string write_error_term_type(void) const;
 
    // Serialization methods
 
@@ -134,13 +139,18 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
    //void read_XML(   );
 
-   std::string write_information(void) const;
+//   std::string write_information(void) const;
 
    std::string to_string(void) const;
 
 private:
 
+   /// Weight for the positives for the calculation of the error.
+
    double positives_weight;
+
+   /// Weight for the negatives for the calculation of the error.
+
    double negatives_weight;
 
 
