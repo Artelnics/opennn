@@ -170,6 +170,7 @@ public:
 
    std::string to_string(void) const;
 
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
@@ -177,6 +178,7 @@ public:
    // virtual void read_XML(   );
 
    // PMML Methods
+  /// ownership not passed
    void to_PMML(tinyxml2::XMLElement*, const bool& , const bool& is_data_unscaled = false, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >());
    void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool& , const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >() );
    void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool&);

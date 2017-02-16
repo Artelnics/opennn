@@ -50,7 +50,7 @@ public:
    explicit OutputsIntegrals(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit OutputsIntegrals(NeuralNetwork*);
 
    // XML CONSTRUCTOR
@@ -66,6 +66,7 @@ public:
    // Get methods
 
    const NumericalIntegration& get_numerical_integration(void) const;
+  /// ownership not passed
    NumericalIntegration* get_numerical_integration_pointer(void);
 
    const Vector<double>& get_outputs_integrals_weights(void) const;
@@ -96,7 +97,7 @@ public:
    std::string write_error_term_type(void) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

@@ -52,7 +52,7 @@ public:
     explicit SelectivePruning(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit SelectivePruning(TrainingStrategy*);
 
     // XML CONSTRUCTOR
@@ -107,13 +107,14 @@ public:
     void set_maximum_selection_failures(const size_t&);
 
     // Order selection methods
-
+  /// ownership passed - use delete to destroy
     SelectivePruningResults* perform_inputs_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
 
     void from_XML(const tinyxml2::XMLDocument&);

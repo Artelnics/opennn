@@ -52,6 +52,7 @@ public:
     explicit ROCCurveOptimizationThreshold(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
+  /// ownership not passed
 
     explicit ROCCurveOptimizationThreshold(TrainingStrategy*);
 
@@ -113,12 +114,14 @@ public:
 
     // Order selection methods
 
-    ROCCurveOptimizationThresholdResults* perform_threshold_selection(void);
+  /// ownership passed - use delete to destroy
+  ROCCurveOptimizationThresholdResults* perform_threshold_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

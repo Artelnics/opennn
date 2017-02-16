@@ -48,14 +48,17 @@ public:
 
    // GENERAL CONSTRUCTOR
 
+  /// ownership not passed
    explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
 
    // NEURAL NETWORK CONSTRUCTOR
 
+  /// ownership not passed
    explicit NormalizedSquaredError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
 
+  /// ownership not passed
    explicit NormalizedSquaredError(DataSet*);
 
    // DEFAULT CONSTRUCTOR
@@ -120,7 +123,7 @@ public:
    std::string write_error_term_type(void) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

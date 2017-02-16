@@ -47,7 +47,7 @@ public:
    explicit NeuralParametersNorm(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit NeuralParametersNorm(NeuralNetwork*);
 
    // XML CONSTRUCTOR
@@ -89,7 +89,7 @@ public:
    std::string write_information(void) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

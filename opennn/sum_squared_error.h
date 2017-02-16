@@ -49,14 +49,16 @@ public:
    explicit SumSquaredError(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit SumSquaredError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit SumSquaredError(DataSet*);
 
    // GENERAL CONSTRUCTOR
+  /// ownership not passed
 
    explicit SumSquaredError(NeuralNetwork*, DataSet*);
 
@@ -115,7 +117,7 @@ public:
    std::string write_error_term_type(void) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

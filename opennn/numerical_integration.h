@@ -74,7 +74,7 @@ class NumericalIntegration
    double calculate_integral(const Vector<double>&, const Vector<double>&) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

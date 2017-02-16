@@ -255,6 +255,7 @@ public:
 
    const Vector<PerceptronLayer>& get_layers(void) const;
    const PerceptronLayer& get_layer(const size_t&) const;
+  /// ownership not passed
    PerceptronLayer* get_layer_pointer(const size_t&);
 
    size_t count_perceptrons_number(void) const;
@@ -445,7 +446,7 @@ public:
    Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&, const Vector<double>&) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -453,9 +454,11 @@ public:
    // void read_XML(   );
 
    // PMML Methods
+  /// ownership not passed
    void to_PMML(tinyxml2::XMLElement* ) const;
    void write_PMML(tinyxml2::XMLPrinter&, bool is_softmax_normalization_method = false) const;
 
+  /// ownership not passed
    void from_PMML(const tinyxml2::XMLElement*);
 
    // Information

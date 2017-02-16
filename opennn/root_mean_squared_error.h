@@ -49,14 +49,17 @@ public:
    explicit RootMeanSquaredError(void);
 
    // NEURAL NETWORK CONSTRUCTOR
+  /// ownership not passed
 
    explicit RootMeanSquaredError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit RootMeanSquaredError(DataSet*);
 
    // GENERAL CONSTRUCTOR
+  /// ownership not passed
 
    explicit RootMeanSquaredError(NeuralNetwork*, DataSet*);
 
@@ -95,6 +98,7 @@ public:
 
    // Serialization methods
 
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

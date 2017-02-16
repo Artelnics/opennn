@@ -118,6 +118,7 @@ public:
 
    std::string to_string(void) const;
 
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 

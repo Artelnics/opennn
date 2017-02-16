@@ -180,6 +180,7 @@ public:
    virtual void set_default(void);
 
 #ifdef __OPENNN_MPI__
+  /// ownership not passed
    void set_MPI(const NeuralNetwork*);
 #endif
 
@@ -315,7 +316,8 @@ public:
    // Serialization methods
 
    std::string to_string(void) const;
- 
+
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
@@ -342,7 +344,7 @@ public:
    void save_expression_R(const std::string&);
 
    // PMML methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_PMML(void) const;
    void write_PMML(const std::string&) const;
 

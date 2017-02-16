@@ -131,7 +131,7 @@ public:
    std::string write_principal_components_expression(const Vector<std::string>&, const Vector<std::string>&) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

@@ -65,6 +65,7 @@ public:
    explicit QuasiNewtonMethod(void);
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
+  /// ownership not passed
 
    explicit QuasiNewtonMethod(LossIndex*);
 
@@ -93,7 +94,7 @@ public:
        }
 
        /// Quasi-Newton method constructor.
-
+     /// ownership not passed
        explicit QuasiNewtonMethodResults(QuasiNewtonMethod* new_quasi_Newton_method_pointer) : TrainingAlgorithm::TrainingAlgorithmResults()
        {
            quasi_Newton_method_pointer = new_quasi_Newton_method_pointer;
@@ -201,6 +202,7 @@ public:
       size_t iterations_number;
 
       // Methods
+  /// ownership not passed
 
       QuasiNewtonMethod* get_quasi_Newton_method_pointer(void) const;
 
@@ -218,6 +220,7 @@ public:
    // Get methods
 
    const TrainingRateAlgorithm& get_training_rate_algorithm(void) const;
+  /// ownership not passed
    TrainingRateAlgorithm* get_training_rate_algorithm_pointer(void);
 
    const InverseHessianApproximationMethod& get_inverse_Hessian_approximation_method(void) const;
@@ -334,6 +337,7 @@ public:
 
    Vector<double> calculate_training_direction(const Vector<double>&, const Matrix<double>&) const;
 
+  /// ownership passed - used delete to destroy
    QuasiNewtonMethodResults* perform_training(void);
 
    // Training history methods
@@ -344,6 +348,7 @@ public:
 
    // Serialization methods
 
+  /// ownership passed - used delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 

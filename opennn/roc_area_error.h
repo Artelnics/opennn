@@ -50,14 +50,17 @@ public:
    explicit RocAreaError(void);
 
    // NEURAL NETWORK CONSTRUCTOR
+  /// ownership not passed
 
    explicit RocAreaError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit RocAreaError(DataSet*);
 
    // GENERAL CONSTRUCTOR
+  /// ownership not passed
 
    explicit RocAreaError(NeuralNetwork*, DataSet*);
 

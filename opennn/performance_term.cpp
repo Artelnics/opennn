@@ -547,6 +547,7 @@ void PerformanceTerm::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void PerformanceTerm::set_numerical_differentiation_pointer(NumericalDifferentiation* new_numerical_differentiation_pointer)
 {
+  delete numerical_differentiation_pointer;
    numerical_differentiation_pointer = new_numerical_differentiation_pointer;
 }
 
