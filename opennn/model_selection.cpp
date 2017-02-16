@@ -1911,21 +1911,24 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(vo
     {
         incremental_order_pointer->set_display(display);
 
-        results.incremental_order_results_pointer = incremental_order_pointer->perform_order_selection();
+        results.incremental_order_results_pointer.reset
+          (incremental_order_pointer->perform_order_selection());
         break;
     }
     case GOLDEN_SECTION:
     {
         golden_section_order_pointer->set_display(display);
 
-        results.golden_section_order_results_pointer = golden_section_order_pointer->perform_order_selection();
+        results.golden_section_order_results_pointer.reset
+          (golden_section_order_pointer->perform_order_selection());
         break;
     }
     case SIMULATED_ANNEALING:
     {
         simulated_annelaing_order_pointer->set_display(display);
 
-        results.simulated_annealing_order_results_pointer = simulated_annelaing_order_pointer->perform_order_selection();
+        results.simulated_annealing_order_results_pointer.reset
+          (simulated_annelaing_order_pointer->perform_order_selection());
         break;
     }
     default:
@@ -1977,7 +1980,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
         {
             growing_inputs_pointer->set_display(display);
 
-            results.growing_inputs_results_pointer = growing_inputs_pointer->perform_inputs_selection();
+            results.growing_inputs_results_pointer.reset
+              (growing_inputs_pointer->perform_inputs_selection());
 
             break;
         }
@@ -1985,7 +1989,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
         {
             pruning_inputs_pointer->set_display(display);
 
-            results.pruning_inputs_results_pointer = pruning_inputs_pointer->perform_inputs_selection();
+            results.pruning_inputs_results_pointer.reset
+              (pruning_inputs_pointer->perform_inputs_selection());
 
             break;
         }
@@ -1993,7 +1998,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
         {
             genetic_algorithm_pointer->set_display(display);
 
-            results.genetic_algorithm_results_pointer = genetic_algorithm_pointer->perform_inputs_selection();
+            results.genetic_algorithm_results_pointer.reset
+              (genetic_algorithm_pointer->perform_inputs_selection());
 
             break;
         }
@@ -2046,7 +2052,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
         {
             f1_score_optimization_threshold_pointer->set_display(display);
 
-            results.f1_score_opimization_results_pointer = f1_score_optimization_threshold_pointer->perform_threshold_selection();
+            results.f1_score_opimization_results_pointer.reset
+              (f1_score_optimization_threshold_pointer->perform_threshold_selection());
 
             break;
         }
@@ -2054,7 +2061,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
         {
             matthew_correlation_optimization_threshold_pointer->set_display(display);
 
-            results.matthew_correlation_optimization_results_pointer = matthew_correlation_optimization_threshold_pointer->perform_threshold_selection();
+            results.matthew_correlation_optimization_results_pointer.reset
+              (matthew_correlation_optimization_threshold_pointer->perform_threshold_selection());
 
             break;
         }
@@ -2062,7 +2070,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
         {
             youden_index_optimization_threshold_pointer->set_display(display);
 
-            results.youden_index_optimization_results_pointer = youden_index_optimization_threshold_pointer->perform_threshold_selection();
+            results.youden_index_optimization_results_pointer.reset
+              (youden_index_optimization_threshold_pointer->perform_threshold_selection());
 
             break;
         }
@@ -2070,7 +2079,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
         {
             kappa_coefficient_optimization_threshold_pointer->set_display(display);
 
-            results.kappa_coefficient_optimization_results_pointer = kappa_coefficient_optimization_threshold_pointer->perform_threshold_selection();
+            results.kappa_coefficient_optimization_results_pointer.reset
+              (kappa_coefficient_optimization_threshold_pointer->perform_threshold_selection());
 
             break;
         }
@@ -2078,7 +2088,8 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
         {
             roc_curve_optimization_threshold_pointer->set_display(display);
 
-            results.roc_curve_optimization_results_pointer = roc_curve_optimization_threshold_pointer->perform_threshold_selection();
+            results.roc_curve_optimization_results_pointer.reset
+              (roc_curve_optimization_threshold_pointer->perform_threshold_selection());
 
             break;
         }

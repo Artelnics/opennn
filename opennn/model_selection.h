@@ -61,7 +61,7 @@ public:
     explicit ModelSelection(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit ModelSelection(TrainingStrategy*);
 
     // FILE CONSTRUCTOR
@@ -77,7 +77,10 @@ public:
 
     virtual ~ModelSelection(void);
 
-    /// Enumeration of all the available types of inputs selection algorithms.
+  ModelSelection(const ModelSelection&)=delete;
+  ModelSelection& operator=(const ModelSelection&)=delete;
+  
+  /// Enumeration of all the available types of inputs selection algorithms.
 
     enum InputsSelectionType
     {
@@ -125,60 +128,62 @@ public:
 
         /// Pointer to a structure with the results from the incremental order selection algorithm.
 
-        IncrementalOrder::IncrementalOrderResults* incremental_order_results_pointer;
+      std::unique_ptr<IncrementalOrder::IncrementalOrderResults> incremental_order_results_pointer;
 
         /// Pointer to a structure with the results from the golden section order selection algorithm.
 
-        GoldenSectionOrder::GoldenSectionOrderResults* golden_section_order_results_pointer;
+      std::unique_ptr<GoldenSectionOrder::GoldenSectionOrderResults> golden_section_order_results_pointer;
 
         /// Pointer to a structure with the results from the simulated annealing order selection algorithm.
 
-        SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* simulated_annealing_order_results_pointer;
+      std::unique_ptr<SimulatedAnnealingOrder::SimulatedAnnealingOrderResults> simulated_annealing_order_results_pointer;
 
         /// Pointer to a structure with the results from the growing inputs selection algorithm.
 
-        GrowingInputs::GrowingInputsResults* growing_inputs_results_pointer;
+      std::unique_ptr<GrowingInputs::GrowingInputsResults> growing_inputs_results_pointer;
 
         /// Pointer to a structure with the results from the pruning inputs selection algorithm.
 
-        PruningInputs::PruningInputsResults* pruning_inputs_results_pointer;
+      std::unique_ptr<PruningInputs::PruningInputsResults> pruning_inputs_results_pointer;
 
         /// Pointer to a structure with the results from the genetic inputs selection algorithm.
 
-        GeneticAlgorithm::GeneticAlgorithmResults* genetic_algorithm_results_pointer;
+      std::unique_ptr<GeneticAlgorithm::GeneticAlgorithmResults> genetic_algorithm_results_pointer;
 
         /// Pointer to a structure with the results from the f1 score optimization threshold selection algorithm.
 
-        F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* f1_score_opimization_results_pointer;
+      std::unique_ptr<F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults> f1_score_opimization_results_pointer;
 
         /// Pointer to a structure with the results from the matthew correlation optimization threshold selection algorithm.
 
-        MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThresholdResults* matthew_correlation_optimization_results_pointer;
+      std::unique_ptr<MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThresholdResults> matthew_correlation_optimization_results_pointer;
 
         /// Pointer to a structure with the results from the youden index optimization threshold selection algorithm.
 
-        YoudenIndexOptimizationThreshold::YoudenIndexOptimizationThresholdResults* youden_index_optimization_results_pointer;
+      std::unique_ptr<YoudenIndexOptimizationThreshold::YoudenIndexOptimizationThresholdResults> youden_index_optimization_results_pointer;
 
         /// Pointer to a structure with the results from the kappa coefficient optimization threshold selection algorithm.
 
-        KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResults* kappa_coefficient_optimization_results_pointer;
+      std::unique_ptr<KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResults> kappa_coefficient_optimization_results_pointer;
 
         /// Pointer to a structure with the results from the roc curve optimization threshold selection algorithm.
 
-        ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* roc_curve_optimization_results_pointer;
+      std::unique_ptr<ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults> roc_curve_optimization_results_pointer;
 
     };
 
     // METHODS
 
     // Get methods
-
+  /// ownership not passed
     TrainingStrategy* get_training_strategy_pointer(void) const;
     bool has_training_strategy(void) const;
 
     const OrderSelectionType& get_order_selection_type(void) const;
     const InputsSelectionType& get_inputs_selection_type(void) const;
     const ThresholdSelectionType& get_threshold_selection_type(void) const;
+
+  /// @{ ownership not passed
 
     IncrementalOrder* get_incremental_order_pointer(void) const;
     GoldenSectionOrder* get_golden_section_order_pointer(void) const;
@@ -187,19 +192,20 @@ public:
     GrowingInputs* get_growing_inputs_pointer(void) const;
     PruningInputs* get_pruning_inputs_pointer(void) const;
     GeneticAlgorithm* get_genetic_algorithm_pointer(void) const;
-
+  
     F1ScoreOptimizationThreshold* get_f1_score_optimization_threshold_pointer(void) const;
     MatthewCorrelationOptimizationThreshold* get_matthew_correlation_optimization_threshold(void) const;
     YoudenIndexOptimizationThreshold* get_youden_index_optimization_threshold(void) const;
     KappaCoefficientOptimizationThreshold* get_kappa_coefficient_optimization_threshold(void) const;
     ROCCurveOptimizationThreshold* get_roc_curve_optimization_threshold(void) const;
+  /// @}
 
     // Set methods
 
     void set_default(void);
 
     void set_display(const bool&);
-
+  /// ownership not passed
     void set_training_strategy_pointer(TrainingStrategy*);
 
 #ifdef __OPENNN_MPI__
