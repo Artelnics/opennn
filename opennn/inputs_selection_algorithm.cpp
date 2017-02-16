@@ -935,7 +935,7 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
         neural_network->set_MPI(neural_network);
 
 #endif
-    training_strategy_results = training_strategy_pointer->perform_training();
+    training_strategy_pointer->perform_training(training_strategy_results);
 
     current_loss = get_final_losss(training_strategy_results);
 
@@ -959,7 +959,7 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
         neural_network->set_MPI(neural_network);
 #endif
 
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         current_loss = get_final_losss(training_strategy_results);
 
@@ -1074,7 +1074,7 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
         neural_network->set_MPI(neural_network);
 
 #endif
-    training_strategy_results = training_strategy_pointer->perform_training();
+    training_strategy_pointer->perform_training(training_strategy_results);
 
     current_loss = get_final_losss(training_strategy_results);
 
@@ -1094,7 +1094,7 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
 
         neural_network->randomize_parameters_normal();
 
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         current_loss = get_final_losss(training_strategy_results);
 
@@ -1209,7 +1209,7 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
         neural_network->set_MPI(neural_network);
 
 #endif
-    training_strategy_results = training_strategy_pointer->perform_training();
+    training_strategy_pointer->perform_training(training_strategy_results);
 
     current_loss = get_final_losss(training_strategy_results);
 
@@ -1229,7 +1229,7 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
 
         neural_network->randomize_parameters_normal();
 
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         current_loss = get_final_losss(training_strategy_results);
 

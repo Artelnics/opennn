@@ -1800,7 +1800,7 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 
         // Training strategy
 
-        quasi_Newton_method.perform_training();
+        delete quasi_Newton_method.perform_training();
 
         // Set parameters
 
@@ -1818,7 +1818,7 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 /// The most general training strategy consists of three steps: initialization, main and refinement training processes. 
 /// This method also returns a structure with the results from training. 
 
-TrainingStrategy::Results TrainingStrategy::perform_training(void)
+void TrainingStrategy::perform_training(TrainingStrategy::Results& training_strategy_results)
 {
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1829,8 +1829,6 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
    #endif
 
 //   initialize_layers_autoencoding();
-
-   Results training_strategy_results;
 
    // Initialization
 
@@ -1846,17 +1844,17 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       {
          random_search_pointer->set_display(display);
 
-         training_strategy_results.random_search_results_pointer
-         = random_search_pointer->perform_training();
-      }
+         training_strategy_results.random_search_results_pointer.reset
+           (random_search_pointer->perform_training());
+            }
       break;
 
       case EVOLUTIONARY_ALGORITHM:
       {
            evolutionary_algorithm_pointer->set_display(display);
 
-           training_strategy_results.evolutionary_algorithm_results_pointer
-           = evolutionary_algorithm_pointer->perform_training();
+           training_strategy_results.evolutionary_algorithm_results_pointer.reset
+             (evolutionary_algorithm_pointer->perform_training());
       }
       break;
 
@@ -1893,8 +1891,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       {
          gradient_descent_pointer->set_display(display);
 
-         training_strategy_results.gradient_descent_results_pointer
-         = gradient_descent_pointer->perform_training();
+         training_strategy_results.gradient_descent_results_pointer.reset
+           (gradient_descent_pointer->perform_training());
 
       }
       break;
@@ -1903,8 +1901,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       {
            conjugate_gradient_pointer->set_display(display);
 
-           training_strategy_results.conjugate_gradient_results_pointer
-           = conjugate_gradient_pointer->perform_training();
+           training_strategy_results.conjugate_gradient_results_pointer.reset
+             (conjugate_gradient_pointer->perform_training());
       }
       break;
 
@@ -1912,8 +1910,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       {
            quasi_Newton_method_pointer->set_display(display);
 
-           training_strategy_results.quasi_Newton_method_results_pointer
-           = quasi_Newton_method_pointer->perform_training();
+           training_strategy_results.quasi_Newton_method_results_pointer.reset
+             (quasi_Newton_method_pointer->perform_training());
       }
       break;
 
@@ -1921,8 +1919,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       {
            Newton_method_pointer->set_display(display);
 
-           training_strategy_results.Newton_method_results_pointer
-           = Newton_method_pointer->perform_training();
+           training_strategy_results.Newton_method_results_pointer.reset
+             (Newton_method_pointer->perform_training());
       }
       break;
 
@@ -1930,8 +1928,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       {
            Levenberg_Marquardt_algorithm_pointer->set_display(display);
 
-           training_strategy_results.Levenberg_Marquardt_algorithm_results_pointer
-           = Levenberg_Marquardt_algorithm_pointer->perform_training();
+           training_strategy_results.Levenberg_Marquardt_algorithm_results_pointer.reset
+             (Levenberg_Marquardt_algorithm_pointer->perform_training());
       }
       break;
 
@@ -1992,7 +1990,6 @@ TrainingStrategy::Results TrainingStrategy::perform_training(void)
       break;
    }
 
-   return(training_strategy_results);
 }
 
 
