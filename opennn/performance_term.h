@@ -275,20 +275,30 @@ public:
    // Set methods
 
    virtual void set(void);
+  /// ownership not passed
    virtual void set(NeuralNetwork*);
+  /// ownership not passed
    virtual void set(DataSet*);
+  /// ownership not passed
    virtual void set(MathematicalModel*);
+  /// ownership not passed
    virtual void set(NeuralNetwork*, DataSet*);
+  /// ownership not passed
    virtual void set(NeuralNetwork*, MathematicalModel*);
+  /// ownership not passed
    virtual void set(NeuralNetwork*, MathematicalModel*, DataSet*);
 
    void set(const PerformanceTerm&);
 
+  /// ownership not passed
    virtual void set_neural_network_pointer(NeuralNetwork*);
 
+  /// ownership not passed
    virtual void set_mathematical_model_pointer(MathematicalModel*);
+  /// ownership not passed
    virtual void set_data_set_pointer(DataSet*);
 
+  /// ownership passed
    void set_numerical_differentiation_pointer(NumericalDifferentiation*);
 
    virtual void set_default(void);

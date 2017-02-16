@@ -139,15 +139,25 @@ public:
    bool has_conditions_layer(void) const;
    bool has_independent_parameters(void) const;
 
+  /// ownership remains with this
    MultilayerPerceptron* get_multilayer_perceptron_pointer(void) const;
+  /// ownership remains with this
    Inputs* get_inputs_pointer(void) const;
+  /// ownership remains with this
    Outputs* get_outputs_pointer(void) const;
+  /// ownership remains with this
    ScalingLayer* get_scaling_layer_pointer(void) const;
+  /// ownership remains with this
    PrincipalComponentsLayer* get_principal_components_layer_pointer(void) const;
+  /// ownership remains with this
    UnscalingLayer* get_unscaling_layer_pointer(void) const;   
+  /// ownership remains with this
    BoundingLayer* get_bounding_layer_pointer(void) const;
+  /// ownership remains with this
    ProbabilisticLayer* get_probabilistic_layer_pointer(void) const;
+  /// ownership remains with this
    ConditionsLayer* get_conditions_layer_pointer(void) const;
+  /// ownership remains with this
    IndependentParameters* get_independent_parameters_pointer(void) const;
 
    const bool& get_display(void) const;
@@ -173,15 +183,25 @@ public:
    void set_MPI(const NeuralNetwork*);
 #endif
 
+  /// ownership passed
    void set_multilayer_perceptron_pointer(MultilayerPerceptron*);
+  /// ownership passed
    void set_scaling_layer_pointer(ScalingLayer*);
+  /// ownership passed
    void set_principal_components_layer_pointer(PrincipalComponentsLayer*);
+  /// ownership passed
    void set_unscaling_layer_pointer(UnscalingLayer*);
+  /// ownership passed
    void set_bounding_layer_pointer(BoundingLayer*);
+  /// ownership passed
    void set_probabilistic_layer_pointer(ProbabilisticLayer*);
+  /// ownership passed
    void set_conditions_layer_pointer(ConditionsLayer*);
+  /// ownership passed
    void set_inputs_pointer(Inputs*);
+  /// ownership passed
    void set_outputs_pointer(Outputs*);
+  /// ownership passed
    void set_independent_parameters_pointer(IndependentParameters*);
 
    void set_scaling_layer(ScalingLayer&);

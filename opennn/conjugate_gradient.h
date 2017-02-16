@@ -61,7 +61,7 @@ public:
 
 
    // GENERAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit ConjugateGradient(LossIndex*);
 
 
@@ -91,6 +91,7 @@ public:
        }
 
        /// Conjugate gradient constructor.
+       /// ownership not passed
 
        ConjugateGradientResults(ConjugateGradient* new_conjugate_gradient_pointer)
        {
@@ -313,7 +314,7 @@ public:
    Vector<double> calculate_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const;
 
    // Training methods
-
+  /// ownership passed on return
    ConjugateGradientResults* perform_training(void);
 
    std::string write_training_algorithm_type(void) const;
@@ -322,6 +323,7 @@ public:
 
    Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed on return
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 

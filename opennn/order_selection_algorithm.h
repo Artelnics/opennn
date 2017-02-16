@@ -215,7 +215,7 @@ public:
     void check(void) const;
 
     /// Performs the order selection for a neural network.
-
+  /// ownership passed - use delete to destroy
     virtual OrderSelectionResults* perform_order_selection(void) = 0;
 
 protected:

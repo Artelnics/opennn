@@ -52,7 +52,7 @@ public:
     explicit GoldenSectionOrder(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit GoldenSectionOrder(TrainingStrategy*);
 
     // XML CONSTRUCTOR
@@ -91,11 +91,12 @@ public:
     };
 
     // Order selection methods
-
+  /// ownership passed - use delete to destroy
     GoldenSectionOrderResults* perform_order_selection(void);
 
     // Serialization methods
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

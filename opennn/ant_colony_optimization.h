@@ -52,7 +52,7 @@ public:
     explicit AntColonyOptimization(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit AntColonyOptimization(TrainingStrategy*);
 
     // XML CONSTRUCTOR

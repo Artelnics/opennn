@@ -51,14 +51,17 @@ public:
    explicit ErrorTerm(void);
 
    // NEURAL NETWORK CONSTRUCTOR
+  /// ownership not passed
 
    explicit ErrorTerm(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit ErrorTerm(DataSet*);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit ErrorTerm(NeuralNetwork*, DataSet*);
 
@@ -160,6 +163,7 @@ public:
    // Get methods
 
    /// Returns a pointer to the neural network object associated to the error term.
+  /// ownership not passed
 
    inline NeuralNetwork* get_neural_network_pointer(void) const 
    {
@@ -183,6 +187,7 @@ public:
 
 
    /// Returns a pointer to the data set object associated to the error term.
+  /// ownership not passed
 
    inline DataSet* get_data_set_pointer(void) const 
    {
@@ -206,6 +211,7 @@ public:
 
 
    /// Returns a pointer to the numerical differentiation object used in this error term object. 
+  /// ownership not passed
 
    inline NumericalDifferentiation* get_numerical_differentiation_pointer(void) const
    {
@@ -236,17 +242,23 @@ public:
 
    // Set methods
 
-   virtual void set(void);
-   virtual void set(NeuralNetwork*);
-   virtual void set(DataSet*);
-   virtual void set(NeuralNetwork*, DataSet*);
+  virtual void set(void);
+  /// ownership not passed
+  virtual void set(NeuralNetwork*);
+  /// ownership not passed
+  virtual void set(DataSet*);
+  /// ownership not passed
+  virtual void set(NeuralNetwork*, DataSet*);
 
    void set(const ErrorTerm&);
 
+  /// ownership not passed
    virtual void set_neural_network_pointer(NeuralNetwork*);
 
+  /// ownership not passed
    virtual void set_data_set_pointer(DataSet*);
 
+  /// ownership passed
    void set_numerical_differentiation_pointer(NumericalDifferentiation*);
 
    virtual void set_default(void);
@@ -350,6 +362,7 @@ public:
 
    virtual std::string to_string(void) const;
 
+  /// ownership passed
    virtual tinyxml2::XMLDocument* to_XML(void) const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

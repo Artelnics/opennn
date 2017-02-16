@@ -52,7 +52,7 @@ public:
     explicit F1ScoreOptimizationThreshold(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownsership not passed
     explicit F1ScoreOptimizationThreshold(TrainingStrategy*);
 
     // XML CONSTRUCTOR
@@ -112,13 +112,14 @@ public:
     void set_step(const double&);
 
     // Order selection methods
-
+  /// ownership passed - use delete to destroy
     F1ScoreOptimizationThresholdResults* perform_threshold_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

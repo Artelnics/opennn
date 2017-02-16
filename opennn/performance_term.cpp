@@ -220,15 +220,14 @@ PerformanceTerm& PerformanceTerm::operator = (const PerformanceTerm& other_perfo
 
       mathematical_model_pointer = other_performance_term.mathematical_model_pointer;
 
+      delete numerical_differentiation_pointer;
       if(other_performance_term.numerical_differentiation_pointer == NULL)
       {
-          delete numerical_differentiation_pointer;
-
           numerical_differentiation_pointer = NULL;
       }
       else
       {
-            numerical_differentiation_pointer = new NumericalDifferentiation(*other_performance_term.numerical_differentiation_pointer);
+        numerical_differentiation_pointer = new NumericalDifferentiation(*other_performance_term.numerical_differentiation_pointer);
       }
 
       display = other_performance_term.display;

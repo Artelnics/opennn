@@ -70,23 +70,24 @@ public:
    explicit LossIndex(void);
 
    // OBJECTIVE FUNCTIONAL CONSTRUCTOR
-
+  /// ownership passed
    explicit LossIndex(ErrorTerm*);
 
    // NEURAL NETWORK CONSTRUCTOR
 
+  /// ownership not passed
    explicit LossIndex(NeuralNetwork*);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
-
+  /// ownership not passed
    explicit LossIndex(NeuralNetwork*, DataSet*);
 
    // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
-
+  /// ownership not passed
    explicit LossIndex(NeuralNetwork*, MathematicalModel*);
 
    // NEURAL NETWORK, MATHEMATICAL MODEL AND DATA SET CONSTRUCTOR
-
+  /// ownership not passed
    explicit LossIndex(NeuralNetwork*, MathematicalModel*, DataSet*);
 
    // FILE CONSTRUCTOR
@@ -191,7 +192,7 @@ public:
    // Get methods
 
    /// Returns a pointer to the neural network associated to the loss functional.
-
+  /// ownership not passed
    inline NeuralNetwork* get_neural_network_pointer(void) const 
    {
       #ifdef __OPENNN_DEBUG__
@@ -213,7 +214,7 @@ public:
    }
 
    /// Returns a pointer to the mathematical model associated to the loss functional.
-
+  /// ownership not passed
    inline MathematicalModel* get_mathematical_model_pointer(void) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -235,7 +236,7 @@ public:
    }
 
    /// Returns a pointer to the data set associated to the loss functional.
-
+  /// ownership not passed
    inline DataSet* get_data_set_pointer(void) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -265,7 +266,7 @@ public:
    bool is_sum_squared_terms(void) const;
 
    // Objective terms
-
+  /// @{ ownership not passed
    SumSquaredError* get_sum_squared_error_pointer(void) const;
    MeanSquaredError* get_mean_squared_error_pointer(void) const;
    RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const;
@@ -275,12 +276,14 @@ public:
    WeightedSquaredError* get_weighted_squared_error_pointer(void) const;
    RocAreaError* get_roc_area_error_pointer(void) const;
    ErrorTerm* get_user_error_pointer(void) const;
-
+  /// @}
    // Regularization terms
 
+  /// @{ ownership not passed
    NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const;
    OutputsIntegrals* get_outputs_integrals_pointer(void) const;
    RegularizationTerm* get_user_regularization_pointer(void) const;
+  /// @}
 
    // Functional type methods
 
@@ -298,18 +301,23 @@ public:
    const bool& get_display(void) const;
 
    // Set methods
-
+  /// object ownership not passed
    void set_neural_network_pointer(NeuralNetwork*);
 
+  /// object ownership not passed
    void set_mathematical_model_pointer(MathematicalModel*);
+  /// object ownership not passed
    void set_data_set_pointer(DataSet*);
 
+  /// object ownership passed
    void set_user_error_pointer(ErrorTerm*);
+  /// object ownership passed
    void set_user_regularization_pointer(RegularizationTerm*);
 
    void set_default(void);
 
 #ifdef __OPENNN_MPI__
+  /// object ownership passed
    void set_MPI(DataSet*, NeuralNetwork*, const LossIndex*);
 #endif
 

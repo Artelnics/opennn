@@ -49,7 +49,7 @@ public:
     explicit ThresholdSelectionAlgorithm(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit ThresholdSelectionAlgorithm(TrainingStrategy*);
 
     // FILE CONSTRUCTOR
@@ -125,7 +125,7 @@ public:
     // METHODS
 
     // Get methods
-
+  /// ownership not passed
     TrainingStrategy* get_training_strategy_pointer(void) const;
 
     bool has_training_strategy(void) const;
@@ -137,6 +137,7 @@ public:
     const bool& get_display(void) const;
 
     // Set methods
+  /// ownership not passed
 
     void set_training_strategy_pointer(TrainingStrategy*);
 

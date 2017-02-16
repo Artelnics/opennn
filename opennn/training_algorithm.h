@@ -48,7 +48,7 @@ public:
    explicit TrainingAlgorithm(void);
 
    // GENERAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit TrainingAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
