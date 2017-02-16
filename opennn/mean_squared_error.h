@@ -50,15 +50,17 @@ public:
    explicit MeanSquaredError(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit MeanSquaredError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
 
+  /// ownership not passed
    explicit MeanSquaredError(DataSet*);
 
    // GENERAL CONSTRUCTOR
 
+  /// ownership not passed
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
 
    // XML CONSTRUCTOR
@@ -111,7 +113,7 @@ public:
    std::string write_error_term_type(void) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
 
    void write_XML(tinyxml2::XMLPrinter &) const;

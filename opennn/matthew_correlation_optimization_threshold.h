@@ -52,7 +52,7 @@ public:
     explicit MatthewCorrelationOptimizationThreshold(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit MatthewCorrelationOptimizationThreshold(TrainingStrategy*);
 
     // XML CONSTRUCTOR
@@ -112,13 +112,14 @@ public:
     void set_step(const double&);
 
     // Order selection methods
-
+  /// ownership passed - use delete to destroy
     MatthewCorrelationOptimizationThresholdResults* perform_threshold_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

@@ -160,6 +160,7 @@ public:
     void check(void) const;
 
     /// Performs the threshold selection for a neural network.
+  /// ownership passed - use delete to destroy
 
     virtual ThresholdSelectionResults* perform_threshold_selection(void) = 0;
 

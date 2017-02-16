@@ -53,6 +53,7 @@ public:
 
     // TRAINING STRATEGY CONSTRUCTOR
 
+  /// ownership not passed
     explicit KappaCoefficientOptimizationThreshold(TrainingStrategy*);
 
     // XML CONSTRUCTOR
@@ -113,12 +114,14 @@ public:
 
     // Order selection methods
 
+  /// ownership passed - use delete to destroy
     KappaCoefficientOptimizationThresholdResults* perform_threshold_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

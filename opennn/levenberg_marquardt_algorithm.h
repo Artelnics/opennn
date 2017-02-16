@@ -51,6 +51,7 @@ public:
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
 
+  /// ownership not passed
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
@@ -78,6 +79,7 @@ public:
 
        /// Random search constructor.
 
+  /// ownership not passed
        LevenbergMarquardtAlgorithmResults(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_algorithm_pointer)
        {
            Levenberg_Marquardt_algorithm_pointer = new_Levenberg_Marquardt_algorithm_pointer;
@@ -288,6 +290,7 @@ public:
    Vector<double> calculate_gradient(const Vector<double>&, const Matrix<double>&) const;
    Matrix<double> calculate_Hessian_approximation(const Matrix<double>&) const;
 
+  /// ownership passed - use delete to destroy
    LevenbergMarquardtAlgorithmResults* perform_training(void);
 
    std::string write_training_algorithm_type(void) const;
@@ -296,6 +299,7 @@ public:
 
    Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 

@@ -239,7 +239,7 @@ public:
     size_t get_input_index(const Vector<Variables::Use>, const size_t);
 
     /// Performs the inputs selection for a neural network.
-
+  /// ownership passed - use delete to destroy
     virtual InputsSelectionResults* perform_inputs_selection(void) = 0;
 
 
