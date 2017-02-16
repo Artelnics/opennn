@@ -50,14 +50,17 @@ public:
    explicit WeightedSquaredError(void);
 
    // NEURAL NETWORK CONSTRUCTOR
+  /// ownership not passed
 
    explicit WeightedSquaredError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit WeightedSquaredError(DataSet*);
 
    // GENERAL CONSTRUCTOR
+  /// ownership not passed
 
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*);
 
@@ -133,6 +136,7 @@ public:
 
    // Serialization methods
 
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
