@@ -144,9 +144,11 @@ int main(void)
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-        TrainingStrategy::Results training_strategy_results = local_training_strategy.perform_training();
+        TrainingStrategy::Results training_strategy_results;
+        local_training_strategy.perform_training(training_strategy_results);
 #else
-        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+        TrainingStrategy::Results training_strategy_results;
+        training_strategy.perform_training(training_strategy_results);
 #endif
 
         if(rank == 0)
