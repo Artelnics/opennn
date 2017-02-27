@@ -2878,7 +2878,7 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, co
 
     if(multilayer_perceptron_pointer)
     {
-        std::cout << "Inputs multilayer: " << multilayer_perceptron_pointer->get_inputs_number() << std::endl;
+      //        std::cout << "Inputs multilayer: " << multilayer_perceptron_pointer->get_inputs_number() << std::endl;
 
         outputs = multilayer_perceptron_pointer->calculate_outputs(outputs, parameters);
     }
