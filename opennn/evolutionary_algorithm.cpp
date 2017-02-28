@@ -604,6 +604,9 @@ void EvolutionaryAlgorithm::set_population_size(const size_t& new_population_siz
 
        #endif
 
+       if (!loss_index_pointer)
+         throw std::logic_error("loss index not set");
+       
        const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
        // Control sentence (if debug)
