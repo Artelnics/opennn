@@ -316,7 +316,11 @@ public:
         return(output_gradient);
    }
 
-   virtual Vector<double> calculate_gradient(void) const; 
+  virtual Vector<double> calculate_gradient(void) const {
+    if (!neural_network_pointer)
+      throw std::logic_error("No neural network specified");
+    return calculate_gradient(neural_network_pointer->arrange_parameters());
+  }
 
    virtual Vector<double> calculate_gradient(const Vector<double>&) const;
 

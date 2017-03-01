@@ -1637,120 +1637,6 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
     return single_hidden_layer_point_Hessian;
 }
 
-// Vector<double> calculate_gradient(void) const method
-
-/// Returns the default gradient vector of the error term.
-/// It uses numerical differentiation.
-
-Vector<double> ErrorTerm::calculate_gradient(void) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    // Neural network stuff
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    // Neural network stuff
-
-    const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
-
-    const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
-
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    const size_t neural_parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-
-    Vector< Vector< Vector<double> > > first_order_forward_propagation(2);
-
-    Vector<double> particular_solution;
-    Vector<double> homogeneous_solution;
-
-    // Data set stuff
-
-    const Instances& instances = data_set_pointer->get_instances();
-
-    const size_t training_instances_number = instances.count_training_instances_number();
-
-    const Vector<size_t> training_indices = instances.arrange_training_indices();
-
-    size_t training_index;
-
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
-    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> targets(outputs_number);
-
-    // Sum squared error stuff
-
-    Vector<double> output_gradient(outputs_number);
-
-    Vector< Matrix<double> > layers_combination_parameters_Jacobian;
-
-    Vector< Vector<double> > layers_inputs(layers_number);
-    Vector< Vector<double> > layers_delta;
-
-    Vector<double> point_gradient(neural_parameters_number, 0.0);
-
-    Vector<double> gradient(neural_parameters_number, 0.0);
-
-    int i;
-
-    #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
-     output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
-
-    for(i = 0; i < (int)training_instances_number; i++)
-    {
-        training_index = training_indices[i];
-
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-       first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-       const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-       const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-       layers_inputs = multilayer_perceptron_pointer->arrange_layers_input(inputs, layers_activation);
-
-       layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
-
-       if(!has_conditions_layer)
-       {
-           output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
-
-           layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-       }
-       else
-       {
-          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
-
-          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
-
-          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-       }
-
-       point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
-
-       #pragma omp critical
-       gradient += point_gradient;
-    }
-
-    return(gradient);
-}
-
-
 // Vector<double> calculate_gradient(const Vector<double>&) const method
 
 /// Returns the default gradient vector of the error term.
@@ -1768,12 +1654,9 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 
    // Loss index stuff
 
-   #ifdef __OPENNN_DEBUG__
-
-   std::ostringstream buffer;
-
-   if(!numerical_differentiation_pointer)
+  if(!numerical_differentiation_pointer)
    {
+     std::ostringstream buffer;
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector<double> calculate_gradient(const Vector<double>&) const method.\n"
              << "Numerical differentiation pointer is NULL.\n";
@@ -1781,7 +1664,6 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
       throw std::logic_error(buffer.str());
    }
 
-   #endif
 
    return(numerical_differentiation_pointer->calculate_gradient(*this, &ErrorTerm::calculate_error, parameters));
 }
