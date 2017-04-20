@@ -153,12 +153,15 @@ public:
    static ScalingUnscalingMethod get_scaling_unscaling_method(const std::string&);
 
    const MissingValues& get_missing_values(void) const;
-   MissingValues* get_missing_values_pointer(void);
+  /// ownership not passed
+  MissingValues* get_missing_values_pointer(void);
 
    const Variables& get_variables(void) const;
+  /// ownership not passed
    Variables* get_variables_pointer(void);
 
    const Instances& get_instances(void) const;
+  /// ownership not passed
    Instances* get_instances_pointer(void);
 
    const bool& get_display(void) const;
@@ -438,6 +441,7 @@ public:
    void print(void) const;
    void print_summary(void) const;
 
+  /// ownership passed on return
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 

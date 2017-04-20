@@ -148,7 +148,8 @@ public:
    // Serialization methods
 
    std::string to_string(void) const;
-   
+
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

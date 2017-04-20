@@ -50,7 +50,7 @@ public:
     explicit InputsSelectionAlgorithm(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit InputsSelectionAlgorithm(TrainingStrategy*);
 
     // FILE CONSTRUCTOR
@@ -156,7 +156,7 @@ public:
     // Get methods
 
     const bool& get_approximation(void) const;
-
+  /// ownership not passed
     TrainingStrategy* get_training_strategy_pointer(void) const;
 
     bool has_training_strategy(void) const;
@@ -185,6 +185,7 @@ public:
 
     void set_approximation(const bool&);
 
+  /// ownership not passed
     void set_training_strategy_pointer(TrainingStrategy*);
 
     void set_default(void);
@@ -238,7 +239,7 @@ public:
     size_t get_input_index(const Vector<Variables::Use>, const size_t);
 
     /// Performs the inputs selection for a neural network.
-
+  /// ownership passed - use delete to destroy
     virtual InputsSelectionResults* perform_inputs_selection(void) = 0;
 
 

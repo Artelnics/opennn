@@ -50,7 +50,7 @@ public:
    explicit GradientDescent(void); 
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit GradientDescent(LossIndex*);
 
    // XML CONSTRUCTOR
@@ -78,7 +78,7 @@ public:
        }
 
        /// Gradient descent constructor.
-
+     /// ownership not passed
        GradientDescentResults(GradientDescent* new_gradient_descent_pointer)
        {
            gradient_descent_pointer = new_gradient_descent_pointer;
@@ -229,7 +229,7 @@ public:
    const bool& get_reserve_elapsed_time_history(void) const;
 
    // Set methods
-
+  /// ownership not passed
    void set_loss_index_pointer(LossIndex*);
 
    void set_training_rate_algorithm(const TrainingRateAlgorithm&);
@@ -286,6 +286,7 @@ public:
 
    Vector<double> calculate_training_direction(const Vector<double>&) const;
 
+  /// ownership passed - use delete to destroy
    GradientDescentResults* perform_training(void);
 
    std::string write_training_algorithm_type(void) const;
@@ -294,6 +295,7 @@ public:
 
    Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 

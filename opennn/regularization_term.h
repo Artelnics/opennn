@@ -52,7 +52,7 @@ public:
    explicit RegularizationTerm(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit RegularizationTerm(NeuralNetwork*);
 
    // XML CONSTRUCTOR
@@ -153,7 +153,7 @@ public:
    // Get methods
 
    /// Returns a pointer to the neural network object associated to the error term.
-
+  /// ownership not passed
    inline NeuralNetwork* get_neural_network_pointer(void) const 
    {
         #ifdef __OPENNN_DEBUG__
@@ -176,6 +176,7 @@ public:
 
 
    /// Returns a pointer to the numerical differentiation object used in this error term object. 
+  /// ownership not passed
 
    inline NumericalDifferentiation* get_numerical_differentiation_pointer(void) const
    {
@@ -211,7 +212,7 @@ public:
    void set(const RegularizationTerm&);
 
    virtual void set_neural_network_pointer(NeuralNetwork*);
-
+  /// ownership passed
    void set_numerical_differentiation_pointer(NumericalDifferentiation*);
 
    virtual void set_default(void);
@@ -252,7 +253,7 @@ public:
    // Serialization methods
 
    virtual std::string to_string(void) const;
-
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

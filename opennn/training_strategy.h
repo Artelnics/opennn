@@ -68,7 +68,7 @@ public:
    explicit TrainingStrategy(void);
 
    // GENERAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit TrainingStrategy(LossIndex*);
 
    // XML CONSTRUCTOR
@@ -83,6 +83,9 @@ public:
 
    virtual ~TrainingStrategy(void);
 
+  TrainingStrategy(const TrainingStrategy&)=delete;
+  TrainingStrategy& operator=(const TrainingStrategy&)=delete;
+  
    // ENUMERATIONS
 
     /// Enumeration of all the available types of training algorithms.
@@ -137,31 +140,31 @@ public:
 
         /// Pointer to a structure with the results from the random search training algorithm.
 
-        RandomSearch::RandomSearchResults* random_search_results_pointer;
+     std::unique_ptr<RandomSearch::RandomSearchResults> random_search_results_pointer;
 
         /// Pointer to a structure with the results from the evolutionary training algorithm.
 
-        EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* evolutionary_algorithm_results_pointer;
+        std::unique_ptr<EvolutionaryAlgorithm::EvolutionaryAlgorithmResults> evolutionary_algorithm_results_pointer;
 
         /// Pointer to a structure with the results from the gradient descent training algorithm.
 
-        GradientDescent::GradientDescentResults* gradient_descent_results_pointer;
+        std::unique_ptr<GradientDescent::GradientDescentResults> gradient_descent_results_pointer;
 
         /// Pointer to a structure with the results from the conjugate gradient training algorithm.
 
-        ConjugateGradient::ConjugateGradientResults* conjugate_gradient_results_pointer;
+        std::unique_ptr<ConjugateGradient::ConjugateGradientResults> conjugate_gradient_results_pointer;
 
         /// Pointer to a structure with the results from the quasi-Newton method training algorithm.
 
-        QuasiNewtonMethod::QuasiNewtonMethodResults* quasi_Newton_method_results_pointer;
+        std::unique_ptr<QuasiNewtonMethod::QuasiNewtonMethodResults> quasi_Newton_method_results_pointer;
 
         /// Pointer to a structure with the results from the Levenberg-Marquardt training algorithm.
 
-        LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* Levenberg_Marquardt_algorithm_results_pointer;
+        std::unique_ptr<LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults> Levenberg_Marquardt_algorithm_results_pointer;
 
         /// Pointer to a structure with results from the Newton method training algorithm.
 
-        NewtonMethod::NewtonMethodResults* Newton_method_results_pointer;
+        std::unique_ptr<NewtonMethod::NewtonMethodResults> Newton_method_results_pointer;
 
   };
 
@@ -177,11 +180,12 @@ public:
    void initialize_random(void);
 
    // Get methods
-
+  /// ownership not passed
    LossIndex* get_loss_index_pointer(void) const;
 
    bool has_loss_index(void) const;
 
+  /// @{ ownership not passed
    RandomSearch* get_random_search_pointer(void) const;
    EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer(void) const;
 
@@ -191,7 +195,8 @@ public:
    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer(void) const;
 
    NewtonMethod* get_Newton_method_pointer(void) const;
-
+  /// @}
+  
    const InitializationType& get_initialization_type(void) const;
    const MainType& get_main_type(void) const;
    const RefinementType& get_refinement_type(void) const;
@@ -209,10 +214,12 @@ public:
    // Set methods
 
    void set(void);
+  /// ownership not passed
    void set(LossIndex*);
    virtual void set_default(void);
 
 #ifdef __OPENNN_MPI__
+  /// ownership not passed
    void set_MPI(LossIndex*, const TrainingStrategy*);
 #endif
 
@@ -240,7 +247,13 @@ public:
 
    void initialize_layers_autoencoding(void);
 
-   Results perform_training(void);
+   void perform_training(Results&);
+  Results&& perform_training(void) {
+    Results r;
+    perform_training(r);
+    return std::move(r);
+  }
+  
 
    // Serialization methods
 
@@ -248,6 +261,7 @@ public:
 
    void print(void) const;
 
+  /// ownership passed -- use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);   
 

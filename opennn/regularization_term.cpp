@@ -281,6 +281,7 @@ void RegularizationTerm::set_neural_network_pointer(NeuralNetwork* new_neural_ne
 
 void RegularizationTerm::set_numerical_differentiation_pointer(NumericalDifferentiation* new_numerical_differentiation_pointer)
 {
+  delete numerical_differentiation_pointer;
    numerical_differentiation_pointer = new_numerical_differentiation_pointer;
 }
 

@@ -49,7 +49,7 @@ public:
     explicit OrderSelectionAlgorithm(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit OrderSelectionAlgorithm(TrainingStrategy*);
 
     // FILE CONSTRUCTOR
@@ -145,6 +145,7 @@ public:
     // METHODS
 
     // Get methods
+  /// ownership not passed
 
     TrainingStrategy* get_training_strategy_pointer(void) const;
 
@@ -171,6 +172,7 @@ public:
     std::string write_loss_calculation_method(void) const;
 
     // Set methods
+  /// ownership not passed
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
@@ -215,7 +217,7 @@ public:
     void check(void) const;
 
     /// Performs the order selection for a neural network.
-
+  /// ownership passed - use delete to destroy
     virtual OrderSelectionResults* perform_order_selection(void) = 0;
 
 protected:

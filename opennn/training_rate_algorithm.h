@@ -55,7 +55,7 @@ public:
    explicit TrainingRateAlgorithm(void);
 
    // GENERAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit TrainingRateAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
@@ -202,7 +202,7 @@ public:
    // METHODS
 
    // Get methods
-
+  /// ownership not passed
    LossIndex* get_loss_index_pointer(void) const;
 
    bool has_loss_index(void) const;
@@ -228,8 +228,10 @@ public:
    // Set methods
 
    void set(void);
-   void set(LossIndex*);
+   /// ownership not passed
+  void set(LossIndex*);
 
+  /// ownership not passed
    void set_loss_index_pointer(LossIndex*);
 
    // Training operators
@@ -267,6 +269,7 @@ public:
 
    // Serialization methods
 
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);   
 

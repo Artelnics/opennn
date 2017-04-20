@@ -719,7 +719,7 @@ Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const s
         neural_network->set_MPI(neural_network);
 
 #endif
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         final_parameters.set(neural_network->arrange_parameters());
         final = get_final_losss(training_strategy_results);
@@ -738,7 +738,7 @@ Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const s
         neural_network->set_MPI(neural_network);
 
 #endif
-        training_strategy_results = training_strategy_pointer->perform_training();
+         training_strategy_pointer->perform_training(training_strategy_results);
 
         final_parameters.set(neural_network->arrange_parameters());
         final = get_final_losss(training_strategy_results);
@@ -759,7 +759,7 @@ Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const s
         neural_network->set_MPI(neural_network);
 
 #endif
-        training_strategy_results = training_strategy_pointer->perform_training();
+         training_strategy_pointer->perform_training(training_strategy_results);
 
         current_loss = get_final_losss(training_strategy_results);
 
@@ -880,7 +880,7 @@ Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const s
     {
         multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
         neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+       training_strategy_pointer->perform_training(training_strategy_results);
 
         final_parameters.set(neural_network->arrange_parameters());
         final = get_final_losss(training_strategy_results);
@@ -895,7 +895,7 @@ Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const s
         }
 
         neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         final_parameters.set(neural_network->arrange_parameters());
         final = get_final_losss(training_strategy_results);
@@ -912,7 +912,7 @@ Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const s
 
         neural_network->randomize_parameters_normal();
 
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         current_loss = get_final_losss(training_strategy_results);
 
@@ -1034,7 +1034,7 @@ Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size
     {
         multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
         neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+        training_strategy_pointer->perform_training(training_strategy_results);
 
         final_parameters.set(neural_network->arrange_parameters());
         mean_final = get_final_losss(training_strategy_results);
@@ -1047,7 +1047,7 @@ Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size
         }
 
         neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+         training_strategy_pointer->perform_training(training_strategy_results);
 
         final_parameters.set(neural_network->arrange_parameters());
         mean_final = get_final_losss(training_strategy_results);
@@ -1064,7 +1064,7 @@ Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size
 
         neural_network->randomize_parameters_normal();
 
-        training_strategy_results = training_strategy_pointer->perform_training();
+         training_strategy_pointer->perform_training(training_strategy_results);
 
         current_loss = get_final_losss(training_strategy_results);
 

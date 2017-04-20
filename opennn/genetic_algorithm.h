@@ -52,6 +52,7 @@ public:
     explicit GeneticAlgorithm(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
+  /// ownership not passed
 
     explicit GeneticAlgorithm(TrainingStrategy*);
 
@@ -246,12 +247,14 @@ public:
 
     size_t get_optimal_individual_index(void) const;
 
+  /// ownership passed - use delete to destroy
     GeneticAlgorithmResults* perform_inputs_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

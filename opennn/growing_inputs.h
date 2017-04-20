@@ -52,6 +52,7 @@ public:
     explicit GrowingInputs(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
+  /// ownership not passed
 
     explicit GrowingInputs(TrainingStrategy*);
 
@@ -106,14 +107,15 @@ public:
     void set_maximum_selection_failures(const size_t&);
 
     // Order selection methods
-
+  /// ownership passed - use delete to destroy
     GrowingInputsResults* perform_inputs_selection(void);
 
     // Serialization methods
 
     Matrix<std::string> to_string_matrix(void) const;
 
-    tinyxml2::XMLDocument* to_XML(void) const;
+  /// ownership passed - use delete to destroy
+  tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;

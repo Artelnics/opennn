@@ -52,7 +52,7 @@ public:
    explicit NewtonMethod(void); 
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit NewtonMethod(LossIndex*);
 
    // XML CONSTRUCTOR
@@ -81,7 +81,7 @@ public:
        }
 
        /// Newton method constructor.
-
+     /// ownership not passed
        NewtonMethodResults(NewtonMethod* new_Newton_method_pointer)
        {
            Newton_method_pointer = new_Newton_method_pointer;
@@ -191,6 +191,7 @@ public:
    // METHODS
 
    const TrainingRateAlgorithm& get_training_rate_algorithm(void) const;
+  /// ownership not passed
    TrainingRateAlgorithm* get_training_rate_algorithm_pointer(void);
 
    // Training parameters
@@ -231,7 +232,7 @@ public:
    const bool& get_reserve_elapsed_time_history(void) const;
 
    // Utilities
-
+  /// ownership not passed
    void set_loss_index_pointer(LossIndex*);
 
    void set_default(void);
@@ -285,7 +286,7 @@ public:
 
    Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const;
    Vector<double> calculate_training_direction(const Vector<double>&, const Matrix<double>&) const;
-
+  /// ownership passed - use delete to destroy
    NewtonMethodResults* perform_training(void);
 
    std::string write_training_algorithm_type(void) const;
@@ -294,7 +295,8 @@ public:
 
    Matrix<std::string> to_string_matrix(void) const;
 
-   tinyxml2::XMLDocument* to_XML(void) const;
+  /// ownership passed - use delete to destroy
+  tinyxml2::XMLDocument* to_XML(void) const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;

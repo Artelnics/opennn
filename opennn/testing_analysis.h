@@ -49,26 +49,31 @@ public:
    explicit TestingAnalysis(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit TestingAnalysis(NeuralNetwork*);
 
    // MATHEMATICAL MODEL CONSTRUCTOR
+  /// ownership not passed
 
    explicit TestingAnalysis(MathematicalModel*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit TestingAnalysis(DataSet*);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit TestingAnalysis(NeuralNetwork*, DataSet*);
 
    // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
+  /// ownership not passed
 
    explicit TestingAnalysis(NeuralNetwork*, MathematicalModel*);
 
    // NEURAL NETWORK, DATA SET AND MATHEMATICAL MODEL CONSTRUCTOR
+  /// ownership not passed
 
    explicit TestingAnalysis(NeuralNetwork*, DataSet*, MathematicalModel*);
 
@@ -169,18 +174,22 @@ public:
    // METHODS
 
    // Get methods
+  /// @{ ownership not passed
 
    NeuralNetwork* get_neural_network_pointer(void) const;
    DataSet* get_data_set_pointer(void) const;
    MathematicalModel* get_mathematical_model_pointer(void) const;
-
+  /// @}
+  
    const bool& get_display(void) const;
 
    // Set methods
 
+  /// @{ ownership not passed
    void set_neural_network_pointer(NeuralNetwork*);
    void set_data_set_pointer(DataSet*);
    void set_mathematical_model_pointer(MathematicalModel*);
+  /// @}
 
    void set_display(const bool&);
 
@@ -292,6 +301,7 @@ public:
 
    void print(void) const;
 
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

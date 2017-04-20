@@ -88,7 +88,7 @@ public:
    Vector<double> calculate_h(const Vector<double>&) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);   
 

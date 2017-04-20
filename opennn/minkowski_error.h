@@ -49,15 +49,17 @@ public:
    explicit MinkowskiError(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownerhip not passed
    explicit MinkowskiError(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
 
+  /// ownerhip not passed
    explicit MinkowskiError(DataSet*);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
+  /// ownerhip not passed
    explicit MinkowskiError(NeuralNetwork*, DataSet*);
 
    // XML CONSTRUCTOR
@@ -97,7 +99,7 @@ public:
    std::string write_error_term_type(void) const;
 
    // Serialization methods
-
+  /// ownership passed - use delete to destroy
    tinyxml2::XMLDocument* to_XML(void) const;   
    void from_XML(const tinyxml2::XMLDocument&);   
 

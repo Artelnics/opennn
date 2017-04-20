@@ -52,7 +52,7 @@ public:
     explicit SimulatedAnnealingOrder(void);
 
     // TRAINING STRATEGY CONSTRUCTOR
-
+  /// ownership not passed
     explicit SimulatedAnnealingOrder(TrainingStrategy*);
 
     // XML CONSTRUCTOR
@@ -116,6 +116,7 @@ public:
 
     Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
     tinyxml2::XMLDocument* to_XML(void) const;
     void from_XML(const tinyxml2::XMLDocument&);
 

@@ -52,26 +52,31 @@ public:
    explicit PerformanceTerm(void);
 
    // NEURAL NETWORK CONSTRUCTOR
-
+  /// ownership not passed
    explicit PerformanceTerm(NeuralNetwork*);
 
    // DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit PerformanceTerm(DataSet*);
 
    // MATHEMATICAL MODEL CONSTRUCTOR
+  /// ownership not passed
 
    explicit PerformanceTerm(MathematicalModel*);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit PerformanceTerm(NeuralNetwork*, DataSet*);
 
    // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
+  /// ownership not passed
 
    explicit PerformanceTerm(NeuralNetwork*, MathematicalModel*);
 
    // NEURAL NETWORK, MATHEMATICAL MODEL AND DATA SET CONSTRUCTOR
+  /// ownership not passed
 
    explicit PerformanceTerm(NeuralNetwork*, MathematicalModel*, DataSet*);
 
@@ -173,6 +178,7 @@ public:
    // Get methods
 
    /// Returns a pointer to the neural network object associated to the performance term.
+  /// ownership not passed
 
    inline NeuralNetwork* get_neural_network_pointer(void) const 
    {
@@ -196,6 +202,7 @@ public:
 
 
    /// Returns a pointer to the mathematical model object associated to the performance term.
+  /// ownership not passed
 
    inline MathematicalModel* get_mathemtaical_model_pointer(void) const 
    {
@@ -220,6 +227,7 @@ public:
 
 
    /// Returns a pointer to the data set object associated to the performance term.
+  /// ownership not passed
 
    inline DataSet* get_data_set_pointer(void) const 
    {
@@ -243,6 +251,7 @@ public:
 
 
    /// Returns a pointer to the numerical differentiation object used in this performance term object. 
+  /// ownership not passed
 
    inline NumericalDifferentiation* get_numerical_differentiation_pointer(void) const
    {
@@ -275,20 +284,30 @@ public:
    // Set methods
 
    virtual void set(void);
+  /// ownership not passed
    virtual void set(NeuralNetwork*);
+  /// ownership not passed
    virtual void set(DataSet*);
+  /// ownership not passed
    virtual void set(MathematicalModel*);
+  /// ownership not passed
    virtual void set(NeuralNetwork*, DataSet*);
+  /// ownership not passed
    virtual void set(NeuralNetwork*, MathematicalModel*);
+  /// ownership not passed
    virtual void set(NeuralNetwork*, MathematicalModel*, DataSet*);
 
    void set(const PerformanceTerm&);
 
+  /// ownership not passed
    virtual void set_neural_network_pointer(NeuralNetwork*);
 
+  /// ownership not passed
    virtual void set_mathematical_model_pointer(MathematicalModel*);
+  /// ownership not passed
    virtual void set_data_set_pointer(DataSet*);
 
+  /// ownership passed
    void set_numerical_differentiation_pointer(NumericalDifferentiation*);
 
    virtual void set_default(void);
@@ -388,6 +407,7 @@ public:
 
    virtual std::string to_string(void) const;
 
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 

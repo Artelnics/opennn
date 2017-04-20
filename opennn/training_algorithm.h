@@ -48,7 +48,7 @@ public:
    explicit TrainingAlgorithm(void);
 
    // GENERAL CONSTRUCTOR
-
+  /// ownership not passed
    explicit TrainingAlgorithm(LossIndex*);
 
    // XML CONSTRUCTOR
@@ -121,6 +121,7 @@ public:
    // METHODS
 
    // Get methods
+  /// ownership not passed
 
    LossIndex* get_loss_index_pointer(void) const;
 
@@ -139,9 +140,11 @@ public:
    // Set methods
 
    void set(void);
+  /// ownership not passed
    void set(LossIndex*);
    virtual void set_default(void);
 
+  /// ownership not passed
    virtual void set_loss_index_pointer(LossIndex*);
 
    void set_display(const bool&);
@@ -157,7 +160,8 @@ public:
 
    /// Trains a neural network which has a loss functional associated. 
 
-   virtual TrainingAlgorithmResults* perform_training(void) = 0;
+  /// ownership passed - use delete to destroy
+    virtual TrainingAlgorithmResults* perform_training(void) = 0;
 
    virtual std::string write_training_algorithm_type(void) const;
 
@@ -168,6 +172,7 @@ public:
 
    virtual Matrix<std::string> to_string_matrix(void) const;
 
+  /// ownership passed - use delete to destroy
    virtual tinyxml2::XMLDocument* to_XML(void) const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
