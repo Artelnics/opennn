@@ -137,3 +137,6 @@ variables.cpp
 
 add_library(opennn ${OPENNN_SRCS})
 target_link_libraries(opennn tinyxml2)
+
+INSTALL(TARGETS opennn ARCHIVE DESTINATION lib INCLUDES DESTINATION include/opennn)
+INSTALL(DIRECTORY . DESTINATION include/opennn FILES_MATCHING PATTERN "*.h")

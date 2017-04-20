@@ -4,4 +4,4 @@ target_link_libraries(yacht_hydrodynamics_production opennn)
 
 
 
-install(TARGETS yacht_hydrodynamics_production RUNTIME DESTINATION bin)
+#install(TARGETS yacht_hydrodynamics_production RUNTIME DESTINATION bin)
