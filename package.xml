@@ -5,6 +5,9 @@
   <description>
     Open source Neural Network and Deep Learning libary.
   </description>
+  <maintainer email="aeolus@aeolus.com">
+    The Aeolus Authors
+  </maintainer>
   <license>LGPL-3.0</license>
 
   <url>https://github.com/aeolusbot/OpenNN</url>
