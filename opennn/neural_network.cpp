@@ -5258,9 +5258,9 @@ std::string NeuralNetwork::write_expression(void) const
         search = " (";
         replace = "_";
 
-        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        while((pos = outputs_name[i].find(search, pos)) != std::string::npos)
         {
-            inputs_name[i].replace(pos, search.length(), replace);
+            outputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
 
@@ -5269,9 +5269,9 @@ std::string NeuralNetwork::write_expression(void) const
         search = " ";
         replace = "_";
 
-        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        while((pos = outputs_name[i].find(search, pos)) != std::string::npos)
         {
-            inputs_name[i].replace(pos, search.length(), replace);
+            outputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
 
@@ -5280,9 +5280,9 @@ std::string NeuralNetwork::write_expression(void) const
         search = "-";
         replace = "_";
 
-        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        while((pos = outputs_name[i].find(search, pos)) != std::string::npos)
         {
-            inputs_name[i].replace(pos, search.length(), replace);
+            outputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
 
@@ -5291,9 +5291,9 @@ std::string NeuralNetwork::write_expression(void) const
         search = "(";
         replace = "_";
 
-        while((pos = inputs_name[i].find(search, pos)) != std::string::npos)
+        while((pos = outputs_name[i].find(search, pos)) != std::string::npos)
         {
-            inputs_name[i].replace(pos, search.length(), replace);
+            outputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
     }
