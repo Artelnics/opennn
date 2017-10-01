@@ -2109,11 +2109,11 @@ void EvolutionaryAlgorithm::evaluate_population(void)
 
    const size_t population_size = get_population_size();
 
+   loss_index_pointer->start_loss_calculation(get_population());
+   
    for(size_t i = 0; i < population_size; i++)
    {
-      individual = get_individual(i);
-
-      loss[i] = loss_index_pointer->calculate_loss(individual);
+      loss[i] = loss_index_pointer->calculate_loss_for_individual(i);
       
       if(!(loss[i] > -1.0e99 && loss[i] < 1.0e99))
       {

@@ -408,6 +408,10 @@ public:
    double calculate_loss_derivative(const Vector<double>&, const double&) const;
    double calculate_loss_second_derivative(const Vector<double>&, const double&) const;
 
+  /// support for population dependent objective functions
+  virtual void start_loss_calculation(const Matrix<double>& population) {m_population=&population;}
+  virtual double calculate_loss_for_individual(size_t i) const {return calculate_loss(m_population->arrange_row(i));}
+
    // Serialization methods
 
    virtual tinyxml2::XMLDocument* to_XML(void) const;   
@@ -506,7 +510,7 @@ private:
    /// Display messages to screen. 
 
    bool display;
-
+  const Matrix<double> *m_population; // weak reference to an EA population
 };
 
 }
