@@ -408,8 +408,12 @@ public:
    double calculate_loss_derivative(const Vector<double>&, const double&) const;
    double calculate_loss_second_derivative(const Vector<double>&, const double&) const;
 
-  /// support for population dependent objective functions
+  /// population dependent objective function support. Call this
+  /// method with the population matrix prior to calling
+  /// calculate_loss_for_individual. population must remain valid for
+  /// all susequent calls of calculate_loss_for_individual
   virtual void start_loss_calculation(const Matrix<double>& population) {m_population=&population;}
+  /// Return loss for inidvidual \a i in population set by previous call to start_loss_calculation
   virtual double calculate_loss_for_individual(size_t i) const {return calculate_loss(m_population->arrange_row(i));}
 
    // Serialization methods
@@ -445,11 +449,11 @@ private:
 
    /// Type of error term.
 
-   ErrorType error_type;
+   ErrorType error_type=NO_ERROR;
 
    /// Type of regularization term.
 
-   RegularizationType regularization_type;
+   RegularizationType regularization_type=NO_REGULARIZATION;
 
    // Error terms
 
@@ -510,7 +514,7 @@ private:
    /// Display messages to screen. 
 
    bool display;
-  const Matrix<double> *m_population; // weak reference to an EA population
+  const Matrix<double> *m_population=nullptr; // weak reference to an EA population
 };
 
 }
