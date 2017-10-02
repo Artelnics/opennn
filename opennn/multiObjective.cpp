@@ -48,7 +48,10 @@ void MultiObjective::start_loss_calculation(const Matrix<double> &population)
   // invert range outside of the loop
   vector<double> invRange;
   for (size_t i=0; i<num_objectives(); ++i)
-    invRange.push_back(1/(maxObj[i]-minObj[i]));
+    if (maxObj[i]=minObj[i])
+      invRange.push_back(0);
+    else
+      invRange.push_back(1/(maxObj[i]-minObj[i]));
   
   // now mixin individual objectives to discriminate between
   // individuals of the same dominance, and add the regularisation term
