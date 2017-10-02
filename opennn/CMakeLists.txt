@@ -68,6 +68,7 @@ variables.h
     kappa_coefficient_optimization_threshold.h 
     roc_curve_optimization_threshold.h 
     selective_pruning.h
+    multiObjective.h
 )
 
 set(OPENNN_SRCS
@@ -133,7 +134,8 @@ variables.cpp
     kappa_coefficient_optimization_threshold.cpp 
     roc_curve_optimization_threshold.cpp 
     selective_pruning.cpp
-        )
+    multiObjective.cpp
+)
 
 add_library(opennn ${OPENNN_SRCS})
 target_link_libraries(opennn tinyxml2)

@@ -112,6 +112,7 @@ HEADERS += \
     youden_index_optimization_threshold.h \
     kappa_coefficient_optimization_threshold.h \
     roc_curve_optimization_threshold.h \
+    multiObjective.h \
     selective_pruning.h
 
 SOURCES += \
@@ -177,6 +178,7 @@ SOURCES += \
     youden_index_optimization_threshold.cpp \
     kappa_coefficient_optimization_threshold.cpp \
     roc_curve_optimization_threshold.cpp \
+    multiObjective.cpp \
     selective_pruning.cpp
 
 # TinyXML2 library
