@@ -2,10 +2,21 @@
 cmake_minimum_required(VERSION 2.6)
 project(OpenNN)
 
+option (OPENNN_MPI "Use MPI" FALSE)
+option (OPENNN_OMP "Use OpenMP" FALSE)
+
 set (CMAKE_CXX_STANDARD 11)
 SET(CPACK_GENERATOR "TGZ")
 
 if(__OPENNN_MPI__)
+   message(FATAL_ERROR "Please use OPENNN_MPI instead of __OPENNN_MPI__.")
+endif()
+
+if(__OPENNN_OMP__)
+   message(FATAL_ERROR "Please use OPENNN_OMP instead of __OPENNN_OMP__.")
+endif()
+
+if(OPENNN_MPI)
    find_package(MPI)
    if(MPI_FOUND)
         message("Using MPI")
@@ -18,7 +29,7 @@ if(__OPENNN_MPI__)
 endif()
 
 
-if(__OPENNN_OMP__)
+if(OPENNN_OMP)
     message("Using OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")#${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")#${OpenMP_CXX_FLAGS}")
