@@ -67,6 +67,7 @@ variables.h
     youden_index_optimization_threshold.h 
     kappa_coefficient_optimization_threshold.h 
     roc_curve_optimization_threshold.h 
+    ant_colony_optimization.h 
     selective_pruning.h
 )
 
@@ -132,8 +133,15 @@ variables.cpp
     youden_index_optimization_threshold.cpp 
     kappa_coefficient_optimization_threshold.cpp 
     roc_curve_optimization_threshold.cpp 
+    ant_colony_optimization.cpp 
     selective_pruning.cpp
         )
 
 add_library(opennn ${OPENNN_SRCS})
 target_link_libraries(opennn tinyxml2)
+
+set_target_properties(opennn PROPERTIES PUBLIC_HEADER "${OPENNN_HDRS}")
+install(TARGETS opennn 
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include/opennn
+)
