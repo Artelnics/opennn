@@ -4,6 +4,9 @@ project(OpenNN)
 
 option (OPENNN_MPI "Use MPI" FALSE)
 option (OPENNN_OMP "Use OpenMP" FALSE)
+option (OPENNN_EXAMPLES "Build examples" TRUE)
+option (OPENNN_TESTS "Build tests" TRUE)
+
 
 set (CMAKE_CXX_STANDARD 11)
 SET(CPACK_GENERATOR "TGZ")
@@ -43,8 +46,14 @@ add_subdirectory(tinyxml2)
 add_subdirectory(eigen)
 add_subdirectory(opennn)
 include_directories(opennn)
-add_subdirectory(examples)
-add_subdirectory(blank)
-add_subdirectory(tests)
+
+if(OPENNN_EXAMPLES)
+    add_subdirectory(examples)
+    add_subdirectory(blank)
+endif()
+
+if(OPENNN_TESTS)
+    add_subdirectory(tests)
+endif()
 
 include(CPack)
