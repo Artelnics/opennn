@@ -24,7 +24,7 @@ void MultiObjective::start_loss_calculation(const Matrix<double> &population)
 
   // compute maximum and minimum objective functions, to allow
   // discrimination between individuals with the same dominance
-  vector<double> maxObj(num_objectives()),
+  vector<double> maxObj(num_objectives(),-numeric_limits<double>::max()),
     minObj(num_objectives(),numeric_limits<double>::max());
   for (auto& i: obj)
     for (size_t j=0; j<i.size() && j<num_objectives(); ++j)
@@ -48,7 +48,7 @@ void MultiObjective::start_loss_calculation(const Matrix<double> &population)
   // invert range outside of the loop
   vector<double> invRange;
   for (size_t i=0; i<num_objectives(); ++i)
-    if (maxObj[i]=minObj[i])
+    if (maxObj[i]==minObj[i])
       invRange.push_back(0);
     else
       invRange.push_back(1/(maxObj[i]-minObj[i]));
