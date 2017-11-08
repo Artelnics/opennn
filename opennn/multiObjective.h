@@ -24,7 +24,7 @@ namespace OpenNN
     virtual size_t num_objectives() const=0;
     /// evaluate the objectives for individual desribed by \a parameters
     /// @return vector of length num_objectives()
-    virtual std::vector<double> objectives(OpenNN::Vector<double>& parameters)=0;
+    virtual std::vector<double> objectives(const OpenNN::Vector<double>& parameters)=0;
   };
 }
 
