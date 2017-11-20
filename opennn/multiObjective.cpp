@@ -40,8 +40,8 @@ void MultiObjective::start_loss_calculation(const Matrix<double> &population)
     for (size_t j=0; j<obj.size(); ++j)
       {
         bool dominates=true;
-        for (size_t k=0; k<num_objectives(); ++k)
-          dominates &= i[k] < obj[j][k];
+        for (size_t k=0; dominates && k<num_objectives(); ++k)
+          dominates = dominates && (i[k] < obj[j][k]);
         loss[j] += dominates * num_objectives();
       }
 
