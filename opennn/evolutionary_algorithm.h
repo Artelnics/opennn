@@ -439,6 +439,8 @@ private:
 
    Vector<bool> selection;
 
+   Vector<bool> elite; // records if individual is an elite
+
    // Training operators
 
    /// Fitness assignment training operators enumeration.

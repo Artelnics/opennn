@@ -2172,11 +2172,14 @@ void EvolutionaryAlgorithm::perform_roulette_wheel_selection(void)
 
    const Vector<size_t> elite_individuals = fitness.calculate_maximal_indices(elitism_size);
 
+   elite.clear();
+   elite.resize(population_size);
    for(size_t i = 0; i < elitism_size; i++)
    {
        const size_t elite_individual_index = elite_individuals[i];
 
        selection[elite_individual_index] = true;
+       elite[elite_individual_index]=true;
    }
 
    const size_t selection_target = population_size/2 - elitism_size;
@@ -2297,6 +2300,8 @@ void EvolutionaryAlgorithm::perform_intermediate_recombination(void)
 
    double scaling_factor;
 
+   Vector<bool> newElites(population_size);
+
    for(size_t i = 0; i < population_size; i++)
    {
       if(selection[i])
@@ -2305,11 +2310,18 @@ void EvolutionaryAlgorithm::perform_intermediate_recombination(void)
 
          parent_1 = get_individual(i);
 
-         // Generate 2 offspring with parent 1
+         // Generate 2 offspring with parent 1, unless they're elite
 
          for(size_t j = 0; j < 2; j++)
          {
-            // Choose parent 2 at random among selected individuals   
+           if (j==0 && elite[i]) // insert elite individuals into the resultant population without change
+             {
+               newElites[new_population_size_count]=true;
+               new_population.set_row(new_population_size_count++, parent_1);
+               continue;
+             }
+
+           // Choose parent 2 at random among selected individuals   
 
             parent_2_candidate = false;
 
@@ -2373,6 +2385,7 @@ void EvolutionaryAlgorithm::perform_intermediate_recombination(void)
 
    // Set new population
 
+   elite=newElites;
    population = new_population;
 }
 
@@ -2427,6 +2440,8 @@ void EvolutionaryAlgorithm::perform_line_recombination(void)
 
    double scaling_factor;
 
+   Vector<bool> newElites(population_size);
+   
    for(size_t i = 0; i < population_size; i++)
    {
       if(selection[i])
@@ -2439,7 +2454,14 @@ void EvolutionaryAlgorithm::perform_line_recombination(void)
 
          for(size_t j = 0; j < 2; j++)
          {
-            // Choose parent 2 at random among selected individuals   
+           if (j==0 && elite[i]) // insert elite individuals into the resultant population without change
+             {
+               newElites[new_population_size_count]=true;
+               new_population.set_row(new_population_size_count++, parent_1);
+               continue;
+             }
+
+           // Choose parent 2 at random among selected individuals   
 
             parent_2_candidate = false;
 
@@ -2484,6 +2506,7 @@ void EvolutionaryAlgorithm::perform_line_recombination(void)
       }
    }
 
+   
    // Count new population size control sentence
 
    if(new_population_size_count != population_size)
@@ -2499,6 +2522,7 @@ void EvolutionaryAlgorithm::perform_line_recombination(void)
 
    // Set new population
 
+   elite=newElites;
    population = new_population;
 }
 
@@ -2521,23 +2545,24 @@ void EvolutionaryAlgorithm::perform_normal_mutation(void)
    double pointer;
 
    for(size_t i = 0; i < population_size; i++)
-   {
-      individual = get_individual(i);
+     if (!elite[i])
+       {
+         individual = get_individual(i);
 
-      for(size_t j = 0; j < parameters_number; j++)
-      {
-         // Random number between 0 and 1
+         for(size_t j = 0; j < parameters_number; j++)
+           {
+             // Random number between 0 and 1
 
-         pointer = calculate_random_uniform(0.0, 1.0);
+             pointer = calculate_random_uniform(0.0, 1.0);
+             
+             if(pointer < mutation_rate)
+               {
+                 individual[j] += calculate_random_normal(0.0, mutation_range);
+               }
+           }
 
-         if(pointer < mutation_rate)
-         {
-            individual[j] += calculate_random_normal(0.0, mutation_range);
-         }
-      }
-
-      set_individual(i, individual);
-   }
+         set_individual(i, individual);
+       }
 }  
 
 
@@ -2559,29 +2584,30 @@ void EvolutionaryAlgorithm::perform_uniform_mutation(void)
    double pointer;
 
    for(size_t i = 0; i < population_size; i++)
-   {
-      individual = get_individual(i);
+     if (!elite[i])
+       {
+         individual = get_individual(i);
 
-      for(size_t j = 0; j < parameters_number; j++)
-      {
-         // random number between 0 and 1
+         for(size_t j = 0; j < parameters_number; j++)
+           {
+             // random number between 0 and 1
 
-          pointer = calculate_random_uniform(0.0, 1.0);
+             pointer = calculate_random_uniform(0.0, 1.0);
 
-         if(pointer < mutation_rate)
-         {
-            individual[j] += calculate_random_uniform(-mutation_range, mutation_range);
-         }
-      }
+             if(pointer < mutation_rate)
+               {
+                 individual[j] += calculate_random_uniform(-mutation_range, mutation_range);
+               }
+           }
 
-      set_individual(i, individual);
-   }
+         set_individual(i, individual);
+       }
 }
 
 
 // std::string to_string(void) const method
 
-/// Returns a string representation of the current evolutionary algorithm resutls structure. 
+/// Returns a string representation of the current evolutionary algorithm results structure. 
 
 std::string EvolutionaryAlgorithm::EvolutionaryAlgorithmResults::to_string(void) const
 {
