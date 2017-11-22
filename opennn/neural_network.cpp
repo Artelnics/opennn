@@ -296,25 +296,35 @@ NeuralNetwork& NeuralNetwork::operator = (const NeuralNetwork& other_neural_netw
     {
         delete_pointers();
 
-        inputs_pointer = new Inputs(*other_neural_network.inputs_pointer);
+        if (other_neural_network.inputs_pointer)
+          inputs_pointer = new Inputs(*other_neural_network.inputs_pointer);
 
-        outputs_pointer = new Outputs(*other_neural_network.outputs_pointer);
+        if (other_neural_network.outputs_pointer)
+          outputs_pointer = new Outputs(*other_neural_network.outputs_pointer);
 
-        multilayer_perceptron_pointer = new MultilayerPerceptron(*other_neural_network.multilayer_perceptron_pointer);
+        if (other_neural_network.multilayer_perceptron_pointer)
+          multilayer_perceptron_pointer = new MultilayerPerceptron(*other_neural_network.multilayer_perceptron_pointer);
 
-        scaling_layer_pointer = new ScalingLayer(*other_neural_network.scaling_layer_pointer);
+        if (other_neural_network.principal_components_layer_pointer)
+          scaling_layer_pointer = new ScalingLayer(*other_neural_network.scaling_layer_pointer);
 
-        principal_components_layer_pointer = new PrincipalComponentsLayer(*other_neural_network.principal_components_layer_pointer);
+        if (other_neural_network.principal_components_layer_pointer)
+          principal_components_layer_pointer = new PrincipalComponentsLayer(*other_neural_network.principal_components_layer_pointer);
 
-        unscaling_layer_pointer = new UnscalingLayer(*other_neural_network.unscaling_layer_pointer);
+        if (other_neural_network.unscaling_layer_pointer)
+          unscaling_layer_pointer = new UnscalingLayer(*other_neural_network.unscaling_layer_pointer);
 
-        bounding_layer_pointer = new BoundingLayer(*other_neural_network.bounding_layer_pointer);
+        if (other_neural_network.bounding_layer_pointer)
+          bounding_layer_pointer = new BoundingLayer(*other_neural_network.bounding_layer_pointer);
 
-        probabilistic_layer_pointer = new ProbabilisticLayer(*other_neural_network.probabilistic_layer_pointer);
+        if (other_neural_network.probabilistic_layer_pointer)
+          probabilistic_layer_pointer = new ProbabilisticLayer(*other_neural_network.probabilistic_layer_pointer);
 
-        conditions_layer_pointer = new ConditionsLayer(*other_neural_network.conditions_layer_pointer);
+        if (other_neural_network.conditions_layer_pointer)
+          conditions_layer_pointer = new ConditionsLayer(*other_neural_network.conditions_layer_pointer);
 
-        independent_parameters_pointer = new IndependentParameters(*other_neural_network.independent_parameters_pointer);
+        if (other_neural_network.independent_parameters_pointer)
+          independent_parameters_pointer = new IndependentParameters(*other_neural_network.independent_parameters_pointer);
 
         display = other_neural_network.display;
     }
