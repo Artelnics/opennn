@@ -1,3 +1,4 @@
+set(CURRENT_TEST_DATA_FOLDER ${CMAKE_CURRENT_BINARY_DIR}/data)
 
 add_subdirectory(simple_function_regression)
 add_subdirectory(simple_pattern_recognition)

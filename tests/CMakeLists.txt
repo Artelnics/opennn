@@ -1,6 +1,7 @@
+file(COPY data DESTINATION ${CURRENT_TEST_DATA_FOLDER} ${CMAKE_CURRENT_BINARY_DIR}/..)
 
 set(OPENNNTESTSSRCS
-unit_testing.cpp 
+    unit_testing.cpp
     variables_test.cpp 
     instances_test.cpp 
     missing_values_test.cpp 
@@ -61,7 +62,7 @@ unit_testing.cpp
         )
 
 set(OPENNNTESTSHDRS
-unit_testing.h 
+    unit_testing.h
     variables_test.h 
     instances_test.h 
     missing_values_test.h 
