@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   O P E N N N   Q T   C R E A T O R   P R O J E C T                                             #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artificial Intelligence Techniques SL                                                         #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 
