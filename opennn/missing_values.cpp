@@ -6,7 +6,7 @@
 /*   M I S S I N G   V A L U E S   C L A S S                                                                    */
 /*                                                                                                              */ 
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates a missing values object with zero missing values.
 /// It also initializes the rest of class members to their default values.
 
-MissingValues::MissingValues(void)
+MissingValues::MissingValues()
 {
     set();
 
@@ -81,7 +81,7 @@ MissingValues::MissingValues(const MissingValues& other_missing_values)
 
 /// Destructor. 
 
-MissingValues::~MissingValues(void)
+MissingValues::~MissingValues()
 {
 }
 
@@ -110,14 +110,14 @@ MissingValues& MissingValues::operator=(const MissingValues& other_missing_value
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const MissingValues&) const method
+// bool operator ==(const MissingValues&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_missing_values Missing values object to be compared with.
 
-bool MissingValues::operator == (const MissingValues& other_missing_values) const
+bool MissingValues::operator ==(const MissingValues& other_missing_values) const
 {
     if(items == other_missing_values.items
             && display == other_missing_values.display)
@@ -133,32 +133,32 @@ bool MissingValues::operator == (const MissingValues& other_missing_values) cons
 
 // METHODS
 
-// size_t get_instances_number(void) const method
+// size_t get_instances_number() const method
 
 /// Returns the number of instances in the data set.
 
-size_t MissingValues::get_instances_number(void) const
+size_t MissingValues::get_instances_number() const
 {
     return(instances_number);
 }
 
 
-// size_t get_variables_number(void) const method
+// size_t get_variables_number() const method
 
 /// Returns the number of variables in the data set.
 
-size_t MissingValues::get_variables_number(void) const
+size_t MissingValues::get_variables_number() const
 {
     return(variables_number);
 }
 
 
-// Vector<size_t> get_missing_values_numbers(void) const method
+// Vector<size_t> get_missing_values_numbers() const method
 
 /// Returns a vector with the number of missing values for each variable in the data set.
 /// The size of the vector is the number of variables.
 
-Vector<size_t> MissingValues::get_missing_values_numbers(void) const
+Vector<size_t> MissingValues::get_missing_values_numbers() const
 {
     Vector<size_t> missing_values_numbers(variables_number, 0);
 
@@ -177,11 +177,11 @@ Vector<size_t> MissingValues::get_missing_values_numbers(void) const
 }
 
 
-// const Vector<Item>& get_items(void) const method
+// const Vector<Item>& get_items() const method
 
 /// Returns a constant reference to the vector of missing value items.
 
-const Vector<MissingValues::Item>& MissingValues::get_items(void) const
+const Vector<MissingValues::Item>& MissingValues::get_items() const
 {
     return(items);
 }
@@ -194,7 +194,7 @@ const Vector<MissingValues::Item>& MissingValues::get_items(void) const
 
 const MissingValues::Item& MissingValues::get_item(const size_t& index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -202,13 +202,13 @@ const MissingValues::Item& MissingValues::get_item(const size_t& index) const
 
     if(index >= missing_values_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "const Item& get_item(const size_t&) const method.\n"
-               << "Index (" << index << ") must be less than number of missing values (" << missing_values_number << ").\n";
+               << "Index(" << index << ") must be less than number of missing values(" << missing_values_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -217,21 +217,21 @@ const MissingValues::Item& MissingValues::get_item(const size_t& index) const
 }
 
 
-// ScrubbingMethod get_scrubbing_method(void) const
+// ScrubbingMethod get_scrubbing_method() const
 
 /// Returns the method to be used for dealing with the missing values.
 
-MissingValues::ScrubbingMethod MissingValues::get_scrubbing_method(void) const
+MissingValues::ScrubbingMethod MissingValues::get_scrubbing_method() const
 {
     return(scrubbing_method);
 }
 
 
-// std::string write_scrubbing_method(void) const method
+// string write_scrubbing_method() const method
 
 /// Returns a string with the name of the method used for scrubbing.
 
-std::string MissingValues::write_scrubbing_method(void) const
+string MissingValues::write_scrubbing_method() const
 {
     if(scrubbing_method == Unuse)
     {
@@ -241,28 +241,36 @@ std::string MissingValues::write_scrubbing_method(void) const
     {
         return("Mean");
     }
-    if(scrubbing_method == NoScrubbing)
+    else if(scrubbing_method == TimeSeries)
+    {
+        return("TimeSeries");
+    }
+    else if(scrubbing_method == Median)
+    {
+        return("Median");
+    }
+    else if(scrubbing_method == NoScrubbing)
     {
         return("NoScrubbing");
     }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
-               << "std::string write_scrubbing_method(void) const method.\n"
+               << "string write_scrubbing_method() const method.\n"
                << "Unknown scrubbing method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
 
-// std::string write_scrubbing_method_text(void) const method
+// string write_scrubbing_method_text() const method
 
 /// Returns a string with the name of the method used for scrubbing, as paragaph text.
 
-std::string MissingValues::write_scrubbing_method_text(void) const
+string MissingValues::write_scrubbing_method_text() const
 {
     if(scrubbing_method == Unuse)
     {
@@ -272,39 +280,47 @@ std::string MissingValues::write_scrubbing_method_text(void) const
     {
         return("mean");
     }
+    else if(scrubbing_method == TimeSeries)
+    {
+        return("time series");
+    }
+    else if(scrubbing_method == Median)
+    {
+        return("median");
+    }
     else if(scrubbing_method == NoScrubbing)
     {
         return("no scrubbing");
     }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
-               << "std::string write_scrubbing_method_text(void) const method.\n"
+               << "string write_scrubbing_method_text() const method.\n"
                << "Unknown scrubbing method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
 
-const bool& MissingValues::get_display(void) const
+const bool& MissingValues::get_display() const
 {
     return(display);
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets a missing values object with zero instances, variables and missing values.
 
-void MissingValues::set(void)
+void MissingValues::set()
 {
     instances_number = 0;
     variables_number = 0;
@@ -369,7 +385,7 @@ void MissingValues::set_variables_number(const size_t& new_variables_number)
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the default values to this MissingValues object:
 /// <ul>
@@ -377,7 +393,7 @@ void MissingValues::set_variables_number(const size_t& new_variables_number)
 /// <li>display: true</li>
 /// </ul>
 
-void MissingValues::set_default(void)
+void MissingValues::set_default()
 {
     scrubbing_method = Unuse;
 
@@ -414,7 +430,7 @@ void MissingValues::set_items(const Vector<Item>& new_items)
 
 void MissingValues::set_item(const size_t& index, const size_t& instance_index, const size_t& variable_index)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -422,35 +438,35 @@ void MissingValues::set_item(const size_t& index, const size_t& instance_index, 
 
     if(index >= missing_values_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void set_item(const size_t&, const size_t&, const size_t&) method.\n"
-               << "Index (" << index << ") must be less than number of missing values (" << missing_values_number << ").\n";
+               << "Index(" << index << ") must be less than number of missing values(" << missing_values_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(instance_index >= instances_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void set_item(const size_t&, const size_t&, const size_t&) method.\n"
-               << "Index of instance (" << instance_index << ") must be less than number of instances (" << instances_number << ").\n";
+               << "Index of instance(" << instance_index << ") must be less than number of instances(" << instances_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(variable_index >= variables_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void set_item(const size_t&, const size_t&, const size_t&) method.\n"
-               << "Index of variable (" << variable_index << ") must be less than number of variables (" << variables_number << ").\n";
+               << "Index of variable(" << variable_index << ") must be less than number of variables(" << variables_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -472,24 +488,24 @@ void MissingValues::append(const size_t& instance_index, const size_t& variable_
 
     if(instance_index >= instances_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void append(const size_t&, const size_t&) method.\n"
-               << "Index of instance (" << instance_index << ") must be less than number of instances (" << instances_number << ").\n";
+               << "Index of instance(" << instance_index << ") must be less than number of instances(" << instances_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(variable_index >= variables_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void append(const size_t&, const size_t&) method.\n"
-               << "Index of variable (" << variable_index << ") must be less than number of instances (" << variables_number << ").\n";
+               << "Index of variable(" << variable_index << ") must be less than number of instances(" << variables_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -522,12 +538,12 @@ void MissingValues::set_scrubbing_method(const ScrubbingMethod& new_scrubbing_me
 }
 
 
-// void set_scrubbing_method(const std::string&) method
+// void set_scrubbing_method(const string&) method
 
 /// Sets a new method for dealing with the missing values from a string.
 /// @param new_scrubbing_method String with the name of the scrubbing method.
 
-void MissingValues::set_scrubbing_method(const std::string& new_scrubbing_method)
+void MissingValues::set_scrubbing_method(const string& new_scrubbing_method)
 {
     if(new_scrubbing_method == "Unuse")
     {
@@ -537,24 +553,32 @@ void MissingValues::set_scrubbing_method(const std::string& new_scrubbing_method
     {
         scrubbing_method = Mean;
     }
+    else if(new_scrubbing_method == "TimeSeries")
+    {
+        scrubbing_method = TimeSeries;
+    }
+    else if(new_scrubbing_method == "Median")
+    {
+        scrubbing_method = Median;
+    }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MissingValues class.\n"
-               << "void new_scrubbing_method(const std::string&) method.\n"
+               << "void new_scrubbing_method(const string&) method.\n"
                << "Unknown scrubbing method: " << new_scrubbing_method << ".\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
-// bool has_missing_values(void) const method
+// bool has_missing_values() const method
 
 /// Returns true if there are missing values,
 /// and false if the number of missing values is zero.
 
-bool MissingValues::has_missing_values(void) const
+bool MissingValues::has_missing_values() const
 {
     if(items.empty())
     {
@@ -652,57 +676,128 @@ bool MissingValues::is_missing_value(const size_t& instance_index, const size_t&
 }
 
 
-// Vector<size_t> arrange_missing_instances(void) const method
+// Vector<size_t> arrange_missing_instances() const method
 
 /// Returns a vector with the indices of those instances with missing values.
 
-Vector<size_t> MissingValues::arrange_missing_instances(void) const
+Vector<size_t> MissingValues::arrange_missing_instances() const
 {
     const size_t missing_values_number = get_missing_values_number();
 
-    Vector<size_t> missing_instances;
+    Vector<double> missing_instances(instances_number, 0.0);
 
     for(size_t i = 0; i < missing_values_number; i++)
     {
-        if(!missing_instances.contains(items[i].instance_index))
-        {
-            missing_instances.push_back(items[i].instance_index);
-        }
+        missing_instances[items[i].instance_index] = 1.0;
     }
 
-    return(missing_instances);
+    return(missing_instances.calculate_greater_than_indices(0.5));
 }
 
 
-// size_t count_missing_instances(void) const method
+// Vector<size_t> arrange_missing_instances(const size_t&) const method
+
+Vector<size_t> MissingValues::arrange_missing_instances(const size_t& variable_index) const
+{
+    const size_t missing_values_number = get_missing_values_number();
+
+    Vector<double> missing_instances(instances_number, 0.0);
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        if(items[i].variable_index == variable_index)
+        {
+            missing_instances[items[i].instance_index] = 1.0;
+        }
+    }
+
+    return(missing_instances.calculate_greater_than_indices(0.5));
+}
+
+Vector<size_t> MissingValues::arrange_missing_instances(const Vector<size_t>& variable_indices) const
+{
+    const size_t missing_values_number = get_missing_values_number();
+
+    Vector<double> missing_instances(instances_number, 0.0);
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        if(variable_indices.contains(items[i].variable_index))
+        {
+            missing_instances[items[i].instance_index] = 1.0;
+        }
+    }
+
+    return(missing_instances.calculate_greater_than_indices(0.5));
+}
+
+
+// size_t count_missing_instances() const method
 
 /// Returns the number of instances with missing values.
 
-size_t MissingValues::count_missing_instances(void) const
+size_t MissingValues::count_missing_instances() const
 {
     return(arrange_missing_instances().size());
 }
 
 
-// Vector<size_t> arrange_missing_variables(void) const method
+// size_t count_missing_instances(const size_t&) const
 
-/// Returns a vector with the indices of those variables with missing values.
-
-Vector<size_t> MissingValues::arrange_missing_variables(void) const
+size_t MissingValues::count_missing_instances(const size_t& variable_index) const
 {
     const size_t missing_values_number = get_missing_values_number();
 
-    Vector<size_t> missing_variables;
+    size_t count = 0;
 
     for(size_t i = 0; i < missing_values_number; i++)
     {
-        if(!missing_variables.contains(items[i].variable_index))
+        if(items[i].variable_index == variable_index)
         {
-            missing_variables.push_back(items[i].variable_index);
+            count++;
         }
     }
 
-    return(missing_variables);
+    return(count);
+}
+
+
+// size_t count_missing_instances(const size_t&) const
+
+size_t MissingValues::count_missing_instances(const size_t& variable_1, const size_t& variable_2) const
+{
+    const size_t missing_values_number = get_missing_values_number();
+
+    size_t count = 0;
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        if(items[i].variable_index == variable_1 || items[i].variable_index == variable_2)
+        {
+            count++;
+        }
+    }
+
+    return(count);
+}
+
+
+// Vector<size_t> arrange_missing_variables() const method
+
+/// Returns a vector with the indices of those variables with missing values.
+
+Vector<size_t> MissingValues::arrange_missing_variables() const
+{
+    const size_t missing_values_number = get_missing_values_number();
+
+    Vector<double> missing_variables(variables_number, 0.0);
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        missing_variables[items[i].variable_index] = 1.0;
+    }
+
+    return(missing_variables.calculate_greater_than_indices(0.5));
 }
 
 
@@ -716,43 +811,71 @@ void MissingValues::convert_time_series(const size_t& lags_number)
     {
         return;
     }
-/*
-    const size_t missing_values_number = get_missing_values_number();
 
-    //    const size_t new_missing_values_number = missing_values_number*(1+lags_number);
+//    const size_t missing_values_number = get_missing_values_number();
 
-    Vector<Item> new_items;
+//    Vector<Item> new_items;
 
 //    size_t instance_index;
 //    size_t variable_index;
 
+//    Item new_item;
+
+//    for(size_t i = 0; i < missing_values_number; i++)
+//    {
+//        instance_index = items[i].instance_index;
+//        variable_index = items[i].variable_index;
+
+//        for(size_t j = 0; j < 1+lags_number; j++)
+//        {
+//            new_item.instance_index = items[i].instance_index+j;
+
+//            new_item.variable_index = items[i].variable_index*(1+j);
+
+//            new_items.push_back(new_item);
+//        }
+//    }
+
+//    set_items(new_items);
+}
+
+
+// void convert_time_series(const Matrix<double>&) method
+
+/// Arranges the new items of a time series data matrix.
+/// @param data Matrix of the converted time series data.
+
+void MissingValues::convert_time_series(const Matrix<double>& data)
+{
+    variables_number = data.get_columns_number();
+    instances_number = data.get_rows_number();
+
+    Vector<Item> new_items;
+
     Item new_item;
 
-    for(size_t i = 0; i < missing_values_number; i++)
+    for(size_t i = 0; i < instances_number; i++)
     {
-        instance_index = items[i].instance_index;
-        variable_index = items[i].variable_index;
-
-        for(size_t j = 0; j < 1+lags_number; j++)
+        for(size_t j = 0; j < variables_number; j++)
         {
-            new_item.instance_index = items[i].instance_index+j;
-
-            new_item.variable_index = items[i].variable_index*(1+j);
-
-            new_items.push_back(new_item);
+            if(data(i,j) == -99.9)
+            {
+                new_item.instance_index = i;
+                new_item.variable_index = j;
+                new_items.push_back(new_item);
+            }
         }
     }
 
     set_items(new_items);
-*/
 }
 
 
-// void convert_association(void) method
+// void convert_association() method
 
 /// @todo Implement this method.
 
-void MissingValues::convert_association(void)
+void MissingValues::convert_association()
 {
     const size_t missing_values_number = get_missing_values_number();
 
@@ -761,13 +884,13 @@ void MissingValues::convert_association(void)
 }
 
 
-// Vector< Vector<size_t> > arrange_missing_indices(void) const method
+// Vector< Vector<size_t> > arrange_missing_indices() const method
 
 /// Returns a vector of vectors with the indices of the missing values for each variable.
 /// The size of the vector is the number of variables.
 /// The size of each subvector is the number of missing values for the corresponding variable.
 
-Vector< Vector<size_t> > MissingValues::arrange_missing_indices(void) const
+Vector< Vector<size_t> > MissingValues::arrange_missing_indices() const
 {
     Vector< Vector<size_t> > missing_indices(variables_number);
 
@@ -787,18 +910,80 @@ Vector< Vector<size_t> > MissingValues::arrange_missing_indices(void) const
     return(missing_indices);
 }
 
+Vector< Vector<size_t> > MissingValues::arrange_missing_indices(const Vector<size_t>& variable_indices) const
+{
+    const size_t variables_indices_size = variable_indices.size();
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+    Vector< Vector<size_t> > missing_indices(variables_indices_size);
+
+    for(size_t i = 0; i < variables_indices_size; i++)
+    {
+        missing_indices[i] = arrange_missing_indices(variable_indices[i]);
+    }
+
+    return(missing_indices);
+}
+
+// Vector<size_t> arrange_missing_indices(const size_t&) const method
+
+/// Returns a vector of vectors with the indices of the missing values for the given variable.
+/// The size of the vector is the number of missing values for the corresponding variable.
+/// @param variable_index Index of the variable whose missing indices will be returned.
+
+Vector<size_t> MissingValues::arrange_missing_indices(const size_t& variable_index) const
+{
+    Vector<size_t> missing_indices(instances_number, 0);
+
+    const size_t missing_values_number = get_missing_values_number();
+
+    size_t current_variable_index;
+    size_t instance_index;
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        current_variable_index = items[i].variable_index;
+
+        if(current_variable_index == variable_index)
+        {
+            instance_index = items[i].instance_index;
+
+            missing_indices[instance_index] = 1;
+        }
+    }
+
+    return(missing_indices.calculate_equal_to_indices(1));
+}
+
+
+Vector<size_t> MissingValues::count_variables_missing_indices() const
+{
+    Vector<size_t> missing_indices_per_variable(variables_number, 0);
+
+    const size_t missing_values_number = get_missing_values_number();
+
+    size_t variable_index;
+
+    for(size_t i = 0; i < missing_values_number; i++)
+    {
+        variable_index = items[i].variable_index;
+
+        missing_indices_per_variable[variable_index]++;
+    }
+
+    return(missing_indices_per_variable);
+}
+
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the MissingValues object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document. 
 /// @todo
 
-tinyxml2::XMLDocument* MissingValues::to_XML(void) const
+tinyxml2::XMLDocument* MissingValues::to_XML() const
 {
     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     // MissingValues
 
@@ -866,8 +1051,8 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
         tinyxml2::XMLElement* variables_indices_element = document->NewElement("VariablesIndices");
         missing_values_element->LinkEndChild(variables_indices_element);
 
-        std::string instances_indices_text;
-        std::string variables_indices_text;
+        string instances_indices_text;
+        string variables_indices_text;
 
         for(size_t i = 0; i < missing_values_number; i++)
         {
@@ -909,7 +1094,7 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
     for(size_t i = 0; i < missing_values_number; i++)
     {
         element = document->NewElement("Item");
-        element->SetAttribute("Index", (unsigned)i+1);
+        element->SetAttribute("Index",(unsigned)i+1);
         missing_values_element->LinkEndChild(element);
 
         // Instance index
@@ -959,7 +1144,7 @@ tinyxml2::XMLDocument* MissingValues::to_XML(void) const
 
 void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t missing_values_number = get_missing_values_number();
 
@@ -1014,8 +1199,8 @@ void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
         return;
     }
 
-    std::string instances_indices_text;
-    std::string variables_indices_text;
+    string instances_indices_text;
+    string variables_indices_text;
 
     for(size_t i = 0; i < missing_values_number; i++)
     {
@@ -1072,7 +1257,7 @@ void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     // Missing values element
 
@@ -1084,7 +1269,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to MissingValues element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Instances number
@@ -1097,7 +1282,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to instances number is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     instances_number = atoi(instances_number_element->GetText());
@@ -1112,7 +1297,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to variables number is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     variables_number = atoi(variables_number_element->GetText());
@@ -1127,10 +1312,10 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to scrubbing method element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    const std::string scrubbing_method_string = scrubbing_method_element->GetText();
+    const string scrubbing_method_string = scrubbing_method_element->GetText();
 
     set_scrubbing_method(scrubbing_method_string);
 
@@ -1144,7 +1329,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to missing values number is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t new_missing_values_number = atoi(missing_values_number_element->GetText());
@@ -1166,10 +1351,10 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to instances indices element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    const std::string instances_indices_text(instances_indices_element->GetText());
+    const string instances_indices_text(instances_indices_element->GetText());
 
     Vector<size_t> instances_indices;
     instances_indices.parse(instances_indices_text);
@@ -1178,9 +1363,9 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Instances indices size (" << instances_indices.size() << ") must be the same than missing values number (" << new_missing_values_number << ").\n";
+               << "Instances indices size(" << instances_indices.size() << ") must be the same than missing values number(" << new_missing_values_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const tinyxml2::XMLElement* variables_indices_element = missing_values_element->FirstChildElement("VariablesIndices");
@@ -1191,10 +1376,10 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Pointer to variables indices element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    const std::string variables_indices_text(variables_indices_element->GetText());
+    const string variables_indices_text(variables_indices_element->GetText());
 
     Vector<size_t> variables_indices;
     variables_indices.parse(variables_indices_text);
@@ -1203,9 +1388,9 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Variables indices size (" << variables_indices.size() << ") must be the same than missing values number (" << new_missing_values_number << ").\n";
+               << "Variables indices size(" << variables_indices.size() << ") must be the same than missing values number(" << new_missing_values_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     for(size_t i = 0; i < new_missing_values_number; i++)
@@ -1231,7 +1416,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Item " << i+1 << " is NULL.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         item_element->QueryUnsignedAttribute("Index", &index);
@@ -1242,7 +1427,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Index " << index << " is not correct.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         // Instance index
@@ -1255,7 +1440,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Pointer to instance index element is NULL.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         const size_t new_instance_index = atoi(instance_index_element->GetText())-1;
@@ -1272,7 +1457,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Pointer to variable index element is NULL.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         const size_t new_variable_index = atoi(variable_index_element->GetText())-1;
@@ -1283,13 +1468,11 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// std::string to_string(void) const method
-
 /// Returns a string representation of the current MissingValues object.
 
-std::string MissingValues::to_string(void) const
+string MissingValues::object_to_string() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t missing_values_number = get_missing_values_number();
 
@@ -1313,13 +1496,13 @@ std::string MissingValues::to_string(void) const
 }
 
 
-// void print(void) const method
+// void print() const method
 
 /// Prints to the screen information about the missing values object.
 
-void MissingValues::print(void) const
+void MissingValues::print() const
 {
-    std::cout << to_string();
+    cout << object_to_string();
 }
 
 
@@ -1328,7 +1511,7 @@ void MissingValues::print(void) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

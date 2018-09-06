@@ -6,7 +6,7 @@
 /*   S C A L I N G   L A Y E R   C L A S S   H E A D E R                                                        */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,7 +30,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -46,7 +46,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit ScalingLayer(void);
+   explicit ScalingLayer();
 
    // INPUTS NUMBER CONSTRUCTOR
 
@@ -62,62 +62,60 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~ScalingLayer(void);
+   virtual ~ScalingLayer();
 
    // ASSIGNMENT OPERATOR
 
-   ScalingLayer& operator = (const ScalingLayer&);
+   ScalingLayer& operator =(const ScalingLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const ScalingLayer&) const;
+   bool operator ==(const ScalingLayer&) const;
 
    // ENUMERATIONS
 
    /// Enumeration of available methods for scaling the input variables.  
    
-   enum ScalingMethod{NoScaling, MinimumMaximum, MeanStandardDeviation};
+   enum ScalingMethod{NoScaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation};
 
    // GET METHODS
 
-   size_t get_scaling_neurons_number(void) const;
+   size_t get_scaling_neurons_number() const;
 
    // Inputs statistics
 
-   Vector< Statistics<double> > get_statistics(void) const;
+   Vector< Statistics<double> > get_statistics() const;
    Statistics<double> get_statistics(const size_t&) const;
 
-   Matrix<double> arrange_statistics(void) const;
+   Matrix<double> arrange_statistics() const;
 
-   Vector<double> arrange_minimums(void) const;
-   Vector<double> arrange_maximums(void) const;
-   Vector<double> arrange_means(void) const;
-   Vector<double> arrange_standard_deviations(void) const;
+   Vector<double> arrange_minimums() const;
+   Vector<double> arrange_maximums() const;
+   Vector<double> arrange_means() const;
+   Vector<double> arrange_standard_deviations() const;
 
    // Variables scaling and unscaling
 
-   const ScalingMethod& get_scaling_method(void) const;
-   const Vector<ScalingMethod> get_scaling_methods(void) const;
+   const Vector<ScalingMethod> get_scaling_methods() const;
 
-   std::string write_scaling_method(void) const;
-   std::string write_scaling_method_text(void) const;
-
-   Vector<std::string> write_scaling_methods(void) const;
-   Vector<std::string> write_scaling_methods_text(void) const;
+   Vector<string> write_scaling_methods() const;
+   Vector<string> write_scaling_methods_text() const;
 
    // Display messages
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // SET METHODS
 
-   void set(void);
+   void set();
    void set(const size_t&);
    void set(const Vector< Statistics<double> >&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
-   virtual void set_default(void);
+   void set(const Vector<bool>&);
+
+   virtual void set_default();
 
    // Statistics
 
@@ -131,11 +129,11 @@ public:
 
    // Scaling method
 
-   void set_scaling_method(const ScalingMethod&);
-   void set_scaling_method(const std::string&);
-
    void set_scaling_methods(const Vector<ScalingMethod>&);
-   void set_scaling_methods(const Vector<std::string>&);
+   void set_scaling_methods(const Vector<string>&);
+
+   void set_scaling_methods(const ScalingMethod&);
+   void set_scaling_methods(const string&);
 
    // Display messages
 
@@ -149,11 +147,11 @@ public:
 
    // Check methods
 
-   bool is_empty(void) const;
+   bool is_empty() const;
 
    // Inputs scaling function
 
-   void initialize_random(void);
+   void initialize_random();
 
    void check_range(const Vector<double>&) const;
 
@@ -174,30 +172,32 @@ public:
 
    // Expression methods
 
-   std::string write_no_scaling_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_no_scaling_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_minimum_maximum_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_mean_standard_deviation_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
+
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   // void read_XML(   );
 
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const Vector<std::string>&) const;
-   void write_PMML(tinyxml2::XMLPrinter&, const Vector<std::string>&) const;
+
+   void to_PMML(tinyxml2::XMLElement*, const Vector<string>&) const;
+   void write_PMML(tinyxml2::XMLPrinter&, const Vector<string>&) const;
 
 
-   void from_PMML(const tinyxml2::XMLElement*, const Vector<std::string>&);
+   void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&);
 
 protected:
 
@@ -206,10 +206,6 @@ protected:
    /// Statistics of input variables.
 
    Vector< Statistics<double> > statistics;
-
-   /// Method for scaling the input variables.
-
-   ScalingMethod scaling_method;
 
    /// Vector of scaling methods for each variable.
 
@@ -226,7 +222,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

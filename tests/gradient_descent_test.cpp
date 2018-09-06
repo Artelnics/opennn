@@ -20,21 +20,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR 
 
-GradientDescentTest::GradientDescentTest(void) : UnitTesting()
+GradientDescentTest::GradientDescentTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-GradientDescentTest::~GradientDescentTest(void)
+GradientDescentTest::~GradientDescentTest()
 {
 }
 
 
 // METHODS
 
-void GradientDescentTest::test_constructor(void)
+void GradientDescentTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -52,13 +52,13 @@ void GradientDescentTest::test_constructor(void)
 }
 
 
-void GradientDescentTest::test_destructor(void)
+void GradientDescentTest::test_destructor()
 {
    message += "test_destructor\n"; 
 }
 
 
-void GradientDescentTest::test_set_reserve_all_training_history(void)
+void GradientDescentTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -78,7 +78,7 @@ void GradientDescentTest::test_set_reserve_all_training_history(void)
 }
 
 
-void GradientDescentTest::test_perform_training(void)
+void GradientDescentTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -175,7 +175,7 @@ void GradientDescentTest::test_perform_training(void)
 }
 
 
-void GradientDescentTest::test_resize_training_history(void)
+void GradientDescentTest::test_resize_training_history()
 {
    message += "test_resize_training_history\n";
 
@@ -201,7 +201,7 @@ void GradientDescentTest::test_resize_training_history(void)
 }
 
 
-void GradientDescentTest::test_to_XML(void)
+void GradientDescentTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -218,7 +218,7 @@ void GradientDescentTest::test_to_XML(void)
 }
 
 
-void GradientDescentTest::test_from_XML(void)
+void GradientDescentTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -242,7 +242,7 @@ void GradientDescentTest::test_from_XML(void)
 }
 
 
-void GradientDescentTest::run_test_case(void)
+void GradientDescentTest::run_test_case()
 {
    message += "Running gradient descent test case...\n";
 
@@ -273,7 +273,7 @@ void GradientDescentTest::run_test_case(void)
 
 
  // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,7 +6,7 @@
 /*   O U T P U T S   C L A S S                                                                                  */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -15,8 +15,8 @@
 
 #include "outputs.h"
 
-#define numeric_to_string( x ) static_cast< std::ostringstream & >( \
-    ( std::ostringstream() << std::dec << x ) ).str()
+#define numeric_to_string( x ) static_cast< ostringstream & >( \
+   ( ostringstream() << dec << x ) ).str()
 
 namespace OpenNN
 {
@@ -26,7 +26,7 @@ namespace OpenNN
 /// Default constructor. 
 /// It creates a outputs information object with zero outputs.
 
-Outputs::Outputs(void)
+Outputs::Outputs()
 {
     set();
 }
@@ -73,7 +73,7 @@ Outputs::Outputs(const Outputs& other_outputs)
 
 /// Destructor.
 
-Outputs::~Outputs(void)
+Outputs::~Outputs()
 {
 }
 
@@ -84,7 +84,7 @@ Outputs::~Outputs(void)
 /// It assigns to this object the members of an existing outputs object.
 /// @param other_outputs Outputs object to be assigned.
 
-Outputs& Outputs::operator = (const Outputs& other_outputs)
+Outputs& Outputs::operator =(const Outputs& other_outputs)
 {
     if(this != &other_outputs)
     {
@@ -102,14 +102,14 @@ Outputs& Outputs::operator = (const Outputs& other_outputs)
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const Outputs&) const method
+// bool operator ==(const Outputs&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_outputs Outputs object to be compared with.
 
-bool Outputs::operator == (const Outputs& other_outputs) const
+bool Outputs::operator ==(const Outputs& other_outputs) const
 {
     if(/*items == other_outputs.items
                                                    */ display == other_outputs.display)
@@ -123,11 +123,11 @@ bool Outputs::operator == (const Outputs& other_outputs) const
 }
 
 
-// bool is_empty(void) const method
+// bool is_empty() const method
 
 /// Returns true if both the number of outputs is zero, and false otherwise.
 
-bool Outputs::is_empty(void) const
+bool Outputs::is_empty() const
 {
     const size_t outputs_number = get_outputs_number();
 
@@ -142,16 +142,16 @@ bool Outputs::is_empty(void) const
 }
 
 
-// Vector<std::string> arrange_names(void) const method
+// Vector<string> arrange_names() const method
 
 /// Returns the names of the output variables.
 /// Such names are only used to give the user basic information about the problem at hand.
 
-Vector<std::string> Outputs::arrange_names(void) const
+Vector<string> Outputs::arrange_names() const
 {
     const size_t outputs_number = get_outputs_number();
 
-    Vector<std::string> names(outputs_number);
+    Vector<string> names(outputs_number);
 
     for(size_t i = 0; i < outputs_number; i++)
     {
@@ -162,15 +162,15 @@ Vector<std::string> Outputs::arrange_names(void) const
 }
 
 
-// const std::string& get_name(const size_t&) const method
+// const string& get_name(const size_t&) const method
 
 /// Returns the name of a single output variable.
 /// Such a name is only used to give the user basic information about the problem at hand.
 /// @param index Index of output variable.
 
-const std::string& Outputs::get_name(const size_t& index) const
+const string& Outputs::get_name(const size_t& index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -178,13 +178,13 @@ const std::string& Outputs::get_name(const size_t& index) const
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "const std::string get_name(const size_t&) const method.\n"
+               << "const string get_name(const size_t&) const method.\n"
                << "Output variable index must be less than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -193,26 +193,26 @@ const std::string& Outputs::get_name(const size_t& index) const
 }
 
 
-// Vector<std::string> arrange_descriptions(void) const method
+// Vector<string> arrange_descriptions() const method
 
 /// Returns the descriptions of the output variables as strings. 
 /// Such descriptions are only used to give the user basic information about the problem at hand.
 
-Vector<std::string> Outputs::arrange_descriptions(void) const
+Vector<string> Outputs::arrange_descriptions() const
 {
     return(descriptions);
 }
 
 
-// const std::string& get_description(const size_t&) const method
+// const string& get_description(const size_t&) const method
 
 /// Returns the description of a single output variable as a string.
 /// Such a description is only used to give the user basic information about the problem at hand.
 /// @param index Index of output variable.
 
-const std::string& Outputs::get_description(const size_t& index) const
+const string& Outputs::get_description(const size_t& index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -220,13 +220,13 @@ const std::string& Outputs::get_description(const size_t& index) const
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "const std::string& get_description(const size_t&) const method.\n"
+               << "const string& get_description(const size_t&) const method.\n"
                << "Index of output variable must be less than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -235,16 +235,16 @@ const std::string& Outputs::get_description(const size_t& index) const
 }
 
 
-// Vector<std::string> arrange_units(void) const method
+// Vector<string> arrange_units() const method
 
 /// Returns the units of the output variables as strings. 
 /// Such units are only used to give the user basic information about the problem at hand.
 
-Vector<std::string> Outputs::arrange_units(void) const
+Vector<string> Outputs::arrange_units() const
 {
     const size_t outputs_number = get_outputs_number();
 
-    Vector<std::string> units(outputs_number);
+    Vector<string> units(outputs_number);
 
     for(size_t i = 0; i < outputs_number; i++)
     {
@@ -254,15 +254,15 @@ Vector<std::string> Outputs::arrange_units(void) const
     return(units);}
 
 
-// const std::string& get_unit(const size_t&) const method
+// const string& get_unit(const size_t&) const method
 
 /// Returns the units of a single output variable as a string. 
 /// Such units are only used to give the user basic information about the problem at hand.
 /// @param index Index of output variable.
 
-const std::string& Outputs::get_unit(const size_t& index) const
+const string& Outputs::get_unit(const size_t& index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -270,13 +270,13 @@ const std::string& Outputs::get_unit(const size_t& index) const
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "const std::string get_unit(const size_t&) const method.\n"
+               << "const string get_unit(const size_t&) const method.\n"
                << "Index of output variable must be less than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -285,18 +285,18 @@ const std::string& Outputs::get_unit(const size_t& index) const
 }
 
 
-// Matrix<std::string> arrange_information(void) const method
+// Matrix<string> arrange_information() const method
 
 /// Returns all the available information about the outputs as a single matrix of strings.
 /// The number of rows is the number of outputs.
 /// The number of columns is three.
-/// Each row contains the information of a single output (name, units and description).
+/// Each row contains the information of a single output(name, units and description).
 
-Matrix<std::string> Outputs::arrange_information(void) const
+Matrix<string> Outputs::arrange_information() const
 {
     const size_t outputs_number = get_outputs_number();
 
-    Matrix<std::string> information(outputs_number, 3);
+    Matrix<string> information(outputs_number, 3);
 
     for(size_t i = 0; i < outputs_number; i++)
     {
@@ -309,23 +309,23 @@ Matrix<std::string> Outputs::arrange_information(void) const
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages 
 /// from this class are not to be displayed on the screen.
 
-const bool& Outputs::get_display(void) const
+const bool& Outputs::get_display() const
 {
     return(display);
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets zero outputs.
 /// It also sets the rest of members to their default values. 
 
-void Outputs::set(void)
+void Outputs::set()
 {
     set_outputs_number(0);
 
@@ -382,13 +382,13 @@ void Outputs::set_outputs_number(const size_t& new_outputs_number)
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of this object to their default values.
 
-void Outputs::set_default(void)
+void Outputs::set_default()
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t outputs_number = get_outputs_number();
 
@@ -406,17 +406,17 @@ void Outputs::set_default(void)
 }
 
 
-// void set_names(const Vector<std::string>&) method
+// void set_names(const Vector<string>&) method
 
 /// Sets the names of the output variables.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_names New names for the output variables.
 
-void Outputs::set_names(const Vector<std::string>& new_names)
+void Outputs::set_names(const Vector<string>& new_names)
 {
     const size_t outputs_number = get_outputs_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -424,13 +424,13 @@ void Outputs::set_names(const Vector<std::string>& new_names)
 
     if(size != outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "void set_names(const Vector<std::string>&) method.\n"
+               << "void set_names(const Vector<string>&) method.\n"
                << "Size of name of outputs vector must be equal to number of output variables.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -444,16 +444,16 @@ void Outputs::set_names(const Vector<std::string>& new_names)
 }
 
 
-// void set_name(const size_t&, const std::string&) method
+// void set_name(const size_t&, const string&) method
 
 /// Sets the name of a single output variable.
 /// Such value is only used to give the user basic information on the problem at hand.
 /// @param index Index of output variable.
 /// @param new_name New name for the output variable with index i.
 
-void Outputs::set_name(const size_t& index, const std::string& new_name)
+void Outputs::set_name(const size_t& index, const string& new_name)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -461,13 +461,13 @@ void Outputs::set_name(const size_t& index, const std::string& new_name)
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "void set_name(const size_t&, const std::string&) method.\n"
+               << "void set_name(const size_t&, const string&) method.\n"
                << "Index of output variable must be less than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -478,15 +478,15 @@ void Outputs::set_name(const size_t& index, const std::string& new_name)
 }
 
 
-// void set_units(const Vector<std::string>&) method
+// void set_units(const Vector<string>&) method
 
 /// Sets new units for all the output variables.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_units New units for the output variables.
 
-void Outputs::set_units(const Vector<std::string>& new_units)
+void Outputs::set_units(const Vector<string>& new_units)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -496,13 +496,13 @@ void Outputs::set_units(const Vector<std::string>& new_units)
 
     if(size != outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "void set_units(const Vector<std::string>&) method.\n"
+               << "void set_units(const Vector<string>&) method.\n"
                << "Size must be equal to number of output variables.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -513,30 +513,30 @@ void Outputs::set_units(const Vector<std::string>& new_units)
 }
 
 
-// void set_units(const size_t&, const std::string&) method
+// void set_units(const size_t&, const string&) method
 
 /// Sets new units for a single output variable.
 /// Such value is only used to give the user basic information on the problem at hand.
 /// @param index Index of output variable.
 /// @param new_units New units for that output variable.
 
-void Outputs::set_unit(const size_t& index, const std::string& new_units)
+void Outputs::set_unit(const size_t& index, const string& new_units)
 {
     const size_t outputs_number = get_outputs_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "void set_units(const size_t&, const std::string&) method.\n"
+               << "void set_units(const size_t&, const string&) method.\n"
                << "Index of output variable must be less than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -552,15 +552,15 @@ void Outputs::set_unit(const size_t& index, const std::string& new_units)
 }
 
 
-// void set_descriptions(const Vector<std::string>&) method
+// void set_descriptions(const Vector<string>&) method
 
 /// Sets new descriptions for all the output variables.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_descriptions New description for the output variables.
 
-void Outputs::set_descriptions(const Vector<std::string>& new_descriptions)
+void Outputs::set_descriptions(const Vector<string>& new_descriptions)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -570,13 +570,13 @@ void Outputs::set_descriptions(const Vector<std::string>& new_descriptions)
 
     if(size != outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "void set_descriptions(const Vector<std::string>&) method.\n"
+               << "void set_descriptions(const Vector<string>&) method.\n"
                << "Size must be equal to number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -587,30 +587,30 @@ void Outputs::set_descriptions(const Vector<std::string>& new_descriptions)
 }
 
 
-// void set_description(const size_t&, const std::string&) method
+// void set_description(const size_t&, const string&) method
 
 /// Sets a new description for a single output variable.
 /// Such value is only used to give the user basic information on the problem at hand.
 /// @param index Index of output variable.
 /// @param new_description New description for the output variable with index i.
 
-void Outputs::set_description(const size_t& index, const std::string& new_description)
+void Outputs::set_description(const size_t& index, const string& new_description)
 {
     const size_t outputs_number = get_outputs_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
-               << "void set_description(const size_t&, const std::string&) method.\n"
+               << "void set_description(const size_t&, const string&) method.\n"
                << "Index of output variable must be less than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -626,7 +626,7 @@ void Outputs::set_description(const size_t& index, const std::string& new_descri
 }
 
 
-// void set_information(const Matrix<std::string>&) method
+// void set_information(const Matrix<string>&) method
 
 /// Sets all the possible information about the output variables.
 /// The format is a vector of vectors of size three:
@@ -637,7 +637,7 @@ void Outputs::set_description(const size_t& index, const std::string& new_descri
 /// </ul>
 /// @param new_information Output variables information.
 
-void Outputs::set_information(const Matrix<std::string>& new_information)
+void Outputs::set_information(const Matrix<string>& new_information)
 {
     const size_t outputs_number = get_outputs_number();
 
@@ -665,11 +665,11 @@ void Outputs::set_display(const bool& new_display)
 }
 
 
-// void grow_output(void) method
+// void grow_output() method
 
 /// Appends a new item to the outputs.
 
-void Outputs::grow_output(void)
+void Outputs::grow_output()
 {
     const Item item;
 
@@ -684,7 +684,7 @@ void Outputs::grow_output(void)
 
 void Outputs::prune_output(const size_t& index)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -692,13 +692,13 @@ void Outputs::prune_output(const size_t& index)
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: Outputs class.\n"
                << "void prune_output(const size_t&) method.\n"
                << "Index of output is equal or greater than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -707,7 +707,7 @@ void Outputs::prune_output(const size_t& index)
 }
 
 
-// Vector<std::string> write_default_outputs_name(void) const method
+// Vector<string> write_default_outputs_name() const method
 
 /// Returns the default names for the output variables:
 /// <ul>
@@ -716,13 +716,13 @@ void Outputs::prune_output(const size_t& index)
 /// <li> output_n
 /// </ul>
 
-Vector<std::string> Outputs::write_default_names(void) const
+Vector<string> Outputs::write_default_names() const
 {
     const size_t outputs_number = get_outputs_number();
 
-    Vector<std::string> default_names(outputs_number);
+    Vector<string> default_names(outputs_number);
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     for(size_t i = 0; i < outputs_number; i++)
     {
@@ -737,13 +737,11 @@ Vector<std::string> Outputs::write_default_names(void) const
 }
 
 
-// std::string to_string(void) const method
-
 /// Returns a string representation of the current outputs object.
 
-std::string Outputs::to_string(void) const
+string Outputs::object_to_string() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "Outputs\n";
 
@@ -763,18 +761,18 @@ std::string Outputs::to_string(void) const
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the outputs information object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 
-tinyxml2::XMLDocument* Outputs::to_XML(void) const
+tinyxml2::XMLDocument* Outputs::to_XML() const
 {
     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
     const size_t outputs_number = get_outputs_number();
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     tinyxml2::XMLElement* outputs_element = document->NewElement("Outputs");
 
@@ -798,7 +796,7 @@ tinyxml2::XMLDocument* Outputs::to_XML(void) const
     for(size_t i = 0; i < outputs_number; i++)
     {
         element = document->NewElement("Item");
-        element->SetAttribute("Index", (unsigned)i+1);
+        element->SetAttribute("Index",(unsigned)i+1);
         outputs_element->LinkEndChild(element);
 
         // Name
@@ -851,7 +849,7 @@ void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     const size_t outputs_number = get_outputs_number();
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("Outputs");
 
@@ -872,7 +870,7 @@ void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Item");
 
-        file_stream.PushAttribute("Index", (unsigned)i+1);
+        file_stream.PushAttribute("Index",(unsigned)i+1);
 
         // Name
 
@@ -882,21 +880,21 @@ void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
-        // Units
+//        // Units
 
-        file_stream.OpenElement("Units");
+//        file_stream.OpenElement("Units");
 
-        file_stream.PushText(items[i].units.c_str());
+//        file_stream.PushText(items[i].units.c_str());
 
-        file_stream.CloseElement();
+//        file_stream.CloseElement();
 
-        // Description
+//        // Description
 
-        file_stream.OpenElement("Description");
+//        file_stream.OpenElement("Description");
 
-        file_stream.PushText(items[i].description.c_str());
+//        file_stream.PushText(items[i].description.c_str());
 
-        file_stream.CloseElement();
+//        file_stream.CloseElement();
 
 
         file_stream.CloseElement();
@@ -913,7 +911,7 @@ void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void Outputs::from_XML(const tinyxml2::XMLDocument& document)
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const tinyxml2::XMLElement* outputs_element = document.FirstChildElement("Outputs");
 
@@ -923,7 +921,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Outputs element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Outputs number
@@ -936,7 +934,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Outputs number element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t outputs_number = atoi(outputs_number_element->GetText());
@@ -958,7 +956,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Item " << i+1 << " is NULL.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         item_element->QueryUnsignedAttribute("Index", &index);
@@ -969,7 +967,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
                    << "Index " << index << " is not correct.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         // Name
@@ -1022,7 +1020,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
 
 void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilistic, const bool& is_data_unscaled, const Vector< Statistics<double> >& outputs_statistics)
 {
-    std::string element_name(element->Name());
+    string element_name(element->Name());
 
     tinyxml2::XMLDocument* pmml_document = element->GetDocument();
 
@@ -1043,7 +1041,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
 
             for(size_t i = 0; i < outputs_number; i++)
             {
-                std::string output_name = get_name(i);
+                string output_name = get_name(i);
 
                 tinyxml2::XMLElement* value_field = pmml_document->NewElement("Value");
                 data_field->LinkEndChild(value_field);
@@ -1056,7 +1054,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
         {
             for(size_t i = 0; i < outputs_number; i++)
             {
-                std::string output_name = get_name(i);
+                string output_name = get_name(i);
 
                 tinyxml2::XMLElement* data_field = pmml_document->NewElement("DataField");
                 element->LinkEndChild(data_field);
@@ -1093,7 +1091,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
         {
             for(size_t i = 0 ; i< outputs_number; i++)
             {
-                std::string output_name = get_name(i);
+                string output_name = get_name(i);
 
                 tinyxml2::XMLElement* mining_field = pmml_document->NewElement("MiningField");
                 element->LinkEndChild(mining_field);
@@ -1111,12 +1109,12 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
 
         for(size_t i = 0; i < outputs_number ; i++)
         {
-            std::string output_name = get_name(i);
+            string output_name = get_name(i);
 
             tinyxml2::XMLElement* neural_output = pmml_document->NewElement("NeuralOutput");
             element->LinkEndChild(neural_output);
 
-            std::string neural_output_id = number_to_string(number_of_layers);
+            string neural_output_id = number_to_string(number_of_layers);
             neural_output_id.append(",");
             neural_output_id.append(number_to_string(i));
 
@@ -1145,7 +1143,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
                 tinyxml2::XMLElement* field_ref = pmml_document->NewElement("FieldRef");
                 derived_field->InsertFirstChild(field_ref);
 
-                std::string field_ref_name(output_name);
+                string field_ref_name(output_name);
 
                 if(is_data_unscaled || is_probabilistic)
                 {
@@ -1181,7 +1179,7 @@ void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, cons
 
         for(size_t i = 0; i < outputs_number; i++)
         {
-            std::string output_name = get_name(i);
+            string output_name = get_name(i);
 
             file_stream.OpenElement("Value");
 
@@ -1196,7 +1194,7 @@ void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, cons
     {
         for(size_t i = 0; i < outputs_number; i++)
         {
-            std::string output_name = get_name(i);
+            string output_name = get_name(i);
 
             file_stream.OpenElement("DataField");
 
@@ -1244,7 +1242,7 @@ void Outputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream, const 
     {
         for(size_t i = 0 ; i< outputs_number; i++)
         {
-            std::string output_name = get_name(i);
+            string output_name = get_name(i);
 
             file_stream.OpenElement("MiningField");
 
@@ -1271,11 +1269,11 @@ void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_
 
     for(size_t i = 0; i < outputs_number ; i++)
     {
-        std::string output_name = get_name(i);
+        string output_name = get_name(i);
 
         file_stream.OpenElement("NeuralOutput");
 
-        std::string neural_output_id = number_to_string(number_of_layers);
+        string neural_output_id = number_to_string(number_of_layers);
         neural_output_id.append(",");
         neural_output_id.append(number_to_string(i));
 
@@ -1304,9 +1302,9 @@ void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_
 
             file_stream.OpenElement("FieldRef");
 
-            std::string field_ref_name(output_name);
+            string field_ref_name(output_name);
 
-            if(is_data_unscaled || (is_probabilistic && (outputs_number == 1)))
+            if(is_data_unscaled ||(is_probabilistic &&(outputs_number == 1)))
             {
                 field_ref_name.append("*");
             }
@@ -1326,7 +1324,7 @@ void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_
 
 }
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

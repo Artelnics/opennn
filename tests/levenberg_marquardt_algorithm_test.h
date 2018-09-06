@@ -32,67 +32,67 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit LevenbergMarquardtAlgorithmTest(void); 
+   explicit LevenbergMarquardtAlgorithmTest(); 
 
 
    // DESTRUCTOR
 
-   virtual ~LevenbergMarquardtAlgorithmTest(void);
+   virtual ~LevenbergMarquardtAlgorithmTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // METHODS
 
    // Get methods
 
-   void test_get_damping_parameter(void);
+   void test_get_damping_parameter();
 
-   void test_get_damping_parameter_factor(void);
+   void test_get_damping_parameter_factor();
 
-   void test_get_minimum_damping_parameter(void);
-   void test_get_maximum_damping_parameter(void);
+   void test_get_minimum_damping_parameter();
+   void test_get_maximum_damping_parameter();
 
    // Set methods
 
-   void test_set_damping_parameter(void);
+   void test_set_damping_parameter();
 
-   void test_set_damping_parameter_factor(void);
+   void test_set_damping_parameter_factor();
 
-   void test_set_minimum_damping_parameter(void);
-   void test_set_maximum_damping_parameter(void);
+   void test_set_minimum_damping_parameter();
+   void test_set_maximum_damping_parameter();
 
    // Training methods
 
-   void test_calculate_loss(void);
-   void test_calculate_gradient(void);
-   void test_calculate_Hessian_approximation(void);
+   void test_calculate_loss();
+   void test_calculate_gradient();
+   void test_calculate_Hessian_approximation();
 
-   void test_perform_training(void);
+   void test_perform_training();
 
    // Training history methods
 
-   void test_resize_training_history(void);
-   void test_set_reserve_all_training_history(void);
+   void test_resize_training_history();
+   void test_set_reserve_all_training_history();
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);
+   void test_to_XML();   
+   void test_from_XML();
 
    // Linear algebraic equations methods
 
-   void test_perform_Householder_QR_decomposition(void);
+   void test_perform_Householder_QR_decomposition();
 
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -100,7 +100,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

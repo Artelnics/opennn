@@ -20,6 +20,7 @@
 
 #include "vector_test.h"
 #include "matrix_test.h"
+#include "sparse_matrix_test.h"
 #include "numerical_differentiation_test.h"
 #include "numerical_integration_test.h"
 #include "ordinary_differential_equations_test.h"
@@ -45,6 +46,8 @@
 #include "outputs_test.h"
 #include "independent_parameters_test.h"
 #include "neural_network_test.h"
+#include "inputs_trending_layer_test.h"
+#include "outputs_trending_layer_test.h"
 
 #include "mock_error_term.h"
 #include "error_term_test.h"
@@ -83,13 +86,14 @@
 #include "growing_inputs_test.h"
 #include "pruning_inputs_test.h"
 #include "genetic_algorithm_test.h"
+#include "correlation_analysis_test.h"
 
 #include "testing_analysis_test.h"
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Roberto Lopez
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

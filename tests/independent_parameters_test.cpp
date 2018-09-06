@@ -21,14 +21,14 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-IndependentParametersTest::IndependentParametersTest(void) : UnitTesting()
+IndependentParametersTest::IndependentParametersTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-IndependentParametersTest::~IndependentParametersTest(void)
+IndependentParametersTest::~IndependentParametersTest()
 {
 }
 
@@ -36,7 +36,7 @@ IndependentParametersTest::~IndependentParametersTest(void)
 // METHODS
 
 
-void IndependentParametersTest::test_constructor(void)
+void IndependentParametersTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -57,13 +57,13 @@ void IndependentParametersTest::test_constructor(void)
 }
 
 
-void IndependentParametersTest::test_destructor(void)
+void IndependentParametersTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void IndependentParametersTest::test_assignment_operator(void)
+void IndependentParametersTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -74,139 +74,139 @@ void IndependentParametersTest::test_assignment_operator(void)
 }
 
 
-void IndependentParametersTest::test_set(void)
+void IndependentParametersTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void IndependentParametersTest::test_set_default(void)
+void IndependentParametersTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void IndependentParametersTest::test_count_parameters_number(void)
+void IndependentParametersTest::test_count_parameters_number()
 {
    message += "test_count_parameters_number\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters(void)   
+void IndependentParametersTest::test_get_parameters()   
 {
    message += "test_get_parameters\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter(void)   
+void IndependentParametersTest::test_get_parameter()   
 {
    message += "test_get_parameter\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_name(void)
+void IndependentParametersTest::test_get_parameters_name()
 {
    message += "test_get_parameters_name\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_name(void)
+void IndependentParametersTest::test_get_parameter_name()
 {
    message += "test_get_parameter_name\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_units(void)
+void IndependentParametersTest::test_get_parameters_units()
 {
    message += "test_get_parameters_units\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_units(void)
+void IndependentParametersTest::test_get_parameter_units()
 {
    message += "test_get_parameter_units\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_information(void)
+void IndependentParametersTest::test_get_parameters_information()
 {
    message += "test_get_parameters_information\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_description(void)
+void IndependentParametersTest::test_get_parameters_description()
 {
    message += "test_get_parameters_description\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_description(void)
+void IndependentParametersTest::test_get_parameter_description()
 {
    message += "test_get_parameter_description\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_mean(void)
+void IndependentParametersTest::test_get_parameters_mean()
 {
    message += "test_get_parameters_mean\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_standard_deviation(void)
+void IndependentParametersTest::test_get_parameters_standard_deviation()
 {
    message += "test_get_parameters_standard_deviation\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_mean_standard_deviation(void)
+void IndependentParametersTest::test_get_parameters_mean_standard_deviation()
 {
    message += "test_get_parameters_mean_standard_deviation\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_mean(void)
+void IndependentParametersTest::test_get_parameter_mean()
 {
    message += "test_get_parameter_mean\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_standard_deviation(void)
+void IndependentParametersTest::test_get_parameter_standard_deviation()
 {
    message += "test_get_parameter_standard_deviation\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_minimum(void)
+void IndependentParametersTest::test_get_parameters_minimum()
 {
    message += "test_get_parameters_minimum\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_maximum(void)
+void IndependentParametersTest::test_get_parameters_maximum()
 {
    message += "test_get_parameters_maximum\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_minimum_maximum(void)
+void IndependentParametersTest::test_get_parameters_minimum_maximum()
 {
    message += "test_get_parameters_minimum_maximum\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_minimum(void)
+void IndependentParametersTest::test_get_parameter_minimum()
 {
    message += "test_get_parameter_minimum\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_maximum(void)
+void IndependentParametersTest::test_get_parameter_maximum()
 {
    message += "test_get_parameter_maximum\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_statistics(void)
+void IndependentParametersTest::test_get_parameters_statistics()
 {
    message += "test_get_parameters_statistics\n";
 
@@ -220,205 +220,205 @@ void IndependentParametersTest::test_get_parameters_statistics(void)
 }
 
 
-void IndependentParametersTest::test_get_parameters_lower_bound(void)
+void IndependentParametersTest::test_get_parameters_lower_bound()
 {
    message += "test_get_parameters_lower_bound\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_upper_bound(void)
+void IndependentParametersTest::test_get_parameters_upper_bound()
 {
    message += "test_get_parameters_upper_bound\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_lower_bound(void)
+void IndependentParametersTest::test_get_parameter_lower_bound()
 {
    message += "test_get_parameter_lower_bound\n";
 }
 
 
-void IndependentParametersTest::test_get_parameter_upper_bound(void)
+void IndependentParametersTest::test_get_parameter_upper_bound()
 {
    message += "test_get_parameter_upper_bound\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_bounds(void)
+void IndependentParametersTest::test_get_parameters_bounds()
 {
    message += "test_get_parameters_bounds\n";
 }
 
 
-void IndependentParametersTest::test_get_display(void)
+void IndependentParametersTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_scaling_method(void)
+void IndependentParametersTest::test_set_parameters_scaling_method()
 {
    message += "test_set_parameters_scaling_method\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_number(void)
+void IndependentParametersTest::test_set_parameters_number()
 {
    message += "test_set_parameters_number\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters(void)
+void IndependentParametersTest::test_set_parameters()
 {
    message += "test_set_parameters\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter(void)
+void IndependentParametersTest::test_set_parameter()
 {
    message += "test_set_parameter\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_name(void)
+void IndependentParametersTest::test_set_parameters_name()
 {
    message += "test_set_parameters_name\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_name(void)
+void IndependentParametersTest::test_set_parameter_name()
 {
    message += "test_set_parameter_name\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_units(void)
+void IndependentParametersTest::test_set_parameters_units()
 {
    message += "test_set_parameters_units\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_units(void)
+void IndependentParametersTest::test_set_parameter_units()
 {
    message += "test_set_parameter_units\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_description(void)
+void IndependentParametersTest::test_set_parameters_description()
 {
    message += "test_set_parameters_description\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_description(void)
+void IndependentParametersTest::test_set_parameter_description()
 {
    message += "test_set_parameter_description\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_mean(void)
+void IndependentParametersTest::test_set_parameters_mean()
 {
    message += "test_set_parameters_mean\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_standard_deviation(void)
+void IndependentParametersTest::test_set_parameters_standard_deviation()
 {
    message += "test_set_parameters_standard_deviation\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_mean_standard_deviation(void)
+void IndependentParametersTest::test_set_parameters_mean_standard_deviation()
 {
    message += "test_set_parameters_mean_standard_deviation\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_mean(void)
+void IndependentParametersTest::test_set_parameter_mean()
 {
    message += "test_set_parameter_mean\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_standard_deviation(void)
+void IndependentParametersTest::test_set_parameter_standard_deviation()
 {
    message += "test_set_parameter_standard_deviation\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_minimum(void)
+void IndependentParametersTest::test_set_parameters_minimum()
 {
    message += "test_set_parameters_minimum\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_minimum(void)
+void IndependentParametersTest::test_set_parameter_minimum()
 {
    message += "test_set_parameter_minimum\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_maximum(void)
+void IndependentParametersTest::test_set_parameters_maximum()
 {
    message += "test_set_parameters_maximum\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_maximum(void)
+void IndependentParametersTest::test_set_parameter_maximum()
 {
    message += "test_set_parameter_maximum\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_minimum_maximum(void)
+void IndependentParametersTest::test_set_parameters_minimum_maximum()
 {
    message += "test_set_parameters_minimum_maximum\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_statistics(void)
+void IndependentParametersTest::test_set_parameters_statistics()
 {
    message += "test_set_parameters_statistics\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_lower_bound(void)
+void IndependentParametersTest::test_set_parameters_lower_bound()
 {
    message += "test_set_parameters_lower_bound\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_upper_bound(void)
+void IndependentParametersTest::test_set_parameters_upper_bound()
 {
    message += "test_set_parameters_upper_bound\n";
 }
 
 
-void IndependentParametersTest::test_set_parameters_bounds(void)
+void IndependentParametersTest::test_set_parameters_bounds()
 {
    message += "test_set_parameters_bounds\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_lower_bound(void)
+void IndependentParametersTest::test_set_parameter_lower_bound()
 {
    message += "test_set_parameter_lower_bounds\n";
 }
 
 
-void IndependentParametersTest::test_set_parameter_upper_bound(void)
+void IndependentParametersTest::test_set_parameter_upper_bound()
 {
    message += "test_set_parameter_upper_bound\n";
 }
 
 
-void IndependentParametersTest::test_set_display(void)
+void IndependentParametersTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void IndependentParametersTest::test_initialize_random(void)
+void IndependentParametersTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -436,7 +436,7 @@ void IndependentParametersTest::test_initialize_random(void)
 }
 
 
-void IndependentParametersTest::test_initialize_parameters(void)
+void IndependentParametersTest::test_initialize_parameters()
 {      
    message += "test_initialize_parameters\n";
 
@@ -450,7 +450,7 @@ void IndependentParametersTest::test_initialize_parameters(void)
 }
 
 
-void IndependentParametersTest::test_randomize_parameters_uniform(void)
+void IndependentParametersTest::test_randomize_parameters_uniform()
 {
    message += "test_randomize_parameters_uniform\n";
    IndependentParameters ip;
@@ -466,7 +466,7 @@ void IndependentParametersTest::test_randomize_parameters_uniform(void)
 }
 
 
-void IndependentParametersTest::test_randomize_parameters_normal(void)
+void IndependentParametersTest::test_randomize_parameters_normal()
 {
    message += "test_randomize_parameters_normal\n";
    IndependentParameters ip;
@@ -481,7 +481,7 @@ void IndependentParametersTest::test_randomize_parameters_normal(void)
 }
 
 
-void IndependentParametersTest::test_calculate_scaled_parameters(void)
+void IndependentParametersTest::test_calculate_scaled_parameters()
 {
    message += "test_calculate_scaled_parameters\n";
 
@@ -524,7 +524,7 @@ void IndependentParametersTest::test_calculate_scaled_parameters(void)
 }
 
 
-void IndependentParametersTest::test_unscale_parameters(void)
+void IndependentParametersTest::test_unscale_parameters()
 {
    message += "test_unscale_parameters\n";
 
@@ -570,7 +570,7 @@ void IndependentParametersTest::test_unscale_parameters(void)
 }
 
 
-void IndependentParametersTest::test_bound_parameters(void)
+void IndependentParametersTest::test_bound_parameters()
 {
    message += "test_bound_parameters\n";
 
@@ -584,13 +584,13 @@ void IndependentParametersTest::test_bound_parameters(void)
 }
 
 
-void IndependentParametersTest::test_bound_parameter(void)
+void IndependentParametersTest::test_bound_parameter()
 {
    message += "test_bound_parameter\n";
 }
 
 
-void IndependentParametersTest::test_get_parameters_scaling_method(void)
+void IndependentParametersTest::test_get_parameters_scaling_method()
 {
    message += "test_get_parameters_scaling_method\n";
 
@@ -606,13 +606,13 @@ void IndependentParametersTest::test_get_parameters_scaling_method(void)
 }
 
 
-void IndependentParametersTest::test_get_parameters_scaling_method_name(void)
+void IndependentParametersTest::test_get_parameters_scaling_method_name()
 {
    message += "test_get_parameters_scaling_method_name\n";
 }
 
 
-void IndependentParametersTest::test_to_XML(void)
+void IndependentParametersTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -624,7 +624,7 @@ void IndependentParametersTest::test_to_XML(void)
 }
 
 
-void IndependentParametersTest::test_from_XML(void)
+void IndependentParametersTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -642,7 +642,7 @@ void IndependentParametersTest::test_from_XML(void)
 }
 
 
-void IndependentParametersTest::run_test_case(void)
+void IndependentParametersTest::run_test_case()
 {
    message += "Running independent parameters test case...\n";
 
@@ -818,7 +818,7 @@ void IndependentParametersTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

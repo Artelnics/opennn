@@ -32,106 +32,106 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   PerceptronTest(void);
+   PerceptronTest();
 
 
    // DESTRUCTOR
 
-   virtual ~PerceptronTest(void);
+   virtual ~PerceptronTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void); 
+   void test_constructor();
+   void test_destructor(); 
 
    // Assignment operator 
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
-   void test_count_inputs_number(void);
+   void test_count_inputs_number();
 
-   void test_get_activation_function(void);
-   void test_get_bias(void);   
-   void test_arrange_synaptic_weights(void);
-   void test_get_synaptic_weight(void);
+   void test_get_activation_function();
+   void test_get_bias();   
+   void test_arrange_synaptic_weights();
+   void test_get_synaptic_weight();
 
-   void test_count_parameters_number(void);
-   void test_arrange_parameters(void);
+   void test_count_parameters_number();
+   void test_arrange_parameters();
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set(void);
+   void test_set();
 
-   void test_set_activation_function(void);
+   void test_set_activation_function();
 
-   void test_set_inputs_number(void);
+   void test_set_inputs_number();
 
-   void test_set_bias(void);
-   void test_set_synaptic_weights(void);
-   void test_set_synaptic_weight(void);
+   void test_set_bias();
+   void test_set_synaptic_weights();
+   void test_set_synaptic_weight();
 
-   void test_set_parameters_number(void);
-   void test_set_parameters(void);
+   void test_set_parameters_number();
+   void test_set_parameters();
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Growing and pruning
 
-   void test_grow_input(void);
+   void test_grow_input();
 
-   void test_prune_input(void);
+   void test_prune_input();
 
    // Initialization methods
 
-   void test_initialize_bias_uniform(void);
-   void test_initialize_bias_normal(void);
+   void test_initialize_bias_uniform();
+   void test_initialize_bias_normal();
 
-   void test_initialize_synaptic_weights_uniform(void);
-   void test_initialize_synaptic_weights_normal(void);
+   void test_initialize_synaptic_weights_uniform();
+   void test_initialize_synaptic_weights_normal();
 
-   void test_initialize_parameters(void);
+   void test_initialize_parameters();
 
    // Combination methods
 
-   void test_calculate_combination(void);
+   void test_calculate_combination();
 
-   void test_calculate_combination_gradient(void);
-   void test_calculate_combination_Hessian(void);
+   void test_calculate_combination_gradient();
+   void test_calculate_combination_Hessian();
 
-   void test_calculate_combination_parameters_gradient(void);
-   void test_calculate_combination_parameters_Hessian(void);
+   void test_calculate_combination_parameters_gradient();
+   void test_calculate_combination_parameters_Hessian();
 
    // Activation methods
 
-   void test_calculate_activation(void);
-   void test_calculate_activation_derivative(void);
-   void test_calculate_activation_second_derivative(void);
+   void test_calculate_activation();
+   void test_calculate_activation_derivative();
+   void test_calculate_activation_second_derivative();
 
    // Output methods
 
-   void test_calculate_output(void);
-   void test_calculate_gradient(void);
-   void test_calculate_Hessian(void);
+   void test_calculate_output();
+   void test_calculate_gradient();
+   void test_calculate_Hessian();
 
-   void test_calculate_parameters_outputs(void);
-   void test_calculate_parameters_gradient(void);
-   void test_calculate_parameters_Hessian(void);
+   void test_calculate_parameters_outputs();
+   void test_calculate_parameters_gradient();
+   void test_calculate_parameters_Hessian();
 
    // Serialization methods
 
-   void test_print(void);
-   void test_save(void);
-   void test_load(void);
+   void test_print();
+   void test_save();
+   void test_load();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -139,7 +139,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

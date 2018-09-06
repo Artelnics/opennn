@@ -32,179 +32,179 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit MultilayerPerceptronTest(void);
+   explicit MultilayerPerceptronTest();
 
 
    // DESTRUCTOR
 
-   virtual ~MultilayerPerceptronTest(void);
+   virtual ~MultilayerPerceptronTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
    // Multilayer perceptron architecture
 
-   void test_count_inputs_number(void);
+   void test_count_inputs_number();
 
-   void test_get_layers_number(void);
-   void test_count_layers_perceptrons_number(void);
+   void test_get_layers_number();
+   void test_count_layers_perceptrons_number();
 
-   void test_count_outputs_number(void);
+   void test_count_outputs_number();
 
-   void test_count_perceptrons_number(void);
-   void test_count_cumulative_perceptrons_number(void);
+   void test_count_perceptrons_number();
+   void test_count_cumulative_perceptrons_number();
 
-   void test_get_layers(void);
-   void test_get_layer(void);
+   void test_get_layers();
+   void test_get_layer();
 
    // Multilayer Perceptron parameters
 
-   void test_arrange_layers_parameters_number(void);
+   void test_arrange_layers_parameters_number();
 
-   void test_count_parameters_number(void);
-   void test_get_cumulative_parameters_number(void);
+   void test_count_parameters_number();
+   void test_get_cumulative_parameters_number();
 
-   void test_arrange_parameters(void);   
+   void test_arrange_parameters();   
 
-   void test_arrange_layers_biases(void);
+   void test_arrange_layers_biases();
 
-   void test_arrange_layers_synaptic_weights(void);
+   void test_arrange_layers_synaptic_weights();
 
-   void test_get_layers_parameters(void);
+   void test_get_layers_parameters();
 
-   void test_get_parameter_indices(void);
-   void test_arrange_parameters_indices(void);
+   void test_get_parameter_indices();
+   void test_arrange_parameters_indices();
 
-   void test_get_layers_activation_function(void);
-   void test_get_layers_activation_function_name(void);
+   void test_get_layers_activation_function();
+   void test_get_layers_activation_function_name();
 
    // Display messages
 
-   void test_get_display(void);
+   void test_get_display();
 
    // SET METHODS
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
    // Multilayer perceptron architecture
 
-   void test_set_layers_perceptrons_number(void);
+   void test_set_layers_perceptrons_number();
 
    // Multilayer perceptron parameters
 
-   void test_set_parameters(void);
+   void test_set_parameters();
 
-   void test_set_layers_biases(void);
+   void test_set_layers_biases();
 
-   void test_set_layers_synaptic_weights(void);
+   void test_set_layers_synaptic_weights();
 
-   void test_set_layers_parameters(void);
+   void test_set_layers_parameters();
 
    // Activation functions
 
-   void test_set_layers_activation_function(void);
+   void test_set_layers_activation_function();
 
    // Display messages
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Check methods
 
-   void test_is_empty(void);
+   void test_is_empty();
 
    // Growing and pruning
 
-   void test_grow_input(void);
-   void test_grow_layer(void);
+   void test_grow_input();
+   void test_grow_layer();
 
-   void test_prune_input(void);
-   void test_prune_output(void);
+   void test_prune_input();
+   void test_prune_output();
 
-   void test_prune_layer(void);
+   void test_prune_layer();
 
    // Initialization methods
 
-   void test_initialize_random(void);
+   void test_initialize_random();
 
    // Parameters initialization methods
 
-   void test_initialize_parameters(void);
+   void test_initialize_parameters();
 
-   void test_initialize_biases(void);    
-   void test_initialize_synaptic_weights(void);
-   void test_randomize_parameters_uniform(void);
-   void test_randomize_parameters_normal(void);
+   void test_initialize_biases();    
+   void test_initialize_synaptic_weights();
+   void test_randomize_parameters_uniform();
+   void test_randomize_parameters_normal();
 
    // Parameters norm 
 
-   void test_calculate_parameters_norm(void);   
+   void test_calculate_parameters_norm();   
 
    // Multilayer perceptron architecture outputs
 
-   void test_calculate_outputs(void);
+   void test_calculate_outputs();
 
-   void test_calculate_Jacobian(void);
-   void test_calculate_Hessian_form(void);
+   void test_calculate_Jacobian();
+   void test_calculate_Hessian_form();
 
-   void test_calculate_parameters_Jacobian(void);
-   void test_calculate_parameters_Hessian_form(void);
+   void test_calculate_parameters_Jacobian();
+   void test_calculate_parameters_Hessian_form();
 
    // PerceptronLayer combination combination
 
-   void test_calculate_layer_combination_combination(void);
-   void test_calculate_layer_combination_combination_Jacobian(void);
+   void test_calculate_layer_combination_combination();
+   void test_calculate_layer_combination_combination_Jacobian();
 
    // Interlayer combination combination
 
-   void test_calculate_interlayer_combination_combination(void);
-   void test_calculate_interlayer_combination_combination_Jacobian(void);
+   void test_calculate_interlayer_combination_combination();
+   void test_calculate_interlayer_combination_combination_Jacobian();
 
    // Forward propagation
 
-   void test_calculate_layers_combination(void);
+   void test_calculate_layers_combination();
 
-   void test_calculate_layers_combination_Jacobian(void);
-   void test_calculate_layers_combination_parameters_Jacobian(void);
-   void test_calculate_perceptrons_combination_parameters_gradient(void);
+   void test_calculate_layers_combination_Jacobian();
+   void test_calculate_layers_combination_parameters_Jacobian();
+   void test_calculate_perceptrons_combination_parameters_gradient();
 
-   void test_calculate_layers_activation(void);
-   void test_calculate_layers_activation_derivative(void);
-   void test_calculate_layers_activation_second_derivative(void);
+   void test_calculate_layers_activation();
+   void test_calculate_layers_activation_derivative();
+   void test_calculate_layers_activation_second_derivative();
 
-   void test_calculate_first_order_forward_propagation(void);
-   void test_calculate_second_order_forward_propagation(void);
+   void test_calculate_first_order_forward_propagation();
+   void test_calculate_second_order_forward_propagation();
  
-   void test_calculate_layers_Jacobian(void);
-   void test_calculate_layers_Hessian_form(void);
+   void test_calculate_layers_Jacobian();
+   void test_calculate_layers_Hessian_form();
 
-   void test_calculate_output_layers_delta(void);
-   void test_calculate_output_interlayers_Delta(void);
+   void test_calculate_output_layers_delta();
+   void test_calculate_output_interlayers_Delta();
 
-   void test_calculate_interlayers_combination_combination_Jacobian(void);
+   void test_calculate_interlayers_combination_combination_Jacobian();
 
    // Expression methods
 
-   void test_write_expression(void);
+   void test_write_expression();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -213,7 +213,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
