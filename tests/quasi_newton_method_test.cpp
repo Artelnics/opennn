@@ -22,7 +22,7 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-QuasiNewtonMethodTest::QuasiNewtonMethodTest(void) : UnitTesting() 
+QuasiNewtonMethodTest::QuasiNewtonMethodTest() : UnitTesting() 
 {
 }
 
@@ -31,7 +31,7 @@ QuasiNewtonMethodTest::QuasiNewtonMethodTest(void) : UnitTesting()
 
 /// Destructor.
 
-QuasiNewtonMethodTest::~QuasiNewtonMethodTest(void)
+QuasiNewtonMethodTest::~QuasiNewtonMethodTest()
 {
 
 }
@@ -39,7 +39,7 @@ QuasiNewtonMethodTest::~QuasiNewtonMethodTest(void)
 
 // METHODS
 
-void QuasiNewtonMethodTest::test_constructor(void)
+void QuasiNewtonMethodTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -57,12 +57,12 @@ void QuasiNewtonMethodTest::test_constructor(void)
 }
 
 
-void QuasiNewtonMethodTest::test_destructor(void)
+void QuasiNewtonMethodTest::test_destructor()
 {
 }
 
 
-void QuasiNewtonMethodTest::test_get_inverse_Hessian_approximation_method(void)
+void QuasiNewtonMethodTest::test_get_inverse_Hessian_approximation_method()
 {
    message += "test_get_inverse_Hessian_approximation_method\n";
 
@@ -76,13 +76,13 @@ void QuasiNewtonMethodTest::test_get_inverse_Hessian_approximation_method(void)
 }
 
 
-void QuasiNewtonMethodTest::test_get_inverse_Hessian_approximation_method_name(void)
+void QuasiNewtonMethodTest::test_get_inverse_Hessian_approximation_method_name()
 {
    message += "test_get_inverse_Hessian_approximation_method_name\n";
 }
 
 
-void QuasiNewtonMethodTest::test_set_inverse_Hessian_approximation_method(void)
+void QuasiNewtonMethodTest::test_set_inverse_Hessian_approximation_method()
 {
    message += "test_set_training_direction_method\n";
 
@@ -95,7 +95,7 @@ void QuasiNewtonMethodTest::test_set_inverse_Hessian_approximation_method(void)
 
 // @todo
 
-void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation(void)
+void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation()
 {
    message += "test_calculate_DFP_inverse_Hessian_approximation\n";
 
@@ -180,7 +180,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation(voi
 
 // @todo
 
-void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_Hessian_approximation(void)
+void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_Hessian_approximation()
 {
    message += "test_calculate_BFGS_inverse_Hessian_approximation\n";
 
@@ -215,7 +215,7 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_Hessian_approximation(vo
 
 // @todo
 
-void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation(void)
+void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation()
 {
    message += "test_calculate_inverse_Hessian_approximation\n";
 
@@ -282,13 +282,13 @@ void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation(void)
 }
 
 
-void QuasiNewtonMethodTest::test_calculate_training_direction(void)
+void QuasiNewtonMethodTest::test_calculate_training_direction()
 {
    message += "test_calculate_training_direction\n";
 }
 
 
-void QuasiNewtonMethodTest::test_perform_training(void)
+void QuasiNewtonMethodTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -386,7 +386,7 @@ void QuasiNewtonMethodTest::test_perform_training(void)
 }
 
 
-void QuasiNewtonMethodTest::test_to_XML(void)   
+void QuasiNewtonMethodTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 
@@ -399,7 +399,7 @@ void QuasiNewtonMethodTest::test_to_XML(void)
 }
 
 
-void QuasiNewtonMethodTest::test_resize_training_history(void)
+void QuasiNewtonMethodTest::test_resize_training_history()
 {
     message += "test_resize_training_history\n";
 
@@ -424,7 +424,7 @@ void QuasiNewtonMethodTest::test_resize_training_history(void)
 }
 
 
-void QuasiNewtonMethodTest::test_load(void)
+void QuasiNewtonMethodTest::test_load()
 {
    message += "test_load\n";
 
@@ -437,7 +437,7 @@ void QuasiNewtonMethodTest::test_load(void)
 }
 
 
-void QuasiNewtonMethodTest::test_set_reserve_all_training_history(void)
+void QuasiNewtonMethodTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -446,7 +446,7 @@ void QuasiNewtonMethodTest::test_set_reserve_all_training_history(void)
 }
 
 
-void QuasiNewtonMethodTest::run_test_case(void)
+void QuasiNewtonMethodTest::run_test_case()
 {
    message += "Running quasi-Newton method test case...\n";
 
@@ -489,7 +489,7 @@ void QuasiNewtonMethodTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

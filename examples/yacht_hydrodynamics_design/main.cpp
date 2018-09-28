@@ -32,184 +32,112 @@ int main(void)
 {
     try
     {
-        int rank = 0;
-
-#ifdef __OPENNN_MPI__
-
-        int size = 1;
-
-        MPI_Init(NULL,NULL);
-
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-#endif
-
-        if(rank == 0)
-        {
-            std::cout << "OpenNN. Yacht Resistance Design Application." << std::endl;
-        }
+        std::cout << "OpenNN. Yacht Resistance Design Application." << std::endl;
 
         srand((unsigned)time(NULL));
 
-        // Global variables
+        // Data set
 
         DataSet data_set;
 
-        NeuralNetwork neural_network;
+        data_set.set_data_file_name("../data/yachtresistance.dat");
 
-        LossIndex loss_index;
+        data_set.load_data();
 
-        TrainingStrategy training_strategy;
+        // Variables
 
-        // Local variables
+        Variables* variables_pointer = data_set.get_variables_pointer();
 
-        DataSet local_data_set;
+        variables_pointer->set_name(0, "longitudinal_center_buoyancy");
+        variables_pointer->set_name(1, "prismatic_coefficient");
+        variables_pointer->set_name(2, "length_displacement_ratio");
+        variables_pointer->set_name(3, "beam_draught_ratio");
+        variables_pointer->set_name(4, "length_beam_ratio");
+        variables_pointer->set_name(5, "froude_number");
+        variables_pointer->set_name(6, "residuary_resistance");
 
-        NeuralNetwork local_neural_network;
+        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-        LossIndex local_loss_index;
+        // Instances
 
-        TrainingStrategy local_training_strategy;
+        Instances* instances_pointer = data_set.get_instances_pointer();
 
-        if(rank == 0)
-        {
-            // Data set
+        instances_pointer->split_random_indices();
 
-            data_set.set_data_file_name("../data/yachtresistance.dat");
+        const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+        const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
 
-            data_set.load_data();
+        // Neural network
 
-            // Variables
+        const size_t inputs_number = data_set.get_variables().count_inputs_number();
+        const size_t hidden_neurons_number = 30;
+        const size_t outputs_number = data_set.get_variables().count_targets_number();
 
-            Variables* variables_pointer = data_set.get_variables_pointer();
+        NeuralNetwork neural_network(inputs_number, hidden_neurons_number, outputs_number);
 
-            variables_pointer->set_name(0, "longitudinal_center_buoyancy");
-            variables_pointer->set_name(1, "prismatic_coefficient");
-            variables_pointer->set_name(2, "length_displacement_ratio");
-            variables_pointer->set_name(3, "beam_draught_ratio");
-            variables_pointer->set_name(4, "length_beam_ratio");
-            variables_pointer->set_name(5, "froude_number");
-            variables_pointer->set_name(6, "residuary_resistance");
+        Inputs* inputs = neural_network.get_inputs_pointer();
 
-            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        inputs->set_information(inputs_information);
 
-            // Instances
+        Outputs* outputs = neural_network.get_outputs_pointer();
 
-            Instances* instances_pointer = data_set.get_instances_pointer();
+        outputs->set_information(targets_information);
 
-            instances_pointer->split_random_indices();
+        neural_network.construct_scaling_layer();
 
-            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
-            const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-            // Neural network
+        scaling_layer_pointer->set_statistics(inputs_statistics);
 
-            const size_t inputs_number = data_set.get_variables().count_inputs_number();
-            const size_t hidden_neurons_number = 30;
-            const size_t outputs_number = data_set.get_variables().count_targets_number();
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
-            neural_network.set(inputs_number, hidden_neurons_number, outputs_number);
+        neural_network.construct_unscaling_layer();
 
-            Inputs* inputs = neural_network.get_inputs_pointer();
+        UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
 
-            inputs->set_information(inputs_information);
+        unscaling_layer_pointer->set_statistics(targets_statistics);
 
-            Outputs* outputs = neural_network.get_outputs_pointer();
+        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-            outputs->set_information(targets_information);
+        // Loss index
 
-            neural_network.construct_scaling_layer();
+        LossIndex loss_index(&neural_network, &data_set);
 
-            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-            scaling_layer_pointer->set_statistics(inputs_statistics);
+        // Training strategy
 
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+        TrainingStrategy training_strategy(&loss_index);
 
-            neural_network.construct_unscaling_layer();
+        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-            UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+        quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
 
-            unscaling_layer_pointer->set_statistics(targets_statistics);
+        quasi_Newton_method_pointer->set_reserve_loss_history(true);
 
-            unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
+        quasi_Newton_method_pointer->set_display_period(100);
 
-            // Loss index
-
-            loss_index.set_data_set_pointer(&data_set);
-            loss_index.set_neural_network_pointer(&neural_network);
-
-            // Training strategy
-
-            training_strategy.set(&loss_index);
-
-            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
-
-            quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
-
-            quasi_Newton_method_pointer->set_reserve_loss_history(true);
-
-            quasi_Newton_method_pointer->set_display_period(100);
-        }
-
-#ifdef __OPENNN_MPI__
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        local_data_set.set_MPI(&data_set);
-
-        local_neural_network.set_MPI(&neural_network);
-
-        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
-
-        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        TrainingStrategy::Results training_strategy_results = local_training_strategy.perform_training();
-#else
         TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
-#endif
 
-        if(rank == 0)
-        {
-#ifdef __OPENNN_MPI__
-            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
-#endif
-            // Testing analysis
+        // Testing analysis
 
-            TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-            TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
+//        TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
 
-            // Save results
+        // Save results
 
-            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-            UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+        data_set.save("../data/data_set.xml");
 
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
-            unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression("../data/expression.txt");
 
-            data_set.save("../data/data_set.xml");
+        training_strategy.save("../data/training_strategy.xml");
+        training_strategy_results.save("../data/training_strategy_results.dat");
 
-            neural_network.save("../data/neural_network.xml");
-            neural_network.save_expression("../data/expression.txt");
+//        linear_regression_results.save("../data/linear_regression_analysis_results.dat");
 
-            training_strategy.save("../data/training_strategy.xml");
-            training_strategy_results.save("../data/training_strategy_results.dat");
-
-            linear_regression_results.save("../data/linear_regression_analysis_results.dat");
-        }
-
-#ifdef __OPENNN_MPI__
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        MPI_Finalize();
-
-#endif
         return(0);
     }
     catch(std::exception& e)

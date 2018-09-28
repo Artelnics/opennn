@@ -30,170 +30,96 @@ int main(void)
 {
     try
     {
-        int rank = 0;
+        std::cout << "OpenNN. Simple Pattern Recognition Application." << std::endl;
 
-#ifdef __OPENNN_MPI__
-
-        int size = 1;
-
-        MPI_Init(NULL,NULL);
-
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-#endif
-
-        if(rank == 0)
-        {
-            std::cout << "OpenNN. Simple Pattern Recognition Application." << std::endl;
-        }
-
-        srand( (unsigned)time( NULL ) );
-
-        // Global variables
+        // Data set
 
         DataSet data_set;
 
-        NeuralNetwork neural_network;
+        data_set.set_data_file_name("../data/simple_pattern_recognition.dat");
 
-        LossIndex loss_index;
+        data_set.load_data();
 
-        TrainingStrategy training_strategy;
+        Variables* variables_pointer = data_set.get_variables_pointer();
 
-        // Local variables
+        variables_pointer->set_name(0, "x1");
+        variables_pointer->set_name(1, "x2");
+        variables_pointer->set_name(2, "y");
 
-        DataSet local_data_set;
+        Instances* instances_pointer = data_set.get_instances_pointer();
 
-        NeuralNetwork local_neural_network;
+        instances_pointer->set_training();
 
-        LossIndex local_loss_index;
+        Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+        Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-        TrainingStrategy local_training_strategy;
+        const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
-        if(rank == 0)
-        {
-            // Data set
+        // Neural network
 
-            data_set.set_data_file_name("../data/simple_pattern_recognition.dat");
+        NeuralNetwork neural_network(2, 2, 1);
 
-            data_set.load_data();
+        Inputs* inputs_pointer = neural_network.get_inputs_pointer();
 
-            Variables* variables_pointer = data_set.get_variables_pointer();
+        inputs_pointer->set_information(inputs_information);
 
-            variables_pointer->set_name(0, "x1");
-            variables_pointer->set_name(1, "x2");
-            variables_pointer->set_name(2, "y");
+        neural_network.construct_scaling_layer();
 
-            Instances* instances_pointer = data_set.get_instances_pointer();
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-            instances_pointer->set_training();
+        scaling_layer_pointer->set_statistics(inputs_statistics);
 
-            Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-            Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
-            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+        MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
 
-            // Neural network
+        multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::Logistic);
 
-            neural_network.set(2, 2, 1);
+        Outputs* outputs_pointer = neural_network.get_outputs_pointer();
 
-            Inputs* inputs_pointer = neural_network.get_inputs_pointer();
+        outputs_pointer->set_information(targets_information);
 
-            inputs_pointer->set_information(inputs_information);
+        // Loss index
 
-            neural_network.construct_scaling_layer();
+        LossIndex loss_index(&neural_network, &data_set);
 
-            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-            scaling_layer_pointer->set_statistics(inputs_statistics);
+        // Training strategy
 
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+        TrainingStrategy training_strategy(&loss_index);
 
-            MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
+        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-            multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::Logistic);
+        quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-4);
 
-            Outputs* outputs_pointer = neural_network.get_outputs_pointer();
-
-            outputs_pointer->set_information(targets_information);
-
-            // Loss index
-
-            loss_index.set_data_set_pointer(&data_set);
-            loss_index.set_neural_network_pointer(&neural_network);
-
-            // Training strategy
-
-            training_strategy.set(&loss_index);
-
-            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
-
-            quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-4);
-        }
-
-#ifdef __OPENNN_MPI__
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        local_data_set.set_MPI(&data_set);
-
-        local_neural_network.set_MPI(&neural_network);
-
-        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
-
-        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        TrainingStrategy::Results training_strategy_results = local_training_strategy.perform_training();
-#else
         TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
-#endif
 
-        if(rank == 0)
-        {
-#ifdef __OPENNN_MPI__
-            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
-#endif
-            // Testing analysis
+        // Testing analysis
 
-            Instances* instances_pointer = data_set.get_instances_pointer();
+        instances_pointer->set_testing();
 
-            instances_pointer->set_testing();
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-            TestingAnalysis testing_analysis(&neural_network, &data_set);
+        Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
-            Vector<double> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+        Matrix<size_t> confusion = testing_analysis.calculate_confusion();
 
-            Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        // Save results
 
-            // Save results
+        data_set.save("../data/data_set.xml");
 
-            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression("../data/expression.txt");
 
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+        loss_index.save("../data/loss_index.xml");
 
-            data_set.save("../data/data_set.xml");
+        training_strategy.save("../data/training_strategy.xml");
+        training_strategy_results.save("../data/training_strategy_results.dat");
 
-            neural_network.save("../data/neural_network.xml");
-            neural_network.save_expression("../data/expression.txt");
+        binary_classification_tests.save("../data/binary_classification_tests.dat");
+        confusion.save("../data/confusion.dat");
 
-            loss_index.save("../data/loss_index.xml");
-
-            training_strategy.save("../data/training_strategy.xml");
-            training_strategy_results.save("../data/training_strategy_results.dat");
-
-            binary_classification_tests.save("../data/binary_classification_tests.dat");
-            confusion.save("../data/confusion.dat");
-        }
-
-#ifdef __OPENNN_MPI__
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        MPI_Finalize();
-
-#endif
         return(0);
     }
     catch(std::exception& e)

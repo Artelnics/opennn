@@ -20,7 +20,7 @@ using namespace OpenNN;
 
 // DEFAULT CONSTRUCTOR
 
-MockTrainingAlgorithm::MockTrainingAlgorithm(void) : TrainingAlgorithm()
+MockTrainingAlgorithm::MockTrainingAlgorithm() : TrainingAlgorithm()
 {
 }
 
@@ -36,16 +36,16 @@ MockTrainingAlgorithm::MockTrainingAlgorithm(LossIndex* new_loss_index_pointer)
 
 // DESTRUCTOR
 
-MockTrainingAlgorithm::~MockTrainingAlgorithm(void)
+MockTrainingAlgorithm::~MockTrainingAlgorithm()
 {
 }
 
 
 // METHODS
 
-// MockTrainingAlgorithmResults* perform_training(void) method
+// MockTrainingAlgorithmResults* perform_training() method
 
-MockTrainingAlgorithm::MockTrainingAlgorithmResults* MockTrainingAlgorithm::perform_training(void)
+MockTrainingAlgorithm::MockTrainingAlgorithmResults* MockTrainingAlgorithm::perform_training()
 {
    MockTrainingAlgorithmResults* mock_training_algorithm_training_results = new MockTrainingAlgorithmResults;
 
@@ -54,7 +54,7 @@ MockTrainingAlgorithm::MockTrainingAlgorithmResults* MockTrainingAlgorithm::perf
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

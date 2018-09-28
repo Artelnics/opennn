@@ -31,78 +31,78 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit InstancesTest(void);
+   explicit InstancesTest();
 
 
    // DESTRUCTOR
 
-   virtual ~InstancesTest(void);
+   virtual ~InstancesTest();
 
 
     // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
-   void test_get_instances_number(void);
+   void test_get_instances_number();
 
    // Instances methods 
 
-   void test_count_training_instances_number(void);
-   void test_count_selection_instances_number(void);
-   void test_count_testing_instances_number(void);
+   void test_count_training_instances_number();
+   void test_count_selection_instances_number();
+   void test_count_testing_instances_number();
 
-   void test_arrange_selection_indices(void);
-   void test_arrange_training_indices(void);
-   void test_arrange_testing_indices(void);
-   void test_arrange_used_indices(void);
+   void test_arrange_selection_indices();
+   void test_arrange_training_indices();
+   void test_arrange_testing_indices();
+   void test_arrange_used_indices();
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set(void);
+   void test_set();
 
-   void test_set_instances_number(void);
+   void test_set_instances_number();
 
    // Instances methods
 
-   void test_set_training(void);
-   void test_set_selection(void);
-   void test_set_testing(void);
+   void test_set_training();
+   void test_set_selection();
+   void test_set_testing();
 
-   void test_set_unused(void);
+   void test_set_unused();
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Splitting methods
 
-   void test_split_random_indices(void);
-   void test_split_sequential_indices(void);
+   void test_split_random_indices();
+   void test_split_sequential_indices();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 #endif
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

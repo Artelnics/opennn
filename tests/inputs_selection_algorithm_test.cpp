@@ -23,14 +23,14 @@ using namespace OpenNN;
 
 // GENERAL RUCTOR
 
-InputsSelectionAlgorithmTest::InputsSelectionAlgorithmTest(void) : UnitTesting()
+InputsSelectionAlgorithmTest::InputsSelectionAlgorithmTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-InputsSelectionAlgorithmTest::~InputsSelectionAlgorithmTest(void)
+InputsSelectionAlgorithmTest::~InputsSelectionAlgorithmTest()
 {
 }
 
@@ -39,7 +39,7 @@ InputsSelectionAlgorithmTest::~InputsSelectionAlgorithmTest(void)
 
 // Constructor and destructor methods
 
-void InputsSelectionAlgorithmTest::test_constructor(void)
+void InputsSelectionAlgorithmTest::test_constructor()
 {
     message += "test_constructor\n";
 
@@ -54,7 +54,7 @@ void InputsSelectionAlgorithmTest::test_constructor(void)
     assert_true(!gi2.has_training_strategy(), LOG);
 }
 
-void InputsSelectionAlgorithmTest::test_destructor(void)
+void InputsSelectionAlgorithmTest::test_destructor()
 {
     message += "tes_destructor\n";
 
@@ -65,7 +65,7 @@ void InputsSelectionAlgorithmTest::test_destructor(void)
 
 // Get methods
 
-void InputsSelectionAlgorithmTest::test_get_training_strategy_pointer(void)
+void InputsSelectionAlgorithmTest::test_get_training_strategy_pointer()
 {
     message += "test_get_training_strategy_pointer\n";
 
@@ -78,7 +78,7 @@ void InputsSelectionAlgorithmTest::test_get_training_strategy_pointer(void)
 }
 
 
-void InputsSelectionAlgorithmTest::test_get_loss_calculation_method(void)
+void InputsSelectionAlgorithmTest::test_get_loss_calculation_method()
 {
     message += "test_get_loss_calculation_method\n";
 
@@ -90,7 +90,7 @@ void InputsSelectionAlgorithmTest::test_get_loss_calculation_method(void)
 
 }
 
-void InputsSelectionAlgorithmTest::test_write_loss_calculation_method(void)
+void InputsSelectionAlgorithmTest::test_write_loss_calculation_method()
 {
     message += "test_write_loss_calculation_method\n";
 
@@ -103,7 +103,7 @@ void InputsSelectionAlgorithmTest::test_write_loss_calculation_method(void)
 
 // Set methods
 
-void InputsSelectionAlgorithmTest::test_set_training_strategy_pointer(void)
+void InputsSelectionAlgorithmTest::test_set_training_strategy_pointer()
 {
     message += "test_set_training_strategy_pointer\n";
 
@@ -116,13 +116,13 @@ void InputsSelectionAlgorithmTest::test_set_training_strategy_pointer(void)
     assert_true(gi.get_training_strategy_pointer() != NULL, LOG);
 }
 
-void InputsSelectionAlgorithmTest::test_set_default(void)
+void InputsSelectionAlgorithmTest::test_set_default()
 {
     message += "test_set_default\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_set_loss_calculation_method(void)
+void InputsSelectionAlgorithmTest::test_set_loss_calculation_method()
 {
     message += "test_set_loss_calculation_method\n";
 
@@ -130,64 +130,65 @@ void InputsSelectionAlgorithmTest::test_set_loss_calculation_method(void)
 
 // Performances calculation methods
 
-void InputsSelectionAlgorithmTest::test_set_neural_inputs(void)
+/// @todo
+
+void InputsSelectionAlgorithmTest::test_set_neural_inputs()
 {
     message += "test_set_neural_inputs\n";
 
-    DataSet ds;
+//    DataSet ds;
 
-    NeuralNetwork nn(2,6,1);
+//    NeuralNetwork nn(2,6,1);
 
-    LossIndex pf(&nn, &ds);
+//    LossIndex pf(&nn, &ds);
 
-    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&pf);
 
-    GrowingInputs gi(&ts);
+//    GrowingInputs gi(&ts);
 
-    Vector<bool> inputs(2);
+//    Vector<bool> inputs(2);
 
-    inputs[0] = false;
-    inputs[1] = true;
+//    inputs[0] = false;
+//    inputs[1] = true;
 
-    gi.set_neural_inputs(inputs);
+//    gi.set_neural_inputs(inputs);
 
-    assert_true(nn.get_inputs_number() == 1, LOG);
-
+//    assert_true(nn.get_inputs_number() == 1, LOG);
 }
 
 // Performances calculation methods
 
-void InputsSelectionAlgorithmTest::test_perform_minimum_model_evaluation(void)
+void InputsSelectionAlgorithmTest::test_perform_minimum_model_evaluation()
 {
     message += "test_perform_minimum_model_evaluation\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_perform_maximum_model_evaluation(void)
+void InputsSelectionAlgorithmTest::test_perform_maximum_model_evaluation()
 {
     message += "test_perform_maximum_model_evaluation\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_perform_mean_model_evaluation(void)
+void InputsSelectionAlgorithmTest::test_perform_mean_model_evaluation()
 {
     message += "test_perform_mean_model_evaluation\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_get_final_losss(void)
+void InputsSelectionAlgorithmTest::test_get_final_losss()
 {
     message += "test_get_final_losss\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_perform_model_evaluation(void)
+void InputsSelectionAlgorithmTest::test_perform_model_evaluation()
 {
     message += "test_perform_model_evaluation\n";
 
 }
 
-void InputsSelectionAlgorithmTest::test_get_parameters_order(void)
+void InputsSelectionAlgorithmTest::test_get_parameters_order()
 {
     message += "test_get_parameters_order\n";
 
@@ -195,7 +196,7 @@ void InputsSelectionAlgorithmTest::test_get_parameters_order(void)
 
 // Unit testing methods
 
-void InputsSelectionAlgorithmTest::run_test_case(void)
+void InputsSelectionAlgorithmTest::run_test_case()
 {
     message += "Running order selection algorithm test case...\n";
 

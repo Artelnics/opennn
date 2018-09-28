@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   O P E N N N   P R O J E C T                                                                   #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artelnics - Making intelligent use of data                                                    #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 
@@ -21,8 +20,8 @@ CONFIG(release, debug|release) {
 DEFINES += NDEBUG
 }
 
-SUBDIRS += tinyxml2
 SUBDIRS += opennn
-SUBDIRS += examples
 SUBDIRS += blank
+SUBDIRS += examples
 SUBDIRS += tests
+

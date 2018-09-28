@@ -6,7 +6,7 @@
 /*   P E R F O R M A N C E   F U N C T I O N A L   C L A S S                                                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates a loss functional object with all pointers initialized to NULL. 
 /// It also initializes all the rest of class members to their default values.
 
-LossIndex::LossIndex(void)
+LossIndex::LossIndex()
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -42,7 +42,7 @@ LossIndex::LossIndex(void)
  , user_regularization_pointer(NULL)
 {
     set_error_type(NORMALIZED_SQUARED_ERROR);
-    set_regularization_type(NO_REGULARIZATION);
+    set_regularization_type(NEURAL_PARAMETERS_NORM);
 
     set_default();
 }
@@ -80,6 +80,31 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer)
 }
 
 
+LossIndex::LossIndex(NeuralNetwork& new_neural_network)
+ : neural_network_pointer(&new_neural_network)
+ , data_set_pointer(NULL)
+ , mathematical_model_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
+ , user_regularization_pointer(NULL)
+{
+    set_error_type(NORMALIZED_SQUARED_ERROR);
+    set_regularization_type(NO_REGULARIZATION);
+
+   set_default();
+}
+
+
+
 // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
@@ -107,11 +132,35 @@ LossIndex::LossIndex(NeuralNetwork* new_neural_network_pointer, DataSet* new_dat
  , user_regularization_pointer(NULL)
 {
    set_error_type(NORMALIZED_SQUARED_ERROR);
-   set_regularization_type(NO_REGULARIZATION);   
+   set_regularization_type(NEURAL_PARAMETERS_NORM);
 
    set_default();
-
 }
+
+
+LossIndex::LossIndex(NeuralNetwork& new_neural_network, DataSet& new_data_set)
+ : neural_network_pointer(&new_neural_network)
+ , data_set_pointer(&new_data_set)
+ , mathematical_model_pointer(NULL)
+ , sum_squared_error_pointer(NULL)
+ , mean_squared_error_pointer(NULL)
+ , root_mean_squared_error_pointer(NULL)
+ , normalized_squared_error_pointer(NULL)
+ , Minkowski_error_pointer(NULL)
+ , cross_entropy_error_pointer(NULL)
+ , weighted_squared_error_pointer(NULL)
+ , roc_area_error_pointer(NULL)
+ , user_error_pointer(NULL)
+ , neural_parameters_norm_pointer(NULL)
+ , outputs_integrals_pointer(NULL)
+ , user_regularization_pointer(NULL)
+{
+   set_error_type(NORMALIZED_SQUARED_ERROR);
+   set_regularization_type(NEURAL_PARAMETERS_NORM);
+
+   set_default();
+}
+
 
 
 // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
@@ -219,7 +268,7 @@ LossIndex::LossIndex(ErrorTerm* new_user_error_pointer)
 /// Please be careful with the format of that file, which is specified in the OpenNN manual.
 /// @param file_name Name of loss functional file.
 
-LossIndex::LossIndex(const std::string& file_name)
+LossIndex::LossIndex(const string& file_name)
  : neural_network_pointer(NULL)
  , data_set_pointer(NULL)
  , mathematical_model_pointer(NULL)
@@ -373,13 +422,13 @@ LossIndex::LossIndex(const LossIndex& other_loss_index)
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "Copy constructor.\n"
                    << "Unknown error type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -414,13 +463,13 @@ LossIndex::LossIndex(const LossIndex& other_loss_index)
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "Copy constructor.\n"
                    << "Unknown regularization type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -434,7 +483,7 @@ LossIndex::LossIndex(const LossIndex& other_loss_index)
 /// Destructor.
 /// It deletes the objective, regularization and constraints terms. 
 
-LossIndex::~LossIndex(void)
+LossIndex::~LossIndex()
 {
    // Delete error terms
 
@@ -459,12 +508,12 @@ LossIndex::~LossIndex(void)
 // METHODS
 
 
-// bool has_neural_network(void) const method
+// bool has_neural_network() const method
 
 /// Returns true if this loss functional has a neural network associated,
 /// and false otherwise.
 
-bool LossIndex::has_neural_network(void) const
+bool LossIndex::has_neural_network() const
 {
     if(neural_network_pointer)
     {
@@ -477,12 +526,12 @@ bool LossIndex::has_neural_network(void) const
 }
 
 
-// bool has_mathematical_model(void) const method
+// bool has_mathematical_model() const method
 
 /// Returns true if this loss functional has a mathematical model associated,
 /// and false otherwise.
 
-bool LossIndex::has_mathematical_model(void) const
+bool LossIndex::has_mathematical_model() const
 {
     if(mathematical_model_pointer)
     {
@@ -495,12 +544,12 @@ bool LossIndex::has_mathematical_model(void) const
 }
 
 
-// bool has_data_set(void) const method
+// bool has_data_set() const method
 
 /// Returns true if this loss functional has a data set associated,
 /// and false otherwise.
 
-bool LossIndex::has_data_set(void) const
+bool LossIndex::has_data_set() const
 {
     if(data_set_pointer)
     {
@@ -513,12 +562,12 @@ bool LossIndex::has_data_set(void) const
 }
 
 
-// bool has_selection(void) const method
+// bool has_selection() const method
 
 /// Returns true if this loss functional has a selection method defined,
 /// and false otherwise.
 
-bool LossIndex::has_selection(void) const
+bool LossIndex::has_selection() const
 {
     if(!data_set_pointer)
     {
@@ -538,12 +587,12 @@ bool LossIndex::has_selection(void) const
 }
 
 
-// bool is_sum_squared_terms(void) const method
+// bool is_sum_squared_terms() const method
 
 /// Returns true if the loss functional can be expressed as the sum of squared terms.
 /// Only those loss functionals are suitable for the Levenberg-Marquardt training algorithm.
 
-bool LossIndex::is_sum_squared_terms(void) const
+bool LossIndex::is_sum_squared_terms() const
 {
     if(error_type == ROOT_MEAN_SQUARED_ERROR
     || error_type == MINKOWSKI_ERROR
@@ -562,67 +611,67 @@ bool LossIndex::is_sum_squared_terms(void) const
 }
 
 
-// void check_neural_network(void) const method
+// void check_neural_network() const method
 
 /// Throws an exception if no neural network is associated to the loss functional.
 
-void LossIndex::check_neural_network(void) const
+void LossIndex::check_neural_network() const
 {
     if(!neural_network_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "void check_neural_network(void) const.\n"
+              << "void check_neural_network() const.\n"
               << "Pointer to neural network is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 }
 
 
-// void check_error_terms(void) const method
+// void check_error_terms() const method
 
 /// Throws an exception if the loss functional has not got any
 /// objective, regularization or constraints terms.
 
-void LossIndex::check_error_terms(void) const
+void LossIndex::check_error_terms() const
 {
     if(error_type == NO_ERROR
     && regularization_type == NO_REGULARIZATION)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: LossIndex class.\n"
-               << "void check_error_terms(void) const method.\n"
+               << "void check_error_terms() const method.\n"
                << "None objective, regularization or constraints terms are used.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
     }
 }
 
 
-// SumSquaredError* get_sum_squared_error_pointer(void) const method
+// SumSquaredError* get_sum_squared_error_pointer() const method
 
 /// Returns a pointer to the sum squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-SumSquaredError* LossIndex::get_sum_squared_error_pointer(void) const
+SumSquaredError* LossIndex::get_sum_squared_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!sum_squared_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "SumSquaredError* get_sum_squared_error_pointer(void) const method.\n"
+              << "SumSquaredError* get_sum_squared_error_pointer() const method.\n"
               << "Pointer to sum squared error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -631,26 +680,26 @@ SumSquaredError* LossIndex::get_sum_squared_error_pointer(void) const
 }
 
 
-// MeanSquaredError* get_mean_squared_error_pointer(void) const method
+// MeanSquaredError* get_mean_squared_error_pointer() const method
 
 /// Returns a pointer to the mean squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-MeanSquaredError* LossIndex::get_mean_squared_error_pointer(void) const
+MeanSquaredError* LossIndex::get_mean_squared_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!mean_squared_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "MeanSquaredError* get_mean_squared_error_pointer(void) const method.\n"
+              << "MeanSquaredError* get_mean_squared_error_pointer() const method.\n"
               << "Pointer to mean squared error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -659,26 +708,26 @@ MeanSquaredError* LossIndex::get_mean_squared_error_pointer(void) const
 }
 
 
-// RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const method
+// RootMeanSquaredError* get_root_mean_squared_error_pointer() const method
 
 /// Returns a pointer to the root mean squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-RootMeanSquaredError* LossIndex::get_root_mean_squared_error_pointer(void) const
+RootMeanSquaredError* LossIndex::get_root_mean_squared_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!root_mean_squared_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const method.\n"
+              << "RootMeanSquaredError* get_root_mean_squared_error_pointer() const method.\n"
               << "Pointer to root mean squared error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -687,26 +736,26 @@ RootMeanSquaredError* LossIndex::get_root_mean_squared_error_pointer(void) const
 }
 
 
-// NormalizedSquaredError* get_normalized_squared_error_pointer(void) const method
+// NormalizedSquaredError* get_normalized_squared_error_pointer() const method
 
 /// Returns a pointer to the normalized squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-NormalizedSquaredError* LossIndex::get_normalized_squared_error_pointer(void) const
+NormalizedSquaredError* LossIndex::get_normalized_squared_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!normalized_squared_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "NormalizedSquaredError* get_normalized_squared_error_pointer(void) const method.\n"
+              << "NormalizedSquaredError* get_normalized_squared_error_pointer() const method.\n"
               << "Pointer to normalized squared error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -715,26 +764,26 @@ NormalizedSquaredError* LossIndex::get_normalized_squared_error_pointer(void) co
 }
 
 
-// MinkowskiError* get_Minkowski_error_pointer(void) const method
+// MinkowskiError* get_Minkowski_error_pointer() const method
 
 /// Returns a pointer to the Minkowski error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-MinkowskiError* LossIndex::get_Minkowski_error_pointer(void) const
+MinkowskiError* LossIndex::get_Minkowski_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!Minkowski_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "MinkowskiError* get_Minkowski_error_pointer(void) const method.\n"
+              << "MinkowskiError* get_Minkowski_error_pointer() const method.\n"
               << "Pointer to Minkowski error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -743,26 +792,26 @@ MinkowskiError* LossIndex::get_Minkowski_error_pointer(void) const
 }
 
 
-// CrossEntropyError* get_cross_entropy_error_pointer(void) const method
+// CrossEntropyError* get_cross_entropy_error_pointer() const method
 
 /// Returns a pointer to the cross entropy error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-CrossEntropyError* LossIndex::get_cross_entropy_error_pointer(void) const
+CrossEntropyError* LossIndex::get_cross_entropy_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!cross_entropy_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "CrossEntropyError* get_cross_entropy_error_pointer(void) const method.\n"
+              << "CrossEntropyError* get_cross_entropy_error_pointer() const method.\n"
               << "Pointer to cross entropy error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -771,26 +820,26 @@ CrossEntropyError* LossIndex::get_cross_entropy_error_pointer(void) const
 }
 
 
-// WeightedSquaredError* get_weighted_squared_error_pointer(void) const method
+// WeightedSquaredError* get_weighted_squared_error_pointer() const method
 
 /// Returns a pointer to the weighted squared error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-WeightedSquaredError* LossIndex::get_weighted_squared_error_pointer(void) const
+WeightedSquaredError* LossIndex::get_weighted_squared_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(!cross_entropy_error_pointer)
+    if(!weighted_squared_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "WeightedSquaredError* get_weighted_squared_error_pointer(void) const method.\n"
+              << "WeightedSquaredError* get_weighted_squared_error_pointer() const method.\n"
               << "Pointer to weighted squared error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -799,26 +848,26 @@ WeightedSquaredError* LossIndex::get_weighted_squared_error_pointer(void) const
 }
 
 
-// RocAreaError* get_roc_area_error_pointer(void) const method
+// RocAreaError* get_roc_area_error_pointer() const method
 
 /// Returns a pointer to the ROC area error which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-RocAreaError* LossIndex::get_roc_area_error_pointer(void) const
+RocAreaError* LossIndex::get_roc_area_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!roc_area_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "RocAreaError* get_roc_area_error_pointer(void) const method.\n"
+              << "RocAreaError* get_roc_area_error_pointer() const method.\n"
               << "Pointer to ROC area error objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -828,27 +877,27 @@ RocAreaError* LossIndex::get_roc_area_error_pointer(void) const
 
 
 
-// OutputsIntegrals* get_outputs_integrals_pointer(void) const method
+// OutputsIntegrals* get_outputs_integrals_pointer() const method
 
 /// Returns a pointer to the outputs integrals which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
 
-OutputsIntegrals* LossIndex::get_outputs_integrals_pointer(void) const
+OutputsIntegrals* LossIndex::get_outputs_integrals_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!outputs_integrals_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "OutputsIntegrals* get_outputs_integrals_pointer(void) const method.\n"
+              << "OutputsIntegrals* get_outputs_integrals_pointer() const method.\n"
               << "Pointer to outputs integrals objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -857,26 +906,26 @@ OutputsIntegrals* LossIndex::get_outputs_integrals_pointer(void) const
 }
 
 
-// ErrorTerm* get_user_error_pointer(void) const method
+// ErrorTerm* get_user_error_pointer() const method
 
 /// Returns a pointer to the user error term which is used as objective.
 /// If that object does not exists, an exception is thrown.
 
-ErrorTerm* LossIndex::get_user_error_pointer(void) const
+ErrorTerm* LossIndex::get_user_error_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!user_error_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "ErrorTerm* get_user_error_pointer(void) const method.\n"
+              << "ErrorTerm* get_user_error_pointer() const method.\n"
               << "Pointer to user objective is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -885,26 +934,26 @@ ErrorTerm* LossIndex::get_user_error_pointer(void) const
 }
 
 
-// NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const method
+// NeuralParametersNorm* get_neural_parameters_norm_pointer() const method
 
 /// Returns a pointer to the neural parameters norm functional which is used as regularization.
 /// If that object does not exists, an exception is thrown.
 
-NeuralParametersNorm* LossIndex::get_neural_parameters_norm_pointer(void) const
+NeuralParametersNorm* LossIndex::get_neural_parameters_norm_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!neural_parameters_norm_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const method.\n"
+              << "NeuralParametersNorm* get_neural_parameters_norm_pointer() const method.\n"
               << "Pointer to neural parameters norm regularization is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -913,26 +962,26 @@ NeuralParametersNorm* LossIndex::get_neural_parameters_norm_pointer(void) const
 }
 
 
-// RegularizationTerm* get_user_regularization_pointer(void) const method
+// RegularizationTerm* get_user_regularization_pointer() const method
 
 /// Returns a pointer to the user regularization functional.
 /// If that object does not exists, an exception is thrown.
 
-RegularizationTerm* LossIndex::get_user_regularization_pointer(void) const
+RegularizationTerm* LossIndex::get_user_regularization_pointer() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
     if(!user_regularization_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: LossIndex class.\n"
-              << "ErrorTerm* get_user_regularization_pointer(void) const method.\n"
+              << "ErrorTerm* get_user_regularization_pointer() const method.\n"
               << "Pointer to user regularization is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
      }
 
      #endif
@@ -941,31 +990,31 @@ RegularizationTerm* LossIndex::get_user_regularization_pointer(void) const
 }
 
 
-// const ErrorType& get_error_type(void) const method
+// const ErrorType& get_error_type() const method
 
 /// Returns the type of objective term used in the loss functional expression.
 
-const LossIndex::ErrorType& LossIndex::get_error_type(void) const
+const LossIndex::ErrorType& LossIndex::get_error_type() const
 {
    return(error_type);
 }
 
 
-// const RegularizationType& get_regularization_type(void) const method
+// const RegularizationType& get_regularization_type() const method
 
 /// Returns the type of regularization term used in the loss functional expression.
 
-const LossIndex::RegularizationType& LossIndex::get_regularization_type(void) const
+const LossIndex::RegularizationType& LossIndex::get_regularization_type() const
 {
    return(regularization_type);
 }
 
 
-// std::string write_error_type(void) const
+// string write_error_type() const
 
 /// Returns a string with the type of objective term used in the loss functional expression.
 
-std::string LossIndex::write_error_type(void) const
+string LossIndex::write_error_type() const
 {
    if(error_type == NO_ERROR)
    {
@@ -1005,22 +1054,22 @@ std::string LossIndex::write_error_type(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "std::string write_error_type(void) const method.\n"
+             << "string write_error_type() const method.\n"
              << "Unknown error type.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// std::string write_regularization_type(void) const method
+// string write_regularization_type() const method
 
 /// Returns a string with the type of regularization term used in the loss functional expression.
 
-std::string LossIndex::write_regularization_type(void) const
+string LossIndex::write_regularization_type() const
 {
    if(regularization_type == NO_REGULARIZATION)
    {
@@ -1040,22 +1089,22 @@ std::string LossIndex::write_regularization_type(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "std::string write_regularization_type(void) const method.\n"
+             << "string write_regularization_type() const method.\n"
              << "Unknown regularization type.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// std::string write_error_type_text(void) const
+// string write_error_type_text() const
 
 /// Returns a string in text format with the type of objective term used in the loss functional expression.
 
-std::string LossIndex::write_error_type_text(void) const
+string LossIndex::write_error_type_text() const
 {
    if(error_type == NO_ERROR)
    {
@@ -1095,22 +1144,22 @@ std::string LossIndex::write_error_type_text(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "std::string write_error_type_text(void) const method.\n"
+             << "string write_error_type_text() const method.\n"
              << "Unknown error type.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// std::string write_regularization_type_text(void) const method
+// string write_regularization_type_text() const method
 
 /// Returns a string in text format with the type of regularization term used in the loss functional expression.
 
-std::string LossIndex::write_regularization_type_text(void) const
+string LossIndex::write_regularization_type_text() const
 {
    if(regularization_type == NO_REGULARIZATION)
    {
@@ -1130,23 +1179,23 @@ std::string LossIndex::write_regularization_type_text(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "std::string write_regularization_type_text(void) const method.\n"
+             << "string write_regularization_type_text() const method.\n"
              << "Unknown regularization type.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen, or false if messages
 /// from this class can't be displayed on the screen.
 
-const bool& LossIndex::get_display(void) const
+const bool& LossIndex::get_display() const
 {
    return(display);
 }
@@ -1221,13 +1270,13 @@ void LossIndex::set_neural_network_pointer(NeuralNetwork* new_neural_network_poi
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_neural_network_pointer(NeuralNetwork*) method.\n"
                    << "Unknown error type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -1262,13 +1311,13 @@ void LossIndex::set_neural_network_pointer(NeuralNetwork* new_neural_network_poi
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_neural_network_pointer(NeuralNetwork*) method.\n"
                    << "Unknown regularization type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -1344,6 +1393,8 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
             else
             {
                 weighted_squared_error_pointer->set_weights();
+
+                weighted_squared_error_pointer->set_normalization_coefficient();
             }
         }
         break;
@@ -1368,13 +1419,13 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_data_set_pointer(DataSet*) method.\n"
                    << "Unknown error type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -1411,11 +1462,11 @@ void LossIndex::set_user_regularization_pointer(RegularizationTerm* new_user_reg
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the loss functional object to their default values.
 
-void LossIndex::set_default(void)
+void LossIndex::set_default()
 {
    display = true;
 }
@@ -1451,8 +1502,8 @@ void LossIndex::set_MPI(DataSet* new_data_set, NeuralNetwork* new_neural_network
     {
         // Variables to send initialization
 
-        original_error_type = (int)loss_index->get_error_type();
-        original_regularization_type = (int)loss_index->get_regularization_type();
+        original_error_type =(int)loss_index->get_error_type();
+        original_regularization_type =(int)loss_index->get_regularization_type();
 
         if(loss_index->get_error_type() == LossIndex::WEIGHTED_SQUARED_ERROR)
         {
@@ -1483,21 +1534,21 @@ void LossIndex::set_MPI(DataSet* new_data_set, NeuralNetwork* new_neural_network
 
         MPI_Waitall(2, req, MPI_STATUS_IGNORE);
 
-        if(original_error_type == (int)LossIndex::WEIGHTED_SQUARED_ERROR)
+        if(original_error_type ==(int)LossIndex::WEIGHTED_SQUARED_ERROR)
         {
             MPI_Irecv(&positives_weight, 1, MPI_DOUBLE, rank-1, 3, MPI_COMM_WORLD, &req[0]);
             MPI_Irecv(&negatives_weight, 1, MPI_DOUBLE, rank-1, 4, MPI_COMM_WORLD, &req[1]);
 
             MPI_Waitall(2, req, MPI_STATUS_IGNORE);
         }
-        else if(original_error_type == (int)LossIndex::MINKOWSKI_ERROR)
+        else if(original_error_type ==(int)LossIndex::MINKOWSKI_ERROR)
         {
             MPI_Irecv(&minkowski_parameter, 1, MPI_DOUBLE, rank-1, 3, MPI_COMM_WORLD, &req[0]);
 
             MPI_Waitall(1, req, MPI_STATUS_IGNORE);
         }
 
-        if(original_regularization_type == (int)LossIndex::NEURAL_PARAMETERS_NORM)
+        if(original_regularization_type ==(int)LossIndex::NEURAL_PARAMETERS_NORM)
         {
             MPI_Recv(&regularization_weight, 1, MPI_DOUBLE, rank-1, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
@@ -1512,21 +1563,21 @@ void LossIndex::set_MPI(DataSet* new_data_set, NeuralNetwork* new_neural_network
 
         MPI_Waitall(2, req, MPI_STATUS_IGNORE);
 
-        if(original_error_type == (int)LossIndex::WEIGHTED_SQUARED_ERROR)
+        if(original_error_type ==(int)LossIndex::WEIGHTED_SQUARED_ERROR)
         {
             MPI_Isend(&positives_weight, 1, MPI_DOUBLE, rank+1, 3, MPI_COMM_WORLD, &req[0]);
             MPI_Isend(&negatives_weight, 1, MPI_DOUBLE, rank+1, 4, MPI_COMM_WORLD, &req[1]);
 
             MPI_Waitall(2, req, MPI_STATUS_IGNORE);
         }
-        else if(original_error_type == (int)LossIndex::MINKOWSKI_ERROR)
+        else if(original_error_type ==(int)LossIndex::MINKOWSKI_ERROR)
         {
             MPI_Isend(&minkowski_parameter, 1, MPI_DOUBLE, rank+1, 3, MPI_COMM_WORLD, &req[0]);
 
             MPI_Waitall(1, req, MPI_STATUS_IGNORE);
         }
 
-        if(original_regularization_type == (int)LossIndex::NEURAL_PARAMETERS_NORM)
+        if(original_regularization_type ==(int)LossIndex::NEURAL_PARAMETERS_NORM)
         {
             MPI_Send(&regularization_weight, 1, MPI_DOUBLE, rank+1, 5, MPI_COMM_WORLD);
         }
@@ -1537,29 +1588,29 @@ void LossIndex::set_MPI(DataSet* new_data_set, NeuralNetwork* new_neural_network
     set_error_type((LossIndex::ErrorType)original_error_type);
     set_regularization_type((LossIndex::RegularizationType)original_regularization_type);
 
-    if(original_error_type == (int)LossIndex::WEIGHTED_SQUARED_ERROR)
+    if(original_error_type ==(int)LossIndex::WEIGHTED_SQUARED_ERROR)
     {
         get_weighted_squared_error_pointer()->set_positives_weight(positives_weight);
         get_weighted_squared_error_pointer()->set_negatives_weight(negatives_weight);
     }
-    else if(original_error_type == (int)LossIndex::MINKOWSKI_ERROR)
+    else if(original_error_type ==(int)LossIndex::MINKOWSKI_ERROR)
     {
         get_Minkowski_error_pointer()->set_Minkowski_parameter(minkowski_parameter);
     }
 
-    if(original_regularization_type == (int)LossIndex::NEURAL_PARAMETERS_NORM)
+    if(original_regularization_type ==(int)LossIndex::NEURAL_PARAMETERS_NORM)
     {
         get_neural_parameters_norm_pointer()->set_neural_parameters_norm_weight(regularization_weight);
     }
 }
 #endif
 
-// void set_error_type(const std::string&) method
+// void set_error_type(const string&) method
 
 /// Sets a new type for the error term from a string.
 /// @param new_error_type String with the type of objective term.
 
-void LossIndex::set_error_type(const std::string& new_error_type)
+void LossIndex::set_error_type(const string& new_error_type)
 {
    if(new_error_type == "NO_ERROR")
    {
@@ -1603,23 +1654,23 @@ void LossIndex::set_error_type(const std::string& new_error_type)
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "void set_error_type(const std::string&) method.\n"
-             << "Unknown objective type: " << new_error_type << ".\n";
+             << "void set_error_type(const string&) method.\n"
+             << "Unknown error type: " << new_error_type << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }   
 }
 
 
-// void set_regularization_type(const std::string&) method
+// void set_regularization_type(const string&) method
 
 /// Sets a new type for the regularization term from a string.
 /// @param new_regularization_type String with the type of regularization term.
 
-void LossIndex::set_regularization_type(const std::string& new_regularization_type)
+void LossIndex::set_regularization_type(const string& new_regularization_type)
 {
    if(new_regularization_type == "NO_REGULARIZATION")
    {
@@ -1635,13 +1686,13 @@ void LossIndex::set_regularization_type(const std::string& new_regularization_ty
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "void set_regularization_type(const std::string&) method.\n"
+             << "void set_regularization_type(const string&) method.\n"
              << "Unknown regularization type: " << new_regularization_type << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }   
 }
 
@@ -1735,13 +1786,13 @@ void LossIndex::set_error_type(const ErrorType& new_error_type)
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void set_error_type(const ErrorType&) method.\n"
                    << "Unknown error type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
             break;
     }
@@ -1787,25 +1838,25 @@ void LossIndex::set_regularization_type(const RegularizationType& new_regulariza
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: LossIndex class.\n"
                 << "void set_regularization_type(const RegularizationType&) method.\n"
                 << "Unknown regularization type.\n";
  
-         throw std::logic_error(buffer.str());	     
+         throw logic_error(buffer.str());	     
       }
       break;
    }
 }
 
 
-// void destruct_error_term(void) method
+// void destruct_error_term() method
 
 /// This method deletes the error term object. 
 /// It also sets the error term type to NONE and the corresponding flag to false. 
 
-void LossIndex::destruct_error_term(void)
+void LossIndex::destruct_error_term()
 {
     delete sum_squared_error_pointer;
     delete mean_squared_error_pointer;
@@ -1829,12 +1880,12 @@ void LossIndex::destruct_error_term(void)
 }
 
 
-// void destruct_regularization_term(void) method
+// void destruct_regularization_term() method
 
 /// This method deletes the regularization term object. 
 /// It also sets the regularization term type to NONE and the corresponding flag to false. 
 
-void LossIndex::destruct_regularization_term(void)
+void LossIndex::destruct_regularization_term()
 {
     delete neural_parameters_norm_pointer;
     delete outputs_integrals_pointer;
@@ -1848,25 +1899,25 @@ void LossIndex::destruct_regularization_term(void)
 }
 
 
-// void destruct_all_terms(void) method
+// void destruct_all_terms() method
 
 /// This method destructs the objective, regularization and constraints terms. 
 
-void LossIndex::destruct_all_terms(void)
+void LossIndex::destruct_all_terms()
 {
    destruct_error_term();
    destruct_regularization_term();
 }
 
 
-// double calculate_error(void) const method
+// double calculate_error() const method
 
-/// Returns the objective evaluation,
-/// according to the respective objective type used in the loss functional expression.
+/// Returns the error evaluation,
+/// according to the respective error type used in the loss functional expression.
 
-double LossIndex::calculate_error(void) const
+double LossIndex::calculate_error() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1874,7 +1925,7 @@ double LossIndex::calculate_error(void) const
 
     #endif
 
-    double objective = 0.0;
+    double error = 0.0;
 
     // Objective
 
@@ -1888,83 +1939,83 @@ double LossIndex::calculate_error(void) const
 
          case SUM_SQUARED_ERROR:
          {
-            objective = sum_squared_error_pointer->calculate_error();
+            error = sum_squared_error_pointer->calculate_error();
          }
          break;
 
          case MEAN_SQUARED_ERROR:
          {
-             objective = mean_squared_error_pointer->calculate_error();
+             error = mean_squared_error_pointer->calculate_error();
          }
          break;
 
          case ROOT_MEAN_SQUARED_ERROR:
          {
-             objective = root_mean_squared_error_pointer->calculate_error();
+             error = root_mean_squared_error_pointer->calculate_error();
          }
          break;
 
          case NORMALIZED_SQUARED_ERROR:
          {
-             objective = normalized_squared_error_pointer->calculate_error();
+             error = normalized_squared_error_pointer->calculate_error();
          }
          break;
 
          case WEIGHTED_SQUARED_ERROR:
          {
-             objective = weighted_squared_error_pointer->calculate_error();
+             error = weighted_squared_error_pointer->calculate_error();
          }
          break;
 
          case ROC_AREA_ERROR:
          {
-             objective = roc_area_error_pointer->calculate_error();
+             error = roc_area_error_pointer->calculate_error();
          }
          break;
 
          case MINKOWSKI_ERROR:
          {
-             objective = Minkowski_error_pointer->calculate_error();
+             error = Minkowski_error_pointer->calculate_error();
          }
          break;
 
          case CROSS_ENTROPY_ERROR:
          {
-             objective = cross_entropy_error_pointer->calculate_error();
+             error = cross_entropy_error_pointer->calculate_error();
          }
          break;
 
          case USER_ERROR:
          {
-             objective = user_error_pointer->calculate_error();
+             error = user_error_pointer->calculate_error();
          }
          break;
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "double calculate_error(void) const method.\n"
+                    << "double calculate_error() const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
 
-     return(objective);
+     return(error);
 }
 
 
 // double calculate_error(const Vector<double>&) const method
 
 /// Returns the objective evaluation,
-/// according to the respective objective type used in the loss functional expression.
+/// according to the respective error type used in the loss functional expression.
 
 double LossIndex::calculate_error(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2040,13 +2091,13 @@ double LossIndex::calculate_error(const Vector<double>& parameters) const
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
                     << "double calculate_error(const Vector<double>&) const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -2056,9 +2107,9 @@ double LossIndex::calculate_error(const Vector<double>& parameters) const
 
 #ifdef __OPENNN_MPI__
 
-double LossIndex::calculate_error_MPI(void) const
+double LossIndex::calculate_error_MPI() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2077,7 +2128,7 @@ double LossIndex::calculate_error_MPI(void) const
 
     if(has_data_set() && data_set_pointer->has_data())
     {
-        local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+        local_training_instances_number =(int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
     }
     MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
@@ -2086,13 +2137,13 @@ double LossIndex::calculate_error_MPI(void) const
         return 0.0;
     }
 
-    size = std::min(size,training_instances_number);
+    size = min(size,training_instances_number);
 
     // Get the group of processes in MPI_COMM_WORLD
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 
-    int* ranks = (int*)malloc(size*sizeof(int));
+    int* ranks =(int*)malloc(size*sizeof(int));
 
     for(int i = 0; i < size; i++)
     {
@@ -2161,7 +2212,7 @@ double LossIndex::calculate_error_MPI(void) const
 
                  const Vector<double> local_training_target_data_mean = data_set_pointer->arrange_training_target_data().calculate_rows_sum();
 
-                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(),(int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
 
                  training_target_data_mean /= training_instances_number;
 
@@ -2177,7 +2228,7 @@ double LossIndex::calculate_error_MPI(void) const
              {
                  const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
 
-                 const int local_training_negatives = (int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
+                 const int local_training_negatives =(int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
 
                  int negatives = 0;
                  MPI_Allreduce(&local_training_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
@@ -2215,15 +2266,15 @@ double LossIndex::calculate_error_MPI(void) const
 
              default:
              {
-                 std::ostringstream buffer;
+                 ostringstream buffer;
 
                  buffer << "OpenNN Exception: LossIndex class.\n"
-                        << "double calculate_error_MPI(void) const method.\n"
+                        << "double calculate_error_MPI() const method.\n"
                         << "Unknown error type.\n";
 
                  MPI_Abort(MPI_COMM_WORLD, 1);
 
-                 throw std::logic_error(buffer.str());
+                 throw logic_error(buffer.str());
              }
              break;
          }
@@ -2234,24 +2285,24 @@ double LossIndex::calculate_error_MPI(void) const
     }
      if(rank == 0)
      {
-         if(error_type == (int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
+         if(error_type ==(int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
          {
              global_objective = sqrt(global_objective);
          }
-         else if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+         else if(error_type ==(int)LossIndex::NORMALIZED_SQUARED_ERROR)
          {
              if(normalization_coefficient < 1.0e-99)
              {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-                       << "double calculate_selection_loss(void) const method.\n"
+                       << "double calculate_selection_loss() const method.\n"
                        << "Normalization coefficient is zero.\n"
                        << "Unuse constant target variables or choose another error functional. ";
 
                 MPI_Abort(MPI_COMM_WORLD, 1);
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
              }
 
              global_objective /= normalization_coefficient;
@@ -2268,7 +2319,7 @@ double LossIndex::calculate_error_MPI(void) const
 
 double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2296,17 +2347,17 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 
     if(has_data_set() && data_set_pointer->has_data())
     {
-        local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+        local_training_instances_number =(int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
     }
     MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-    size = std::min(size,training_instances_number);
+    size = min(size,training_instances_number);
 
     // Get the group of processes in MPI_COMM_WORLD
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 
-    int* ranks = (int*)malloc(size*sizeof(int));
+    int* ranks =(int*)malloc(size*sizeof(int));
 
     for(int i = 0; i < size; i++)
     {
@@ -2375,7 +2426,7 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 
                  const Vector<double> local_training_target_data_mean = data_set_pointer->arrange_training_target_data().calculate_rows_sum();
 
-                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(),(int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
 
                  training_target_data_mean /= training_instances_number;
 
@@ -2391,7 +2442,7 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
              {
                  const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
 
-                 const int local_training_negatives = (int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
+                 const int local_training_negatives =(int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
 
                  int negatives = 0;
                  MPI_Allreduce(&local_training_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
@@ -2429,7 +2480,7 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 
              default:
              {
-                 std::ostringstream buffer;
+                 ostringstream buffer;
 
                  buffer << "OpenNN Exception: LossIndex class.\n"
                         << "double calculate_error_MPI(const Vector<double>&) const method.\n"
@@ -2437,7 +2488,7 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 
                  MPI_Abort(MPI_COMM_WORLD, 1);
 
-                 throw std::logic_error(buffer.str());
+                 throw logic_error(buffer.str());
              }
              break;
          }
@@ -2450,24 +2501,24 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 
      if(rank == 0)
      {
-         if(error_type == (int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
+         if(error_type ==(int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
          {
              global_objective = sqrt(global_objective);
          }
-         else if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+         else if(error_type ==(int)LossIndex::NORMALIZED_SQUARED_ERROR)
          {
              if(normalization_coefficient < 1.0e-99)
              {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-                       << "double calculate_selection_loss(void) const method.\n"
+                       << "double calculate_selection_loss() const method.\n"
                        << "Normalization coefficient is zero.\n"
                        << "Unuse constant target variables or choose another error functional. ";
 
                 MPI_Abort(MPI_COMM_WORLD, 1);
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
              }
 
              global_objective /= normalization_coefficient;
@@ -2484,14 +2535,14 @@ double LossIndex::calculate_error_MPI(const Vector<double>& parameters) const
 #endif
 
 
-// double calculate_regularization(void) const method
+// double calculate_regularization() const method
 
 /// Returns the regularization evaluation,
 /// according to the respective regularization type used in the loss functional expression.
 
-double LossIndex::calculate_regularization(void) const
+double LossIndex::calculate_regularization() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2529,13 +2580,13 @@ double LossIndex::calculate_regularization(void) const
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
-                   << "double calculate_regularization(void) const method.\n"
+                   << "double calculate_regularization() const method.\n"
                    << "Unknown regularization type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -2550,7 +2601,7 @@ double LossIndex::calculate_regularization(void) const
 
 double LossIndex::calculate_regularization(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2588,13 +2639,13 @@ double LossIndex::calculate_regularization(const Vector<double>& parameters) con
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "double calculate_regularization(const Vector<double>&) const method.\n"
                    << "Unknown regularization type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -2602,15 +2653,15 @@ double LossIndex::calculate_regularization(const Vector<double>& parameters) con
     return(regularization);
 }
 
-// Vector<double> calculate_error_terms(void) const method
+// Vector<double> calculate_error_terms() const method
 
 /// Returns the evaluation of all the error terms,
-/// according to the respective objective type used in the loss functional expression.
+/// according to the respective error type used in the loss functional expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 
-Vector<double> LossIndex::calculate_error_terms(void) const
+Vector<double> LossIndex::calculate_error_terms() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2618,7 +2669,7 @@ Vector<double> LossIndex::calculate_error_terms(void) const
 
     #endif
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const Instances& instances = data_set_pointer->get_instances();
 
@@ -2651,10 +2702,10 @@ Vector<double> LossIndex::calculate_error_terms(void) const
          case ROOT_MEAN_SQUARED_ERROR:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Vector<double> calculate_error_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms() const method.\n"
                     << "Cannot calculate error terms for root mean squared error objective.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
 
@@ -2673,20 +2724,20 @@ Vector<double> LossIndex::calculate_error_terms(void) const
          case MINKOWSKI_ERROR:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Vector<double> calculate_error_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms() const method.\n"
                     << "Cannot calculate error terms for Minkowski error objective.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
 
          case CROSS_ENTROPY_ERROR:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Vector<double> calculate_error_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms() const method.\n"
                     << "Cannot calculate error terms for cross-entropy error objective.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
 
@@ -2699,10 +2750,10 @@ Vector<double> LossIndex::calculate_error_terms(void) const
          default:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Vector<double> calculate_error_terms(void) const method.\n"
+                    << "Vector<double> calculate_error_terms() const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -2711,18 +2762,18 @@ Vector<double> LossIndex::calculate_error_terms(void) const
 }
 
 
-// Matrix<double> calculate_error_terms_Jacobian(void) const method
+// Matrix<double> calculate_error_terms_Jacobian() const method
 
 /// Returns the Jacobian of the error terms function,
-/// according to the objective type used in the loss functional expression.
+/// according to the error type used in the loss functional expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters,
 /// and the number of columns the number of terms composing the objective.
 
-Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
+Matrix<double> LossIndex::calculate_error_terms_Jacobian() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2730,7 +2781,7 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
 
     #endif
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     Matrix<double> objective_terms_Jacobian;
 
@@ -2759,10 +2810,10 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
          case ROOT_MEAN_SQUARED_ERROR:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
+                    << "Matrix<double> calculate_error_terms_Jacobian() const method.\n"
                     << "Cannot calculate error terms for root mean squared error objective.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
 
@@ -2781,20 +2832,20 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
          case MINKOWSKI_ERROR:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
+                    << "Matrix<double> calculate_error_terms_Jacobian() const method.\n"
                     << "Cannot calculate error terms for Minkowski error objective.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
 
      case CROSS_ENTROPY_ERROR:
      {
          buffer << "OpenNN Exception: LossIndex class.\n"
-                << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
+                << "Matrix<double> calculate_error_terms_Jacobian() const method.\n"
                 << "Cannot calculate error terms for cross-entropy error objective.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
      }
      break;
 
@@ -2808,10 +2859,10 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
          default:
          {
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Matrix<double> calculate_error_terms_Jacobian(void) const method.\n"
+                    << "Matrix<double> calculate_error_terms_Jacobian() const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -2820,15 +2871,15 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(void) const
 }
 
 
-// Vector<double> calculate_error_gradient(void) const method
+// Vector<double> calculate_error_gradient() const method
 
-/// Returns the gradient of the objective, according to the objective type.
+/// Returns the gradient of the objective, according to the error type.
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> LossIndex::calculate_error_gradient(void) const
+Vector<double> LossIndex::calculate_error_gradient() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -2906,13 +2957,13 @@ Vector<double> LossIndex::calculate_error_gradient(void) const
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Vector<double> calculate_error_gradient(void) const method.\n"
+                    << "Vector<double> calculate_error_gradient() const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -2923,13 +2974,13 @@ Vector<double> LossIndex::calculate_error_gradient(void) const
 
 // Vector<double> calculate_error_gradient(const Vector<double>&) const method
 
-/// Returns the gradient of the objective, according to the objective type.
+/// Returns the gradient of the error, according to the error type.
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 
 Vector<double> LossIndex::calculate_error_gradient(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3001,13 +3052,13 @@ Vector<double> LossIndex::calculate_error_gradient(const Vector<double>& paramet
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_gradient(const Vector<double>&) const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3017,10 +3068,10 @@ Vector<double> LossIndex::calculate_error_gradient(const Vector<double>& paramet
 
 #ifdef __OPENNN_MPI__
 
-Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
+Vector<double> LossIndex::calculate_error_gradient_MPI() const
 {
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3039,17 +3090,17 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
 
     if(has_data_set() && data_set_pointer->has_data())
     {
-        local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+        local_training_instances_number =(int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
     }
     MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-    size = std::min(size,training_instances_number);
+    size = min(size,training_instances_number);
 
     // Get the group of processes in MPI_COMM_WORLD
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 
-    int* ranks = (int*)malloc(size*sizeof(int));
+    int* ranks =(int*)malloc(size*sizeof(int));
 
     for(int i = 0; i < size; i++)
     {
@@ -3124,7 +3175,7 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
 
                  const Vector<double> local_training_target_data_mean = data_set_pointer->arrange_training_target_data().calculate_rows_sum();
 
-                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+                 MPI_Allreduce(local_training_target_data_mean.data(), training_target_data_mean.data(),(int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
 
                  training_target_data_mean /= training_instances_number;
 
@@ -3143,7 +3194,7 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
              {
                  const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
 
-                 const int local_training_negatives = (int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
+                 const int local_training_negatives =(int)data_set_pointer->calculate_training_negatives(targets_indices[0]);
 
                  int negatives = 0;
                  MPI_Allreduce(&local_training_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
@@ -3168,7 +3219,7 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
 
              case CROSS_ENTROPY_ERROR: // todo
              {
-                 const int local_training_instances_number = (int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
+                 const int local_training_instances_number =(int)data_set_pointer->get_instances_pointer()->count_training_instances_number();
                  int training_instances_number = 0;
 
                  MPI_Allreduce(&local_training_instances_number, &training_instances_number, 1, MPI_INT, MPI_SUM, current_comm);
@@ -3187,40 +3238,40 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
 
              default:
              {
-                 std::ostringstream buffer;
+                 ostringstream buffer;
 
                  buffer << "OpenNN Exception: LossIndex class.\n"
-                        << "Vector<double> calculate_error_gradient_MPI(void) const method.\n"
+                        << "Vector<double> calculate_error_gradient_MPI() const method.\n"
                         << "Unknown error type.\n";
 
                  MPI_Abort(MPI_COMM_WORLD, 1);
 
-                 throw std::logic_error(buffer.str());
+                 throw logic_error(buffer.str());
              }
              break;
          }
 
-         MPI_Reduce(local_gradient.data(), global_gradient.data(), (int)parameters_number, MPI_DOUBLE, MPI_SUM, 0, current_comm);
+         MPI_Reduce(local_gradient.data(), global_gradient.data(),(int)parameters_number, MPI_DOUBLE, MPI_SUM, 0, current_comm);
 
          MPI_Barrier(current_comm);
     }
 
     if(rank == 0)
     {
-        if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+        if(error_type ==(int)LossIndex::NORMALIZED_SQUARED_ERROR)
         {
             if(normalization_coefficient < 1.0e-99)
             {
-               std::ostringstream buffer;
+               ostringstream buffer;
 
                buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-                      << "double calculate_selection_loss(void) const method.\n"
+                      << "double calculate_selection_loss() const method.\n"
                       << "Normalization coefficient is zero.\n"
                       << "Unuse constant target variables or choose another error functional. ";
 
                MPI_Abort(MPI_COMM_WORLD, 1);
 
-               throw std::logic_error(buffer.str());
+               throw logic_error(buffer.str());
             }
 
             global_gradient /= normalization_coefficient;
@@ -3238,7 +3289,7 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(void) const
 
 Vector<double> LossIndex::calculate_error_gradient_MPI(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3316,7 +3367,7 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(const Vector<double>& par
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_error_gradient_MPI(const Vector<double>&) const method.\n"
@@ -3324,7 +3375,7 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(const Vector<double>& par
 
              MPI_Abort(MPI_COMM_WORLD, 1);
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3333,15 +3384,15 @@ Vector<double> LossIndex::calculate_error_gradient_MPI(const Vector<double>& par
 }
 #endif
 
-// Vector<double> calculate_regularization_gradient(void) const method
+// Vector<double> calculate_regularization_gradient() const method
 
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> LossIndex::calculate_regularization_gradient(void) const
+Vector<double> LossIndex::calculate_regularization_gradient() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3383,13 +3434,13 @@ Vector<double> LossIndex::calculate_regularization_gradient(void) const
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Vector<double> calculate_regularization_gradient(void) const method.\n"
+                    << "Vector<double> calculate_regularization_gradient() const method.\n"
                     << "Unknown regularization type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3406,7 +3457,7 @@ Vector<double> LossIndex::calculate_regularization_gradient(void) const
 
 Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3448,13 +3499,13 @@ Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Vector<double> calculate_regularization_gradient(const Vector<double>&) const method.\n"
                     << "Unknown regularization type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3463,15 +3514,15 @@ Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>
 }
 
 
-// Matrix<double> calculate_error_Hessian(void) const method
+// Matrix<double> calculate_error_Hessian() const method
 
-/// Returns the Hessian of the objective, according to the objective type.
-/// That Hessian is the matrix of second partial derivatives of the objective with respect to the parameters.
+/// Returns the Hessian of the objective, according to the error type.
+/// That Hessian is the matrix of second partial derivatives of the error with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 
-Matrix<double> LossIndex::calculate_error_Hessian(void) const
+Matrix<double> LossIndex::calculate_error_Hessian() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3543,13 +3594,13 @@ Matrix<double> LossIndex::calculate_error_Hessian(void) const
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "Matrix<double> Exception: LossIndex class.\n"
-                    << "Matrix<double> calculate_error_Hessian(void) const method.\n"
+                    << "Matrix<double> calculate_error_Hessian() const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3557,17 +3608,14 @@ Matrix<double> LossIndex::calculate_error_Hessian(void) const
     return(Hessian);
 }
 
-
-// Matrix<double> calculate_error_Hessian(const Vector<double>&) const method
-
-/// Returns the Hessian of the objective, according to the objective type.
+/// Returns the Hessian of the objective, according to the error type.
 /// That Hessian is the matrix of second partial derivatives of the objective with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 /// @todo
 
 Matrix<double> LossIndex::calculate_error_Hessian(const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3639,13 +3687,13 @@ Matrix<double> LossIndex::calculate_error_Hessian(const Vector<double>& paramete
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "Matrix<double> Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_error_Hessian(const Vector<double>&) const method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3654,15 +3702,15 @@ Matrix<double> LossIndex::calculate_error_Hessian(const Vector<double>& paramete
 }
 
 
-// Matrix<double> calculate_regularization_Hessian(void) const method
+// Matrix<double> calculate_regularization_Hessian() const method
 
 /// Returns the Hessian of the regularization, according to the regularization type.
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 
-Matrix<double> LossIndex::calculate_regularization_Hessian(void) const
+Matrix<double> LossIndex::calculate_regularization_Hessian() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3704,13 +3752,13 @@ Matrix<double> LossIndex::calculate_regularization_Hessian(void) const
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "Matrix<double> calculate_regularization_Hessian(void) const method.\n"
+                    << "Matrix<double> calculate_regularization_Hessian() const method.\n"
                     << "Unknown regularization type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3728,7 +3776,7 @@ Matrix<double> LossIndex::calculate_regularization_Hessian(void) const
 
 Matrix<double> LossIndex::calculate_regularization_Hessian(const Vector<double>&) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3770,13 +3818,13 @@ Matrix<double> LossIndex::calculate_regularization_Hessian(const Vector<double>&
 
          default:
          {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
                     << "Matrix<double> calculate_regularization_Hessian(const Vector<double>&) const method.\n"
                     << "Unknown regularization type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -3785,14 +3833,14 @@ Matrix<double> LossIndex::calculate_regularization_Hessian(const Vector<double>&
 }
 
 
-// double calculate_loss(void) const method
+// double calculate_loss() const method
 
 /// Calculates the evaluation value of the loss functional,
 /// as the sum of the objective, regularization and constraints functionals.
 
-double LossIndex::calculate_loss(void) const 
+double LossIndex::calculate_loss() const 
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -3858,7 +3906,7 @@ double LossIndex::calculate_loss(void) const
 
 double LossIndex::calculate_loss(const Vector<double>& parameters) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -3872,13 +3920,13 @@ double LossIndex::calculate_loss(const Vector<double>& parameters) const
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_loss(const Vector<double>&) method.\n"
-             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -3929,12 +3977,22 @@ double LossIndex::calculate_loss(const Vector<double>& parameters) const
 }
 
 
-// double calculate_selection_error(void) const method
+// double calculate_selection_error() const method
 
 /// Returns the evaluation of the error term on the selection instances of the associated data set.
 
-double LossIndex::calculate_selection_error(void) const
+double LossIndex::calculate_selection_error() const
 {
+    if(data_set_pointer != NULL)
+    {
+        const size_t selection_instances_number = data_set_pointer->get_instances().count_selection_instances_number();
+
+        if(selection_instances_number == 0)
+        {
+            return(0.0);
+        }
+    }
+
     double selection_error = 0.0;
 
     switch(error_type)
@@ -4001,13 +4059,13 @@ double LossIndex::calculate_selection_error(void) const
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
-                   << "double calculate_selection_error(void) const method.\n"
+                   << "double calculate_selection_error() const method.\n"
                    << "Unknown error type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -4017,9 +4075,9 @@ double LossIndex::calculate_selection_error(void) const
 
 #ifdef __OPENNN_MPI__
 
-double LossIndex::calculate_selection_error_MPI(void) const
+double LossIndex::calculate_selection_error_MPI() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -4038,7 +4096,7 @@ double LossIndex::calculate_selection_error_MPI(void) const
 
     if(has_data_set() && data_set_pointer->has_data())
     {
-        local_selection_instances_number = (int)data_set_pointer->get_instances_pointer()->count_selection_instances_number();
+        local_selection_instances_number =(int)data_set_pointer->get_instances_pointer()->count_selection_instances_number();
     }
     MPI_Allreduce(&local_selection_instances_number, &selection_instances_number, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
@@ -4047,13 +4105,13 @@ double LossIndex::calculate_selection_error_MPI(void) const
         return 0.0;
     }
 
-    size = std::min(size,selection_instances_number);
+    size = min(size,selection_instances_number);
 
     // Get the group of processes in MPI_COMM_WORLD
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
 
-    int* ranks = (int*)malloc(size*sizeof(int));
+    int* ranks =(int*)malloc(size*sizeof(int));
 
     for(int i = 0; i < size; i++)
     {
@@ -4123,7 +4181,7 @@ double LossIndex::calculate_selection_error_MPI(void) const
 
                  const Vector<double> local_selection_target_data_mean = data_set_pointer->arrange_selection_target_data().calculate_rows_sum();
 
-                 MPI_Allreduce(local_selection_target_data_mean.data(), selection_target_data_mean.data(), (int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
+                 MPI_Allreduce(local_selection_target_data_mean.data(), selection_target_data_mean.data(),(int)targets_number, MPI_DOUBLE, MPI_SUM, current_comm);
 
                  selection_target_data_mean /= selection_instances_number;
 
@@ -4139,7 +4197,7 @@ double LossIndex::calculate_selection_error_MPI(void) const
              {
                  const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->arrange_targets_indices();
 
-                 const int local_selection_negatives = (int)data_set_pointer->calculate_selection_negatives(targets_indices[0]);
+                 const int local_selection_negatives =(int)data_set_pointer->calculate_selection_negatives(targets_indices[0]);
 
                  int negatives = 0;
                  MPI_Allreduce(&local_selection_negatives, &negatives, 1, MPI_INT, MPI_SUM, current_comm);
@@ -4177,15 +4235,15 @@ double LossIndex::calculate_selection_error_MPI(void) const
 
              default:
              {
-                 std::ostringstream buffer;
+                 ostringstream buffer;
 
                  buffer << "OpenNN Exception: LossIndex class.\n"
-                        << "double calculate_selection_error_MPI(void) const method.\n"
+                        << "double calculate_selection_error_MPI() const method.\n"
                         << "Unknown error type.\n";
 
                  MPI_Abort(MPI_COMM_WORLD, 1);
 
-                 throw std::logic_error(buffer.str());
+                 throw logic_error(buffer.str());
              }
              break;
          }
@@ -4197,24 +4255,24 @@ double LossIndex::calculate_selection_error_MPI(void) const
 
      if(rank == 0)
      {
-         if(error_type == (int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
+         if(error_type ==(int)LossIndex::ROOT_MEAN_SQUARED_ERROR)
          {
              global_selection_objective = sqrt(global_selection_objective);
          }
-         else if(error_type == (int)LossIndex::NORMALIZED_SQUARED_ERROR)
+         else if(error_type ==(int)LossIndex::NORMALIZED_SQUARED_ERROR)
          {
              if(normalization_coefficient < 1.0e-99)
              {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
-                       << "double calculate_selection_loss(void) const method.\n"
+                       << "double calculate_selection_loss() const method.\n"
                        << "Normalization coefficient is zero.\n"
                        << "Unuse constant target variables or choose another error functional. ";
 
                 MPI_Abort(MPI_COMM_WORLD, 1);
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
              }
 
              global_selection_objective /= normalization_coefficient;
@@ -4231,14 +4289,14 @@ double LossIndex::calculate_selection_error_MPI(void) const
 }
 #endif
 
-// double calculate_selection_loss(void) const method method
+// double calculate_selection_loss() const method method
 
 /// Calculates the selection loss,
 /// as the sum of the objective and the regularization terms. 
 
-double LossIndex::calculate_selection_loss(void) const 
+double LossIndex::calculate_selection_loss() const 
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -4290,13 +4348,13 @@ double LossIndex::calculate_selection_loss(void) const
 }
 
 
-// Vector<double> calculate_gradient(void) const method
+// Vector<double> calculate_gradient() const method
 
 /// Returns the loss function gradient, as the sum of the objective and the regularization gradient vectors.
 
-Vector<double> LossIndex::calculate_gradient(void) const
+Vector<double> LossIndex::calculate_gradient() const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -4324,7 +4382,7 @@ Vector<double> LossIndex::calculate_gradient(void) const
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    const int parameters_number = (int)neural_network_pointer->count_parameters_number();
+    const int parameters_number =(int)neural_network_pointer->count_parameters_number();
 
     Vector<double> gradient(parameters_number);
 
@@ -4381,13 +4439,13 @@ Vector<double> LossIndex::calculate_gradient(const Vector<double>& parameters) c
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
              << "Vector<double> calculate_gradient(const Vector<double>&) const method.\n"
-             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
    
    #endif
@@ -4397,12 +4455,12 @@ Vector<double> LossIndex::calculate_gradient(const Vector<double>& parameters) c
 
 
 
-// Matrix<double> calculate_Hessian(void) const method
+// Matrix<double> calculate_Hessian() const method
 
 /// Returns the default objective function Hessian matrix,
 /// which is computed as the sum of the objective, regularization and constraints Hessians.
 
-Matrix<double> LossIndex::calculate_Hessian(void) const
+Matrix<double> LossIndex::calculate_Hessian() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -4426,7 +4484,7 @@ Matrix<double> LossIndex::calculate_Hessian(void) const
 
 Matrix<double> LossIndex::calculate_Hessian(const Vector<double>& parameters) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -4439,13 +4497,13 @@ Matrix<double> LossIndex::calculate_Hessian(const Vector<double>& parameters) co
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_Hessian(const Vector<double>&) method.\n"
              << "Size must be equal to number of parameters.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -4454,14 +4512,14 @@ Matrix<double> LossIndex::calculate_Hessian(const Vector<double>& parameters) co
 }
 
 
-// Vector<double> calculate_terms(void) const method
+// Vector<double> calculate_terms() const method
 
 /// Evaluates the objective, regularization and constraints terms functions,
 /// and returns the total error terms as the assembly of that three vectors.
 
-Vector<double> LossIndex::calculate_terms(void) const
+Vector<double> LossIndex::calculate_terms() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -4477,13 +4535,13 @@ Vector<double> LossIndex::calculate_terms(void) const
 }
 
 
-// Matrix<double> calculate_terms_Jacobian(void) const method
+// Matrix<double> calculate_terms_Jacobian() const method
 
 /// @todo
 
-Matrix<double> LossIndex::calculate_terms_Jacobian(void) const
+Matrix<double> LossIndex::calculate_terms_Jacobian() const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -4510,15 +4568,15 @@ Matrix<double> LossIndex::calculate_terms_Jacobian(void) const
 }
 
 
-// Matrix<double> calculate_inverse_Hessian(void) const method
+// Matrix<double> calculate_inverse_Hessian() const method
 
 /// Returns inverse matrix of the Hessian.
 /// It first computes the Hessian matrix and then computes its inverse. 
 /// @todo
 
-Matrix<double> LossIndex::calculate_inverse_Hessian(void) const
+Matrix<double> LossIndex::calculate_inverse_Hessian() const
 {  
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -4543,7 +4601,7 @@ Matrix<double> LossIndex::calculate_inverse_Hessian(void) const
 
 Vector<double> LossIndex::calculate_vector_dot_Hessian(const Vector<double>& vector) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
@@ -4562,13 +4620,13 @@ Vector<double> LossIndex::calculate_vector_dot_Hessian(const Vector<double>& vec
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
              << "Vector<double> calculate_vector_dot_Hessian(Vector<double>) method.\n"
              << "Size of vector must be equal to number of parameters.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Calculate vector Hessian product
@@ -4579,11 +4637,11 @@ Vector<double> LossIndex::calculate_vector_dot_Hessian(const Vector<double>& vec
 }
 
 
-// ZeroOrderloss calculate_zero_order_loss(void) const method
+// ZeroOrderloss calculate_zero_order_loss() const method
 
 /// Returns a zero order loss structure, which just contains the loss value of the loss function.
 
-LossIndex::ZeroOrderloss LossIndex::calculate_zero_order_loss(void) const
+LossIndex::ZeroOrderloss LossIndex::calculate_zero_order_loss() const
 {
    ZeroOrderloss zero_order_loss;
 
@@ -4593,11 +4651,11 @@ LossIndex::ZeroOrderloss LossIndex::calculate_zero_order_loss(void) const
 }
 
 
-// FirstOrderloss calculate_first_order_loss(void) const method
+// FirstOrderloss calculate_first_order_loss() const method
 
 /// Returns a first order loss structure, which contains the value and the gradient of the loss function.
 
-LossIndex::FirstOrderloss LossIndex::calculate_first_order_loss(void) const
+LossIndex::FirstOrderloss LossIndex::calculate_first_order_loss() const
 {
    FirstOrderloss first_order_loss;
 
@@ -4608,11 +4666,11 @@ LossIndex::FirstOrderloss LossIndex::calculate_first_order_loss(void) const
 }
 
 
-// SecondOrderloss calculate_second_order_loss(void) const method
+// SecondOrderloss calculate_second_order_loss() const method
 
 /// Returns a second order loss structure, which contains the value, the gradient and the Hessian of the loss function.
 
-LossIndex::SecondOrderloss LossIndex::calculate_second_order_loss(void) const
+LossIndex::SecondOrderloss LossIndex::calculate_second_order_loss() const
 {
    SecondOrderloss second_order_loss;
 
@@ -4643,7 +4701,7 @@ double LossIndex::calculate_zero_order_Taylor_approximation(const Vector<double>
 
 double LossIndex::calculate_first_order_Taylor_approximation(const Vector<double>& parameters) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -4652,13 +4710,13 @@ double LossIndex::calculate_first_order_Taylor_approximation(const Vector<double
 
    if(parameters_size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_first_order_Taylor_approximation(const Vector<double>&) const method.\n"
              << "Size of potential parameters must be equal to number of parameters.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -4682,7 +4740,7 @@ double LossIndex::calculate_first_order_Taylor_approximation(const Vector<double
 
 double LossIndex::calculate_second_order_Taylor_approximation(const Vector<double>& parameters) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -4691,13 +4749,13 @@ double LossIndex::calculate_second_order_Taylor_approximation(const Vector<doubl
 
    if(parameters_size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
              << "double calculate_second_order_Taylor_approximation(const Vector<double>&) const method.\n"
              << "Size of potential parameters must be equal to number of parameters.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -4784,14 +4842,14 @@ double LossIndex::calculate_loss_second_derivative(const Vector<double>& directi
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method 
+// tinyxml2::XMLDocument* to_XML() const method 
 
 /// Serializes a default loss functional object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element. 
 
-tinyxml2::XMLDocument* LossIndex::to_XML(void) const
+tinyxml2::XMLDocument* LossIndex::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -4807,25 +4865,28 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
    {
       case NO_ERROR:
       {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-           objective_element->SetAttribute("Type", "NO_ERROR");
+           error_element->SetAttribute("Type", "NO_ERROR");
       }
       break;
 
       case SUM_SQUARED_ERROR:
       {                
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-           objective_element->SetAttribute("Type", "SUM_SQUARED_ERROR");
+           error_element->SetAttribute("Type", "SUM_SQUARED_ERROR");
 
            const tinyxml2::XMLDocument* sum_squared_error_document = sum_squared_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* sum_squared_error_element = sum_squared_error_document->FirstChildElement("SumSquaredError");
 
-           DeepClone(objective_element, sum_squared_error_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=sum_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               error_element->InsertEndChild( copy );
+           }
 
            delete sum_squared_error_document;
       }
@@ -4833,16 +4894,19 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       case MEAN_SQUARED_ERROR:
       {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-            objective_element->SetAttribute("Type", "MEAN_SQUARED_ERROR");
+            error_element->SetAttribute("Type", "MEAN_SQUARED_ERROR");
 
             const tinyxml2::XMLDocument* mean_squared_error_document = mean_squared_error_pointer->to_XML();
 
             const tinyxml2::XMLElement* mean_squared_error_element = mean_squared_error_document->FirstChildElement("MeanSquaredError");
 
-            DeepClone(objective_element, mean_squared_error_element, document, NULL);
+            for( const tinyxml2::XMLNode* nodeFor=mean_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+                error_element->InsertEndChild( copy );
+            }
 
             delete mean_squared_error_document;
       }
@@ -4850,16 +4914,19 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       case ROOT_MEAN_SQUARED_ERROR:
       {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-            objective_element->SetAttribute("Type", "ROOT_MEAN_SQUARED_ERROR");
+            error_element->SetAttribute("Type", "ROOT_MEAN_SQUARED_ERROR");
 
             const tinyxml2::XMLDocument* root_mean_squared_error_document = root_mean_squared_error_pointer->to_XML();
 
             const tinyxml2::XMLElement* root_mean_squared_error_element = root_mean_squared_error_document->FirstChildElement("RootMeanSquaredError");
 
-            DeepClone(objective_element, root_mean_squared_error_element, document, NULL);
+            for( const tinyxml2::XMLNode* nodeFor=root_mean_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+                error_element->InsertEndChild( copy );
+            }
 
             delete root_mean_squared_error_document;
       }
@@ -4867,16 +4934,19 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       case NORMALIZED_SQUARED_ERROR:
       {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-           objective_element->SetAttribute("Type", "NORMALIZED_SQUARED_ERROR");
+           error_element->SetAttribute("Type", "NORMALIZED_SQUARED_ERROR");
 
            const tinyxml2::XMLDocument* normalized_squared_error_document = normalized_squared_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* normalized_squared_error_element = normalized_squared_error_document->FirstChildElement("NormalizedSquaredError");
 
-           DeepClone(objective_element, normalized_squared_error_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=normalized_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               error_element->InsertEndChild( copy );
+           }
 
            delete normalized_squared_error_document;
       }
@@ -4884,16 +4954,19 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
        case WEIGHTED_SQUARED_ERROR:
        {
-            tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-            loss_index_element->LinkEndChild(objective_element);
+            tinyxml2::XMLElement* error_element = document->NewElement("Error");
+            loss_index_element->LinkEndChild(error_element);
 
-            objective_element->SetAttribute("Type", "WEIGHTED_SQUARED_ERROR");
+            error_element->SetAttribute("Type", "WEIGHTED_SQUARED_ERROR");
 
-            const tinyxml2::XMLDocument* weighted_squared_error_document = weighted_squared_error_pointer->to_XML();
+            tinyxml2::XMLDocument* weighted_squared_error_document = weighted_squared_error_pointer->to_XML();
 
             const tinyxml2::XMLElement* weighted_squared_error_element = weighted_squared_error_document->FirstChildElement("WeightedSquaredError");
 
-            DeepClone(objective_element, weighted_squared_error_element, document, NULL);
+            for( const tinyxml2::XMLNode* nodeFor=weighted_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+                error_element->InsertEndChild( copy );
+            }
 
             delete weighted_squared_error_document;
        }
@@ -4901,16 +4974,19 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       case MINKOWSKI_ERROR:
       {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-           objective_element->SetAttribute("Type", "MINKOWSKI_ERROR");
+           error_element->SetAttribute("Type", "MINKOWSKI_ERROR");
 
            const tinyxml2::XMLDocument* Minkowski_error_document = Minkowski_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* Minkowski_error_element = Minkowski_error_document->FirstChildElement("MinkowskiError");
 
-           DeepClone(objective_element, Minkowski_error_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=Minkowski_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               error_element->InsertEndChild( copy );
+           }
 
            delete Minkowski_error_document;
       }
@@ -4918,16 +4994,19 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       case CROSS_ENTROPY_ERROR:
       {
-           tinyxml2::XMLElement* objective_element = document->NewElement("Objective");
-           loss_index_element->LinkEndChild(objective_element);
+           tinyxml2::XMLElement* error_element = document->NewElement("Error");
+           loss_index_element->LinkEndChild(error_element);
 
-           objective_element->SetAttribute("Type", "CROSS_ENTROPY_ERROR");
+           error_element->SetAttribute("Type", "CROSS_ENTROPY_ERROR");
 
            const tinyxml2::XMLDocument* cross_entropy_error_document = cross_entropy_error_pointer->to_XML();
 
            const tinyxml2::XMLElement* cross_entropy_error_element = cross_entropy_error_document->FirstChildElement("CrossEntropyError");
 
-           DeepClone(objective_element, cross_entropy_error_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=cross_entropy_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               error_element->InsertEndChild( copy );
+           }
 
            delete cross_entropy_error_document;
       }
@@ -4941,13 +5020,13 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: LossIndex class.\n"
-                << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+                << "tinyxml2::XMLDocument* to_XML() const method.\n"
                 << "Unknown error type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -4976,7 +5055,10 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
            const tinyxml2::XMLElement* neural_parameters_norm_element = neural_parameters_norm_document->FirstChildElement("NeuralParametersNorm");
 
-           DeepClone(regularization_element, neural_parameters_norm_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=neural_parameters_norm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               regularization_element->InsertEndChild( copy );
+           }
 
            delete neural_parameters_norm_document;
       }
@@ -4993,7 +5075,10 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
            const tinyxml2::XMLElement* outputs_integrals_element = outputs_integrals_document->FirstChildElement("OutputsIntegrals");
 
-           DeepClone(regularization_element, outputs_integrals_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=outputs_integrals_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               regularization_element->InsertEndChild( copy );
+           }
 
            delete outputs_integrals_document;
       }
@@ -5007,13 +5092,13 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: LossIndex class.\n"
-                << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+                << "tinyxml2::XMLDocument* to_XML() const method.\n"
                 << "Unknown regularization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -5040,7 +5125,7 @@ tinyxml2::XMLDocument* LossIndex::to_XML(void) const
 
 void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("LossIndex");
 
@@ -5050,7 +5135,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
        case NO_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "NO_ERROR");
 
@@ -5060,7 +5145,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        case SUM_SQUARED_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "SUM_SQUARED_ERROR");
 
@@ -5072,7 +5157,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        case MEAN_SQUARED_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "MEAN_SQUARED_ERROR");
 
@@ -5084,7 +5169,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        case ROOT_MEAN_SQUARED_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "ROOT_MEAN_SQUARED_ERROR");
 
@@ -5096,7 +5181,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        case NORMALIZED_SQUARED_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "NORMALIZED_SQUARED_ERROR");
 
@@ -5108,7 +5193,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         case WEIGHTED_SQUARED_ERROR:
         {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "WEIGHTED_SQUARED_ERROR");
 
@@ -5120,7 +5205,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        case MINKOWSKI_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "MINKOWSKI_ERROR");
 
@@ -5132,7 +5217,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        case CROSS_ENTROPY_ERROR:
        {
-            file_stream.OpenElement("Objective");
+            file_stream.OpenElement("Error");
 
             file_stream.PushAttribute("Type", "CROSS_ENTROPY_ERROR");
 
@@ -5150,7 +5235,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           file_stream.CloseElement();
 
@@ -5158,7 +5243,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
                  << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                  << "Unknown error type.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -5209,7 +5294,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           file_stream.CloseElement();
 
@@ -5217,7 +5302,7 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
                  << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                  << "Unknown regularization type.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -5233,26 +5318,28 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 {
+    destruct_all_terms();
+
     const tinyxml2::XMLElement* loss_index_element = document.FirstChildElement("LossIndex");
 
     if(!loss_index_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: LossIndex class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Loss index element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-   // Objective type
+   // Error type
 
-   const tinyxml2::XMLElement* objective_element = loss_index_element->FirstChildElement("Objective");
+   const tinyxml2::XMLElement* error_element = loss_index_element->FirstChildElement("Error");
 
-   if(objective_element)
+   if(error_element)
    {
-       const std::string new_error_type = objective_element->Attribute("Type");
+       const string new_error_type = error_element->Attribute("Type");
 
        set_error_type(new_error_type);
 
@@ -5268,12 +5355,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("SumSquaredError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* sum_squared_error_element = new_document.NewElement("SumSquaredError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   sum_squared_error_element->InsertEndChild( copy );
+               }
 
-               sum_squared_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(sum_squared_error_element);
+
+               sum_squared_error_pointer = new SumSquaredError(new_document);
           }
           break;
 
@@ -5281,12 +5372,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("MeanSquaredError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* mean_squared_error_element = new_document.NewElement("MeanSquaredError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   mean_squared_error_element->InsertEndChild( copy );
+               }
 
-               mean_squared_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(mean_squared_error_element);
+
+               mean_squared_error_pointer = new MeanSquaredError(new_document);
           }
           break;
 
@@ -5294,12 +5389,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("RootMeanSquaredError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* root_mean_squared_error_element = new_document.NewElement("RootMeanSquaredError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   root_mean_squared_error_element->InsertEndChild( copy );
+               }
 
-               root_mean_squared_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(root_mean_squared_error_element);
+
+               root_mean_squared_error_pointer = new RootMeanSquaredError(new_document);
           }
           break;
 
@@ -5307,12 +5406,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("NormalizedSquaredError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* normalized_squared_error_element = new_document.NewElement("NormalizedSquaredError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   normalized_squared_error_element->InsertEndChild( copy );
+               }
 
-               normalized_squared_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(normalized_squared_error_element);
+
+               normalized_squared_error_pointer = new NormalizedSquaredError(new_document);
           }
           break;
 
@@ -5320,12 +5423,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("WeightedSquaredError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* weighted_squared_error_element = new_document.NewElement("WeightedSquaredError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   weighted_squared_error_element->InsertEndChild( copy );
+               }
 
-               weighted_squared_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(weighted_squared_error_element);
+
+               weighted_squared_error_pointer = new WeightedSquaredError(new_document);
           }
           break;
 
@@ -5333,12 +5440,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("MinkowskiError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* minkowski_error_element = new_document.NewElement("MinkowskiError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   minkowski_error_element->InsertEndChild( copy );
+               }
 
-               Minkowski_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(minkowski_error_element);
+
+               Minkowski_error_pointer = new MinkowskiError(new_document);
           }
           break;
 
@@ -5346,12 +5457,16 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
           {
                tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("CrossEntropyError");
-               new_document.InsertFirstChild(element_clone);
+               tinyxml2::XMLElement* cross_entropy_error_element = new_document.NewElement("CrossEntropyError");
 
-               DeepClone(element_clone, objective_element, &new_document, NULL);
+               for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                   tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                   cross_entropy_error_element->InsertEndChild( copy );
+               }
 
-               cross_entropy_error_pointer->from_XML(new_document);
+               new_document.InsertEndChild(cross_entropy_error_element);
+
+               cross_entropy_error_pointer = new CrossEntropyError(new_document);
           }
           break;
 
@@ -5363,13 +5478,13 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
           default:
           {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
                     << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
           }
           break;
        }
@@ -5381,7 +5496,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
    if(regularization_element)
    {
-      const std::string new_regularization_type = regularization_element->Attribute("Type");
+      const string new_regularization_type = regularization_element->Attribute("Type");
 
       set_regularization_type(new_regularization_type);
 
@@ -5395,27 +5510,35 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
          case NEURAL_PARAMETERS_NORM:
          {
-               tinyxml2::XMLDocument new_document;
+              tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("NeuralParametersNorm");
-               new_document.InsertFirstChild(element_clone);
+              tinyxml2::XMLElement* neural_parameters_norm_element = new_document.NewElement("NeuralParametersNorm");
 
-               DeepClone(element_clone, regularization_element, &new_document, NULL);
+              for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                  tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                  neural_parameters_norm_element->InsertEndChild( copy );
+              }
 
-               neural_parameters_norm_pointer->from_XML(new_document);
+              new_document.InsertEndChild(neural_parameters_norm_element);
+
+              neural_parameters_norm_pointer = new NeuralParametersNorm(new_document);
          }
          break;
 
          case OUTPUTS_INTEGRALS:
          {
-               tinyxml2::XMLDocument new_document;
+              tinyxml2::XMLDocument new_document;
 
-               tinyxml2::XMLElement* element_clone = new_document.NewElement("OutputsIntegrals");
-               new_document.InsertFirstChild(element_clone);
+              tinyxml2::XMLElement* outputs_integral_element = new_document.NewElement("OutputsIntegrals");
 
-               DeepClone(element_clone, regularization_element, &new_document, NULL);
+              for( const tinyxml2::XMLNode* nodeFor=error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                  tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                  outputs_integral_element->InsertEndChild( copy );
+              }
 
-               outputs_integrals_pointer->from_XML(new_document);
+              new_document.InsertEndChild(outputs_integral_element);
+
+               outputs_integrals_pointer = new OutputsIntegrals(new_document);
          }
          break;
 
@@ -5427,13 +5550,13 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
          default:
          {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: LossIndex class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                    << "Unknown regularization type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
          }
          break;
       }
@@ -5445,32 +5568,32 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
    if(display_element)
    {
-      std::string new_display_string = display_element->GetText();           
+      string new_display_string = display_element->GetText();           
 
       try
       {
          set_display(new_display_string != "0");
       }
-      catch(const std::logic_error& e)
+      catch(const logic_error& e)
       {
-         std::cout << e.what() << std::endl;		 
+         cout << e.what() << endl;		 
       }
    }
 }
 
 
-// std::string to_string(void) method
+// string object_to_string() method
 
 /// Writes to a string the members of the loss functional object in text format.
 
-std::string LossIndex::to_string(void) const
+string LossIndex::object_to_string() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "Loss index\n"
-           << "Objective type: " << write_error_type() << "\n";
+           << "Error type: " << write_error_type() << "\n";
 
-    // Objective
+    // Error
 
      switch(error_type)
      {
@@ -5482,55 +5605,55 @@ std::string LossIndex::to_string(void) const
 
          case SUM_SQUARED_ERROR:
          {
-             buffer << sum_squared_error_pointer->to_string();
+             buffer << sum_squared_error_pointer->object_to_string();
          }
          break;
 
          case MEAN_SQUARED_ERROR:
          {
-             buffer << mean_squared_error_pointer->to_string();
+             buffer << mean_squared_error_pointer->object_to_string();
          }
          break;
 
          case ROOT_MEAN_SQUARED_ERROR:
          {
-             buffer << root_mean_squared_error_pointer->to_string();
+             buffer << root_mean_squared_error_pointer->object_to_string();
          }
          break;
 
          case NORMALIZED_SQUARED_ERROR:
          {
-             buffer << normalized_squared_error_pointer->to_string();
+             buffer << normalized_squared_error_pointer->object_to_string();
          }
          break;
 
          case WEIGHTED_SQUARED_ERROR:
          {
-             buffer << weighted_squared_error_pointer->to_string();
+             buffer << weighted_squared_error_pointer->object_to_string();
          }
          break;
 
          case ROC_AREA_ERROR:
          {
-             buffer << roc_area_error_pointer->to_string();
+             buffer << roc_area_error_pointer->object_to_string();
          }
          break;
 
          case MINKOWSKI_ERROR:
          {
-             buffer << Minkowski_error_pointer->to_string();
+             buffer << Minkowski_error_pointer->object_to_string();
          }
          break;
 
          case CROSS_ENTROPY_ERROR:
          {
-             buffer << cross_entropy_error_pointer->to_string();
+             buffer << cross_entropy_error_pointer->object_to_string();
          }
          break;
 
          case USER_ERROR:
          {
-             buffer << user_error_pointer->to_string();
+             buffer << user_error_pointer->object_to_string();
          }
          break;
 
@@ -5539,10 +5662,10 @@ std::string LossIndex::to_string(void) const
              buffer.str("");
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "std::string to_string(void) method.\n"
+                    << "string object_to_string() method.\n"
                     << "Unknown error type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -5561,19 +5684,19 @@ std::string LossIndex::to_string(void) const
 
          case NEURAL_PARAMETERS_NORM:
          {
-             buffer << neural_parameters_norm_pointer->to_string();
+             buffer << neural_parameters_norm_pointer->object_to_string();
          }
          break;
 
          case OUTPUTS_INTEGRALS:
          {
-             buffer << outputs_integrals_pointer->to_string();
+             buffer << outputs_integrals_pointer->object_to_string();
          }
          break;
 
          case USER_REGULARIZATION:
          {
-             buffer << user_regularization_pointer->to_string();
+             buffer << user_regularization_pointer->object_to_string();
          }
          break;
 
@@ -5582,10 +5705,10 @@ std::string LossIndex::to_string(void) const
              buffer.str("");
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "std::string to_string(void) method.\n"
+                    << "string object_to_string() method.\n"
                     << "Unknown regularization type.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
          }
          break;
      }
@@ -5596,12 +5719,12 @@ std::string LossIndex::to_string(void) const
 }
 
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file a string representation of the loss functional object.
 /// @param file_name Name of XML-type loss functional file. 
 
-void LossIndex::save(const std::string& file_name) const
+void LossIndex::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -5618,38 +5741,38 @@ void LossIndex::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a default loss functional XML-type file.
 /// @param file_name Name of default XML-type loss functional file. 
 
-void LossIndex::load(const std::string& file_name)
+void LossIndex::load(const string& file_name)
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument document;
 
    if(document.LoadFile(file_name.c_str()))
    {
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
 }
 
 
-// std::string write_information(void) method
+// string write_information() method
 
 /// Returns any useful information about the objective function during training.
 /// By default it is an empty string.
 
-std::string LossIndex::write_information(void)  
+string LossIndex::write_information()  
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
    // Objective
 
@@ -5720,10 +5843,10 @@ std::string LossIndex::write_information(void)
             buffer.str("");
 
             buffer << "OpenNN Exception: LossIndex class.\n"
-                   << "std::string write_information(void) method.\n"
+                   << "string write_information() method.\n"
                    << "Unknown error type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -5761,10 +5884,10 @@ std::string LossIndex::write_information(void)
             buffer.str("");
 
             buffer << "OpenNN Exception: LossIndex class.\n"
-                   << "std::string write_information(void) method.\n"
+                   << "string write_information() method.\n"
                    << "Unknown regularization type.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
         break;
     }
@@ -5773,13 +5896,13 @@ std::string LossIndex::write_information(void)
 }
 
 
-// void print(void) const method
+// void print() const method
 
 /// Print the members of this object to the standard output.
 
-void LossIndex::print(void) const
+void LossIndex::print() const
 {
-    std::cout << to_string();
+    cout << object_to_string();
 }
 
 
@@ -5787,7 +5910,7 @@ void LossIndex::print(void) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

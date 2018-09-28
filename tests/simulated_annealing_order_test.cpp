@@ -22,14 +22,14 @@ using namespace OpenNN;
 
 // CONSTRUCTOR
 
-SimulatedAnnealingOrderTest::SimulatedAnnealingOrderTest(void) : UnitTesting()
+SimulatedAnnealingOrderTest::SimulatedAnnealingOrderTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-SimulatedAnnealingOrderTest::~SimulatedAnnealingOrderTest(void)
+SimulatedAnnealingOrderTest::~SimulatedAnnealingOrderTest()
 {
 }
 
@@ -38,7 +38,7 @@ SimulatedAnnealingOrderTest::~SimulatedAnnealingOrderTest(void)
 
 // Constructor and destructor methods
 
-void SimulatedAnnealingOrderTest::test_constructor(void)
+void SimulatedAnnealingOrderTest::test_constructor()
 {
     message += "test_constructor\n";
 
@@ -53,7 +53,7 @@ void SimulatedAnnealingOrderTest::test_constructor(void)
     assert_true(!sa2.has_training_strategy(), LOG);
 }
 
-void SimulatedAnnealingOrderTest::test_destructor(void)
+void SimulatedAnnealingOrderTest::test_destructor()
 {
     message += "test_destructor\n";
 
@@ -65,7 +65,7 @@ void SimulatedAnnealingOrderTest::test_destructor(void)
 
 // Set methods
 
-void SimulatedAnnealingOrderTest::test_set_default(void)
+void SimulatedAnnealingOrderTest::test_set_default()
 {
     message += "test_set_default\n";
 
@@ -73,11 +73,11 @@ void SimulatedAnnealingOrderTest::test_set_default(void)
 
 // Order selection methods
 
-void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
+void SimulatedAnnealingOrderTest::test_perform_order_selection()
 {
     message += "test_perform_order_selection\n";
 
-    std::string str;
+    string str;
     Matrix<double> data;
 
     Vector<Instances::Use> uses;
@@ -206,7 +206,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection(void)
 
 // Serialization methods
 
-void SimulatedAnnealingOrderTest::test_to_XML(void)
+void SimulatedAnnealingOrderTest::test_to_XML()
 {
     message += "test_to_XML\n";
 
@@ -219,7 +219,7 @@ void SimulatedAnnealingOrderTest::test_to_XML(void)
 
 }
 
-void SimulatedAnnealingOrderTest::test_from_XML(void)
+void SimulatedAnnealingOrderTest::test_from_XML()
 {
     message += "test_from_XML\n";
 
@@ -234,7 +234,7 @@ void SimulatedAnnealingOrderTest::test_from_XML(void)
 
 // Unit testing methods
 
-void SimulatedAnnealingOrderTest::run_test_case(void)
+void SimulatedAnnealingOrderTest::run_test_case()
 {
     message += "Running simulated annealing order test case...\n";
 

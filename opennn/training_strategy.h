@@ -6,7 +6,7 @@
 /*   T R A I N I N G   S T R A T E G Y   C L A S S   H E A D E R                                                */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -45,7 +45,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -65,11 +65,13 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit TrainingStrategy(void);
+   explicit TrainingStrategy();
 
    // GENERAL CONSTRUCTOR
 
    explicit TrainingStrategy(LossIndex*);
+
+   explicit TrainingStrategy(LossIndex&);
 
    // XML CONSTRUCTOR
 
@@ -77,11 +79,11 @@ public:
 
    // FILE CONSTRUCTOR
 
-   explicit TrainingStrategy(const std::string&);
+   explicit TrainingStrategy(const string&);
 
    // DESTRUCTOR
 
-   virtual ~TrainingStrategy(void);
+   virtual ~TrainingStrategy();
 
    // ENUMERATIONS
 
@@ -127,13 +129,13 @@ public:
    {
         /// Default constructor.
 
-        explicit Results(void);
+        explicit Results();
 
         /// Destructor.
 
-        virtual ~Results(void);
+        virtual ~Results();
 
-        void save(const std::string&) const;
+        void save(const string&) const;
 
         /// Pointer to a structure with the results from the random search training algorithm.
 
@@ -169,48 +171,48 @@ public:
 
    // Checking methods
 
-   void check_loss_index(void) const;
-   void check_training_algorithms(void) const;
+   void check_loss_index() const;
+   void check_training_algorithms() const;
 
    // Initialization methods
 
-   void initialize_random(void);
+   void initialize_random();
 
    // Get methods
 
-   LossIndex* get_loss_index_pointer(void) const;
+   LossIndex* get_loss_index_pointer() const;
 
-   bool has_loss_index(void) const;
+   bool has_loss_index() const;
 
-   RandomSearch* get_random_search_pointer(void) const;
-   EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer(void) const;
+   RandomSearch* get_random_search_pointer() const;
+   EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer() const;
 
-   GradientDescent* get_gradient_descent_pointer(void) const;
-   ConjugateGradient* get_conjugate_gradient_pointer(void) const;
-   QuasiNewtonMethod* get_quasi_Newton_method_pointer(void) const;
-   LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer(void) const;
+   GradientDescent* get_gradient_descent_pointer() const;
+   ConjugateGradient* get_conjugate_gradient_pointer() const;
+   QuasiNewtonMethod* get_quasi_Newton_method_pointer() const;
+   LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer() const;
 
-   NewtonMethod* get_Newton_method_pointer(void) const;
+   NewtonMethod* get_Newton_method_pointer() const;
 
-   const InitializationType& get_initialization_type(void) const;
-   const MainType& get_main_type(void) const;
-   const RefinementType& get_refinement_type(void) const;
+   const InitializationType& get_initialization_type() const;
+   const MainType& get_main_type() const;
+   const RefinementType& get_refinement_type() const;
 
-   std::string write_initialization_type(void) const;
-   std::string write_main_type(void) const;
-   std::string write_refinement_type(void) const;
+   string write_initialization_type() const;
+   string write_main_type() const;
+   string write_refinement_type() const;
 
-   std::string write_initialization_type_text(void) const;
-   std::string write_main_type_text(void) const;
-   std::string write_refinement_type_text(void) const;
+   string write_initialization_type_text() const;
+   string write_main_type_text() const;
+   string write_refinement_type_text() const;
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // Set methods
 
-   void set(void);
+   void set();
    void set(LossIndex*);
-   virtual void set_default(void);
+   virtual void set_default();
 
 #ifdef __OPENNN_MPI__
    void set_MPI(LossIndex*, const TrainingStrategy*);
@@ -222,40 +224,40 @@ public:
    void set_main_type(const MainType&);
    void set_refinement_type(const RefinementType&);
 
-   void set_initialization_type(const std::string&);
-   void set_main_type(const std::string&);
-   void set_refinement_type(const std::string&);
+   void set_initialization_type(const string&);
+   void set_main_type(const string&);
+   void set_refinement_type(const string&);
 
    void set_display(const bool&);
 
    // Pointer methods
 
-   void destruct_initialization(void);
-   void destruct_main(void);
-   void destruct_refinement(void);
+   void destruct_initialization();
+   void destruct_main();
+   void destruct_refinement();
 
    // Training methods
 
    // This method trains a neural network which has a loss functional associated. 
 
-   void initialize_layers_autoencoding(void);
+   void initialize_layers_autoencoding();
 
-   Results perform_training(void);
+   Results perform_training();
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
-   void print(void) const;
+   void print() const;
 
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    //void read_XML(   );
 
-   void save(const std::string&) const;
-   void load(const std::string&);
+   void save(const string&) const;
+   void load(const string&);
 
 protected:
 
@@ -315,7 +317,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

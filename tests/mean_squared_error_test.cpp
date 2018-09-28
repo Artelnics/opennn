@@ -19,14 +19,14 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-MeanSquaredErrorTest::MeanSquaredErrorTest(void) : UnitTesting() 
+MeanSquaredErrorTest::MeanSquaredErrorTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-MeanSquaredErrorTest::~MeanSquaredErrorTest(void)
+MeanSquaredErrorTest::~MeanSquaredErrorTest()
 {
 }
 
@@ -34,7 +34,7 @@ MeanSquaredErrorTest::~MeanSquaredErrorTest(void)
 // METHODS
 
 
-void MeanSquaredErrorTest::test_constructor(void)
+void MeanSquaredErrorTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -65,12 +65,12 @@ void MeanSquaredErrorTest::test_constructor(void)
 }
 
 
-void MeanSquaredErrorTest::test_destructor(void)
+void MeanSquaredErrorTest::test_destructor()
 {
 }
 
 
-void MeanSquaredErrorTest::test_calculate_loss(void)   
+void MeanSquaredErrorTest::test_calculate_loss()   
 {
    message += "test_calculate_loss\n";
 
@@ -101,7 +101,7 @@ void MeanSquaredErrorTest::test_calculate_loss(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_gradient(void)
+void MeanSquaredErrorTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -223,7 +223,7 @@ void MeanSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_selection_loss(void)   
+void MeanSquaredErrorTest::test_calculate_selection_loss()   
 {
    message += "test_calculate_selection_loss\n";
 
@@ -245,7 +245,7 @@ void MeanSquaredErrorTest::test_calculate_selection_loss(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_terms(void)
+void MeanSquaredErrorTest::test_calculate_terms()
 {
    message += "test_calculate_terms\n";
 
@@ -277,7 +277,7 @@ void MeanSquaredErrorTest::test_calculate_terms(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_terms_Jacobian(void)
+void MeanSquaredErrorTest::test_calculate_terms_Jacobian()
 {
    message += "test_calculate_terms_Jacobian\n";
 
@@ -393,25 +393,25 @@ void MeanSquaredErrorTest::test_calculate_terms_Jacobian(void)
 }
 
 
-void MeanSquaredErrorTest::test_calculate_Hessian(void)
+void MeanSquaredErrorTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 }
 
 
-void MeanSquaredErrorTest::test_to_XML(void)
+void MeanSquaredErrorTest::test_to_XML()
 {
    message += "test_to_XML\n";
 }
 
 
-void MeanSquaredErrorTest::test_from_XML(void)
+void MeanSquaredErrorTest::test_from_XML()
 {
    message += "test_from_XML\n";
 }
 
 
-void MeanSquaredErrorTest::run_test_case(void)
+void MeanSquaredErrorTest::run_test_case()
 {
    message += "Running mean squared error test case...\n";
 
@@ -450,7 +450,7 @@ void MeanSquaredErrorTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lemser General Public

@@ -32,86 +32,86 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit ErrorTermTest(void);
+   explicit ErrorTermTest();
 
 
    // DESTRUCTOR
 
-   virtual ~ErrorTermTest(void);
+   virtual ~ErrorTermTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Operators
 
-   void test_assingment_operator(void);
-   void test_equal_to_operator(void);
+   void test_assingment_operator();
+   void test_equal_to_operator();
 
    // Get methods
 
-   void test_get_neural_network_pointer(void);
+   void test_get_neural_network_pointer();
 
-   void test_get_data_set_pointer(void);
+   void test_get_data_set_pointer();
 
-   void test_get_numerical_differentiation_pointer(void);
+   void test_get_numerical_differentiation_pointer();
 
    // Serialization methods
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set_neural_network_pointer(void);
+   void test_set_neural_network_pointer();
 
-   void test_set_data_set_pointer(void);
+   void test_set_data_set_pointer();
 
-   void test_set_numerical_differentiation_pointer(void);
+   void test_set_numerical_differentiation_pointer();
    
-   void test_set_default(void);
+   void test_set_default();
 
    // Serialization methods
 
-   void test_set_display(void);
+   void test_set_display();
 
    // delta methods
 
-   void test_calculate_layers_delta(void);
-   void test_calculate_interlayers_Delta(void);
+   void test_calculate_layers_delta();
+   void test_calculate_interlayers_Delta();
 
    // Point objective function methods
 
-   void test_calculate_point_objective(void);
-   void test_calculate_point_gradient(void);
-   void test_calculate_point_Hessian(void);
+   void test_calculate_point_objective();
+   void test_calculate_point_gradient();
+   void test_calculate_point_Hessian();
 
    // Objective methods
 
-   void test_calculate_error(void);
+   void test_calculate_error();
 
-   void test_calculate_selection_error(void);
+   void test_calculate_selection_error();
 
-   void test_calculate_gradient(void); 
-   void test_calculate_Hessian(void); 
+   void test_calculate_gradient(); 
+   void test_calculate_Hessian(); 
 
-   void test_calculate_terms(void);
-   void test_calculate_terms_Jacobian(void);
+   void test_calculate_terms();
+   void test_calculate_terms_Jacobian();
 
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);   
+   void test_to_XML();   
+   void test_from_XML();   
 
-   void test_write_information(void);
+   void test_write_information();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -120,7 +120,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Roberto Lopez
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

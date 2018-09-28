@@ -6,7 +6,7 @@
 /*   N E U R A L   P A R A M E T E R S   N O R M   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -29,7 +29,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -44,7 +44,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit NeuralParametersNorm(void);
+   explicit NeuralParametersNorm();
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -56,41 +56,41 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~NeuralParametersNorm(void);    
+   virtual ~NeuralParametersNorm();    
 
    // METHODS
 
    // Get methods
 
-   const double& get_neural_parameters_norm_weight(void) const;
+   const double& get_neural_parameters_norm_weight() const;
 
    // Set methods
 
    void set_neural_parameters_norm_weight(const double&);
 
-   void set_default(void);
+   void set_default();
 
    // Checking methods
 
-   void check(void) const;
+   void check() const;
 
    // loss methods
 
-   double calculate_regularization(void) const;
-   Vector<double> calculate_gradient(void) const;
-   Matrix<double> calculate_Hessian(void) const;
+   double calculate_regularization() const;
+   Vector<double> calculate_gradient() const;
+   Matrix<double> calculate_Hessian() const;
 
    double calculate_regularization(const Vector<double>&) const;
    Vector<double> calculate_gradient(const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
-   std::string write_error_term_type(void) const;
+   string write_error_term_type() const;
 
-   std::string write_information(void) const;
+   string write_information() const;
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -110,7 +110,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

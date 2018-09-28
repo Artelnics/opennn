@@ -20,21 +20,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-NeuralParametersNormTest::NeuralParametersNormTest(void) : UnitTesting() 
+NeuralParametersNormTest::NeuralParametersNormTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-NeuralParametersNormTest::~NeuralParametersNormTest(void) 
+NeuralParametersNormTest::~NeuralParametersNormTest() 
 {
 }
 
 
 // METHODS
 
-void NeuralParametersNormTest::test_constructor(void)
+void NeuralParametersNormTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -53,13 +53,13 @@ void NeuralParametersNormTest::test_constructor(void)
 }
 
 
-void NeuralParametersNormTest::test_destructor(void)
+void NeuralParametersNormTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void NeuralParametersNormTest::test_calculate_loss(void)   
+void NeuralParametersNormTest::test_calculate_loss()   
 {
    message += "test_calculate_loss\n";
 
@@ -92,7 +92,7 @@ void NeuralParametersNormTest::test_calculate_loss(void)
 }
 
 /*
-void NeuralParametersNormTest::test_calculate_selection_loss(void)
+void NeuralParametersNormTest::test_calculate_selection_loss()
 {
    message += "test_calculate_selection_loss\n";
 
@@ -114,7 +114,7 @@ void NeuralParametersNormTest::test_calculate_selection_loss(void)
 }
 */
 
-void NeuralParametersNormTest::test_calculate_gradient(void)
+void NeuralParametersNormTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -192,9 +192,9 @@ void NeuralParametersNormTest::test_calculate_gradient(void)
 }
 
 
-/// @todo Fix test which fails.
+// @todo Fix test which fails.
 
-void NeuralParametersNormTest::test_calculate_Hessian(void)
+void NeuralParametersNormTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 
@@ -277,7 +277,7 @@ void NeuralParametersNormTest::test_calculate_Hessian(void)
 //   numerical_Hessian = nd.calculate_Hessian(npn, &NeuralParametersNorm::calculate_loss, parameters);
 //   error = (Hessian - numerical_Hessian).calculate_absolute_value();
 
-//   std::cout << error << std::endl;
+//   cout << error << endl;
 
 //   assert_true(error < 1.0e-3, LOG);
 //   }
@@ -285,7 +285,7 @@ void NeuralParametersNormTest::test_calculate_Hessian(void)
 }
 
 
-void NeuralParametersNormTest::test_to_XML(void)   
+void NeuralParametersNormTest::test_to_XML()   
 {
 	message += "test_to_XML\n"; 
 
@@ -304,7 +304,7 @@ void NeuralParametersNormTest::test_to_XML(void)
 }
 
 
-void NeuralParametersNormTest::test_from_XML(void)
+void NeuralParametersNormTest::test_from_XML()
 {
 	message += "test_from_XML\n"; 
 
@@ -327,7 +327,7 @@ void NeuralParametersNormTest::test_from_XML(void)
 }
 
 
-void NeuralParametersNormTest::run_test_case(void)
+void NeuralParametersNormTest::run_test_case()
 {
    message += "Running neural parameters norm test case...\n";
 
@@ -359,7 +359,7 @@ void NeuralParametersNormTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

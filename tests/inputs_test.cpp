@@ -21,21 +21,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-InputsTest::InputsTest(void) : UnitTesting()
+InputsTest::InputsTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-InputsTest::~InputsTest(void)
+InputsTest::~InputsTest()
 {
 }
 
 
 // METHODS
 
-void InputsTest::test_constructor(void)
+void InputsTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -59,13 +59,13 @@ void InputsTest::test_constructor(void)
 }
 
 
-void InputsTest::test_destructor(void)
+void InputsTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void InputsTest::test_assignment_operator(void)
+void InputsTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -76,7 +76,7 @@ void InputsTest::test_assignment_operator(void)
 }
 
 
-void InputsTest::test_get_inputs_number(void)
+void InputsTest::test_get_inputs_number()
 {
    message += "test_get_inputs_number\n";
 
@@ -94,32 +94,32 @@ void InputsTest::test_get_inputs_number(void)
 }
 
 
-void InputsTest::test_set(void)
+void InputsTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void InputsTest::test_set_default(void)
+void InputsTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void InputsTest::test_arrange_names(void)
+void InputsTest::test_arrange_names()
 {
    message += "test_arrange_names\n";
 
    Inputs i;
 
-   Vector<std::string> names = i.arrange_names();
+   Vector<string> names = i.arrange_names();
 
    assert_true(names.size() == 0, LOG);
 
 }
 
 
-void InputsTest::test_get_name(void)
+void InputsTest::test_get_name()
 {
    message += "test_get_name\n";
 
@@ -131,20 +131,20 @@ void InputsTest::test_get_name(void)
 }
 
 
-void InputsTest::test_arrange_units(void)
+void InputsTest::test_arrange_units()
 {
    message += "test_arrange_units\n";
 
    Inputs i;
 
-   Vector<std::string> units = i.arrange_units();
+   Vector<string> units = i.arrange_units();
 
    assert_true(units.size() == 0, LOG);
 
 }
 
 
-void InputsTest::test_get_unit(void)
+void InputsTest::test_get_unit()
 {
    message += "test_get_unit\n";
 
@@ -156,19 +156,19 @@ void InputsTest::test_get_unit(void)
 }
 
 
-void InputsTest::test_arrange_descriptions(void)
+void InputsTest::test_arrange_descriptions()
 {
    message += "test_arrange_descriptions\n";
 
    Inputs i;
 
-   Vector<std::string> descriptions = i.arrange_descriptions();
+   Vector<string> descriptions = i.arrange_descriptions();
 
    assert_true(descriptions.size() == 0, LOG);
 }
 
 
-void InputsTest::test_get_description(void)
+void InputsTest::test_get_description()
 {
    message += "test_get_description\n";
 
@@ -180,55 +180,55 @@ void InputsTest::test_get_description(void)
 }
 
 
-void InputsTest::test_get_display(void)
+void InputsTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void InputsTest::test_set_names(void)
+void InputsTest::test_set_names()
 {
    message += "test_set_names\n";
 }
 
 
-void InputsTest::test_set_name(void)
+void InputsTest::test_set_name()
 {
    message += "test_set_name\n";
 }
 
 
-void InputsTest::test_set_units(void)
+void InputsTest::test_set_units()
 {
    message += "test_set_units\n";
 }
 
 
-void InputsTest::test_set_unit(void)
+void InputsTest::test_set_unit()
 {
    message += "test_set_unit\n";
 }
 
 
-void InputsTest::test_set_descriptions(void)
+void InputsTest::test_set_descriptions()
 {
    message += "test_set_descriptions\n";
 }
 
 
-void InputsTest::test_set_description(void)
+void InputsTest::test_set_description()
 {
    message += "test_set_description\n";
 }
 
 
-void InputsTest::test_set_display(void)
+void InputsTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void InputsTest::test_to_XML(void)
+void InputsTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -244,7 +244,7 @@ void InputsTest::test_to_XML(void)
 }
 
 
-void InputsTest::test_from_XML(void)
+void InputsTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -262,7 +262,7 @@ void InputsTest::test_from_XML(void)
 }
 
 
-void InputsTest::run_test_case(void)
+void InputsTest::run_test_case()
 {
    message += "Running inputs test case...\n";
 
@@ -327,7 +327,7 @@ void InputsTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
