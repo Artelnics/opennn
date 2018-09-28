@@ -1752,7 +1752,7 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 
    // Loss index stuff
 
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
    ostringstream buffer;
 
@@ -1765,7 +1765,7 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 
       throw logic_error(buffer.str());
    }
-
+#endif
 
    return(numerical_differentiation_pointer->calculate_gradient(*this, &ErrorTerm::calculate_error, parameters));
 }
