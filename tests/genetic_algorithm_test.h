@@ -32,56 +32,56 @@ public:
 
    // CONSTRUCTOR
 
-   explicit GeneticAlgorithmTest(void);
+   explicit GeneticAlgorithmTest();
 
 
    // DESTRUCTOR
 
-   virtual ~GeneticAlgorithmTest(void);
+   virtual ~GeneticAlgorithmTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Set methods
 
-   void test_set_default(void);
+   void test_set_default();
 
    // Population methods
 
-   void test_initialize_population(void);
+   void test_initialize_population();
 
-   void test_calculate_fitness(void);
+   void test_calculate_fitness();
 
    // Selection methods
 
-   void test_perform_selection(void);
+   void test_perform_selection();
 
    // Crossover methods
 
-   void test_perform_crossover(void);
+   void test_perform_crossover();
 
    // Mutation methods
 
-   void test_perform_mutation(void);
+   void test_perform_mutation();
 
    // Order selection methods
 
-   void test_perform_order_selection(void);
+   void test_perform_order_selection();
 
    // Serialization methods
 
-   void test_to_XML(void);
+   void test_to_XML();
 
-   void test_from_XML(void);
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 

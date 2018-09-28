@@ -6,7 +6,7 @@
 /*   R E G U L A R I Z A T I O N   T E R M   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -34,13 +34,13 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
 /// This class represents the concept of error term. 
 /// A error term is a summand in the loss functional expression. 
-/// Any derived class must implement the calculate_loss(void) method.
+/// Any derived class must implement the calculate_loss() method.
 
 class RegularizationTerm
 {
@@ -49,7 +49,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit RegularizationTerm(void);
+   explicit RegularizationTerm();
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -65,15 +65,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~RegularizationTerm(void);
+   virtual ~RegularizationTerm();
 
    // ASSIGNMENT OPERATOR
 
-   virtual RegularizationTerm& operator = (const RegularizationTerm&);
+   virtual RegularizationTerm& operator =(const RegularizationTerm&);
 
    // EQUAL TO OPERATOR
 
-   virtual bool operator == (const RegularizationTerm&) const;
+   virtual bool operator ==(const RegularizationTerm&) const;
 
    // STRUCTURES
 
@@ -154,19 +154,19 @@ public:
 
    /// Returns a pointer to the neural network object associated to the error term.
 
-   inline NeuralNetwork* get_neural_network_pointer(void) const 
+   inline NeuralNetwork* get_neural_network_pointer() const 
    {
         #ifdef __OPENNN_DEBUG__
 
         if(!neural_network_pointer)
         {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: RegularizationTerm class.\n"
-                    << "NeuralNetwork* get_neural_network_pointer(void) const method.\n"
+                    << "NeuralNetwork* get_neural_network_pointer() const method.\n"
                     << "Neural network pointer is NULL.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
         }
 
         #endif
@@ -177,19 +177,19 @@ public:
 
    /// Returns a pointer to the numerical differentiation object used in this error term object. 
 
-   inline NumericalDifferentiation* get_numerical_differentiation_pointer(void) const
+   inline NumericalDifferentiation* get_numerical_differentiation_pointer() const
    {
         #ifdef __OPENNN_DEBUG__
 
         if(!numerical_differentiation_pointer)
         {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: RegularizationTerm class.\n"
-                    << "NumericalDifferentiation* get_numerical_differentiation_pointer(void) const method.\n"
+                    << "NumericalDifferentiation* get_numerical_differentiation_pointer() const method.\n"
                     << "Numerical differentiation pointer is NULL.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
         }
 
         #endif
@@ -197,15 +197,15 @@ public:
       return(numerical_differentiation_pointer);
    }
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
-   bool has_neural_network(void) const;
-   bool has_numerical_differentiation(void) const;
+   bool has_neural_network() const;
+   bool has_numerical_differentiation() const;
 
 
    // Set methods
 
-   virtual void set(void);
+   virtual void set();
    virtual void set(NeuralNetwork*);
 
    void set(const RegularizationTerm&);
@@ -214,46 +214,46 @@ public:
 
    void set_numerical_differentiation_pointer(NumericalDifferentiation*);
 
-   virtual void set_default(void);
+   virtual void set_default();
 
    void set_display(const bool&);
 
    // Pointer methods
 
-   void construct_numerical_differentiation(void);
-   void delete_numerical_differentiation_pointer(void);
+   void construct_numerical_differentiation();
+   void delete_numerical_differentiation_pointer();
 
    // Checking methods
 
-   virtual void check(void) const;
+   virtual void check() const;
 
    // Objective methods
 
    /// Returns the loss value of the error term.
 
-   virtual double calculate_regularization(void) const = 0;
+   virtual double calculate_regularization() const = 0;
 
    /// Returns the default loss of a error term for a given set of neural network parameters. 
 
    virtual double calculate_regularization(const Vector<double>&) const = 0;
 
-   virtual Vector<double> calculate_gradient(void) const; 
+   virtual Vector<double> calculate_gradient() const; 
 
    virtual Vector<double> calculate_gradient(const Vector<double>&) const;
 
-   virtual Matrix<double> calculate_Hessian(void) const; 
+   virtual Matrix<double> calculate_Hessian() const; 
 
    virtual Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
-   virtual std::string write_error_term_type(void) const;
+   virtual string write_error_term_type() const;
 
-   virtual std::string write_information(void) const;
+   virtual string write_information() const;
 
    // Serialization methods
 
-   virtual std::string to_string(void) const;
+   virtual string object_to_string() const;
 
-   virtual tinyxml2::XMLDocument* to_XML(void) const;   
+   virtual tinyxml2::XMLDocument* to_XML() const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -281,7 +281,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

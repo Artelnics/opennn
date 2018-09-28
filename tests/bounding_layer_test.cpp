@@ -19,21 +19,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-BoundingLayerTest::BoundingLayerTest(void) : UnitTesting()
+BoundingLayerTest::BoundingLayerTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-BoundingLayerTest::~BoundingLayerTest(void)
+BoundingLayerTest::~BoundingLayerTest()
 {
 }
 
 
 // METHODS
 
-void BoundingLayerTest::test_constructor(void)
+void BoundingLayerTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -45,16 +45,21 @@ void BoundingLayerTest::test_constructor(void)
 
    // Copy constructor
 
+   bl1.set(2);
+
+   BoundingLayer bl2(bl1);
+
+   assert_true(bl2.get_bounding_neurons_number() == 2, LOG);
 }
 
 
-void BoundingLayerTest::test_destructor(void)
+void BoundingLayerTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void BoundingLayerTest::test_assignment_operator(void)
+void BoundingLayerTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -65,7 +70,7 @@ void BoundingLayerTest::test_assignment_operator(void)
 }
 
 
-void BoundingLayerTest::test_get_bounding_neurons_number(void)
+void BoundingLayerTest::test_get_bounding_neurons_number()
 {
    message += "test_get_bounding_neurons_number\n";
 
@@ -83,91 +88,91 @@ void BoundingLayerTest::test_get_bounding_neurons_number(void)
 }
 
 
-void BoundingLayerTest::test_set(void)
+void BoundingLayerTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void BoundingLayerTest::test_set_default(void)
+void BoundingLayerTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void BoundingLayerTest::test_get_lower_bounds(void)
+void BoundingLayerTest::test_get_lower_bounds()
 {
    message += "test_get_lower_bounds\n";
 }
 
 
-void BoundingLayerTest::test_get_upper_bounds(void)
+void BoundingLayerTest::test_get_upper_bounds()
 {
    message += "test_get_upper_bounds\n";
 }
 
 
-void BoundingLayerTest::test_get_lower_bound(void)
+void BoundingLayerTest::test_get_lower_bound()
 {
    message += "test_get_lower_bound\n";
 }
 
 
-void BoundingLayerTest::test_get_upper_bound(void)
+void BoundingLayerTest::test_get_upper_bound()
 {
    message += "test_get_upper_bound\n";
 }
 
 
-void BoundingLayerTest::test_get_bounds(void)
+void BoundingLayerTest::test_get_bounds()
 {
    message += "test_get_bounds\n";
 }
 
 
-void BoundingLayerTest::test_get_display(void)
+void BoundingLayerTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void BoundingLayerTest::test_set_lower_bounds(void)
+void BoundingLayerTest::test_set_lower_bounds()
 {
    message += "test_set_lower_bounds\n";
 }
 
 
-void BoundingLayerTest::test_set_upper_bounds(void)
+void BoundingLayerTest::test_set_upper_bounds()
 {
    message += "test_set_upper_bounds\n";
 }
 
 
-void BoundingLayerTest::test_set_lower_bound(void)
+void BoundingLayerTest::test_set_lower_bound()
 {
    message += "test_set_lower_bound\n";
 }
 
 
-void BoundingLayerTest::test_set_upper_bound(void)
+void BoundingLayerTest::test_set_upper_bound()
 {
    message += "test_set_upper_bound\n";
 }
 
 
-void BoundingLayerTest::test_set_bounds(void)
+void BoundingLayerTest::test_set_bounds()
 {
    message += "test_set_bounds\n";
 }
 
 
-void BoundingLayerTest::test_set_display(void)
+void BoundingLayerTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void BoundingLayerTest::test_initialize_random(void)
+void BoundingLayerTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -179,7 +184,7 @@ void BoundingLayerTest::test_initialize_random(void)
 }
 
 
-void BoundingLayerTest::test_calculate_outputs(void)
+void BoundingLayerTest::test_calculate_outputs()
 {
    message += "test_calculate_outputs\n";
 
@@ -206,7 +211,7 @@ void BoundingLayerTest::test_calculate_outputs(void)
 }
 
 
-void BoundingLayerTest::test_to_XML(void)
+void BoundingLayerTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -225,7 +230,7 @@ void BoundingLayerTest::test_to_XML(void)
 }
 
 
-void BoundingLayerTest::test_from_XML(void)
+void BoundingLayerTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -242,7 +247,7 @@ void BoundingLayerTest::test_from_XML(void)
 }
 
 
-void BoundingLayerTest::test_write_expression(void)
+void BoundingLayerTest::test_write_expression()
 {
    message += "test_write_expression\n";
 
@@ -250,7 +255,7 @@ void BoundingLayerTest::test_write_expression(void)
 }
 
 
-void BoundingLayerTest::run_test_case(void)
+void BoundingLayerTest::run_test_case()
 {
    message += "Running bounding layer test case...\n";
 
@@ -324,7 +329,7 @@ void BoundingLayerTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

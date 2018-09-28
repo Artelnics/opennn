@@ -6,7 +6,7 @@
 /*   R O O T   M E A N   S Q U A R E D   E R R O R   C L A S S                                                  */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -26,7 +26,7 @@ namespace OpenNN
 /// neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-RootMeanSquaredError::RootMeanSquaredError(void) : ErrorTerm()
+RootMeanSquaredError::RootMeanSquaredError() : ErrorTerm()
 {
 }
 
@@ -82,6 +82,7 @@ RootMeanSquaredError::RootMeanSquaredError(NeuralNetwork* new_neural_network_poi
 RootMeanSquaredError::RootMeanSquaredError(const tinyxml2::XMLDocument& root_mean_squared_error_document)
 : ErrorTerm(root_mean_squared_error_document)
 {
+    from_XML(root_mean_squared_error_document);
 }
 
 
@@ -89,32 +90,32 @@ RootMeanSquaredError::RootMeanSquaredError(const tinyxml2::XMLDocument& root_mea
 
 /// Destructor.
 
-RootMeanSquaredError::~RootMeanSquaredError(void)
+RootMeanSquaredError::~RootMeanSquaredError()
 {
 }
 
 
 // METHODS
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that there are a neural network and a data set associated to the root mean squared error, 
 /// and that the numbers of inputs and outputs in the neural network are equal to the numbers of inputs and targets in the data set. 
 /// If some of the above conditions is not hold, the method throws an exception. 
 
-void RootMeanSquaredError::check(void) const
+void RootMeanSquaredError::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Neural network stuff
 
    if(!neural_network_pointer)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -122,10 +123,10 @@ void RootMeanSquaredError::check(void) const
    if(!multilayer_perceptron_pointer)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to multilayer perceptron is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
@@ -134,19 +135,19 @@ void RootMeanSquaredError::check(void) const
    if(inputs_number == 0)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of inputs in multilayer perceptron object is zero.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(outputs_number == 0)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of outputs in multilayer perceptron object is zero.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Data set stuff
@@ -154,10 +155,10 @@ void RootMeanSquaredError::check(void) const
    if(!data_set_pointer)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to data set is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Sum squared error stuff
@@ -170,29 +171,29 @@ void RootMeanSquaredError::check(void) const
    if(data_set_inputs_number != inputs_number)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
-             << "Number of inputs in neural network (" << inputs_number << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
+             << "void check() const method.\n"
+             << "Number of inputs in neural network(" << inputs_number << ") must be equal to number of inputs in data set(" << data_set_inputs_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(outputs_number != targets_number)
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of outputs in neural network must be equal to number of targets in data set.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// double calculate_error(void) const method
+// double calculate_error() const method
 
 /// Returns the loss value of a neural network according to the root mean squared error 
 /// on the training instances of a data set.
 
-double RootMeanSquaredError::calculate_error(void) const
+double RootMeanSquaredError::calculate_error() const
 {
    // Control sentence
 
@@ -215,40 +216,33 @@ double RootMeanSquaredError::calculate_error(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
+   const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-   size_t training_index;
+   const size_t training_instances_number = training_indices.size();
 
-   const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
    // Root mean squared error
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
    double sum_squared_error = 0.0;
 
-   int i = 0;
+   #pragma omp parallel for reduction(+:sum_squared_error)
 
-   #pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+:sum_squared_error)
-
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(int i = 0; i <(int)training_instances_number; i++)
    {
-       training_index = training_indices[i];
+       const size_t training_index = training_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      const Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
       // Target vector
 
@@ -274,7 +268,7 @@ double RootMeanSquaredError::calculate_error(void) const
 
 double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
    
@@ -284,7 +278,7 @@ double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) c
 
    #ifdef __OPENNN_DEBUG__ 
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    const size_t size = parameters.size();
 
@@ -294,9 +288,9 @@ double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) c
    {
       buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
              << "double calculate_error(const Vector<double>&) const method.\n"
-             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -312,11 +306,9 @@ double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) c
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
-
    const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-   size_t training_index;
+   const size_t training_instances_number = training_indices.size();
 
    const Variables& variables = data_set_pointer->get_variables();
 
@@ -325,31 +317,25 @@ double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) c
 
    // Root mean squared error
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
    double sum_squared_error = 0.0;
 
-   int i = 0;
+   #pragma omp parallel for reduction(+:sum_squared_error)
 
-   #pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+:sum_squared_error)
-
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(int i = 0; i <(int)training_instances_number; i++)
    {
-       training_index = training_indices[i];
+       const size_t training_index = training_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
+      const Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
+      const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
       // Sum squaresd error
 
@@ -360,25 +346,25 @@ double RootMeanSquaredError::calculate_error(const Vector<double>& parameters) c
 }
 
 
-// Vector<double> calculate_output_gradient(void) const method
+// Vector<double> calculate_output_gradient() const method
 
 /// Calculates the gradient the root mean squared error funcion by means of the back-propagation algorithm.
 
 Vector<double> RootMeanSquaredError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
 {
-    const Vector<double>  output_gradient = (output-target);
+    const Vector<double>  output_gradient =(output-target);
 
     return(output_gradient);
 }
 
 
-// double calculate_selection_error(void) const method
+// double calculate_selection_error() const method
 
 /// Returns the root mean squared error of the multilayer perceptron measured on the selection instances of the data set.
 
-double RootMeanSquaredError::calculate_selection_error(void) const
+double RootMeanSquaredError::calculate_selection_error() const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -405,38 +391,30 @@ double RootMeanSquaredError::calculate_selection_error(void) const
 
    const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-   size_t selection_index;
-
    const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
-   int i = 0;
-
    double selection_loss = 0.0;
 
-   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_loss)
+   #pragma omp parallel for reduction(+ : selection_loss)
 
-   for(i = 0; i < (int)selection_instances_number; i++)
+   for(int i = 0; i <(int)selection_instances_number; i++)
    {
-       selection_index = selection_indices[i];
+       const size_t selection_index = selection_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      const Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(selection_index, targets_indices);
+      const Vector<double> targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
       // Sum of squares error
 
@@ -470,12 +448,12 @@ Matrix<double> RootMeanSquaredError::calculate_output_Hessian(const Vector<doubl
 }
 
 
-// Vector<double> calculate_gradient(void) const method
+// Vector<double> calculate_gradient() const method
 
 /// Returns the root mean squared error function gradient of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
 
-Vector<double> RootMeanSquaredError::calculate_gradient(void) const
+Vector<double> RootMeanSquaredError::calculate_gradient() const
 {
     // Control sentence
 
@@ -511,11 +489,9 @@ Vector<double> RootMeanSquaredError::calculate_gradient(void) const
 
        const Instances& instances = data_set_pointer->get_instances();
 
-       const size_t training_instances_number = instances.count_training_instances_number();
-
        const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-       size_t training_index;
+       const size_t training_instances_number = training_indices.size();
 
        const Variables& variables = data_set_pointer->get_variables();
 
@@ -523,9 +499,6 @@ Vector<double> RootMeanSquaredError::calculate_gradient(void) const
        const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
        const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
-       Vector<double> inputs(inputs_number);
-       Vector<double> targets(outputs_number);
 
        // Loss index stuff
 
@@ -541,23 +514,21 @@ Vector<double> RootMeanSquaredError::calculate_gradient(void) const
 
        Vector<double> gradient(parameters_number, 0.0);
 
-       int i = 0;
-
-       #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, output_gradient, \
+       #pragma omp parallel for private(first_order_forward_propagation, output_gradient, \
         layers_delta, particular_solution, homogeneous_solution, point_gradient)
 
-       for(i = 0; i < (int)training_instances_number; i++)
+       for(int i = 0; i <(int)training_instances_number; i++)
        {
-           training_index = training_indices[i];
+           const size_t training_index = training_indices[i];
 
            if(missing_values.has_missing_values(training_index))
            {
                continue;
            }
 
-          inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+          const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
-          targets = data_set_pointer->get_instance(training_index, targets_indices);
+          const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
           first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
@@ -566,7 +537,7 @@ Vector<double> RootMeanSquaredError::calculate_gradient(void) const
 
           if(!has_conditions_layer)
           {
-             output_gradient = (layers_activation[layers_number-1]-targets)/(training_instances_number*loss);
+             output_gradient =(layers_activation[layers_number-1]-targets)/(training_instances_number*loss);
 
              layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
           }
@@ -575,7 +546,7 @@ Vector<double> RootMeanSquaredError::calculate_gradient(void) const
              particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
              homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-             output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)/(training_instances_number*loss);
+             output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)/(training_instances_number*loss);
 
              layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
           }
@@ -634,11 +605,9 @@ Vector<double> RootMeanSquaredError::calculate_gradient(const double& total_trai
 
        const Instances& instances = data_set_pointer->get_instances();
 
-       const size_t training_instances_number = instances.count_training_instances_number();
-
        const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-       size_t training_index;
+       const size_t training_instances_number = training_indices.size();
 
        const Variables& variables = data_set_pointer->get_variables();
 
@@ -646,9 +615,6 @@ Vector<double> RootMeanSquaredError::calculate_gradient(const double& total_trai
        const Vector<size_t> targets_indices = variables.arrange_targets_indices();
 
        const MissingValues& missing_values = data_set_pointer->get_missing_values();
-
-       Vector<double> inputs(inputs_number);
-       Vector<double> targets(outputs_number);
 
        // Loss index stuff
 
@@ -662,23 +628,21 @@ Vector<double> RootMeanSquaredError::calculate_gradient(const double& total_trai
 
        Vector<double> gradient(parameters_number, 0.0);
 
-       int i = 0;
-
-       #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, output_gradient, \
+       #pragma omp parallel for private(first_order_forward_propagation, output_gradient, \
         layers_delta, particular_solution, homogeneous_solution, point_gradient)
 
-       for(i = 0; i < (int)training_instances_number; i++)
+       for(int i = 0; i <(int)training_instances_number; i++)
        {
-           training_index = training_indices[i];
+           const size_t training_index = training_indices[i];
 
            if(missing_values.has_missing_values(training_index))
            {
                continue;
            }
 
-          inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+          const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
-          targets = data_set_pointer->get_instance(training_index, targets_indices);
+          const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
           first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
@@ -687,7 +651,7 @@ Vector<double> RootMeanSquaredError::calculate_gradient(const double& total_trai
 
           if(!has_conditions_layer)
           {
-             output_gradient = (layers_activation[layers_number-1]-targets)/(total_training_instances_number*loss);
+             output_gradient =(layers_activation[layers_number-1]-targets)/(total_training_instances_number*loss);
 
              layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
           }
@@ -696,7 +660,7 @@ Vector<double> RootMeanSquaredError::calculate_gradient(const double& total_trai
              particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
              homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-             output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)/(total_training_instances_number*loss);
+             output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)/(total_training_instances_number*loss);
 
              layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
           }
@@ -711,24 +675,24 @@ Vector<double> RootMeanSquaredError::calculate_gradient(const double& total_trai
        return(gradient);
 }
 
-// std::string write_error_term_type(void) const method
+// string write_error_term_type() const method
 
 /// Returns a string with the name of the root mean squared error loss type, "ROOT_MEAN_SQUARED_ERROR".
 
-std::string RootMeanSquaredError::write_error_term_type(void) const
+string RootMeanSquaredError::write_error_term_type() const
 {
    return("ROOT_MEAN_SQUARED_ERROR");
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method 
+// tinyxml2::XMLDocument* to_XML() const method 
 
 /// Serializes the root mean squared error object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element. 
 
-tinyxml2::XMLDocument* RootMeanSquaredError::to_XML(void) const
+tinyxml2::XMLDocument* RootMeanSquaredError::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -775,13 +739,13 @@ void RootMeanSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: RootMeanSquaredError class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Root mean squared error element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
   // Display
@@ -790,15 +754,15 @@ void RootMeanSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
      if(element)
      {
-        const std::string new_display_string = element->GetText();
+        const string new_display_string = element->GetText();
 
         try
         {
            set_display(new_display_string != "0");
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -807,7 +771,7 @@ void RootMeanSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

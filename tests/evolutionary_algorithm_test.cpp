@@ -20,21 +20,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR 
 
-EvolutionaryAlgorithmTest::EvolutionaryAlgorithmTest(void) : UnitTesting()
+EvolutionaryAlgorithmTest::EvolutionaryAlgorithmTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-EvolutionaryAlgorithmTest::~EvolutionaryAlgorithmTest(void)
+EvolutionaryAlgorithmTest::~EvolutionaryAlgorithmTest()
 {
 }
 
 
 // METHODS
 
-void EvolutionaryAlgorithmTest::test_constructor(void)
+void EvolutionaryAlgorithmTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -61,13 +61,13 @@ void EvolutionaryAlgorithmTest::test_constructor(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_destructor(void)
+void EvolutionaryAlgorithmTest::test_destructor()
 {
     message += "test_destructor\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_population_size(void)
+void EvolutionaryAlgorithmTest::test_get_population_size()
 {
    message += "test_get_population_size\n";
 
@@ -79,7 +79,7 @@ void EvolutionaryAlgorithmTest::test_get_population_size(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_population(void)
+void EvolutionaryAlgorithmTest::test_get_population()
 {
    message += "test_get_population\n";
 
@@ -100,7 +100,7 @@ void EvolutionaryAlgorithmTest::test_get_population(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_loss(void)
+void EvolutionaryAlgorithmTest::test_get_loss()
 {
    message += "test_get_loss\n";
 
@@ -120,7 +120,7 @@ void EvolutionaryAlgorithmTest::test_get_loss(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_fitness(void)
+void EvolutionaryAlgorithmTest::test_get_fitness()
 {
    message += "test_get_fitnesss\n";
 
@@ -140,7 +140,7 @@ void EvolutionaryAlgorithmTest::test_get_fitness(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_selection(void)
+void EvolutionaryAlgorithmTest::test_get_selection()
 {
    message += "test_get_selection\n";
 
@@ -160,7 +160,7 @@ void EvolutionaryAlgorithmTest::test_get_selection(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_selective_pressure(void)
+void EvolutionaryAlgorithmTest::test_get_selective_pressure()
 {
    message += "test_get_selective_pressure\n";
 
@@ -174,7 +174,7 @@ void EvolutionaryAlgorithmTest::test_get_selective_pressure(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_recombination_size(void)
+void EvolutionaryAlgorithmTest::test_get_recombination_size()
 {
    message += "test_get_recombination_size\n";
 
@@ -186,7 +186,7 @@ void EvolutionaryAlgorithmTest::test_get_recombination_size(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_mutation_rate(void)
+void EvolutionaryAlgorithmTest::test_get_mutation_rate()
 {
    message += "test_get_mutation_rate\n";
 
@@ -198,7 +198,7 @@ void EvolutionaryAlgorithmTest::test_get_mutation_rate(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_mutation_range(void)
+void EvolutionaryAlgorithmTest::test_get_mutation_range()
 {
    message += "test_get_mutation_range\n";
 
@@ -210,7 +210,7 @@ void EvolutionaryAlgorithmTest::test_get_mutation_range(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_maximum_generations_number(void)
+void EvolutionaryAlgorithmTest::test_get_maximum_generations_number()
 {
    message += "test_get_maximum_generations_number\n";
 
@@ -222,7 +222,7 @@ void EvolutionaryAlgorithmTest::test_get_maximum_generations_number(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_population_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_population_history()
 {
    message += "test_get_reserve_population_history\n";
 
@@ -238,7 +238,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_population_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_mean_norm_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_mean_norm_history()
 {
    message += "test_get_reserve_mean_norm_history\n";
 
@@ -254,7 +254,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_mean_norm_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_norm_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_norm_history()
 {
    message += "test_get_reserve_standard_deviation_norm_history\n";
 
@@ -270,7 +270,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_norm_history
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_best_norm_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_best_norm_history()
 {
    message += "test_get_reserve_best_norm_history\n";
 
@@ -286,7 +286,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_best_norm_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_mean_loss_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_mean_loss_history()
 {
    message += "test_get_reserve_mean_loss_history\n";
 
@@ -302,7 +302,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_mean_loss_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_loss_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_loss_history()
 {
    message += "test_get_reserve_standard_deviation_loss_history\n";
 
@@ -318,7 +318,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_standard_deviation_loss_history
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_reserve_best_loss_history(void)
+void EvolutionaryAlgorithmTest::test_get_reserve_best_loss_history()
 {
    message += "test_get_reserve_best_loss_history\n";
 
@@ -334,7 +334,7 @@ void EvolutionaryAlgorithmTest::test_get_reserve_best_loss_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_fitness_assignment_method(void)
+void EvolutionaryAlgorithmTest::test_get_fitness_assignment_method()
 {
    message += "test_get_fitness_assignment_method\n";
 
@@ -346,7 +346,7 @@ void EvolutionaryAlgorithmTest::test_get_fitness_assignment_method(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_selection_method(void)
+void EvolutionaryAlgorithmTest::test_get_selection_method()
 {
    message += "test_get_selection_method\n";
 
@@ -359,7 +359,7 @@ void EvolutionaryAlgorithmTest::test_get_selection_method(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_recombination_method(void)
+void EvolutionaryAlgorithmTest::test_get_recombination_method()
 {
    message += "test_get_recombination_method\n";
 
@@ -375,7 +375,7 @@ void EvolutionaryAlgorithmTest::test_get_recombination_method(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_mutation_method(void)
+void EvolutionaryAlgorithmTest::test_get_mutation_method()
 {
    message += "test_get_mutation_method\n";
 
@@ -395,14 +395,14 @@ void EvolutionaryAlgorithmTest::test_get_mutation_method(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set(void)
+void EvolutionaryAlgorithmTest::test_set()
 {
    message += "test_set\n";
 
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_default(void)
+void EvolutionaryAlgorithmTest::test_set_default()
 {
    message += "test_set_default\n";
 
@@ -424,7 +424,7 @@ void EvolutionaryAlgorithmTest::test_set_default(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_population_size(void)
+void EvolutionaryAlgorithmTest::test_set_population_size()
 {
    message += "test_set_population_size\n";
 
@@ -440,7 +440,7 @@ void EvolutionaryAlgorithmTest::test_set_population_size(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_population(void)
+void EvolutionaryAlgorithmTest::test_set_population()
 {
    message += "test_set_population\n";
 
@@ -463,7 +463,7 @@ void EvolutionaryAlgorithmTest::test_set_population(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_loss(void)
+void EvolutionaryAlgorithmTest::test_set_loss()
 {
    message += "test_set_loss\n";
 
@@ -477,7 +477,7 @@ void EvolutionaryAlgorithmTest::test_set_loss(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_fitness(void)
+void EvolutionaryAlgorithmTest::test_set_fitness()
 {
    message += "test_set_fitness\n";
 
@@ -491,7 +491,7 @@ void EvolutionaryAlgorithmTest::test_set_fitness(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_selection(void)
+void EvolutionaryAlgorithmTest::test_set_selection()
 {
    message += "test_set_selection\n";
 
@@ -505,7 +505,7 @@ void EvolutionaryAlgorithmTest::test_set_selection(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_selective_pressure(void)
+void EvolutionaryAlgorithmTest::test_set_selective_pressure()
 {
    message += "test_set_selective_pressure\n";
 
@@ -517,7 +517,7 @@ void EvolutionaryAlgorithmTest::test_set_selective_pressure(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_recombination_size(void)
+void EvolutionaryAlgorithmTest::test_set_recombination_size()
 {
    message += "test_set_recombination_size\n";
 
@@ -529,7 +529,7 @@ void EvolutionaryAlgorithmTest::test_set_recombination_size(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_mutation_rate(void)
+void EvolutionaryAlgorithmTest::test_set_mutation_rate()
 {
    message += "test_set_mutation_rate\n";
 
@@ -541,7 +541,7 @@ void EvolutionaryAlgorithmTest::test_set_mutation_rate(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_mutation_range(void)
+void EvolutionaryAlgorithmTest::test_set_mutation_range()
 {
    message += "test_set_mutation_range\n";
 
@@ -553,7 +553,7 @@ void EvolutionaryAlgorithmTest::test_set_mutation_range(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_maximum_generations_number(void)
+void EvolutionaryAlgorithmTest::test_set_maximum_generations_number()
 {
    message += "test_set_maximum_generations_number\n";
 
@@ -565,7 +565,7 @@ void EvolutionaryAlgorithmTest::test_set_maximum_generations_number(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_mean_loss_goal(void)
+void EvolutionaryAlgorithmTest::test_set_mean_loss_goal()
 {
    message += "test_set_mean_loss_goal\n";
 
@@ -577,7 +577,7 @@ void EvolutionaryAlgorithmTest::test_set_mean_loss_goal(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_standard_deviation_loss_goal(void)
+void EvolutionaryAlgorithmTest::test_set_standard_deviation_loss_goal()
 {
    message += "test_set_standard_deviation_loss_goal\n";
 
@@ -589,73 +589,73 @@ void EvolutionaryAlgorithmTest::test_set_standard_deviation_loss_goal(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_fitness_assignment_method(void)
+void EvolutionaryAlgorithmTest::test_set_fitness_assignment_method()
 {
    message += "test_set_fitness_assignment_method\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_selection_method(void)
+void EvolutionaryAlgorithmTest::test_set_selection_method()
 {
    message += "test_set_selection_method\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_recombination_method(void)
+void EvolutionaryAlgorithmTest::test_set_recombination_method()
 {
    message += "test_set_recombination_method\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_mutation_method(void)
+void EvolutionaryAlgorithmTest::test_set_mutation_method()
 {
    message += "test_set_mutation_method\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_population_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_population_history()
 {
    message += "test_set_reserve_population_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_mean_norm_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_mean_norm_history()
 {
    message += "test_set_reserve_mean_norm_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_standard_deviation_norm_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_standard_deviation_norm_history()
 {
    message += "test_set_reserve_standard_deviation_norm_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_best_norm_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_best_norm_history()
 {
    message += "test_set_reserve_best_norm_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_mean_loss_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_mean_loss_history()
 {
    message += "test_set_reserve_mean_loss_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_standard_deviation_loss_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_standard_deviation_loss_history()
 {
    message += "test_set_reserve_standard_deviation_loss_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_best_loss_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_best_loss_history()
 {
    message += "test_set_reserve_best_loss_history\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_get_individual(void)
+void EvolutionaryAlgorithmTest::test_get_individual()
 {
    message += "test_get_individual\n";
 
@@ -675,7 +675,7 @@ void EvolutionaryAlgorithmTest::test_get_individual(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_individual(void)
+void EvolutionaryAlgorithmTest::test_set_individual()
 {
    message += "test_set_individual\n";
 
@@ -696,7 +696,7 @@ void EvolutionaryAlgorithmTest::test_set_individual(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_randomize_population_uniform(void)
+void EvolutionaryAlgorithmTest::test_randomize_population_uniform()
 {
    message += "test_randomize_population_uniform\n";
 
@@ -717,13 +717,13 @@ void EvolutionaryAlgorithmTest::test_randomize_population_uniform(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_randomize_population_normal(void)
+void EvolutionaryAlgorithmTest::test_randomize_population_normal()
 {
    message += "test_randomize_population_normal\n";
 }
 
 
-void EvolutionaryAlgorithmTest::test_calculate_population_norm(void)
+void EvolutionaryAlgorithmTest::test_calculate_population_norm()
 {
    message += "test_calculate_population_norm\n";
 
@@ -742,7 +742,7 @@ void EvolutionaryAlgorithmTest::test_calculate_population_norm(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_evaluate_population(void)
+void EvolutionaryAlgorithmTest::test_evaluate_population()
 {
    message += "test_evaluate_population\n";
 
@@ -768,7 +768,7 @@ void EvolutionaryAlgorithmTest::test_evaluate_population(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment(void)
+void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment()
 {
    message += "test_perform_linear_ranking_fitness_assignment\n";
 
@@ -848,7 +848,7 @@ void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment(v
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection(void)
+void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection()
 {
    message += "test_perform_roulette_wheel_selection\n";
 
@@ -884,7 +884,7 @@ void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection(void)
 
    selection = ea.get_selection();
 
-   assert_true(selection.count_occurrences(true) == population_size/2, LOG);
+   assert_true(selection.count_equal_to(true) == population_size/2, LOG);
 
    best_individual_index = ea.calculate_best_individual_index();
 
@@ -898,7 +898,7 @@ void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection(void)
 
    selection = ea.get_selection();
 
-   assert_true(selection.count_occurrences(true) == population_size/2, LOG);
+   assert_true(selection.count_equal_to(true) == population_size/2, LOG);
 
    // Test
 
@@ -908,7 +908,7 @@ void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection(void)
 
    selection = ea.get_selection();
 
-   assert_true(selection.count_occurrences(true) == population_size/2, LOG);
+   assert_true(selection.count_equal_to(true) == population_size/2, LOG);
 
    best_individual_index = ea.calculate_best_individual_index();
 
@@ -930,11 +930,11 @@ void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection(void)
 
    selection = ea.get_selection();
 
-   assert_true(selection.count_occurrences(true) == population_size/2, LOG);
+   assert_true(selection.count_equal_to(true) == population_size/2, LOG);
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_intermediate_recombination(void)
+void EvolutionaryAlgorithmTest::test_perform_intermediate_recombination()
 {
    message += "test_perform_intermediate_recombination\n";
 
@@ -966,7 +966,7 @@ void EvolutionaryAlgorithmTest::test_perform_intermediate_recombination(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_line_recombination(void)
+void EvolutionaryAlgorithmTest::test_perform_line_recombination()
 {
    message += "test_perform_line_recombination\n";
 
@@ -997,7 +997,7 @@ void EvolutionaryAlgorithmTest::test_perform_line_recombination(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_normal_mutation(void)
+void EvolutionaryAlgorithmTest::test_perform_normal_mutation()
 {
    message += "test_perform_normal_mutation\n";
 
@@ -1030,7 +1030,7 @@ void EvolutionaryAlgorithmTest::test_perform_normal_mutation(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_uniform_mutation(void)
+void EvolutionaryAlgorithmTest::test_perform_uniform_mutation()
 {
    message += "test_perform_uniform_mutation\n";
 
@@ -1063,7 +1063,7 @@ void EvolutionaryAlgorithmTest::test_perform_uniform_mutation(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_perform_training(void)
+void EvolutionaryAlgorithmTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -1144,7 +1144,7 @@ void EvolutionaryAlgorithmTest::test_perform_training(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_to_XML(void)
+void EvolutionaryAlgorithmTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -1159,7 +1159,7 @@ void EvolutionaryAlgorithmTest::test_to_XML(void)
 
 // @todo Check test
 
-void EvolutionaryAlgorithmTest::test_from_XML(void)
+void EvolutionaryAlgorithmTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -1213,7 +1213,7 @@ void EvolutionaryAlgorithmTest::test_from_XML(void)
 }
 
 
-void EvolutionaryAlgorithmTest::test_set_reserve_all_training_history(void)
+void EvolutionaryAlgorithmTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -1222,7 +1222,7 @@ void EvolutionaryAlgorithmTest::test_set_reserve_all_training_history(void)
 }
 
 
-void EvolutionaryAlgorithmTest::run_test_case(void)
+void EvolutionaryAlgorithmTest::run_test_case()
 {
    message += "Running evolutionary algorithm test case...\n";
 
@@ -1352,7 +1352,7 @@ void EvolutionaryAlgorithmTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

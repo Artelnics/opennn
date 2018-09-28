@@ -22,14 +22,14 @@ using namespace OpenNN;
 
 // CONSTRUCTOR
 
-GrowingInputsTest::GrowingInputsTest(void) : UnitTesting()
+GrowingInputsTest::GrowingInputsTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-GrowingInputsTest::~GrowingInputsTest(void)
+GrowingInputsTest::~GrowingInputsTest()
 {
 }
 
@@ -37,7 +37,7 @@ GrowingInputsTest::~GrowingInputsTest(void)
 
 // Constructor and destructor methods
 
-void GrowingInputsTest::test_constructor(void)
+void GrowingInputsTest::test_constructor()
 {
     message += "test_constructor\n";
 
@@ -52,7 +52,7 @@ void GrowingInputsTest::test_constructor(void)
     assert_true(!gi2.has_training_strategy(), LOG);
 }
 
-void GrowingInputsTest::test_destructor(void)
+void GrowingInputsTest::test_destructor()
 {
     message += "test_destructor\n";
 
@@ -63,63 +63,66 @@ void GrowingInputsTest::test_destructor(void)
 
 // Set methods
 
-void GrowingInputsTest::test_set_default(void)
+void GrowingInputsTest::test_set_default()
 {
     message += "test_set_default\n";
 }
 
 // Input selection methods
 
-void GrowingInputsTest::test_perform_inputs_selection(void)
+
+// @todo
+
+void GrowingInputsTest::test_perform_inputs_selection()
 {
-    message += "test_perform_inputs_selection\n";
+//    message += "test_perform_inputs_selection\n";
 
-    DataSet ds;
+//    DataSet ds;
 
-    Matrix<double> data;
+//    Matrix<double> data;
 
-    NeuralNetwork nn;
+//    NeuralNetwork nn;
 
-    LossIndex pf(&nn,&ds);
+//    LossIndex pf(&nn,&ds);
 
-    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&pf);
 
-    GrowingInputs gi(&ts);
+//    GrowingInputs gi(&ts);
 
-    GrowingInputs::GrowingInputsResults* gir;
+//    GrowingInputs::GrowingInputsResults* gir;
 
-    // Test
+//    // Test
 
-    data.set(20,3);
+//    data.set(20,3);
 
-    for (size_t i = 0; i < 20; i++)
-    {
-        data(i,0) = (double)i;
-        data(i,1) = 10.0;
-        data(i,2) = (double)i;
-    }
+//    for (size_t i = 0; i < 20; i++)
+//    {
+//        data(i,0) = (double)i;
+//        data(i,1) = 10.0;
+//        data(i,2) = (double)i;
+//    }
 
-    ds.set(data);
+//    ds.set(data);
 
-    //ds.get_instances_pointer()->split_random_indices();
+//    //ds.get_instances_pointer()->split_random_indices();
 
-    nn.set(2,6,1);
+//    nn.set(2,6,1);
 
-    ts.set_display(false);
+//    ts.set_display(false);
 
-    gi.set_display(false);
+//    gi.set_display(false);
 
-    gi.set_approximation(true);
+//    gi.set_approximation(true);
 
-    gir = gi.perform_inputs_selection();
+//    gir = gi.perform_inputs_selection();
 
-    assert_true(gir->optimal_inputs[0] == 1, LOG);
+//    assert_true(gir->optimal_inputs[0] == 1, LOG);
 
-    gi.delete_selection_history();
-    gi.delete_parameters_history();
-    gi.delete_loss_history();
+//    gi.delete_selection_history();
+//    gi.delete_parameters_history();
+//    gi.delete_loss_history();
 
-    // Test
+//    // Test
 
 //    size_t j = -10;
 
@@ -149,7 +152,7 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
 //    gir = gi.perform_inputs_selection();
 
-////    assert_true(gir->optimal_inputs[0] == 1, LOG);
+//    assert_true(gir->optimal_inputs[0] == 1, LOG);
 
 //    gi.delete_selection_history();
 //    gi.delete_parameters_history();
@@ -158,7 +161,7 @@ void GrowingInputsTest::test_perform_inputs_selection(void)
 
 // Serialization methods
 
-void GrowingInputsTest::test_to_XML(void)
+void GrowingInputsTest::test_to_XML()
 {
     message += "test_to_XML\n";
 
@@ -170,7 +173,7 @@ void GrowingInputsTest::test_to_XML(void)
     delete document;
 }
 
-void GrowingInputsTest::test_from_XML(void)
+void GrowingInputsTest::test_from_XML()
 {
     message += "test_from_XML\n";
 
@@ -184,7 +187,7 @@ void GrowingInputsTest::test_from_XML(void)
 
 // Unit testing methods
 
-void GrowingInputsTest::run_test_case(void)
+void GrowingInputsTest::run_test_case()
 {
     message += "Running growing input test case...\n";
 

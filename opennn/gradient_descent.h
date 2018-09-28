@@ -6,7 +6,7 @@
 /*   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -47,7 +47,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit GradientDescent(void); 
+   explicit GradientDescent(); 
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
 
@@ -60,7 +60,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~GradientDescent(void);
+   virtual ~GradientDescent();
 
    // STRUCTURES
 
@@ -72,7 +72,7 @@ public:
    {
        /// Default constructor.
 
-       GradientDescentResults(void)
+       GradientDescentResults()
        {
            gradient_descent_pointer = NULL;
        }
@@ -86,7 +86,7 @@ public:
 
        /// Destructor.
 
-       virtual ~GradientDescentResults(void)
+       virtual ~GradientDescentResults()
        {
        }
 
@@ -176,57 +176,58 @@ public:
 
       /// Stopping criterion
 
-      std::string stopping_criterion;
+      string stopping_criterion;
 
       void resize_training_history(const size_t&);
 
-      std::string to_string(void) const;
+      string object_to_string() const;
 
-      Matrix<std::string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const size_t& precision = 3) const;
    };
 
    // METHODS
 
-   const TrainingRateAlgorithm& get_training_rate_algorithm(void) const;
-   TrainingRateAlgorithm* get_training_rate_algorithm_pointer(void);
+   const TrainingRateAlgorithm& get_training_rate_algorithm() const;
+   TrainingRateAlgorithm* get_training_rate_algorithm_pointer();
 
    // Training parameters
 
-   const double& get_warning_parameters_norm(void) const;
-   const double& get_warning_gradient_norm(void) const;
-   const double& get_warning_training_rate(void) const;
+   const double& get_warning_parameters_norm() const;
+   const double& get_warning_gradient_norm() const;
+   const double& get_warning_training_rate() const;
 
-   const double& get_error_parameters_norm(void) const;
-   const double& get_error_gradient_norm(void) const;
-   const double& get_error_training_rate(void) const;
+   const double& get_error_parameters_norm() const;
+   const double& get_error_gradient_norm() const;
+   const double& get_error_training_rate() const;
 
    // Stopping criteria
 
-   const double& get_minimum_parameters_increment_norm(void) const;
+   const double& get_minimum_parameters_increment_norm() const;
 
-   const double& get_minimum_loss_increase(void) const;
-   const double& get_loss_goal(void) const;
-   const double& get_gradient_norm_goal(void) const;
-   const size_t& get_maximum_selection_loss_decreases(void) const;
+   const double& get_minimum_loss_increase() const;
+   const double& get_loss_goal() const;
+   const double& get_gradient_norm_goal() const;
+   const size_t& get_maximum_selection_loss_decreases() const;
 
-   const size_t& get_maximum_iterations_number(void) const;
-   const double& get_maximum_time(void) const;
+   const size_t& get_maximum_iterations_number() const;
+   const double& get_maximum_time() const;
 
-   const bool& get_return_minimum_selection_error_neural_network(void) const;
+   const bool& get_return_minimum_selection_error_neural_network() const;
+   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
-   const bool& get_reserve_parameters_history(void) const;
-   const bool& get_reserve_parameters_norm_history(void) const;
+   const bool& get_reserve_parameters_history() const;
+   const bool& get_reserve_parameters_norm_history() const;
 
-   const bool& get_reserve_loss_history(void) const;
-   const bool& get_reserve_gradient_history(void) const;
-   const bool& get_reserve_gradient_norm_history(void) const;
-   const bool& get_reserve_selection_loss_history(void) const;
+   const bool& get_reserve_loss_history() const;
+   const bool& get_reserve_gradient_history() const;
+   const bool& get_reserve_gradient_norm_history() const;
+   const bool& get_reserve_selection_loss_history() const;
 
-   const bool& get_reserve_training_direction_history(void) const;
-   const bool& get_reserve_training_rate_history(void) const;
-   const bool& get_reserve_elapsed_time_history(void) const;
+   const bool& get_reserve_training_direction_history() const;
+   const bool& get_reserve_training_rate_history() const;
+   const bool& get_reserve_elapsed_time_history() const;
 
    // Set methods
 
@@ -235,7 +236,7 @@ public:
    void set_training_rate_algorithm(const TrainingRateAlgorithm&);
 
 
-   void set_default(void);
+   void set_default();
 
    void set_reserve_all_training_history(const bool&);
 
@@ -263,6 +264,7 @@ public:
    void set_maximum_time(const double&);
 
    void set_return_minimum_selection_error_neural_network(const bool&);
+   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -286,15 +288,15 @@ public:
 
    Vector<double> calculate_training_direction(const Vector<double>&) const;
 
-   GradientDescentResults* perform_training(void);
+   GradientDescentResults* perform_training();
 
-   std::string write_training_algorithm_type(void) const;
+   string write_training_algorithm_type() const;
 
    // Serialization methods
 
-   Matrix<std::string> to_string_matrix(void) const;
+   Matrix<string> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -334,7 +336,6 @@ private:
 
    double error_training_rate;
 
-
    // STOPPING CRITERIA
 
    /// Norm of the parameters increment vector at which training stops.
@@ -369,6 +370,10 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool return_minimum_selection_error_neural_network;
+
+   /// True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+
+   bool apply_early_stopping;
 
    // TRAINING HISTORY
 

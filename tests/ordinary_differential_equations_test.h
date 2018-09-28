@@ -33,56 +33,56 @@ public:
 
    // CONSTRUCTOR
 
-   explicit OrdinaryDifferentialEquationsTest(void);
+   explicit OrdinaryDifferentialEquationsTest();
 
    // DESTRUCTOR
 
-   virtual ~OrdinaryDifferentialEquationsTest(void);
+   virtual ~OrdinaryDifferentialEquationsTest();
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_points_number(void);
+   void test_get_points_number();
 
-   void test_get_tolerance(void);
-   void test_get_initial_size(void);
-   void test_get_warning_size(void);
-   void test_get_error_size(void);
+   void test_get_tolerance();
+   void test_get_initial_size();
+   void test_get_warning_size();
+   void test_get_error_size();
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set_default(void);
+   void test_set_default();
 
-   void test_set_points_number(void);
+   void test_set_points_number();
 
-   void test_set_tolerance(void);
-   void test_set_initial_size(void);
-   void test_set_warning_size(void);
-   void test_set_error_size(void);
+   void test_set_tolerance();
+   void test_set_initial_size();
+   void test_set_warning_size();
+   void test_set_error_size();
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Runge-Kutta methods
 
-   void test_calculate_Runge_Kutta_integral_1(void);
-   void test_calculate_Runge_Kutta_integral_2(void);
-   void test_calculate_Runge_Kutta_integral_3(void);
-   void test_calculate_Runge_Kutta_integral_4(void);
-   void test_calculate_Runge_Kutta_integral_5(void);
+   void test_calculate_Runge_Kutta_integral_1();
+   void test_calculate_Runge_Kutta_integral_2();
+   void test_calculate_Runge_Kutta_integral_3();
+   void test_calculate_Runge_Kutta_integral_4();
+   void test_calculate_Runge_Kutta_integral_5();
 
    // Runge-Kutta-Fehlberg methods
 
-   void test_calculate_Runge_Kutta_Fehlberg_integral_1(void);
-   void test_calculate_Runge_Kutta_Fehlberg_integral_2(void);
-   void test_calculate_Runge_Kutta_Fehlberg_integral_3(void);
-   void test_calculate_Runge_Kutta_Fehlberg_integral_4(void);
-   void test_calculate_Runge_Kutta_Fehlberg_integral_5(void);
+   void test_calculate_Runge_Kutta_Fehlberg_integral_1();
+   void test_calculate_Runge_Kutta_Fehlberg_integral_2();
+   void test_calculate_Runge_Kutta_Fehlberg_integral_3();
+   void test_calculate_Runge_Kutta_Fehlberg_integral_4();
+   void test_calculate_Runge_Kutta_Fehlberg_integral_5();
 
    double calculate_zero_dot(const NeuralNetwork&, const double&, const double&) const;
    double calculate_zero_dot(const NeuralNetwork&, const double&, const double&, const double&) const;
@@ -100,15 +100,15 @@ public:
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);   
+   void test_to_XML();   
+   void test_from_XML();   
 
-   void test_save(void);
-   void test_load(void);
+   void test_save();
+   void test_load();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -116,7 +116,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

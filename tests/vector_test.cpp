@@ -17,93 +17,93 @@
 
 // GENERAL CONSTRUCTOR
 
-VectorTest::VectorTest(void) : UnitTesting() 
+VectorTest::VectorTest() : UnitTesting() 
 {   
 }
 
 
 // DESTRUCTOR
 
-VectorTest::~VectorTest(void)
+VectorTest::~VectorTest()
 {
 }
 
 
 // METHODS
 
-void VectorTest::test_constructor(void)
+void VectorTest::test_constructor()
 {
-   message += "test_constructor\n";
+       message += "test_constructor\n";
 
-   std::string file_name = "../data/vector.dat";
+       string file_name = "../data/vector.dat";
 
-   // Default 
+       // Default
 
-   Vector<bool> v1;
+       Vector<bool> v1;
 
-   assert_true(v1.size() == 0, LOG);   
+       assert_true(v1.size() == 0, LOG);
 
-   // Size
+       // Size
 
-   Vector<bool> v2(1);
+       Vector<bool> v2(1);
 
-   assert_true(v2.size() == 1, LOG);
+       assert_true(v2.size() == 1, LOG);
 
-   // Size initialization
+       // Size initialization
 
-   Vector<bool> v3(1, false);
+       Vector<bool> v3(1, false);
 
-   assert_true(v3.size() == 1, LOG);
-   assert_true(v3[0] == false, LOG);
+       assert_true(v3.size() == 1, LOG);
+       assert_true(v3[0] == false, LOG);
 
-   // File
+       // File
 
-   Vector<int> v4(3, 0);
-   v4.save(file_name);
+       Vector<int> v4(3, 0);
+       v4.save(file_name);
 
-   Vector<int> w4(file_name);
-   
-   assert_true(w4.size() == 3, LOG);
-   assert_true(w4 == 0, LOG);
+       Vector<int> w4(file_name);
 
-   // Sequential
+       assert_true(w4.size() == 3, LOG);
+       assert_true(w4 == 0, LOG);
 
-   Vector<int> v6(10, 5, 50);
+       // Sequential
 
-   assert_true(v6.size() == 9, LOG);
-   assert_true(v6[0] == 10, LOG);
-   assert_true(v6[8] == 50, LOG);
+       Vector<int> v6(10, 5, 50);
 
-   Vector<double> v7(3.0, 0.2, 3.8);
+       assert_true(v6.size() == 9, LOG);
+       assert_true(v6[0] == 10, LOG);
+       assert_true(v6[8] == 50, LOG);
 
-   assert_true(v7.size() == 5, LOG);
-   assert_true(v7[0] == 3.0, LOG);
-   assert_true(v7[4] == 3.8, LOG);
+       Vector<double> v7(3.0, 0.2, 3.8);
 
-   Vector<int> v8(9, -1, 1);
+       assert_true(v7.size() == 5, LOG);
+       assert_true(v7[0] == 3.0, LOG);
+       assert_true(v7[4] == 3.8, LOG);
 
-   assert_true(v8.size() == 9, LOG);
-   assert_true(v8[0] == 9, LOG);
-   assert_true(v8[8] == 1, LOG);
+       Vector<int> v8(9, -1, 1);
 
-   // Copy
+       assert_true(v8.size() == 9, LOG);
+       assert_true(v8[0] == 9, LOG);
+       assert_true(v8[8] == 1, LOG);
 
-   Vector<std::string> v5(1, "hello");
+       // Copy
 
-   Vector<std::string> w5(v5);
+       Vector<string> v5(1, "hello");
 
-   assert_true(w5.size() == 1, LOG);
-   assert_true(w5[0] == "hello", LOG);
+       Vector<string> w5(v5);
+
+       assert_true(w5.size() == 1, LOG);
+       assert_true(w5[0] == "hello", LOG);
 
 }
 
 
-void VectorTest::test_destructor(void)
+void VectorTest::test_destructor()
 {
 }
 
 
-void VectorTest::test_sum_operator(void)
+void VectorTest::test_sum_operator()
 {
    message += "test_sum_operator\n";
 
@@ -131,7 +131,7 @@ void VectorTest::test_sum_operator(void)
 }
 
 
-void VectorTest::test_rest_operator(void)
+void VectorTest::test_rest_operator()
 {
    message += "test_rest_operator\n";
 
@@ -159,7 +159,7 @@ void VectorTest::test_rest_operator(void)
 }
 
 
-void VectorTest::test_multiplication_operator(void)
+void VectorTest::test_multiplication_operator()
 {
    message += "test_multiplication_operator\n";
 
@@ -185,7 +185,7 @@ void VectorTest::test_multiplication_operator(void)
 
    assert_true(c == d, LOG);
 
-   // Matrix 
+   // Matrix
 
    Matrix<double> m(1, 1, 0.0);
 
@@ -210,7 +210,7 @@ void VectorTest::test_multiplication_operator(void)
 }
 
 
-void VectorTest::test_division_operator(void)
+void VectorTest::test_division_operator()
 {
    message += "test_division_operator\n";
 
@@ -238,7 +238,7 @@ void VectorTest::test_division_operator(void)
 }
 
 
-void VectorTest::test_sum_assignment_operator(void)
+void VectorTest::test_sum_assignment_operator()
 {
    message += "test_sum_assignment_operator\n";
 
@@ -263,7 +263,7 @@ void VectorTest::test_sum_assignment_operator(void)
 }
 
 
-void VectorTest::test_rest_assignment_operator(void)
+void VectorTest::test_rest_assignment_operator()
 {
    message += "test_rest_assignment_operator\n";
 
@@ -288,7 +288,7 @@ void VectorTest::test_rest_assignment_operator(void)
 }
 
 
-void VectorTest::test_multiplication_assignment_operator(void)
+void VectorTest::test_multiplication_assignment_operator()
 {
    message += "test_multiplication_assignment_operator\n";
 
@@ -313,7 +313,7 @@ void VectorTest::test_multiplication_assignment_operator(void)
 }
 
 
-void VectorTest::test_division_assignment_operator(void)
+void VectorTest::test_division_assignment_operator()
 {
    message += "test_division_assignment_operator\n";
 
@@ -338,7 +338,7 @@ void VectorTest::test_division_assignment_operator(void)
 }
 
 
-void VectorTest::test_equal_to_operator(void)
+void VectorTest::test_equal_to_operator()
 {
    message += "test_equal_to_operator\n";
 
@@ -357,7 +357,7 @@ void VectorTest::test_equal_to_operator(void)
 }
 
 
-void VectorTest::test_not_equal_to_operator(void)
+void VectorTest::test_not_equal_to_operator()
 {
    message += "test_not_equal_to_operator\n";
 
@@ -370,11 +370,11 @@ void VectorTest::test_not_equal_to_operator(void)
 }
 
 
-void VectorTest::test_greater_than_operator(void)
+void VectorTest::test_greater_than_operator()
 {
    message += "test_greater_than_operator\n";
 
-   Vector<int> a(2);   
+   Vector<int> a(2);
    a[0] = 1;
    a[1] = 2;
 
@@ -392,11 +392,11 @@ void VectorTest::test_greater_than_operator(void)
 }
 
 
-void VectorTest::test_less_than_operator(void)
+void VectorTest::test_less_than_operator()
 {
    message += "test_less_than_operator\n";
 
-   Vector<double> a(2);   
+   Vector<double> a(2);
    a[0] = 0.0;
    a[1] = 1.0;
 
@@ -414,11 +414,11 @@ void VectorTest::test_less_than_operator(void)
 }
 
 
-void VectorTest::test_greater_than_or_equal_to_operator(void)
+void VectorTest::test_greater_than_or_equal_to_operator()
 {
    message += "test_greater_than_or_equal_to_operator\n";
 
-   Vector<int> a(2);   
+   Vector<int> a(2);
    a[0] = 1;
    a[1] = 2;
 
@@ -436,11 +436,11 @@ void VectorTest::test_greater_than_or_equal_to_operator(void)
 }
 
 
-void VectorTest::test_less_than_or_equal_to_operator(void)
+void VectorTest::test_less_than_or_equal_to_operator()
 {
    message += "test_less_than_or_equal_to_operator\n";
 
-   Vector<double> a(2);   
+   Vector<double> a(2);
    a[0] = 1.0;
    a[1] = 1.0;
 
@@ -458,7 +458,7 @@ void VectorTest::test_less_than_or_equal_to_operator(void)
 }
 
 
-void VectorTest::test_output_operator(void)
+void VectorTest::test_output_operator()
 {
    message += "test_output_operator\n";
 
@@ -483,11 +483,11 @@ void VectorTest::test_output_operator(void)
 }
 
 
-void VectorTest::test_get_size(void)
+void VectorTest::test_get_size()
 {
    message += "test_get_size\n";
 
-   Vector<int> v; 
+   Vector<int> v;
 
    assert_true(v.size() == 0, LOG);
 
@@ -501,27 +501,27 @@ void VectorTest::test_get_size(void)
 }
 
 
-void VectorTest::test_get_display(void)
+void VectorTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void VectorTest::test_set(void)
+void VectorTest::test_set()
 {
    message += "test_set\n";
 
-   std::string file_name = "../data/vector.dat";
+   string file_name = "../data/vector.dat";
 
    Vector<int> v(3, 0);
 
-   // Default 
+   // Default
 
    v.set();
 
    assert_true(v.size() == 0, LOG);
 
-   // Size 
+   // Size
 
    v.set(1);
 
@@ -534,7 +534,7 @@ void VectorTest::test_set(void)
    assert_true(v.size() == 1, LOG);
    assert_true(v == 0, LOG);
 
-   // File 
+   // File
 
    v.save(file_name);
    v.set(file_name);
@@ -567,13 +567,13 @@ void VectorTest::test_set(void)
 }
 
 
-void VectorTest::test_set_display(void)
+void VectorTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void VectorTest::test_resize(void)
+void VectorTest::test_resize()
 {
    message += "test_resize\n";
 
@@ -593,7 +593,7 @@ void VectorTest::test_resize(void)
 }
 
 
-void VectorTest::test_initialize(void)
+void VectorTest::test_initialize()
 {
    message += "test_initialize\n";
 
@@ -607,7 +607,7 @@ void VectorTest::test_initialize(void)
 }
 
 
-void VectorTest::test_initialize_sequential(void)
+void VectorTest::test_initialize_sequential()
 {
    message += "test_initialize_sequential\n";
 
@@ -623,7 +623,7 @@ void VectorTest::test_initialize_sequential(void)
 }
 
 
-void VectorTest::test_randomize_uniform(void)
+void VectorTest::test_randomize_uniform()
 {
    message += "test_randomize_uniform\n";
 
@@ -641,7 +641,7 @@ void VectorTest::test_randomize_uniform(void)
 }
 
 
-void VectorTest::test_randomize_normal(void)
+void VectorTest::test_randomize_normal()
 {
    message += "test_randomize_normal\n";
 
@@ -655,11 +655,12 @@ void VectorTest::test_randomize_normal(void)
 }
 
 
-void VectorTest::test_contains(void)
+void VectorTest::test_contains()
 {
    message += "test_contains\n";
 
    Vector<int> v;
+   Vector<int> v1;
 
    // Test
 
@@ -670,10 +671,24 @@ void VectorTest::test_contains(void)
    v.set(5, -1);
 
    assert_true(v.contains(0) == false, LOG);
+
+   //Test
+
+   v.set(5, -1);
+   v[3] = 1;
+   v1.set(3, 1);
+
+   assert_true(v.contains(v1) == true, LOG);
+
+   //Test
+
+//   v.set(10000000, -1);
+
+//   assert_true(v.contains(0) == false, LOG);
 }
 
 
-void VectorTest::test_is_in(void)
+void VectorTest::test_is_in()
 {
    message += "test_is_in\n";
 
@@ -683,25 +698,93 @@ void VectorTest::test_is_in(void)
 }
 
 
-void VectorTest::test_is_constant(void)
+void VectorTest::test_is_constant()
 {
    message += "test_is_constant\n";
 }
 
 
-void VectorTest::test_is_crescent(void)
+void VectorTest::test_is_crescent()
 {
    message += "test_is_crescent\n";
 }
 
 
-void VectorTest::test_is_decrescent(void)
+void VectorTest::test_is_decrescent()
 {
    message += "test_is_decrescent\n";
 }
 
 
-void VectorTest::test_calculate_sum(void)
+void VectorTest::test_impute_time_series_missing_values_mean()
+{
+    message += "test_impute_time_series_missing_values_mean\n";
+
+    Vector<double> v;
+
+    Vector<double> w;
+
+    // Test
+
+    v.set(1, 3.141592);
+    w = v.impute_time_series_missing_values_mean(999.0);
+
+    assert_true(w == v, LOG);
+
+    // Test
+
+    v.set(1, 999.0);
+    w = v.impute_time_series_missing_values_mean(999.0);
+
+    assert_true(w == v, LOG);
+
+    // Test
+
+    v.set(3, 1.0);
+    v[0] = 0.0;
+    v[1] = 999.0;
+    v[2] = 2.0;
+
+    w = v.impute_time_series_missing_values_mean(999.0);
+
+    assert_true(w[1] == 1.0, LOG);
+
+    // Test
+
+    v.set(3);
+    v[0] = 999.0;
+    v[1] = 999.0;
+    v[2] = 2.0;
+
+    w = v.impute_time_series_missing_values_mean(999.0);
+
+    assert_true(w[0] == 2.0, LOG);
+    assert_true(w[1] == 2.0, LOG);
+
+    // Test
+
+    v.set(3);
+    v[0] = 2.0;
+    v[1] = 999.0;
+    v[2] = 999.0;
+
+    w = v.impute_time_series_missing_values_mean(999.0);
+
+    assert_true(w[1] == 2.0, LOG);
+    assert_true(w[2] == 2.0, LOG);
+
+    v.set(3);
+    v[0] = 999.0;
+    v[1] = 999.0;
+    v[2] = 999.0;
+
+    w = v.impute_time_series_missing_values_mean(999.0);
+
+    assert_true(w == 999.0, LOG);
+}
+
+
+void VectorTest::test_calculate_sum()
 {
    message += "test_calculate_sum\n";
 
@@ -716,7 +799,7 @@ void VectorTest::test_calculate_sum(void)
 }
 
 
-void VectorTest::test_calculate_partial_sum(void)
+void VectorTest::test_calculate_partial_sum()
 {
     message += "test_calculate_partial_sum\n";
 
@@ -741,7 +824,7 @@ void VectorTest::test_calculate_partial_sum(void)
 }
 
 
-void VectorTest::test_calculate_product(void)
+void VectorTest::test_calculate_product()
 {
    message += "test_calculate_product\n";
 
@@ -757,7 +840,7 @@ void VectorTest::test_calculate_product(void)
 }
 
 
-void VectorTest::test_calculate_mean(void)
+void VectorTest::test_calculate_mean()
 {
    message += "test_calculate_mean\n";
    
@@ -773,7 +856,7 @@ void VectorTest::test_calculate_mean(void)
 }
 
 
-void VectorTest::test_calculate_standard_deviation(void)
+void VectorTest::test_calculate_standard_deviation()
 {
    message += "test_calculate_standard_deviation\n";
    
@@ -800,7 +883,7 @@ void VectorTest::test_calculate_standard_deviation(void)
    assert_true(fabs(standard_deviation-1.4142) < 1.0e-3, LOG);
 }
 
-void VectorTest::test_calculate_covariance(void)
+void VectorTest::test_calculate_covariance()
 {
     message += "test_calculate_covariance\n";
 
@@ -824,7 +907,7 @@ void VectorTest::test_calculate_covariance(void)
 }
 
    
-void VectorTest::test_calculate_mean_standard_deviation(void)
+void VectorTest::test_calculate_mean_standard_deviation()
 {
    message += "test_calculate_mean_standard_deviation\n";
 
@@ -844,7 +927,7 @@ void VectorTest::test_calculate_mean_standard_deviation(void)
 }
 
 
-void VectorTest::test_calculate_minimum(void)
+void VectorTest::test_calculate_minimum()
 {
    message += "test_calculate_minimum\n";
    
@@ -861,7 +944,7 @@ void VectorTest::test_calculate_minimum(void)
 }
 
 
-void VectorTest::test_calculate_maximum(void)
+void VectorTest::test_calculate_maximum()
 {
    message += "test_calculate_maximum\n";
    
@@ -878,7 +961,7 @@ void VectorTest::test_calculate_maximum(void)
 }
 
 
-void VectorTest::test_calculate_minimum_maximum(void)
+void VectorTest::test_calculate_minimum_maximum()
 {
    message += "test_calculate_minimum_maximum\n";
    
@@ -894,7 +977,7 @@ void VectorTest::test_calculate_minimum_maximum(void)
 }
 
 
-void VectorTest::test_calculate_minimum_missing_values(void)
+void VectorTest::test_calculate_minimum_missing_values()
 {
    message += "test_calculate_minimum_missing_values\n";
 
@@ -927,7 +1010,7 @@ void VectorTest::test_calculate_minimum_missing_values(void)
 }
 
 
-void VectorTest::test_calculate_maximum_missing_values(void)
+void VectorTest::test_calculate_maximum_missing_values()
 {
    message += "test_calculate_maximum_missing_values\n";
 
@@ -960,7 +1043,7 @@ void VectorTest::test_calculate_maximum_missing_values(void)
 }
 
 
-void VectorTest::test_calculate_minimum_maximum_missing_values(void)
+void VectorTest::test_calculate_minimum_maximum_missing_values()
 {
    message += "test_calculate_minimum_maximum_missing_values\n";
 
@@ -978,7 +1061,7 @@ void VectorTest::test_calculate_minimum_maximum_missing_values(void)
 }
 
 
-void VectorTest::test_calculate_explained_variance(void)
+void VectorTest::test_calculate_explained_variance()
 {
     message += "test_calculate_explained_variance\n";
 
@@ -1013,7 +1096,7 @@ void VectorTest::test_calculate_explained_variance(void)
 }
 
 
-void VectorTest::test_calculate_statistics(void)
+void VectorTest::test_calculate_statistics()
 {
     message += "test_calculate_statistics\n";
 
@@ -1035,8 +1118,81 @@ void VectorTest::test_calculate_statistics(void)
 
 }
 
+void VectorTest::test_calculate_quartiles()
+{
+   message += "test_calculate_quartiles\n";
 
-void VectorTest::test_calculate_histogram(void)
+   Vector<double> v1(2);
+   v1[0] =  0.0;
+
+   Vector<double> quartiles1 = v1.calculate_quartiles();
+
+   assert_true(quartiles1[0] == 0.0, LOG);
+   assert_true(quartiles1[1] == 0.0, LOG);
+   assert_true(quartiles1[2] == 0.0, LOG);
+
+   Vector<double> v2(2);
+   v2[0] =  0.0;
+   v2[1] =  1.0;
+
+   Vector<double> quartiles2 = v2.calculate_quartiles();
+
+   assert_true(quartiles2[0] == 0.25, LOG);
+   assert_true(quartiles2[1] == 0.5, LOG);
+   assert_true(quartiles2[2] == 0.75, LOG);
+
+   Vector<double> v3(3);
+   v3[0] =  0.0;
+   v3[1] =  1.0;
+   v3[2] =  2.0;
+
+   Vector<double> quartiles3 = v3.calculate_quartiles();
+
+   assert_true(quartiles3[0] == 0.5, LOG);
+   assert_true(quartiles3[1] == 1.0, LOG);
+   assert_true(quartiles3[2] == 1.5, LOG);
+
+   Vector<double> v4(4);
+   v4[0] =  0.0;
+   v4[1] =  1.0;
+   v4[2] =  2.0;
+   v4[3] =  3.0;
+
+   Vector<double> quartiles4 = v4.calculate_quartiles();
+
+   assert_true(v4.count_less_equal_to(quartiles4[0])*100.0/v4.size() == 25.0, LOG);
+   assert_true(v4.count_less_equal_to(quartiles4[1])*100.0/v4.size() == 50.0, LOG);
+   assert_true(v4.count_less_equal_to(quartiles4[2])*100.0/v4.size() == 75.0, LOG);
+
+   Vector<double> v5(5);
+   v5[0] =  0.0;
+   v5[1] =  1.0;
+   v5[2] =  2.0;
+   v5[3] =  3.0;
+   v5[4] =  4.0;
+
+   Vector<double> quartiles5 = v5.calculate_quartiles();
+
+   assert_true(quartiles5[0] == 1.0, LOG);
+   assert_true(quartiles5[1] == 2.0, LOG);
+   assert_true(quartiles5[2] == 3.0, LOG);
+
+   Vector<double> v6(6);
+   v6[0] =  0.0;
+   v6[1] =  1.0;
+   v6[2] =  2.0;
+   v6[3] =  3.0;
+   v6[4] =  4.0;
+   v6[5] =  5.0;
+
+   Vector<double> quartiles6 = v6.calculate_quartiles();
+
+   assert_true(quartiles6[0] == 1.0, LOG);
+   assert_true(quartiles6[1] == 2.5, LOG);
+   assert_true(quartiles6[2] == 4.0, LOG);
+}
+
+void VectorTest::test_calculate_histogram()
 {
    message += "test_calculate_histogram\n";
 
@@ -1051,7 +1207,7 @@ void VectorTest::test_calculate_histogram(void)
 
    v.set(0.0, 1.0, 9.0);
 
-   histogram = v.calculate_histogram(10); 
+   histogram = v.calculate_histogram(10);
 
    assert_true(histogram.get_bins_number() == 10, LOG);
 
@@ -1089,12 +1245,10 @@ void VectorTest::test_calculate_histogram(void)
    histogram = v.calculate_histogram(10);
 
    assert_true(histogram.frequencies.calculate_sum() == 20, LOG);
-
-
 }
 
 
-void VectorTest::test_calculate_bin(void)
+void VectorTest::test_calculate_bin()
 {
     message += "test_calculate_bin\n";
 
@@ -1128,7 +1282,7 @@ void VectorTest::test_calculate_bin(void)
 }
 
 
-void VectorTest::test_calculate_frequency(void)
+void VectorTest::test_calculate_frequency()
 {
     message += "test_calculate_frequency\n";
 
@@ -1151,7 +1305,7 @@ void VectorTest::test_calculate_frequency(void)
 }
 
 
-void VectorTest::test_calculate_total_frequencies(void)
+void VectorTest::test_calculate_total_frequencies()
 {
     message += "test_calculate_total_frequencies\n";
 
@@ -1190,7 +1344,7 @@ void VectorTest::test_calculate_total_frequencies(void)
 }
 
 
-void VectorTest::test_calculate_minimal_index(void)
+void VectorTest::test_calculate_minimal_index()
 {
    message += "test_calculate_minimal_index\n";
    
@@ -1207,7 +1361,7 @@ void VectorTest::test_calculate_minimal_index(void)
 }
 
 
-void VectorTest::test_calculate_maximal_index(void)
+void VectorTest::test_calculate_maximal_index()
 {
    message += "test_calculate_maximal_index\n";
    
@@ -1224,7 +1378,7 @@ void VectorTest::test_calculate_maximal_index(void)
 }
 
 
-void VectorTest::test_calculate_minimal_indices(void)
+void VectorTest::test_calculate_minimal_indices()
 {
     message += "test_calculate_minimal_indices\n";
 
@@ -1282,7 +1436,7 @@ void VectorTest::test_calculate_minimal_indices(void)
 }
 
 
-void VectorTest::test_calculate_maximal_indices(void)
+void VectorTest::test_calculate_maximal_indices()
 {
     message += "test_calculate_maximal_indices\n";
 
@@ -1320,7 +1474,7 @@ void VectorTest::test_calculate_maximal_indices(void)
     assert_true(v[maximal_indices[7]] >= v[maximal_indices[8]], LOG);
     assert_true(v[maximal_indices[8]] >= v[maximal_indices[9]], LOG);
 
-    assert_true(v.arrange_subvector(maximal_indices).is_decrescent(), LOG);
+    assert_true(v.get_subvector(maximal_indices).is_decrescent(), LOG);
 
 
     //Test
@@ -1344,7 +1498,7 @@ void VectorTest::test_calculate_maximal_indices(void)
 }
 
 
-void VectorTest::test_calculate_minimal_maximal_index(void)
+void VectorTest::test_calculate_minimal_maximal_index()
 {
    message += "test_calculate_minimal_maximal_index\n";
    
@@ -1357,7 +1511,7 @@ void VectorTest::test_calculate_minimal_maximal_index(void)
 }
 
 
-void VectorTest::test_calculate_cumulative_index(void)
+void VectorTest::test_calculate_cumulative_index()
 {
    message += "test_calculate_cumulative_index\n";
 
@@ -1367,7 +1521,7 @@ void VectorTest::test_calculate_cumulative_index(void)
 
    // Test
 
-   v.set(0.0, 1.0, 1.0); 
+   v.set(0.0, 1.0, 1.0);
    value = 0.0;
    index = v.calculate_cumulative_index(value);
 
@@ -1375,7 +1529,7 @@ void VectorTest::test_calculate_cumulative_index(void)
 
    // Test
 
-   v.set(0.0, 1.0, 1.0); 
+   v.set(0.0, 1.0, 1.0);
    value = 0.5;
    index = v.calculate_cumulative_index(value);
 
@@ -1383,7 +1537,7 @@ void VectorTest::test_calculate_cumulative_index(void)
 
    // Test
 
-   v.set(0.0, 1.0, 1.0); 
+   v.set(0.0, 1.0, 1.0);
    value = 1.0;
    index = v.calculate_cumulative_index(value);
 
@@ -1391,31 +1545,31 @@ void VectorTest::test_calculate_cumulative_index(void)
 }
 
 
-void VectorTest::test_calculate_closest_index(void)
+void VectorTest::test_calculate_closest_index()
 {
    message += "test_calculate_closest_index\n";
 }
 
 
-void VectorTest::test_calculate_sum_squared_error(void)
+void VectorTest::test_calculate_sum_squared_error()
 {
    message += "test_calculate_sum_squared_error\n";
 }
 
 
-void VectorTest::test_calculate_mean_squared_error(void)
+void VectorTest::test_calculate_mean_squared_error()
 {
    message += "test_calculate_mean_squared_error\n";
 }
 
 
-void VectorTest::test_calculate_root_mean_squared_error(void)
+void VectorTest::test_calculate_root_mean_squared_error()
 {
    message += "test_calculate_root_mean_squared_error\n";
 }
 
 
-void VectorTest::test_calculate_norm(void)
+void VectorTest::test_calculate_norm()
 {
    message += "test_calculate_norm\n";
 
@@ -1430,7 +1584,7 @@ void VectorTest::test_calculate_norm(void)
 }
 
 
-void VectorTest::test_calculate_normalized(void)
+void VectorTest::test_calculate_normalized()
 {
    message += "test_calculate_normalized\n";
 
@@ -1447,36 +1601,36 @@ void VectorTest::test_calculate_normalized(void)
 }
 
 
-void VectorTest::test_apply_absolute_value(void)
+void VectorTest::test_apply_absolute_value()
 {
    message += "test_apply_absolute_value\n";
 }
 
 
-void VectorTest::test_calculate_lower_bounded(void)
+void VectorTest::test_calculate_lower_bounded()
 {
    message += "test_calculate_lower_bounded\n";
 
    Vector<double> v(1, -1.0);
    Vector<double> lower_bound(1, 0.0);
 
-   assert_true(v.calculate_lower_bounded(lower_bound) == 0.0, LOG); 
+   assert_true(v.calculate_lower_bounded(lower_bound) == 0.0, LOG);
 }
 
 
-void VectorTest::test_calculate_upper_bounded(void)
+void VectorTest::test_calculate_upper_bounded()
 {
    message += "test_calculate_upper_bounded\n";
 }
 
 
-void VectorTest::test_calculate_lower_upper_bounded(void)
+void VectorTest::test_calculate_lower_upper_bounded()
 {
    message += "test_calculate_lower_upper_bounded\n";
 }
 
 
-void VectorTest::test_dot_vector(void)
+void VectorTest::test_dot_vector()
 {
    message += "test_dot_vector\n";
 
@@ -1517,7 +1671,7 @@ void VectorTest::test_dot_vector(void)
 }
 
 
-void VectorTest::test_dot_matrix(void)
+void VectorTest::test_dot_matrix()
 {
    message += "test_dot_matrix\n";
 
@@ -1571,7 +1725,7 @@ void VectorTest::test_dot_matrix(void)
 }
 
 
-void VectorTest::test_tuck_in(void)
+void VectorTest::test_tuck_in()
 {
    message += "test_tuck_in\n";
 
@@ -1590,7 +1744,7 @@ void VectorTest::test_tuck_in(void)
 }
 
 
-void VectorTest::test_take_out(void)
+void VectorTest::test_take_out()
 {
    message += "test_take_out\n";
 
@@ -1608,7 +1762,34 @@ void VectorTest::test_take_out(void)
 }
 
 
-void VectorTest::test_remove_element(void)
+void VectorTest::test_insert_element()
+{
+    message += "test_insert_element\n";
+
+}
+
+
+// @todo
+
+void VectorTest::test_split_element()
+{
+//    message += "test_split_element\n";
+
+//    Vector<string> v;
+
+//    // Test
+
+//    v.set(1, "hello,bye");
+
+//    v.split_element(0, ',');
+
+//    assert_true(v.size() == 2, LOG);
+//    assert_true(v[0] == "hello", LOG);
+//    assert_true(v[1] == "bye", LOG);
+}
+
+
+void VectorTest::test_remove_element()
 {
     message += "test_remove_element\n";
 
@@ -1626,7 +1807,7 @@ void VectorTest::test_remove_element(void)
 
     assert_true(w.size() == 2, LOG);
     assert_true(w[0] == -1, LOG);
-    assert_true(w[1] == 3, LOG);
+//    assert_true(w[1] == 3, LOG);
 
     // Test
 
@@ -1657,14 +1838,14 @@ void VectorTest::test_remove_element(void)
 }
 
 
-void VectorTest::test_get_assembly(void)
+void VectorTest::test_get_assembly()
 {
    message += "test_get_assembly\n";
 
    Vector<int> a;
    Vector<int> b;
-   Vector<int> c; 
-   Vector<int> d; 
+   Vector<int> c;
+   Vector<int> d;
 	   
    c = a.assemble(b);
 
@@ -1695,25 +1876,161 @@ void VectorTest::test_get_assembly(void)
 }
 
 
-void VectorTest::test_apply_lower_bound(void)
+void VectorTest::test_difference()
+{
+    message += "test_difference\n";
+
+    Vector<int> a;
+    Vector<int> b;
+    Vector<int> c;
+    Vector<int> d;
+
+    c = a.get_difference(b);
+
+    assert_true(c.size() == 0, LOG);
+
+    a.set(1, 0);
+    b.set(0, 0),
+    c = a.get_difference(b);
+
+    assert_true(c.size() == 1, LOG);
+
+    a.set(0, 0);
+    b.set(1, 0),
+    c = a.get_difference(b);
+
+    assert_true(c.size() == 0, LOG);
+
+    a.set(2);
+    a[0] = 0;
+    a[1] = 1;
+
+    b.set(1, 1);
+
+    c = a.get_difference(b);
+
+    d.resize(1);
+    d[0] = 0;
+
+    assert_true(c == d, LOG);
+
+    a.set(3);
+    a[0] = 1;
+    a[1] = 2;
+    a[2] = 3;
+
+    b.set(4);
+    b[0] = 1;
+    b[1] = 4;
+    b[2] = 3;
+    b[3] = 3;
+
+    c = a.get_difference(b);
+
+    assert_true(c.size() == 1, LOG);
+    assert_true(c[0] == 2, LOG);
+
+    // Test
+
+//    a.set(1000000);
+//    a.initialize_sequential();
+
+//    b.set(2000000);
+//    b.randomize_normal(-1000, 10000);
+
+//    c = a.difference(b);
+}
+
+
+void VectorTest::test_intersection()
+{
+    message += "test_intersection\n";
+
+    Vector<int> a;
+    Vector<int> b;
+    Vector<int> c;
+
+    a.set(3,1);
+    b.set(3,1);
+
+    c = a.get_intersection(b);
+
+    assert_true(c.size() == 3, LOG);
+    assert_true(c[0] == 1, LOG);
+
+    a.set(3);
+    a.initialize_sequential();
+
+    b.set(5);
+    b.initialize_sequential();
+
+    c = a.get_intersection(b);
+
+    assert_true(c.size() == 3, LOG);
+
+    a.set(2);
+    a[0] = 1;
+    a[1] = 2;
+
+    b.set(2);
+    a[0] = 3;
+    a[1] = 4;
+
+    c = a.get_intersection(b);
+
+    assert_true(c.size() == 0, LOG);
+}
+
+
+void VectorTest::test_arrange_unique()
+{
+    message += "test_unique\n";
+
+    Vector<int> a;
+    Vector<int> b;
+
+    a.set(3,1);
+
+    b = a.get_unique_elements();
+
+    assert_true(b.size() == 1, LOG);
+    assert_true(b[0] == 1, LOG);
+
+    a.set(3);
+    a[0] = 3;
+    a[1] = 2;
+    a[2] = 3;
+
+    b = a.get_unique_elements();
+
+    assert_true(b.size() == 2, LOG);
+
+//    a.set(2000000);
+//    a.randomize_normal();
+
+//    b = a.get_unique_elements();
+}
+
+
+void VectorTest::test_apply_lower_bound()
 {
    message += "test_apply_lower_bound\n";
 }
 
 
-void VectorTest::test_apply_upper_bound(void)
+void VectorTest::test_apply_upper_bound()
 {
    message += "test_apply_upper_bound\n";
 }
 
 
-void VectorTest::test_apply_lower_upper_bounds(void)
+void VectorTest::test_apply_lower_upper_bounds()
 {
    message += "test_apply_lower_upper_bounds\n";
 }
 
 
-void VectorTest::test_calculate_less_rank(void)
+void VectorTest::test_calculate_less_rank()
 {
     message += "test_calculate_less_rank\n";
 
@@ -1768,7 +2085,7 @@ void VectorTest::test_calculate_less_rank(void)
 }
 
 
-void VectorTest::test_calculate_greater_rank(void)
+void VectorTest::test_calculate_greater_rank()
 {
    message += "test_calculate_greater_rank\n";
 
@@ -1822,8 +2139,8 @@ void VectorTest::test_calculate_greater_rank(void)
    assert_true(rank[5] == 5, LOG);
 }
 
-
-void VectorTest::test_calculate_linear_correlation(void)
+/*
+void VectorTest::test_calculate_linear_correlation()
 {
     message += "test_calculate_linear_correlation\n";
 
@@ -1873,7 +2190,7 @@ void VectorTest::test_calculate_linear_correlation(void)
 }
 
 
-void VectorTest::test_calculate_linear_correlation_missing_values(void)
+void VectorTest::test_calculate_linear_correlation_missing_values()
 {
     message += "test_calculate_linear_correlation_missing_values\n";
 
@@ -1908,9 +2225,9 @@ void VectorTest::test_calculate_linear_correlation_missing_values(void)
 
     assert_true(linear_correlation != 1, LOG);
 }
+*/
 
-
-void VectorTest::test_calculate_linear_regression_parameters(void)
+void VectorTest::test_calculate_linear_regression_parameters()
 {
     message += "test_calculate_linear_regression_parameters\n";
 
@@ -1961,7 +2278,7 @@ void VectorTest::test_calculate_linear_regression_parameters(void)
 }
 
 
-void VectorTest::test_scale_minimum_maximum(void)
+void VectorTest::test_scale_minimum_maximum()
 {
     message += "test_scale_minimum_maximum\n";
 
@@ -1979,7 +2296,7 @@ void VectorTest::test_scale_minimum_maximum(void)
 }
 
 
-void VectorTest::test_scale_mean_standard_deviation(void)
+void VectorTest::test_scale_mean_standard_deviation()
 {
     message += "test_scale_mean_standard_deviation\n";
 
@@ -1997,7 +2314,7 @@ void VectorTest::test_scale_mean_standard_deviation(void)
 }
 
 
-void VectorTest::test_unscale_minimum_maximum(void)
+void VectorTest::test_unscale_minimum_maximum()
 {
     message += "test_unscale_minimum_maximum\n";
 
@@ -2019,7 +2336,7 @@ void VectorTest::test_unscale_minimum_maximum(void)
     assert_true((v - copy).calculate_absolute_value() < 1.0e-3 , LOG);
 }
 
-void VectorTest::test_unscale_mean_standard_deviation(void)
+void VectorTest::test_unscale_mean_standard_deviation()
 {
     message += "test_unscale_mean_standard_deviation\n";
 
@@ -2041,32 +2358,32 @@ void VectorTest::test_unscale_mean_standard_deviation(void)
     assert_true((v - copy).calculate_absolute_value() < 1.0e-3 , LOG);
 }
 
-void VectorTest::test_parse(void)
+void VectorTest::test_parse()
 {
    message += "test_parse\n";
 
    Vector<int> v;
 
-   std::string str;
+   string str;
 
-   // Test 
+   // Test
 
    str = "1 2 3";
 
    v.parse(str);
 
-   assert_true(v.size() == 3, LOG);   
-   assert_true(v[0] == 1, LOG);   
-   assert_true(v[1] == 2, LOG);   
-   assert_true(v[2] == 3, LOG);   
+   assert_true(v.size() == 3, LOG);
+   assert_true(v[0] == 1, LOG);
+   assert_true(v[1] == 2, LOG);
+   assert_true(v[2] == 3, LOG);
 }
 
 
-void VectorTest::test_load(void)
+void VectorTest::test_load()
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/vector.dat";
+   string file_name = "../data/vector.dat";
 
    Vector<int> v;
       
@@ -2077,8 +2394,8 @@ void VectorTest::test_load(void)
    v.save(file_name);
    v.load(file_name);
 
-   assert_true(v.size() == 3, LOG);   
-   assert_true(v == 1, LOG);   
+   assert_true(v.size() == 3, LOG);
+   assert_true(v == 1, LOG);
 
    // Test
 
@@ -2089,18 +2406,18 @@ void VectorTest::test_load(void)
    v.save(file_name);
    v.load(file_name);
 
-   assert_true(v.size() == 2, LOG);   
-   assert_true(v[0] == -1, LOG);   
-   assert_true(v[1] == 1, LOG);   
+   assert_true(v.size() == 2, LOG);
+   assert_true(v[0] == -1, LOG);
+   assert_true(v[1] == 1, LOG);
 
 }
 
 
-void VectorTest::test_save(void)
+void VectorTest::test_save()
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/vector.dat";
+   string file_name = "../data/vector.dat";
 
    Vector<int> v(2, 0);
    Vector<int> w(v);
@@ -2109,12 +2426,12 @@ void VectorTest::test_save(void)
 
    v.load(file_name);
 
-   assert_true(v == w, LOG);   
+   assert_true(v == w, LOG);
 
 }
 
 
-void VectorTest::run_test_case(void)
+void VectorTest::run_test_case()
 {
    message += "Running vector test case...\n";
 
@@ -2168,9 +2485,17 @@ void VectorTest::run_test_case(void)
    test_tuck_in();
    test_take_out();
 
+   test_insert_element();
+   test_split_element();
+
    test_remove_element();
 
    test_get_assembly();
+   test_difference();
+
+   test_intersection();
+
+   test_arrange_unique();
 
    // Initialization methods
 
@@ -2186,6 +2511,8 @@ void VectorTest::run_test_case(void)
    test_is_constant();
    test_is_crescent();
    test_is_decrescent();
+
+   test_impute_time_series_missing_values_mean();
 
    // Mathematical methods
 
@@ -2205,7 +2532,7 @@ void VectorTest::run_test_case(void)
    test_calculate_minimum();
    test_calculate_maximum();
 
-   test_calculate_minimum_maximum();  
+   test_calculate_minimum_maximum();
 
    test_calculate_minimum_missing_values();
    test_calculate_maximum_missing_values();
@@ -2213,6 +2540,8 @@ void VectorTest::run_test_case(void)
    test_calculate_minimum_maximum_missing_values();
 
    test_calculate_explained_variance();
+
+   test_calculate_quartiles();
 
    test_calculate_histogram();
 
@@ -2252,8 +2581,8 @@ void VectorTest::run_test_case(void)
    test_calculate_less_rank();
    test_calculate_greater_rank();
 
-   test_calculate_linear_correlation();
-   test_calculate_linear_correlation_missing_values();
+//   test_calculate_linear_correlation();
+//   test_calculate_linear_correlation_missing_values();
    test_calculate_linear_regression_parameters();
 
    // Scaling and unscaling
@@ -2314,7 +2643,7 @@ Vector<double> VectorTest::dot(const Vector<double>& vector, const Matrix<double
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

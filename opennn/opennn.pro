@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   O P E N N N   Q T   C R E A T O R   P R O J E C T                                             #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artelnics - Making intelligent use of data                                                    #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 
@@ -35,14 +34,18 @@ INCLUDEPATH += eigen
 win32:!win32-g++{
 QMAKE_CXXFLAGS += -openmp
 QMAKE_LFLAGS   += -openmp
-}else{
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
+
+#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+#QMAKE_LFLAGS += -fopenmp -pthread -lgomp
+#LIBS += -fopenmp -pthread -lgomp
+}else:!macx{
+QMAKE_CXXFLAGS+= -fopenmp -lgomp
+QMAKE_LFLAGS +=  -fopenmp -lgomp
 }
 
-mac{
+macx{
 
-INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
+#INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
 
 }
 
@@ -54,14 +57,16 @@ HEADERS += \
     plug_in.h \
     ordinary_differential_equations.h \
     mathematical_model.h \
-        inputs.h \
-        outputs.h \
-        unscaling_layer.h \
-        scaling_layer.h \
-        probabilistic_layer.h \
-        perceptron_layer.h \
-        perceptron.h \
-        neural_network.h \
+    inputs.h \
+    outputs.h \
+    unscaling_layer.h \
+    scaling_layer.h \
+    inputs_trending_layer.h \
+    outputs_trending_layer.h \
+    probabilistic_layer.h \
+    perceptron_layer.h \
+    perceptron.h \
+    neural_network.h \
     multilayer_perceptron.h \
     independent_parameters.h \
     conditions_layer.h \
@@ -77,6 +82,7 @@ HEADERS += \
     minkowski_error.h \
     mean_squared_error.h \
     weighted_squared_error.h \
+    weighted_squared_regression_error.h \
     roc_area_error.h \
     cross_entropy_error.h \
     training_strategy.h \
@@ -102,6 +108,8 @@ HEADERS += \
     testing_analysis.h \
     vector.h \
     matrix.h \
+    sparse_matrix.h \
+    character_string.h \
     numerical_integration.h \
     numerical_differentiation.h \
     opennn.h \
@@ -112,7 +120,13 @@ HEADERS += \
     youden_index_optimization_threshold.h \
     kappa_coefficient_optimization_threshold.h \
     roc_curve_optimization_threshold.h \
-    selective_pruning.h
+    selective_pruning.h \
+    file_utilities.h \
+    association_rules.h \
+    text_analytics.h \
+    k_nearest_neighbors.h \
+    tinyxml2.h \
+    correlation_analysis.h
 
 SOURCES += \
     variables.cpp \
@@ -126,6 +140,8 @@ SOURCES += \
     outputs.cpp \
     unscaling_layer.cpp \
     scaling_layer.cpp \
+    inputs_trending_layer.cpp \
+    outputs_trending_layer.cpp \
     probabilistic_layer.cpp \
     perceptron_layer.cpp \
     perceptron.cpp \
@@ -145,6 +161,7 @@ SOURCES += \
     minkowski_error.cpp \
     mean_squared_error.cpp \
     weighted_squared_error.cpp \
+    weighted_squared_regression_error.cpp \
     roc_area_error.cpp \
     cross_entropy_error.cpp \
     training_strategy.cpp \
@@ -168,6 +185,7 @@ SOURCES += \
     pruning_inputs.cpp \
     genetic_algorithm.cpp \
     testing_analysis.cpp \
+    character_string.cpp \
     numerical_integration.cpp \
     numerical_differentiation.cpp \
     principal_components_layer.cpp \
@@ -177,22 +195,13 @@ SOURCES += \
     youden_index_optimization_threshold.cpp \
     kappa_coefficient_optimization_threshold.cpp \
     roc_curve_optimization_threshold.cpp \
-    selective_pruning.cpp
-
-# TinyXML2 library
-
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
-else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
-
-INCLUDEPATH += $$PWD/../tinyxml2
-DEPENDPATH += $$PWD/../tinyxml2
-
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
-else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
+    selective_pruning.cpp \
+    file_utilities.cpp \
+    association_rules.cpp \
+    text_analytics.cpp \
+    k_nearest_neighbors.cpp \
+    tinyxml2.cpp \
+    correlation_analysis.cpp
 
 # MPI libraries
 #DEFINES += __OPENNN_MPI__
@@ -205,10 +214,7 @@ include(../mpi.pri)
     #the following DEFINES
     #include(../cuda.pri) at the end of this file
     #neuralengine.pro > include(../opennn/cuda.pri)
-    #neuralreader < include(../cuda.pri)
-    #tinyxml2.pro > #include(../cuda.pri)
     #test.pro > #include(../cuda.pri)
-    #don't use this include in neuraleditor.pro for the Qt 5.4.0 version
 
 
 
@@ -220,7 +226,7 @@ contains(DEFINES, __OPENNN_CUDA__){
 OTHER_FILES +=  utilities.cu
 
 windows{
-CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v8.0            # Path to cuda toolkit install
+CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v9.2            # Path to cuda toolkit install
 }else:mac{
 CUDA_DIR = /Developer/NVIDIA/CUDA-7.5
 }else:unix{
@@ -256,7 +262,7 @@ NVCC_OPTIONS = --use_fast_math
 
 CUDA_LIBS += -lcuda -lcudart -lcublas
 
-# The following makes sure all path names (which often include spaces) are put between quotation marks
+# The following makes sure all path names(which often include spaces) are put between quotation marks
 CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
 
 CUDA_OBJECTS_DIR = $$OBJECTS_DIR
@@ -279,8 +285,6 @@ else {
     QMAKE_EXTRA_COMPILERS += cuda
 }
 
-#include(../cuda.pri)
+include(../cuda.pri)
 
 }
-
-

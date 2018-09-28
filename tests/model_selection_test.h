@@ -30,45 +30,45 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit ModelSelectionTest(void);
+   explicit ModelSelectionTest();
 
 
    // DESTRUCTOR
 
-   virtual ~ModelSelectionTest(void);
+   virtual ~ModelSelectionTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_training_strategy_pointer(void);
+   void test_get_training_strategy_pointer();
 
    // Set methods
 
-   void test_set_training_strategy_pointer(void);
+   void test_set_training_strategy_pointer();
 
-   void test_set_default(void);
+   void test_set_default();
 
    // Model selection methods
 
-   void test_perform_order_selection(void);
+   void test_perform_order_selection();
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);
-   void test_save(void);
-   void test_load(void);
+   void test_to_XML();   
+   void test_from_XML();
+   void test_save();
+   void test_load();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
