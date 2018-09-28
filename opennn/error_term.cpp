@@ -1754,11 +1754,9 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 
 #ifdef __OPENNN_DEBUG__
 
-   ostringstream buffer;
-
    if(!numerical_differentiation_pointer)
    {
-     std::ostringstream buffer;
+      ostringstream buffer;
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector<double> calculate_gradient(const Vector<double>&) const method.\n"
              << "Numerical differentiation pointer is NULL.\n";
