@@ -6,7 +6,7 @@
 /*   T R A I N I N G   R A T E   A L G O R I T H M   C L A S S   H E A D E R                                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -31,7 +31,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -52,7 +52,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit TrainingRateAlgorithm(void);
+   explicit TrainingRateAlgorithm();
 
    // GENERAL CONSTRUCTOR
 
@@ -64,17 +64,17 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~TrainingRateAlgorithm(void);
+   virtual ~TrainingRateAlgorithm();
 
    ///
-   /// Defines a set of three points (A, U, B) for bracketing a directional minimum.
+   /// Defines a set of three points(A, U, B) for bracketing a directional minimum.
    ///
 
    struct Triplet
    {
        /// Default constructor.
 
-       Triplet(void)
+       Triplet()
        {
            A.set(2, 0.0);
            U.set(2, 0.0);
@@ -83,7 +83,7 @@ public:
 
        /// Destructor.
 
-       virtual ~Triplet(void)
+       virtual ~Triplet()
        {
        }
 
@@ -92,7 +92,7 @@ public:
        /// It returns true if both triplets have the same points A, U and B, and false otherwise.
        /// @ param other_triplet Triplet to be compared with.
 
-       inline bool operator == (const Triplet& other_triplet) const
+       inline bool operator ==(const Triplet& other_triplet) const
        {
           if(A == other_triplet.A
           && U == other_triplet.U
@@ -106,10 +106,10 @@ public:
           }
        }
 
-       /// Returns true if the length of the interval (A,B) is zero,
+       /// Returns true if the length of the interval(A,B) is zero,
        /// and false otherwise.
 
-       inline bool has_length_zero(void) const
+       inline bool has_length_zero() const
        {
            if(A[0] == B[0])
            {
@@ -121,10 +121,10 @@ public:
            }
        }
 
-       /// Returns true if the interval (A,B) is constant,
+       /// Returns true if the interval(A,B) is constant,
        /// and false otherwise.
 
-       inline bool is_constant(void) const
+       inline bool is_constant() const
        {
            if(A[1] == B[1])
            {
@@ -138,50 +138,50 @@ public:
 
        /// Writes a string with the values of A, U and B.
 
-       inline std::string to_string(void) const
+       inline string object_to_string() const
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
-           buffer << "A = (" << A[0] << "," << A[1] << ")\n"
-                  << "U = (" << U[0] << "," << U[1] << ")\n"
-                  << "B = (" << B[0] << "," << B[1] << ")" << std::endl;
+           buffer << "A =(" << A[0] << "," << A[1] << ")\n"
+                  << "U =(" << U[0] << "," << U[1] << ")\n"
+                  << "B =(" << B[0] << "," << B[1] << ")" << endl;
 
            return(buffer.str());
        }
 
        /// Prints the triplet points to the standard output.
 
-       inline void print(void) const
+       inline void print() const
        {
-           std::cout << to_string();
+           cout << object_to_string();
        }
 
        /// Checks that the points A, U and B define a minimum.
        /// That is, a < u < b, fa > fu and fu < fb.
        /// If some of that conditions is not satisfied, an exception is thrown.
 
-       inline void check(void) const
+       inline void check() const
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            if(A[0] > U[0] || U[0] > B[0])
            {
               buffer << "OpenNN Exception: TrainingRateAlgorithm class.\n"
-                     << "void check(void) const method.\n"
+                     << "void check() const method.\n"
                      << "Uncorrect triplet:\n"
-                     << to_string();
+                     << object_to_string();
 
-              throw std::logic_error(buffer.str());
+              throw logic_error(buffer.str());
            }
 
            if(A[1] < U[1] || U[1] > B[1])
            {
               buffer << "OpenNN Exception: TrainingRateAlgorithm class.\n"
-                     << "void check(void) const method.\n"
+                     << "void check() const method.\n"
                      << "Triplet does not satisfy minimum condition:\n"
-                     << to_string();
+                     << object_to_string();
 
-              throw std::logic_error(buffer.str());
+              throw logic_error(buffer.str());
            }
        }
 
@@ -203,31 +203,31 @@ public:
 
    // Get methods
 
-   LossIndex* get_loss_index_pointer(void) const;
+   LossIndex* get_loss_index_pointer() const;
 
-   bool has_loss_index(void) const;
+   bool has_loss_index() const;
 
    // Training operators
 
-   const TrainingRateMethod& get_training_rate_method(void) const;
-   std::string write_training_rate_method(void) const;
+   const TrainingRateMethod& get_training_rate_method() const;
+   string write_training_rate_method() const;
 
    // Training parameters
 
-   const double& get_bracketing_factor(void) const;   
-   const double& get_training_rate_tolerance(void) const;
+   const double& get_bracketing_factor() const;   
+   const double& get_training_rate_tolerance() const;
 
-   const double& get_warning_training_rate(void) const;
+   const double& get_warning_training_rate() const;
 
-   const double& get_error_training_rate(void) const;
+   const double& get_error_training_rate() const;
   
    // Utilities
    
-   const bool& get_display(void) const;
+   const bool& get_display() const;
   
    // Set methods
 
-   void set(void);
+   void set();
    void set(LossIndex*);
 
    void set_loss_index_pointer(LossIndex*);
@@ -235,7 +235,7 @@ public:
    // Training operators
 
    void set_training_rate_method(const TrainingRateMethod&);
-   void set_training_rate_method(const std::string&);
+   void set_training_rate_method(const string&);
 
    // Training parameters
 
@@ -250,7 +250,7 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default(void);
+   virtual void set_default();
 
    // Training rate method
 
@@ -267,7 +267,7 @@ public:
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -317,7 +317,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

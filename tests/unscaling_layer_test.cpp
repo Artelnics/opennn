@@ -21,34 +21,34 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-UnscalingLayerTest::UnscalingLayerTest(void) : UnitTesting()
+UnscalingLayerTest::UnscalingLayerTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-UnscalingLayerTest::~UnscalingLayerTest(void)
+UnscalingLayerTest::~UnscalingLayerTest()
 {
 }
 
 
 // METHODS
 
-void UnscalingLayerTest::test_constructor(void)
+void UnscalingLayerTest::test_constructor()
 {
    message += "test_constructor\n";
 
 }
 
 
-void UnscalingLayerTest::test_destructor(void)
+void UnscalingLayerTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void UnscalingLayerTest::test_assignment_operator(void)
+void UnscalingLayerTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -60,7 +60,7 @@ void UnscalingLayerTest::test_assignment_operator(void)
 }
 
 
-void UnscalingLayerTest::test_get_unscaling_neurons_number(void)
+void UnscalingLayerTest::test_get_unscaling_neurons_number()
 {
    message += "test_get_unscaling_neurons_number\n";
 
@@ -70,19 +70,19 @@ void UnscalingLayerTest::test_get_unscaling_neurons_number(void)
 }
 
 
-void UnscalingLayerTest::test_set(void)
+void UnscalingLayerTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void UnscalingLayerTest::test_set_default(void)
+void UnscalingLayerTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void UnscalingLayerTest::test_arrange_means(void)
+void UnscalingLayerTest::test_arrange_means()
 {
    message += "test_arrange_means\n";
 
@@ -92,7 +92,7 @@ void UnscalingLayerTest::test_arrange_means(void)
 }
 
 
-void UnscalingLayerTest::test_arrange_standard_deviations(void)
+void UnscalingLayerTest::test_arrange_standard_deviations()
 {
    message += "test_arrange_standard_deviations\n";
 
@@ -102,43 +102,43 @@ void UnscalingLayerTest::test_arrange_standard_deviations(void)
 }
 
 
-void UnscalingLayerTest::test_get_mean(void)
+void UnscalingLayerTest::test_get_mean()
 {
    message += "test_get_mean\n";
 }
 
 
-void UnscalingLayerTest::test_get_standard_deviation(void)
+void UnscalingLayerTest::test_get_standard_deviation()
 {
    message += "test_get_standard_deviation\n";
 }
 
 
-void UnscalingLayerTest::test_arrange_minimums(void)
+void UnscalingLayerTest::test_arrange_minimums()
 {
    message += "test_arrange_minimums\n";
 }
 
 
-void UnscalingLayerTest::test_arrange_maximums(void)
+void UnscalingLayerTest::test_arrange_maximums()
 {
    message += "test_arrange_maximums\n";
 }
 
 
-void UnscalingLayerTest::test_get_minimum(void)
+void UnscalingLayerTest::test_get_minimum()
 {
    message += "test_get_minimum\n";
 }
 
 
-void UnscalingLayerTest::test_get_maximum(void)
+void UnscalingLayerTest::test_get_maximum()
 {
    message += "test_get_maximum\n";
 }
 
 
-void UnscalingLayerTest::test_get_statistics(void)
+void UnscalingLayerTest::test_get_statistics()
 {
    message += "test_get_statistics\n";
 
@@ -154,79 +154,79 @@ void UnscalingLayerTest::test_get_statistics(void)
 }
 
 
-void UnscalingLayerTest::test_get_display(void)
+void UnscalingLayerTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void UnscalingLayerTest::test_set_unscaling_method(void)
+void UnscalingLayerTest::test_set_unscaling_method()
 {
    message += "test_set_unscaling_method\n";
 }
 
 
-void UnscalingLayerTest::test_set_means(void)
+void UnscalingLayerTest::test_set_means()
 {
    message += "test_set_means\n";
 }
 
 
-void UnscalingLayerTest::test_set_standard_deviations(void)
+void UnscalingLayerTest::test_set_standard_deviations()
 {
    message += "test_set_standard_deviations\n";
 }
 
 
-void UnscalingLayerTest::test_set_mean(void)
+void UnscalingLayerTest::test_set_mean()
 {
    message += "test_set_mean\n";
 }
 
 
-void UnscalingLayerTest::test_set_standard_deviation(void)
+void UnscalingLayerTest::test_set_standard_deviation()
 {
    message += "test_set_standard_deviation\n";
 }
 
 
-void UnscalingLayerTest::test_set_minimums(void)
+void UnscalingLayerTest::test_set_minimums()
 {
    message += "test_set_minimums\n";
 }
 
 
-void UnscalingLayerTest::test_set_maximums(void)
+void UnscalingLayerTest::test_set_maximums()
 {
    message += "test_set_outputs_maximum\n";
 }
 
 
-void UnscalingLayerTest::test_set_minimum(void)
+void UnscalingLayerTest::test_set_minimum()
 {
    message += "test_set_minimum\n";
 }
 
 
-void UnscalingLayerTest::test_set_maximum(void)
+void UnscalingLayerTest::test_set_maximum()
 {
    message += "test_set_maximum\n";
 }
 
 
-void UnscalingLayerTest::test_set_statistics(void)
+void UnscalingLayerTest::test_set_statistics()
 {
    message += "test_set_statistics\n";
 }
 
 
-void UnscalingLayerTest::test_set_display(void)
+void UnscalingLayerTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void UnscalingLayerTest::test_initialize_random(void)
+void UnscalingLayerTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -238,7 +238,7 @@ void UnscalingLayerTest::test_initialize_random(void)
 }
 
 
-void UnscalingLayerTest::test_calculate_outputs(void)
+void UnscalingLayerTest::test_calculate_outputs()
 {
    message += "test_calculate_outputs\n";
 
@@ -266,7 +266,7 @@ void UnscalingLayerTest::test_calculate_outputs(void)
 }
 
 
-void UnscalingLayerTest::test_calculate_derivatives(void)
+void UnscalingLayerTest::test_calculate_derivatives()
 {
    message += "test_calculate_derivatives\n";
 
@@ -344,22 +344,22 @@ void UnscalingLayerTest::test_calculate_derivatives(void)
 }
 
 
-void UnscalingLayerTest::test_calculate_second_derivatives(void)
+void UnscalingLayerTest::test_calculate_second_derivatives()
 {
    message += "test_calculate_second_derivatives\n";
 }
 
 
-void UnscalingLayerTest::test_write_expression(void)
+void UnscalingLayerTest::test_write_expression()
 {
    message += "test_write_expression\n";
 
    UnscalingLayer ul;
 
-   Vector<std::string> inputs_name;
-   Vector<std::string> outputs_name;
+   Vector<string> inputs_name;
+   Vector<string> outputs_name;
 
-   std::string expression;
+   string expression;
 
    // Test
 
@@ -373,7 +373,7 @@ void UnscalingLayerTest::test_write_expression(void)
 }
 
 
-void UnscalingLayerTest::test_get_unscaling_method(void)
+void UnscalingLayerTest::test_get_unscaling_method()
 {
    message += "test_get_unscaling_method\n";
 
@@ -393,13 +393,13 @@ void UnscalingLayerTest::test_get_unscaling_method(void)
 }
 
 
-void UnscalingLayerTest::test_get_unscaling_method_name(void)
+void UnscalingLayerTest::test_get_unscaling_method_name()
 {
    message += "test_get_outputs_method_name\n";
 }
 
 
-void UnscalingLayerTest::test_to_XML(void)
+void UnscalingLayerTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -417,7 +417,7 @@ void UnscalingLayerTest::test_to_XML(void)
 }
 
 
-void UnscalingLayerTest::test_from_XML(void)
+void UnscalingLayerTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -435,7 +435,7 @@ void UnscalingLayerTest::test_from_XML(void)
 }
 
 
-void UnscalingLayerTest::run_test_case(void)
+void UnscalingLayerTest::run_test_case()
 {
    message += "Running unscaling layer test case...\n";
 
@@ -532,7 +532,7 @@ void UnscalingLayerTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

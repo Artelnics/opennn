@@ -31,33 +31,33 @@ public:
 
    // CONSTRUCTOR
 
-   explicit MathematicalModelTest(void);
+   explicit MathematicalModelTest();
 
    // DESTRUCTOR
 
-   virtual ~MathematicalModelTest(void);
+   virtual ~MathematicalModelTest();
 
    // Get methods
     
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Mathematical model methods
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);   
+   void test_to_XML();   
+   void test_from_XML();   
 
-   void test_save(void);
-   void test_load(void);
+   void test_save();
+   void test_load();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -66,7 +66,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

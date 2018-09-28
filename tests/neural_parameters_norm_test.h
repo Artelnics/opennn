@@ -33,20 +33,20 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit NeuralParametersNormTest(void);
+   explicit NeuralParametersNormTest();
 
 
    // DESTRUCTOR
 
-   virtual ~NeuralParametersNormTest(void);
+   virtual ~NeuralParametersNormTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
@@ -54,21 +54,21 @@ public:
 
    // Objective methods
 
-   void test_calculate_loss(void); 
-//   void test_calculate_selection_loss(void);
+   void test_calculate_loss(); 
+//   void test_calculate_selection_loss();
 
-   void test_calculate_gradient(void);
+   void test_calculate_gradient();
 
-   void test_calculate_Hessian(void);
+   void test_calculate_Hessian();
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);
+   void test_to_XML();   
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -76,7 +76,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

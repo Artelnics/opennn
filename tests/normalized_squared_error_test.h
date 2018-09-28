@@ -33,20 +33,20 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit NormalizedSquaredErrorTest(void);
+   explicit NormalizedSquaredErrorTest();
 
 
    // DESTRUCTOR
 
-   virtual ~NormalizedSquaredErrorTest(void);
+   virtual ~NormalizedSquaredErrorTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
@@ -54,38 +54,38 @@ public:
  
    // Normalization coefficient
 
-   void test_calculate_training_normalization_coefficient(void);   
-   void test_calculate_selection_normalization_coefficient(void);   
+   void test_calculate_training_normalization_coefficient();   
+   void test_calculate_selection_normalization_coefficient();   
 
    // Objective methods
 
-   void test_calculate_error(void);
-   void test_calculate_selection_error(void);
+   void test_calculate_error();
+   void test_calculate_selection_error();
 
-   void test_calculate_gradient(void);
-   void test_calculate_Hessian(void);
+   void test_calculate_gradient();
+   void test_calculate_Hessian();
 
    // Objective terms methods
 
-   void test_calculate_terms(void);
+   void test_calculate_terms();
 
-   void test_calculate_terms_Jacobian(void);
+   void test_calculate_terms_Jacobian();
 
    // Squared errors methods
 
-   void test_calculate_squared_errors(void);
+   void test_calculate_squared_errors();
 
-   void test_calculate_maximal_errors(void);
+   void test_calculate_maximal_errors();
 
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -93,7 +93,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

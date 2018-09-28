@@ -31,101 +31,101 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit VariablesTest(void);
+   explicit VariablesTest();
 
    // DESTRUCTOR
 
-   virtual ~VariablesTest(void);
+   virtual ~VariablesTest();
 
     // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
-   void test_get_variables_number(void);
+   void test_get_variables_number();
 
    // Variables methods
 
-   void test_count_inputs_number(void);
-   void test_count_targets_number(void);
+   void test_count_inputs_number();
+   void test_count_targets_number();
 
-   void test_arrange_inputs_indices(void);
-   void test_arrange_targets_indices(void);
-   void test_arrange_used_indices(void);
+   void test_arrange_inputs_indices();
+   void test_arrange_targets_indices();
+   void test_arrange_used_indices();
 
    // Information methods 
 
-   void test_arrange_names(void);
-   void test_get_name(void);
+   void test_arrange_names();
+   void test_get_name();
 
-   void test_arrange_inputs_name(void);
-   void test_arrange_targets_name(void);
+   void test_arrange_inputs_name();
+   void test_arrange_targets_name();
 
-   void test_arrange_units(void);
-   void test_get_unit(void);
+   void test_arrange_units();
+   void test_get_unit();
 
-   void test_arrange_inputs_units(void);
-   void test_arrange_targets_units(void);
+   void test_arrange_inputs_units();
+   void test_arrange_targets_units();
 
-   void test_arrange_descriptions(void);
-   void test_get_description(void);
+   void test_arrange_descriptions();
+   void test_get_description();
 
-   void test_arrange_inputs_description(void);
-   void test_arrange_target_descriptions(void);
+   void test_arrange_inputs_description();
+   void test_arrange_target_descriptions();
 
-   void test_arrange_information(void);
+   void test_arrange_information();
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set(void);
+   void test_set();
 
-   void test_set_variables_number(void);
+   void test_set_variables_number();
 
    // Variables methods
 
-   void test_set_input(void);
-   void test_set_target(void);
+   void test_set_input();
+   void test_set_target();
 
    // Information methods
 
-   void test_set_names(void);
-   void test_set_name(void);
+   void test_set_names();
+   void test_set_name();
 
-   void test_set_units(void);
-   void test_set_unit(void);
+   void test_set_units();
+   void test_set_unit();
 
-   void test_set_descriptions(void);
-   void test_set_description(void);
+   void test_set_descriptions();
+   void test_set_description();
 
-   void test_set_display(void);
+   void test_set_display();
 
-   void test_convert_time_series(void);
+   void test_convert_time_series();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 #endif
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

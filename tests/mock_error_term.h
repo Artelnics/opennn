@@ -30,7 +30,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit MockErrorTerm(void);
+   explicit MockErrorTerm();
 
    // GENERAL CONSTRUCTOR
 
@@ -41,7 +41,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~MockErrorTerm(void); 
+   virtual ~MockErrorTerm(); 
 
     // ENUMERATIONS
 
@@ -49,19 +49,19 @@ public:
 
    // METHODS
 
-    const Expression& get_expression(void) const;
+    const Expression& get_expression() const;
     void set_expression(const Expression&);
 
-    void set_default(void);
+    void set_default();
 
     // Sum squared parameters methods
 
-    double calculate_sum_squared_parameters(void) const;
-    Vector<double> calculate_sum_squared_parameters_gradient(void) const;
-    Matrix<double> calculate_sum_squared_parameters_Hessian(void) const;
+    double calculate_sum_squared_parameters() const;
+    Vector<double> calculate_sum_squared_parameters_gradient() const;
+    Matrix<double> calculate_sum_squared_parameters_Hessian() const;
 
-    Vector<double> calculate_sum_squared_parameters_terms(void) const;
-    Matrix<double> calculate_sum_squared_parameters_terms_Jacobian(void) const;
+    Vector<double> calculate_sum_squared_parameters_terms() const;
+    Matrix<double> calculate_sum_squared_parameters_terms_Jacobian() const;
 
     double calculate_sum_squared_parameters(const Vector<double>&) const;
     Vector<double> calculate_sum_squared_parameters_gradient(const Vector<double>&) const;
@@ -70,13 +70,13 @@ public:
    // Output integral methods
 
    double calculate_output_integral_integrand(const double&) const;
-   double calculate_output_integral(void) const;
+   double calculate_output_integral() const;
    
    Vector<double> calculate_output_integral_integrand_gradient(const double&) const;
-   Vector<double> calculate_output_integral_gradient(void) const;
+   Vector<double> calculate_output_integral_gradient() const;
 
    Matrix<double> calculate_output_integral_integrand_Hessian(const double&) const;
-   Matrix<double> calculate_output_integral_Hessian(void) const;
+   Matrix<double> calculate_output_integral_Hessian() const;
 
    double calculate_output_integral(const Vector<double>&) const;
    Vector<double> calculate_output_integral_gradient(const Vector<double>&) const;
@@ -85,12 +85,12 @@ public:
 
    // Performance methods
 
-   double calculate_error(void) const;
-   Vector<double> calculate_gradient(void) const;
-   Matrix<double> calculate_Hessian(void) const;
+   double calculate_error() const;
+   Vector<double> calculate_gradient() const;
+   Matrix<double> calculate_Hessian() const;
 
-   Vector<double> calculate_terms(void) const;
-   Matrix<double> calculate_terms_Jacobian(void) const;
+   Vector<double> calculate_terms() const;
+   Matrix<double> calculate_terms_Jacobian() const;
 
    double calculate_error(const Vector<double>&) const;
    Vector<double> calculate_gradient(const Vector<double>&) const;
@@ -111,7 +111,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Roberto Lopez
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

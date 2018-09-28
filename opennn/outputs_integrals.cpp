@@ -6,7 +6,7 @@
 /*   O U T P U T S   I N T E G R A L S   C L A S S                                                              */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates an outputs integrals error term not associated to any neural network.
 /// It also initializes all the rest of class members to their default values.
 
-OutputsIntegrals::OutputsIntegrals(void) 
+OutputsIntegrals::OutputsIntegrals() 
  : RegularizationTerm()
 {
    set_default();
@@ -65,36 +65,36 @@ OutputsIntegrals::OutputsIntegrals(const tinyxml2::XMLDocument& outputs_integral
 
 /// Destructor.
 
-OutputsIntegrals::~OutputsIntegrals(void) 
+OutputsIntegrals::~OutputsIntegrals() 
 {
 }
 
 
-// const NumericalIntegration& get_numerical_integration(void) const method
+// const NumericalIntegration& get_numerical_integration() const method
 
 /// Returns a constant reference to the numerical integration object inside the outputs integrals object. 
 
-const NumericalIntegration& OutputsIntegrals::get_numerical_integration(void) const
+const NumericalIntegration& OutputsIntegrals::get_numerical_integration() const
 {
    return(numerical_integration);
 }
 
 
-// NumericalIntegration* get_numerical_integration_pointer(void) method
+// NumericalIntegration* get_numerical_integration_pointer() method
 
 /// Returns a pointer to the numerical integration object inside the outputs integrals object. 
 
-NumericalIntegration* OutputsIntegrals::get_numerical_integration_pointer(void) 
+NumericalIntegration* OutputsIntegrals::get_numerical_integration_pointer() 
 {
    return(&numerical_integration);
 }
 
 
-// const Vector<double>& get_outputs_integrals_weights(void) const method
+// const Vector<double>& get_outputs_integrals_weights() const method
 
 /// Returns the weights for each integral of the neural network outputs.
 
-const Vector<double>& OutputsIntegrals::get_outputs_integrals_weights(void) const
+const Vector<double>& OutputsIntegrals::get_outputs_integrals_weights() const
 {
    return(outputs_integrals_weights);
 }
@@ -145,7 +145,7 @@ void OutputsIntegrals::set_output_integral_weight(const size_t& i, const double&
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the default values for the outputs integrals object: 
 /// <ul>
@@ -153,7 +153,7 @@ void OutputsIntegrals::set_output_integral_weight(const size_t& i, const double&
 /// <li> Display: true.
 /// </ul>
 
-void OutputsIntegrals::set_default(void)
+void OutputsIntegrals::set_default()
 {
    size_t outputs_number = 0;
 
@@ -175,26 +175,26 @@ void OutputsIntegrals::set_default(void)
 
 // METHODS
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that there are a neural network and a mathematical model associated to the outputs integrals error term,
 /// and that there is a multilayer perceptron in the neural network. 
 /// It also checks that the number of inputs in the neural network is 1. 
 /// If some of the above conditions is not hold, the method throws an exception. 
 
-void OutputsIntegrals::check(void) const
+void OutputsIntegrals::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Neural network stuff
 
    if(!neural_network_pointer)
    {
       buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -202,10 +202,10 @@ void OutputsIntegrals::check(void) const
    if(!multilayer_perceptron_pointer)
    {
       buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to multilayer perceptron is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
@@ -214,37 +214,37 @@ void OutputsIntegrals::check(void) const
    if(inputs_number != 1)
    {
       buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of inputs in multilayer perceptron is not one.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(outputs_number == 0)
    {
       buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of outputs in multilayer perceptron object is zero.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 }
 
 
-// double calculate_regularization(void) const method
+// double calculate_regularization() const method
 
 /// Returns the regularization value of a neural network according to the outputs integrals.
 /// @todo
 
-double OutputsIntegrals::calculate_regularization(void) const
+double OutputsIntegrals::calculate_regularization() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "OpenNN Exception: OutputsIntegrals class.\n"
-          << "double calculate_regularization(void) const method.\n"
+          << "double calculate_regularization() const method.\n"
           << "This method is under development.\n";
 
-   throw std::logic_error(buffer.str());	  
+   throw logic_error(buffer.str());	  
 
 /*
    // Control sentence
@@ -283,15 +283,15 @@ double OutputsIntegrals::calculate_regularization(void) const
 
 double OutputsIntegrals::calculate_regularization(const Vector<double>&) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "OpenNN Exception: OutputsIntegrals class.\n"
           << "double calculate_regularization(const Vector<double>&) const method.\n"
           << "This method is under development.\n";
 
-   throw std::logic_error(buffer.str());	  
+   throw logic_error(buffer.str());	  
 /*  
- // Control sentence (if debug)
+ // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -307,13 +307,13 @@ double OutputsIntegrals::calculate_regularization(const Vector<double>&) const
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
-      buffer << "OpenNN Exception: OutputsIntegrals class." << std::endl
-             << "double calculate_error(const Vector<double>&) const method." << std::endl
-             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
+      buffer << "OpenNN Exception: OutputsIntegrals class." << endl
+             << "double calculate_error(const Vector<double>&) const method." << endl
+             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ")." << endl;
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -331,13 +331,13 @@ double OutputsIntegrals::calculate_regularization(const Vector<double>&) const
 }
 
 
-// Vector<double> calculate_gradient(void) const method
+// Vector<double> calculate_gradient() const method
 
 /// Calculates the objective gradient by means of the back-propagation algorithm, 
 /// and returns it in a single vector of size the number of multilayer perceptron parameters. 
 /// @todo
 
-Vector<double> OutputsIntegrals::calculate_gradient(void) const
+Vector<double> OutputsIntegrals::calculate_gradient() const
 {
    // Neural network stuff
 
@@ -353,13 +353,13 @@ Vector<double> OutputsIntegrals::calculate_gradient(void) const
 }
 
 
-// Matrix<double> calculate_Hessian(void) const method
+// Matrix<double> calculate_Hessian() const method
 
 /// Calculates the objective Hessian by means of the back-propagation algorithm, 
 /// and returns it in a single symmetric matrix of size the number of multilayer perceptron parameters. 
 /// @todo
 
-Matrix<double> OutputsIntegrals::calculate_Hessian(void) const
+Matrix<double> OutputsIntegrals::calculate_Hessian() const
 {
    // Neural network stuff
 
@@ -375,23 +375,23 @@ Matrix<double> OutputsIntegrals::calculate_Hessian(void) const
 }
 
 
-// std::string write_error_term_type(void) const method
+// string write_error_term_type() const method
 
 /// Returns a string with the name of the outputs integrals loss type, "OUTPUTS_INTEGRALS".
 
-std::string OutputsIntegrals::write_error_term_type(void) const
+string OutputsIntegrals::write_error_term_type() const
 {
    return("OUTPUTS_INTEGRALS");
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) method method 
+// tinyxml2::XMLDocument* to_XML() method method 
 
 /// Returns a representation of the sum squared error object, in XML format. 
 
-tinyxml2::XMLDocument* OutputsIntegrals::to_XML(void) const
+tinyxml2::XMLDocument* OutputsIntegrals::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -444,7 +444,7 @@ tinyxml2::XMLDocument* OutputsIntegrals::to_XML(void) const
 
 void OutputsIntegrals::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     //file_stream.OpenElement("OutputsIntegrals");
 
@@ -482,13 +482,13 @@ void OutputsIntegrals::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: OutputsIntegrals class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Outputs integrals element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
   // Display
@@ -497,15 +497,15 @@ void OutputsIntegrals::from_XML(const tinyxml2::XMLDocument& document)
 
      if(display_element)
      {
-        const std::string new_display_string = display_element->GetText();
+        const string new_display_string = display_element->GetText();
 
         try
         {
            set_display(new_display_string != "0");
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -517,7 +517,7 @@ void OutputsIntegrals::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

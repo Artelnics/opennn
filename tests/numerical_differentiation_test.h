@@ -31,67 +31,67 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit NumericalDifferentiationTest(void);
+   explicit NumericalDifferentiationTest();
 
 
    // DESTRUCTOR
 
-   virtual ~NumericalDifferentiationTest(void);
+   virtual ~NumericalDifferentiationTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Derivative methods
 
-   void test_calculate_forward_differences_derivative(void);
-   void test_calculate_central_differences_derivative(void);
-   void test_calculate_derivative(void);
+   void test_calculate_forward_differences_derivative();
+   void test_calculate_central_differences_derivative();
+   void test_calculate_derivative();
 
-//   void test_calculate_forward_differences_derivative(void);
-//   void test_calculate_central_differences_derivative(void);
-//   void test_calculate_derivative(void);
+//   void test_calculate_forward_differences_derivative();
+//   void test_calculate_central_differences_derivative();
+//   void test_calculate_derivative();
 
    // Second derivative methods
 
-   void test_calculate_forward_differences_second_derivative(void);
-   void test_calculate_central_differences_second_derivative(void);
-   void test_calculate_second_derivative(void);
+   void test_calculate_forward_differences_second_derivative();
+   void test_calculate_central_differences_second_derivative();
+   void test_calculate_second_derivative();
 
-//   void test_calculate_forward_differences_second_derivative(void);
-//   void test_calculate_central_differences_second_derivative(void);
-//   void test_calculate_second_derivative(void);
+//   void test_calculate_forward_differences_second_derivative();
+//   void test_calculate_central_differences_second_derivative();
+//   void test_calculate_second_derivative();
 
    // Gradient methods
 
-   void test_calculate_forward_differences_gradient(void);
-   void test_calculate_central_differences_gradient(void);
-   void test_calculate_gradient(void);
+   void test_calculate_forward_differences_gradient();
+   void test_calculate_central_differences_gradient();
+   void test_calculate_gradient();
 
    // Hessian methods
 
-   void test_calculate_forward_differences_Hessian(void);
-   void test_calculate_central_differences_Hessian(void);
-   void test_calculate_Hessian(void);
+   void test_calculate_forward_differences_Hessian();
+   void test_calculate_central_differences_Hessian();
+   void test_calculate_Hessian();
 
    // Jacobian methods
 
-   void test_calculate_forward_differences_Jacobian(void);
-   void test_calculate_central_differences_Jacobian(void);
-   void test_calculate_Jacobian(void);
+   void test_calculate_forward_differences_Jacobian();
+   void test_calculate_central_differences_Jacobian();
+   void test_calculate_Jacobian();
 
    // Hessian methods
 
-   void test_calculate_forward_differences_Hessian_form(void);
-   void test_calculate_central_differences_Hessian_form(void);
-   void test_calculate_Hessian_form(void);
+   void test_calculate_forward_differences_Hessian_form();
+   void test_calculate_central_differences_Hessian_form();
+   void test_calculate_Hessian_form();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 private:
 
@@ -117,7 +117,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
