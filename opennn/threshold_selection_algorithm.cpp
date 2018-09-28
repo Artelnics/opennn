@@ -6,7 +6,7 @@
 /*   T H R E S H O L D   S E L E C T I O N   A L G O R I T H M   C L A S S                                      */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -21,7 +21,7 @@ namespace OpenNN {
 
 /// Default constructor.
 
-ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(void)
+ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm()
     : training_strategy_pointer(NULL)
 {
     set_default();
@@ -45,7 +45,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(TrainingStrategy* new_t
 /// File constructor.
 /*/// @param file_name Name of XML order selection file.*/
 
-ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const std::string&)
+ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const string&)
     : training_strategy_pointer(NULL)
 {
     //load(file_name);
@@ -68,30 +68,30 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const tinyxml2::XMLDocu
 
 /// Destructor.
 
-ThresholdSelectionAlgorithm::~ThresholdSelectionAlgorithm(void)
+ThresholdSelectionAlgorithm::~ThresholdSelectionAlgorithm()
 {
 }
 
 
 // METHODS
 
-// TrainingStrategy* get_training_strategy_pointer(void) const method
+// TrainingStrategy* get_training_strategy_pointer() const method
 
 /// Returns a pointer to the training strategy object.
 
-TrainingStrategy* ThresholdSelectionAlgorithm::get_training_strategy_pointer(void) const
+TrainingStrategy* ThresholdSelectionAlgorithm::get_training_strategy_pointer() const
 {
 #ifdef __OPENNN_DEBUG__
 
     if(!training_strategy_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "DataSet* get_training_strategy_pointer(void) const method.\n"
+               << "DataSet* get_training_strategy_pointer() const method.\n"
                << "Training strategy pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -99,11 +99,11 @@ TrainingStrategy* ThresholdSelectionAlgorithm::get_training_strategy_pointer(voi
     return(training_strategy_pointer);
 }
 
-// bool has_training_strategy(void) const method
+// bool has_training_strategy() const method
 
 /// Returns true if this threshold selection algorithm has a training strategy associated, and false otherwise.
 
-bool ThresholdSelectionAlgorithm::has_training_strategy(void) const
+bool ThresholdSelectionAlgorithm::has_training_strategy() const
 {
     if(training_strategy_pointer)
     {
@@ -115,30 +115,30 @@ bool ThresholdSelectionAlgorithm::has_training_strategy(void) const
     }
 }
 
-// const bool& get_reserve_binary_classification_tests_data(void) const method
+// const bool& get_reserve_binary_classification_tests_data() const method
 
 /// Returns true if the binary classification test are to be reserved, and false otherwise.
 
-const bool& ThresholdSelectionAlgorithm::get_reserve_binary_classification_tests_data(void) const
+const bool& ThresholdSelectionAlgorithm::get_reserve_binary_classification_tests_data() const
 {
     return(reserve_binary_classification_tests_data);
 }
 
-// const bool& get_reserve_function_data(void) const method
+// const bool& get_reserve_function_data() const method
 
 /// Returns true if the function values to optimize are to be reserved, and false otherwise.
 
-const bool& ThresholdSelectionAlgorithm::get_reserve_function_data(void) const
+const bool& ThresholdSelectionAlgorithm::get_reserve_function_data() const
 {
     return(reserve_function_data);
 }
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
 
-const bool& ThresholdSelectionAlgorithm::get_display(void) const
+const bool& ThresholdSelectionAlgorithm::get_display() const
 {
     return(display);
 }
@@ -154,11 +154,11 @@ void ThresholdSelectionAlgorithm::set_training_strategy_pointer(TrainingStrategy
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the threshold selection object to their default values.
 
-void ThresholdSelectionAlgorithm::set_default(void)
+void ThresholdSelectionAlgorithm::set_default()
 {
     // MEMBERS
 
@@ -225,13 +225,13 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
     if(!multilayer_perceptron_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
               << "Matrix<size_t> calculate_confusion(const double&) const method.\n"
               << "Pointer to multilayer perceptron in neural network is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 
 
@@ -245,35 +245,35 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
     if(inputs_number != variables.count_inputs_number())
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
-        buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class." << std::endl
-               << "Matrix<size_t> calculate_confusion(const double&) const method." << std::endl
-               << "Number of inputs in neural network must be equal to number of inputs in data set." << std::endl;
+        buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class." << endl
+               << "Matrix<size_t> calculate_confusion(const double&) const method." << endl
+               << "Number of inputs in neural network must be equal to number of inputs in data set." << endl;
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 
     if(outputs_number != variables.count_targets_number())
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class." << std::endl
-              << "Matrix<size_t> calculate_confusion(const double&) const method." << std::endl
-              << "Number of outputs in neural network must be equal to number of targets in data set." << std::endl;
+       buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class." << endl
+              << "Matrix<size_t> calculate_confusion(const double&) const method." << endl
+              << "Number of outputs in neural network must be equal to number of targets in data set." << endl;
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 
     if(outputs_number != 1)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
-       buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class." << std::endl
-              << "Matrix<size_t> calculate_confusion(const double&) const method." << std::endl
-              << "Number of outputs in neural network must be equal to 1." << std::endl;
+       buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class." << endl
+              << "Matrix<size_t> calculate_confusion(const double&) const method." << endl
+              << "Number of outputs in neural network must be equal to 1." << endl;
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
     #endif
 
@@ -298,7 +298,7 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
              false_positive++;
 
          }
-         else if (decision_threshold == 0.0 && target_data(i,0) == 1.0)
+         else if(decision_threshold == 0.0 && target_data(i,0) == 1.0)
          {
              true_positive++;
 
@@ -339,13 +339,13 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
      if(confusion.calculate_sum() != rows_number)
      {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                 << "Matrix<size_t> calculate_confusion(const double&) const method.\n"
                 << "Number of elements in confusion matrix must be equal to number of testing instances.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
      }
 
      return(confusion);
@@ -363,26 +363,26 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     const size_t rows = confusion.get_rows_number();
     const size_t columns = confusion.get_columns_number();
 
-    if (rows != 2)
+    if(rows != 2)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "Matrix<size_t> calculate_binary_classification_test(const Matrix<size_t>&) const method.\n"
                << "Number of rows in confusion matrix must be equal to two.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    if (columns != 2)
+    if(columns != 2)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "Matrix<size_t> calculate_binary_classification_test(const Matrix<size_t>&) const method.\n"
                << "Number of columns in confusion matrix must be equal to two.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -402,7 +402,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        classification_accuracy = (double)(true_positive + true_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
+        classification_accuracy =(double)(true_positive + true_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
     }
 
     // Error rate
@@ -415,7 +415,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        error_rate = (double)(false_positive + false_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
+        error_rate =(double)(false_positive + false_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
     }
 
     // Sensitivity
@@ -428,7 +428,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        sensitivity = (double)true_positive/(double)(true_positive + false_negative);
+        sensitivity =(double)true_positive/(double)(true_positive + false_negative);
     }
 
     // Specificity
@@ -441,7 +441,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        specificity = (double)true_negative/(double)(true_negative + false_positive);
+        specificity =(double)true_negative/(double)(true_negative + false_positive);
     }
 
     // Precision
@@ -454,7 +454,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-       precision = (double) true_positive / (double)(true_positive + false_positive);
+       precision =(double) true_positive /(double)(true_positive + false_positive);
     }
 
     // Positive likelihood
@@ -501,7 +501,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        F1_score = (double) 2*true_positive/(double) (2*true_positive + false_positive + false_negative);
+        F1_score =(double) 2*true_positive/(double)(2*true_positive + false_positive + false_negative);
     }
 
     // False positive rate
@@ -514,7 +514,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        false_positive_rate = (double) false_positive/(double) (false_positive + true_negative);
+        false_positive_rate =(double) false_positive/(double)(false_positive + true_negative);
     }
 
     // False discovery rate
@@ -527,7 +527,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        false_discovery_rate = (double) false_positive /(double) (false_positive + true_positive);
+        false_discovery_rate =(double) false_positive /(double)(false_positive + true_positive);
     }
 
     // False negative rate
@@ -540,7 +540,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        false_negative_rate = (double) false_negative /(double) (false_negative + true_positive);
+        false_negative_rate =(double) false_negative /(double)(false_negative + true_positive);
     }
 
     // Negative predictive value
@@ -553,20 +553,20 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        negative_predictive_value = (double) true_negative/(double) (true_negative + false_negative);
+        negative_predictive_value =(double) true_negative/(double)(true_negative + false_negative);
     }
 
     //Matthews correlation coefficient
 
     double Matthews_correlation_coefficient;
 
-    if((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative) == 0)
+    if((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative) == 0)
     {
         Matthews_correlation_coefficient = 0.0;
     }
     else
     {
-        Matthews_correlation_coefficient = (double) (true_positive * true_negative - false_positive * false_negative) /(double) sqrt((true_positive + false_positive) * (true_positive + false_negative) * (true_negative + false_positive) * (true_negative + false_negative));
+        Matthews_correlation_coefficient =(double)(true_positive * true_negative - false_positive * false_negative) /(double) sqrt((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative));
     }
 
     //Informedness
@@ -583,7 +583,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        markedness = precision + (double) true_negative/(double) (true_negative + false_positive) - 1;
+        markedness = precision +(double) true_negative/(double)(true_negative + false_positive) - 1;
     }
 
     //Arrange vector
@@ -609,23 +609,23 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     return(binary_classification_test);
 }
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that the different pointers needed for performing the threshold selection are not NULL.
 
-void ThresholdSelectionAlgorithm::check(void) const
+void ThresholdSelectionAlgorithm::check() const
 {
     // Training algorithm stuff
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(!training_strategy_pointer)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to training strategy is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Loss index stuff
@@ -635,10 +635,10 @@ void ThresholdSelectionAlgorithm::check(void) const
     if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to loss functional is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Neural network stuff
@@ -648,10 +648,10 @@ void ThresholdSelectionAlgorithm::check(void) const
     if(!neural_network_pointer)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to neural network is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const ProbabilisticLayer* probabilistic_layer_pointer = neural_network_pointer->get_probabilistic_layer_pointer();
@@ -659,10 +659,10 @@ void ThresholdSelectionAlgorithm::check(void) const
     if(!probabilistic_layer_pointer)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to probabilistic layer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Data set stuff
@@ -672,10 +672,10 @@ void ThresholdSelectionAlgorithm::check(void) const
     if(!data_set_pointer)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to data set is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const Instances& instances = data_set_pointer->get_instances();
@@ -685,26 +685,26 @@ void ThresholdSelectionAlgorithm::check(void) const
     if(selection_instances_number == 0)
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Number of selection instances is zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 }
 
 
-// std::string write_stopping_condition(void) const method
+// string write_stopping_condition() const method
 
 /// Return a string with the stopping condition of the ThresholdSelectionResults.
 
-std::string ThresholdSelectionAlgorithm::ThresholdSelectionResults::write_stopping_condition(void) const
+string ThresholdSelectionAlgorithm::ThresholdSelectionResults::write_stopping_condition() const
 {
-    switch (stopping_condition)
+    switch(stopping_condition)
     {
     case PerfectConfusionMatrix:
     {
-        return ("PerfectConfusionMatrix");
+        return("PerfectConfusionMatrix");
     }
     case AlgorithmFinished:
     {
@@ -712,13 +712,13 @@ std::string ThresholdSelectionAlgorithm::ThresholdSelectionResults::write_stoppi
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ThresholdSelectionResults struct.\n"
-               << "std::string write_stopping_condition(void) const method.\n"
+               << "string write_stopping_condition() const method.\n"
                << "Unknown stopping condition type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
@@ -727,13 +727,13 @@ std::string ThresholdSelectionAlgorithm::ThresholdSelectionResults::write_stoppi
 }
 
 
-// std::string to_string(void) const method
+// string object_to_string() const method
 
 /// Returns a string representation of the current threshold selection results structure.
 
-std::string ThresholdSelectionAlgorithm::ThresholdSelectionResults::to_string(void) const
+string ThresholdSelectionAlgorithm::ThresholdSelectionResults::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Threshold history
 
@@ -784,7 +784,7 @@ std::string ThresholdSelectionAlgorithm::ThresholdSelectionResults::to_string(vo
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

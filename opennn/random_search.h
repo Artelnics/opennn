@@ -6,7 +6,7 @@
 /*   R A N D O M   S E A R C H   C L A S S   H E A D E R                                                        */
 /*                                                                                                              */ 
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -33,7 +33,7 @@
  
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit RandomSearch(void); 
+   explicit RandomSearch(); 
 
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
@@ -64,7 +64,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~RandomSearch(void);
+   virtual ~RandomSearch();
 
    // STRUCTURES
 
@@ -76,7 +76,7 @@ public:
    {  
        /// Default constructor.
 
-       RandomSearchResults(void)
+       RandomSearchResults()
        {
            random_search_pointer = NULL;
        }
@@ -90,7 +90,7 @@ public:
 
        /// Destructor.
 
-       virtual ~RandomSearchResults(void)
+       virtual ~RandomSearchResults()
        {
        }
 
@@ -171,9 +171,9 @@ public:
 
       void resize_training_history(const size_t&);
 
-      std::string to_string(void) const;
+      string object_to_string() const;
 
-      Matrix<std::string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const size_t& precision = 3) const;
   };
 
 
@@ -181,41 +181,41 @@ public:
 
    // Get methods
 
-   const double& get_training_rate_reduction_factor(void) const;
-   const size_t& get_training_rate_reduction_period(void) const;
+   const double& get_training_rate_reduction_factor() const;
+   const size_t& get_training_rate_reduction_period() const;
 
-   const bool& get_reserve_parameters_history(void) const;
-   const bool& get_reserve_parameters_norm_history(void) const;
+   const bool& get_reserve_parameters_history() const;
+   const bool& get_reserve_parameters_norm_history() const;
 
-   const bool& get_reserve_loss_history(void) const;
+   const bool& get_reserve_loss_history() const;
 
    // Training parameters
 
-   const double& get_warning_parameters_norm(void) const;
-   const double& get_warning_training_rate(void) const;
+   const double& get_warning_parameters_norm() const;
+   const double& get_warning_training_rate() const;
 
-   const double& get_error_parameters_norm(void) const;
-   const double& get_error_training_rate(void) const;
+   const double& get_error_parameters_norm() const;
+   const double& get_error_training_rate() const;
 
    // Stopping criteria
 
-   const double& get_loss_goal(void) const;
-   const size_t& get_maximum_selection_loss_decreases(void) const;
+   const double& get_loss_goal() const;
+   const size_t& get_maximum_selection_loss_decreases() const;
 
-   const size_t& get_maximum_iterations_number(void) const;
-   const double& get_maximum_time(void) const;
+   const size_t& get_maximum_iterations_number() const;
+   const double& get_maximum_time() const;
 
    // Reserve training history
 
-   const bool& get_reserve_selection_loss_history(void) const;
+   const bool& get_reserve_selection_loss_history() const;
 
-   const bool& get_reserve_training_direction_history(void) const;
-   const bool& get_reserve_training_rate_history(void) const;
-   const bool& get_reserve_elapsed_time_history(void) const;
+   const bool& get_reserve_training_direction_history() const;
+   const bool& get_reserve_training_rate_history() const;
+   const bool& get_reserve_elapsed_time_history() const;
 
    // Set methods
 
-   void set_default(void);
+   void set_default();
 
    void set_first_training_rate(const double&);
    void set_training_rate_reduction_factor(const double&);
@@ -261,17 +261,17 @@ public:
 
    // Training methods
 
-   Vector<double> calculate_training_direction(void) const;
+   Vector<double> calculate_training_direction() const;
 
-   RandomSearchResults* perform_training(void);
+   RandomSearchResults* perform_training();
 
-   std::string write_training_algorithm_type(void) const;
+   string write_training_algorithm_type() const;
 
    // Serialization methods
 
-   Matrix<std::string> to_string_matrix(void) const;
+   Matrix<string> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -375,7 +375,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

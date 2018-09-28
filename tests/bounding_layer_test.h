@@ -31,86 +31,85 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit BoundingLayerTest(void);
-
+   explicit BoundingLayerTest();
 
    // DESTRUCTOR
 
-   virtual ~BoundingLayerTest(void);
+   virtual ~BoundingLayerTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
    // PerceptronLayer architecture 
 
-   void test_get_bounding_neurons_number(void);
+   void test_get_bounding_neurons_number();
    
    // Variables bounds
 
-   void test_get_lower_bounds(void);
-   void test_get_lower_bound(void);
+   void test_get_lower_bounds();
+   void test_get_lower_bound();
 
-   void test_get_upper_bounds(void);
-   void test_get_upper_bound(void);
+   void test_get_upper_bounds();
+   void test_get_upper_bound();
 
-   void test_get_bounds(void);
+   void test_get_bounds();
 
    // Display messages
 
-   void test_get_display(void);
+   void test_get_display();
 
    // SET METHODS
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
    // Variables bounds
 
-   void test_set_lower_bounds(void);
-   void test_set_lower_bound(void);
+   void test_set_lower_bounds();
+   void test_set_lower_bound();
 
-   void test_set_upper_bounds(void);
-   void test_set_upper_bound(void);
+   void test_set_upper_bounds();
+   void test_set_upper_bound();
 
-   void test_set_bounds(void);
+   void test_set_bounds();
 
    // Display messages
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Initialization methods
 
-   void test_initialize_random(void);
+   void test_initialize_random();
 
    // Output methods
 
-   void test_calculate_outputs(void);
-   void test_calculate_derivative(void);
-   void test_calculate_second_derivative(void);
+   void test_calculate_outputs();
+   void test_calculate_derivative();
+   void test_calculate_second_derivative();
 
 
    // Expression methods
 
-   void test_write_expression(void);
+   void test_write_expression();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -119,7 +118,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

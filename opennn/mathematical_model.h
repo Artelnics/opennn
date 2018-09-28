@@ -6,7 +6,7 @@
 /*   M A T H E M A T I C A L   M O D E L   C L A S S   H E A D E R                                              */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -44,7 +44,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit MathematicalModel(void);
+   explicit MathematicalModel();
 
    // XML CONSTRUCTOR
 
@@ -52,7 +52,7 @@ public:
 
    // FILE CONSTRUCTOR
 
-   explicit MathematicalModel(const std::string&);
+   explicit MathematicalModel(const string&);
 
    // COPY CONSTRUCTOR
 
@@ -60,26 +60,26 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~MathematicalModel(void);
+   virtual ~MathematicalModel();
 
    // ASSIGNMENT OPERATOR
 
-   virtual MathematicalModel& operator = (const MathematicalModel&);
+   virtual MathematicalModel& operator =(const MathematicalModel&);
 
    // EQUAL TO OPERATOR
 
-   virtual bool operator == (const MathematicalModel&) const;
+   virtual bool operator ==(const MathematicalModel&) const;
 
    // METHODS
 
    // Get methods
 
-   const size_t& get_independent_variables_number(void) const;
-   const size_t& get_dependent_variables_number(void) const;
+   const size_t& get_independent_variables_number() const;
+   const size_t& get_dependent_variables_number() const;
 
-   size_t count_variables_number(void) const;
+   size_t count_variables_number() const;
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // Set methods
 
@@ -90,7 +90,7 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default(void);
+   virtual void set_default();
 
    // Mathematical model
 
@@ -103,20 +103,20 @@ public:
 
    // Serialization methods
 
-   virtual std::string to_string(void) const;
+   virtual string object_to_string() const;
 
-   void print(void) const;
+   void print() const;
 
-   virtual tinyxml2::XMLDocument* to_XML(void) const;   
+   virtual tinyxml2::XMLDocument* to_XML() const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML(   );
 
-   void save(const std::string&) const;
-   void load(const std::string&);
+   void save(const string&) const;
+   void load(const string&);
 
-   virtual void save_data(const NeuralNetwork&, const std::string&) const;
+   virtual void save_data(const NeuralNetwork&, const string&) const;
 
 protected: 
 
@@ -139,7 +139,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

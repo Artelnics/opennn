@@ -6,7 +6,7 @@
 /*   R O C   A R E A   E R R O R   C L A S S                                                                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -25,7 +25,7 @@ namespace OpenNN
 /// It creates a sum squared error term not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-RocAreaError::RocAreaError(void) : ErrorTerm()
+RocAreaError::RocAreaError() : ErrorTerm()
 {
 }
 
@@ -102,32 +102,32 @@ RocAreaError::RocAreaError(const RocAreaError& new_roc_area_error)
 
 /// Destructor.
 
-RocAreaError::~RocAreaError(void)
+RocAreaError::~RocAreaError()
 {
 }
 
 
 // METHODS
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that there are a neural network and a data set associated to the sum squared error, 
 /// and that the numbers of inputs and outputs in the neural network are equal to the numbers of inputs and targets in the data set. 
 /// If some of the above conditions is not hold, the method throws an exception. 
 
-void RocAreaError::check(void) const
+void RocAreaError::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Neural network stuff
 
    if(!neural_network_pointer)
    {
       buffer << "OpenNN Exception: RocAreaError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -135,10 +135,10 @@ void RocAreaError::check(void) const
    if(!multilayer_perceptron_pointer)
    {
       buffer << "OpenNN Exception: RocAreaError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to multilayer perceptron is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
@@ -149,10 +149,10 @@ void RocAreaError::check(void) const
    if(!data_set_pointer)
    {
       buffer << "OpenNN Exception: RocAreaError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to data set is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Sum squared error stuff
@@ -165,28 +165,28 @@ void RocAreaError::check(void) const
    if(data_set_inputs_number != inputs_number)
    {
       buffer << "OpenNN Exception: RocAreaError class.\n"
-             << "void check(void) const method.\n"
-             << "Number of inputs in neural network (" << inputs_number << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
+             << "void check() const method.\n"
+             << "Number of inputs in neural network(" << inputs_number << ") must be equal to number of inputs in data set(" << data_set_inputs_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(outputs_number != targets_number)
    {
       buffer << "OpenNN Exception: RocAreaError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of outputs in neural network must be equal to number of targets in data set.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// double calculate_error(void) const method
+// double calculate_error() const method
 
 /// Returns the loss value of a neural network according to the sum squared error on a data set.
 
-double RocAreaError::calculate_error(void) const
+double RocAreaError::calculate_error() const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -205,9 +205,9 @@ double RocAreaError::calculate_error(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
-
    const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+   const size_t training_instances_number = training_indices.size();
 
    size_t training_index;
 
@@ -241,7 +241,7 @@ double RocAreaError::calculate_error(void) const
    Vector<double> true_positive_rate(points_number, 0.0);
    Vector<double> false_positive_rate(points_number, 0.0);
 
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(i = 0; i <(int)training_instances_number; i++)
    {
        training_index = training_indices[i];
 
@@ -283,7 +283,7 @@ double RocAreaError::calculate_error(void) const
                }
                else
                {
-                   false_negatives += (1.0 - output_data[j]);
+                   false_negatives +=(1.0 - output_data[j]);
                }
            }
            else if(target_data[j] == 0.0)
@@ -294,30 +294,30 @@ double RocAreaError::calculate_error(void) const
                }
                else
                {
-                   true_negatives += (1.0 - output_data[j]);
+                   true_negatives +=(1.0 - output_data[j]);
                }
            }
            else
            {
-               std::ostringstream buffer;
+               ostringstream buffer;
 
                buffer << "OpenNN Exception: RocAreaError class.\n"
-                      << "double calculate_error(void) const method.\n"
+                      << "double calculate_error() const method.\n"
                       << "Target is not binary.\n";
 
-               throw std::logic_error(buffer.str());
+               throw logic_error(buffer.str());
            }
        }
 
        if(true_negatives+false_positives < 1.0e-12)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "Cannot compute false_positive_rate.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
        false_positive_rate[i] = false_negatives/(true_positives+false_negatives);
@@ -325,24 +325,24 @@ double RocAreaError::calculate_error(void) const
        if(false_positive_rate[i] < 0.0
        || false_positive_rate[i] > 1.0)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "false_positve_rate must be between 0 and 1.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
        if(true_positives+false_negatives < 1.0e-12)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "Cannot compute true_positive_rate.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
        true_positive_rate[i] = true_positives/(true_negatives+false_positives);
@@ -350,13 +350,13 @@ double RocAreaError::calculate_error(void) const
        if(true_positive_rate[i] < 0.0
        || true_positive_rate[i] > 1.0)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "true_positve_rate must be between 0 and 1.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
    }
@@ -366,7 +366,7 @@ double RocAreaError::calculate_error(void) const
 
    const double roc_area = numerical_integration.calculate_trapezoid_integral(false_positive_rate, true_positive_rate);
 
-   const double roc_area_error = (1.0-roc_area)*(1.0-roc_area);
+   const double roc_area_error =(1.0-roc_area)*(1.0-roc_area);
 
    return(roc_area_error);
 }
@@ -392,7 +392,7 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    const size_t size = parameters.size();
 
@@ -400,11 +400,11 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
 
    if(size != parameters_number)
    {
-      buffer << "OpenNN Exception: RocAreaError class." << std::endl
-             << "double calculate_error(const Vector<double>&) const method." << std::endl
-             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
+      buffer << "OpenNN Exception: RocAreaError class." << endl
+             << "double calculate_error(const Vector<double>&) const method." << endl
+             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ")." << endl;
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -420,9 +420,9 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
-
    const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+   const size_t training_instances_number = training_indices.size();
 
    size_t training_index;
 
@@ -454,7 +454,7 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
    Vector<double> target_data(training_instances_number);
    Vector<double> output_data(training_instances_number);
 
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(i = 0; i <(int)training_instances_number; i++)
    {
        training_index = training_indices[i];
 
@@ -496,7 +496,7 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
                }
                else
                {
-                   false_negatives += (1.0 - output_data[j]);
+                   false_negatives +=(1.0 - output_data[j]);
                }
            }
            else if(target_data[j] == 0.0)
@@ -507,30 +507,30 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
                }
                else
                {
-                   true_negatives += (1.0 - output_data[j]);
+                   true_negatives +=(1.0 - output_data[j]);
                }
            }
            else
            {
-               std::ostringstream buffer;
+               ostringstream buffer;
 
                buffer << "OpenNN Exception: RocAreaError class.\n"
-                      << "double calculate_error(void) const method.\n"
+                      << "double calculate_error() const method.\n"
                       << "Target is not binary.\n";
 
-               throw std::logic_error(buffer.str());
+               throw logic_error(buffer.str());
            }
        }
 
        if(true_negatives+false_positives < 1.0e-12)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "Cannot compute false_positive_rate.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
        false_positive_rate[i] = false_negatives/(true_positives+false_negatives);
@@ -538,24 +538,24 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
        if(false_positive_rate[i] < 0.0
        || false_positive_rate[i] > 1.0)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "false_positve_rate must be between 0 and 1.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
        if(true_positives+false_negatives < 1.0e-12)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "Cannot compute true_positive_rate.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
        true_positive_rate[i] = true_positives/(true_negatives+false_positives);
@@ -563,13 +563,13 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
        if(true_positive_rate[i] < 0.0
        || true_positive_rate[i] > 1.0)
        {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: RocAreaError class.\n"
-                  << "double calculate_error(void) const method.\n"
+                  << "double calculate_error() const method.\n"
                   << "true_positve_rate must be between 0 and 1.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
        }
 
    }
@@ -581,7 +581,7 @@ double RocAreaError::calculate_error(const Vector<double>& parameters) const
 
    const double roc_area = numerical_integration.calculate_trapezoid_integral(false_positive_rate, true_positive_rate);
 
-   const double roc_area_error = (1.0-roc_area)*(1.0-roc_area);
+   const double roc_area_error =(1.0-roc_area)*(1.0-roc_area);
 
    return(roc_area_error);
 }
@@ -605,7 +605,7 @@ double RocAreaError::calculate_loss_combination(const size_t& index, const Vecto
 
 double RocAreaError::calculate_loss_combinations(const size_t& index_1, const Vector<double>& combinations_1, const size_t& index_2, const Vector<double>& combinations_2) const
 {
-    std::cout << index_1 << combinations_1 << std::endl;
+    cout << index_1 << combinations_1 << endl;
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
@@ -631,11 +631,11 @@ double RocAreaError::calculate_loss_combinations(const size_t& index_1, const Ve
 }
 
 
-// double calculate_selection_loss(void) const method
+// double calculate_selection_loss() const method
 
 /// Returns the sum squared error of the neural network measured on the selection instances of the data set.
 
-double RocAreaError::calculate_selection_loss(void) const
+double RocAreaError::calculate_selection_loss() const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -676,7 +676,7 @@ double RocAreaError::calculate_selection_loss(void) const
 
    #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(+ : selection_loss)
 
-   for(i = 0; i < (int)selection_instances_number; i++)
+   for(i = 0; i <(int)selection_instances_number; i++)
    {
        selection_index = selection_indices[i];
 
@@ -705,18 +705,18 @@ double RocAreaError::calculate_selection_loss(void) const
 
 Vector<double> RocAreaError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
 {
-    const Vector<double> output_gradient = (output-target)*2.0;
+    const Vector<double> output_gradient =(output-target)*2.0;
 
     return(output_gradient);
 }
 
 
-// Vector<double> calculate_gradient(void) const method
+// Vector<double> calculate_gradient() const method
 
 /// Calculates the error term gradient by means of the back-propagation algorithm, 
 /// and returns it in a single vector of size the number of neural network parameters. 
 
-Vector<double> RocAreaError::calculate_gradient(void) const
+Vector<double> RocAreaError::calculate_gradient() const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -750,19 +750,14 @@ Vector<double> RocAreaError::calculate_gradient(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
-
    const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-   size_t training_index;
+   const size_t training_instances_number = training_indices.size();
 
    const Variables& variables = data_set_pointer->get_variables();
 
    const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-   Vector<double> inputs(inputs_number);
-   Vector<double> targets(outputs_number);
 
    // Sum squared error stuff
 
@@ -777,18 +772,16 @@ Vector<double> RocAreaError::calculate_gradient(void) const
 
    Vector<double> gradient(neural_parameters_number, 0.0);
 
-   int i;
-
-   #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
+   #pragma omp parallel for private(first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
     output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
 
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(int i = 0; i <(int)training_instances_number; i++)
    {
-       training_index = training_indices[i];
+      const size_t training_index = training_indices[i];
 
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
+      const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
       first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
@@ -810,7 +803,7 @@ Vector<double> RocAreaError::calculate_gradient(void) const
          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+         output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
 
          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
       }
@@ -838,12 +831,12 @@ Matrix<double> RocAreaError::calculate_output_Hessian(const Vector<double>&, con
 }
 
 
-// Matrix<double> calculate_Hessian(void) const method
+// Matrix<double> calculate_Hessian() const method
 
 /// Calculates the Hessian by means of the back-propagation algorithm,
 /// and returns it in a single symmetric matrix of size the number of neural network parameters. 
 
-Matrix<double> RocAreaError::calculate_Hessian(void) const
+Matrix<double> RocAreaError::calculate_Hessian() const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -951,7 +944,7 @@ Matrix<double> RocAreaError::calculate_Hessian(void) const
          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-         output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+         output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
 
          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
       }
@@ -962,12 +955,12 @@ Matrix<double> RocAreaError::calculate_Hessian(void) const
    return(Hessian);
 }
 
-// Matrix<double> calculate_single_hidden_layer_Hessian(void) const
+// Matrix<double> calculate_single_hidden_layer_Hessian() const
 
 /// Calculates the Hessian matrix for a neural network with one hidden layer and an arbitrary number of
 /// inputs, perceptrons in the hidden layer and outputs.
 
-Matrix<double> RocAreaError::calculate_single_hidden_layer_Hessian(void) const
+Matrix<double> RocAreaError::calculate_single_hidden_layer_Hessian() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1066,7 +1059,7 @@ Matrix<double> RocAreaError::calculate_single_hidden_layer_Hessian(void) const
     size_t parameter_index_j;
 
     const Matrix<double> output_interlayers_Delta =
-    (output_Hessian
+   (output_Hessian
      * layers_activation_derivative[layers_number-1]
      * layers_activation_derivative[layers_number-1]
      + output_gradient
@@ -1115,7 +1108,7 @@ Matrix<double> RocAreaError::calculate_single_hidden_layer_Hessian(void) const
             parameter_index_j = parameter_indices[2];
 
             single_hidden_layer_Hessian(i,j) =
-             (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+            (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
              *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
              *layers_activation_derivative[layer_index_i][neuron_index_i]
              *second_layer_weights(neuron_index_j, neuron_index_i)
@@ -1160,7 +1153,7 @@ Matrix<double> RocAreaError::calculate_single_hidden_layer_Hessian(void) const
                     *sum
                     +layers_activation_second_derivative[layer_index_j][neuron_index_j]
                     *calculate_Kronecker_delta(neuron_index_j,neuron_index_i)
-                    *second_layer_weights.arrange_column(neuron_index_j).dot(layers_delta[1]));
+                    *second_layer_weights.get_column(neuron_index_j).dot(layers_delta[1]));
         }
     }
 
@@ -1178,13 +1171,13 @@ Matrix<double> RocAreaError::calculate_single_hidden_layer_Hessian(void) const
 }
 
 
-// Vector<double> calculate_terms(void) const method
+// Vector<double> calculate_terms() const method
 
 /// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
 
-Vector<double> RocAreaError::calculate_terms(void) const
+Vector<double> RocAreaError::calculate_terms() const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -1226,7 +1219,7 @@ Vector<double> RocAreaError::calculate_terms(void) const
 
    #pragma omp parallel for private(i, training_index, inputs, outputs, targets)
 
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(i = 0; i <(int)training_instances_number; i++)
    {
        training_index = training_indices[i];
 
@@ -1258,7 +1251,7 @@ Vector<double> RocAreaError::calculate_terms(void) const
 
 Vector<double> RocAreaError::calculate_terms(const Vector<double>& parameters) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
    
@@ -1275,13 +1268,13 @@ Vector<double> RocAreaError::calculate_terms(const Vector<double>& parameters) c
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
-      buffer << "OpenNN Exception: RocAreaError class." << std::endl
-             << "double calculate_terms(const Vector<double>&) const method." << std::endl
-             << "Size (" << size << ") must be equal to number of neural network parameters (" << parameters_number << ")." << std::endl;
+      buffer << "OpenNN Exception: RocAreaError class." << endl
+             << "double calculate_terms(const Vector<double>&) const method." << endl
+             << "Size(" << size << ") must be equal to number of neural network parameters(" << parameters_number << ")." << endl;
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -1298,13 +1291,13 @@ Vector<double> RocAreaError::calculate_terms(const Vector<double>& parameters) c
 }
 
 
-// Matrix<double> calculate_terms_Jacobian(void) const method
+// Matrix<double> calculate_terms_Jacobian() const method
 
 /// Returns the terms_Jacobian matrix of the sum squared error function, whose elements are given by the 
 /// derivatives of the squared errors data set with respect to the multilayer perceptron parameters.
 /// The terms_Jacobian matrix here is computed using a back-propagation algorithm.
 
-Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
+Matrix<double> RocAreaError::calculate_terms_Jacobian() const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -1371,7 +1364,7 @@ Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
    #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, \
     layers_combination_parameters_Jacobian, term, term_norm, output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
 
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(i = 0; i <(int)training_instances_number; i++)
    {
        training_index = training_indices[i];
 
@@ -1413,7 +1406,7 @@ Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
 
          //const Vector<double>& output_layer_activation = first_order_forward_propagation[0][layers_number-1];
 
-         term = (particular_solution+homogeneous_solution*first_order_forward_propagation[0][layers_number-1] - targets);
+         term =(particular_solution+homogeneous_solution*first_order_forward_propagation[0][layers_number-1] - targets);
          term_norm = term.calculate_norm();
 
          if(term_norm == 0.0)
@@ -1437,12 +1430,12 @@ Matrix<double> RocAreaError::calculate_terms_Jacobian(void) const
 }
 
 
-// FirstOrderTerms calculate_first_order_terms(void) const method
+// FirstOrderTerms calculate_first_order_terms() const method
 
 /// Returns the first order loss of the terms loss function.
 /// This is a structure containing the error terms vector and the error terms Jacobian.
 
-ErrorTerm::FirstOrderTerms RocAreaError::calculate_first_order_terms(void) const
+ErrorTerm::FirstOrderTerms RocAreaError::calculate_first_order_terms() const
 {
    FirstOrderTerms first_order_terms;
 
@@ -1453,13 +1446,13 @@ ErrorTerm::FirstOrderTerms RocAreaError::calculate_first_order_terms(void) const
 }
 
 
-// Vector<double> calculate_squared_errors(void) const method
+// Vector<double> calculate_squared_errors() const method
 
 /// Returns the squared errors of the training instances. 
 
-Vector<double> RocAreaError::calculate_squared_errors(void) const
+Vector<double> RocAreaError::calculate_squared_errors() const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -1503,7 +1496,7 @@ Vector<double> RocAreaError::calculate_squared_errors(void) const
 
    #pragma omp parallel for private(i, training_index, inputs, outputs, targets)
 
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(i = 0; i <(int)training_instances_number; i++)
    {
        training_index = training_indices[i];
 
@@ -1553,23 +1546,23 @@ Matrix<double> RocAreaError::calculate_Hessian(const Vector<double>&) const
 }
 
 
-// std::string write_error_term_type(void) const method
+// string write_error_term_type() const method
 
 /// Returns a string with the name of the sum squared error loss type, "SUM_SQUARED_ERROR".
 
-std::string RocAreaError::write_error_term_type(void) const
+string RocAreaError::write_error_term_type() const
 {
    return("SUM_SQUARED_ERROR");
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) method method 
+// tinyxml2::XMLDocument* to_XML() method method 
 
 /// Returns a representation of the sum squared error object, in XML format. 
 
-tinyxml2::XMLDocument* RocAreaError::to_XML(void) const
+tinyxml2::XMLDocument* RocAreaError::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -1617,13 +1610,13 @@ void RocAreaError::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: RocAreaError class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Sum squared error element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
   // Display
@@ -1632,15 +1625,15 @@ void RocAreaError::from_XML(const tinyxml2::XMLDocument& document)
 
      if(element)
      {
-        const std::string new_display_string = element->GetText();
+        const string new_display_string = element->GetText();
 
         try
         {
            set_display(new_display_string != "0");
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -1651,7 +1644,7 @@ void RocAreaError::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

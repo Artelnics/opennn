@@ -1,7 +1,7 @@
 # Path to cuda toolkit install
 
 windows{
-CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v7.5
+CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v9.2
 }else:mac{
 CUDA_DIR = /Developer/NVIDIA/CUDA-7.5
 }else:unix{

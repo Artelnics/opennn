@@ -23,14 +23,14 @@ using namespace OpenNN;
 
 // GENERAL RUCTOR
 
-OrderSelectionAlgorithmTest::OrderSelectionAlgorithmTest(void) : UnitTesting()
+OrderSelectionAlgorithmTest::OrderSelectionAlgorithmTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-OrderSelectionAlgorithmTest::~OrderSelectionAlgorithmTest(void)
+OrderSelectionAlgorithmTest::~OrderSelectionAlgorithmTest()
 {
 }
 
@@ -39,7 +39,7 @@ OrderSelectionAlgorithmTest::~OrderSelectionAlgorithmTest(void)
 
 // Constructor and destructor methods
 
-void OrderSelectionAlgorithmTest::test_constructor(void)
+void OrderSelectionAlgorithmTest::test_constructor()
 {
     message += "test_constructor\n";
 
@@ -54,7 +54,7 @@ void OrderSelectionAlgorithmTest::test_constructor(void)
     assert_true(!io2.has_training_strategy(), LOG);
 }
 
-void OrderSelectionAlgorithmTest::test_destructor(void)
+void OrderSelectionAlgorithmTest::test_destructor()
 {
     message += "tes_destructor\n";
 
@@ -65,7 +65,7 @@ void OrderSelectionAlgorithmTest::test_destructor(void)
 
 // Get methods
 
-void OrderSelectionAlgorithmTest::test_get_training_strategy_pointer(void)
+void OrderSelectionAlgorithmTest::test_get_training_strategy_pointer()
 {
     message += "test_get_training_strategy_pointer\n";
 
@@ -78,7 +78,7 @@ void OrderSelectionAlgorithmTest::test_get_training_strategy_pointer(void)
 }
 
 
-void OrderSelectionAlgorithmTest::test_get_loss_calculation_method(void)
+void OrderSelectionAlgorithmTest::test_get_loss_calculation_method()
 {
     message += "test_get_loss_calculation_method\n";
 
@@ -90,7 +90,7 @@ void OrderSelectionAlgorithmTest::test_get_loss_calculation_method(void)
 
 }
 
-void OrderSelectionAlgorithmTest::test_write_loss_calculation_method(void)
+void OrderSelectionAlgorithmTest::test_write_loss_calculation_method()
 {
     message += "test_write_loss_calculation_method\n";
 
@@ -103,7 +103,7 @@ void OrderSelectionAlgorithmTest::test_write_loss_calculation_method(void)
 
 // Set methods
 
-void OrderSelectionAlgorithmTest::test_set_training_strategy_pointer(void)
+void OrderSelectionAlgorithmTest::test_set_training_strategy_pointer()
 {
     message += "test_set_training_strategy_pointer\n";
 
@@ -116,13 +116,13 @@ void OrderSelectionAlgorithmTest::test_set_training_strategy_pointer(void)
     assert_true(io.get_training_strategy_pointer() != NULL, LOG);
 }
 
-void OrderSelectionAlgorithmTest::test_set_default(void)
+void OrderSelectionAlgorithmTest::test_set_default()
 {
     message += "test_set_default\n";
 
 }
 
-void OrderSelectionAlgorithmTest::test_set_loss_calculation_method(void)
+void OrderSelectionAlgorithmTest::test_set_loss_calculation_method()
 {
     message += "test_set_loss_calculation_method\n";
 
@@ -130,37 +130,37 @@ void OrderSelectionAlgorithmTest::test_set_loss_calculation_method(void)
 
 // Performances calculation methods
 
-void OrderSelectionAlgorithmTest::test_perform_minimum_model_evaluation(void)
+void OrderSelectionAlgorithmTest::test_perform_minimum_model_evaluation()
 {
     message += "test_perform_minimum_model_evaluation\n";
 
 }
 
-void OrderSelectionAlgorithmTest::test_perform_maximum_model_evaluation(void)
+void OrderSelectionAlgorithmTest::test_perform_maximum_model_evaluation()
 {
     message += "test_perform_maximum_model_evaluation\n";
 
 }
 
-void OrderSelectionAlgorithmTest::test_perform_mean_model_evaluation(void)
+void OrderSelectionAlgorithmTest::test_perform_mean_model_evaluation()
 {
     message += "test_perform_mean_model_evaluation\n";
 
 }
 
-void OrderSelectionAlgorithmTest::test_get_final_losss(void)
+void OrderSelectionAlgorithmTest::test_get_final_losss()
 {
     message += "test_get_final_losss\n";
 
 }
 
-void OrderSelectionAlgorithmTest::test_perform_model_evaluation(void)
+void OrderSelectionAlgorithmTest::test_perform_model_evaluation()
 {
     message += "test_perform_model_evaluation\n";
 
 }
 
-void OrderSelectionAlgorithmTest::test_get_parameters_order(void)
+void OrderSelectionAlgorithmTest::test_get_parameters_order()
 {
     message += "test_get_parameters_order\n";
 
@@ -168,7 +168,7 @@ void OrderSelectionAlgorithmTest::test_get_parameters_order(void)
 
 // Unit testing methods
 
-void OrderSelectionAlgorithmTest::run_test_case(void)
+void OrderSelectionAlgorithmTest::run_test_case()
 {
     message += "Running order selection algorithm test case...\n";
 

@@ -18,17 +18,17 @@
 using namespace OpenNN;
 
 
-OutputsIntegralsTest::OutputsIntegralsTest(void) : UnitTesting() 
+OutputsIntegralsTest::OutputsIntegralsTest() : UnitTesting() 
 {
 }
 
 
-OutputsIntegralsTest::~OutputsIntegralsTest(void) 
+OutputsIntegralsTest::~OutputsIntegralsTest() 
 {
 }
 
 
-void OutputsIntegralsTest::test_constructor(void)
+void OutputsIntegralsTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -48,14 +48,14 @@ void OutputsIntegralsTest::test_constructor(void)
 }
 
 
-void OutputsIntegralsTest::test_destructor(void)
+void OutputsIntegralsTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 // @todo
 
-void OutputsIntegralsTest::test_calculate_loss(void)   
+void OutputsIntegralsTest::test_calculate_loss()   
 {
    message += "test_calculate_loss\n";
 /*
@@ -79,7 +79,7 @@ void OutputsIntegralsTest::test_calculate_loss(void)
 
 // @todo
 
-void OutputsIntegralsTest::test_calculate_gradient(void)
+void OutputsIntegralsTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -130,25 +130,25 @@ void OutputsIntegralsTest::test_calculate_gradient(void)
 
 // @todo
 
-void OutputsIntegralsTest::test_calculate_Hessian(void)
+void OutputsIntegralsTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 }
 
 
-void OutputsIntegralsTest::test_to_XML(void)   
+void OutputsIntegralsTest::test_to_XML()   
 {
 	message += "test_to_XML\n"; 
 }
 
 
-void OutputsIntegralsTest::test_from_XML(void)
+void OutputsIntegralsTest::test_from_XML()
 {
 	message += "test_from_XML\n"; 
 }
 
 
-void OutputsIntegralsTest::run_test_case(void)
+void OutputsIntegralsTest::run_test_case()
 {
    message += "Running outputs integrals test case...\n";
 
@@ -179,7 +179,7 @@ void OutputsIntegralsTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,7 +6,7 @@
 /*   O R D I N A R Y   D I F F E R E N T I A L   E Q U A T I O N S   C L A S S   H E A D E R                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -33,7 +33,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -51,7 +51,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit OrdinaryDifferentialEquations(void);
+   explicit OrdinaryDifferentialEquations();
 
    // XML CONSTRUCTOR
 
@@ -59,7 +59,7 @@ public:
 
    // FILE CONSTRUCTOR
 
-   explicit OrdinaryDifferentialEquations(const std::string&);
+   explicit OrdinaryDifferentialEquations(const string&);
 
    // COPY CONSTRUCTOR
 
@@ -67,15 +67,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~OrdinaryDifferentialEquations(void);
+   virtual ~OrdinaryDifferentialEquations();
 
    // ASSIGNMENT OPERATOR
 
-   OrdinaryDifferentialEquations& operator = (const OrdinaryDifferentialEquations&);
+   OrdinaryDifferentialEquations& operator =(const OrdinaryDifferentialEquations&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const OrdinaryDifferentialEquations&) const;
+   bool operator ==(const OrdinaryDifferentialEquations&) const;
 
    // Enumerations
 
@@ -88,22 +88,22 @@ public:
 
    // Get methods
 
-   const double& get_initial_independent_variable(void) const;
-   const double& get_final_independent_variable(void) const;
+   const double& get_initial_independent_variable() const;
+   const double& get_final_independent_variable() const;
 
-   const Vector<double>& get_initial_dependent_variables(void) const;
+   const Vector<double>& get_initial_dependent_variables() const;
    const double& get_initial_dependent_variable(const size_t&) const;
 
-   const SolutionMethod& get_solution_method(void) const;
-   std::string write_solution_method(void) const;
+   const SolutionMethod& get_solution_method() const;
+   string write_solution_method() const;
 
-   const size_t& get_points_number(void) const;
+   const size_t& get_points_number() const;
 
-   const double& get_tolerance(void) const;
+   const double& get_tolerance() const;
 
-   const size_t& get_initial_size(void) const;
-   const size_t& get_warning_size(void) const;
-   const size_t& get_error_size(void) const;
+   const size_t& get_initial_size() const;
+   const size_t& get_warning_size() const;
+   const size_t& get_error_size() const;
 
    // Set methods
 
@@ -116,7 +116,7 @@ public:
    void set_initial_dependent_variable(const size_t&, const double&);
 
    void set_solution_method(const SolutionMethod&);
-   void set_solution_method(const std::string&);
+   void set_solution_method(const string&);
 
    void set_points_number(const size_t&);
 
@@ -126,7 +126,7 @@ public:
    void set_warning_size(const size_t&);
    void set_error_size(const size_t&);
 
-   virtual void set_default(void);
+   virtual void set_default();
 
    // Ordinary differential equations methods
 
@@ -147,15 +147,15 @@ public:
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
    
-   virtual tinyxml2::XMLDocument* to_XML(void) const;
+   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML(   );
 
-   virtual void save_data(const NeuralNetwork&, const std::string&) const;
+   virtual void save_data(const NeuralNetwork&, const string&) const;
 
 protected: 
 
@@ -171,7 +171,7 @@ protected:
 
    Vector<double> initial_dependent_variables;
 
-   /// Numerical integration method (Runge-Kutta or Runge-Kutta-Fehlberg).
+   /// Numerical integration method(Runge-Kutta or Runge-Kutta-Fehlberg).
 
    SolutionMethod solution_method;
 
@@ -202,7 +202,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

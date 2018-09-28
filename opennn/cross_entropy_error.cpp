@@ -6,7 +6,7 @@
 /*   C R O S S   E N T R O P Y   E R R O R   C L A S S                                                          */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -25,7 +25,7 @@ namespace OpenNN
 /// which is not associated to any neural network and not measured on any data set.
 /// It also initializes all the rest of class members to their default values.
 
-CrossEntropyError::CrossEntropyError(void) : ErrorTerm()
+CrossEntropyError::CrossEntropyError() : ErrorTerm()
 {
 }
 
@@ -80,6 +80,7 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& sum_squared_error_document)
  : ErrorTerm(sum_squared_error_document)
 {
+    from_XML(sum_squared_error_document);
 }
 
 
@@ -101,7 +102,7 @@ CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_
 
 /// Destructor.
 
-CrossEntropyError::~CrossEntropyError(void) 
+CrossEntropyError::~CrossEntropyError() 
 {
 }
 
@@ -111,7 +112,7 @@ CrossEntropyError::~CrossEntropyError(void)
 /// Assignment operator. 
 /// @param other_cross_entropy_error Object to be copied. 
 
-CrossEntropyError& CrossEntropyError::operator = (const CrossEntropyError& other_cross_entropy_error)
+CrossEntropyError& CrossEntropyError::operator =(const CrossEntropyError& other_cross_entropy_error)
 {
    if(this != &other_cross_entropy_error) 
    {
@@ -130,7 +131,7 @@ CrossEntropyError& CrossEntropyError::operator = (const CrossEntropyError& other
 /// If compares this object with another object of the same class, and returns true if they are equal, and false otherwise. 
 /// @param other_cross_entropy_error Object to be compared with. 
 
-bool CrossEntropyError::operator == (const CrossEntropyError& other_cross_entropy_error) const
+bool CrossEntropyError::operator ==(const CrossEntropyError& other_cross_entropy_error) const
 {
    if(*neural_network_pointer == *other_cross_entropy_error.neural_network_pointer
    && display == other_cross_entropy_error.display)    
@@ -148,24 +149,24 @@ bool CrossEntropyError::operator == (const CrossEntropyError& other_cross_entrop
 // METHODS
 
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that there are a neural network and a data set associated to the cross entropy error, 
 /// and that the numbers of inputs and outputs in the neural network are equal to the numbers of inputs and targets in the data set. 
 
-void CrossEntropyError::check(void) const
+void CrossEntropyError::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Neural network stuff
 
    if(!neural_network_pointer)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -173,10 +174,10 @@ void CrossEntropyError::check(void) const
    if(!multilayer_perceptron_pointer)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to multilayer perceptron is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
@@ -185,19 +186,19 @@ void CrossEntropyError::check(void) const
    if(inputs_number == 0)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of inputs in multilayer perceptron object is zero.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(outputs_number == 0)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of outputs in multilayer perceptron object is zero.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const ProbabilisticLayer* probabilistic_layer_pointer = neural_network_pointer->get_probabilistic_layer_pointer();
@@ -205,10 +206,10 @@ void CrossEntropyError::check(void) const
    if(!probabilistic_layer_pointer)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to probabilistic layer is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const ProbabilisticLayer::ProbabilisticMethod& outputs_probabilizing_method = probabilistic_layer_pointer->get_probabilistic_method();
@@ -216,10 +217,10 @@ void CrossEntropyError::check(void) const
    if(outputs_probabilizing_method != ProbabilisticLayer::Softmax)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Probabilistic method is not Softmax.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    // Data set stuff
@@ -227,10 +228,10 @@ void CrossEntropyError::check(void) const
    if(!data_set_pointer)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to data set is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Cross-entropy error stuff
@@ -243,28 +244,28 @@ void CrossEntropyError::check(void) const
    if(inputs_number != data_set_inputs_number)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
-             << "Number of inputs in neural network (" << inputs_number << ") must be equal to number of inputs in data set (" << data_set_inputs_number << ").\n";
+             << "void check() const method.\n"
+             << "Number of inputs in neural network(" << inputs_number << ") must be equal to number of inputs in data set(" << data_set_inputs_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(outputs_number != targets_number)
    {
       buffer << "OpenNN Exception: CrossEntropyError class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of outputs in neural network must be equal to number of targets in data set.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// double calculate_error(void) method
+// double calculate_error() method
 
 /// Returns the loss value of a neural network according to the cross-entropy error on a data set.
 
-double CrossEntropyError::calculate_error(void) const
+double CrossEntropyError::calculate_error() const
 {
    #ifdef __OPENNN_DEBUG__ 
 
@@ -276,18 +277,15 @@ double CrossEntropyError::calculate_error(void) const
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
    // Data set stuff 
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
-
    const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-   size_t training_index;
+   const size_t training_instances_number = training_indices.size();
 
    const Variables& variables = data_set_pointer->get_variables();
 
@@ -296,32 +294,25 @@ double CrossEntropyError::calculate_error(void) const
 
    // Cross entropy error
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
    double cross_entropy_error = 0.0;
 
-   int i = 0;
+    #pragma omp parallel for reduction(+ : cross_entropy_error)
 
-
-#pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+ : cross_entropy_error)
-
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(int i = 0; i <(int)training_instances_number; i++)
    {
-       training_index = training_indices[i];
+       const size_t training_index = training_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
+      const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
       // Cross entropy error
 
@@ -333,10 +324,17 @@ double CrossEntropyError::calculate_error(void) const
           }
           else if(outputs[j] == 1.0)
           {
-              outputs[j] = 0.999999;
+              outputs[j] = 1.0 - 1.0e-6;
           }
 
-          cross_entropy_error -= (targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]));
+          if(targets[j] == 0.0)
+          {
+              cross_entropy_error -= log(1.0 - outputs[j]);
+          }
+          else if(targets[j] == 1.0)
+          {
+              cross_entropy_error -= log(outputs[j]);
+          }
       }
    }
 
@@ -364,7 +362,7 @@ double CrossEntropyError::calculate_error(const Vector<double>& parameters) cons
 
     #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t size = parameters.size();
 
@@ -372,11 +370,11 @@ double CrossEntropyError::calculate_error(const Vector<double>& parameters) cons
 
     if(size != parameters_number)
     {
-       buffer << "OpenNN Exception: CrossEntropyError class." << std::endl
-              << "double calculate_error(const Vector<double>&) const method." << std::endl
-              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
+       buffer << "OpenNN Exception: CrossEntropyError class." << endl
+              << "double calculate_error(const Vector<double>&) const method." << endl
+              << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ")." << endl;
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 
     #endif
@@ -392,11 +390,9 @@ double CrossEntropyError::calculate_error(const Vector<double>& parameters) cons
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-    size_t training_index;
+    const size_t training_instances_number = training_indices.size();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -405,31 +401,25 @@ double CrossEntropyError::calculate_error(const Vector<double>& parameters) cons
 
     // Cross-entropy error stuff
 
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-    Vector<double> targets(outputs_number);
-
     double cross_entropy_error = 0.0;
 
-    int i = 0;
+    #pragma omp parallel for reduction(+ : cross_entropy_error)
 
-    #pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+ : cross_entropy_error)
-
-    for(i = 0; i < (int)training_instances_number; i++)
+    for(int i = 0; i <(int)training_instances_number; i++)
     {
-        training_index = training_indices[i];
+        const size_t training_index = training_indices[i];
 
        // Input vector
 
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
        // Output vector
 
-       outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
+       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
 
        // Target vector
 
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
+       Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
        // Cross-entropy error
 
@@ -441,10 +431,18 @@ double CrossEntropyError::calculate_error(const Vector<double>& parameters) cons
            }
            else if(outputs[j] == 1)
            {
-               outputs[j] = 0.99999;
+               outputs[j] = 1.0 - 1.0e-6;
            }
 
-           cross_entropy_error -= (targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]));
+           if(targets[j] == 0.0)
+           {
+               cross_entropy_error -= log(1.0 - outputs[j]);
+           }
+           else if(targets[j] == 1.0)
+           {
+               cross_entropy_error -= log(outputs[j]);
+           }
+//           cross_entropy_error -=(targets[j]*log(outputs[j]) +(1.0 - targets[j])*log(1.0 - outputs[j]));
        }
     }
 
@@ -452,12 +450,12 @@ double CrossEntropyError::calculate_error(const Vector<double>& parameters) cons
 }
 
 
-// double calculate_minimum_loss(void) method
+// double calculate_minimum_loss() method
 
 /// Returns the minimum achieveable cross entropy for the training data. 
 /// It occurs when all the targets are equal to the outputs for the training data.
 
-double CrossEntropyError::calculate_minimum_loss(void) const
+double CrossEntropyError::calculate_minimum_loss() const
 {
     // Neural network stuff
 
@@ -478,11 +476,9 @@ double CrossEntropyError::calculate_minimum_loss(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-    size_t training_index;
+    const size_t training_instances_number = training_indices.size();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -491,31 +487,25 @@ double CrossEntropyError::calculate_minimum_loss(void) const
 
     // Cross-entropy error stuff
 
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-    Vector<double> targets(outputs_number);
-
     double minimum_cross_entropy_error = 0.0;
 
-    int i = 0;
+    #pragma omp parallel for reduction(+ : minimum_cross_entropy_error)
 
-    #pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+ : minimum_cross_entropy_error)
-
-    for(i = 0; i < (int)training_instances_number; i++)
+    for(int i = 0; i <(int)training_instances_number; i++)
     {
-        training_index = training_indices[i];
+        const size_t training_index = training_indices[i];
 
         // Input vector
 
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
        // Output vector
 
-       outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
        // Target vector
 
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
+       Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
        // Cross-entropy error
 
@@ -539,7 +529,7 @@ double CrossEntropyError::calculate_minimum_loss(void) const
                targets[j] = 0.999999;
            }
 
-           minimum_cross_entropy_error -= (targets[j]*log(outputs[j]/targets[j]) + (1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
+           minimum_cross_entropy_error -=(targets[j]*log(outputs[j]/targets[j]) +(1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
        }
     }
 
@@ -547,11 +537,11 @@ double CrossEntropyError::calculate_minimum_loss(void) const
 }
 
 
-// double calculate_selection_error(void) const method
+// double calculate_selection_error() const method
 
 /// Returns the cross entropy error of the neural network measured on the selection instances of the data set.
 
-double CrossEntropyError::calculate_selection_error(void) const
+double CrossEntropyError::calculate_selection_error() const
 {
    // Control sentence
 
@@ -574,9 +564,14 @@ double CrossEntropyError::calculate_selection_error(void) const
 
    const size_t selection_instances_number = instances.count_selection_instances_number();
 
+   if(selection_instances_number == 0)
+   {
+       return(0.0);
+   }
+
    const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-   size_t selection_index;
+   size_t selection_index = 0;
 
    const Variables& variables = data_set_pointer->get_variables();
 
@@ -585,31 +580,25 @@ double CrossEntropyError::calculate_selection_error(void) const
 
    // Loss index
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
    double selection_loss = 0.0;
 
-   int i = 0;
+   #pragma omp parallel for reduction(- : selection_loss)
 
-   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(- : selection_loss)
-
-   for(i = 0; i < (int)selection_instances_number; i++)
+   for(int i = 0; i <(int)selection_instances_number; i++)
    {
        selection_index = selection_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(selection_index, targets_indices);
+      Vector<double> targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
       // Cross entropy error
 
@@ -624,7 +613,7 @@ double CrossEntropyError::calculate_selection_error(void) const
               outputs[j] = 0.999999;
           }
 
-          selection_loss -= (targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]));
+          selection_loss -=(targets[j]*log(outputs[j]) +(1.0 - targets[j])*log(1.0 - outputs[j]));
       }
    }
 
@@ -632,12 +621,12 @@ double CrossEntropyError::calculate_selection_error(void) const
 }
 
 
-// double calculate_minimum_selection_error(void) method
+// double calculate_minimum_selection_error() method
 
 /// Returns the minimum achieveable cross entropy for the selection data. 
 /// It occurs when all the targets are equal to the outputs for the selection data.
 
-double CrossEntropyError::calculate_minimum_selection_error(void) const
+double CrossEntropyError::calculate_minimum_selection_error() const
 {
     // Control sentence
 
@@ -662,8 +651,6 @@ double CrossEntropyError::calculate_minimum_selection_error(void) const
 
     const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-    size_t selection_index;
-
     const Variables& variables = data_set_pointer->get_variables();
 
     const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
@@ -671,31 +658,25 @@ double CrossEntropyError::calculate_minimum_selection_error(void) const
 
     // Loss index
 
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-    Vector<double> targets(outputs_number);
-
     double minimum_selection_loss = 0.0;
 
-    int i = 0;
+    #pragma omp parallel for reduction(- : minimum_selection_loss)
 
-    #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(- : minimum_selection_loss)
-
-    for(i = 0; i < (int)selection_instances_number; i++)
+    for(int i = 0; i <(int)selection_instances_number; i++)
     {
-        selection_index = selection_indices[i];
+        const size_t selection_index = selection_indices[i];
 
        // Input vector
 
-       inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
+       const Vector<double> inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
        // Output vector
 
-       outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
        // Target vector
 
-       targets = data_set_pointer->get_instance(selection_index, targets_indices);
+       Vector<double> targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
        // Cross entropy error
 
@@ -719,18 +700,19 @@ double CrossEntropyError::calculate_minimum_selection_error(void) const
                targets[j] = 0.999999;
            }
 
-           minimum_selection_loss -= (targets[j]*log(outputs[j]/targets[j]) + (1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
+           minimum_selection_loss -=(targets[j]*log(outputs[j]/targets[j]) +(1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
        }
     }
 
     return(minimum_selection_loss/(double)selection_instances_number);
 }
 
-// double calculate_error_unnormalized(void) method
+
+// double calculate_error_unnormalized() method
 
 /// Returns the loss value of a neural network according to the cross-entropy error on a data set without the normalization.
 
-double CrossEntropyError::calculate_error_unnormalized(void) const
+double CrossEntropyError::calculate_error_unnormalized() const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -749,11 +731,9 @@ double CrossEntropyError::calculate_error_unnormalized(void) const
 
    const Instances& instances = data_set_pointer->get_instances();
 
-   const size_t training_instances_number = instances.count_training_instances_number();
-
    const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-   size_t training_index;
+   const size_t training_instances_number = training_indices.size();
 
    const Variables& variables = data_set_pointer->get_variables();
 
@@ -762,32 +742,25 @@ double CrossEntropyError::calculate_error_unnormalized(void) const
 
    // Cross entropy error
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
    double cross_entropy_error = 0.0;
 
-   int i = 0;
+    #pragma omp parallel for reduction(+ : cross_entropy_error)
 
-
-#pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+ : cross_entropy_error)
-
-   for(i = 0; i < (int)training_instances_number; i++)
+   for(int i = 0; i <(int)training_instances_number; i++)
    {
-       training_index = training_indices[i];
+       const size_t training_index = training_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(training_index, targets_indices);
+      Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
       // Cross entropy error
 
@@ -804,12 +777,11 @@ double CrossEntropyError::calculate_error_unnormalized(void) const
 
           if(targets[j] == 0.0)
           {
-              cross_entropy_error -= (1.0 - targets[j])*log(1.0 - outputs[j]);
+              cross_entropy_error -=(1.0 - targets[j])*log(1.0 - outputs[j]);
           }
           else if(targets[j] == 1.0)
           {
               cross_entropy_error -= targets[j]*log(outputs[j]);
-
           }
       }
    }
@@ -838,7 +810,7 @@ double CrossEntropyError::calculate_error_unnormalized(const Vector<double>& par
 
     #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t size = parameters.size();
 
@@ -846,11 +818,11 @@ double CrossEntropyError::calculate_error_unnormalized(const Vector<double>& par
 
     if(size != parameters_number)
     {
-       buffer << "OpenNN Exception: CrossEntropyError class." << std::endl
-              << "double calculate_error(const Vector<double>&) const method." << std::endl
-              << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
+       buffer << "OpenNN Exception: CrossEntropyError class." << endl
+              << "double calculate_error(const Vector<double>&) const method." << endl
+              << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ")." << endl;
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 
     #endif
@@ -866,11 +838,9 @@ double CrossEntropyError::calculate_error_unnormalized(const Vector<double>& par
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-    size_t training_index;
+    const size_t training_instances_number = training_indices.size();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -879,31 +849,25 @@ double CrossEntropyError::calculate_error_unnormalized(const Vector<double>& par
 
     // Cross-entropy error stuff
 
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-    Vector<double> targets(outputs_number);
-
     double cross_entropy_error = 0.0;
 
-    int i = 0;
+    #pragma omp parallel for reduction(+ : cross_entropy_error)
 
-    #pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+ : cross_entropy_error)
-
-    for(i = 0; i < (int)training_instances_number; i++)
+    for(int i = 0; i <(int)training_instances_number; i++)
     {
-        training_index = training_indices[i];
+        const size_t training_index = training_indices[i];
 
        // Input vector
 
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
        // Output vector
 
-       outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
+       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
 
        // Target vector
 
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
+       Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
        // Cross-entropy error
 
@@ -918,7 +882,7 @@ double CrossEntropyError::calculate_error_unnormalized(const Vector<double>& par
                outputs[j] = 0.99999;
            }
 
-           cross_entropy_error -= (targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]));
+           cross_entropy_error -=(targets[j]*log(outputs[j]) +(1.0 - targets[j])*log(1.0 - outputs[j]));
        }
     }
 
@@ -926,12 +890,12 @@ double CrossEntropyError::calculate_error_unnormalized(const Vector<double>& par
 }
 
 
-// double calculate_minimum_loss_unnormalized(void) method
+// double calculate_minimum_loss_unnormalized() method
 
 /// Returns the minimum achieveable cross entropy without the normalization for the training data.
 /// It occurs when all the targets are equal to the outputs for the training data.
 
-double CrossEntropyError::calculate_minimum_loss_unnormalized(void) const
+double CrossEntropyError::calculate_minimum_loss_unnormalized() const
 {
     // Neural network stuff
 
@@ -952,11 +916,9 @@ double CrossEntropyError::calculate_minimum_loss_unnormalized(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-    size_t training_index;
+    const size_t training_instances_number = training_indices.size();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -965,31 +927,25 @@ double CrossEntropyError::calculate_minimum_loss_unnormalized(void) const
 
     // Cross-entropy error stuff
 
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-    Vector<double> targets(outputs_number);
-
     double minimum_cross_entropy_error = 0.0;
 
-    int i = 0;
+    #pragma omp parallel for reduction(+ : minimum_cross_entropy_error)
 
-    #pragma omp parallel for private(i, training_index, inputs, outputs, targets) reduction(+ : minimum_cross_entropy_error)
-
-    for(i = 0; i < (int)training_instances_number; i++)
+    for(int i = 0; i <(int)training_instances_number; i++)
     {
-        training_index = training_indices[i];
+       const size_t training_index = training_indices[i];
 
         // Input vector
 
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
        // Output vector
 
-       outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
        // Target vector
 
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
+       Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
        // Cross-entropy error
 
@@ -1013,7 +969,7 @@ double CrossEntropyError::calculate_minimum_loss_unnormalized(void) const
                targets[j] = 0.999999;
            }
 
-           minimum_cross_entropy_error -= (targets[j]*log(outputs[j]/targets[j]) + (1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
+           minimum_cross_entropy_error -=(targets[j]*log(outputs[j]/targets[j]) +(1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
        }
     }
 
@@ -1021,11 +977,11 @@ double CrossEntropyError::calculate_minimum_loss_unnormalized(void) const
 }
 
 
-// double calculate_selection_error_unnormalized(void) const method
+// double calculate_selection_error_unnormalized() const method
 
 /// Returns the cross entropy error of the neural network measured on the selection instances of the data set.
 
-double CrossEntropyError::calculate_selection_error_unnormalized(void) const
+double CrossEntropyError::calculate_selection_error_unnormalized() const
 {
    // Control sentence
 
@@ -1048,9 +1004,12 @@ double CrossEntropyError::calculate_selection_error_unnormalized(void) const
 
    const size_t selection_instances_number = instances.count_selection_instances_number();
 
-   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
+   if(selection_instances_number == 0)
+   {
+       return(0.0);
+   }
 
-   size_t selection_index;
+   const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
    const Variables& variables = data_set_pointer->get_variables();
 
@@ -1059,31 +1018,25 @@ double CrossEntropyError::calculate_selection_error_unnormalized(void) const
 
    // Loss index
 
-   Vector<double> inputs(inputs_number);
-   Vector<double> outputs(outputs_number);
-   Vector<double> targets(outputs_number);
-
    double selection_loss = 0.0;
 
-   int i = 0;
+   #pragma omp parallel for reduction(- : selection_loss)
 
-   #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(- : selection_loss)
-
-   for(i = 0; i < (int)selection_instances_number; i++)
+   for(int i = 0; i <(int)selection_instances_number; i++)
    {
-       selection_index = selection_indices[i];
+       const size_t selection_index = selection_indices[i];
 
       // Input vector
 
-      inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
+      const Vector<double> inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
       // Output vector
 
-      outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
       // Target vector
 
-      targets = data_set_pointer->get_instance(selection_index, targets_indices);
+      Vector<double> targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
       // Cross entropy error
 
@@ -1098,7 +1051,7 @@ double CrossEntropyError::calculate_selection_error_unnormalized(void) const
               outputs[j] = 0.999999;
           }
 
-          selection_loss -= (targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]));
+          selection_loss -=(targets[j]*log(outputs[j]) +(1.0 - targets[j])*log(1.0 - outputs[j]));
       }
    }
 
@@ -1106,12 +1059,12 @@ double CrossEntropyError::calculate_selection_error_unnormalized(void) const
 }
 
 
-// double calculate_minimum_selection_error_unnormalized(void) method
+// double calculate_minimum_selection_error_unnormalized() method
 
 /// Returns the minimum achieveable cross entropy without the normalization for the selection data with no normalization.
 /// It occurs when all the targets are equal to the outputs for the selection data.
 
-double CrossEntropyError::calculate_minimum_selection_error_unnormalized(void) const
+double CrossEntropyError::calculate_minimum_selection_error_unnormalized() const
 {
     // Control sentence
 
@@ -1136,8 +1089,6 @@ double CrossEntropyError::calculate_minimum_selection_error_unnormalized(void) c
 
     const Vector<size_t> selection_indices = instances.arrange_selection_indices();
 
-    size_t selection_index;
-
     const Variables& variables = data_set_pointer->get_variables();
 
     const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
@@ -1145,31 +1096,25 @@ double CrossEntropyError::calculate_minimum_selection_error_unnormalized(void) c
 
     // Loss index
 
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-    Vector<double> targets(outputs_number);
-
     double minimum_selection_loss = 0.0;
 
-    int i = 0;
+    #pragma omp parallel for reduction(- : minimum_selection_loss)
 
-    #pragma omp parallel for private(i, selection_index, inputs, outputs, targets) reduction(- : minimum_selection_loss)
-
-    for(i = 0; i < (int)selection_instances_number; i++)
+    for(int i = 0; i <(int)selection_instances_number; i++)
     {
-        selection_index = selection_indices[i];
+        const size_t selection_index = selection_indices[i];
 
        // Input vector
 
-       inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
+       const Vector<double> inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
 
        // Output vector
 
-       outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+        Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
        // Target vector
 
-       targets = data_set_pointer->get_instance(selection_index, targets_indices);
+       Vector<double> targets = data_set_pointer->get_instance(selection_index, targets_indices);
 
        // Cross entropy error
 
@@ -1193,7 +1138,7 @@ double CrossEntropyError::calculate_minimum_selection_error_unnormalized(void) c
                targets[j] = 0.999999;
            }
 
-           minimum_selection_loss -= (targets[j]*log(outputs[j]/targets[j]) + (1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
+           minimum_selection_loss -=(targets[j]*log(outputs[j]/targets[j]) +(1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
        }
     }
 
@@ -1220,19 +1165,19 @@ Vector<double> CrossEntropyError::calculate_output_gradient(const Vector<double>
     {
         if(output[j] == 0.0)
         {
-            output_gradient[j] = (-target[j]/1.e-6 + (1.0 - target[j])/(1.0 - 1.e-6));
+            output_gradient[j] =(-target[j]/1.e-6 +(1.0 - target[j])/(1.0 - 1.e-6));
         }
         else if(output[j] == 1.0)
         {
-            output_gradient[j] = (-target[j]/0.999999 + (1.0 - target[j])/(1.0 - 0.999999));
+            output_gradient[j] =(-target[j]/0.999999 +(1.0 - target[j])/(1.0 - 0.999999));
         }
         else
         {
-           output_gradient[j] = (-target[j]/output[j] + (1.0 - target[j])/(1.0 - output[j]));
+           output_gradient[j] =(-target[j]/output[j] +(1.0 - target[j])/(1.0 - output[j]));
         }
     }
 
-    return (output_gradient/(double)training_instances_number);
+    return(output_gradient/(double)training_instances_number);
 }
 
 
@@ -1253,19 +1198,136 @@ Matrix<double> CrossEntropyError::calculate_output_Hessian(const Vector<double>&
     {
         if(output[i] == 0.0)
         {
-            output_Hessian(i,i) = (1.0 - target[i])/((1.0 - 1.e-6)*(1.0 - 1.e-6)) + target[i]/((1.e-6)*(1.e-6))/(double)training_instances_number;
+            output_Hessian(i,i) =(1.0 - target[i])/((1.0 - 1.e-6)*(1.0 - 1.e-6)) + target[i]/((1.e-6)*(1.e-6))/(double)training_instances_number;
         }
         else if(output[i] == 1.0)
         {
-            output_Hessian(i,i) = (1.0 - target[i])/((1.0 - 0.999999)*(1.0 - 0.999999))+target[i]/(0.999999*0.999999)/(double)training_instances_number;
+            output_Hessian(i,i) =(1.0 - target[i])/((1.0 - 0.999999)*(1.0 - 0.999999))+target[i]/(0.999999*0.999999)/(double)training_instances_number;
         }
         else
         {
-           output_Hessian(i,i) = (1.0 - target[i])/((1.0 - output[i])*(1.0 - output[i])) + target[i]/(output[i]*output[i])/(double)training_instances_number;
+           output_Hessian(i,i) =(1.0 - target[i])/((1.0 - output[i])*(1.0 - output[i])) + target[i]/(output[i]*output[i])/(double)training_instances_number;
         }
     }
 
     return output_Hessian;
+}
+
+// Vector<double> calculate_gradient() const method
+
+/// Returns the cross entropy error function gradient of a multilayer perceptron on a data set.
+/// It uses the error back-propagation method.
+
+Vector<double> CrossEntropyError::calculate_gradient() const
+{
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   check();
+
+   #endif
+
+   // Neural network stuff
+
+   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+   // Neural network stuff
+
+   const bool has_conditions_layer = neural_network_pointer->has_conditions_layer();
+
+   const ConditionsLayer* conditions_layer_pointer = has_conditions_layer ? neural_network_pointer->get_conditions_layer_pointer() : NULL;
+
+   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
+   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+
+   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+   const size_t neural_parameters_number = multilayer_perceptron_pointer->count_parameters_number();
+
+   Vector< Vector< Vector<double> > > first_order_forward_propagation(2);
+
+   Vector<double> particular_solution;
+   Vector<double> homogeneous_solution;
+
+   // Data set stuff
+
+   const Instances& instances = data_set_pointer->get_instances();
+
+   const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+   const size_t training_instances_number = training_indices.size();
+
+   const Variables& variables = data_set_pointer->get_variables();
+
+   const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
+   const Vector<size_t> targets_indices = variables.arrange_targets_indices();
+
+   Vector<double> inputs(inputs_number);
+   Vector<double> targets(outputs_number);
+
+   // Sum squared error stuff
+
+   Vector<double> output_gradient(outputs_number);
+
+   Vector< Matrix<double> > layers_combination_parameters_Jacobian;
+
+   Vector< Vector<double> > layers_inputs(layers_number);
+   Vector< Vector<double> > layers_delta;
+
+   Vector<double> point_gradient(neural_parameters_number, 0.0);
+
+   Vector<double> gradient(neural_parameters_number, 0.0);
+
+   #pragma omp parallel for private(first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
+    output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
+
+   for(int i = 0; i <(int)training_instances_number; i++)
+   {
+       const size_t training_index = training_indices[i];
+
+       // Data set
+
+       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+
+       const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
+
+       // Multilayer perceptron
+
+       first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+       const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
+       const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
+
+       layers_inputs = multilayer_perceptron_pointer->arrange_layers_input(inputs, layers_activation);
+
+       layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
+
+       // Loss index
+
+       if(!has_conditions_layer)
+       {
+           output_gradient = calculate_output_gradient_unnormalized(layers_activation[layers_number-1], targets)/(double)training_instances_number;
+
+           layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+       }
+       else
+       {
+           particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
+           homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
+
+           output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+
+           layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
+       }
+
+       point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
+
+       #pragma omp critical
+       gradient += point_gradient;
+   }
+
+   return(gradient);
 }
 
 // Vector<double> calculate_output_gradient_unnormalized(const Vector<double> &, const Vector<double> &) const;
@@ -1285,27 +1347,27 @@ Vector<double> CrossEntropyError::calculate_output_gradient_unnormalized(const V
     {
         if(output[j] == 0.0)
         {
-            output_gradient[j] = (-target[j]/1.e-6 + (1.0 - target[j])/(1.0 - 1.e-6));
+            output_gradient[j] =(-target[j]/1.e-6 +(1.0 - target[j])/(1.0 - 1.e-6));
         }
         else if(output[j] == 1.0)
         {
-            output_gradient[j] = (-target[j]/0.999999 + (1.0 - target[j])/(1.0 - 0.999999));
+            output_gradient[j] =(-target[j]/0.999999 +(1.0 - target[j])/(1.0 - 0.999999));
         }
         else
         {
-           output_gradient[j] = (-target[j]/output[j] + (1.0 - target[j])/(1.0 - output[j]));
+           output_gradient[j] =(-target[j]/output[j] +(1.0 - target[j])/(1.0 - output[j]));
         }
     }
 
-    return (output_gradient);
+    return(output_gradient);
 }
 
-// Vector<double> calculate_gradient_unnormalized(void) const;
+// Vector<double> calculate_gradient_unnormalized() const;
 
 /// Returns the cross-entropy error function output gradient without the normalization of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
 
-Vector<double> CrossEntropyError::calculate_gradient_unnormalized(void) const
+Vector<double> CrossEntropyError::calculate_gradient_unnormalized() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1339,11 +1401,9 @@ Vector<double> CrossEntropyError::calculate_gradient_unnormalized(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-    size_t training_index;
+    const size_t training_instances_number = training_indices.size();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -1366,18 +1426,16 @@ Vector<double> CrossEntropyError::calculate_gradient_unnormalized(void) const
 
     Vector<double> gradient(neural_parameters_number, 0.0);
 
-    int i;
-
-#pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
+#pragma omp parallel for private(first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
     output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
 
-    for(i = 0; i < (int)training_instances_number; i++)
+    for(int i = 0; i <(int)training_instances_number; i++)
     {
-        training_index = training_indices[i];
+        const size_t training_index = training_indices[i];
 
-        inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+        const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
-        targets = data_set_pointer->get_instance(training_index, targets_indices);
+        const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
         first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
@@ -1399,7 +1457,7 @@ Vector<double> CrossEntropyError::calculate_gradient_unnormalized(void) const
             particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
             homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-            output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+            output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
 
             layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
         }
@@ -1414,24 +1472,24 @@ Vector<double> CrossEntropyError::calculate_gradient_unnormalized(void) const
 }
 
 
-// std::string write_error_term_type(void) const method
+// string write_error_term_type() const method
 
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
 
-std::string CrossEntropyError::write_error_term_type(void) const
+string CrossEntropyError::write_error_term_type() const
 {
    return("CROSS_ENTROPY_ERROR");
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method 
+// tinyxml2::XMLDocument* to_XML() const method 
 
 /// Serializes the cross entropy error object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document-> 
 
-tinyxml2::XMLDocument* CrossEntropyError::to_XML(void) const
+tinyxml2::XMLDocument* CrossEntropyError::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -1482,13 +1540,13 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: CrossEntropyError class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Cross entropy error element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
   // Display
@@ -1497,15 +1555,15 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
      if(display_element)
      {
-        const std::string new_display_string = display_element->GetText();
+        const string new_display_string = display_element->GetText();
 
         try
         {
            set_display(new_display_string != "0");
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -1515,7 +1573,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

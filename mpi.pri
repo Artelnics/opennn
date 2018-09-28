@@ -5,7 +5,6 @@ DEFINES += __OPENNN_MPI__
 win32{
 MPI_DIR = C:/"Program Files (x86)"/"Microsoft SDKs"/MPI
 
-
 INCLUDEPATH += $$MPI_DIR/Include
 DEPENDPATH += $$MPI_DIR/Include
 

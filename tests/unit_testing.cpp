@@ -19,7 +19,7 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-UnitTesting::UnitTesting(void)
+UnitTesting::UnitTesting()
 {
    message = "";
 
@@ -38,76 +38,76 @@ UnitTesting::UnitTesting(void)
  
 /// Destructor.
 
-UnitTesting::~UnitTesting(void)
+UnitTesting::~UnitTesting()
 { 
 }
 
 
 // METHODS
 
-// size_t get_tests_count(void) const method
+// size_t get_tests_count() const method
 
 /// Returns the number of tests which have been performed by the test case. 
 
-size_t UnitTesting::get_tests_count(void) const
+size_t UnitTesting::get_tests_count() const
 {
    return(tests_count);
 }
 
 
-// size_t get_tests_passed_count(void) const method
+// size_t get_tests_passed_count() const method
 
 /// Returns the number of tests which have passed the test case. 
 
-size_t UnitTesting::get_tests_passed_count(void) const
+size_t UnitTesting::get_tests_passed_count() const
 {
    return(tests_passed_count);
 }
 
 
-// size_t get_tests_failed_count(void) const method
+// size_t get_tests_failed_count() const method
 
 /// Returns the number of tests which have failed the test case. 
 
-size_t UnitTesting::get_tests_failed_count(void) const
+size_t UnitTesting::get_tests_failed_count() const
 {
    return(tests_failed_count);
 }
 
 
-// size_t get_random_tests_number(void) const method
+// size_t get_random_tests_number() const method
 
 /// Returns the number of iterations for loops of random tests. 
 
-size_t UnitTesting::get_random_tests_number(void) const
+size_t UnitTesting::get_random_tests_number() const
 {
    return(random_tests_number);
 }
 
 
-// bool get_numerical_differentiation_tests(void) const method
+// bool get_numerical_differentiation_tests() const method
 
-bool UnitTesting::get_numerical_differentiation_tests(void) const
+bool UnitTesting::get_numerical_differentiation_tests() const
 {
    return(numerical_differentiation_tests);
 }
 
 
-// std::string& get_message(void) method
+// string& get_message() method
 
 /// Returns a reference to the test case information message. 
 
-std::string& UnitTesting::get_message(void) 
+string& UnitTesting::get_message() 
 {
    return(message);
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns the display messages to the screen value of this object. 
 
-const bool& UnitTesting::get_display(void) const
+const bool& UnitTesting::get_display() const
 {
    return(display);
 }
@@ -165,12 +165,12 @@ void UnitTesting::set_random_tests_number(const size_t& new_random_tests_number)
 }
 
 
-// void set_message(const std::string&) method
+// void set_message(const string&) method
 
 /// Sets a new test case information message. 
 /// @param new_message Information message. 
 
-void UnitTesting::set_message(const std::string& new_message)
+void UnitTesting::set_message(const string& new_message)
 {
    message = new_message;
 }
@@ -187,7 +187,7 @@ void UnitTesting::set_display(const bool& new_display)
 }
 
 
-// void assert_true(bool, std::string) method
+// void assert_true(bool, string) method
 
 /// Checks that a condition is true.
 /// It increases the number of tests by one.
@@ -198,7 +198,7 @@ void UnitTesting::set_display(const bool& new_display)
 /// @param error_message Error message to be appended to the information message, 
 /// typically the file name and the line where the condition has been tested. 
 
-void UnitTesting::assert_true(const bool& condition, const std::string& error_message)
+void UnitTesting::assert_true(const bool& condition, const string& error_message)
 {
    tests_count++;
 
@@ -208,7 +208,7 @@ void UnitTesting::assert_true(const bool& condition, const std::string& error_me
    }
    else
    {
-      message += "void assert_true(bool, const std::string&) method failed\n";
+      message += "void assert_true(bool, const string&) method failed\n";
       message += error_message;
       tests_failed_count++;
    }
@@ -226,7 +226,7 @@ void UnitTesting::assert_true(const bool& condition, const std::string& error_me
 /// @param error_message Error message to be appended to the information message, 
 /// typically the file name and the line where the condition has been tested. 
 
-void UnitTesting::assert_false(const bool& condition, const std::string& error_message)
+void UnitTesting::assert_false(const bool& condition, const string& error_message)
 {
    tests_count++;
 
@@ -236,14 +236,14 @@ void UnitTesting::assert_false(const bool& condition, const std::string& error_m
    }
    else
    {
-      message += "void assert_false(bool, const std::string&) method failed\n";
+      message += "void assert_false(bool, const string&) method failed\n";
       message += error_message;
       tests_failed_count++;
    }
 }
 
 
-// void print_results(void) method
+// void print_results() method
 
 /// Prints the test case results to the screen: 
 /// <ul>
@@ -254,29 +254,29 @@ void UnitTesting::assert_false(const bool& condition, const std::string& error_m
 /// <li> Concluding remarks.
 /// </ul> 
 
-void UnitTesting::print_results(void)
+void UnitTesting::print_results()
 {
    run_test_case();
 
-   std::cout << message << std::endl;
+   cout << message << endl;
 
-   std::cout << "Tests run: " << tests_count << std::endl;
-   std::cout << "Tests passed: " << tests_passed_count << std::endl;
-   std::cout << "Tests failed: " << tests_failed_count << std::endl;
+   cout << "Tests run: " << tests_count << endl;
+   cout << "Tests passed: " << tests_passed_count << endl;
+   cout << "Tests failed: " << tests_failed_count << endl;
 
    if(tests_failed_count == 0)
    {
-      std::cout << "Test case OK." << std::endl;
+      cout << "Test case OK." << endl;
    }
    else
    {
-      std::cout << "Test case NOT OK: " << tests_failed_count << " tests failed."  << std::endl;
+      cout << "Test case NOT OK: " << tests_failed_count << " tests failed."  << endl;
    } 
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
