@@ -21,21 +21,21 @@ using namespace OpenNN;
 
 // CONSTRUCTOR 
 
-PerceptronTest::PerceptronTest(void) : UnitTesting() 
+PerceptronTest::PerceptronTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-PerceptronTest::~PerceptronTest(void)
+PerceptronTest::~PerceptronTest()
 {
 }
 
 
 // METHODS
 
-void PerceptronTest::test_constructor(void)
+void PerceptronTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -69,13 +69,13 @@ void PerceptronTest::test_constructor(void)
 }
 
 
-void PerceptronTest::test_destructor(void)
+void PerceptronTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void PerceptronTest::test_assignment_operator(void)
+void PerceptronTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -89,7 +89,7 @@ void PerceptronTest::test_assignment_operator(void)
 }
 
 
-void PerceptronTest::test_get_activation_function(void)
+void PerceptronTest::test_get_activation_function()
 {
    message += "test_get_activation_function\n";
 
@@ -109,7 +109,7 @@ void PerceptronTest::test_get_activation_function(void)
 }
 
 
-void PerceptronTest::test_count_inputs_number(void)
+void PerceptronTest::test_count_inputs_number()
 {
    message += "test_count_inputs_number\n";
 
@@ -119,7 +119,7 @@ void PerceptronTest::test_count_inputs_number(void)
 }
 
 
-void PerceptronTest::test_get_bias(void)   
+void PerceptronTest::test_get_bias()   
 {
    message += "test_count_inputs_number\n";
 
@@ -130,7 +130,7 @@ void PerceptronTest::test_get_bias(void)
 }
 
 
-void PerceptronTest::test_arrange_synaptic_weights(void)
+void PerceptronTest::test_arrange_synaptic_weights()
 {
    message += "test_arrange_synaptic_weights\n";
 
@@ -142,7 +142,7 @@ void PerceptronTest::test_arrange_synaptic_weights(void)
 }
 
 
-void PerceptronTest::test_get_synaptic_weight(void)
+void PerceptronTest::test_get_synaptic_weight()
 {
    message += "test_arrange_synaptic_weights\n";
 
@@ -153,7 +153,7 @@ void PerceptronTest::test_get_synaptic_weight(void)
 }
 
 
-void PerceptronTest::test_count_parameters_number(void)
+void PerceptronTest::test_count_parameters_number()
 {
    message += "test_count_parameters_number\n";
 
@@ -165,7 +165,7 @@ void PerceptronTest::test_count_parameters_number(void)
 }
 
 
-void PerceptronTest::test_arrange_parameters(void)
+void PerceptronTest::test_arrange_parameters()
 {
    message += "test_arrange_parameters\n";
    
@@ -179,7 +179,7 @@ void PerceptronTest::test_arrange_parameters(void)
 }
 
 
-void PerceptronTest::test_get_display(void)
+void PerceptronTest::test_get_display()
 {
    message += "test_get_display\n";
    
@@ -191,13 +191,13 @@ void PerceptronTest::test_get_display(void)
 }
 
 
-void PerceptronTest::test_set(void)
+void PerceptronTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void PerceptronTest::test_set_activation_function(void)
+void PerceptronTest::test_set_activation_function()
 {
    message += "test_set_activation_function\n";
 
@@ -219,7 +219,7 @@ void PerceptronTest::test_set_activation_function(void)
 }
 
 
-void PerceptronTest::test_set_inputs_number(void)
+void PerceptronTest::test_set_inputs_number()
 {
    message += "test_set_inputs_number\n";
 
@@ -231,7 +231,7 @@ void PerceptronTest::test_set_inputs_number(void)
 }
 
 
-void PerceptronTest::test_set_bias(void)
+void PerceptronTest::test_set_bias()
 {
    message += "test_set_bias\n";
 
@@ -243,7 +243,7 @@ void PerceptronTest::test_set_bias(void)
 }
 
 
-void PerceptronTest::test_set_synaptic_weights(void)
+void PerceptronTest::test_set_synaptic_weights()
 {
    message += "test_set_synaptic_weights\n";
 
@@ -259,7 +259,7 @@ void PerceptronTest::test_set_synaptic_weights(void)
 }
 
 
-void PerceptronTest::test_set_synaptic_weight(void)
+void PerceptronTest::test_set_synaptic_weight()
 {
    message += "test_set_synaptic_weight\n";
 
@@ -271,7 +271,7 @@ void PerceptronTest::test_set_synaptic_weight(void)
 }
 
 
-void PerceptronTest::test_set_parameters(void)
+void PerceptronTest::test_set_parameters()
 {
    message += "test_set_parameters\n";
 
@@ -287,7 +287,7 @@ void PerceptronTest::test_set_parameters(void)
 }
 
 
-void PerceptronTest::test_set_display(void)
+void PerceptronTest::test_set_display()
 {
    message += "test_set_display\n";
 
@@ -299,7 +299,7 @@ void PerceptronTest::test_set_display(void)
 }
 
 
-void PerceptronTest::test_grow_input(void)
+void PerceptronTest::test_grow_input()
 {
     message += "test_grow_input\n";
 
@@ -314,7 +314,7 @@ void PerceptronTest::test_grow_input(void)
 }
 
 
-void PerceptronTest::test_prune_input(void)
+void PerceptronTest::test_prune_input()
 {
     message += "test_prune_input";
 
@@ -337,7 +337,7 @@ void PerceptronTest::test_prune_input(void)
 }
 
 
-void PerceptronTest::test_initialize_parameters(void)
+void PerceptronTest::test_initialize_parameters()
 {
    message += "test_initialize_parameters\n";
 
@@ -349,7 +349,7 @@ void PerceptronTest::test_initialize_parameters(void)
 }
 
 
-void PerceptronTest::test_initialize_bias_uniform(void)
+void PerceptronTest::test_initialize_bias_uniform()
 {
    message += "test_initialize_bias_uniform\n";
 
@@ -361,7 +361,7 @@ void PerceptronTest::test_initialize_bias_uniform(void)
 }
 
 
-void PerceptronTest::test_initialize_bias_normal(void)
+void PerceptronTest::test_initialize_bias_normal()
 {
    message += "test_initialize_bias_normal\n";
 
@@ -373,7 +373,7 @@ void PerceptronTest::test_initialize_bias_normal(void)
 }
 
 
-void PerceptronTest::test_initialize_synaptic_weights_uniform(void)
+void PerceptronTest::test_initialize_synaptic_weights_uniform()
 {
    message += "test_initialize_synaptic_weights_uniform\n";
 
@@ -385,7 +385,7 @@ void PerceptronTest::test_initialize_synaptic_weights_uniform(void)
 }
 
 
-void PerceptronTest::test_initialize_synaptic_weights_normal(void)
+void PerceptronTest::test_initialize_synaptic_weights_normal()
 {
    message += "test_initialize_synaptic_weights_normal\n";
 
@@ -397,7 +397,7 @@ void PerceptronTest::test_initialize_synaptic_weights_normal(void)
 }
 
 
-void PerceptronTest::test_calculate_combination(void)
+void PerceptronTest::test_calculate_combination()
 {
    message += "test_calculate_combination\n";
 
@@ -462,7 +462,7 @@ void PerceptronTest::test_calculate_combination(void)
 }
 
 
-void PerceptronTest::test_calculate_combination_gradient(void)
+void PerceptronTest::test_calculate_combination_gradient()
 {
    message += "test_calculate_combination_gradient\n";
 
@@ -489,7 +489,7 @@ void PerceptronTest::test_calculate_combination_gradient(void)
 }
 
 
-void PerceptronTest::test_calculate_combination_Hessian(void)
+void PerceptronTest::test_calculate_combination_Hessian()
 {
    message += "test_calculate_combination_Hessian\n";
 
@@ -516,7 +516,7 @@ void PerceptronTest::test_calculate_combination_Hessian(void)
 }
 
 
-void PerceptronTest::test_calculate_combination_parameters_gradient(void)
+void PerceptronTest::test_calculate_combination_parameters_gradient()
 {
    message += "test_calculate_combination_parameters_gradient\n";
 
@@ -550,7 +550,7 @@ void PerceptronTest::test_calculate_combination_parameters_gradient(void)
 }
 
 
-void PerceptronTest::test_calculate_combination_parameters_Hessian(void)
+void PerceptronTest::test_calculate_combination_parameters_Hessian()
 {
    message += "test_calculate_combination_parameters_Hessian\n";
 
@@ -585,7 +585,7 @@ void PerceptronTest::test_calculate_combination_parameters_Hessian(void)
 }
 
 
-void PerceptronTest::test_calculate_activation(void)
+void PerceptronTest::test_calculate_activation()
 {
    message += "test_calculate_activation\n";
 
@@ -676,7 +676,7 @@ void PerceptronTest::test_calculate_activation(void)
 }
 
 
-void PerceptronTest::test_calculate_activation_derivative(void)
+void PerceptronTest::test_calculate_activation_derivative()
 {
    message += "test_calculate_activation_derivative\n";
 
@@ -744,7 +744,7 @@ void PerceptronTest::test_calculate_activation_derivative(void)
 }
 
   
-void PerceptronTest::test_calculate_activation_second_derivative(void)
+void PerceptronTest::test_calculate_activation_second_derivative()
 {
    message += "test_calculate_activation_second_derivative\n";
 
@@ -816,7 +816,7 @@ void PerceptronTest::test_calculate_activation_second_derivative(void)
 }
 
 
-void PerceptronTest::test_calculate_output(void)
+void PerceptronTest::test_calculate_output()
 {
    message += "test_calculate_output\n";
 
@@ -971,13 +971,13 @@ void PerceptronTest::test_calculate_output(void)
 }
 
 
-void PerceptronTest::test_calculate_parameters_outputs(void)
+void PerceptronTest::test_calculate_parameters_outputs()
 {
    message += "test_calculate_parameters_output\n";
 }
 
 
-void PerceptronTest::test_calculate_gradient(void)
+void PerceptronTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -1040,7 +1040,7 @@ void PerceptronTest::test_calculate_gradient(void)
 }
 
 
-void PerceptronTest::test_calculate_Hessian(void)
+void PerceptronTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 
@@ -1106,7 +1106,7 @@ void PerceptronTest::test_calculate_Hessian(void)
 }
 
 
-void PerceptronTest::test_calculate_parameters_gradient(void)
+void PerceptronTest::test_calculate_parameters_gradient()
 {
    message += "test_calculate_parameters_gradient\n";
 
@@ -1138,7 +1138,7 @@ void PerceptronTest::test_calculate_parameters_gradient(void)
 }
 
 
-void PerceptronTest::test_calculate_parameters_Hessian(void)
+void PerceptronTest::test_calculate_parameters_Hessian()
 {
    message += "test_calculate_parameters_Hessian\n";
 
@@ -1194,7 +1194,7 @@ void PerceptronTest::test_calculate_parameters_Hessian(void)
 }
 
 
-void PerceptronTest::run_test_case(void)
+void PerceptronTest::run_test_case()
 {
    message += "Running perceptron test case...\n";
 
@@ -1280,7 +1280,7 @@ void PerceptronTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

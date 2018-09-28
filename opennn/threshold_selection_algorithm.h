@@ -6,7 +6,7 @@
 /*   T H R E S H O L D   S E L E C T I O N   A L G O R I T H M   C L A S S   H E A D E R                        */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -32,13 +32,13 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
 
 /// This abstract class represents the concept of order selection algorithm for a neural network.
-/// Any derived class must implement the perform_order_selection(void) method.
+/// Any derived class must implement the perform_order_selection() method.
 
 class ThresholdSelectionAlgorithm
 {
@@ -46,7 +46,7 @@ public:
 
     // DEFAULT CONSTRUCTOR
 
-    explicit ThresholdSelectionAlgorithm(void);
+    explicit ThresholdSelectionAlgorithm();
 
     // TRAINING STRATEGY CONSTRUCTOR
 
@@ -54,7 +54,7 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit ThresholdSelectionAlgorithm(const std::string&);
+    explicit ThresholdSelectionAlgorithm(const string&);
 
     // XML CONSTRUCTOR
 
@@ -63,7 +63,7 @@ public:
 
     // DESTRUCTOR
 
-    virtual ~ThresholdSelectionAlgorithm(void);
+    virtual ~ThresholdSelectionAlgorithm();
 
     // ENUMERATIONS
 
@@ -79,19 +79,19 @@ public:
 
     struct ThresholdSelectionResults
     {
-       explicit ThresholdSelectionResults(void)
+       explicit ThresholdSelectionResults()
        {
 
        }
 
-       virtual ~ThresholdSelectionResults(void)
+       virtual ~ThresholdSelectionResults()
        {
 
        }
 
-       std::string write_stopping_condition(void) const;
+       string write_stopping_condition() const;
 
-       std::string to_string(void) const;
+       string object_to_string() const;
 
        /// Threshold of the different neural networks.
 
@@ -126,21 +126,21 @@ public:
 
     // Get methods
 
-    TrainingStrategy* get_training_strategy_pointer(void) const;
+    TrainingStrategy* get_training_strategy_pointer() const;
 
-    bool has_training_strategy(void) const;
+    bool has_training_strategy() const;
 
-    const bool& get_reserve_binary_classification_tests_data(void) const;
+    const bool& get_reserve_binary_classification_tests_data() const;
 
-    const bool& get_reserve_function_data(void) const;
+    const bool& get_reserve_function_data() const;
 
-    const bool& get_display(void) const;
+    const bool& get_display() const;
 
     // Set methods
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
-    void set_default(void);
+    void set_default();
 
     void set_reserve_binary_classification_tests_data(const bool&);
 
@@ -156,11 +156,11 @@ public:
 
     // threshold selection methods
 
-    void check(void) const;
+    void check() const;
 
     /// Performs the threshold selection for a neural network.
 
-    virtual ThresholdSelectionResults* perform_threshold_selection(void) = 0;
+    virtual ThresholdSelectionResults* perform_threshold_selection() = 0;
 
 protected:
 
@@ -189,7 +189,7 @@ protected:
 #endif // __THRESHOLDELECTIONALGORITHM_H__
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,7 +6,7 @@
 /*   U N S C A L I N G   L A Y E R   C L A S S   H E A D E R                                                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,7 +30,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 
 namespace OpenNN
@@ -47,7 +47,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit UnscalingLayer(void);
+   explicit UnscalingLayer();
 
    // UNSCALING NEURONS NUMBER CONSTRUCTOR
 
@@ -67,56 +67,56 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~UnscalingLayer(void);
+   virtual ~UnscalingLayer();
 
    // ASSIGNMENT OPERATOR
 
-   UnscalingLayer& operator = (const UnscalingLayer&);
+   UnscalingLayer& operator =(const UnscalingLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const UnscalingLayer&) const;
+   bool operator ==(const UnscalingLayer&) const;
 
    // ENUMERATIONS
 
    /// Enumeration of available methods for input variables, output variables and independent parameters scaling.  
    
-   enum UnscalingMethod{NoUnscaling, MinimumMaximum, MeanStandardDeviation};
+   enum UnscalingMethod{NoUnscaling, MinimumMaximum, MeanStandardDeviation, Logarithmic};
 
    // GET METHODS
 
    // Outputs number
 
-   size_t get_unscaling_neurons_number(void) const;
+   size_t get_unscaling_neurons_number() const;
 
    // Output variables statistics
 
-   Vector< Statistics<double> > get_statistics(void) const;
+   Vector< Statistics<double> > get_statistics() const;
 
-   Matrix<double> arrange_statistics(void) const;
-   Vector<double> arrange_minimums(void) const;
-   Vector<double> arrange_maximums(void) const;
+   Matrix<double> arrange_statistics() const;
+   Vector<double> arrange_minimums() const;
+   Vector<double> arrange_maximums() const;
 
    // Outputs unscaling method
 
-   const UnscalingMethod& get_unscaling_method(void) const;
+   const UnscalingMethod& get_unscaling_method() const;
 
-   std::string write_unscaling_method(void) const;
-   std::string write_unscaling_method_text(void) const;
+   string write_unscaling_method() const;
+   string write_unscaling_method_text() const;
 
    // Display messages
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // SET METHODS
 
-   void set(void);
+   void set();
    void set(const size_t&);
    void set(const Vector< Statistics<double> >&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
-   virtual void set_default(void);
+   virtual void set_default();
 
    // Output variables statistics
 
@@ -131,7 +131,7 @@ public:
    // Outputs unscaling method
 
    void set_unscaling_method(const UnscalingMethod&);
-   void set_unscaling_method(const std::string&);
+   void set_unscaling_method(const string&);
 
    // Display messages
 
@@ -143,11 +143,11 @@ public:
 
    // Check methods
 
-   bool is_empty(void) const;
+   bool is_empty() const;
   
    // UnscalingLayer and unscaling
 
-   void initialize_random(void);
+   void initialize_random();
 
    Vector<double> calculate_outputs(const Vector<double>&) const;
    Vector<double> calculate_derivatives(const Vector<double>&) const;
@@ -161,6 +161,10 @@ public:
    Vector<double> calculate_mean_standard_deviation_derivatives(const Vector<double>&) const;
    Vector<double> calculate_mean_standard_deviation_second_derivatives(const Vector<double>&) const;
 
+   Vector<double> calculate_logarithmic_outputs(const Vector<double>&) const;
+   Vector<double> calculate_logarithmic_derivatives(const Vector<double>&) const;
+   Vector<double> calculate_logarithmic_second_derivatives(const Vector<double>&) const;
+
    Matrix<double> arrange_Jacobian(const Vector<double>&) const;
    Vector< Matrix<double> > arrange_Hessian_form(const Vector<double>&) const;
 
@@ -168,27 +172,28 @@ public:
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    //void read_XML(   );
 
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const Vector<std::string>& ) const;
-   void write_PMML(tinyxml2::XMLPrinter&, const Vector<std::string>&) const;
+   void to_PMML(tinyxml2::XMLElement*, const Vector<string>& ) const;
+   void write_PMML(tinyxml2::XMLPrinter&, const Vector<string>&) const;
 
-   void from_PMML(const tinyxml2::XMLElement*, const Vector<std::string>& );
+   void from_PMML(const tinyxml2::XMLElement*, const Vector<string>& );
 
    // Expression methods
 
-   std::string write_none_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_minimum_maximum_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_mean_stadard_deviation_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_none_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_logarithmic_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
 
 protected:
 
@@ -213,7 +218,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

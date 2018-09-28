@@ -6,7 +6,7 @@
 /*   W E I G H T E D   S Q U A R E D   E R R O R    C L A S S   H E A D E R                                     */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,7 +30,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -47,7 +47,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit WeightedSquaredError(void);
+   explicit WeightedSquaredError();
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -71,7 +71,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~WeightedSquaredError(void);
+   virtual ~WeightedSquaredError();
 
    // STRUCTURES
 
@@ -80,32 +80,38 @@ public:
 
    // Get methods
 
-   double get_positives_weight(void) const;
-   double get_negatives_weight(void) const;
+   double get_positives_weight() const;
+   double get_negatives_weight() const;
+
+   double get_normalization_coefficient() const;
 
    // Set methods
 
    // Checking methods
 
-   void check(void) const;
+   void check() const;
 
    // Objective methods
 
-   void set_default(void);
+   void set_default();
 
    void set_positives_weight(const double&);
    void set_negatives_weight(const double&);
 
+   void set_normalization_coefficient(const double&);
+
    void set_weights(const double&, const double&);
 
-   void set_weights(void);
+   void set_weights();
 
-   double calculate_positives_loss(void) const;
-   double calculate_negatives_loss(void) const;
+   void set_normalization_coefficient();
 
-   double calculate_error(void) const;
+   double calculate_positives_loss() const;
+   double calculate_negatives_loss() const;
+
+   double calculate_error() const;
    double calculate_error(const Vector<double>&) const;
-   double calculate_selection_error(void) const;
+   double calculate_selection_error() const;
 
    double calculate_error(const double&) const;
    double calculate_error(const Vector<double>&, const double&) const;
@@ -117,31 +123,31 @@ public:
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&, const double&) const;
    Vector<double> calculate_gradient_with_normalization(const double&) const;
 
-   FirstOrderPerformance calculate_first_order_loss(void) const;
-   SecondOrderPerformance calculate_second_order_loss(void) const;
+   FirstOrderPerformance calculate_first_order_loss() const;
+   SecondOrderPerformance calculate_second_order_loss() const;
 
    // Objective terms methods
 
-   Vector<double> calculate_terms(void) const;
+   Vector<double> calculate_terms() const;
    Vector<double> calculate_terms(const Vector<double>&) const;
 
-   Matrix<double> calculate_terms_Jacobian(void) const;
+   Matrix<double> calculate_terms_Jacobian() const;
 
-   FirstOrderTerms calculate_first_order_terms(void) const;
+   FirstOrderTerms calculate_first_order_terms() const;
 
-   std::string write_error_term_type(void) const;
+   string write_error_term_type() const;
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    //void read_XML(   );
 
-//   std::string write_information(void) const;
+//   string write_information() const;
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
 private:
 
@@ -153,7 +159,9 @@ private:
 
    double negatives_weight;
 
+   /// Coefficient of normalization for the calculation of the training error.
 
+   double normalization_coefficient;
 };
 
 }
@@ -162,7 +170,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

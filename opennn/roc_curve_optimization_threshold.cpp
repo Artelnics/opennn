@@ -6,7 +6,7 @@
 /*   R O C   C U R V E   O P T I M I Z A T I O N   T H R E S H O L D   C L A S S                                    */
 /*                                                                                                                  */
 /*   Fernando Gomez                                                                                                 */
-/*   Artelnics - Making intelligent use of data                                                                     */
+/*   Artificial Intelligence Techniques SL                                                                     */
 /*   fernandogomez@artelnics.com                                                                                    */
 /*                                                                                                                  */
 /********************************************************************************************************************/
@@ -22,7 +22,7 @@ namespace OpenNN {
 
 /// Default constructor.
 
-ROCCurveOptimizationThreshold::ROCCurveOptimizationThreshold(void)
+ROCCurveOptimizationThreshold::ROCCurveOptimizationThreshold()
     : ThresholdSelectionAlgorithm()
 {
     set_default();
@@ -56,7 +56,7 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThreshold(const tinyxml2::XML
 /// File constructor.
 /// @param file_name Name of XML roc curve optimization file.
 
-ROCCurveOptimizationThreshold::ROCCurveOptimizationThreshold(const std::string& file_name)
+ROCCurveOptimizationThreshold::ROCCurveOptimizationThreshold(const string& file_name)
     : ThresholdSelectionAlgorithm(file_name)
 {
     load(file_name);
@@ -68,44 +68,44 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThreshold(const std::string& 
 
 /// Destructor.
 
-ROCCurveOptimizationThreshold::~ROCCurveOptimizationThreshold(void)
+ROCCurveOptimizationThreshold::~ROCCurveOptimizationThreshold()
 {
 }
 
 // METHODS
 
-// const double& get_minimum_threshold(void) const method
+// const double& get_minimum_threshold() const method
 
 /// Returns the minimum threshold of the algorithm.
 
-const double& ROCCurveOptimizationThreshold::get_minimum_threshold(void) const
+const double& ROCCurveOptimizationThreshold::get_minimum_threshold() const
 {
     return(minimum_threshold);
 }
 
-// const double& get_maximum_threshold(void) const method
+// const double& get_maximum_threshold() const method
 
 /// Returns the maximum threshold of the algorithm.
 
-const double& ROCCurveOptimizationThreshold::get_maximum_threshold(void) const
+const double& ROCCurveOptimizationThreshold::get_maximum_threshold() const
 {
     return(maximum_threshold);
 }
 
-// const double& get_step(void) const method
+// const double& get_step() const method
 
 /// Returns the step for the sucesive iterations of the algorithm.
 
-const double& ROCCurveOptimizationThreshold::get_step(void) const
+const double& ROCCurveOptimizationThreshold::get_step() const
 {
     return(step);
 }
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the model selection object to their default values:
 
-void ROCCurveOptimizationThreshold::set_default(void)
+void ROCCurveOptimizationThreshold::set_default()
 {
     minimum_threshold = 0.0;
 
@@ -125,13 +125,13 @@ void ROCCurveOptimizationThreshold::set_minimum_threshold(const double& new_mini
 
     if(new_minimum_threshold <= 0 || new_minimum_threshold >= 1)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ROCCurveOptimizationThreshold class.\n"
                << "void set_minimum_threshold(const double&) method.\n"
                << "Minimum threshold must be between 0 and 1.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -150,13 +150,13 @@ void ROCCurveOptimizationThreshold::set_maximum_threshold(const double& new_maxi
 
     if(new_maximum_threshold <= 0 || new_maximum_threshold >= 1)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ROCCurveOptimizationThreshold class.\n"
                << "void set_maximum_threshold(const double&) method.\n"
                << "Maximum threshold must be between 0 and 1.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -175,13 +175,13 @@ void ROCCurveOptimizationThreshold::set_step(const double& new_step)
 
     if(new_step <= 0 || new_step >= 1)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ROCCurveOptimizationThreshold class.\n"
                << "void set_step(const double&) method.\n"
                << "Step must be between 0 and 1.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -189,11 +189,11 @@ void ROCCurveOptimizationThreshold::set_step(const double& new_step)
     step = new_step;
 }
 
-// ROCCurveOptimizationThresholdResults* perform_order_selection(void) method
+// ROCCurveOptimizationThresholdResults* perform_order_selection() method
 
 /// Perform the decision threshold selection optimizing the ROC curve distance.
 
-ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOptimizationThreshold::perform_threshold_selection(void)
+ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOptimizationThreshold::perform_threshold_selection()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -225,13 +225,13 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOpt
 
     bool end = false;
 
-    while (!end)
+    while(!end)
     {
         current_confusion = calculate_confusion(current_threshold);
         current_binary_classification_test = calculate_binary_classification_test(current_confusion);
 
-        current_roc_curve_distance = (1-current_binary_classification_test[3])*(1-current_binary_classification_test[3]) +
-                                     (current_binary_classification_test[2]-1)*(current_binary_classification_test[2]-1);
+        current_roc_curve_distance =(1-current_binary_classification_test[3])*(1-current_binary_classification_test[3]) +
+                                    (current_binary_classification_test[2]-1)*(current_binary_classification_test[2]-1);
 
         current_roc_curve_distance = sqrt(current_roc_curve_distance);
 
@@ -247,8 +247,8 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOpt
             results->function_data.push_back(current_roc_curve_distance);
         }
 
-        if (current_roc_curve_distance < optimum_roc_curve_distance ||
-            (current_roc_curve_distance == optimum_roc_curve_distance && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
+        if(current_roc_curve_distance < optimum_roc_curve_distance ||
+           (current_roc_curve_distance == optimum_roc_curve_distance && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
         {
             optimum_roc_curve_distance = current_roc_curve_distance;
             optimum_threshold = current_threshold;
@@ -257,50 +257,50 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOpt
 
         iterations++;
 
-        if (current_confusion(0,1) == 0 && current_confusion(1,0) == 0)
+        if(current_confusion(0,1) == 0 && current_confusion(1,0) == 0)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Perfect confusion matrix reached." << std::endl;
+                cout << "Perfect confusion matrix reached." << endl;
             }
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
         }
-        else if (current_threshold == maximum_threshold)
+        else if(current_threshold == maximum_threshold)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Algorithm finished \n";
+                cout << "Algorithm finished \n";
             }
 
             results->stopping_condition = ThresholdSelectionAlgorithm::AlgorithmFinished;
         }
 
-        if (display)
+        if(display)
         {
-            std::cout << "Iteration: " << iterations << std::endl;
-            std::cout << "Current threshold: " << current_threshold << std::endl;
-            std::cout << "Current error: " << current_binary_classification_test[1] << std::endl;
-            std::cout << "Current sensitivity: " << current_binary_classification_test[2] << std::endl;
-            std::cout << "Current specifity: " << current_binary_classification_test[3] << std::endl;
-            std::cout << "Current ROC curve distance: " << current_roc_curve_distance << std::endl;
-            std::cout << "Confusion matrix: " << std::endl
-                      << current_confusion << std::endl;
-            std::cout << std::endl;
+            cout << "Iteration: " << iterations << endl;
+            cout << "Current threshold: " << current_threshold << endl;
+            cout << "Current error: " << current_binary_classification_test[1] << endl;
+            cout << "Current sensitivity: " << current_binary_classification_test[2] << endl;
+            cout << "Current specifity: " << current_binary_classification_test[3] << endl;
+            cout << "Current ROC curve distance: " << current_roc_curve_distance << endl;
+            cout << "Confusion matrix: " << endl
+                      << current_confusion << endl;
+            cout << endl;
         }
 
         current_threshold = fmin(maximum_threshold, current_threshold + step);
 
     }
 
-    if (display)
+    if(display)
     {
-        std::cout << "Optimum threshold: " << optimum_threshold << std::endl;
-        std::cout << "Optimal error: " << optimal_binary_classification_test[1] << std::endl;
+        cout << "Optimum threshold: " << optimum_threshold << endl;
+        cout << "Optimal error: " << optimal_binary_classification_test[1] << endl;
     }
 
     results->iterations_number = iterations;
@@ -312,16 +312,16 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOpt
     return(results);
 }
 
-// Matrix<std::string> to_string_matrix(void) const method
+// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<std::string> ROCCurveOptimizationThreshold::to_string_matrix(void) const
+Matrix<string> ROCCurveOptimizationThreshold::to_string_matrix() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
-    Vector<std::string> labels;
-    Vector<std::string> values;
+    Vector<string> labels;
+    Vector<string> values;
 
     // Minimum threshold
 
@@ -353,23 +353,23 @@ Matrix<std::string> ROCCurveOptimizationThreshold::to_string_matrix(void) const
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
 
-   Matrix<std::string> string_matrix(rows_number, columns_number);
+   Matrix<string> string_matrix(rows_number, columns_number);
 
-   string_matrix.set_column(0, labels);
-   string_matrix.set_column(1, values);
+   string_matrix.set_column(0, labels, "");
+   string_matrix.set_column(1, values, "");
 
     return(string_matrix);
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the roc curve optimization parameters, the stopping criteria
 /// and other user stuff concerning the roc curve optimization object.
 
-tinyxml2::XMLDocument* ROCCurveOptimizationThreshold::to_XML(void) const
+tinyxml2::XMLDocument* ROCCurveOptimizationThreshold::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -474,7 +474,7 @@ tinyxml2::XMLDocument* ROCCurveOptimizationThreshold::to_XML(void) const
 
 void ROCCurveOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     //file_stream.OpenElement("ROCCurveOptimizationThreshold");
 
@@ -537,13 +537,13 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ROCCurveOptimizationThreshold class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "ROCCurveOptimizationThreshold element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Minimum threshold
@@ -558,9 +558,9 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            {
               set_minimum_threshold(new_minimum_threshold);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -577,9 +577,9 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            {
               set_maximum_threshold(new_maximum_threshold);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -596,9 +596,9 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            {
               set_step(new_step);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -609,15 +609,15 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
 
         if(element)
         {
-            const std::string new_reserve_function_data = element->GetText();
+            const string new_reserve_function_data = element->GetText();
 
             try
             {
                 set_reserve_function_data(new_reserve_function_data != "0");
             }
-            catch(const std::logic_error& e)
+            catch(const logic_error& e)
             {
-               std::cout << e.what() << std::endl;
+               cout << e.what() << endl;
             }
         }
     }
@@ -628,27 +628,27 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
 
 //        if(element)
 //        {
-//           const std::string new_display = element->GetText();
+//           const string new_display = element->GetText();
 
 //           try
 //           {
 //              set_display(new_display != "0");
 //           }
-//           catch(const std::logic_error& e)
+//           catch(const logic_error& e)
 //           {
-//              std::cout << e.what() << std::endl;
+//              cout << e.what() << endl;
 //           }
 //        }
 //    }
 
 }
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the roc curve optimization object.
 /// @param file_name Name of roc curve optimization XML-type file.
 
-void ROCCurveOptimizationThreshold::save(const std::string& file_name) const
+void ROCCurveOptimizationThreshold::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -658,12 +658,12 @@ void ROCCurveOptimizationThreshold::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a roc curve optimization object from a XML-type file.
 /// @param file_name Name of roc curve optimization XML-type file.
 
-void ROCCurveOptimizationThreshold::load(const std::string& file_name)
+void ROCCurveOptimizationThreshold::load(const string& file_name)
 {
    set_default();
 
@@ -671,13 +671,13 @@ void ROCCurveOptimizationThreshold::load(const std::string& file_name)
 
    if(document.LoadFile(file_name.c_str()))
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ROCCurveOptimizationThreshold class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
@@ -688,7 +688,7 @@ void ROCCurveOptimizationThreshold::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

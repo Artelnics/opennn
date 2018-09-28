@@ -32,100 +32,100 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit TestingAnalysisTest(void);
+   explicit TestingAnalysisTest();
 
 
    // DESTRUCTOR
 
-   virtual ~TestingAnalysisTest(void);
+   virtual ~TestingAnalysisTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_neural_network_pointer(void);
-   void test_get_data_set_pointer(void);
+   void test_get_neural_network_pointer();
+   void test_get_data_set_pointer();
    
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set_neural_network_pointer(void);
-   void test_set_data_set_pointer(void);
+   void test_set_neural_network_pointer();
+   void test_set_data_set_pointer();
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Target and output data methods
 
-   void test_calculate_target_output_data(void);
+   void test_calculate_target_output_data();
 
    // Error data methods
 
-   void test_calculate_error_data(void);
+   void test_calculate_error_data();
 
-   void test_calculate_error_data_statistics(void);
-   void test_calculate_error_data_statistics_matrices(void);
+   void test_calculate_error_data_statistics();
+   void test_calculate_error_data_statistics_matrices();
 
-   void test_calculate_error_data_histograms(void);
+   void test_calculate_error_data_histograms();
 
    // Linear regression parameters methods
 
-   void test_calculate_linear_regression_parameters(void);
-   void test_print_linear_regression_parameters(void);
-   void test_save_linear_regression_parameters(void);
+   void test_calculate_linear_regression_parameters();
+   void test_print_linear_regression_parameters();
+   void test_save_linear_regression_parameters();
 
-   void test_perform_linear_regression_parameters(void);
+   void test_perform_linear_regression_parameters();
 
-   void test_print_linear_regression_analysis(void);
-   void test_save_linear_regression_analysis(void);
+   void test_print_linear_regression_analysis();
+   void test_save_linear_regression_analysis();
 
    // Binary classification test methods
 
-   void test_calculate_binary_classification_test(void);
-   void test_print_binary_classification_test(void);
+   void test_calculate_binary_classification_test();
+   void test_print_binary_classification_test();
 
    // Confusion matrix methods
 
-   void test_calculate_confusion(void);
-   void test_print_confusion(void);
+   void test_calculate_confusion();
+   void test_print_confusion();
 
    // ROC curve methods
 
-   void test_calculate_Wilcoxon_parameter(void);
+   void test_calculate_Wilcoxon_parameter();
 
-   void test_calculate_roc_curve(void);
-   void test_calculate_area_under_curve(void);
-   void test_calculate_optimal_threshold (void);
+   void test_calculate_roc_curve();
+   void test_calculate_area_under_curve();
+   void test_calculate_optimal_threshold ();
 
    // Lift chart methods
 
-   void test_calculate_cumulative_gain(void);
-   void test_calculate_lift_chart(void);
+   void test_calculate_cumulative_gain();
+   void test_calculate_lift_chart();
 
    // Calibration plot
 
-   void test_calculate_calibration_plot(void);
+   void test_calculate_calibration_plot();
 
    // Binary classificaton rates
 
-   void test_calculate_true_positive_instances(void);
-   void test_calculate_false_positive_instances(void);
-   void test_calculate_false_negative_instances(void);
-   void test_calculate_true_negative_instances(void);
+   void test_calculate_true_positive_instances();
+   void test_calculate_false_positive_instances();
+   void test_calculate_false_negative_instances();
+   void test_calculate_true_negative_instances();
 
    // Multiple classification rates
 
-   void test_calculate_multiple_classification_rates(void);
+   void test_calculate_multiple_classification_rates();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -133,7 +133,7 @@ public:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

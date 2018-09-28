@@ -21,21 +21,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-ProbabilisticLayerTest::ProbabilisticLayerTest(void) : UnitTesting()
+ProbabilisticLayerTest::ProbabilisticLayerTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-ProbabilisticLayerTest::~ProbabilisticLayerTest(void)
+ProbabilisticLayerTest::~ProbabilisticLayerTest()
 {
 }
 
 
 // METHODS
 
-void ProbabilisticLayerTest::test_constructor(void)
+void ProbabilisticLayerTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -59,13 +59,13 @@ void ProbabilisticLayerTest::test_constructor(void)
 }
 
 
-void ProbabilisticLayerTest::test_destructor(void)
+void ProbabilisticLayerTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void ProbabilisticLayerTest::test_assignment_operator(void)
+void ProbabilisticLayerTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -83,7 +83,7 @@ void ProbabilisticLayerTest::test_assignment_operator(void)
 }
 
 
-void ProbabilisticLayerTest::test_count_probabilistic_neurons_number(void)
+void ProbabilisticLayerTest::test_count_probabilistic_neurons_number()
 {
    message += "test_count_probabilistic_neurons_number\n";
 
@@ -102,31 +102,31 @@ void ProbabilisticLayerTest::test_count_probabilistic_neurons_number(void)
 }
 
 
-void ProbabilisticLayerTest::test_set(void)
+void ProbabilisticLayerTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void ProbabilisticLayerTest::test_set_default(void)
+void ProbabilisticLayerTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void ProbabilisticLayerTest::test_get_display(void)
+void ProbabilisticLayerTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void ProbabilisticLayerTest::test_set_display(void)
+void ProbabilisticLayerTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void ProbabilisticLayerTest::test_initialize_random(void)
+void ProbabilisticLayerTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -138,7 +138,7 @@ void ProbabilisticLayerTest::test_initialize_random(void)
 }
 
 
-void ProbabilisticLayerTest::test_calculate_outputs(void)
+void ProbabilisticLayerTest::test_calculate_outputs()
 {
    message += "test_calculate_outputs\n";
 
@@ -171,7 +171,7 @@ void ProbabilisticLayerTest::test_calculate_outputs(void)
 }
 
 
-void ProbabilisticLayerTest::test_calculate_Jacobian(void)
+void ProbabilisticLayerTest::test_calculate_Jacobian()
 {
    message += "test_calculate_Jacobian\n";
 
@@ -202,7 +202,7 @@ void ProbabilisticLayerTest::test_calculate_Jacobian(void)
 }
 
 
-void ProbabilisticLayerTest::test_calculate_Hessian_form(void)
+void ProbabilisticLayerTest::test_calculate_Hessian_form()
 {
     message += "test_calculate_Hessian_form\n";
 
@@ -235,7 +235,7 @@ void ProbabilisticLayerTest::test_calculate_Hessian_form(void)
 }
 
 
-void ProbabilisticLayerTest::test_to_XML(void)
+void ProbabilisticLayerTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -270,7 +270,7 @@ void ProbabilisticLayerTest::test_to_XML(void)
 }
 
 
-void ProbabilisticLayerTest::test_from_XML(void)
+void ProbabilisticLayerTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -287,7 +287,7 @@ void ProbabilisticLayerTest::test_from_XML(void)
 }
 
 
-void ProbabilisticLayerTest::run_test_case(void)
+void ProbabilisticLayerTest::run_test_case()
 {
    message += "Running probabilistic layer test case...\n";
 
@@ -339,7 +339,7 @@ void ProbabilisticLayerTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

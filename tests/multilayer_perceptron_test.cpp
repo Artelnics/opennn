@@ -20,14 +20,14 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-MultilayerPerceptronTest::MultilayerPerceptronTest(void) : UnitTesting()
+MultilayerPerceptronTest::MultilayerPerceptronTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-MultilayerPerceptronTest::~MultilayerPerceptronTest(void)
+MultilayerPerceptronTest::~MultilayerPerceptronTest()
 {
 }
 
@@ -35,7 +35,7 @@ MultilayerPerceptronTest::~MultilayerPerceptronTest(void)
 // METHODS
 
 
-void MultilayerPerceptronTest::test_constructor(void)
+void MultilayerPerceptronTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -74,13 +74,13 @@ void MultilayerPerceptronTest::test_constructor(void)
 }
 
 
-void MultilayerPerceptronTest::test_destructor(void)
+void MultilayerPerceptronTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void MultilayerPerceptronTest::test_assignment_operator(void)
+void MultilayerPerceptronTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -94,7 +94,7 @@ void MultilayerPerceptronTest::test_assignment_operator(void)
 }
 
 
-void MultilayerPerceptronTest::test_count_inputs_number(void)
+void MultilayerPerceptronTest::test_count_inputs_number()
 {
    message += "test_count_inputs_number\n";
 
@@ -112,7 +112,7 @@ void MultilayerPerceptronTest::test_count_inputs_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_count_layers_perceptrons_number(void)
+void MultilayerPerceptronTest::test_count_layers_perceptrons_number()
 {
    message += "test_count_layers_perceptrons_number\n";
 
@@ -136,7 +136,7 @@ void MultilayerPerceptronTest::test_count_layers_perceptrons_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_count_outputs_number(void)
+void MultilayerPerceptronTest::test_count_outputs_number()
 {
    message += "test_count_outputs_number\n";
 
@@ -147,7 +147,7 @@ void MultilayerPerceptronTest::test_count_outputs_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_count_perceptrons_number(void)
+void MultilayerPerceptronTest::test_count_perceptrons_number()
 {
    message += "test_count_perceptrons_number\n";
 
@@ -177,7 +177,7 @@ void MultilayerPerceptronTest::test_count_perceptrons_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_count_cumulative_perceptrons_number(void)
+void MultilayerPerceptronTest::test_count_cumulative_perceptrons_number()
 {
    message += "test_count_cumulative_perceptrons_number\n";
 
@@ -223,7 +223,7 @@ void MultilayerPerceptronTest::test_count_cumulative_perceptrons_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_layers_activation_function(void)
+void MultilayerPerceptronTest::test_get_layers_activation_function()
 {
    message += "test_get_layers_activation_function\n";
 
@@ -239,13 +239,13 @@ void MultilayerPerceptronTest::test_get_layers_activation_function(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_layers_activation_function_name(void)
+void MultilayerPerceptronTest::test_get_layers_activation_function_name()
 {
    message += "test_get_layers_activation_function_name\n";
 }
 
 
-void MultilayerPerceptronTest::test_get_layers(void)
+void MultilayerPerceptronTest::test_get_layers()
 {
    message += "test_get_layers\n";
 
@@ -259,7 +259,7 @@ void MultilayerPerceptronTest::test_get_layers(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_layer(void)
+void MultilayerPerceptronTest::test_get_layer()
 {
    message += "test_get_layer\n";
 
@@ -283,7 +283,7 @@ void MultilayerPerceptronTest::test_get_layer(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_layers_number(void)
+void MultilayerPerceptronTest::test_get_layers_number()
 {
    message += "test_get_layers_number\n";
 
@@ -309,7 +309,7 @@ void MultilayerPerceptronTest::test_get_layers_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_count_parameters_number(void)
+void MultilayerPerceptronTest::test_count_parameters_number()
 {
    message += "test_count_parameters_number\n";
 
@@ -327,7 +327,7 @@ void MultilayerPerceptronTest::test_count_parameters_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_cumulative_parameters_number(void)
+void MultilayerPerceptronTest::test_get_cumulative_parameters_number()
 {
    message += "test_get_cumulative_parameters_number\n";
 
@@ -337,7 +337,7 @@ void MultilayerPerceptronTest::test_get_cumulative_parameters_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_arrange_layers_parameters_number(void)
+void MultilayerPerceptronTest::test_arrange_layers_parameters_number()
 {   
    message += "test_arrange_layers_parameters_number\n";
    
@@ -375,19 +375,19 @@ void MultilayerPerceptronTest::test_arrange_layers_parameters_number(void)
 }
 
 
-void MultilayerPerceptronTest::test_set(void)
+void MultilayerPerceptronTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void MultilayerPerceptronTest::test_set_default(void)
+void MultilayerPerceptronTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void MultilayerPerceptronTest::test_set_parameters(void)
+void MultilayerPerceptronTest::test_set_parameters()
 {
 	message += "test_set_parameters\n";
 
@@ -407,7 +407,7 @@ void MultilayerPerceptronTest::test_set_parameters(void)
 }
 
 
-void MultilayerPerceptronTest::test_arrange_layers_biases(void)
+void MultilayerPerceptronTest::test_arrange_layers_biases()
 {
    message += "test_arrange_layers_biases\n";
 
@@ -427,7 +427,7 @@ void MultilayerPerceptronTest::test_arrange_layers_biases(void)
 }
 
 
-void MultilayerPerceptronTest::test_arrange_layers_synaptic_weights(void)
+void MultilayerPerceptronTest::test_arrange_layers_synaptic_weights()
 {
    message += "test_arrange_layers_synaptic_weights\n";
 
@@ -455,7 +455,7 @@ void MultilayerPerceptronTest::test_arrange_layers_synaptic_weights(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_layers_parameters(void)
+void MultilayerPerceptronTest::test_get_layers_parameters()
 {
    message += "test_get_layers_parameters\n";
 
@@ -476,7 +476,7 @@ void MultilayerPerceptronTest::test_get_layers_parameters(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_parameter_indices(void)
+void MultilayerPerceptronTest::test_get_parameter_indices()
 {
    message += "test_get_parameter_indices\n";
 
@@ -600,7 +600,7 @@ void MultilayerPerceptronTest::test_get_parameter_indices(void)
 }
 
 
-void MultilayerPerceptronTest::test_arrange_parameters_indices(void)
+void MultilayerPerceptronTest::test_arrange_parameters_indices()
 {
    message += "test_arrange_parameters_indices\n";
 
@@ -661,7 +661,7 @@ void MultilayerPerceptronTest::test_arrange_parameters_indices(void)
 
 
 
-void MultilayerPerceptronTest::test_set_layers_biases(void)
+void MultilayerPerceptronTest::test_set_layers_biases()
 {
    message += "test_set_layers_biases\n";
 
@@ -684,7 +684,7 @@ void MultilayerPerceptronTest::test_set_layers_biases(void)
 }
 
 
-void MultilayerPerceptronTest::test_set_layers_synaptic_weights(void)
+void MultilayerPerceptronTest::test_set_layers_synaptic_weights()
 {
    message += "test_set_layers_synaptic_weights\n";
 
@@ -708,7 +708,7 @@ void MultilayerPerceptronTest::test_set_layers_synaptic_weights(void)
 }
 
 
-void MultilayerPerceptronTest::test_set_layers_parameters(void)
+void MultilayerPerceptronTest::test_set_layers_parameters()
 {
    message += "test_set_layers_parameters\n";
 
@@ -734,25 +734,25 @@ void MultilayerPerceptronTest::test_set_layers_parameters(void)
 }
 
 
-void MultilayerPerceptronTest::test_get_display(void)
+void MultilayerPerceptronTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void MultilayerPerceptronTest::test_set_layers_activation_function(void)
+void MultilayerPerceptronTest::test_set_layers_activation_function()
 {
    message += "test_set_layers_activation_function\n";
 }
 
 
-void MultilayerPerceptronTest::test_set_display(void)
+void MultilayerPerceptronTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void MultilayerPerceptronTest::test_is_empty(void)
+void MultilayerPerceptronTest::test_is_empty()
 {
    message += "test_is_empty\n";
 
@@ -772,7 +772,7 @@ void MultilayerPerceptronTest::test_is_empty(void)
 }
 
 
-void MultilayerPerceptronTest::test_grow_input(void)
+void MultilayerPerceptronTest::test_grow_input()
 {
    message += "test_grow_input\n";
 
@@ -788,7 +788,7 @@ void MultilayerPerceptronTest::test_grow_input(void)
 }
 
 
-void MultilayerPerceptronTest::test_grow_layer(void)
+void MultilayerPerceptronTest::test_grow_layer()
 {
    message += "test_grow_layer\n";
 
@@ -798,7 +798,7 @@ void MultilayerPerceptronTest::test_grow_layer(void)
 }
 
 
-void MultilayerPerceptronTest::test_prune_input(void)
+void MultilayerPerceptronTest::test_prune_input()
 {
    message += "test_prune_input\n";
 
@@ -824,7 +824,7 @@ void MultilayerPerceptronTest::test_prune_input(void)
 }
 
 
-void MultilayerPerceptronTest::test_prune_output(void)
+void MultilayerPerceptronTest::test_prune_output()
 {
    message += "test_prune_output\n";
 
@@ -852,7 +852,7 @@ void MultilayerPerceptronTest::test_prune_output(void)
 }
 
 
-void MultilayerPerceptronTest::test_prune_layer(void)
+void MultilayerPerceptronTest::test_prune_layer()
 {
    message += "test_prune_layer\n";
 
@@ -862,7 +862,7 @@ void MultilayerPerceptronTest::test_prune_layer(void)
 }
 
 
-void MultilayerPerceptronTest::test_arrange_parameters(void)   
+void MultilayerPerceptronTest::test_arrange_parameters()   
 {
    message += "test_arrange_parameters\n";
 
@@ -905,7 +905,7 @@ void MultilayerPerceptronTest::test_arrange_parameters(void)
 }
 
 
-void MultilayerPerceptronTest::test_initialize_random(void)
+void MultilayerPerceptronTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -934,7 +934,7 @@ void MultilayerPerceptronTest::test_initialize_random(void)
 }
 
 
-void MultilayerPerceptronTest::test_initialize_parameters(void)
+void MultilayerPerceptronTest::test_initialize_parameters()
 {
    message += "test_initialize_parameters\n";
 
@@ -951,19 +951,19 @@ void MultilayerPerceptronTest::test_initialize_parameters(void)
 }
 
 
-void MultilayerPerceptronTest::test_initialize_biases(void)
+void MultilayerPerceptronTest::test_initialize_biases()
 {
    message += "test_initialize_biases\n";
 }
 
 
-void MultilayerPerceptronTest::test_initialize_synaptic_weights(void)
+void MultilayerPerceptronTest::test_initialize_synaptic_weights()
 {
    message += "test_initialize_synaptic_weights\n";
 }
 
 
-void MultilayerPerceptronTest::test_randomize_parameters_uniform(void)
+void MultilayerPerceptronTest::test_randomize_parameters_uniform()
 {
    message += "test_randomize_parameters_uniform\n";
 
@@ -980,7 +980,7 @@ void MultilayerPerceptronTest::test_randomize_parameters_uniform(void)
 }
 
 
-void MultilayerPerceptronTest::test_randomize_parameters_normal(void)
+void MultilayerPerceptronTest::test_randomize_parameters_normal()
 {
    message += "test_randomize_parameters_normal\n";
 
@@ -996,7 +996,7 @@ void MultilayerPerceptronTest::test_randomize_parameters_normal(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_parameters_norm(void)
+void MultilayerPerceptronTest::test_calculate_parameters_norm()
 {
    message += "test_calculate_parameters_norm\n";
 
@@ -1088,7 +1088,7 @@ void MultilayerPerceptronTest::test_calculate_parameters_norm(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_outputs(void)
+void MultilayerPerceptronTest::test_calculate_outputs()
 {
    message += "test_calculate_outputs\n";
 
@@ -1211,7 +1211,7 @@ void MultilayerPerceptronTest::test_calculate_outputs(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_Jacobian()
 {
    message += "test_calculate_Jacobian\n";
 
@@ -1335,11 +1335,11 @@ void MultilayerPerceptronTest::test_calculate_Jacobian(void)
 
 // @todo
 
-void MultilayerPerceptronTest::test_calculate_Hessian_form(void)
+void MultilayerPerceptronTest::test_calculate_Hessian_form()
 {
    message += "test_calculate_Hessian_form\n";
 
-   std::cout.precision(2);
+   cout.precision(2);
 
    NumericalDifferentiation nd;
 
@@ -1603,7 +1603,7 @@ void MultilayerPerceptronTest::test_calculate_Hessian_form(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layer_combination_combination(void)
+void MultilayerPerceptronTest::test_calculate_layer_combination_combination()
 {
    message += "test_calculate_layer_combination_combination\n";   
 
@@ -1686,11 +1686,11 @@ void MultilayerPerceptronTest::test_calculate_layer_combination_combination(void
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layer_combination_combination_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_layer_combination_combination_Jacobian()
 {
    message += "test_calculate_layer_combination_combination_Jacobian\n";
 
-   std::cout.precision(2);
+   cout.precision(2);
 
    NumericalDifferentiation nd;
 
@@ -1833,7 +1833,7 @@ void MultilayerPerceptronTest::test_calculate_layer_combination_combination_Jaco
 }
 
 
-void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination(void)
+void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination()
 {
    message += "test_calculate_interlayer_combination_combination\n";
 
@@ -1915,7 +1915,7 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
 
 // @todo 
 
-void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination_Jacobian()
 {
    message += "test_calculate_interlayer_combination_combination_Jacobian\n";
 
@@ -2076,7 +2076,7 @@ void MultilayerPerceptronTest::test_calculate_interlayer_combination_combination
 }
 
 
-void MultilayerPerceptronTest::test_calculate_interlayers_combination_combination_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_interlayers_combination_combination_Jacobian()
 {
    message += "test_calculate_interlayers_combination_combination_Jacobian\n";
 
@@ -2449,7 +2449,7 @@ void MultilayerPerceptronTest::test_calculate_interlayers_combination_combinatio
    }
 }
 
-void MultilayerPerceptronTest::test_calculate_output_layers_delta(void)
+void MultilayerPerceptronTest::test_calculate_output_layers_delta()
 {
    message += "test_calculate_output_layers_delta\n";
 
@@ -2615,9 +2615,9 @@ void MultilayerPerceptronTest::test_calculate_output_layers_delta(void)
 }
 
 
-//@todo
+// @todo
 
-void MultilayerPerceptronTest::test_calculate_output_interlayers_Delta(void)
+void MultilayerPerceptronTest::test_calculate_output_interlayers_Delta()
 {
    message += "test_calculate_output_interlayers_Delta\n";
 
@@ -3195,11 +3195,11 @@ void MultilayerPerceptronTest::test_calculate_output_interlayers_Delta(void)
 
 // @todo
 
-void MultilayerPerceptronTest::test_calculate_parameters_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_parameters_Jacobian()
 {
    message += "test_calculate_parameters_Jacobian\n";
 
-   std::cout.precision(2);
+   cout.precision(2);
 
    NumericalDifferentiation nd;
 
@@ -3315,9 +3315,9 @@ void MultilayerPerceptronTest::test_calculate_parameters_Jacobian(void)
 }
 
 
-// todo
+// @todo
 
-void MultilayerPerceptronTest::test_calculate_parameters_Hessian_form(void)
+void MultilayerPerceptronTest::test_calculate_parameters_Hessian_form()
 {
    message += "test_calculate_parameters_Hessian_form\n";
 
@@ -3788,7 +3788,7 @@ void MultilayerPerceptronTest::test_calculate_parameters_Hessian_form(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_combination(void)
+void MultilayerPerceptronTest::test_calculate_layers_combination()
 {
    message += "test_calculate_layers_combination\n";
 
@@ -3807,19 +3807,19 @@ void MultilayerPerceptronTest::test_calculate_layers_combination(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_combination_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_layers_combination_Jacobian()
 {
    message += "test_calculate_layers_combination_Jacobian\n";
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_combination_parameters_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_layers_combination_parameters_Jacobian()
 {
    message += "test_calculate_layers_combination_parameters_Jacobian\n";
 }
 
 
-void MultilayerPerceptronTest::test_calculate_perceptrons_combination_parameters_gradient(void)
+void MultilayerPerceptronTest::test_calculate_perceptrons_combination_parameters_gradient()
 {
    message += "test_calculate_perceptrons_combination_parameters_gradient\n";
 
@@ -3844,7 +3844,7 @@ void MultilayerPerceptronTest::test_calculate_perceptrons_combination_parameters
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_activation(void)
+void MultilayerPerceptronTest::test_calculate_layers_activation()
 {
    message += "test_calculate_layers_activation\n";
 
@@ -3879,7 +3879,7 @@ void MultilayerPerceptronTest::test_calculate_layers_activation(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_activation_derivative(void)
+void MultilayerPerceptronTest::test_calculate_layers_activation_derivative()
 {
    message += "test_calculate_layers_activation_derivative\n";
 
@@ -3909,7 +3909,7 @@ void MultilayerPerceptronTest::test_calculate_layers_activation_derivative(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_activation_second_derivative(void)
+void MultilayerPerceptronTest::test_calculate_layers_activation_second_derivative()
 {
    message += "test_calculate_layers_activation_second_derivative\n";
 
@@ -3940,7 +3940,7 @@ void MultilayerPerceptronTest::test_calculate_layers_activation_second_derivativ
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_Jacobian(void)
+void MultilayerPerceptronTest::test_calculate_layers_Jacobian()
 {
    message += "test_calculate_layers_Jacobian\n";
 
@@ -4014,7 +4014,7 @@ void MultilayerPerceptronTest::test_calculate_layers_Jacobian(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_layers_Hessian_form(void)
+void MultilayerPerceptronTest::test_calculate_layers_Hessian_form()
 {
    message += "test_calculate_layers_Hessian_form\n";
 
@@ -4074,7 +4074,7 @@ void MultilayerPerceptronTest::test_calculate_layers_Hessian_form(void)
 }
 
 
-void MultilayerPerceptronTest::test_calculate_first_order_forward_propagation(void)
+void MultilayerPerceptronTest::test_calculate_first_order_forward_propagation()
 {
    message += "test_calculate_first_order_forward_propagation\n";
 
@@ -4099,7 +4099,7 @@ void MultilayerPerceptronTest::test_calculate_first_order_forward_propagation(vo
 }
 
 
-void MultilayerPerceptronTest::test_calculate_second_order_forward_propagation(void)
+void MultilayerPerceptronTest::test_calculate_second_order_forward_propagation()
 {
    message += "test_calculate_second_order_forward_propagation\n";
 
@@ -4125,16 +4125,16 @@ void MultilayerPerceptronTest::test_calculate_second_order_forward_propagation(v
 }
 
 
-// todo
+// @todo
 
-void MultilayerPerceptronTest::test_write_expression(void)
+void MultilayerPerceptronTest::test_write_expression()
 {
    message += "test_write_expression\n";
 
    Vector<size_t> architecture;
 
    MultilayerPerceptron n;
-   std::string expression;
+   string expression;
 
    // Test
 
@@ -4179,7 +4179,7 @@ void MultilayerPerceptronTest::test_write_expression(void)
 }
 
 
-void MultilayerPerceptronTest::test_to_XML(void)
+void MultilayerPerceptronTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -4203,7 +4203,7 @@ void MultilayerPerceptronTest::test_to_XML(void)
 }
 
 
-void MultilayerPerceptronTest::test_from_XML(void)
+void MultilayerPerceptronTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -4221,7 +4221,7 @@ void MultilayerPerceptronTest::test_from_XML(void)
 }
 
 
-void MultilayerPerceptronTest::run_test_case(void)
+void MultilayerPerceptronTest::run_test_case()
 {
    message += "Running multilayer perceptron test case...\n";
 
@@ -4410,7 +4410,7 @@ void MultilayerPerceptronTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

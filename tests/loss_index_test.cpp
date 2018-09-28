@@ -20,21 +20,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-LossIndexTest::LossIndexTest(void) : UnitTesting() 
+LossIndexTest::LossIndexTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-LossIndexTest::~LossIndexTest(void)
+LossIndexTest::~LossIndexTest()
 {
 }
 
 
 // METHODS
 
-void LossIndexTest::test_constructor(void)
+void LossIndexTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -46,13 +46,13 @@ void LossIndexTest::test_constructor(void)
 }
 
 
-void LossIndexTest::test_destructor(void)
+void LossIndexTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void LossIndexTest::test_get_neural_network_pointer(void)
+void LossIndexTest::test_get_neural_network_pointer()
 {
    message += "test_get_neural_network_pointer\n";
 
@@ -66,43 +66,43 @@ void LossIndexTest::test_get_neural_network_pointer(void)
 }
 
 
-void LossIndexTest::test_get_mathematical_model_pointer(void)
+void LossIndexTest::test_get_mathematical_model_pointer()
 {
    message += "test_get_mathematical_model_pointer\n";
 }
 
 
-void LossIndexTest::test_get_data_set_pointer(void)
+void LossIndexTest::test_get_data_set_pointer()
 {
    message += "test_get_data_set_pointer\n";
 }
 
 
-void LossIndexTest::test_get_user_pointer(void)
+void LossIndexTest::test_get_user_pointer()
 {
    message += "test_get_user_pointer\n";
 }
 
 
-void LossIndexTest::test_get_user_regularization_pointer(void)
+void LossIndexTest::test_get_user_regularization_pointer()
 {
    message += "test_get_user_regularization_pointer\n";
 }
 
 
-void LossIndexTest::test_get_user_constraints_pointer(void)
+void LossIndexTest::test_get_user_constraints_pointer()
 {
    message += "test_get_user_constraints_pointer\n";
 }
 
 
-void LossIndexTest::test_get_numerical_differentiation_pointer(void)
+void LossIndexTest::test_get_numerical_differentiation_pointer()
 {
    message += "test_get_numerical_differentiation_pointer\n";
 }
 
 
-void LossIndexTest::test_get_display(void)
+void LossIndexTest::test_get_display()
 {
    message += "test_get_display\n";
 
@@ -118,7 +118,7 @@ void LossIndexTest::test_get_display(void)
 }
 
 
-void LossIndexTest::test_set_neural_network_pointer(void)
+void LossIndexTest::test_set_neural_network_pointer()
 {
    message += "test_set_neural_network_pointer\n";
 
@@ -132,13 +132,13 @@ void LossIndexTest::test_set_neural_network_pointer(void)
 }
 
 
-void LossIndexTest::test_set_numerical_differentiation(void)
+void LossIndexTest::test_set_numerical_differentiation()
 {
    message += "test_set_numerical_differentiation\n";
 }
 
 
-void LossIndexTest::test_set_default(void)
+void LossIndexTest::test_set_default()
 {
    message += "test_set_default\n";
 
@@ -150,13 +150,13 @@ void LossIndexTest::test_set_default(void)
 }
 
 
-void LossIndexTest::test_set_display(void)
+void LossIndexTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void LossIndexTest::test_calculate_loss(void)
+void LossIndexTest::test_calculate_loss()
 {
    message += "test_calculate_loss\n";
 
@@ -261,7 +261,7 @@ void LossIndexTest::test_calculate_loss(void)
 }
 
 
-void LossIndexTest::test_calculate_gradient(void)
+void LossIndexTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -306,14 +306,14 @@ void LossIndexTest::test_calculate_gradient(void)
 }
 
 
-void LossIndexTest::test_calculate_gradient_norm(void)
+void LossIndexTest::test_calculate_gradient_norm()
 {
    message += "test_calculate_gradient_norm\n";
 }
 
 // @todo
 
-void LossIndexTest::test_calculate_Hessian(void)
+void LossIndexTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 
@@ -383,7 +383,7 @@ void LossIndexTest::test_calculate_Hessian(void)
 
 // @todo
 
-void LossIndexTest::test_calculate_inverse_Hessian(void)
+void LossIndexTest::test_calculate_inverse_Hessian()
 {
    message += "test_calculate_inverse_Hessian\n";
 
@@ -400,7 +400,7 @@ void LossIndexTest::test_calculate_inverse_Hessian(void)
 
 // @todo
 
-void LossIndexTest::test_calculate_vector_dot_Hessian(void)
+void LossIndexTest::test_calculate_vector_dot_Hessian()
 {
    message += "test_calculate_vector_dot_Hessian\n";
 
@@ -418,7 +418,7 @@ void LossIndexTest::test_calculate_vector_dot_Hessian(void)
 }
 
 
-void LossIndexTest::test_calculate_terms(void)
+void LossIndexTest::test_calculate_terms()
 {
    message += "test_calculate_terms\n";
 
@@ -446,7 +446,7 @@ void LossIndexTest::test_calculate_terms(void)
 }
 
 
-void LossIndexTest::test_calculate_terms_Jacobian(void)
+void LossIndexTest::test_calculate_terms_Jacobian()
 {
    message += "test_calculate_terms_Jacobian\n";
 
@@ -476,25 +476,25 @@ void LossIndexTest::test_calculate_terms_Jacobian(void)
 }
 
 
-void LossIndexTest::test_calculate_zero_order_Taylor_approximation(void)
+void LossIndexTest::test_calculate_zero_order_Taylor_approximation()
 {
    message += "test_calculate_zero_order_Taylor_approximation\n";
 }
 
 
-void LossIndexTest::test_calculate_first_order_Taylor_approximation(void)
+void LossIndexTest::test_calculate_first_order_Taylor_approximation()
 {
    message += "test_calculate_first_order_Taylor_approximation\n";
 }
 
 
-void LossIndexTest::test_calculate_second_order_Taylor_approximation(void)
+void LossIndexTest::test_calculate_second_order_Taylor_approximation()
 {
    message += "test_calculate_second_order_Taylor_approximation\n";
 }
 
 
-void LossIndexTest::test_calculate_directional_loss(void)
+void LossIndexTest::test_calculate_directional_loss()
 {
    message += "test_calculate_directional_loss\n";
 
@@ -521,7 +521,7 @@ void LossIndexTest::test_calculate_directional_loss(void)
 }
 
 
-void LossIndexTest::test_calculate_directional_loss_derivative(void)
+void LossIndexTest::test_calculate_directional_loss_derivative()
 {
    message += "test_calculate_directional_loss_derivative\n";
 
@@ -549,7 +549,7 @@ void LossIndexTest::test_calculate_directional_loss_derivative(void)
 }
 
 
-void LossIndexTest::test_calculate_directional_loss_second_derivative(void)
+void LossIndexTest::test_calculate_directional_loss_second_derivative()
 {
    message += "test_calculate_directional_loss_second_derivative\n";
 
@@ -576,7 +576,7 @@ void LossIndexTest::test_calculate_directional_loss_second_derivative(void)
 }
 
 
-void LossIndexTest::test_to_XML(void)
+void LossIndexTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -593,7 +593,7 @@ void LossIndexTest::test_to_XML(void)
 }
 
 
-void LossIndexTest::test_from_XML(void)
+void LossIndexTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -615,7 +615,7 @@ void LossIndexTest::test_from_XML(void)
 }
 
 
-void LossIndexTest::test_print(void)
+void LossIndexTest::test_print()
 {
    message += "test_print\n";
 
@@ -625,11 +625,11 @@ void LossIndexTest::test_print(void)
 }
 
 
-void LossIndexTest::test_save(void)
+void LossIndexTest::test_save()
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/loss_index.xml";
+   string file_name = "../data/loss_index.xml";
 
    LossIndex pf;
 
@@ -640,11 +640,11 @@ void LossIndexTest::test_save(void)
 }
 
 
-void LossIndexTest::test_load(void)
+void LossIndexTest::test_load()
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/loss_index.xml";
+   string file_name = "../data/loss_index.xml";
 
    LossIndex pf1;
    LossIndex pf2;
@@ -663,7 +663,7 @@ void LossIndexTest::test_load(void)
 }
 
 
-void LossIndexTest::test_write_information(void)
+void LossIndexTest::test_write_information()
 {
    message += "test_write_information\n";
 
@@ -672,7 +672,7 @@ void LossIndexTest::test_write_information(void)
 
    LossIndex pf(&nn, &ds);
 
-   std::string information;
+   string information;
 
    // Test
 
@@ -686,7 +686,7 @@ void LossIndexTest::test_write_information(void)
 }
 
 
-void LossIndexTest::run_test_case(void)
+void LossIndexTest::run_test_case()
 {
    message += "Running loss functional test case...\n";
 
@@ -761,7 +761,7 @@ void LossIndexTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

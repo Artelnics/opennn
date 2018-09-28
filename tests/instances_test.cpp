@@ -20,21 +20,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-InstancesTest::InstancesTest(void) : UnitTesting() 
+InstancesTest::InstancesTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-InstancesTest::~InstancesTest(void)
+InstancesTest::~InstancesTest()
 {
 }
 
 
 // METHODS
 
-void InstancesTest::test_constructor(void)
+void InstancesTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -72,7 +72,7 @@ void InstancesTest::test_constructor(void)
 }
 
 
-void InstancesTest::test_destructor(void)
+void InstancesTest::test_destructor()
 {
    message += "test_destructor\n";
 
@@ -83,7 +83,7 @@ void InstancesTest::test_destructor(void)
 }
 
 
-void InstancesTest::test_assignment_operator(void)
+void InstancesTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -94,7 +94,7 @@ void InstancesTest::test_assignment_operator(void)
 }
 
 
-void InstancesTest::test_get_instances_number(void) 
+void InstancesTest::test_get_instances_number() 
 {
    message += "test_get_instances_number\n";
 
@@ -104,7 +104,7 @@ void InstancesTest::test_get_instances_number(void)
 }
 
 
-void InstancesTest::test_count_training_instances_number(void) 
+void InstancesTest::test_count_training_instances_number() 
 {
    message += "test_count_training_instances_number\n";
 
@@ -125,7 +125,7 @@ void InstancesTest::test_count_training_instances_number(void)
 }
 
 
-void InstancesTest::test_arrange_training_indices(void) 
+void InstancesTest::test_arrange_training_indices() 
 {
    message += "test_arrange_training_indices\n";
 
@@ -146,7 +146,7 @@ void InstancesTest::test_arrange_training_indices(void)
 }
 
 
-void InstancesTest::test_count_selection_instances_number(void) 
+void InstancesTest::test_count_selection_instances_number() 
 {
    message += "test_count_selection_instances_number\n";
 
@@ -160,7 +160,7 @@ void InstancesTest::test_count_selection_instances_number(void)
 }
 
 
-void InstancesTest::test_arrange_selection_indices(void) 
+void InstancesTest::test_arrange_selection_indices() 
 {
    message += "test_arrange_selection_indices\n";
 
@@ -180,7 +180,7 @@ void InstancesTest::test_arrange_selection_indices(void)
 }
 
 
-void InstancesTest::test_count_testing_instances_number(void) 
+void InstancesTest::test_count_testing_instances_number() 
 {
    message += "test_count_testing_instances_number\n";
 
@@ -195,7 +195,7 @@ void InstancesTest::test_count_testing_instances_number(void)
 }
 
 
-void InstancesTest::test_arrange_testing_indices(void) 
+void InstancesTest::test_arrange_testing_indices() 
 {
    message += "test_arrange_testing_indices\n";
  
@@ -250,7 +250,7 @@ void InstancesTest::test_arrange_used_indices()
 }
 
 
-void InstancesTest::test_get_display(void) 
+void InstancesTest::test_get_display() 
 {
    message += "test_get_display\n";
 
@@ -266,7 +266,7 @@ void InstancesTest::test_get_display(void)
 }
 
 
-void InstancesTest::test_set(void) 
+void InstancesTest::test_set() 
 {
    message += "test_set\n";
 
@@ -280,7 +280,7 @@ void InstancesTest::test_set(void)
 }
 
 
-void InstancesTest::test_set_instances_number(void) 
+void InstancesTest::test_set_instances_number() 
 {
    message += "test_set_instances_number\n";
 
@@ -292,7 +292,7 @@ void InstancesTest::test_set_instances_number(void)
 }
 
 
-void InstancesTest::test_set_training(void)
+void InstancesTest::test_set_training()
 {
    message += "test_set_training\n";
    
@@ -308,7 +308,7 @@ void InstancesTest::test_set_training(void)
 }
 
 
-void InstancesTest::test_set_selection(void)
+void InstancesTest::test_set_selection()
 {
    message += "test_set_selection\n";
 
@@ -324,7 +324,7 @@ void InstancesTest::test_set_selection(void)
 }
 
 
-void InstancesTest::test_set_testing(void)
+void InstancesTest::test_set_testing()
 {
    message += "test_set_testing\n";
 
@@ -340,7 +340,7 @@ void InstancesTest::test_set_testing(void)
 }
 
 
-void InstancesTest::test_set_unused(void)
+void InstancesTest::test_set_unused()
 {
     message += "test_set_unused\n";
 
@@ -365,13 +365,13 @@ void InstancesTest::test_set_unused(void)
 }
 
 
-void InstancesTest::test_set_display(void) 
+void InstancesTest::test_set_display() 
 {
    message += "test_set_display\n";
 }
 
 
-void InstancesTest::test_split_random_indices(void) 
+void InstancesTest::test_split_random_indices() 
 {
    message += "test_split_random_indices\n";
 
@@ -457,7 +457,7 @@ void InstancesTest::test_split_random_indices(void)
 }
 
 
-void InstancesTest::test_split_sequential_indices(void)
+void InstancesTest::test_split_sequential_indices()
 {
    message += "test_split_sequential_indices\n";
 
@@ -543,7 +543,7 @@ void InstancesTest::test_split_sequential_indices(void)
 }
 
 
-void InstancesTest::test_to_XML(void) 
+void InstancesTest::test_to_XML() 
 {
    message += "test_to_XML\n";
 
@@ -572,7 +572,7 @@ void InstancesTest::test_to_XML(void)
 }
 
 
-void InstancesTest::test_from_XML(void) 
+void InstancesTest::test_from_XML() 
 {
    message += "test_from_XML\n";
 
@@ -585,7 +585,7 @@ void InstancesTest::test_from_XML(void)
 }
 
 
-void InstancesTest::run_test_case(void)
+void InstancesTest::run_test_case()
 {
    message += "Running instances test case...\n";
 
@@ -650,7 +650,7 @@ void InstancesTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

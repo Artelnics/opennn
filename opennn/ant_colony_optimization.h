@@ -6,7 +6,7 @@
 /*   A N T   C O L O N Y   O P T I M I Z A T I O N   C L A S S   H E A D E R                                    */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -35,7 +35,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ class AntColonyOptimization : public OrderSelectionAlgorithm
 public:
     // DEFAULT CONSTRUCTOR
 
-    explicit AntColonyOptimization(void);
+    explicit AntColonyOptimization();
 
     // TRAINING STRATEGY CONSTRUCTOR
 
@@ -61,11 +61,11 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit AntColonyOptimization(const std::string&);
+    explicit AntColonyOptimization(const string&);
 
     // DESTRUCTOR
 
-    virtual ~AntColonyOptimization(void);
+    virtual ~AntColonyOptimization();
 
 
     // STRUCTURES
@@ -78,67 +78,103 @@ public:
     {
         /// Default constructor.
 
-        explicit AntColonyOptimizationResults(void) : OrderSelectionAlgorithm::OrderSelectionResults()
+        explicit AntColonyOptimizationResults() : OrderSelectionAlgorithm::OrderSelectionResults()
         {
         }
 
         /// Destructor.
 
-        virtual ~AntColonyOptimizationResults(void)
+        virtual ~AntColonyOptimizationResults()
         {
         }
-
-
     };
 
     // METHODS
 
     // Get methods
 
-    const size_t& get_step(void) const;
-
-    const size_t& get_maximum_selection_failures(void) const;
+    const size_t& get_maximum_selection_failures() const;
 
     // Set methods
 
-    void set_default(void);
-
-    void set_step(const size_t&);
+    void set_default();
 
     void set_maximum_selection_failures(const size_t&);
 
+    // Model evaluation methods
+
+    Vector<double> perform_minimum_model_evaluation(const Vector<size_t>&);
+    Vector<double> perform_maximum_model_evaluation(const Vector<size_t>&);
+    Vector<double> perform_mean_model_evaluation(const Vector<size_t>&);
+
+    Vector<double> perform_model_evaluation(const Vector<size_t>&);
+
     // Order selection methods
 
-    AntColonyOptimizationResults* perform_order_selection(void);
+    void chose_paths();
+    void evaluate_ants();
+
+    AntColonyOptimizationResults* perform_order_selection();
 
     // Serialization methods
 
-    Matrix<std::string> to_string_matrix(void) const;
+    Matrix<string> to_string_matrix() const;
 
-    tinyxml2::XMLDocument* to_XML(void) const;
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     // void read_XML(   );
 
 
-    void save(const std::string&) const;
-    void load(const std::string&);
+    void save(const string&) const;
+    void load(const string&);
 
 private:
 
    // MEMBERS
 
-   /// Number of hidden perceptrons added in each iteration.
+    /// Maximum number of hidden layers.
 
-   size_t step;
+    size_t maximum_layers;
+
+    /// Activation function of the hidden layers.
+
+    Perceptron::ActivationFunction default_activation_function;
+
+   /// Number of ants that will be evaluated in the algorithm.
+
+   size_t ants_number;
+
+   /// Pheromone trail for every arc of the path.
+
+   Vector< Matrix<double> > pheromone_trail;
+
+   /// Ratio of the evaporation of the pheromone trail in each iteration.
+
+   double evaporation_rate;
+
+   /// Parameter to scale the actualization of the pheromone trail of the best ants.
+
+   double scaling_parameter;
+
+   /// Architecture of that represents the path of each ant.
+
+   Matrix<size_t> architectures;
+
+   /// Losses of the models selected for each ant.
+
+   Vector<double> model_loss;
+
+   /// Architecture of all the neural networks trained.
+
+   Vector< Vector<size_t> > architecture_history;
 
    // STOPPING CRITERIA
 
    /// Maximum number of iterations at which the selection loss increases.
 
    size_t maximum_selection_failures;
-
 };
 
 }
@@ -146,7 +182,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
