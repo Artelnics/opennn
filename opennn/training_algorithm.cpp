@@ -6,7 +6,7 @@
 /*   T R A I N I N G   A L G O R I T H M   C L A S S                                                            */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// Default constructor. 
 /// It creates a training algorithm object not associated to any loss functional object.  
 
-TrainingAlgorithm::TrainingAlgorithm(void)
+TrainingAlgorithm::TrainingAlgorithm()
  : loss_index_pointer(NULL)
 { 
    set_default();
@@ -61,7 +61,7 @@ TrainingAlgorithm::TrainingAlgorithm(const tinyxml2::XMLDocument& document)
 
 /// Destructor
 
-TrainingAlgorithm::~TrainingAlgorithm(void)
+TrainingAlgorithm::~TrainingAlgorithm()
 { 
 }
 
@@ -72,7 +72,7 @@ TrainingAlgorithm::~TrainingAlgorithm(void)
 /// It assigns to this object the members of an existing training algorithm object.
 /// @param other_training_algorithm Training algorithm object to be assigned.
 
-TrainingAlgorithm& TrainingAlgorithm::operator = (const TrainingAlgorithm& other_training_algorithm)
+TrainingAlgorithm& TrainingAlgorithm::operator =(const TrainingAlgorithm& other_training_algorithm)
 {
    if(this != &other_training_algorithm)
    {
@@ -90,7 +90,7 @@ TrainingAlgorithm& TrainingAlgorithm::operator = (const TrainingAlgorithm& other
 /// Equal to operator.
 /// @param other_training_algorithm Training algorithm object to be compared with.
 
-bool TrainingAlgorithm::operator == (const TrainingAlgorithm& other_training_algorithm) const
+bool TrainingAlgorithm::operator ==(const TrainingAlgorithm& other_training_algorithm) const
 {
    if(loss_index_pointer == other_training_algorithm.loss_index_pointer
    && display == other_training_algorithm.display)
@@ -106,24 +106,24 @@ bool TrainingAlgorithm::operator == (const TrainingAlgorithm& other_training_alg
 
 // METHODS
 
-// LossIndex* get_loss_index_pointer(void) const method
+// LossIndex* get_loss_index_pointer() const method
 
 /// Returns a pointer to the loss functional object to which the training algorithm is
 /// associated.
 
-LossIndex* TrainingAlgorithm::get_loss_index_pointer(void) const
+LossIndex* TrainingAlgorithm::get_loss_index_pointer() const
 {
     #ifdef __OPENNN_DEBUG__
 
     if(!loss_index_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
-               << "LossIndex* get_loss_index_pointer(void) const method.\n"
+               << "LossIndex* get_loss_index_pointer() const method.\n"
                << "Loss index pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     #endif
@@ -132,12 +132,12 @@ LossIndex* TrainingAlgorithm::get_loss_index_pointer(void) const
 }
 
 
-// bool has_loss_index(void) const method
+// bool has_loss_index() const method
 
 /// Returns true if this training algorithm object has an associated loss functional object,
 /// and false otherwise.
 
-bool TrainingAlgorithm::has_loss_index(void) const
+bool TrainingAlgorithm::has_loss_index() const
 {
     if(loss_index_pointer)
     {
@@ -150,53 +150,53 @@ bool TrainingAlgorithm::has_loss_index(void) const
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen, or false if messages from
 /// this class can't be displayed on the screen.
 
-const bool& TrainingAlgorithm::get_display(void) const
+const bool& TrainingAlgorithm::get_display() const
 {
    return(display);
 }
 
 
-// const size_t& get_display_period(void) const method
+// const size_t& get_display_period() const method
 
 /// Returns the number of iterations between the training showing progress.
 
-const size_t& TrainingAlgorithm::get_display_period(void) const
+const size_t& TrainingAlgorithm::get_display_period() const
 {
    return(display_period);
 }
 
 
-// const size_t& get_save_period(void) const method
+// const size_t& get_save_period() const method
 
 /// Returns the number of iterations between the training saving progress.
 
-const size_t& TrainingAlgorithm::get_save_period(void) const
+const size_t& TrainingAlgorithm::get_save_period() const
 {
    return(save_period);
 }
 
 
-// const size_t& get_neural_network_filename(void) const method
+// const size_t& get_neural_network_filename() const method
 
 /// Returns the file name where the neural network will be saved.
 
-const std::string& TrainingAlgorithm::get_neural_network_file_name(void) const
+const string& TrainingAlgorithm::get_neural_network_file_name() const
 {
    return(neural_network_file_name);
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets the loss functional pointer to NULL.
 /// It also sets the rest of members to their default values. 
 
-void TrainingAlgorithm::set(void)
+void TrainingAlgorithm::set()
 {
    loss_index_pointer = NULL;
 
@@ -250,19 +250,19 @@ void TrainingAlgorithm::set_display(const bool& new_display)
 
 void TrainingAlgorithm::set_display_period(const size_t& new_display_period)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
    if(new_display_period <= 0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
              << "void set_display_period(const size_t&) method.\n"
              << "Display period must be greater than 0.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -279,19 +279,19 @@ void TrainingAlgorithm::set_display_period(const size_t& new_display_period)
 
 void TrainingAlgorithm::set_save_period(const size_t& new_save_period)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
    if(new_save_period <= 0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
              << "void set_save_period(const size_t&) method.\n"
              << "Save period must be greater than 0.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -300,23 +300,23 @@ void TrainingAlgorithm::set_save_period(const size_t& new_save_period)
 }
 
 
-// void set_neural_network_file_name(const std::string&) method
+// void set_neural_network_file_name(const string&) method
 
 /// Sets a new file name where the neural network will be saved.
 /// @param new_neural_network_file_name
 /// File name for the neural network object.
 
-void TrainingAlgorithm::set_neural_network_file_name(const std::string& new_neural_network_file_name)
+void TrainingAlgorithm::set_neural_network_file_name(const string& new_neural_network_file_name)
 {
    neural_network_file_name = new_neural_network_file_name;
 }
 
 
-// void set_default(void) method 
+// void set_default() method 
 
 /// Sets the members of the training algorithm object to their default values.
 
-void TrainingAlgorithm::set_default(void)
+void TrainingAlgorithm::set_default()
 {
    display = true;
 
@@ -328,34 +328,34 @@ void TrainingAlgorithm::set_default(void)
 }
 
 
-// std::string write_training_algorithm_type(void) const method
+// string write_training_algorithm_type() const method
 
 /// This method writes a string with the type of training algoritm.
 
-std::string TrainingAlgorithm::write_training_algorithm_type(void) const
+string TrainingAlgorithm::write_training_algorithm_type() const
 {
    return("USER_TRAINING_ALGORITHM");
 }
 
 
-// void check(void) const method
+// void check() const method
 
 /// Performs a default checking for training algorithms.
 /// In particular, it checks that the loss functional pointer associated to the training algorithm is not NULL,
 /// and that the neural network associated to that loss functional is neither NULL.
 /// If that checkings are not hold, an exception is thrown. 
 
-void TrainingAlgorithm::check(void) const
+void TrainingAlgorithm::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!loss_index_pointer)
    {
       buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to loss functional is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -363,22 +363,22 @@ void TrainingAlgorithm::check(void) const
    if(neural_network_pointer == NULL)
    {
       buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Pointer to neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes a default training algorithm object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 
-tinyxml2::XMLDocument* TrainingAlgorithm::to_XML(void) const
+tinyxml2::XMLDocument* TrainingAlgorithm::to_XML() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -411,7 +411,7 @@ tinyxml2::XMLDocument* TrainingAlgorithm::to_XML(void) const
 
 void TrainingAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("TrainingAlgorithm");
 
@@ -442,13 +442,13 @@ void TrainingAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Training algorithm element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
   // Display
@@ -457,15 +457,15 @@ void TrainingAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
      if(display_element)
      {
-        const std::string new_display_string = display_element->GetText();
+        const string new_display_string = display_element->GetText();
 
         try
         {
            set_display(new_display_string != "0");
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -473,13 +473,13 @@ void TrainingAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// std::string to_string(void) const method
+// string object_to_string() const method
 
 /// Returns a default string representation of a training algorithm.
 
-std::string TrainingAlgorithm::to_string(void) const
+string TrainingAlgorithm::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "Training strategy\n" 
           << "Display: " << display << "\n";
@@ -488,35 +488,35 @@ std::string TrainingAlgorithm::to_string(void) const
 }
 
 
-// Matrix<std::string> to_string_matrix(void) const method
+// Matrix<string> to_string_matrix() const method
 
-/// Returns a default (empty) string matrix containing the members
+/// Returns a default(empty) string matrix containing the members
 /// of the training algorithm object.
 
-Matrix<std::string> TrainingAlgorithm::to_string_matrix(void) const
+Matrix<string> TrainingAlgorithm::to_string_matrix() const
 {
-    Matrix<std::string> string_matrix;
+    Matrix<string> string_matrix;
 
     return(string_matrix);
 }
 
 
-// void print(void) const method
+// void print() const method
 
 /// Prints to the screen the XML-type representation of the training algorithm object.
 
-void TrainingAlgorithm::print(void) const
+void TrainingAlgorithm::print() const
 {
-   std::cout << to_string();
+   cout << object_to_string();
 }
 
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the training algorithm object.
 /// @param file_name Name of training algorithm XML-type file. 
 
-void TrainingAlgorithm::save(const std::string& file_name) const
+void TrainingAlgorithm::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -526,13 +526,13 @@ void TrainingAlgorithm::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a gradient descent object from a XML-type file.
 /// Please mind about the file format, wich is specified in the User's Guide. 
 /// @param file_name Name of training algorithm XML-type file. 
 
-void TrainingAlgorithm::load(const std::string& file_name)
+void TrainingAlgorithm::load(const string& file_name)
 {
    set_default();
 
@@ -540,40 +540,41 @@ void TrainingAlgorithm::load(const std::string& file_name)
 
    if(document.LoadFile(file_name.c_str()))
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
 }
 
 
-// void initialize_random(void) method
+// void initialize_random() method
 
 /// Default random initialization for a training algorithm object.
 /// It just sets a random display value.
 
-void TrainingAlgorithm::initialize_random(void)
+void TrainingAlgorithm::initialize_random()
 {
    display = true;
 }
 
-// std::string write_stopping_condition(void) const method
+
+// string write_stopping_condition() const method
 
 /// Return a string with the stopping condition of the TrainingAlgorithmResults
 
-std::string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_condition(void) const
+string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_condition() const
 {
-    switch (stopping_condition)
+    switch(stopping_condition)
     {
     case MinimumParametersIncrementNorm:
     {
-        return ("Minimum parameters increment norm");
+        return("Minimum parameters increment norm");
     }
     case MinimumPerformanceIncrease:
     {
@@ -601,13 +602,13 @@ std::string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_conditio
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingAlgorithmResults struct.\n"
-               << "std::string write_stopping_condition(void) const method.\n"
+               << "string write_stopping_condition() const method.\n"
                << "Unknown stopping condition type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
@@ -620,7 +621,7 @@ std::string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_conditio
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

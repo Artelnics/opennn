@@ -6,7 +6,7 @@
 /*   S E L E C T I V E   P R U N I N G   C L A S S   H E A D E R                                                */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -35,7 +35,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ class SelectivePruning : public InputsSelectionAlgorithm
 public:
     // DEFAULT CONSTRUCTOR
 
-    explicit SelectivePruning(void);
+    explicit SelectivePruning();
 
     // TRAINING STRATEGY CONSTRUCTOR
 
@@ -61,11 +61,11 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit SelectivePruning(const std::string&);
+    explicit SelectivePruning(const string&);
 
     // DESTRUCTOR
 
-    virtual ~SelectivePruning(void);
+    virtual ~SelectivePruning();
 
 
     // STRUCTURES
@@ -78,13 +78,13 @@ public:
     {
         /// Default constructor.
 
-        explicit SelectivePruningResults(void) : InputsSelectionAlgorithm::InputsSelectionResults()
+        explicit SelectivePruningResults() : InputsSelectionAlgorithm::InputsSelectionResults()
         {
         }
 
         /// Destructor.
 
-        virtual ~SelectivePruningResults(void)
+        virtual ~SelectivePruningResults()
         {
         }
 
@@ -94,13 +94,13 @@ public:
 
     // Get methods
 
-    const size_t& get_minimum_inputs_number(void) const;
+    const size_t& get_minimum_inputs_number() const;
 
-    const size_t& get_maximum_selection_failures(void) const;
+    const size_t& get_maximum_selection_failures() const;
 
     // Set methods
 
-    void set_default(void);
+    void set_default();
 
     void set_minimum_inputs_number(const size_t&);
 
@@ -108,18 +108,18 @@ public:
 
     // Order selection methods
 
-    SelectivePruningResults* perform_inputs_selection(void);
+    SelectivePruningResults* perform_inputs_selection();
 
     // Serialization methods
 
-    Matrix<std::string> to_string_matrix(void) const;
+    Matrix<string> to_string_matrix() const;
 
-    tinyxml2::XMLDocument* to_XML(void) const;
+    tinyxml2::XMLDocument* to_XML() const;
 
     void from_XML(const tinyxml2::XMLDocument&);
 
-    void save(const std::string&) const;
-    void load(const std::string&);
+    void save(const string&) const;
+    void load(const string&);
 
 private:
 
@@ -145,7 +145,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

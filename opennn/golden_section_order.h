@@ -6,7 +6,7 @@
 /*   G O L D E N   S E C T I O N   O R D E R   C L A S S   H E A D E R                                          */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -35,7 +35,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ class GoldenSectionOrder : public OrderSelectionAlgorithm
 public:
     // DEFAULT CONSTRUCTOR
 
-    explicit GoldenSectionOrder(void);
+    explicit GoldenSectionOrder();
 
     // TRAINING STRATEGY CONSTRUCTOR
 
@@ -61,11 +61,11 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit GoldenSectionOrder(const std::string&);
+    explicit GoldenSectionOrder(const string&);
 
     // DESTRUCTOR
 
-    virtual ~GoldenSectionOrder(void);
+    virtual ~GoldenSectionOrder();
 
 
     // STRUCTURES
@@ -78,13 +78,13 @@ public:
     {
         /// Default constructor.
 
-        explicit GoldenSectionOrderResults(void) : OrderSelectionAlgorithm::OrderSelectionResults()
+        explicit GoldenSectionOrderResults() : OrderSelectionAlgorithm::OrderSelectionResults()
         {
         }
 
         /// Destructor.
 
-        virtual ~GoldenSectionOrderResults(void)
+        virtual ~GoldenSectionOrderResults()
         {
         }
 
@@ -92,18 +92,18 @@ public:
 
     // Order selection methods
 
-    GoldenSectionOrderResults* perform_order_selection(void);
+    GoldenSectionOrderResults* perform_order_selection();
 
     // Serialization methods
 
-    tinyxml2::XMLDocument* to_XML(void) const;
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     // void read_XML(   );
 
-    void save(const std::string&) const;
-    void load(const std::string&);
+    void save(const string&) const;
+    void load(const string&);
 
 
 };
@@ -113,7 +113,7 @@ public:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

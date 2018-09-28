@@ -19,14 +19,14 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-WeightedSquaredErrorTest::WeightedSquaredErrorTest(void) : UnitTesting()
+WeightedSquaredErrorTest::WeightedSquaredErrorTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-WeightedSquaredErrorTest::~WeightedSquaredErrorTest(void)
+WeightedSquaredErrorTest::~WeightedSquaredErrorTest()
 {
 }
 
@@ -34,7 +34,7 @@ WeightedSquaredErrorTest::~WeightedSquaredErrorTest(void)
 // METHODS
 
 
-void WeightedSquaredErrorTest::test_constructor(void)
+void WeightedSquaredErrorTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -64,12 +64,12 @@ void WeightedSquaredErrorTest::test_constructor(void)
 }
 
 
-void WeightedSquaredErrorTest::test_destructor(void)
+void WeightedSquaredErrorTest::test_destructor()
 {
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_loss(void)
+void WeightedSquaredErrorTest::test_calculate_loss()
 {
    message += "test_calculate_loss\n";
 
@@ -139,7 +139,7 @@ void WeightedSquaredErrorTest::test_calculate_loss(void)
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_gradient(void)
+void WeightedSquaredErrorTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -290,7 +290,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_selection_loss(void)
+void WeightedSquaredErrorTest::test_calculate_selection_loss()
 {
    message += "test_calculate_selection_loss\n";
 
@@ -312,7 +312,7 @@ void WeightedSquaredErrorTest::test_calculate_selection_loss(void)
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_terms(void)
+void WeightedSquaredErrorTest::test_calculate_terms()
 {
    message += "test_calculate_terms\n";
 
@@ -360,7 +360,7 @@ void WeightedSquaredErrorTest::test_calculate_terms(void)
 
 // @todo Last test
 
-void WeightedSquaredErrorTest::test_calculate_terms_Jacobian(void)
+void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
 {
    message += "test_calculate_terms_Jacobian\n";
 
@@ -472,32 +472,32 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian(void)
 //   evaluation_terms = wse.calculate_terms();
 //   terms_Jacobian = wse.calculate_terms_Jacobian();
 
-//   std::cout << (terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 << std::endl;
-//   std::cout << objective_gradient << std::endl;
+//   cout << (terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 << endl;
+//   cout << objective_gradient << endl;
 
 //   assert_true(((terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 - objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_Hessian(void)
+void WeightedSquaredErrorTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 }
 
 
-void WeightedSquaredErrorTest::test_to_XML(void)
+void WeightedSquaredErrorTest::test_to_XML()
 {
    message += "test_to_XML\n";
 }
 
 
-void WeightedSquaredErrorTest::test_from_XML(void)
+void WeightedSquaredErrorTest::test_from_XML()
 {
    message += "test_from_XML\n";
 }
 
 
-void WeightedSquaredErrorTest::run_test_case(void)
+void WeightedSquaredErrorTest::run_test_case()
 {
    message += "Running weighted squared error test case...\n";
 
@@ -538,7 +538,7 @@ void WeightedSquaredErrorTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lewser General Public

@@ -6,7 +6,7 @@
 /*   I N C R E M E N T A L   O R D E R   C L A S S                                                              */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -22,7 +22,7 @@ namespace OpenNN {
 
 /// Default constructor.
 
-IncrementalOrder::IncrementalOrder(void)
+IncrementalOrder::IncrementalOrder()
     : OrderSelectionAlgorithm()
 {
     set_default();
@@ -56,7 +56,7 @@ IncrementalOrder::IncrementalOrder(const tinyxml2::XMLDocument& incremental_orde
 /// File constructor.
 /// @param file_name Name of XML incremental order file.
 
-IncrementalOrder::IncrementalOrder(const std::string& file_name)
+IncrementalOrder::IncrementalOrder(const string& file_name)
     : OrderSelectionAlgorithm(file_name)
 {
     load(file_name);
@@ -68,36 +68,36 @@ IncrementalOrder::IncrementalOrder(const std::string& file_name)
 
 /// Destructor.
 
-IncrementalOrder::~IncrementalOrder(void)
+IncrementalOrder::~IncrementalOrder()
 {
 }
 
 // METHODS
 
 
-// const size_t& get_step(void) const method
+// const size_t& get_step() const method
 
 /// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm.
 
-const size_t& IncrementalOrder::get_step(void) const
+const size_t& IncrementalOrder::get_step() const
 {
     return(step);
 }
 
-// const size_t& get_maximum_selection_failures(void) const method
+// const size_t& get_maximum_selection_failures() const method
 
 /// Returns the maximum number of selection failures in the model order selection algorithm.
 
-const size_t& IncrementalOrder::get_maximum_selection_failures(void) const
+const size_t& IncrementalOrder::get_maximum_selection_failures() const
 {
     return(maximum_selection_failures);
 }
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the model selection object to their default values:
 
-void IncrementalOrder::set_default(void)
+void IncrementalOrder::set_default()
 {
     step = 1;
 
@@ -115,23 +115,23 @@ void IncrementalOrder::set_step(const size_t& new_step)
 
     if(new_step <= 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void set_step(const size_t&) method.\n"
-               << "New_step (" << new_step << ") must be greater than 0.\n";
+               << "New_step(" << new_step << ") must be greater than 0.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    if(new_step > (maximum_order-minimum_order))
+    if(new_step >(maximum_order-minimum_order))
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void set_step(const size_t&) method.\n"
-               << "New_step must be less than the distance between maximum_order and minimum_order (" << maximum_order-minimum_order << ").\n";
+               << "New_step must be less than the distance between maximum_order and minimum_order(" << maximum_order-minimum_order << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -150,13 +150,13 @@ void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_
 
     if(new_maximum_loss_failures <= 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void set_maximum_selection_failures(const size_t&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -164,11 +164,11 @@ void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_
     maximum_selection_failures = new_maximum_loss_failures;
 }
 
-// IncrementalOrderResults* perform_order_selection(void) method
+// IncrementalOrderResults* perform_order_selection() method
 
 /// Perform the order selection with the Incremental method.
 
-IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selection(void)
+IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selection()
 {
     IncrementalOrderResults* results = new IncrementalOrderResults();
 
@@ -197,13 +197,13 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
     if(display)
     {
-        std::cout << "Performing Incremental order selection..." << std::endl;
-        std::cout.flush();
+        cout << "Performing Incremental order selection..." << endl;
+        cout.flush();
     }
 
     time(&beginning_time);
 
-    while (!end)
+    while(!end)
     {
         loss = perform_model_evaluation(order);
         current_training_loss = loss[0];
@@ -231,7 +231,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         }
 
         if(iterations == 0
-        || (optimum_selection_loss > current_selection_loss
+        ||(optimum_selection_loss > current_selection_loss
         && fabs(optimum_selection_loss - current_selection_loss) > tolerance))
         {
             optimal_order = order;
@@ -256,7 +256,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             if(display)
             {
-                std::cout << "Maximum time reached." << std::endl;
+                cout << "Maximum time reached." << endl;
             }
 
             results->stopping_condition = IncrementalOrder::MaximumTime;            
@@ -267,7 +267,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             if(display)
             {
-                std::cout << "Selection loss reached." << std::endl;
+                cout << "Selection loss reached." << endl;
             }
 
             results->stopping_condition = IncrementalOrder::SelectionLossGoal;
@@ -279,7 +279,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             if(display)
             {
-                std::cout << "Maximum number of iterations reached." << std::endl;
+                cout << "Maximum number of iterations reached." << endl;
             }
 
             results->stopping_condition = IncrementalOrder::MaximumIterations;
@@ -290,7 +290,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             if(display)
             {
-                std::cout << "Maximum selection failures ("<<selection_failures<<") reached." << std::endl;
+                cout << "Maximum selection failures("<<selection_failures<<") reached." << endl;
             }
 
             results->stopping_condition = IncrementalOrder::MaximumSelectionFailures;
@@ -301,7 +301,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             if(display)
             {
-                std::cout << "Algorithm finished" << std::endl;
+                cout << "Algorithm finished" << endl;
             }
 
             results->stopping_condition = IncrementalOrder::AlgorithmFinished;
@@ -309,26 +309,26 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
         if(display)
         {
-            std::cout << "Iteration: " << iterations << std::endl
-                      << "Hidden neurons number: " << order << std::endl
-                      << "Training loss: " << loss[0] << std::endl
-                      << "Selection loss: " << loss[1] << std::endl
-                      << "Elapsed time: " << elapsed_time << std::endl;
+            cout << "Iteration: " << iterations << endl
+                      << "Hidden neurons number: " << order << endl
+                      << "Training loss: " << loss[0] << endl
+                      << "Selection loss: " << loss[1] << endl
+                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
 
         if(!end)
         {
-            order = std::min(maximum_order, order+step);
+            order = min(maximum_order, order+step);
         }
     }
 
     if(display)
     {
-        std::cout << std::endl
-                  << "Optimal order: " << optimal_order << std:: endl
-                  << "Optimum selection loss: " << optimum_selection_loss << std::endl
-                  << "Corresponding training loss: " << optimum_training_loss << std::endl;
+        cout << endl
+                  << "Optimal order: " << optimal_order <<  endl
+                  << "Optimum selection loss: " << optimum_selection_loss << endl
+                  << "Corresponding training loss: " << optimum_training_loss << endl;
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
@@ -340,7 +340,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     }
     else
     {
-        for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
+        for(size_t i = 0; i <(perceptrons_number-optimal_order); i++)
         {
             multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
         }
@@ -366,16 +366,16 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     return(results);
 }
 
-// Matrix<std::string> to_string_matrix(void) const method
+// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
+Matrix<string> IncrementalOrder::to_string_matrix() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
-    Vector<std::string> labels;
-    Vector<std::string> values;
+    Vector<string> labels;
+    Vector<string> values;
 
    // Minimum order
 
@@ -495,23 +495,23 @@ Matrix<std::string> IncrementalOrder::to_string_matrix(void) const
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
 
-   Matrix<std::string> string_matrix(rows_number, columns_number);
+   Matrix<string> string_matrix(rows_number, columns_number);
 
-   string_matrix.set_column(0, labels);
-   string_matrix.set_column(1, values);
+   string_matrix.set_column(0, labels, "name");
+   string_matrix.set_column(1, values, "value");
 
     return(string_matrix);
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the incremental order parameters, the stopping criteria
 /// and other user stuff concerning the incremental order object.
 
-tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
+tinyxml2::XMLDocument* IncrementalOrder::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -712,7 +712,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML(void) const
 
 void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     //file_stream.OpenElement("IncrementalOrder");
 
@@ -842,13 +842,13 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "IncrementalOrder element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Minimum order
@@ -863,9 +863,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               minimum_order = new_minimum_order;
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -882,9 +882,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               maximum_order = new_maximum_order;
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -901,9 +901,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_trials_number(new_trials_number);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -914,15 +914,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_loss_calculation_method = element->GetText();
+           const string new_loss_calculation_method = element->GetText();
 
            try
            {
               set_loss_calculation_method(new_loss_calculation_method);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -939,9 +939,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_step(new_step);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -952,15 +952,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_parameters_data = element->GetText();
+           const string new_reserve_parameters_data = element->GetText();
 
            try
            {
               set_reserve_parameters_data(new_reserve_parameters_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -971,15 +971,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_loss_data = element->GetText();
+           const string new_reserve_loss_data = element->GetText();
 
            try
            {
               set_reserve_loss_data(new_reserve_loss_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -990,15 +990,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_selection_loss_data = element->GetText();
+           const string new_reserve_selection_loss_data = element->GetText();
 
            try
            {
               set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1009,15 +1009,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_minimal_parameters = element->GetText();
+           const string new_reserve_minimal_parameters = element->GetText();
 
            try
            {
               set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1028,15 +1028,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_display = element->GetText();
+           const string new_display = element->GetText();
 
            try
            {
               set_display(new_display != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1053,9 +1053,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_selection_loss_goal(new_selection_loss_goal);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1072,9 +1072,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_iterations_number(new_maximum_iterations_number);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1091,9 +1091,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_time(new_maximum_time);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1110,9 +1110,9 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_tolerance(new_tolerance);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1129,20 +1129,20 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_selection_failures(new_maximum_selection_failures);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
 }
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the incremental order object.
 /// @param file_name Name of incremental order XML-type file.
 
-void IncrementalOrder::save(const std::string& file_name) const
+void IncrementalOrder::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -1152,12 +1152,12 @@ void IncrementalOrder::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a incremental order object from a XML-type file.
 /// @param file_name Name of incremental order XML-type file.
 
-void IncrementalOrder::load(const std::string& file_name)
+void IncrementalOrder::load(const string& file_name)
 {
    set_default();
 
@@ -1165,13 +1165,13 @@ void IncrementalOrder::load(const std::string& file_name)
 
    if(document.LoadFile(file_name.c_str()))
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IncrementalOrder class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
@@ -1182,7 +1182,7 @@ void IncrementalOrder::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

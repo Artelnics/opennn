@@ -20,53 +20,53 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR 
 
-TrainingStrategyTest::TrainingStrategyTest(void) : UnitTesting() 
+TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-TrainingStrategyTest::~TrainingStrategyTest(void)
+TrainingStrategyTest::~TrainingStrategyTest()
 {
 }
 
 
 // METHODS
 
-void TrainingStrategyTest::test_constructor(void)
+void TrainingStrategyTest::test_constructor()
 {
-   message += "test_constructor\n"; 
+   message += "test_constructor\n";
 
    LossIndex pf;
 
    // Test
 
-   TrainingStrategy ts1(&pf); 
+   TrainingStrategy ts1(&pf);
 
    assert_true(ts1.has_loss_index() == true, LOG);
 
    // Test
 
-   TrainingStrategy ts2; 
+   TrainingStrategy ts2;
 
    assert_true(ts2.has_loss_index() == false, LOG);
 }
 
 
-void TrainingStrategyTest::test_destructor(void)
+void TrainingStrategyTest::test_destructor()
 {
-   message += "test_destructor\n"; 
+   message += "test_destructor\n";
 
-   TrainingStrategy* ts = new TrainingStrategy(); 
+   TrainingStrategy* ts = new TrainingStrategy();
 
    delete ts;
 }
 
 
-void TrainingStrategyTest::test_get_loss_index_pointer(void)
+void TrainingStrategyTest::test_get_loss_index_pointer()
 {
-   message += "test_get_loss_index_pointer\n"; 
+   message += "test_get_loss_index_pointer\n";
 
    LossIndex pf;
    
@@ -78,9 +78,9 @@ void TrainingStrategyTest::test_get_loss_index_pointer(void)
 }
 
 
-void TrainingStrategyTest::test_get_display(void)
+void TrainingStrategyTest::test_get_display()
 {
-   message += "test_get_warning_gradient_norm\n"; 
+   message += "test_get_warning_gradient_norm\n";
 
    TrainingStrategy ts;
 
@@ -90,32 +90,33 @@ void TrainingStrategyTest::test_get_display(void)
 }
 
 
-void TrainingStrategyTest::test_set(void)
+void TrainingStrategyTest::test_set()
 {
    message += "test_set\n"; 
 }
 
 
-void TrainingStrategyTest::test_set_default(void)
+void TrainingStrategyTest::test_set_default()
 {
    message += "test_set_default\n"; 
 }
 
 
-void TrainingStrategyTest::test_set_loss_index_pointer(void)
+void TrainingStrategyTest::test_set_loss_index_pointer()
 {
    message += "test_set_loss_index_pointer\n"; 
 }
 
 
-void TrainingStrategyTest::test_set_display(void)
+void TrainingStrategyTest::test_set_display()
 {
    message += "test_set_display\n"; 
 }
 
 
-void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
+void TrainingStrategyTest::test_initialize_layers_autoencoding()
 {
+/*
     message += "test_initialize_layers_autoencoding\n";
 
     DataSet ds;
@@ -222,7 +223,7 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding(void)
 }
 
 
-void TrainingStrategyTest::test_perform_training(void)
+void TrainingStrategyTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -241,7 +242,7 @@ void TrainingStrategyTest::test_perform_training(void)
 }
 
 
-void TrainingStrategyTest::test_to_XML(void)
+void TrainingStrategyTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -262,7 +263,7 @@ void TrainingStrategyTest::test_to_XML(void)
 }
 
 
-void TrainingStrategyTest::test_from_XML(void)
+void TrainingStrategyTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -285,17 +286,17 @@ void TrainingStrategyTest::test_from_XML(void)
 }
 
 
-void TrainingStrategyTest::test_print(void)
+void TrainingStrategyTest::test_print()
 {
    message += "test_print\n";
 }
 
 
-void TrainingStrategyTest::test_save(void)
+void TrainingStrategyTest::test_save()
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/training_strategy.xml";
+   string file_name = "../data/training_strategy.xml";
 
    TrainingStrategy ts;
 
@@ -308,11 +309,11 @@ void TrainingStrategyTest::test_save(void)
 }
 
 
-void TrainingStrategyTest::test_load(void)
+void TrainingStrategyTest::test_load()
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/training_strategy.xml";
+   string file_name = "../data/training_strategy.xml";
 
    TrainingStrategy ts;
 
@@ -326,7 +327,7 @@ void TrainingStrategyTest::test_load(void)
 }
 
 
-void TrainingStrategyTest::test_results_constructor(void)
+void TrainingStrategyTest::test_results_constructor()
 {
     message += "test_results_constructor\n";
 
@@ -335,7 +336,7 @@ void TrainingStrategyTest::test_results_constructor(void)
 }
 
 
-void TrainingStrategyTest::test_results_destructor(void)
+void TrainingStrategyTest::test_results_destructor()
 {
     message += "test_results_destructor\n";
 
@@ -345,7 +346,7 @@ void TrainingStrategyTest::test_results_destructor(void)
 }
 
 
-void TrainingStrategyTest::run_test_case(void)
+void TrainingStrategyTest::run_test_case()
 {
    message += "Running training strategy test case...\n";
 
@@ -398,7 +399,7 @@ void TrainingStrategyTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

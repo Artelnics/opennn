@@ -6,7 +6,7 @@
 /*   C R O S S   E N T R O P Y   E R R O R   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -27,7 +27,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 
 namespace OpenNN
@@ -43,7 +43,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit CrossEntropyError(void);
+   explicit CrossEntropyError();
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -67,52 +67,54 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~CrossEntropyError(void);
+   virtual ~CrossEntropyError();
 
    // ASSIGNMENT OPERATOR
 
-   CrossEntropyError& operator = (const CrossEntropyError&);
+   CrossEntropyError& operator =(const CrossEntropyError&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const CrossEntropyError&) const;
+   bool operator ==(const CrossEntropyError&) const;
 
    // METHODS
 
    // Checking methods
 
-   void check(void) const;
+   void check() const;
 
    // loss methods
 
-   double calculate_error(void) const;
+   double calculate_error() const;
    double calculate_error(const Vector<double>&) const;
 
-   double calculate_minimum_loss(void) const;
+   double calculate_minimum_loss() const;
 
-   double calculate_selection_error(void) const;
-   double calculate_minimum_selection_error(void) const;
+   double calculate_selection_error() const;
+   double calculate_minimum_selection_error() const;
 
-   double calculate_error_unnormalized(void) const;
+   double calculate_error_unnormalized() const;
    double calculate_error_unnormalized(const Vector<double>&) const;
 
-   double calculate_minimum_loss_unnormalized(void) const;
+   double calculate_minimum_loss_unnormalized() const;
 
-   double calculate_selection_error_unnormalized(void) const;
-   double calculate_minimum_selection_error_unnormalized(void) const;
+   double calculate_selection_error_unnormalized() const;
+   double calculate_minimum_selection_error_unnormalized() const;
 
    Vector<double> calculate_output_gradient(const Vector<double> &, const Vector<double> &) const;
    Matrix<double> calculate_output_Hessian(const Vector<double> &, const Vector<double> &) const;
 
+   Vector<double> calculate_gradient() const;
+
    Vector<double> calculate_output_gradient_unnormalized(const Vector<double> &, const Vector<double> &) const;
 
-   Vector<double> calculate_gradient_unnormalized(void) const;
+   Vector<double> calculate_gradient_unnormalized() const;
 
-   std::string write_error_term_type(void) const;
+   string write_error_term_type() const;
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -126,7 +128,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

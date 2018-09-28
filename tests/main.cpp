@@ -25,7 +25,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
 
 #ifdef __OPENNN_MPI__
@@ -40,7 +40,7 @@ int main(void)
 
     if(rank == 0)
     {
-        std::cout << "Tests do not work with MPI\n";
+        cout << "Tests do not work with MPI\n";
     }
 
     MPI_Finalize();
@@ -50,18 +50,21 @@ int main(void)
 #endif
 
 
-   std::cout <<
+   cout <<
    "Open Neural Networks Library. Test Suite Application.\n"
    "Write test:\n"
    "variables\n"
    "instances\n"
    "missing_values\n"
+   "correlation_analysis\n"
    "data_set\n"
    "plug_in\n"
    "ordinary_differential_equations\n"
    "mathematical_model\n"
    "unscaling_layer\n"
    "scaling_layer\n"
+   "inputs_trending_layer\n"
+   "outputs_trending_layer\n"
    "probabilistic_layer\n"
    "perceptron_layer\n"
    "perceptron\n"
@@ -97,6 +100,7 @@ int main(void)
    "numerical_integration\n"
    "numerical_differentiation\n"
    "matrix\n"
+   "sparse_matrix\n"
    "model_selection\n"
    "order_selection_algorithm\n"
    "incremental_order\n"
@@ -106,24 +110,24 @@ int main(void)
    "growing_inputs\n"
    "pruning_inputs\n"
    "genetic_algorithm\n"
-   "suite" << std::endl;
+   "suite" << endl;
 
-   std::string test;
+   string test;
 
-   std::cout << "Test: ";
+   cout << "Test: ";
 
-   std::cin >> test;
+   cin >> test;
 
    // Redirect standard output to file
 
-   //std::ofstream out("../data/out.txt");
-   //std::cout.rdbuf(out.rdbuf());
+   //ofstream out("../data/out.txt");
+   //cout.rdbuf(out.rdbuf());
 
    try
    {
       srand((unsigned)time(NULL));
 
-      std::string message;
+      string message;
 
       size_t tests_count = 0;
       size_t tests_passed_count = 0;
@@ -152,6 +156,15 @@ int main(void)
          tests_count += matrix_test.get_tests_count();
          tests_passed_count += matrix_test.get_tests_passed_count();
          tests_failed_count += matrix_test.get_tests_failed_count();
+      }
+      else if(test == "sparse_matrix")
+      {
+         SparseMatrixTest sparse_matrix_test;
+         sparse_matrix_test.run_test_case();
+         message += sparse_matrix_test.get_message();
+         tests_count += sparse_matrix_test.get_tests_count();
+         tests_passed_count += sparse_matrix_test.get_tests_passed_count();
+         tests_failed_count += sparse_matrix_test.get_tests_failed_count();
       }
       else if(test == "numerical_differentiation")
       {
@@ -202,6 +215,15 @@ int main(void)
          tests_count += missing_values_test.get_tests_count();
          tests_passed_count += missing_values_test.get_tests_passed_count();
          tests_failed_count += missing_values_test.get_tests_failed_count();
+      }
+      else if(test == "correlation_analysis")
+      {
+         CorrelationAnalysisTest correlation_analysis_test;
+         correlation_analysis_test.run_test_case();
+         message += correlation_analysis_test.get_message();
+         tests_count += correlation_analysis_test.get_tests_count();
+         tests_passed_count += correlation_analysis_test.get_tests_passed_count();
+         tests_failed_count += correlation_analysis_test.get_tests_failed_count();
       }
       else if(test == "data_set")
       {
@@ -293,6 +315,24 @@ int main(void)
          tests_count += unscaling_layer_test.get_tests_count();
          tests_passed_count += unscaling_layer_test.get_tests_passed_count();
          tests_failed_count += unscaling_layer_test.get_tests_failed_count();
+      }
+      else if(test == "inputs_trending_layer")
+      {
+         InputsTrendingLayerTest inputs_trending_layer_test;
+         inputs_trending_layer_test.run_test_case();
+         message += inputs_trending_layer_test.get_message();
+         tests_count += inputs_trending_layer_test.get_tests_count();
+         tests_passed_count += inputs_trending_layer_test.get_tests_passed_count();
+         tests_failed_count += inputs_trending_layer_test.get_tests_failed_count();
+      }
+      else if(test == "outputs_trending_layer")
+      {
+         OutputsTrendingLayerTest outputs_trending_layer_test;
+         outputs_trending_layer_test.run_test_case();
+         message += outputs_trending_layer_test.get_message();
+         tests_count += outputs_trending_layer_test.get_tests_count();
+         tests_passed_count += outputs_trending_layer_test.get_tests_passed_count();
+         tests_failed_count += outputs_trending_layer_test.get_tests_failed_count();
       }
       else if(test == "bounding_layer")
       {
@@ -685,6 +725,15 @@ int main(void)
           tests_passed_count += matrix_test.get_tests_passed_count();
           tests_failed_count += matrix_test.get_tests_failed_count();
 
+          // sparse matrix
+
+          SparseMatrixTest sparse_matrix_test;
+          sparse_matrix_test.run_test_case();
+          message += sparse_matrix_test.get_message();
+          tests_count += sparse_matrix_test.get_tests_count();
+          tests_passed_count += sparse_matrix_test.get_tests_passed_count();
+          tests_failed_count += sparse_matrix_test.get_tests_failed_count();
+
           // numerical differentiation
 
           NumericalDifferentiationTest test_numerical_differentiation;
@@ -722,6 +771,15 @@ int main(void)
           tests_count += instances_test.get_tests_count();
           tests_passed_count += instances_test.get_tests_passed_count();
           tests_failed_count += instances_test.get_tests_failed_count();
+
+          // correlation analysis
+
+          CorrelationAnalysisTest correlation_analysis_test;
+          correlation_analysis_test.run_test_case();
+          message += correlation_analysis_test.get_message();
+          tests_count += correlation_analysis_test.get_tests_count();
+          tests_passed_count += correlation_analysis_test.get_tests_passed_count();
+          tests_failed_count += correlation_analysis_test.get_tests_failed_count();
 
           // data set
 
@@ -1155,12 +1213,12 @@ int main(void)
 
       else
       {
-         std::cout << "Unknown test: " << test << std::endl;
+         cout << "Unknown test: " << test << endl;
 
          return(1);
       }
 
-      std::cout << message << "\n"
+      cout << message << "\n"
                 << "OpenNN test suite results:\n"
                 << "Tests run: " << tests_count << "\n"
                 << "Tests passed: " << tests_passed_count << "\n"
@@ -1168,18 +1226,18 @@ int main(void)
 
       if(tests_failed_count == 0)
       {
-         std::cout << "Test OK" << std::endl;
+         cout << "Test OK" << endl;
       }
       else
       {
-         std::cout << "Test NOT OK. " << tests_failed_count << " tests failed" << std::endl;
+         cout << "Test NOT OK. " << tests_failed_count << " tests failed" << endl;
       }
 
       return(0);
    }
-   catch(std::exception& e)
+   catch(exception& e)
    {
-      std::cout << e.what() << std::endl;		 
+      cout << e.what() << endl;		 
 
       return(1);
    }
@@ -1187,7 +1245,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Roberto Lopez
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
