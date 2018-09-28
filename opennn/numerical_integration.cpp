@@ -6,7 +6,7 @@
 /*   N U M E R I C A L   I N T E G R A T I O N   C L A S S                                                      */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -22,7 +22,7 @@ namespace OpenNN
 
 /// Default constructor.
 
-NumericalIntegration::NumericalIntegration(void)	
+NumericalIntegration::NumericalIntegration()	
 {   
 
 }
@@ -32,7 +32,7 @@ NumericalIntegration::NumericalIntegration(void)
 
 /// Destructor.
 
-NumericalIntegration::~NumericalIntegration(void)
+NumericalIntegration::~NumericalIntegration()
 {
 
 }
@@ -40,21 +40,21 @@ NumericalIntegration::~NumericalIntegration(void)
 
 // METHODS
 
-// const NumericalIntegrationMethod& get_numerical_integration_method(void) const method
+// const NumericalIntegrationMethod& get_numerical_integration_method() const method
 
-/// Returns the method used for numerical integration (trapezoid method or Simpson's method).
+/// Returns the method used for numerical integration(trapezoid method or Simpson's method).
 
-const NumericalIntegration::NumericalIntegrationMethod& NumericalIntegration::get_numerical_integration_method(void) const
+const NumericalIntegration::NumericalIntegrationMethod& NumericalIntegration::get_numerical_integration_method() const
 {
    return(numerical_integration_method);                           
 }
 
 
-// std::string write_numerical_integration_method(void) const method
+// string write_numerical_integration_method() const method
 
 /// Returns a string with the name of the method to be used for numerical integration. 
 
-std::string NumericalIntegration::write_numerical_integration_method(void) const
+string NumericalIntegration::write_numerical_integration_method() const
 {
    switch(numerical_integration_method)
    {
@@ -72,24 +72,24 @@ std::string NumericalIntegration::write_numerical_integration_method(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: NumericalIntegration class.\n"
-                << "std::string write_numerical_integration_method(void) const method.\n"
+                << "string write_numerical_integration_method() const method.\n"
                 << "Unknown numerical integration method.\n";
  
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
 	  }
 	  break;
    }
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns the flag used by this class for displaying or not displaying warnings.
 
-const bool& NumericalIntegration::get_display(void) const
+const bool& NumericalIntegration::get_display() const
 {
    return(display);
 }
@@ -110,7 +110,7 @@ void NumericalIntegration::set(const NumericalIntegration& other_numerical_integ
 
 // void set_numerical_integration_method(const NumericalIntegrationMethod&)
 
-/// Sets the method to be used for numerical integration (trapezoid method or Simpson's method).
+/// Sets the method to be used for numerical integration(trapezoid method or Simpson's method).
 /// @param new_numerical_integration_method New numerical integration method.
 
 void NumericalIntegration::set_numerical_integration_method
@@ -120,13 +120,13 @@ void NumericalIntegration::set_numerical_integration_method
 }
 
 
-// void set_numerical_integration_method(const std::string&) method
+// void set_numerical_integration_method(const string&) method
 
 /// Sets the method to be used for the numerical integration.
 /// The argument is a string with the name of the numerical integration method. 
 /// @param new_numerical_integration_method Numerical integration method name string.
 
-void NumericalIntegration::set_numerical_integration_method(const std::string& new_numerical_integration_method)
+void NumericalIntegration::set_numerical_integration_method(const string& new_numerical_integration_method)
 {
    if(new_numerical_integration_method == "TrapezoidMethod")
    {
@@ -138,13 +138,13 @@ void NumericalIntegration::set_numerical_integration_method(const std::string& n
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: NumericalIntegration class.\n"
-             << "void set_numerical_integration_method(const std::string&) method.\n"
+             << "void set_numerical_integration_method(const string&) method.\n"
 			 << "Unknown numerical integration method: " << new_numerical_integration_method << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }	
 }
 
@@ -160,7 +160,7 @@ void NumericalIntegration::set_display(const bool& new_display)
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the default values to the numerical integration object:
 /// <ul>
@@ -168,7 +168,7 @@ void NumericalIntegration::set_display(const bool& new_display)
 /// <li> Display: true
 /// </ul>
 
-void NumericalIntegration::set_default(void)
+void NumericalIntegration::set_default()
 {
    numerical_integration_method = SimpsonMethod;
 
@@ -178,7 +178,7 @@ void NumericalIntegration::set_default(void)
 
 // double calculate_trapezoid_integral(const Vector<double>&, const Vector<double>&) const method
 
-/// This method evaluates the integral of a function given as a set of n pairs of data (x,y) using the composite 
+/// This method evaluates the integral of a function given as a set of n pairs of data(x,y) using the composite 
 /// trapezoid rule. 
 /// @param x Vector of x data.
 /// @param y Vector of y data.
@@ -206,7 +206,7 @@ double NumericalIntegration::calculate_trapezoid_integral(const Vector<double>& 
 
 // double calculate_Simpson_integral(const Vector<double>&, const Vector<double>&) const method
 
-/// This method evaluates the integral of a function given as a set of n pairs of data (x,y) using the composite 
+/// This method evaluates the integral of a function given as a set of n pairs of data(x,y) using the composite 
 /// Simpson's rule.
 /// @param x Vector of x data.
 /// @param y Vector of y data.
@@ -248,9 +248,9 @@ double NumericalIntegration::calculate_Simpson_integral(const Vector<double>& x,
          fb = y[2*i+1]; 
          fc = y[2*i+2];
                    
-         wa = (c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
-         wb = (c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
-         wc = (c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
+         wa =(c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
+         wb =(c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
+         wc =(c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
           
          sum += wa*fa+wb*fb+wc*fc;
       }
@@ -269,9 +269,9 @@ double NumericalIntegration::calculate_Simpson_integral(const Vector<double>& x,
          fb = y[2*i+1]; 
          fc = y[2*i+2];
              
-         wa = (c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
-         wb = (c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
-         wc = (c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
+         wa =(c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
+         wb =(c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
+         wc =(c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
          
 	 sum += wa*fa+wb*fb+wc*fc;
       }
@@ -291,7 +291,7 @@ double NumericalIntegration::calculate_Simpson_integral(const Vector<double>& x,
 
 // double calculate_integral(const Vector<double>&, const Vector<double>&) const method
 
-/// This method evaluates the integral of a function given as a set of n pairs of data (x,y). 
+/// This method evaluates the integral of a function given as a set of n pairs of data(x,y). 
 /// @param x Vector of x data.
 /// @param y Vector of y data.
 
@@ -313,31 +313,31 @@ double NumericalIntegration::calculate_integral(const Vector<double>& x, const V
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: NumericalIntegration class.\n"
                 << "double calculate_integral(const Vector<double>&, const Vector<double>&) const method.\n"
                 << "Unknown numerical integration method.\n";
  
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
 	  }
 	  break;
    }
  
 }
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes this numerical integration object into a XML document.
 
-tinyxml2::XMLDocument* NumericalIntegration::to_XML(void) const  
+tinyxml2::XMLDocument* NumericalIntegration::to_XML() const  
 {
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
    tinyxml2::XMLElement* element = NULL;
    tinyxml2::XMLText* text = NULL;
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Numerical integration
 
@@ -375,7 +375,7 @@ tinyxml2::XMLDocument* NumericalIntegration::to_XML(void) const
 
 void NumericalIntegration::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("NumericalIntegration");
 
@@ -414,13 +414,13 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
 
    if(!root_element)
    {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: NumericalIntegration class.\n"
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Numerical integration element is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
    }
 
    // Numerical integration method
@@ -429,15 +429,15 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_numerical_integration_method = element->GetText();
+          const string new_numerical_integration_method = element->GetText();
 
           try
           {
              set_numerical_integration_method(new_numerical_integration_method);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -448,15 +448,15 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_display = element->GetText();
+          const string new_display = element->GetText();
 
           try
           {
              set_display(new_display != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -466,7 +466,7 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

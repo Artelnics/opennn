@@ -17,7 +17,7 @@ void MultiObjective::start_loss_calculation(const Matrix<double> &population)
   vector<double> reg;
   for (size_t i=0; i<population.get_rows_number(); ++i)
     {
-      auto individual=population.arrange_row(i);
+      auto individual=population.get_row(i);
       obj.push_back(objectives(individual));
       reg.push_back(calculate_regularization(individual));
     }

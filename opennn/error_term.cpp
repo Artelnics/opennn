@@ -6,7 +6,7 @@
 /*   E R R O R   T E R M   C L A S S                                                                            */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates a default error term object, with all pointers initialized to NULL.
 /// It also initializes all the rest of class members to their default values.
 
-ErrorTerm::ErrorTerm(void)
+ErrorTerm::ErrorTerm()
  : neural_network_pointer(NULL), 
    data_set_pointer(NULL),
    numerical_differentiation_pointer(NULL)
@@ -132,7 +132,7 @@ ErrorTerm::ErrorTerm(const ErrorTerm& other_error_term)
 /// Destructor.
 /// It deletes the numerical differentiation object composing this error term object.
 
-ErrorTerm::~ErrorTerm(void)
+ErrorTerm::~ErrorTerm()
 {
    delete numerical_differentiation_pointer;
 }
@@ -140,13 +140,13 @@ ErrorTerm::~ErrorTerm(void)
 
 // ASSIGNMENT OPERATOR
 
-// ErrorTerm& operator = (const ErrorTerm&) method
+// ErrorTerm& operator =(const ErrorTerm&) method
 
 /// Assignment operator. 
 /// It assigns to this error term object the members from another error term object.
 /// @param other_error_term Error term object to be copied.
 
-ErrorTerm& ErrorTerm::operator = (const ErrorTerm& other_error_term)
+ErrorTerm& ErrorTerm::operator =(const ErrorTerm& other_error_term)
 {
    if(this != &other_error_term)
    {
@@ -174,13 +174,13 @@ ErrorTerm& ErrorTerm::operator = (const ErrorTerm& other_error_term)
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const ErrorTerm&) const method
+// bool operator ==(const ErrorTerm&) const method
 
 /// Equal to operator. 
 /// It compares this object to another object. 
 /// The return is true if both objects have the same member data, and false otherwise. 
 
-bool ErrorTerm::operator == (const ErrorTerm& other_error_term) const
+bool ErrorTerm::operator ==(const ErrorTerm& other_error_term) const
 {
    if(neural_network_pointer != other_error_term.neural_network_pointer
    || data_set_pointer != other_error_term.data_set_pointer)
@@ -189,7 +189,7 @@ bool ErrorTerm::operator == (const ErrorTerm& other_error_term) const
    }
 /*
    else if((numerical_differentiation_pointer == NULL && other_error_term.numerical_differentiation_pointer !=NULL)
-        || (numerical_differentiation_pointer != NULL && other_error_term.numerical_differentiation_pointer ==NULL))
+        ||(numerical_differentiation_pointer != NULL && other_error_term.numerical_differentiation_pointer ==NULL))
    {
        return(false);
    }
@@ -213,23 +213,23 @@ bool ErrorTerm::operator == (const ErrorTerm& other_error_term) const
 
 // METHODS
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen, or false if messages
 /// from this class can't be displayed on the screen.
 
-const bool& ErrorTerm::get_display(void) const
+const bool& ErrorTerm::get_display() const
 {
    return(display);
 }
 
 
-// bool has_neural_network(void) const method
+// bool has_neural_network() const method
 
 /// Returns true if this error term has a neural network associated,
 /// and false otherwise.
 
-bool ErrorTerm::has_neural_network(void) const
+bool ErrorTerm::has_neural_network() const
 {
     if(neural_network_pointer)
     {
@@ -242,12 +242,12 @@ bool ErrorTerm::has_neural_network(void) const
 }
 
 
-// bool has_data_set(void) const method
+// bool has_data_set() const method
 
 /// Returns true if this error term has a data set associated,
 /// and false otherwise.
 
-bool ErrorTerm::has_data_set(void) const
+bool ErrorTerm::has_data_set() const
 {
     if(data_set_pointer)
     {
@@ -260,12 +260,12 @@ bool ErrorTerm::has_data_set(void) const
 }
 
 
-// bool has_numerical_differentiation(void) const method
+// bool has_numerical_differentiation() const method
 
 /// Returns true if this error term object contains a numerical differentiation object,
 /// and false otherwise.
 
-bool ErrorTerm::has_numerical_differentiation(void) const
+bool ErrorTerm::has_numerical_differentiation() const
 {
     if(numerical_differentiation_pointer)
     {
@@ -278,12 +278,12 @@ bool ErrorTerm::has_numerical_differentiation(void) const
 }
 
 
-// void set(void) method
+// void set() method
 
-/// Sets all the member pointers to NULL (neural network, data set, mathematical model and numerical differentiation).
+/// Sets all the member pointers to NULL(neural network, data set, mathematical model and numerical differentiation).
 /// It also initializes all the rest of class members to their default values.
 
-void ErrorTerm::set(void)
+void ErrorTerm::set()
 {
    neural_network_pointer = NULL;
    data_set_pointer = NULL;
@@ -395,14 +395,14 @@ void ErrorTerm::set_numerical_differentiation_pointer(NumericalDifferentiation* 
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the error term to their default values:
 /// <ul>
 /// <li> Display: true.
 /// </ul>
 
-void ErrorTerm::set_default(void)
+void ErrorTerm::set_default()
 {
    display = true;
 }
@@ -421,11 +421,11 @@ void ErrorTerm::set_display(const bool& new_display)
 }
 
 
-// void construct_numerical_differentiation(void) method
+// void construct_numerical_differentiation() method
 
 /// This method constructs the numerical differentiation object which composes the error term class.
 
-void ErrorTerm::construct_numerical_differentiation(void)
+void ErrorTerm::construct_numerical_differentiation()
 {
    if(numerical_differentiation_pointer == NULL)
    {
@@ -434,11 +434,11 @@ void ErrorTerm::construct_numerical_differentiation(void)
 }
 
 
-// void delete_numerical_differentiation_pointer(void) method
+// void delete_numerical_differentiation_pointer() method
 
 /// This method deletes the numerical differentiation object which composes the error term class.
 
-void ErrorTerm::delete_numerical_differentiation_pointer(void)
+void ErrorTerm::delete_numerical_differentiation_pointer()
 {
    delete numerical_differentiation_pointer;
 
@@ -446,22 +446,22 @@ void ErrorTerm::delete_numerical_differentiation_pointer(void)
 }
 
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that there is a neural network associated to the error term.
 /// If some of the above conditions is not hold, the method throws an exception. 
 
-void ErrorTerm::check(void) const
+void ErrorTerm::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!neural_network_pointer)
    {
       buffer << "OpenNN Exception: ErrorTerm class.\n"
-             << "void check(void) const.\n"
+             << "void check() const.\n"
              << "Pointer to neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 }
 
@@ -489,7 +489,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!multilayer_perceptron_pointer)
    {
@@ -497,7 +497,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
              << "Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) const method.\n"
              << "Pointer to multilayer perceptron in neural network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -505,7 +505,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -519,7 +519,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
              << "Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) method.\n"
              << "Size of forward propagation activation derivative vector must be equal to number of layers.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    if(layers_number > 0)
@@ -530,10 +530,10 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
       {
          buffer << "OpenNN Exception: ErrorTerm class.\n"
                 << "Vector<double> calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) method.\n"
-                << "Size of outputs objective gradient (" << output_gradient_size << ") must be equal to "
-                << "number of outputs (" << layers_perceptrons_number[layers_number-1] << ").\n";
+                << "Size of outputs objective gradient(" << output_gradient_size << ") must be equal to "
+                << "number of outputs(" << layers_perceptrons_number[layers_number-1] << ").\n";
 
-         throw std::logic_error(buffer.str());	     
+         throw logic_error(buffer.str());	     
       }
    }
 
@@ -555,7 +555,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
 
       // Rest of hidden layers
 
-      for(int i = (int)layers_number-2; i >= 0; i--)
+      for(int i =(int)layers_number-2; i >= 0; i--)
       {
          layer_synaptic_weights = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i+1).arrange_synaptic_weights();
 
@@ -585,7 +585,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -595,27 +595,27 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
 
    if(layers_activation_derivative_size != layers_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) const method.\n"
              << "Size of forward propagation activation derivative vector must be equal to number of layers.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
       
    const size_t objective_function_output_gradient_size = output_gradient.size();
 
    if(objective_function_output_gradient_size != layers_perceptrons_number[layers_number-1])
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector<double> calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) const method.\n"
-             << "Size of objective function outputs derivative (" << objective_function_output_gradient_size << ")must be equal to "               
-             << "number of outputs (" << layers_perceptrons_number[layers_number-1] << ").\n";
+             << "Size of objective function outputs derivative(" << objective_function_output_gradient_size << ")must be equal to "              
+             << "number of outputs(" << layers_perceptrons_number[layers_number-1] << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -641,7 +641,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
 
    // Rest of hidden layers
 
-   for(int h = (int)layers_number-2; h >= 0; h--)
+   for(int h =(int)layers_number-2; h >= 0; h--)
    {   
       for(size_t i = 0; i < layers_perceptrons_number[h]; i++)
       {
@@ -651,7 +651,7 @@ Vector< Vector<double> > ErrorTerm::calculate_layers_delta
          {
             synaptic_weights = layers[h+1].arrange_synaptic_weights();
 
-            sum += (synaptic_weights(i,j))*layers_delta[h+1][j];
+            sum +=(synaptic_weights(i,j))*layers_delta[h+1][j];
          }		 
 
          layers_delta[h][i] = layers_activation_derivative[h][i]*sum;
@@ -675,7 +675,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
  const Vector< Vector<double> >& layers_activation, 
  const Vector< Vector<double> >& layers_delta) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -687,7 +687,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!multilayer_perceptron_pointer)
    {
@@ -695,7 +695,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
              << "Vector<double> calculate_point_gradient(const Vector<double>&, const Vector< Vector<double> >&, const Vector<double>&) const method.\n"
              << "Pointer to multilayer perceptron is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -704,7 +704,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
    const Vector<size_t> layers_perceptrons_number = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
  
@@ -716,9 +716,9 @@ Vector<double> ErrorTerm::calculate_point_gradient
    {
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector< Vector<double> > calculate_layers_error_gradient(const Vector< Vector<double> >&, const Vector<double>&, const Vector<double>&) method.\n"
-             << "Size of inputs (" << inputs_size << ") must be equal to inputs number (" << inputs_number << ").\n";
+             << "Size of inputs(" << inputs_size << ") must be equal to inputs number(" << inputs_number << ").\n";
 
-      throw std::logic_error(buffer.str());  
+      throw logic_error(buffer.str());  
    }
 
    // Forward propagation activation size
@@ -729,9 +729,9 @@ Vector<double> ErrorTerm::calculate_point_gradient
    {
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector< Vector<double> > calculate_layers_error_gradient(const Vector< Vector<double> >&, const Vector<double>&, const Vector<double>&) method.\n"
-             << "Size of forward propagation activation (" << layers_activation_size << ") must be equal to number of layers (" << layers_number << ").\n";
+             << "Size of forward propagation activation(" << layers_activation_size << ") must be equal to number of layers(" << layers_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Hidden errors size
@@ -742,9 +742,9 @@ Vector<double> ErrorTerm::calculate_point_gradient
    {
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector< Vector<double> > calculate_layers_error_gradient(const Vector< Vector<double> >&, const Vector<double>&) method.\n"
-             << "Size of layers delta ("<< layers_delta_size << ") must be equal to number of layers (" << layers_number << ").\n";
+             << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers(" << layers_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -831,7 +831,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
 (const Vector< Matrix<double> >& layers_combination_parameters_Jacobian, 
  const Vector< Vector<double> >& layers_delta) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -841,11 +841,11 @@ Vector<double> ErrorTerm::calculate_point_gradient
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!multilayer_perceptron_pointer)
    {
@@ -853,7 +853,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
              << "Vector<double> calculate_point_gradient(const Vector<double>&, const Vector< Vector<double> >&, const Vector<double>&) const method.\n"
              << "Pointer to network is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -861,7 +861,7 @@ Vector<double> ErrorTerm::calculate_point_gradient
    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
    const Vector<size_t> layers_size = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
  
@@ -873,9 +873,9 @@ Vector<double> ErrorTerm::calculate_point_gradient
    {
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector< Vector<double> > calculate_layers_error_gradient(const Vector< Vector<double> >&, const Vector<double>&, const Vector<double>&) method.\n"
-             << "Size of forward propagation activation (" << layers_combination_parameters_Jacobian_size << ") must be equal to number of layers (" << layers_number << ").\n";
+             << "Size of forward propagation activation(" << layers_combination_parameters_Jacobian_size << ") must be equal to number of layers(" << layers_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    // Hidden errors size
@@ -886,9 +886,9 @@ Vector<double> ErrorTerm::calculate_point_gradient
    {
       buffer << "OpenNN Exception: ErrorTerm class.\n"
              << "Vector< Vector<double> > calculate_layers_error_gradient(const Vector< Vector<double> >&, const Vector<double>&) method.\n"
-             << "Size of layers delta ("<< layers_delta_size << ") must be equal to number of layers (" << layers_number << ").\n";
+             << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers(" << layers_number << ").\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -942,7 +942,7 @@ Matrix<double> ErrorTerm::calculate_output_interlayers_Delta(const Vector<double
     const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
 
     const Matrix<double> output_interlayers_Delta =
-    (output_Hessian
+   (output_Hessian
      * output_layer_activation_derivative[layers_number-1]
      * output_layer_activation_derivative[layers_number-1]
      + output_gradient
@@ -993,29 +993,6 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
             {
                 if(index_1 == 0 && index_2 == 2)
                 {
-                    std::cout << "Layers delta 02: " << layers_delta << std::endl;
-
-//                    std::cout << "--------" << std::endl;
-
-//                    std::cout << "Index 1: " << index_1 << std::endl;
-//                    std::cout << "Index 2: " << index_2 << std::endl;
-
-//                    std::cout << "Previous interlayers delta: " << previous_interlayers_Delta(0,0) << std::endl;
-
-//                    std::cout << "Interlayers Delta(1,2): " <<
-//                                    previous_interlayers_Delta(0,0)
-//                                    *layers_activation_derivative[1][j]
-//                                    *multilayer_perceptron_pointer->get_layer(index_2).arrange_synaptic_weights()(0,0)
-//                               << std::endl;
-
-//                    std::cout << "Layers activation derivative: " << layers_activation_derivative[1][j] << std::endl;
-//                    std::cout << "Synaptic eights index 2: " << multilayer_perceptron_pointer->get_layer(index_2).arrange_synaptic_weights()(0,0) << std::endl;
-//                    std::cout << "Synaptic eights index 1+1: " << multilayer_perceptron_pointer->get_layer(index_1+1).arrange_synaptic_weights()(0,0) << std::endl;
-//                    std::cout << "Layer 1 activation derivative: " << layer_1_activation_derivative[i] << std::endl;
-//                    std::cout << "Layer 1 activation second derivative: " << layer_1_activation_second_derivative[i] << std::endl;
-//                    std::cout << "Interlayers combination combination Jacobian: " << interlayers_combination_combination_Jacobian(0,0) << std::endl;
-//                    std::cout << "Actual layers delta: " << multilayer_perceptron_pointer->get_layer(index_1).arrange_synaptic_weights().arrange_column(j).dot(layers_delta) << std::endl;
-
                     interlayers_Delta(i,j) +=
                             previous_interlayers_Delta(0,0)
                             *layers_activation_derivative[1][j]
@@ -1024,9 +1001,7 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
                             *layer_1_activation_derivative[i]
                             +layer_1_activation_second_derivative[i]
                             *interlayers_combination_combination_Jacobian(0,0)
-                            *multilayer_perceptron_pointer->get_layer(index_1).arrange_synaptic_weights().arrange_column(j).dot(layers_delta);
-
-//                    std::cout << "--------" << std::endl;
+                            *multilayer_perceptron_pointer->get_layer(index_1).arrange_synaptic_weights().get_column(j).dot(layers_delta);
                 }
                 else
                 {
@@ -1046,19 +1021,19 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
                             *previous_interlayers_Delta(0,0)
                             +layer_2_activation_second_derivative[/*neuron_index_j*/j]
                             *calculate_Kronecker_delta(i,j)
-                            *output_layer_weights.arrange_column(j).dot(layers_delta);
+                            *output_layer_weights.get_column(j).dot(layers_delta);
                 }
                 else if(index_1 == 0 && index_2 == 1)
                 {
-                    std::cout << "------------" << std::endl;
+                    cout << "------------" << endl;
 
-                    std::cout << "Previous interlayers Delta: " << previous_interlayers_Delta << std::endl;
+                    cout << "Previous interlayers Delta: " << previous_interlayers_Delta << endl;
 
-                    std::cout << "layers delta: " << layers_delta << std::endl;
+                    cout << "layers delta: " << layers_delta << endl;
 
-                    std::cout << "complete layers delta: " << complete_layers_delta << std::endl;
+                    cout << "complete layers delta: " << complete_layers_delta << endl;
 
-                    std::cout << "interlayers_combination_combination_Jacobian(0,0): " << interlayers_combination_combination_Jacobian(0,0) << std::endl;
+                    cout << "interlayers_combination_combination_Jacobian(0,0): " << interlayers_combination_combination_Jacobian(0,0) << endl;
 
                     double interlayers_Delta02 =
                             previous_interlayers_Delta(0,0)
@@ -1068,9 +1043,9 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
                             *layers_activation_derivative[0][j]
                             +layer_1_activation_second_derivative[i]
                             *interlayers_combination_combination_Jacobian(0,0)
-                            *multilayer_perceptron_pointer->get_layer(0).arrange_synaptic_weights().arrange_column(j).dot(layers_delta);
+                            *multilayer_perceptron_pointer->get_layer(0).arrange_synaptic_weights().get_column(j).dot(layers_delta);
 
-                    std::cout << "Interlayers Delta (0,2): " << interlayers_Delta02 << std::endl;
+                    cout << "Interlayers Delta(0,2): " << interlayers_Delta02 << endl;
 
                     // Previous interlayers Delta:   interlayers_Delta02
 
@@ -1081,9 +1056,9 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
                             +
                             layer_1_activation_second_derivative[i]
                             *interlayers_combination_combination_Jacobian(0,0)
-                            *multilayer_perceptron_pointer->get_layer(0).arrange_synaptic_weights().arrange_column(j).dot(complete_layers_delta[0]);
+                            *multilayer_perceptron_pointer->get_layer(0).arrange_synaptic_weights().get_column(j).dot(complete_layers_delta[0]);
 
-                    std::cout << "------------" << std::endl;
+                    cout << "------------" << endl;
                 }
                 else
                 {
@@ -1103,7 +1078,7 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
                                 *layer_2_activation_derivative[/*neuron_index_*/j]
                                 +layer_2_activation_second_derivative[/*neuron_index_j*/j]
                                 *calculate_Kronecker_delta(i,j)
-                                *output_layer_weights.arrange_column(j).dot(layers_delta);
+                                *output_layer_weights.get_column(j).dot(layers_delta);
                     }
                     else
                     {
@@ -1121,14 +1096,14 @@ Matrix<double> ErrorTerm::calculate_interlayers_Delta(
                                 *layer_2_activation_derivative[/*neuron_index_*/j]
                                 +layer_2_activation_second_derivative[/*neuron_index_j*/j]
                                 *calculate_Kronecker_delta(i,j)
-                                *output_layer_weights.arrange_column(j).dot(layers_delta);
+                                *output_layer_weights.get_column(j).dot(layers_delta);
                     }
                 }
             }
         }
     }
 
-//    std::cout << "-----------" << std::endl;
+//    cout << "-----------" << endl;
 
     return(interlayers_Delta);
 }
@@ -1166,7 +1141,7 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!multilayer_perceptron_pointer)
    {
@@ -1174,7 +1149,7 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
              << "Matrix< Matrix<double> > calculate_interlayers_Delta() method.\n"
              << "Multilayer perceptron pointer is NULL.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -1182,7 +1157,7 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
    const Vector<size_t> layers_size = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
 
@@ -1194,10 +1169,10 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
       {
          buffer << "OpenNN Exception: ErrorTerm class.\n"
                 << "Vector<double> calculate_interlayers_Delta() method.\n"
-                << "Size of layer " << layers_number-1 << " must be equal to size of output objective gradient (" << output_gradient_size << ")."
-                << std::endl;
+                << "Size of layer " << layers_number-1 << " must be equal to size of output objective gradient(" << output_gradient_size << ")."
+                << endl;
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
 
       const size_t output_Hessian_rows_number = output_Hessian.get_rows_number();
@@ -1207,20 +1182,20 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
       {
          buffer << "OpenNN Exception: ErrorTerm class.\n"
                 << "Vector<double> calculate_interlayers_Delta() method.\n"
-                << "Size of layer " << layers_number-1 << " must be equal to number of rows in output objective Hessian (" << output_Hessian_rows_number << ")."
-                << std::endl;
+                << "Size of layer " << layers_number-1 << " must be equal to number of rows in output objective Hessian(" << output_Hessian_rows_number << ")."
+                << endl;
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
 
       if(output_Hessian_columns_number != layers_size[layers_number-1])
       {
          buffer << "OpenNN Exception: ErrorTerm class.\n"
                 << "Vector<double> calculate_interlayers_Delta() method.\n"
-                << "Size of layer " << layers_number-1 << ") must be equal to number of columns in output objective Hessian (" << output_Hessian_columns_number << ")."
-                << std::endl;
+                << "Size of layer " << layers_number-1 << ") must be equal to number of columns in output objective Hessian(" << output_Hessian_columns_number << ")."
+                << endl;
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
    }
 
@@ -1258,11 +1233,11 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
 //                                              output_gradient,
 //                                              output_Hessian);
 
-   for(int i = (int)layers_number-1; i >= 0; i--)
+   for(int i =(int)layers_number-1; i >= 0; i--)
    {
-       for(int j = (int)layers_number-1; j >= i; j--)
+       for(int j =(int)layers_number-1; j >= i; j--)
        {
-           if(i == (int)layers_number-1 &&  j == (int)layers_number-1) // Output-outputs layer
+           if(i ==(int)layers_number-1 &&  j ==(int)layers_number-1) // Output-outputs layer
            {
                interlayers_Delta(i,j) = calculate_output_interlayers_Delta(layers_activation_derivative[layers_number-1],
                                                                            layers_activation_second_derivative[layers_number-1],
@@ -1272,7 +1247,7 @@ Matrix< Matrix<double> > ErrorTerm::calculate_interlayers_Delta
            }
            else //Rest of hidden layers
            {
-               std::cout << "layers_delta[i+1]: " << layers_delta[i+1] << std::endl;
+               cout << "layers_delta[i+1]: " << layers_delta[i+1] << endl;
 
                interlayers_Delta(i,j) = calculate_interlayers_Delta(i,
                                                                     j,
@@ -1322,7 +1297,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!multilayer_perceptron_pointer)
    {
@@ -1330,7 +1305,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
              << "Matrix<double> calculate_point_Hessian(const Vector<double>&, const Matrix< Matrix<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&) const method.\n"
              << "Multilayer perceptron pointer is NULL.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -1352,7 +1327,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
              << "Matrix<double> calculate_point_Hessian(const Vector<double>&, const Matrix< Matrix<double> >&, const Vector< Vector<double> >&, const Matrix< Matrix<double> >&) const method.\n"
              << "Size of layers activation derivative must be equal to number of layers in multilayer perceptron.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
 //   const size_t perceptrons_combination_parameters_gradient_size = perceptrons_combination_parameters_gradient.size();
@@ -1388,16 +1363,16 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
 
     // @todo
 
-   std::cout << "Interlayers Delta: \n" << interlayers_Delta << std::endl;
+   cout << "Interlayers Delta: \n" << interlayers_Delta << endl;
 
-   std::cout << "Layers delta: \n" << layers_delta << std::endl;
-//   std::cout << "interlayers combination combination Jacobian: \n" << interlayers_combination_combination_Jacobian << std::endl;
+   cout << "Layers delta: \n" << layers_delta << endl;
+//   cout << "interlayers combination combination Jacobian: \n" << interlayers_combination_combination_Jacobian << endl;
 
    if(layers_number > 0)
    {
        // Last layer
 
-       std::cout << "---Last layer---" << std::endl;
+       cout << "---Last layer---" << endl;
 
        for(size_t i = parameters_number-last_layer_parameters_number; i < parameters_number; i++)
        {
@@ -1423,7 +1398,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
 
        // First layer
 
-       std::cout << "---First layer---" << std::endl;
+       cout << "---First layer---" << endl;
 
        for(size_t i = 0; i < parameters_number-last_layer_parameters_number; i++)
        {
@@ -1441,7 +1416,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
 
 
               point_Hessian(i,j) =
-               (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+              (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
                //*layers_activation_derivative[layer_index_i][neuron_index_i]
                *interlayers_Delta(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
@@ -1456,7 +1431,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
 
        // Rest of the layers
 
-       std::cout << "---Rest of the layers---" << std::endl;
+       cout << "---Rest of the layers---" << endl;
 
       for(size_t i = 0; i < parameters_number-last_layer_parameters_number; i++)
       {
@@ -1473,7 +1448,7 @@ Matrix<double> ErrorTerm::calculate_point_Hessian
               parameter_index_j = parameter_indices[2];
 
               point_Hessian(i,j) =
-               (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+              (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
                *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
                //*layers_activation_derivative[layer_index_i][neuron_index_i]
                *interlayers_Delta(layer_index_i, layer_index_j)(neuron_index_i,neuron_index_j)
@@ -1578,7 +1553,7 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
             parameter_index_j = parameters_indices(j,2);
 
             single_hidden_layer_point_Hessian(i,j) =
-             (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
+            (perceptrons_combination_parameters_gradient[layer_index_i][neuron_index_i][parameter_index_i]
              *perceptrons_combination_parameters_gradient[layer_index_j][neuron_index_j][parameter_index_j]
              *layers_activation_derivative[layer_index_i][neuron_index_i]
              *second_layer_weights(neuron_index_j, neuron_index_i)
@@ -1621,7 +1596,7 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
                     *sum
                     +layers_activation_second_derivative[layer_index_j][neuron_index_j]
                     *calculate_Kronecker_delta(neuron_index_j,neuron_index_i)
-                    *second_layer_weights.arrange_column(neuron_index_j).dot(layers_delta[1]));
+                    *second_layer_weights.get_column(neuron_index_j).dot(layers_delta[1]));
         }
     }
 
@@ -1637,12 +1612,13 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
     return single_hidden_layer_point_Hessian;
 }
 
-// Vector<double> calculate_gradient(void) const method
+
+// Vector<double> calculate_gradient() const method
 
 /// Returns the default gradient vector of the error term.
 /// It uses numerical differentiation.
 
-Vector<double> ErrorTerm::calculate_gradient(void) const
+Vector<double> ErrorTerm::calculate_gradient() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1676,19 +1652,14 @@ Vector<double> ErrorTerm::calculate_gradient(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
-    size_t training_index;
+    const size_t training_instances_number = training_indices.size();
 
     const Variables& variables = data_set_pointer->get_variables();
 
     const Vector<size_t> inputs_indices = variables.arrange_inputs_indices();
     const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> targets(outputs_number);
 
     // Sum squared error stuff
 
@@ -1703,49 +1674,61 @@ Vector<double> ErrorTerm::calculate_gradient(void) const
 
     Vector<double> gradient(neural_parameters_number, 0.0);
 
-    int i;
-
-    #pragma omp parallel for private(i, training_index, inputs, targets, first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
+    #pragma omp parallel for private(first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
      output_gradient, layers_delta, particular_solution, homogeneous_solution, point_gradient)
 
-    for(i = 0; i < (int)training_instances_number; i++)
+    for(int i = 0; i <(int)training_instances_number; i++)
     {
-        training_index = training_indices[i];
+        const size_t training_index = training_indices[i];
 
-       inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+        // Data set
 
-       targets = data_set_pointer->get_instance(training_index, targets_indices);
+        const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
 
-       first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+        const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
 
-       const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-       const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
+        // Multilayer perceptron
 
-       layers_inputs = multilayer_perceptron_pointer->arrange_layers_input(inputs, layers_activation);
+        first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
-       layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
+        const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
+        const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
 
-       if(!has_conditions_layer)
-       {
-           output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
+        layers_inputs = multilayer_perceptron_pointer->arrange_layers_input(inputs, layers_activation);
 
-           layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-       }
-       else
-       {
-          particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
-          homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
+        layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
 
-          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+        // Loss index
 
-          layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
-       }
+        if(!has_conditions_layer)
+        {
+            output_gradient = calculate_output_gradient(layers_activation[layers_number-1], targets);
 
-       point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
+            layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
+        }
+        else
+        {
+            particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
+            homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-       #pragma omp critical
-       gradient += point_gradient;
+            output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+
+            layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
+        }
+
+        point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
+
+        #pragma omp critical
+        gradient += point_gradient;
     }
+
+    return(gradient);
+}
+
+
+Vector<double> ErrorTerm::calculate_gradient(const double&, const double&) const
+{
+    Vector<double> gradient;
 
     return(gradient);
 }
@@ -1770,7 +1753,7 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 
    #ifdef __OPENNN_DEBUG__
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!numerical_differentiation_pointer)
    {
@@ -1778,7 +1761,7 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
              << "Vector<double> calculate_gradient(const Vector<double>&) const method.\n"
              << "Numerical differentiation pointer is NULL.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -1787,11 +1770,11 @@ Vector<double> ErrorTerm::calculate_gradient(const Vector<double>& parameters) c
 }
 
 
-// Matrix<double> calculate_Hessian(void) const method
+// Matrix<double> calculate_Hessian() const method
 
 /// @todo
 
-Matrix<double> ErrorTerm::calculate_Hessian(void) const
+Matrix<double> ErrorTerm::calculate_Hessian() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1822,13 +1805,13 @@ Matrix<double> ErrorTerm::calculate_Hessian(void) const
     }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: SumSquaredError class.\n"
-               << "Matrix<double> calculate_Hessian(void) method.\n"
+               << "Matrix<double> calculate_Hessian() method.\n"
                << "This method is under development for more than one hidden layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // @todo General method for the Hessian matrix
@@ -1849,9 +1832,9 @@ Matrix<double> ErrorTerm::calculate_Hessian(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    const size_t training_instances_number = training_indices.size();
 
     size_t training_index;
 
@@ -1918,7 +1901,7 @@ Matrix<double> ErrorTerm::calculate_Hessian(void) const
           particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
           homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+          output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
 
           layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
        }
@@ -1952,11 +1935,11 @@ Matrix<double> ErrorTerm::calculate_Hessian(const Vector<double>& parameters) co
 }
 
 
-// Matrix<double> calculate_Hessian_one_layer(void) const method
+// Matrix<double> calculate_Hessian_one_layer() const method
 
 /// @todo
 
-Matrix<double> ErrorTerm::calculate_Hessian_one_layer(void) const
+Matrix<double> ErrorTerm::calculate_Hessian_one_layer() const
 {
     Matrix<double> Hessian_one_layer;
 
@@ -1964,11 +1947,11 @@ Matrix<double> ErrorTerm::calculate_Hessian_one_layer(void) const
 }
 
 
-// Matrix<double> calculate_Hessian_two_layers(void) const method
+// Matrix<double> calculate_Hessian_two_layers() const method
 
 /// @todo
 
-Matrix<double> ErrorTerm::calculate_Hessian_two_layers(void) const
+Matrix<double> ErrorTerm::calculate_Hessian_two_layers() const
 {
     // Neural network stuff
 
@@ -1999,9 +1982,9 @@ Matrix<double> ErrorTerm::calculate_Hessian_two_layers(void) const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
+
+    const size_t training_instances_number = training_indices.size();
 
     size_t training_index;
 
@@ -2065,7 +2048,7 @@ Matrix<double> ErrorTerm::calculate_Hessian_two_layers(void) const
           particular_solution = conditions_layer_pointer->calculate_particular_solution(inputs);
           homogeneous_solution = conditions_layer_pointer->calculate_homogeneous_solution(inputs);
 
-          output_gradient = (particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
+          output_gradient =(particular_solution+homogeneous_solution*layers_activation[layers_number-1] - targets)*2.0;
 
           layers_delta = calculate_layers_delta(layers_activation_derivative, homogeneous_solution, output_gradient);
        }
@@ -2081,19 +2064,19 @@ Matrix<double> ErrorTerm::calculate_Hessian_two_layers(void) const
 }
 
 
-// Vector<double> calculate_terms(void) const method 
+// Vector<double> calculate_terms() const method 
 
 /// Returns the loss of all the subterms composing the error term.
 
-Vector<double> ErrorTerm::calculate_terms(void) const
+Vector<double> ErrorTerm::calculate_terms() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
-           << "Vector<double> calculate_terms(void) const method.\n"
+           << "Vector<double> calculate_terms() const method.\n"
            << "The terms function is not defined for this error term.\n";
 
-    throw std::logic_error(buffer.str());
+    throw logic_error(buffer.str());
 }
 
 
@@ -2103,77 +2086,75 @@ Vector<double> ErrorTerm::calculate_terms(void) const
 
 Vector<double> ErrorTerm::calculate_terms(const Vector<double>&) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
            << "Vector<double> calculate_terms(const Vector<double>&) const method.\n"
            << "The terms function is not defined for this error term.\n";
 
-    throw std::logic_error(buffer.str());
+    throw logic_error(buffer.str());
 }
 
 
-// Matrix<double> calculate_terms_Jacobian(void) const method 
+// Matrix<double> calculate_terms_Jacobian() const method 
 
 /// Returns the Jacobian matrix of the subterms composing the error term.
 
-Matrix<double> ErrorTerm::calculate_terms_Jacobian(void) const
+Matrix<double> ErrorTerm::calculate_terms_Jacobian() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
-           << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
+           << "Matrix<double> calculate_terms_Jacobian() const method.\n"
            << "The terms function is not defined for this error term.\n";
 
-    throw std::logic_error(buffer.str());
+    throw logic_error(buffer.str());
 }
 
 
-// ErrorTerm::FirstOrderTerms calculate_first_order_terms(void) const
+// ErrorTerm::FirstOrderTerms calculate_first_order_terms() const
 
 /// Returns the loss of all the subterms composing the error term.
 
-ErrorTerm::FirstOrderTerms ErrorTerm::calculate_first_order_terms(void) const
+ErrorTerm::FirstOrderTerms ErrorTerm::calculate_first_order_terms() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "OpenNN Exception: ErrorTerm class.\n"
-           << "Vector<double> calculate_terms(void) const method.\n"
+           << "Vector<double> calculate_terms() const method.\n"
            << "The terms function is not defined for this error term.\n";
 
-    throw std::logic_error(buffer.str());
+    throw logic_error(buffer.str());
 }
 
 
-// std::string write_error_term_type(void) const method
+// string write_error_term_type() const method
 
 /// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
 
-std::string ErrorTerm::write_error_term_type(void) const
+string ErrorTerm::write_error_term_type() const
 {
    return("USER_PERFORMANCE_TERM");
 }
 
 
-// std::string write_information(void) const method
+// string write_information() const method
 
 /// Returns a string with the default information of the error term.
 /// It will be used by the training strategy to monitor the training process. 
 /// By default this information is empty. 
 
-std::string ErrorTerm::write_information(void) const
+string ErrorTerm::write_information() const
 {
    return("");
 }
 
 
-// std::string to_string(void) const method
-
 /// Returns the default string representation of a error term.
 
-std::string ErrorTerm::to_string(void) const
+string ErrorTerm::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "Error term\n";
           //<< "Display: " << display << "\n";
@@ -2182,14 +2163,14 @@ std::string ErrorTerm::to_string(void) const
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method 
+// tinyxml2::XMLDocument* to_XML() const method 
 
 /// Serializes a default error term object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 
-tinyxml2::XMLDocument* ErrorTerm::to_XML(void) const
+tinyxml2::XMLDocument* ErrorTerm::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -2209,7 +2190,7 @@ tinyxml2::XMLDocument* ErrorTerm::to_XML(void) const
 
 void ErrorTerm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("ErrorTerm");
 
@@ -2230,15 +2211,15 @@ void ErrorTerm::from_XML(const tinyxml2::XMLDocument& document)
 
    if(display_element)
    {
-      std::string new_display_string = display_element->GetText();           
+      string new_display_string = display_element->GetText();           
 
       try
       {
          set_display(new_display_string != "0");
       }
-      catch(const std::logic_error& e)
+      catch(const logic_error& e)
       {
-         std::cout << e.what() << std::endl;		 
+         cout << e.what() << endl;		 
       }
    }
 }
@@ -2266,7 +2247,7 @@ size_t ErrorTerm::calculate_Kronecker_delta(const size_t& a, const size_t& b) co
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

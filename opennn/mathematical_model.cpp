@@ -6,7 +6,7 @@
 /*   M A T H E M A T I C A L   M O D E L   C L A S S                                                            */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -23,7 +23,7 @@ namespace OpenNN
 /// Default constructor.
 /// It constructs a default mathematical model object, with zero independent and dependent variables. 
 
-MathematicalModel::MathematicalModel(void)
+MathematicalModel::MathematicalModel()
 {                                            
    set_default();
 }
@@ -49,7 +49,7 @@ MathematicalModel::MathematicalModel(const tinyxml2::XMLDocument& mathematical_m
 /// It creates a mathematical model and loads its members from a XML file. 
 /// @param file_name Name of mathematical model XML file.
 
-MathematicalModel::MathematicalModel(const std::string& file_name)
+MathematicalModel::MathematicalModel(const string& file_name)
 {                
    set_default();
 
@@ -74,7 +74,7 @@ MathematicalModel::MathematicalModel(const MathematicalModel& other_mathematical
 /// Destructor. 
 /// It does not delete any object.  
 
-MathematicalModel::~MathematicalModel(void)
+MathematicalModel::~MathematicalModel()
 { 
 }
 
@@ -85,7 +85,7 @@ MathematicalModel::~MathematicalModel(void)
 /// It assigns to this object the members of an existing mathematical model object.
 /// @param other_mathematical_model Mathematical model object to be assigned.
 
-MathematicalModel& MathematicalModel::operator = (const MathematicalModel& other_mathematical_model)
+MathematicalModel& MathematicalModel::operator =(const MathematicalModel& other_mathematical_model)
 {
    if(this != &other_mathematical_model) 
    {
@@ -106,7 +106,7 @@ MathematicalModel& MathematicalModel::operator = (const MathematicalModel& other
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_mathematical_model Mathematical model to be compared with.
 
-bool MathematicalModel::operator == (const MathematicalModel& other_mathematical_model) const
+bool MathematicalModel::operator ==(const MathematicalModel& other_mathematical_model) const
 {
    if(independent_variables_number == other_mathematical_model.independent_variables_number
    && dependent_variables_number == other_mathematical_model.dependent_variables_number
@@ -123,43 +123,43 @@ bool MathematicalModel::operator == (const MathematicalModel& other_mathematical
 
 // METHODS
 
-// const size_t& get_independent_variables_number(void) const method
+// const size_t& get_independent_variables_number() const method
 
 /// Returns the number of independent variables in the mathematical model. 
 
-const size_t& MathematicalModel::get_independent_variables_number(void) const
+const size_t& MathematicalModel::get_independent_variables_number() const
 {
    return(independent_variables_number);
 }
 
 
-// size_t get_dependent_variables_number(void) const method
+// size_t get_dependent_variables_number() const method
 
 /// Returns the number of dependent variables in the mathematical model. 
 
-const size_t& MathematicalModel::get_dependent_variables_number(void) const
+const size_t& MathematicalModel::get_dependent_variables_number() const
 {
    return(dependent_variables_number);
 }
 
 
-// size_t count_variables_number(void) const method
+// size_t count_variables_number() const method
 
 /// Returns the total number variablesin the mathematical model.
 /// This is the sum of the numbers of independent and dependent variables. 
 
-size_t MathematicalModel::count_variables_number(void) const
+size_t MathematicalModel::count_variables_number() const
 {
    return(independent_variables_number + dependent_variables_number);
 }
 
 
-// const bool get_display(void) method
+// const bool get_display() method
 
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
 
-const bool& MathematicalModel::get_display(void) const
+const bool& MathematicalModel::get_display() const
 {
    return(display);     
 }  
@@ -201,7 +201,7 @@ void MathematicalModel::set_dependent_variables_number(const size_t& new_depende
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the following default values in the mathematical model:
 /// <ul>
@@ -210,7 +210,7 @@ void MathematicalModel::set_dependent_variables_number(const size_t& new_depende
 /// <li> Display: True.
 /// </ul>
 
-void MathematicalModel::set_default(void)
+void MathematicalModel::set_default()
 {
    dependent_variables_number = 0;
    independent_variables_number = 0;
@@ -240,13 +240,13 @@ void MathematicalModel::set_display(const bool& new_display)
 
 Matrix<double> MathematicalModel::calculate_solutions(const NeuralNetwork&) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "OpenNN Exception: MathematicalModel class.\n"
           << "Matrix<double> calculate_solutions(const NeuralNetwork&) const method.\n"
           << "This method has not been derived.\n";
  
-   throw std::logic_error(buffer.str());
+   throw logic_error(buffer.str());
 }
 
 
@@ -258,13 +258,13 @@ Matrix<double> MathematicalModel::calculate_solutions(const NeuralNetwork&) cons
 
 Vector<double> MathematicalModel::calculate_final_solutions(const NeuralNetwork&) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "OpenNN Exception: MathematicalModel class.\n"
           << "Vector<double> calculate_final_solutions(const NeuralNetwork&) const method.\n"
           << "This method has not been derived.\n";
  
-   throw std::logic_error(buffer.str());
+   throw logic_error(buffer.str());
 }
 
 
@@ -275,23 +275,21 @@ Vector<double> MathematicalModel::calculate_final_solutions(const NeuralNetwork&
 
 Matrix<double> MathematicalModel::calculate_dependent_variables(const NeuralNetwork&, const Matrix<double>&) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "OpenNN Exception: MathematicalModel class.\n"
           << "Matrix<double> calculate_dependent_variables(const NeuralNetwork&, const Matrix<double>&) const method.\n"
           << "This method has not been derived.\n";
  
-   throw std::logic_error(buffer.str());
+   throw logic_error(buffer.str());
 }
 
 
-// std::string to_string(void) const method
-
 /// Returns a string representation of the current mathematical model object. 
 
-std::string MathematicalModel::to_string(void) const
+string MathematicalModel::object_to_string() const
 {
-   std::ostringstream buffer; 
+   ostringstream buffer; 
 
    buffer << "Mathematical model\n"
           << "Independent variables number: " << independent_variables_number << "\n" 
@@ -302,27 +300,27 @@ std::string MathematicalModel::to_string(void) const
 }
 
 
-// void print(void) const method
+// void print() const method
 
 /// This method outputs to the console the string representation of the mathematical model. 
 
-void MathematicalModel::print(void) const
+void MathematicalModel::print() const
 {
-   std::cout << to_string();
+   cout << object_to_string();
 }
 
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the mathematical model object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document. 
 
-tinyxml2::XMLDocument* MathematicalModel::to_XML(void) const   
+tinyxml2::XMLDocument* MathematicalModel::to_XML() const   
 {
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLElement* mathematical_model_element = document->NewElement("MathematicalModel");
 
@@ -375,7 +373,7 @@ tinyxml2::XMLDocument* MathematicalModel::to_XML(void) const
 
 void MathematicalModel::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("MathematicalModel");
 
@@ -426,7 +424,7 @@ void MathematicalModel::from_XML(const tinyxml2::XMLDocument& document)
 {
    const tinyxml2::XMLElement* root_element = document.FirstChildElement("MathematicalModel");
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(!root_element)
    {
@@ -434,7 +432,7 @@ void MathematicalModel::from_XML(const tinyxml2::XMLDocument& document)
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Unkown root element.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
    }
 
   // Independent variables number
@@ -451,9 +449,9 @@ void MathematicalModel::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_independent_variables_number(atoi(text));
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -473,9 +471,9 @@ void MathematicalModel::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_dependent_variables_number(atoi(text));
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -493,13 +491,13 @@ void MathematicalModel::from_XML(const tinyxml2::XMLDocument& document)
         {
            try
            {
-              const std::string string(text);
+              const string string(text);
 
               set_display(string != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -507,12 +505,12 @@ void MathematicalModel::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a file the XML representation of the mathematical object. 
 /// @param file_name Name of mathematical model XML file.
 
-void MathematicalModel::save(const std::string& file_name) const
+void MathematicalModel::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -522,50 +520,50 @@ void MathematicalModel::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads the members of the mathematical model from a XML file. 
 /// @param file_name Name of mathematical model XML file.
 
-void MathematicalModel::load(const std::string& file_name)
+void MathematicalModel::load(const string& file_name)
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument document;
 
    if(document.LoadFile(file_name.c_str()))
    {
       buffer << "OpenNN Exception: MathematicalModel class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
 }
 
 
-// void save_data(const NeuralNetwork&, const std::string&) const method
+// void save_data(const NeuralNetwork&, const string&) const method
 
 /// @todo
 
-void MathematicalModel::save_data(const NeuralNetwork&, const std::string&) const
+void MathematicalModel::save_data(const NeuralNetwork&, const string&) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "OpenNN Exception: MathematicalModel class.\n"
-          << "void save_data(const NeuralNetwork&, const std::string&) const method.\n"
+          << "void save_data(const NeuralNetwork&, const string&) const method.\n"
           << "This method has not been derived.\n";
  
-   throw std::logic_error(buffer.str());
+   throw logic_error(buffer.str());
 }
 
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

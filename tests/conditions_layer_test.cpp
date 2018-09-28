@@ -19,21 +19,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-ConditionsLayerTest::ConditionsLayerTest(void) : UnitTesting()
+ConditionsLayerTest::ConditionsLayerTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-ConditionsLayerTest::~ConditionsLayerTest(void)
+ConditionsLayerTest::~ConditionsLayerTest()
 {
 }
 
 
 // METHODS
 
-void ConditionsLayerTest::test_constructor(void)
+void ConditionsLayerTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -49,13 +49,13 @@ void ConditionsLayerTest::test_constructor(void)
 }
 
 
-void ConditionsLayerTest::test_destructor(void)
+void ConditionsLayerTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void ConditionsLayerTest::test_assignment_operator(void)
+void ConditionsLayerTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -64,7 +64,7 @@ void ConditionsLayerTest::test_assignment_operator(void)
 }
 
 
-void ConditionsLayerTest::test_count_inputs_number(void)
+void ConditionsLayerTest::test_count_inputs_number()
 {
    message += "test_count_inputs_number\n";
 
@@ -77,7 +77,7 @@ void ConditionsLayerTest::test_count_inputs_number(void)
 }
 
 
-void ConditionsLayerTest::test_get_display(void)
+void ConditionsLayerTest::test_get_display()
 {
    message += "test_get_display\n";
 }
@@ -85,7 +85,7 @@ void ConditionsLayerTest::test_get_display(void)
 
 // @todo
 
-void ConditionsLayerTest::test_set(void)
+void ConditionsLayerTest::test_set()
 {
    message += "test_set\n";
 
@@ -106,19 +106,19 @@ void ConditionsLayerTest::test_set(void)
 }
 
 
-void ConditionsLayerTest::test_set_default(void)
+void ConditionsLayerTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void ConditionsLayerTest::test_set_display(void)
+void ConditionsLayerTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void ConditionsLayerTest::test_initialize_random(void)
+void ConditionsLayerTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -132,7 +132,7 @@ void ConditionsLayerTest::test_initialize_random(void)
 
 // @todo
 
-void ConditionsLayerTest::test_calculate_particular_solution(void)
+void ConditionsLayerTest::test_calculate_particular_solution()
 {
    message += "test_calculate_particular_solution\n";
 
@@ -188,7 +188,7 @@ void ConditionsLayerTest::test_calculate_particular_solution(void)
 
 // @todo
 
-void ConditionsLayerTest::test_calculate_particular_solution_Jacobian(void)
+void ConditionsLayerTest::test_calculate_particular_solution_Jacobian()
 {
    message += "test_calculate_particular_solution_Jacobian\n";
 
@@ -237,7 +237,7 @@ void ConditionsLayerTest::test_calculate_particular_solution_Jacobian(void)
 
 // @todo
 
-void ConditionsLayerTest::test_calculate_homogeneous_solution(void)
+void ConditionsLayerTest::test_calculate_homogeneous_solution()
 {
    message += "test_calculate_homogeneous_solution\n";
 
@@ -300,7 +300,7 @@ void ConditionsLayerTest::test_calculate_homogeneous_solution(void)
 
 // @todo
 
-void ConditionsLayerTest::test_calculate_homogeneous_solution_Jacobian(void)
+void ConditionsLayerTest::test_calculate_homogeneous_solution_Jacobian()
 {
    message += "test_calculate_homogeneous_solution_Jacobian\n";
 
@@ -340,7 +340,7 @@ void ConditionsLayerTest::test_calculate_homogeneous_solution_Jacobian(void)
 }
 
 
-void ConditionsLayerTest::test_calculate_outputs(void)
+void ConditionsLayerTest::test_calculate_outputs()
 {
    message += "test_calculate_outputs\n";
 
@@ -369,13 +369,13 @@ void ConditionsLayerTest::test_calculate_outputs(void)
 }
 
 
-void ConditionsLayerTest::test_calculate_Jacobian(void)
+void ConditionsLayerTest::test_calculate_Jacobian()
 {
    message += "test_calculate_Jacobian\n";
 }
 
 
-void ConditionsLayerTest::test_calculate_Hessian_form(void)
+void ConditionsLayerTest::test_calculate_Hessian_form()
 {
    message += "test_calculate_Hessian_form\n";
 }
@@ -383,7 +383,7 @@ void ConditionsLayerTest::test_calculate_Hessian_form(void)
 
 // @todo
 
-void ConditionsLayerTest::test_to_XML(void)
+void ConditionsLayerTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -397,7 +397,7 @@ void ConditionsLayerTest::test_to_XML(void)
 }
 
 
-void ConditionsLayerTest::test_from_XML(void)
+void ConditionsLayerTest::test_from_XML()
 {
    message += "test_to_XML\n";
 
@@ -405,13 +405,13 @@ void ConditionsLayerTest::test_from_XML(void)
 }
 
 
-void ConditionsLayerTest::test_write_particular_solution_expression(void)
+void ConditionsLayerTest::test_write_particular_solution_expression()
 {
    message += "test_write_particular_solution_expression\n";
 }
 
 
-void ConditionsLayerTest::test_write_homogeneous_solution_expression(void)
+void ConditionsLayerTest::test_write_homogeneous_solution_expression()
 {
    message += "test_write_homogeneous_solution_expression\n";
 }
@@ -419,21 +419,21 @@ void ConditionsLayerTest::test_write_homogeneous_solution_expression(void)
 
 // @todo
 
-void ConditionsLayerTest::test_write_expression(void)
+void ConditionsLayerTest::test_write_expression()
 {
    message += "test_write_expression\n";
 
    ConditionsLayer cl(1,1);
 
-   Vector<std::string> x1(1, "x1");
-   Vector<std::string> x2(1, "x2");
-   Vector<std::string> y(1, "y");
+   Vector<string> x1(1, "x1");
+   Vector<string> x2(1, "x2");
+   Vector<string> y(1, "y");
 
-   std::string expression = cl.write_expression(x1, x2, y);
+   string expression = cl.write_expression(x1, x2, y);
 }
 
 
-void ConditionsLayerTest::run_test_case(void)
+void ConditionsLayerTest::run_test_case()
 {
    message += "Running conditions layer test case...\n";
 
@@ -494,7 +494,7 @@ void ConditionsLayerTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

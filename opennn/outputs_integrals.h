@@ -6,7 +6,7 @@
 /*   O U T P U T S   I N T E G R A L S   C L A S S   H E A D E R                                                */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,7 +30,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -47,7 +47,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit OutputsIntegrals(void);
+   explicit OutputsIntegrals();
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -59,16 +59,16 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~OutputsIntegrals(void);    
+   virtual ~OutputsIntegrals();    
 
    // METHODS
 
    // Get methods
 
-   const NumericalIntegration& get_numerical_integration(void) const;
-   NumericalIntegration* get_numerical_integration_pointer(void);
+   const NumericalIntegration& get_numerical_integration() const;
+   NumericalIntegration* get_numerical_integration_pointer();
 
-   const Vector<double>& get_outputs_integrals_weights(void) const;
+   const Vector<double>& get_outputs_integrals_weights() const;
    const double& get_output_integral_weight(const size_t&) const;
 
    // Set methods
@@ -78,26 +78,26 @@ public:
    void set_outputs_integrals_weights(const Vector<double>&);
    void set_output_integral_weight(const size_t&, const double&);
 
-   void set_default(void);
+   void set_default();
 
    // Checking methods
 
-   void check(void) const;
+   void check() const;
 
    // Regularization methods
 
-   double calculate_regularization(void) const;
+   double calculate_regularization() const;
    double calculate_regularization(const Vector<double>&) const;
 
-   Vector<double> calculate_gradient(void) const;
+   Vector<double> calculate_gradient() const;
 
-   Matrix<double> calculate_Hessian(void) const;
+   Matrix<double> calculate_Hessian() const;
 
-   std::string write_error_term_type(void) const;
+   string write_error_term_type() const;
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -121,7 +121,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

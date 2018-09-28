@@ -32,38 +32,38 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit TrainingRateAlgorithmTest(void); 
+   explicit TrainingRateAlgorithmTest(); 
 
 
    // DESTRUCTOR
 
-   virtual ~TrainingRateAlgorithmTest(void);
+   virtual ~TrainingRateAlgorithmTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_loss_index_pointer(void);
+   void test_get_loss_index_pointer();
 
    // Training operators
 
-   void test_get_training_rate_method(void);
-   void test_get_training_rate_method_name(void);
+   void test_get_training_rate_method();
+   void test_get_training_rate_method_name();
 
    // Training parameters
 
-   void test_get_bracketing_factor(void);   
-   void test_get_training_rate_tolerance(void);
+   void test_get_bracketing_factor();   
+   void test_get_training_rate_tolerance();
 
-   void test_get_warning_training_rate(void);
+   void test_get_warning_training_rate();
 
-   void test_get_error_training_rate(void);
+   void test_get_error_training_rate();
 
    // Stopping criteria
 
@@ -73,49 +73,49 @@ public:
 
    // Utilities
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
-   void test_set_loss_index_pointer(void);
+   void test_set_loss_index_pointer();
 
    // Training operators
 
-   void test_set_training_rate_method(void);
+   void test_set_training_rate_method();
 
    // Training parameters
 
-   void test_set_training_rate_tolerance(void);
+   void test_set_training_rate_tolerance();
 
-   void test_set_warning_training_rate(void);
+   void test_set_warning_training_rate();
 
-   void test_set_error_training_rate(void);
+   void test_set_error_training_rate();
 
     // Utilities
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Training methods
 
-   void test_calculate_directional_point(void);
+   void test_calculate_directional_point();
 
-   void test_calculate_bracketing_triplet(void);
+   void test_calculate_bracketing_triplet();
 
-   void test_calculate_fixed_directional_point(void);
-   void test_calculate_golden_section_directional_point(void);
-   void test_calculate_Brent_method_directional_point(void);
+   void test_calculate_fixed_directional_point();
+   void test_calculate_golden_section_directional_point();
+   void test_calculate_Brent_method_directional_point();
    
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -123,7 +123,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -28,7 +28,7 @@ using namespace OpenNN;
 
 // DEFAULT CONSTRUCTOR
 
-MockErrorTerm::MockErrorTerm(void) : ErrorTerm()
+MockErrorTerm::MockErrorTerm() : ErrorTerm()
 {
     set_default();
 }
@@ -54,14 +54,14 @@ MockErrorTerm::MockErrorTerm(NeuralNetwork* new_neural_network_pointer, DataSet*
 
 /// Destructor.
 
-MockErrorTerm::~MockErrorTerm(void) 
+MockErrorTerm::~MockErrorTerm() 
 {
 }
 
 
 // METHODS
 
-const MockErrorTerm::Expression& MockErrorTerm::get_expression(void) const
+const MockErrorTerm::Expression& MockErrorTerm::get_expression() const
 {
     return(expression);
 }
@@ -73,7 +73,7 @@ void MockErrorTerm::set_expression(const MockErrorTerm::Expression& new_expressi
 }
 
 
-void MockErrorTerm::set_default(void)
+void MockErrorTerm::set_default()
 {
     expression = SumSquaredParameters;
 }
@@ -98,7 +98,7 @@ Matrix<double> MockErrorTerm::calculate_output_Hessian(const Vector<double>&, co
 }
 */
 
-double MockErrorTerm::calculate_sum_squared_parameters(void) const
+double MockErrorTerm::calculate_sum_squared_parameters() const
 {
     const Vector<double> parameters = neural_network_pointer->arrange_parameters();
 
@@ -106,7 +106,7 @@ double MockErrorTerm::calculate_sum_squared_parameters(void) const
 }
 
 
-Vector<double> MockErrorTerm::calculate_sum_squared_parameters_gradient(void) const
+Vector<double> MockErrorTerm::calculate_sum_squared_parameters_gradient() const
 {
     const Vector<double> parameters = neural_network_pointer->arrange_parameters();
 
@@ -114,7 +114,7 @@ Vector<double> MockErrorTerm::calculate_sum_squared_parameters_gradient(void) co
 }
 
 
-Matrix<double> MockErrorTerm::calculate_sum_squared_parameters_Hessian(void) const
+Matrix<double> MockErrorTerm::calculate_sum_squared_parameters_Hessian() const
 {
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
 
@@ -126,7 +126,7 @@ Matrix<double> MockErrorTerm::calculate_sum_squared_parameters_Hessian(void) con
 }
 
 
-Vector<double> MockErrorTerm::calculate_sum_squared_parameters_terms(void) const
+Vector<double> MockErrorTerm::calculate_sum_squared_parameters_terms() const
 {
     const Vector<double> parameters = neural_network_pointer->arrange_parameters();
 
@@ -134,7 +134,7 @@ Vector<double> MockErrorTerm::calculate_sum_squared_parameters_terms(void) const
 }
 
 
-Matrix<double> MockErrorTerm::calculate_sum_squared_parameters_terms_Jacobian(void) const
+Matrix<double> MockErrorTerm::calculate_sum_squared_parameters_terms_Jacobian() const
 {
     const Vector<double> parameters = neural_network_pointer->arrange_parameters();
     const size_t parameters_number = neural_network_pointer->count_parameters_number();
@@ -180,7 +180,7 @@ double MockErrorTerm::calculate_output_integral_integrand(const double& x) const
 }
 
 
-double MockErrorTerm::calculate_output_integral(void) const
+double MockErrorTerm::calculate_output_integral() const
 {
 //   double trapezoid_integral = 
 //   numerical_integration.calculate_trapezoid_integral(*this, 
@@ -222,7 +222,7 @@ Vector<double> MockErrorTerm::calculate_output_integral_integrand_gradient(const
 
 // @todo
 
-Vector<double> MockErrorTerm::calculate_output_integral_gradient(void) const
+Vector<double> MockErrorTerm::calculate_output_integral_gradient() const
 {
 //    Vector<double> trapezoid_integral = 
 //    numerical_integration.calculate_trapezoid_integral(*this, 
@@ -249,7 +249,7 @@ Matrix<double> MockErrorTerm::calculate_output_integral_integrand_Hessian(const 
 
 // @todo
 
-Matrix<double> MockErrorTerm::calculate_output_integral_Hessian(void) const
+Matrix<double> MockErrorTerm::calculate_output_integral_Hessian() const
 {
    Matrix<double> objective_Hessian;
 
@@ -272,13 +272,13 @@ double MockErrorTerm::calculate_output_integral(const Vector<double>&) const
 
    if(size != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
-      buffer << "OpenNN Error: MockErrorTerm class." << std::endl
-             << "double calculate_output_integral(const Vector<double>&) const method." << std::endl
-             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << std::endl;
+      buffer << "OpenNN Error: MockErrorTerm class." << endl
+             << "double calculate_output_integral(const Vector<double>&) const method." << endl
+             << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ")." << endl;
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    #endif
@@ -303,7 +303,7 @@ Matrix<double> MockErrorTerm::calculate_output_integral_Hessian(const Vector<dou
 }
 
 
-double MockErrorTerm::calculate_error(void) const
+double MockErrorTerm::calculate_error() const
 {
     switch(expression)
     {
@@ -321,19 +321,19 @@ double MockErrorTerm::calculate_error(void) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
-                 << "double calculate_error(void) const method.\n"
+                 << "double calculate_error() const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
 }
 
-Vector<double> MockErrorTerm::calculate_gradient(void) const
+Vector<double> MockErrorTerm::calculate_gradient() const
 {
     switch(expression)
     {
@@ -351,13 +351,13 @@ Vector<double> MockErrorTerm::calculate_gradient(void) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
-                 << "Vector<double> calculate_gradient(void) const method.\n"
+                 << "Vector<double> calculate_gradient() const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -365,7 +365,7 @@ Vector<double> MockErrorTerm::calculate_gradient(void) const
 }
 
 
-Matrix<double> MockErrorTerm::calculate_Hessian(void) const
+Matrix<double> MockErrorTerm::calculate_Hessian() const
 {
     switch(expression)
     {
@@ -383,20 +383,20 @@ Matrix<double> MockErrorTerm::calculate_Hessian(void) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
-                 << "Matrix<double> calculate_Hessian(void) const method.\n"
+                 << "Matrix<double> calculate_Hessian() const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
 }
 
 
-Vector<double> MockErrorTerm::calculate_terms(void) const
+Vector<double> MockErrorTerm::calculate_terms() const
 {
     switch(expression)
     {
@@ -408,32 +408,32 @@ Vector<double> MockErrorTerm::calculate_terms(void) const
 
        case OutputIntegral:
        {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: MockLossIndex class\n"
-                   << "Vector<double> calculate_terms(void) const method.\n"
+                   << "Vector<double> calculate_terms() const method.\n"
                    << "The terms function is not defined for the output integral expression.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
        }
        break;
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
-                 << "Vector<double> calculate_terms(void) const method.\n"
+                 << "Vector<double> calculate_terms() const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
 }
 
 
-Matrix<double> MockErrorTerm::calculate_terms_Jacobian(void) const
+Matrix<double> MockErrorTerm::calculate_terms_Jacobian() const
 {
     switch(expression)
     {
@@ -445,25 +445,25 @@ Matrix<double> MockErrorTerm::calculate_terms_Jacobian(void) const
 
        case OutputIntegral:
        {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: MockLossIndex class\n"
-                   << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
+                   << "Matrix<double> calculate_terms_Jacobian() const method.\n"
                    << "The terms function is not defined for the output integral expression.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
        }
        break;
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
-                 << "Matrix<double> calculate_terms_Jacobian(void) const method.\n"
+                 << "Matrix<double> calculate_terms_Jacobian() const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -488,13 +488,13 @@ double MockErrorTerm::calculate_error(const Vector<double>& parameters) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "double calculate_error(const Vector<double>&) const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -519,13 +519,13 @@ Vector<double> MockErrorTerm::calculate_gradient(const Vector<double>& parameter
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Vector<double> calculate_gradient(const Vector<double>) const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -550,20 +550,20 @@ Matrix<double> MockErrorTerm::calculate_Hessian(const Vector<double>& parameters
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           buffer << "OpenNN Exception: MockLossIndex class\n"
                  << "Vector<double> calculate_Hessian(const Vector<double>&) const method.\n"
                  << "Unknown expression.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Roberto Lopez
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

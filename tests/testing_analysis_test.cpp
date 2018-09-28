@@ -18,17 +18,17 @@
 using namespace OpenNN;
 
 
-TestingAnalysisTest::TestingAnalysisTest(void) : UnitTesting() 
+TestingAnalysisTest::TestingAnalysisTest() : UnitTesting() 
 {
 }
 
 
-TestingAnalysisTest::~TestingAnalysisTest(void)
+TestingAnalysisTest::~TestingAnalysisTest()
 {
 }
 
 
-void TestingAnalysisTest::test_constructor(void)
+void TestingAnalysisTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -58,13 +58,13 @@ void TestingAnalysisTest::test_constructor(void)
 }
 
 
-void TestingAnalysisTest::test_destructor(void)
+void TestingAnalysisTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void TestingAnalysisTest::test_get_neural_network_pointer(void)
+void TestingAnalysisTest::test_get_neural_network_pointer()
 {
    message += "test_get_neural_network_pointer\n";
 
@@ -78,7 +78,7 @@ void TestingAnalysisTest::test_get_neural_network_pointer(void)
 }
 
 
-void TestingAnalysisTest::test_get_data_set_pointer(void)
+void TestingAnalysisTest::test_get_data_set_pointer()
 {
    message += "test_get_data_set_pointer\n";
 
@@ -92,36 +92,37 @@ void TestingAnalysisTest::test_get_data_set_pointer(void)
 }
 
 
-void TestingAnalysisTest::test_get_display(void)
+void TestingAnalysisTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void TestingAnalysisTest::test_set_neural_network_pointer(void)
+void TestingAnalysisTest::test_set_neural_network_pointer()
 {
    message += "test_set_neural_network_pointer\n";
 }
 
 
-void TestingAnalysisTest::test_set_data_set_pointer(void)
+void TestingAnalysisTest::test_set_data_set_pointer()
 {
    message += "test_set_data_set_pointer\n";
 }
 
 
-void TestingAnalysisTest::test_set_display(void)
+void TestingAnalysisTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void TestingAnalysisTest::test_calculate_target_output_data(void)
+void TestingAnalysisTest::test_calculate_target_output_data()
 {
    message += "test_calculate_target_output_data\n";
 
    NeuralNetwork nn;
    DataSet ds;
+   Variables* variables_pointer;
 
    TestingAnalysis ta(&nn, &ds);
 
@@ -143,10 +144,29 @@ void TestingAnalysisTest::test_calculate_target_output_data(void)
    assert_true(target_output_data[0].get_rows_number() == 1, LOG);
    assert_true(target_output_data[0].get_columns_number() == 2, LOG);
    assert_true(target_output_data[0] == 0.0, LOG);
+
+   // Test
+
+   nn.set(1, 1);
+   nn.initialize_parameters(0.0);
+
+   ds.set(1, 3);
+   variables_pointer = ds.get_variables_pointer();
+   variables_pointer->set_time_index(0);
+   ds.initialize_data(0.0);
+   ds.get_instances_pointer()->set_testing();
+
+   target_output_data = ta.calculate_forecasting_target_output_data();
+
+   assert_true(target_output_data.size() == 1, LOG);
+
+   assert_true(target_output_data[0].get_rows_number() == 1, LOG);
+   assert_true(target_output_data[0].get_columns_number() == 2, LOG);
+   assert_true(target_output_data[0] == 0.0, LOG);
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data(void)
+void TestingAnalysisTest::test_calculate_error_data()
 {
     message += "test_calculate_error_data\n";
 
@@ -177,7 +197,7 @@ void TestingAnalysisTest::test_calculate_error_data(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data_statistics(void)
+void TestingAnalysisTest::test_calculate_error_data_statistics()
 {
     message += "test_calculate_error_data_statistics\n";
 
@@ -208,13 +228,13 @@ void TestingAnalysisTest::test_calculate_error_data_statistics(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data_statistics_matrices(void)
+void TestingAnalysisTest::test_calculate_error_data_statistics_matrices()
 {
     message += "test_calculate_error_data_statistics_matrices\n";
 }
 
 
-void TestingAnalysisTest::test_calculate_error_data_histograms(void)
+void TestingAnalysisTest::test_calculate_error_data_histograms()
 {
     message += "test_calculate_error_data_histograms\n";
 
@@ -241,7 +261,7 @@ void TestingAnalysisTest::test_calculate_error_data_histograms(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_linear_regression_parameters(void)
+void TestingAnalysisTest::test_calculate_linear_regression_parameters()
 {
    message += "test_calculate_linear_regression_parameters\n";
 
@@ -273,7 +293,7 @@ void TestingAnalysisTest::test_calculate_linear_regression_parameters(void)
 }
 
 
-void TestingAnalysisTest::test_print_linear_regression_parameters(void)
+void TestingAnalysisTest::test_print_linear_regression_parameters()
 {
    message += "test_print_linear_regression_parameters\n";
 
@@ -292,11 +312,11 @@ void TestingAnalysisTest::test_print_linear_regression_parameters(void)
 }
 
 
-void TestingAnalysisTest::test_save_linear_regression_parameters(void)
+void TestingAnalysisTest::test_save_linear_regression_parameters()
 {
    message += "test_save_linear_regression_parameters\n";
 
-   std::string file_name = "../data/linear_regression_parameters.dat";
+   string file_name = "../data/linear_regression_parameters.dat";
 
    NeuralNetwork nn;
    DataSet ds;
@@ -306,19 +326,19 @@ void TestingAnalysisTest::test_save_linear_regression_parameters(void)
 }
 
 
-void TestingAnalysisTest::test_print_linear_regression_analysis(void)
+void TestingAnalysisTest::test_print_linear_regression_analysis()
 {
    message += "test_print_linear_regression_analysis\n";
 }
 
 
-void TestingAnalysisTest::test_save_linear_regression_analysis(void)
+void TestingAnalysisTest::test_save_linear_regression_analysis()
 {
    message += "test_save_linear_regression_analysis\n";
 }
 
 
-void TestingAnalysisTest::test_calculate_confusion(void)
+void TestingAnalysisTest::test_calculate_confusion()
 {
    message += "test_calculate_confusion\n";
 
@@ -356,13 +376,13 @@ void TestingAnalysisTest::test_calculate_confusion(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_binary_classification_test(void)
+void TestingAnalysisTest::test_calculate_binary_classification_test()
 {
    message += "test_calculate_binary_classification_test\n";
 }
 
 
-void TestingAnalysisTest::test_calculate_Wilcoxon_parameter(void)
+void TestingAnalysisTest::test_calculate_Wilcoxon_parameter()
 {
     message += "test_calculate_Wilcoxon_parameter\n";
 
@@ -398,7 +418,7 @@ void TestingAnalysisTest::test_calculate_Wilcoxon_parameter(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_roc_curve(void)
+void TestingAnalysisTest::test_calculate_roc_curve()
 {
     message += "test_calculate_roc_curve\n";
 
@@ -476,7 +496,7 @@ void TestingAnalysisTest::test_calculate_roc_curve(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_area_under_curve(void)
+void TestingAnalysisTest::test_calculate_area_under_curve()
 {
     message += "test_calculate_area_under_curve\n";
 
@@ -573,7 +593,7 @@ void TestingAnalysisTest::test_calculate_area_under_curve(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_optimal_threshold(void)
+void TestingAnalysisTest::test_calculate_optimal_threshold()
 {
     message += "test_calculate_optimal_threshold\n";
 
@@ -651,7 +671,7 @@ void TestingAnalysisTest::test_calculate_optimal_threshold(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_cumulative_gain(void)
+void TestingAnalysisTest::test_calculate_cumulative_gain()
 {
     message += "test_calculate_cumulative_chart\n";
 
@@ -692,7 +712,7 @@ void TestingAnalysisTest::test_calculate_cumulative_gain(void)
  }
 
 
-void TestingAnalysisTest::test_calculate_lift_chart(void)
+void TestingAnalysisTest::test_calculate_lift_chart()
 {
     message += "test_calculate_lift_chart\n";
 
@@ -733,7 +753,7 @@ void TestingAnalysisTest::test_calculate_lift_chart(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_calibration_plot(void)
+void TestingAnalysisTest::test_calculate_calibration_plot()
 {
     message += "test_calculate_calibration_plot\n";
 
@@ -782,7 +802,7 @@ void TestingAnalysisTest::test_calculate_calibration_plot(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_true_positive_instances(void)
+void TestingAnalysisTest::test_calculate_true_positive_instances()
 {
     message += "test_calculate_true_positive_instances\n";
 
@@ -866,7 +886,7 @@ void TestingAnalysisTest::test_calculate_true_positive_instances(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_false_positive_instances(void)
+void TestingAnalysisTest::test_calculate_false_positive_instances()
 {
     message += "test_calculate_false_positive_instaces\n";
 
@@ -950,7 +970,7 @@ void TestingAnalysisTest::test_calculate_false_positive_instances(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_false_negative_instances(void)
+void TestingAnalysisTest::test_calculate_false_negative_instances()
 {
     message += "test_calculate_false_negative_instances\n";
 
@@ -1034,7 +1054,7 @@ void TestingAnalysisTest::test_calculate_false_negative_instances(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_true_negative_instances(void)
+void TestingAnalysisTest::test_calculate_true_negative_instances()
 {
     message += "test_calculate_true_negative_instances\n";
 
@@ -1118,7 +1138,7 @@ void TestingAnalysisTest::test_calculate_true_negative_instances(void)
 }
 
 
-void TestingAnalysisTest::test_calculate_multiple_classification_rates(void)
+void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 {
     message += "test_calculate_multiple_classification_rates\n";
 
@@ -1188,7 +1208,7 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates(void)
 }
 
 
-void TestingAnalysisTest::run_test_case(void)
+void TestingAnalysisTest::run_test_case()
 {
    message += "Running testing analysis test case...\n";
 
@@ -1275,7 +1295,7 @@ void TestingAnalysisTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

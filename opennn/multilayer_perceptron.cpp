@@ -6,7 +6,7 @@
 /*   M U L T I L A Y E R   P E R C E P T R O N   C L A S S                                                      */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -15,8 +15,8 @@
 
 #include "multilayer_perceptron.h"
 
-#define numeric_to_string( x ) static_cast< std::ostringstream & >( \
-    ( std::ostringstream() << std::dec << x ) ).str()
+#define numeric_to_string( x ) static_cast< ostringstream & >( \
+   ( ostringstream() << dec << x ) ).str()
 
 namespace OpenNN
 {
@@ -27,7 +27,7 @@ namespace OpenNN
 ///	It creates a multilayer perceptron object witout any layer.
 /// This constructor also initializes the rest of class members to their default values.
 
-MultilayerPerceptron::MultilayerPerceptron(void)
+MultilayerPerceptron::MultilayerPerceptron()
 {
     set();
 }
@@ -76,9 +76,9 @@ MultilayerPerceptron::MultilayerPerceptron(const Vector<int>& new_architecture)
 
     Vector<size_t> new_architecture_size_t(architecture_size);
 
-    for(int i = 0; i < architecture_size; i++)
+    for(int i = 0; i <(int)architecture_size; i++)
     {
-        new_architecture_size_t[i] = (size_t)new_architecture[i];
+        new_architecture_size_t[i] =(size_t)new_architecture[i];
     }
 
     set(new_architecture_size_t);
@@ -138,7 +138,7 @@ MultilayerPerceptron::MultilayerPerceptron(const MultilayerPerceptron& other_mul
 /// Destructor.
 /// This destructor does not delete any pointer. 
 
-MultilayerPerceptron::~MultilayerPerceptron(void)
+MultilayerPerceptron::~MultilayerPerceptron()
 {
 }
 
@@ -149,7 +149,7 @@ MultilayerPerceptron::~MultilayerPerceptron(void)
 /// It assigns to this object the members of an existing multilayer perceptron object.
 /// @param other_multilayer_perceptron Multilayer perceptron object to be assigned.
 
-MultilayerPerceptron& MultilayerPerceptron::operator = (const MultilayerPerceptron& other_multilayer_perceptron)
+MultilayerPerceptron& MultilayerPerceptron::operator =(const MultilayerPerceptron& other_multilayer_perceptron)
 {
     if(this != &other_multilayer_perceptron)
     {
@@ -164,14 +164,14 @@ MultilayerPerceptron& MultilayerPerceptron::operator = (const MultilayerPerceptr
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const MultilayerPerceptron&) const method
+// bool operator ==(const MultilayerPerceptron&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_multilayer_perceptron Multilayer perceptron to be compared with.
 
-bool MultilayerPerceptron::operator == (const MultilayerPerceptron& other_multilayer_perceptron) const
+bool MultilayerPerceptron::operator ==(const MultilayerPerceptron& other_multilayer_perceptron) const
 {
     if(layers == other_multilayer_perceptron.layers
             && display == other_multilayer_perceptron.display)
@@ -187,13 +187,13 @@ bool MultilayerPerceptron::operator == (const MultilayerPerceptron& other_multil
 
 // METHODS
 
-// const Vector<PerceptronLayer>& get_layers(void) const method
+// const Vector<PerceptronLayer>& get_layers() const method
 
 /// Returns the layers of the multilayer perceptron 
 /// The format is a reference to the vector of vectors of perceptrons.
 /// Note that each layer might have a different size.
 
-const Vector<PerceptronLayer>& MultilayerPerceptron::get_layers(void) const 
+const Vector<PerceptronLayer>& MultilayerPerceptron::get_layers() const 
 {
     return(layers);
 }
@@ -206,7 +206,7 @@ const Vector<PerceptronLayer>& MultilayerPerceptron::get_layers(void) const
 
 const PerceptronLayer& MultilayerPerceptron::get_layer(const size_t& i) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -214,13 +214,13 @@ const PerceptronLayer& MultilayerPerceptron::get_layer(const size_t& i) const
 
     if(i >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "const PerceptronLayer get_layer(const size_t&) const method.\n"
-               << "Index of layer (" << i << ") must be less than number of layers (" << layers_number << ").\n";
+               << "Index of layer(" << i << ") must be less than number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -236,7 +236,7 @@ const PerceptronLayer& MultilayerPerceptron::get_layer(const size_t& i) const
 
 PerceptronLayer* MultilayerPerceptron::get_layer_pointer(const size_t& i)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -244,13 +244,13 @@ PerceptronLayer* MultilayerPerceptron::get_layer_pointer(const size_t& i)
 
     if(i >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "PerceptronLayer* get_layer_pointer(const size_t&) const method.\n"
-               << "Index of layer (" << i << ") must be less than number of layers (" << layers_number << ").\n";
+               << "Index of layer(" << i << ") must be less than number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -259,12 +259,12 @@ PerceptronLayer* MultilayerPerceptron::get_layer_pointer(const size_t& i)
 }
 
 
-// size_t count_perceptrons_number(void) const method
+// size_t count_perceptrons_number() const method
 
 /// Returns the total number of perceptrons in the multilayer perceptron.
 /// This is equal to the sum of the perceptrons of all layers. 
 
-size_t MultilayerPerceptron::count_perceptrons_number(void) const
+size_t MultilayerPerceptron::count_perceptrons_number() const
 {
     const Vector<size_t> layers_perceptrons_number = arrange_layers_perceptrons_numbers();
 
@@ -272,11 +272,11 @@ size_t MultilayerPerceptron::count_perceptrons_number(void) const
 }
 
 
-// Vector<size_t> count_cumulative_perceptrons_number(void) const method
+// Vector<size_t> count_cumulative_perceptrons_number() const method
 
 /// Returns a vector of size the number of layers, where each element is equal to the total number of neurons in the current and all the previous layers. 
 
-Vector<size_t> MultilayerPerceptron::count_cumulative_perceptrons_number(void) const
+Vector<size_t> MultilayerPerceptron::count_cumulative_perceptrons_number() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -298,12 +298,12 @@ Vector<size_t> MultilayerPerceptron::count_cumulative_perceptrons_number(void) c
 }
 
 
-// Vector<size_t> arrange_layers_parameters_number(void) const method
+// Vector<size_t> arrange_layers_parameters_number() const method
 
 /// Returns a vector of integers with size the number of layers, 
 /// where each element contains the number of parameters in the corresponding layer.
 
-Vector<size_t> MultilayerPerceptron::arrange_layers_parameters_number(void) const
+Vector<size_t> MultilayerPerceptron::arrange_layers_parameters_number() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -318,12 +318,12 @@ Vector<size_t> MultilayerPerceptron::arrange_layers_parameters_number(void) cons
 }
 
 
-// Vector<size_t> arrange_layers_cumulative_parameters_number(void) const method
+// Vector<size_t> arrange_layers_cumulative_parameters_number() const method
 
 /// Returns a vector of integers with size the number of layers, 
 /// where each element contains the total number of parameters in the corresponding and the previous layers.
 
-Vector<size_t> MultilayerPerceptron::arrange_layers_cumulative_parameters_number(void) const
+Vector<size_t> MultilayerPerceptron::arrange_layers_cumulative_parameters_number() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -340,14 +340,14 @@ Vector<size_t> MultilayerPerceptron::arrange_layers_cumulative_parameters_number
 }
 
 
-// Vector< Vector<double> > arrange_layers_biases(void) const method
+// Vector< Vector<double> > arrange_layers_biases() const method
 
 /// Returns the bias values from the neurons in all the layers. 
 /// The format is a vector of vectors of real values. 
 /// The size of this vector is the number of layers.
 /// The size of each subvector is the number of neurons in the corresponding layer. 
 
-Vector< Vector<double> > MultilayerPerceptron::arrange_layers_biases(void) const
+Vector< Vector<double> > MultilayerPerceptron::arrange_layers_biases() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -362,7 +362,7 @@ Vector< Vector<double> > MultilayerPerceptron::arrange_layers_biases(void) const
 }
 
 
-// Vector< Matrix<double> > arrange_layers_synaptic_weights(void) const method
+// Vector< Matrix<double> > arrange_layers_synaptic_weights() const method
 
 /// Returns the synaptic weight values from the neurons in all the layers. 
 /// The format is a vector of matrices of real values. 
@@ -370,7 +370,7 @@ Vector< Vector<double> > MultilayerPerceptron::arrange_layers_biases(void) const
 /// The number of rows of each sub_matrix is the number of neurons in the corresponding layer. 
 /// The number of columns of each sub_matrix is the number of inputs to the corresponding layer. 
 
-Vector< Matrix<double> > MultilayerPerceptron::arrange_layers_synaptic_weights(void) const
+Vector< Matrix<double> > MultilayerPerceptron::arrange_layers_synaptic_weights() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -385,16 +385,16 @@ Vector< Matrix<double> > MultilayerPerceptron::arrange_layers_synaptic_weights(v
 }
 
 
-// Vector< Matrix<double> > get_layers_parameters(void) const method
+// Vector< Matrix<double> > get_layers_parameters() const method
 
-/// Returns the neural parameter values (biases and synaptic weights) from the neurons in all 
+/// Returns the neural parameter values(biases and synaptic weights) from the neurons in all 
 /// the layers. 
 /// The format is a vector of vector of real values.
 /// The size of this vector is the number of layers.
 /// The number of rows of each sub_matrix is the number of neurons in the corresponding layer. 
-/// The number of columns of each sub_matrix is the number of parameters (inputs + 1) to the corresponding layer. 
+/// The number of columns of each sub_matrix is the number of parameters(inputs + 1) to the corresponding layer. 
 
-Vector< Vector<double> > MultilayerPerceptron::get_layers_parameters(void) const
+Vector< Vector<double> > MultilayerPerceptron::get_layers_parameters() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -409,11 +409,11 @@ Vector< Vector<double> > MultilayerPerceptron::get_layers_parameters(void) const
 }
 
 
-// size_t count_parameters_number(void) const method
+// size_t count_parameters_number() const method
 
-/// Returns the number of parameters (biases and synaptic weights) in the multilayer perceptron. 
+/// Returns the number of parameters(biases and synaptic weights) in the multilayer perceptron. 
 
-size_t MultilayerPerceptron::count_parameters_number(void) const
+size_t MultilayerPerceptron::count_parameters_number() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -428,11 +428,11 @@ size_t MultilayerPerceptron::count_parameters_number(void) const
 }
 
 
-// Vector<double> arrange_parameters(void) const method
+// Vector<double> arrange_parameters() const method
 
 /// Returns the values of all the biases and synaptic weights in the multilayer perceptron as a single vector.
 
-Vector<double> MultilayerPerceptron::arrange_parameters(void) const
+Vector<double> MultilayerPerceptron::arrange_parameters() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -454,11 +454,11 @@ Vector<double> MultilayerPerceptron::arrange_parameters(void) const
     return(parameters);
 }
 
-// Vector<double> arrange_parameters_statistics(void) const method
+// Vector<double> arrange_parameters_statistics() const method
 
 /// Returns the statistics of all the biases and synaptic weights in the multilayer perceptron.
 
-Vector<double> MultilayerPerceptron::arrange_parameters_statistics(void) const
+Vector<double> MultilayerPerceptron::arrange_parameters_statistics() const
 {
     Vector<double> parameters_statistics(4, 0.0);
 
@@ -473,13 +473,13 @@ Vector<double> MultilayerPerceptron::arrange_parameters_statistics(void) const
 }
 
 
-// Vector<size_t> count_layers_parameters_numbers(void) const method
+// Vector<size_t> count_layers_parameters_numbers() const method
 
 /// Returns the number of parameters for each layer in this multilayer perceptron.
 /// The format is a vector with size the number of layers.
-/// Each element contains the number of parameters (biases and synaptic weights) in the corresponding layer.
+/// Each element contains the number of parameters(biases and synaptic weights) in the corresponding layer.
 
-Vector<size_t> MultilayerPerceptron::count_layers_parameters_numbers(void) const
+Vector<size_t> MultilayerPerceptron::count_layers_parameters_numbers() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -501,7 +501,7 @@ Vector<size_t> MultilayerPerceptron::count_layers_parameters_numbers(void) const
 
 size_t MultilayerPerceptron::get_layer_index(const size_t& neuron_index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -509,13 +509,13 @@ size_t MultilayerPerceptron::get_layer_index(const size_t& neuron_index) const
 
     if(neuron_index >= neurons_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "int get_layer_index(const size_t&) const method.\n"
                << "Index of neuron must be less than number of neurons.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -557,7 +557,7 @@ size_t MultilayerPerceptron::get_perceptron_index(const size_t& layer_index, con
 
 size_t MultilayerPerceptron::get_layer_bias_index(const size_t& layer_index, const size_t& perceptron_index) const
 {  
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -565,26 +565,26 @@ size_t MultilayerPerceptron::get_layer_bias_index(const size_t& layer_index, con
 
     if(layer_index >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "size_t get_layer_bias_index(const size_t&, const size_t&) const method.\n"
-               << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
+               << "Index of layer(" << layer_index << ") must be less than number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t layer_perceptrons_number = layers[layer_index].get_perceptrons_number();
 
     if(perceptron_index >= layer_perceptrons_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "size_t get_layer_bias_index(const size_t&, const size_t&) const method.\n"
                << "Index of perceptron must be less than number of perceptrons in that layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -619,7 +619,7 @@ size_t MultilayerPerceptron::get_layer_bias_index(const size_t& layer_index, con
 size_t MultilayerPerceptron::get_layer_synaptic_weight_index
 (const size_t& layer_index, const size_t& perceptron_index, const size_t& input_index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -627,39 +627,39 @@ size_t MultilayerPerceptron::get_layer_synaptic_weight_index
 
     if(layer_index >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "size_t get_layer_synaptic_weight_index(const size_t&, const size_t&, const size_t&) method.\n"
-               << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
+               << "Index of layer(" << layer_index << ") must be less than number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t layer_perceptrons_number = layers[layer_index].get_perceptrons_number();
 
     if(perceptron_index >= layer_perceptrons_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "size_t get_layer_synaptic_weight_index(const size_t&, const size_t&, const size_t&) method.\n"
                << "Index of perceptron must be less than number of perceptrons in layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t layer_inputs_number = layers[layer_index].get_inputs_number();
 
     if(input_index >= layer_inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "size_t get_layer_synaptic_weight_index(const size_t&, const size_t&, const size_t&) method.\n"
                << "Index of inputs must be less than number of inputs in perceptron.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -705,7 +705,7 @@ size_t MultilayerPerceptron::get_layer_synaptic_weight_index
 
 Vector<size_t> MultilayerPerceptron::arrange_parameter_indices(const size_t& parameter_index) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -713,29 +713,29 @@ Vector<size_t> MultilayerPerceptron::arrange_parameter_indices(const size_t& par
 
     if(parameter_index >= parameters_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector<int> arrange_parameter_indices(const size_t&) const method.\n"
                << "Index of neural parameter must be less than number of multilayer perceptron parameters.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
 
-    return(arrange_parameters_indices().arrange_row(parameter_index));
+    return(arrange_parameters_indices().get_row(parameter_index));
 }
 
 
-// Matrix<size_t> arrange_parameters_indices(void) const method
+// Matrix<size_t> arrange_parameters_indices() const method
 
 /// Returns a matrix with the indices of the multilayer perceptron parameters.
 /// That indices include the layer index, the neuron index and the parameter index. 
 /// The number of rows is the number of multilayer perceptron parameters.
 /// The number of columns is 3. 
 
-Matrix<size_t> MultilayerPerceptron::arrange_parameters_indices(void) const
+Matrix<size_t> MultilayerPerceptron::arrange_parameters_indices() const
 {
     size_t perceptron_parameters_number;
 
@@ -768,11 +768,11 @@ Matrix<size_t> MultilayerPerceptron::arrange_parameters_indices(void) const
 }
 
 
-// Vector<Perceptron::ActivationFunction> get_layers_activation_function(void) const method
+// Vector<Perceptron::ActivationFunction> get_layers_activation_function() const method
 
 /// Returns the activation function of every layer in a single vector. 
 
-Vector<Perceptron::ActivationFunction> MultilayerPerceptron::get_layers_activation_function(void) const
+Vector<Perceptron::ActivationFunction> MultilayerPerceptron::get_layers_activation_function() const
 {
     const size_t layers_number = get_layers_number();
 
@@ -787,16 +787,16 @@ Vector<Perceptron::ActivationFunction> MultilayerPerceptron::get_layers_activati
 }
 
 
-// Vector<std::string> write_layers_activation_function(void) const method
+// Vector<string> write_layers_activation_function() const method
 
 /// Returns a vector of strings with the name of the activation functions for the layers. 
 /// The size of this vector is the number of layers. 
 
-Vector<std::string> MultilayerPerceptron::write_layers_activation_function(void) const
+Vector<string> MultilayerPerceptron::write_layers_activation_function() const
 {
     const size_t layers_number = get_layers_number();
 
-    Vector<std::string> layers_activation_function(layers_number);
+    Vector<string> layers_activation_function(layers_number);
 
     for(size_t i = 0; i < layers_number; i++)
     {
@@ -807,18 +807,18 @@ Vector<std::string> MultilayerPerceptron::write_layers_activation_function(void)
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages 
 /// from this class are not to be displayed on the screen.
 
-const bool& MultilayerPerceptron::get_display(void) const
+const bool& MultilayerPerceptron::get_display() const
 {
     return(display);
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets those members not related to the multilayer perceptron architecture to their default values:
 /// <ul>
@@ -827,7 +827,7 @@ const bool& MultilayerPerceptron::get_display(void) const
 /// <li> Display: True.
 /// </ul>
 
-void MultilayerPerceptron::set_default(void)
+void MultilayerPerceptron::set_default()
 {
     // Multilayer perceptron architecture
 
@@ -849,11 +849,11 @@ void MultilayerPerceptron::set_default(void)
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets an empty multilayer_perceptron_pointer architecture. 
 
-void MultilayerPerceptron::set(void)
+void MultilayerPerceptron::set()
 {
     layers.set();
 }
@@ -882,7 +882,7 @@ void MultilayerPerceptron::set(const Vector<PerceptronLayer>& new_layers)
 
 void MultilayerPerceptron::set(const Vector<size_t>& new_architecture)
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t new_architecture_size = new_architecture.size();
 
@@ -896,7 +896,7 @@ void MultilayerPerceptron::set(const Vector<size_t>& new_architecture)
                << "void set_architecture(const Vector<size_t>&) method.\n"
                << "Size of architecture cannot be one.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else
     {
@@ -908,7 +908,7 @@ void MultilayerPerceptron::set(const Vector<size_t>& new_architecture)
                        << "void set_architecture(const Vector<size_t>&) method.\n"
                        << "Size " << i << " must be greater than zero.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
         }
 
@@ -945,7 +945,7 @@ void MultilayerPerceptron::set(const Vector<size_t>& new_architecture)
 
 void MultilayerPerceptron::set(const Vector<int>& new_architecture)
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t new_architecture_size = new_architecture.size();
 
@@ -959,7 +959,7 @@ void MultilayerPerceptron::set(const Vector<int>& new_architecture)
                << "void set_architecture(const Vector<size_t>&) method.\n"
                << "Size of architecture cannot be one.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else
     {
@@ -971,7 +971,7 @@ void MultilayerPerceptron::set(const Vector<int>& new_architecture)
                        << "void set_architecture(const Vector<size_t>&) method.\n"
                        << "Size " << i << " must be greater than zero.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
         }
 
@@ -1004,11 +1004,11 @@ void MultilayerPerceptron::set(const Vector<int>& new_architecture)
 
 void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& new_perceptrons_number)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(new_inputs_number == 0)
     {
@@ -1016,7 +1016,7 @@ void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& ne
                << "void set(const size_t&, const size_t&) method.\n"
                << "Number of inputs cannot be zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else if(new_perceptrons_number == 0)
     {
@@ -1024,7 +1024,7 @@ void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& ne
                << "void set_architecture(const size_t&, const size_t&) method.\n"
                << "Number of perceptrons cannot be zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1044,11 +1044,11 @@ void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& ne
 
 void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& new_hidden_neurons_number, const size_t& new_outputs_number)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(new_inputs_number == 0)
     {
@@ -1056,7 +1056,7 @@ void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& ne
                << "void set(const size_t&, const size_t&, const size_t&) method.\n"
                << "Number of inputs must be greater than zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else if(new_hidden_neurons_number == 0)
     {
@@ -1064,7 +1064,7 @@ void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& ne
                << "void set(const size_t&, const size_t&, const size_t&) method.\n"
                << "Number of hidden neurons must be greater than zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else if(new_outputs_number == 0)
     {
@@ -1072,7 +1072,7 @@ void MultilayerPerceptron::set(const size_t& new_inputs_number, const size_t& ne
                << "void set(const size_t&, const size_t&, const size_t&) method.\n"
                << "Number of outputs must be greater than zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1109,13 +1109,13 @@ void MultilayerPerceptron::set_inputs_number(const size_t& new_inputs_number)
 {
     if(is_empty())
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_inputs_number(const size_t&) method.\n"
                << "Multilayer perceptron is empty.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     layers[0].set_inputs_number(new_inputs_number);
@@ -1184,7 +1184,7 @@ void MultilayerPerceptron::set_layers_biases(const Vector< Vector<double> >& new
 {
     const size_t layers_number = get_layers_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1192,13 +1192,13 @@ void MultilayerPerceptron::set_layers_biases(const Vector< Vector<double> >& new
 
     if(size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_layers_biases(const Vector< Vector<double> >&) method.\n"
-               << "Size (" << size << ") must be equal to number of layers (" << layers_number << ").\n";
+               << "Size(" << size << ") must be equal to number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1225,7 +1225,7 @@ void MultilayerPerceptron::set_layers_synaptic_weights(const Vector< Matrix<doub
 {
     const size_t layers_number = get_layers_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1233,13 +1233,13 @@ void MultilayerPerceptron::set_layers_synaptic_weights(const Vector< Matrix<doub
 
     if(size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_layers_synaptic_weights(const Vector< Matrix<double> >&) method.\n"
                << "Size must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1276,7 +1276,7 @@ void MultilayerPerceptron::set_layers_parameters(const Vector< Vector<double> >&
 {
     const size_t layers_number = get_layers_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1284,13 +1284,13 @@ void MultilayerPerceptron::set_layers_parameters(const Vector< Vector<double> >&
 
     if(new_layers_parameters_size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_layers_parameters(const Vector< Vector<double> >&) method.\n"
                << "Size of layer parameters must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1309,7 +1309,7 @@ void MultilayerPerceptron::set_layers_parameters(const Vector< Vector<double> >&
 
 void MultilayerPerceptron::set_parameters(const Vector<double>& new_parameters)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1319,13 +1319,13 @@ void MultilayerPerceptron::set_parameters(const Vector<double>& new_parameters)
 
     if(size != parameters_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_parameters(const Vector<double>&) method.\n"
-               << "Size (" << size << ") must be equal to number of biases and synaptic weights (" << parameters_number << ").\n";
+               << "Size(" << size << ") must be equal to number of biases and synaptic weights(" << parameters_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1352,7 +1352,7 @@ void MultilayerPerceptron::set_parameters(const Vector<double>& new_parameters)
 
 // void set_layers_activation_function(const Vector<Perceptron::ActivationFunction>&) method
 
-/// This class sets a new activation (or transfer) function in all the layers of the multilayer perceptron 
+/// This class sets a new activation(or transfer) function in all the layers of the multilayer perceptron 
 /// @param new_layers_activation_function Activation function for the layers.
 /// The size of this Vector must be equal to the number of layers, and each element corresponds
 /// to the activation function of one layer. 
@@ -1362,7 +1362,7 @@ void MultilayerPerceptron::set_layers_activation_function
 { 
     const size_t layers_number = get_layers_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1370,13 +1370,13 @@ void MultilayerPerceptron::set_layers_activation_function
 
     if(new_layers_activation_function_size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_layers_activation_function(const Vector<Perceptron::ActivationFunction>&) method.\n"
                << "Size of activation function of layers must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1390,14 +1390,14 @@ void MultilayerPerceptron::set_layers_activation_function
 
 // void set_layer_activation_function(const size_t&, const Perceptron::ActivationFunction&) method
 
-/// This class sets a new activation (or transfer) function in a single layer of the multilayer perceptron
+/// This class sets a new activation(or transfer) function in a single layer of the multilayer perceptron
 /// @param i Index of layer.
 /// @param new_layer_activation_function Activation function for that layer.
 
 void MultilayerPerceptron::set_layer_activation_function
 (const size_t& i, const Perceptron::ActivationFunction& new_layer_activation_function)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1405,13 +1405,13 @@ void MultilayerPerceptron::set_layer_activation_function
 
     if(i >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void set_layer_activation_function(const size_t&, const Perceptron::ActivationFunction&) method.\n"
                << "Index of layer is equal or greater than number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1420,17 +1420,17 @@ void MultilayerPerceptron::set_layer_activation_function
 }
 
 
-// void set_layers_activation_function(const Vector<std::string>&) method
+// void set_layers_activation_function(const Vector<string>&) method
 
-/// Sets a new activation (or transfer) function in all the layers. 
-/// The argument is a string containing the name of the function ("Logistic", "HyperbolicTangent", "Threshold", etc).
+/// Sets a new activation(or transfer) function in all the layers. 
+/// The argument is a string containing the name of the function("Logistic", "HyperbolicTangent", "Threshold", etc).
 /// @param new_layers_activation_function Activation function for the layers. 
 
-void MultilayerPerceptron::set_layers_activation_function(const Vector<std::string>& new_layers_activation_function)
+void MultilayerPerceptron::set_layers_activation_function(const Vector<string>& new_layers_activation_function)
 {
     const size_t layers_number = get_layers_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1438,13 +1438,13 @@ void MultilayerPerceptron::set_layers_activation_function(const Vector<std::stri
 
     if(size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
-               << "void set_layer_activation_function(const Vector<std::string>&) method.\n"
+               << "void set_layer_activation_function(const Vector<string>&) method.\n"
                << "Size of layers activation function is not equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1470,11 +1470,11 @@ void MultilayerPerceptron::set_display(const bool& new_display)
 }
 
 
-// bool is_empty(void) const method
+// bool is_empty() const method
 
 /// Returns true if the number of layers in the multilayer perceptron is zero, and false otherwise. 
 
-bool MultilayerPerceptron::is_empty(void) const
+bool MultilayerPerceptron::is_empty() const
 {
     if(layers.empty())
     {
@@ -1487,11 +1487,11 @@ bool MultilayerPerceptron::is_empty(void) const
 }
 
 
-// void grow_input(void) method
+// void grow_input() method
 
 /// Grow an input in this multilayer perceptron object.
 
-void MultilayerPerceptron::grow_input(void)
+void MultilayerPerceptron::grow_input()
 {
     const size_t layers_number = get_layers_number();
 
@@ -1512,31 +1512,31 @@ void MultilayerPerceptron::grow_layer_perceptron(const size_t& layer_index, cons
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(layer_index >= (layers.size()-1))
+    if(layer_index >=(layers.size()-1))
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void grow_layer_perceptron(const size_t&, const size_t&) method.\n"
                << "Index of layer is equal or greater than number of layers-1.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(perceptrons_number == 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void grow_layer_perceptron(const size_t&, const size_t&) method.\n"
                << "Number of perceptrons must be greater than 0.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
 
-    for (size_t i = 0; i < perceptrons_number; i++)
+    for(size_t i = 0; i < perceptrons_number; i++)
     {
         layers[layer_index].grow_perceptron();
         layers[layer_index+1].grow_input();
@@ -1551,7 +1551,7 @@ void MultilayerPerceptron::grow_layer_perceptron(const size_t& layer_index, cons
 
 void MultilayerPerceptron::prune_input(const size_t& index)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1559,13 +1559,13 @@ void MultilayerPerceptron::prune_input(const size_t& index)
 
     if(index >= inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void prune_input(const size_t&) method.\n"
                << "Index of input is equal or greater than number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1586,7 +1586,7 @@ void MultilayerPerceptron::prune_input(const size_t& index)
 
 void MultilayerPerceptron::prune_output(const size_t& index)
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1594,13 +1594,13 @@ void MultilayerPerceptron::prune_output(const size_t& index)
 
     if(index >= outputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void prune_output(const size_t&) method.\n"
                << "Index of output is equal or greater than number of outputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1624,26 +1624,26 @@ void MultilayerPerceptron::prune_layer_perceptron(const size_t& layer_index, con
 {
 #ifdef __OPENNN_DEBUG__
 
-    if(layer_index >= (layers.size()-1))
+    if(layer_index >=(layers.size()-1))
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void prune_layer(const size_t&, const size_t&) method.\n"
                << "Index of layer is equal or greater than number of layers-1.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(perceptron_index >= layers[layer_index].get_perceptrons_number())
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void prune_layer(const size_t&, const size_t&) method.\n"
                << "Index of perceptron is equal or greater than number of perceptrons in the layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1652,13 +1652,13 @@ void MultilayerPerceptron::prune_layer_perceptron(const size_t& layer_index, con
     layers[layer_index+1].prune_input(perceptron_index);
 }
 
-// void initialize_random(void) method
+// void initialize_random() method
 
 /// Sets a random architecture in the multilayer perceptron.
 /// It also sets random activation functions for each layer.
 /// This method is useful for testing purposes. 
 
-void MultilayerPerceptron::initialize_random(void)
+void MultilayerPerceptron::initialize_random()
 {
     const size_t architecture_size = rand()%10 + 2;
 
@@ -1711,13 +1711,13 @@ void MultilayerPerceptron::initialize_random(void)
 
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
-                   << "void initialize_random(void) method.\n"
+                   << "void initialize_random() method.\n"
                    << "Unknown layer activation function.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
             break;
         }
@@ -1777,12 +1777,12 @@ void MultilayerPerceptron::initialize_parameters(const double& value)
 }
 
 
-// void randomize_parameters_uniform(void) method
+// void randomize_parameters_uniform() method
 
 /// Initializes all the biases and synaptic weights in the neural newtork at random with values comprised 
 /// between -1 and +1.
 
-void MultilayerPerceptron::randomize_parameters_uniform(void)
+void MultilayerPerceptron::randomize_parameters_uniform()
 {
     const size_t parameters_number = count_parameters_number();
 
@@ -1853,12 +1853,12 @@ void MultilayerPerceptron::randomize_parameters_uniform(const Vector< Vector<dou
 }
 
 
-// void randomize_parameters_normal(void) method
+// void randomize_parameters_normal() method
 
 /// Initializes all the biases and synaptic weights in the newtork with random values chosen from a 
 /// normal distribution with mean 0 and standard deviation 1.
 
-void MultilayerPerceptron::randomize_parameters_normal(void)
+void MultilayerPerceptron::randomize_parameters_normal()
 {
     const size_t parameters_number = count_parameters_number();
 
@@ -1929,11 +1929,11 @@ void MultilayerPerceptron::randomize_parameters_normal(const Vector< Vector<doub
 }
 
 
-// void initialize_parameters(void) method
+// void initialize_parameters() method
 
 /// Initializes the parameters at random with values chosen from a normal distribution with mean 0 and standard deviation 1.
 
-void MultilayerPerceptron::initialize_parameters(void)
+void MultilayerPerceptron::initialize_parameters()
 {
     randomize_parameters_normal();
 }
@@ -1950,13 +1950,13 @@ void MultilayerPerceptron::perturbate_parameters(const double& perturbation)
 
     if(perturbation < 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void perturbate_parameters(const double&) method.\n"
                << "Perturbation must be equal or greater than 0.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -1973,11 +1973,11 @@ void MultilayerPerceptron::perturbate_parameters(const double& perturbation)
 }
 
 
-// double calculate_parameters_norm(void) const const method
+// double calculate_parameters_norm() const method
 
 /// Returns the norm of the vector of multilayer perceptron parameters.
 
-double MultilayerPerceptron::calculate_parameters_norm(void) const 
+double MultilayerPerceptron::calculate_parameters_norm() const 
 {
     const Vector<double> parameters = arrange_parameters();
 
@@ -1995,7 +1995,7 @@ double MultilayerPerceptron::calculate_parameters_norm(void) const
 
 Vector<double> MultilayerPerceptron::calculate_outputs(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2005,13 +2005,13 @@ Vector<double> MultilayerPerceptron::calculate_outputs(const Vector<double>& inp
 
     if(size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
-               << "Size of inputs (" << size <<") must be equal to number of inputs (" << inputs_number << ").\n";
+               << "Size of inputs(" << size <<") must be equal to number of inputs(" << inputs_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2054,13 +2054,13 @@ Matrix<double> MultilayerPerceptron::calculate_Jacobian(const Vector<double>& in
 
     if(size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_Jacobian(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2079,7 +2079,7 @@ Matrix<double> MultilayerPerceptron::calculate_Jacobian(const Vector<double>& in
 
         Matrix<double> Jacobian = layers_Jacobian[layers_number-1];
 
-        for(int i = (int)layers_number-2; i > -1; i--)
+        for(int i =(int)layers_number-2; i > -1; i--)
         {
             Jacobian = Jacobian.dot(layers_Jacobian[i]);
         }
@@ -2105,13 +2105,13 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_Hessian_form(const Vect
 
     if(size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2135,7 +2135,7 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_Hessian_form(const Vect
     {
         for(size_t output_index = 0; output_index < outputs_number; output_index++)
         {
-            Hessian_form[output_index] = (layers_Jacobian[layer_index].calculate_transpose()).dot(Hessian_form[output_index]).dot(layers_Jacobian[layer_index]);
+            Hessian_form[output_index] =(layers_Jacobian[layer_index].calculate_transpose()).dot(Hessian_form[output_index]).dot(layers_Jacobian[layer_index]);
 
             for(size_t neuron_index = 0; neuron_index < layers_size[layer_index]; neuron_index++)
             {
@@ -2145,24 +2145,6 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_Hessian_form(const Vect
 
         Jacobian = Jacobian.dot(layers_Jacobian[layer_index]);
     }
-
-    //   Matrix<double> hidden_layer_Jacobian = layers_Jacobian[0];
-    //   Matrix<double> output_layer_Jacobian = layers_Jacobian[1];
-
-    //   const Vector< Matrix<double> > hidden_layer_Hessian_form = layers_Hessian_form[0];
-    //   const Vector< Matrix<double> > output_layer_Hessian_form = layers_Hessian_form[1];
-
-    //   const Vector< Matrix<double> > Hessian_form(outputs_number);
-
-    //   for(size_t output_index = 0; output_index < outputs_number; output_index++)
-    //   {
-    //      Hessian_form[output_index] = (hidden_layer_Jacobian.calculate_transpose()).dot(output_layer_Hessian_form[output_index]).dot(hidden_layer_Jacobian);
-
-    //      for(size_t neuron_index = 0; neuron_index < layers_size[0]; neuron_index++)
-    //      {
-    //         Hessian_form[output_index] += hidden_layer_Hessian_form[neuron_index]*output_layer_Jacobian[output_index][neuron_index];
-    //	  }
-    //   }
 
     return(Hessian_form);
 }
@@ -2176,7 +2158,7 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_Hessian_form(const Vect
 
 Vector<double> MultilayerPerceptron::calculate_layer_combination_combination(const size_t& layer_index, const Vector<double>& previous_layer_combination) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2184,23 +2166,23 @@ Vector<double> MultilayerPerceptron::calculate_layer_combination_combination(con
 
     if(layer_index == 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_layer_combination_combination(const size_t&, const Vector<double>&) const.\n"
                << "Index of layer must be greater than zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else if(layer_index >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_layer_combination_combination(const size_t&, const Vector<double>&) const.\n"
-               << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
+               << "Index of layer(" << layer_index << ") must be less than number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t size = previous_layer_combination.size();
@@ -2208,13 +2190,13 @@ Vector<double> MultilayerPerceptron::calculate_layer_combination_combination(con
 
     if(size != previous_layer_perceptrons_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_layer_combination_combination(const size_t&, const Vector<double>&) const.\n"
                << "Size must be equal to size of previous layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2241,7 +2223,7 @@ Matrix<double> MultilayerPerceptron::calculate_layer_combination_combination_Jac
 {
     const size_t previous_layer_perceptrons_number = layers[layer_index-1].get_perceptrons_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2249,36 +2231,36 @@ Matrix<double> MultilayerPerceptron::calculate_layer_combination_combination_Jac
 
     if(layer_index == 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_layer_combination_combination_Jacobian(const size_t&, const Vector<double>&) const.\n"
                << "Index of layer must be greater than zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     else if(layer_index >= layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_layer_combination_combination_Jacobian(const size_t&, const Vector<double>&) const.\n"
-               << "Index of layer (" << layer_index << ") must be less than number of layers (" << layers_number << ").\n";
+               << "Index of layer(" << layer_index << ") must be less than number of layers(" << layers_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t size = previous_layer_activation_derivative.size();
 
     if(size != previous_layer_perceptrons_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix<double> calculate_layer_combination_combination_Jacobian(const size_t&, const Vector<double>&).\n"
                << "Size of activation derivative must be equal to size of previous layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2294,7 +2276,7 @@ Matrix<double> MultilayerPerceptron::calculate_layer_combination_combination_Jac
 
 // Vector<double> calculate_interlayer_combination_combination(const size_t&, const size_t&, const Vector<double>&) const method
 
-/// Returns the combination vector of a layer (image) with respect to the combination vector of another layer (domain). 
+/// Returns the combination vector of a layer(image) with respect to the combination vector of another layer(domain). 
 /// @param domain_layer_index Index of domain layer. 
 /// @param image_layer_index Index of image layer.
 /// @param domain_layer_combination Combination vector of domain layer. 
@@ -2303,13 +2285,13 @@ Vector<double> MultilayerPerceptron::calculate_interlayer_combination_combinatio
 {
     if(domain_layer_index > image_layer_index)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector<double> calculate_interlayer_combination_combination(const size_t&, const size_t&, const Vector<double>&) const method.\n"
                << "Index of domain layer must be less or equal than index of image layer.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(domain_layer_index == image_layer_index)
@@ -2332,7 +2314,7 @@ Vector<double> MultilayerPerceptron::calculate_interlayer_combination_combinatio
 
 // Matrix<double> calculate_interlayer_combination_combination_Jacobian(const size_t&, const size_t&, const Vector<double>&) const method
 
-/// Returns the partial derivatives of the combinations of a layer (image) with respect to the combinations of another layer (domain).
+/// Returns the partial derivatives of the combinations of a layer(image) with respect to the combinations of another layer(domain).
 /// This quantity is the Jacobian matrix of the interlayers combination combination function.
 /// @param image_layer_index Index of image layer.
 /// @param domain_layer_index Index of domain layer.
@@ -2365,7 +2347,7 @@ Matrix<double> MultilayerPerceptron:: calculate_interlayer_combination_combinati
 
         interlayer_combination_combination_Jacobian = layers_combination_combination_Jacobian[size-1];
 
-        for(int i = (int)size-2; i > -1; i--)
+        for(int i =(int)size-2; i > -1; i--)
         {
             interlayer_combination_combination_Jacobian = interlayer_combination_combination_Jacobian.dot(layers_combination_combination_Jacobian[i]);
         }
@@ -2396,7 +2378,7 @@ Matrix<double> MultilayerPerceptron:: calculate_interlayer_combination_combinati
 
 Vector<double> MultilayerPerceptron::calculate_output_layer_combination(const size_t& layer_index, const Vector<double>& layer_combinations) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2406,13 +2388,13 @@ Vector<double> MultilayerPerceptron::calculate_output_layer_combination(const si
 
     if(size != layer_perceptrons_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector<double> calculate_output_layer_combination(const size_t&, const Vector<double>&) const method.\n"
                << "Size must be equal to layer size.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2441,12 +2423,12 @@ Vector<double> MultilayerPerceptron::calculate_output_layer_combination(const si
 
 Vector< Matrix<double> > MultilayerPerceptron::calculate_output_layers_delta(const Vector< Vector<double> >& layers_activation_derivative) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
     const size_t layers_number = get_layers_number();
     const Vector<size_t> layers_size = arrange_layers_perceptrons_numbers();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2456,13 +2438,13 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_output_layers_delta(con
 
     if(layers_activation_derivative_size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > calculate_output_layers_delta(const Vector< Vector<double> >&) method.\n"
                << "Size of forward propagation activation derivative vector must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2477,7 +2459,7 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_output_layers_delta(con
 
         // Rest of layers
 
-        for(int i = (int)layers_number-2; i >= 0; i--)
+        for(int i =(int)layers_number-2; i >= 0; i--)
         {
             output_layers_delta[i] = output_layers_delta[i+1].dot(layers[i+1].arrange_synaptic_weights()).dot(layers[i].arrange_activations_Jacobian(layers_activation_derivative[i]));
         }
@@ -2487,7 +2469,7 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_output_layers_delta(con
 }
 
 
-// Matrix< Vector< Matrix<double> > > calculate_output_interlayers_Delta(void) method 
+// Matrix< Vector< Matrix<double> > > calculate_output_interlayers_Delta() method 
 
 /// @todo
 /// @param second_order_forward_propagation
@@ -2503,11 +2485,11 @@ Matrix< Vector< Matrix<double> > > MultilayerPerceptron::calculate_output_interl
     const Vector<size_t> layers_size = arrange_layers_perceptrons_numbers();
     const size_t outputs_number = get_outputs_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     // Second order forward propagation
 
@@ -2519,7 +2501,7 @@ Matrix< Vector< Matrix<double> > > MultilayerPerceptron::calculate_output_interl
                << "Matrix< Vector< Matrix<double> > > calculate_output_interlayers_delta() method.\n"
                << "Size of second order forward propagation must be three.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Interlayers combination-combination Jacobian
@@ -2532,7 +2514,7 @@ Matrix< Vector< Matrix<double> > > MultilayerPerceptron::calculate_output_interl
                << "Matrix< Vector< Matrix<double> > > calculate_output_interlayers_delta() method.\n"
                << "Number of rows of interlayers combination-combination Jacobian must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Multilayer perceptron outputs layers delta
@@ -2545,7 +2527,7 @@ Matrix< Vector< Matrix<double> > > MultilayerPerceptron::calculate_output_interl
                << "Matrix< Vector< Matrix<double> > > calculate_output_interlayers_delta() method.\n"
                << "Size of multilayer perceptron outputs layers delta must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2585,7 +2567,7 @@ Matrix< Vector< Matrix<double> > > MultilayerPerceptron::calculate_output_interl
 
     if(layers_number > 0)
     {
-        // Output-outputs layer (OK)
+        // Output-outputs layer(OK)
 
         output_interlayers_Delta(layers_number-1,layers_number-1) = layers[layers_number-1].arrange_activations_Hessian_form(layers_activation_second_derivative[layers_number-1]);
 
@@ -2647,7 +2629,7 @@ Matrix< Vector< Matrix<double> > > MultilayerPerceptron::calculate_output_interl
 
 Vector<double> MultilayerPerceptron::calculate_outputs(const Vector<double>& inputs, const Vector<double>& parameters) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -2657,13 +2639,13 @@ Vector<double> MultilayerPerceptron::calculate_outputs(const Vector<double>& inp
 
     if(size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const method.\n"
-               << "Size of inputs (" << size <<") must be equal to number of inputs (" << inputs_number << ").\n";
+               << "Size of inputs(" << size <<") must be equal to number of inputs(" << inputs_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t parameters_size = parameters.size();
@@ -2672,13 +2654,13 @@ Vector<double> MultilayerPerceptron::calculate_outputs(const Vector<double>& inp
 
     if(parameters_size != parameters_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const method.\n"
-               << "Size of parameters (" << parameters_size <<") must be equal to number of parameters (" << parameters_number << ").\n";
+               << "Size of parameters(" << parameters_size <<") must be equal to number of parameters(" << parameters_number << ").\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2729,13 +2711,13 @@ Matrix<double> MultilayerPerceptron::calculate_Jacobian(const Vector<double>& in
 
     if(size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "void calculate_Jacobian(Vector<double>&, const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -2901,26 +2883,26 @@ Vector< Vector<double> > MultilayerPerceptron::arrange_layers_input(const Vector
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > arrange_layers_input(const Vector<double>&, const Vector< Vector<double> >&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const size_t layers_activation_size = layers_activation.size();
 
     if(layers_activation_size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > arrange_layers_input(const Vector<double>&, const Vector< Vector<double> >&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3002,7 +2984,7 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_input(const Vect
 
 Vector< Vector<double> > MultilayerPerceptron::calculate_layers_combination(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3012,13 +2994,13 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_combination(cons
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > calculate_layers_combination(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3081,16 +3063,16 @@ Vector< Matrix<double> > MultilayerPerceptron::calculate_layers_combination_Jaco
 
     layers_Jacobian[layers_number] = output_layer_Jacobian;
 
-    for(int i = (int)layers_number-1; i > -1; i--)
+    for(int i =(int)layers_number-1; i > -1; i--)
     {
         layers_Jacobian[layers_number] = layers_Jacobian[layers_number].dot(layers_Jacobian[i]);
     }
 
-    for(int i = (int)layers_number-1; i > -1; i--)
+    for(int i =(int)layers_number-1; i > -1; i--)
     {
         layers_Jacobian[i] = layers_Jacobian[i];
 
-        for(int j = (int)i-1; j > -1; j--)
+        for(int j =(int)i-1; j > -1; j--)
         {
             layers_Jacobian[i] = layers_Jacobian[i].dot(layers_Jacobian[j]);
         }
@@ -3138,7 +3120,7 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_perceptrons_c
 {
     const size_t layers_number = get_layers_number();
 
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3146,13 +3128,13 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_perceptrons_c
 
     if(layers_input_size != layers_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector< Vector<double> > > calculate_perceptrons_combination_parameters_gradient(const Vector< Vector<double> >&) const method.\n"
                << "Size must be equal to number of layers.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3165,13 +3147,13 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_perceptrons_c
     {
         if(layers_inputs[i].size() != layers_inputs_number[i])
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                    << "Vector< Vector< Vector<double> > > calculate_perceptrons_combination_parameters_gradient(const Vector< Vector<double> >&) const method.\n"
                    << "Size of inputs to layer " << i << " must be equal to size of that layer.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
     }
 
@@ -3207,7 +3189,7 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_perceptrons_c
 
 Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3217,13 +3199,13 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation(const
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > calculate_layers_activation(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3254,7 +3236,7 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation(const
 
 Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation_derivative(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3263,13 +3245,13 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation_deriv
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > calculate_layers_activation_derivative(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3311,7 +3293,7 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation_deriv
 
 Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation_second_derivative(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3321,13 +3303,13 @@ Vector< Vector<double> > MultilayerPerceptron::calculate_layers_activation_secon
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector<double> > calculate_layers_activation_second_derivative(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3427,13 +3409,13 @@ Matrix< Matrix<double> > MultilayerPerceptron::calculate_interlayers_combination
 
     if(size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Matrix< Matrix<double> > calculate_interlayers_combination_combination_Jacobian(const Vector<double>&) const method.\n"
                << "Size of inpouts must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3467,13 +3449,13 @@ Matrix < Matrix<double> > MultilayerPerceptron::calculate_interlayers_combinatio
 
         if(size != layers_size[i])
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                    << "Matrix< Matrix<double> > calculate_interlayers_combination_combination_Jacobian(const Vector< Vector<double> >&) const method.\n"
                    << "Size must be equal to size of layer.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
     }
 
@@ -3501,14 +3483,14 @@ Matrix < Matrix<double> > MultilayerPerceptron::calculate_interlayers_combinatio
 /// Returns the first order forward propagation quantities from the multilayer perceptron for a given inputs. 
 /// That quantites include the activation and the activation derivative of all layers. 
 /// The format is a vector of vectors of vectors. 
-/// The first index refers to the quantity (0 for the activation and 1 for the activation derivative).
+/// The first index refers to the quantity(0 for the activation and 1 for the activation derivative).
 /// The second index is the index of the layer. 
 /// The third index is the index of the neuron. 
 /// @param inputs Vector of inputs to the multilayer perceptron 
 
 Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_first_order_forward_propagation(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3518,13 +3500,13 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_first_order_f
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector< Vector<double> > > calculate_first_order_forward_propagation(const Vector<double>&) const method.\n"
                << "Size must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3562,14 +3544,14 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_first_order_f
 /// Returns the second order forward propagation quantities from the multilayer perceptron for a given inputs. 
 /// That quantites include the activation, the activation derivative and the activation second derivative of all layers. 
 /// The format is a vector of vectors of vectors. 
-/// The first index refers to the activation derivative order (0 for the activation, 1 for the activation derivative and 2 for the activation second derivative).
+/// The first index refers to the activation derivative order(0 for the activation, 1 for the activation derivative and 2 for the activation second derivative).
 /// The second index is the index of the layer. 
 /// The third index is the index of the neuron. 
 /// @param inputs Vector of inputs to the multilayer perceptron 
 
 Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_second_order_forward_propagation(const Vector<double>& inputs) const
 {
-    // Control sentence (if debug)
+    // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
 
@@ -3579,13 +3561,13 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_second_order_
 
     if(inputs_size != inputs_number)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
                << "Vector< Vector< Vector<double> > > calculate_second_order_forward_propagation(const Vector<double>&) const method.\n"
                << "Size of multilayer perceptron inputs must be equal to number of inputs.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -3623,13 +3605,13 @@ Vector< Vector< Vector<double> > > MultilayerPerceptron::calculate_second_order_
 }
 
 
-// std::string to_string(void) const method
+// string object_to_string() const method
 
 /// Returns a string representation of the current multilayer perceptron object. 
 
-std::string MultilayerPerceptron::to_string(void) const
+string MultilayerPerceptron::object_to_string() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     buffer << "MultilayerPerceptron\n"
            << "Architecture: " << arrange_architecture() << "\n"
@@ -3641,14 +3623,14 @@ std::string MultilayerPerceptron::to_string(void) const
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the multilayer perceptron object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document-> 
 
-tinyxml2::XMLDocument* MultilayerPerceptron::to_XML(void) const
+tinyxml2::XMLDocument* MultilayerPerceptron::to_XML() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -3661,7 +3643,7 @@ tinyxml2::XMLDocument* MultilayerPerceptron::to_XML(void) const
         tinyxml2::XMLElement* architecture_element = document->NewElement("Architecture");
         multilayer_perceptron_element->LinkEndChild(architecture_element);
 
-        std::string architecture_string = arrange_architecture().to_string();
+        string architecture_string = arrange_architecture().vector_to_string(' ');
 
         tinyxml2::XMLText* architecture_text = document->NewText(architecture_string.c_str());
         architecture_element->LinkEndChild(architecture_text);
@@ -3672,7 +3654,7 @@ tinyxml2::XMLDocument* MultilayerPerceptron::to_XML(void) const
         tinyxml2::XMLElement* layers_activation_function_element = document->NewElement("LayersActivationFunction");
         multilayer_perceptron_element->LinkEndChild(layers_activation_function_element);
 
-        std::string layers_activation_function_string = write_layers_activation_function().to_string();
+        string layers_activation_function_string = write_layers_activation_function().vector_to_string(' ');
 
         tinyxml2::XMLText* layers_activation_function_text = document->NewText(layers_activation_function_string.c_str());
         layers_activation_function_element->LinkEndChild(layers_activation_function_text);
@@ -3683,7 +3665,7 @@ tinyxml2::XMLDocument* MultilayerPerceptron::to_XML(void) const
         tinyxml2::XMLElement* parameters_element = document->NewElement("Parameters");
         multilayer_perceptron_element->LinkEndChild(parameters_element);
 
-        const std::string parameters_string = arrange_parameters().to_string();
+        const string parameters_string = arrange_parameters().vector_to_string(' ');
 
         tinyxml2::XMLText* parameters_text = document->NewText(parameters_string.c_str());
         parameters_element->LinkEndChild(parameters_text);
@@ -3718,7 +3700,7 @@ void MultilayerPerceptron::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Architecture");
 
-    file_stream.PushText(arrange_architecture().to_string().c_str());
+    file_stream.PushText(arrange_architecture().vector_to_string(' ').c_str());
 
     file_stream.CloseElement();
 
@@ -3726,7 +3708,7 @@ void MultilayerPerceptron::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("LayersActivationFunction");
 
-    file_stream.PushText(write_layers_activation_function().to_string().c_str());
+    file_stream.PushText(write_layers_activation_function().vector_to_string(' ').c_str());
 
     file_stream.CloseElement();
 
@@ -3734,7 +3716,7 @@ void MultilayerPerceptron::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("Parameters");
 
-    file_stream.PushText(arrange_parameters().to_string().c_str());
+    file_stream.PushText(arrange_parameters().vector_to_string(' ').c_str());
 
     file_stream.CloseElement();
 
@@ -3774,9 +3756,9 @@ void MultilayerPerceptron::from_XML(const tinyxml2::XMLDocument& document)
                 {
                     set(new_architecture);
                 }
-                catch(const std::logic_error& e)
+                catch(const logic_error& e)
                 {
-                    std::cout << e.what() << std::endl;
+                    cout << e.what() << endl;
                 }
             }
         }
@@ -3792,16 +3774,16 @@ void MultilayerPerceptron::from_XML(const tinyxml2::XMLDocument& document)
 
             if(layers_activation_function_text)
             {
-                Vector<std::string> new_layers_activation_function;
+                Vector<string> new_layers_activation_function;
                 new_layers_activation_function.parse(layers_activation_function_text);
 
                 try
                 {
                     set_layers_activation_function(new_layers_activation_function);
                 }
-                catch(const std::logic_error& e)
+                catch(const logic_error& e)
                 {
-                    std::cout << e.what() << std::endl;
+                    cout << e.what() << endl;
                 }
             }
         }
@@ -3824,9 +3806,9 @@ void MultilayerPerceptron::from_XML(const tinyxml2::XMLDocument& document)
                 {
                     set_parameters(new_parameters);
                 }
-                catch(const std::logic_error& e)
+                catch(const logic_error& e)
                 {
-                    std::cout << e.what() << std::endl;
+                    cout << e.what() << endl;
                 }
             }
         }
@@ -3838,21 +3820,21 @@ void MultilayerPerceptron::from_XML(const tinyxml2::XMLDocument& document)
 
         if(display_element)
         {
-            std::string new_display_string = display_element->GetText();
+            string new_display_string = display_element->GetText();
 
             try
             {
                 set_display(new_display_string != "0");
             }
-            catch(const std::logic_error& e)
+            catch(const logic_error& e)
             {
-                std::cout << e.what() << std::endl;
+                cout << e.what() << endl;
             }
         }
     }
 }
 
-// void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neuralNetwork) const method
+// void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement*) const method
 
 /// Serializes the perceptrons layers into a PMML document
 
@@ -3869,7 +3851,7 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 
     for(size_t i = 1; i < number_of_layers ; i++ )
     {
-        if (get_layer(i).get_activation_function() != neural_network_activation_function)
+        if(get_layer(i).get_activation_function() != neural_network_activation_function)
         {
             equal_activation_function_for_all_layers = false;
 
@@ -3883,6 +3865,18 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
     {
     case Perceptron::Threshold:
         neural_network->SetAttribute("activationFunction","threshold");
+        break;
+
+    case Perceptron::SymmetricThreshold:
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+               << "void to_PMML(tinyxml2::XMLElement*) const method.\n"
+               << "Symmetric threshold activaton function is not supported by PMML.\n";
+
+        throw logic_error(buffer.str());
+    }
         break;
 
     case Perceptron::Logistic:
@@ -3920,6 +3914,18 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
                 neural_layer->SetAttribute("activationFunction","threshold");
                 break;
 
+            case Perceptron::SymmetricThreshold:
+
+                //ostringstream buffer;
+
+                //buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+                //       << "void to_PMML(tinyxml2::XMLElement*) const method.\n"
+                //       << "Symmetric threshold activaton function is not supported by PMML.\n";
+
+                //throw logic_error(buffer.str());
+
+                break;
+
             case Perceptron::Logistic:
                 neural_layer->SetAttribute("activationFunction","logistic");
                 break;
@@ -3942,12 +3948,12 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 
             const Perceptron current_perceptron = current_layer.get_perceptron(neurons_loop_i);
 
-            std::stringstream buffer;
-            buffer << std::setprecision(15) << current_perceptron.get_bias();
+            stringstream buffer;
+            buffer << setprecision(15) << current_perceptron.get_bias();
 
             neuron->SetAttribute("bias",buffer.str().c_str());
 
-            std::string neuron_id = number_to_string(layers_loop_i+1);
+            string neuron_id = number_to_string(layers_loop_i+1);
             neuron_id.append(",");
             neuron_id.append(number_to_string(neurons_loop_i));
 
@@ -3961,7 +3967,7 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
                 tinyxml2::XMLElement* con = pmml_document->NewElement("Con");
                 neuron->LinkEndChild(con);
 
-                std::string connection_from = number_to_string(layers_loop_i);
+                string connection_from = number_to_string(layers_loop_i);
                 connection_from.append(",");
                 connection_from.append(number_to_string(connections_loop_i));
 
@@ -3969,8 +3975,8 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 
                 const double connection_weight = current_perceptron.get_synaptic_weight(connections_loop_i);
 
-                buffer.str(std::string());
-                buffer << std::setprecision(15) << connection_weight;
+                buffer.str(string());
+                buffer << setprecision(15) << connection_weight;
 
                 con->SetAttribute("weight",buffer.str().c_str());
             }
@@ -3984,7 +3990,7 @@ void MultilayerPerceptron::to_PMML(tinyxml2::XMLElement* neural_network) const
 }
 
 
-// void write_PMML(tinyxml2::XMLPrinter&, bool is_softmax_normalization_method) const method
+// void write_PMML(tinyxml2::XMLPrinter&, bool) const method
 
 /// Serializes the multilayer perceptron object into a PMML document.
 /// @param file_stream TinyXML file to append the multilayer perceptron object.
@@ -4002,7 +4008,7 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
 
     for(size_t i = 1; i < number_of_layers ; i++ )
     {
-        if (get_layer(i).get_activation_function() != neural_network_activation_function)
+        if(get_layer(i).get_activation_function() != neural_network_activation_function)
         {
             equal_activation_function_for_all_layers = false;
 
@@ -4029,6 +4035,18 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
                 file_stream.PushAttribute("activationFunction", "threshold");
                 break;
 
+            case Perceptron::SymmetricThreshold:
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+                       << "void write_PMML(tinyxml2::XMLPrinter&, bool) const method.\n"
+                       << "Symmetric threshold activaton function is not supported by PMML.\n";
+
+                throw logic_error(buffer.str());
+            }
+                break;
+
             case Perceptron::Logistic:
                 file_stream.PushAttribute("activationFunction", "logistic");
                 break;
@@ -4043,8 +4061,8 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
             }
         }
 
-        // Put softmax normalizatoin method at output layer (the last) if needed
-        if(layers_loop_i == (number_of_layers - 1))
+        // Put softmax normalizatoin method at output layer(the last) if needed
+        if(layers_loop_i ==(number_of_layers - 1))
             if(is_softmax_normalization_method)
                 file_stream.PushAttribute("normalizationMethod","softmax");
 
@@ -4055,12 +4073,12 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
 
             const Perceptron current_perceptron = current_layer.get_perceptron(neurons_loop_i);
 
-            std::stringstream buffer;
-            buffer << std::setprecision(15) << current_perceptron.get_bias();
+            stringstream buffer;
+            buffer << setprecision(15) << current_perceptron.get_bias();
 
             file_stream.PushAttribute("bias",buffer.str().c_str());
 
-            std::string neuron_id = number_to_string(layers_loop_i+1);
+            string neuron_id = number_to_string(layers_loop_i+1);
             neuron_id.append(",");
             neuron_id.append(number_to_string(neurons_loop_i));
 
@@ -4073,7 +4091,7 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
             {
                 file_stream.OpenElement("Con");
 
-                std::string connection_from = number_to_string(layers_loop_i);
+                string connection_from = number_to_string(layers_loop_i);
                 connection_from.append(",");
                 connection_from.append(number_to_string(connections_loop_i));
 
@@ -4081,8 +4099,8 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
 
                 const double connection_weight = current_perceptron.get_synaptic_weight(connections_loop_i);
 
-                buffer.str(std::string());
-                buffer << std::setprecision(15) << connection_weight;
+                buffer.str(string());
+                buffer << setprecision(15) << connection_weight;
 
                 file_stream.PushAttribute("weight", buffer.str().c_str());
 
@@ -4106,7 +4124,7 @@ void MultilayerPerceptron::write_PMML(tinyxml2::XMLPrinter& file_stream, bool is
 
 void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
 
     const tinyxml2::XMLAttribute* attribute_activation_function_neural_network = neural_network->FindAttribute("activationFunction");
@@ -4117,10 +4135,10 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                << "Attibute \"activationFunction\" in NeuralNetwork element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
-    std::string network_activation_function = std::string(attribute_activation_function_neural_network->Value());
+    string network_activation_function = string(attribute_activation_function_neural_network->Value());
 
 
     const tinyxml2::XMLElement* neural_layer = neural_network->FirstChildElement("NeuralLayer");
@@ -4138,7 +4156,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
 
         const PerceptronLayer current_layer = get_layer(layer_i);
 
-        std::string activation_function_value;
+        string activation_function_value;
         Perceptron::ActivationFunction new_activation_function;
 
         if(!attribute_activation_function_layer)
@@ -4147,7 +4165,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
         }
         else
         {
-            activation_function_value = std::string(attribute_activation_function_layer->Value());
+            activation_function_value = string(attribute_activation_function_layer->Value());
         }
 
         if(activation_function_value == "tanh")
@@ -4172,7 +4190,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                    << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                    << "Activation function: " << activation_function_value << " not supported.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
         }
 
         set_layer_activation_function(layer_i, new_activation_function);
@@ -4199,10 +4217,10 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                        << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                        << "Attribute \"bias\" in Neuron element is NULL.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
 
-            std::string neuron_bias_string(attribute_bias_neuron->Value());
+            string neuron_bias_string(attribute_bias_neuron->Value());
 
             if(neuron_bias_string == "")
             {
@@ -4210,7 +4228,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                        << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                        << "Attribute \"bias\" in Neuron element is empty.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
 
             const double neuron_bias = atof(neuron_bias_string.c_str());
@@ -4233,7 +4251,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                            << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                            << "Con in Neuron element is NULL.\n";
 
-                    throw std::logic_error(buffer.str());
+                    throw logic_error(buffer.str());
                 }
 
                 const tinyxml2::XMLAttribute* attribute_weight_connection = con->FindAttribute("weight");
@@ -4244,10 +4262,10 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                            << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                            << "Attribute \"weight\" in Con in Neuron element is NULL.\n";
 
-                    throw std::logic_error(buffer.str());
+                    throw logic_error(buffer.str());
                 }
 
-                const std::string connection_weight_string(attribute_weight_connection->Value());
+                const string connection_weight_string(attribute_weight_connection->Value());
 
                 if(connection_weight_string == "")
                 {
@@ -4255,7 +4273,7 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
                            << "void from_PMML(const tinyxml2::XMLElement*) method.\n"
                            << "Attribute \"weight\" in Con in Neuron element is NULL.\n";
 
-                    throw std::logic_error(buffer.str());
+                    throw logic_error(buffer.str());
                 }
 
                 const double connection_weight = atof(connection_weight_string.c_str());
@@ -4287,29 +4305,29 @@ void MultilayerPerceptron::from_PMML(const tinyxml2::XMLElement* neural_network)
 }
 
 
-// Matrix<std::string> write_information(void) const method
+// Matrix<string> write_information() const method
 
 /// Returns a string matrix with certain information about the multilayer perceptron,
 /// which includes the number of inputs, the number of perceptrons and the activation function of all the layers.
 /// The  number of rows is the number of layers, and the number of columns is three.
 /// Each row in the matrix contains the information of a single layer.
 
-Matrix<std::string> MultilayerPerceptron::write_information(void) const
+Matrix<string> MultilayerPerceptron::write_information() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t layers_number = get_layers_number();
 
     if(layers_number == 0)
     {
-        Matrix<std::string> information;
+        Matrix<string> information;
 
         return(information);
 
     }
     else
     {
-        Matrix<std::string> information(layers_number, 3);
+        Matrix<string> information(layers_number, 3);
 
         for(size_t i = 0; i < layers_number; i++)
         {
@@ -4338,18 +4356,18 @@ Matrix<std::string> MultilayerPerceptron::write_information(void) const
 }
 
 
-// std::string write_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the forward propagation process in a multilayer perceptron.
 /// @param inputs_name Name of input variables.
 /// @param outputs_name Name of output variables.
 
-std::string MultilayerPerceptron::write_expression(const Vector<std::string>& inputs_name, const Vector<std::string>& outputs_name) const
+string MultilayerPerceptron::write_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
 {
     const size_t layers_number = get_layers_number();
     const Vector<size_t> layers_perceptrons_number = arrange_layers_perceptrons_numbers();
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(layers_number == 0)
     {
@@ -4360,7 +4378,7 @@ std::string MultilayerPerceptron::write_expression(const Vector<std::string>& in
     }
     else
     {
-        Vector< Vector<std::string> > layers_outputs_name(layers_number);
+        Vector< Vector<string> > layers_outputs_name(layers_number);
 
         for(size_t i = 0; i < layers_number; i++)
         {
@@ -4368,7 +4386,7 @@ std::string MultilayerPerceptron::write_expression(const Vector<std::string>& in
 
             for(size_t j = 0; j < layers_perceptrons_number[i]; j++)
             {
-                std::ostringstream new_buffer;
+                ostringstream new_buffer;
                 new_buffer << "y_" << i+1 << "_" << j+1;
                 layers_outputs_name[i][j] = new_buffer.str();
             }
@@ -4387,10 +4405,57 @@ std::string MultilayerPerceptron::write_expression(const Vector<std::string>& in
     return(buffer.str());
 }
 
+
+/// Returns a string with the php expression of the forward propagation process in a multilayer perceptron.
+/// @param inputs_name Name of input variables.
+/// @param outputs_name Name of output variables.
+
+string MultilayerPerceptron::write_expression_php(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+{
+    const size_t layers_number = get_layers_number();
+    const Vector<size_t> layers_perceptrons_number = arrange_layers_perceptrons_numbers();
+
+    ostringstream buffer;
+
+    if(layers_number == 0)
+    {
+    }
+    else if(layers_number == 1)
+    {
+        buffer << layers[0].write_expression(inputs_name, outputs_name) << "\n";
+    }
+    else
+    {
+        Vector< Vector<string> > layers_outputs_name(layers_number);
+
+        for(size_t i = 0; i < layers_number; i++)
+        {
+            layers_outputs_name[i].set(layers_perceptrons_number[i]);
+
+            for(size_t j = 0; j < layers_perceptrons_number[i]; j++)
+            {
+                ostringstream new_buffer;
+                new_buffer << "$y_" << i+1 << "_" << j+1;
+                layers_outputs_name[i][j] = new_buffer.str();
+            }
+        }
+
+        buffer << layers[0].write_expression(inputs_name, layers_outputs_name[0]);
+
+        for(size_t i = 1; i < layers_number-1; i++)
+        {
+            buffer << layers[i].write_expression(layers_outputs_name[i-1], layers_outputs_name[i]);
+        }
+
+        buffer << layers[layers_number-1].write_expression(layers_outputs_name[layers_number-2], outputs_name);
+    }
+
+    return(buffer.str());
+}
 }
 
 // OpenNN: Open Neural MultilayerPerceptrons Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

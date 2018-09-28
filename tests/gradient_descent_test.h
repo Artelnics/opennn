@@ -32,41 +32,41 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit GradientDescentTest(void);
+   explicit GradientDescentTest();
 
    // DESTRUCTOR
 
-   virtual ~GradientDescentTest(void);
+   virtual ~GradientDescentTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Set methods
 
-   void test_set(void);
-   void test_set_reserve_all_training_history(void);
+   void test_set();
+   void test_set_reserve_all_training_history();
 
    // Training methods
 
-   void test_perform_training(void);
+   void test_perform_training();
 
    // Training history methods
 
-   void test_resize_training_history(void);
+   void test_resize_training_history();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -76,7 +76,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

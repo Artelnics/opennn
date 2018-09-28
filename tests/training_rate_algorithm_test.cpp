@@ -19,21 +19,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR 
 
-TrainingRateAlgorithmTest::TrainingRateAlgorithmTest(void) : UnitTesting() 
+TrainingRateAlgorithmTest::TrainingRateAlgorithmTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-TrainingRateAlgorithmTest::~TrainingRateAlgorithmTest(void)
+TrainingRateAlgorithmTest::~TrainingRateAlgorithmTest()
 {
 }
 
 
 // METHODS
 
-void TrainingRateAlgorithmTest::test_constructor(void)
+void TrainingRateAlgorithmTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -49,13 +49,13 @@ void TrainingRateAlgorithmTest::test_constructor(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_destructor(void)
+void TrainingRateAlgorithmTest::test_destructor()
 {
    message += "test_destructor\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_get_loss_index_pointer(void)
+void TrainingRateAlgorithmTest::test_get_loss_index_pointer()
 {
    message += "test_get_loss_index_pointer\n"; 
    
@@ -69,7 +69,7 @@ void TrainingRateAlgorithmTest::test_get_loss_index_pointer(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_get_training_rate_method(void)
+void TrainingRateAlgorithmTest::test_get_training_rate_method()
 {
    message += "test_get_training_rate_method\n"; 
 
@@ -86,13 +86,13 @@ void TrainingRateAlgorithmTest::test_get_training_rate_method(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_get_training_rate_method_name(void)
+void TrainingRateAlgorithmTest::test_get_training_rate_method_name()
 {
    message += "test_get_training_rate_method_name\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_get_warning_training_rate(void)
+void TrainingRateAlgorithmTest::test_get_warning_training_rate()
 {
    message += "test_get_warning_training_rate\n";
 
@@ -104,7 +104,7 @@ void TrainingRateAlgorithmTest::test_get_warning_training_rate(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_get_error_training_rate(void)
+void TrainingRateAlgorithmTest::test_get_error_training_rate()
 {
    message += "test_get_error_training_rate\n";
 
@@ -116,7 +116,7 @@ void TrainingRateAlgorithmTest::test_get_error_training_rate(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_get_display(void)
+void TrainingRateAlgorithmTest::test_get_display()
 {
    message += "test_get_warning_gradient_norm\n"; 
 
@@ -128,7 +128,7 @@ void TrainingRateAlgorithmTest::test_get_display(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_get_bracketing_factor(void)   
+void TrainingRateAlgorithmTest::test_get_bracketing_factor()   
 {
    message += "test_get_bracketing_factor\n"; 
 
@@ -140,61 +140,61 @@ void TrainingRateAlgorithmTest::test_get_bracketing_factor(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_get_training_rate_tolerance(void)
+void TrainingRateAlgorithmTest::test_get_training_rate_tolerance()
 {
    message += "test_get_training_rate_tolerance\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set(void)
+void TrainingRateAlgorithmTest::test_set()
 {
    message += "test_set\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_default(void)
+void TrainingRateAlgorithmTest::test_set_default()
 {
    message += "test_set_default\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_loss_index_pointer(void)
+void TrainingRateAlgorithmTest::test_set_loss_index_pointer()
 {
    message += "test_set_loss_index_pointer\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_display(void)
+void TrainingRateAlgorithmTest::test_set_display()
 {
    message += "test_set_display\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_training_rate_method(void)
+void TrainingRateAlgorithmTest::test_set_training_rate_method()
 {
    message += "test_set_training_rate_method\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_training_rate_tolerance(void)
+void TrainingRateAlgorithmTest::test_set_training_rate_tolerance()
 {
    message += "test_set_training_rate_tolerance\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_warning_training_rate(void)
+void TrainingRateAlgorithmTest::test_set_warning_training_rate()
 {
    message += "test_set_warning_training_rate\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_set_error_training_rate(void)
+void TrainingRateAlgorithmTest::test_set_error_training_rate()
 {
    message += "test_set_error_training_rate\n"; 
 }
 
 
-void TrainingRateAlgorithmTest::test_calculate_directional_point(void)
+void TrainingRateAlgorithmTest::test_calculate_directional_point()
 {
    message += "test_calculate_directional_point\n";
 
@@ -208,7 +208,7 @@ void TrainingRateAlgorithmTest::test_calculate_directional_point(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_calculate_fixed_directional_point(void)
+void TrainingRateAlgorithmTest::test_calculate_fixed_directional_point()
 {
    message += "test_calculate_fixed_directional_point\n";
 
@@ -274,7 +274,7 @@ void TrainingRateAlgorithmTest::test_calculate_fixed_directional_point(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_calculate_bracketing_triplet(void)
+void TrainingRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     message += "test_calculate_bracketing_triplet\n";
 
@@ -380,7 +380,7 @@ void TrainingRateAlgorithmTest::test_calculate_bracketing_triplet(void)
 }
 
 
-void TrainingRateAlgorithmTest::test_calculate_golden_section_directional_point(void)
+void TrainingRateAlgorithmTest::test_calculate_golden_section_directional_point()
 {
    message += "test_calculate_golden_section_directional_point\n";
 
@@ -413,7 +413,7 @@ void TrainingRateAlgorithmTest::test_calculate_golden_section_directional_point(
 }
 
 
-void TrainingRateAlgorithmTest::test_calculate_Brent_method_directional_point(void)
+void TrainingRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
    message += "test_calculate_Brent_method_directional_point\n";
 
@@ -445,7 +445,7 @@ void TrainingRateAlgorithmTest::test_calculate_Brent_method_directional_point(vo
 }
 
 
-void TrainingRateAlgorithmTest::test_to_XML(void)
+void TrainingRateAlgorithmTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -459,7 +459,7 @@ void TrainingRateAlgorithmTest::test_to_XML(void)
 }
 
 
-void TrainingRateAlgorithmTest::run_test_case(void)
+void TrainingRateAlgorithmTest::run_test_case()
 {
    message += "Running training rate algorithm test case...\n";
 
@@ -528,7 +528,7 @@ void TrainingRateAlgorithmTest::run_test_case(void)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

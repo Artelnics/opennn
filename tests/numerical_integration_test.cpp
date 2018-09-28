@@ -24,29 +24,29 @@
 using namespace OpenNN;
 
 
-NumericalIntegrationTest::NumericalIntegrationTest(void) : UnitTesting() 
+NumericalIntegrationTest::NumericalIntegrationTest() : UnitTesting() 
 {
 }
 
 
-NumericalIntegrationTest::~NumericalIntegrationTest(void)
+NumericalIntegrationTest::~NumericalIntegrationTest()
 {
 }
 
 
-void NumericalIntegrationTest::test_constructor(void)
+void NumericalIntegrationTest::test_constructor()
 {
    message += "test_constructor\n";
 }
 
 
-void NumericalIntegrationTest::test_destructor(void)
+void NumericalIntegrationTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void NumericalIntegrationTest::test_calculate_trapezoid_integral(void)
+void NumericalIntegrationTest::test_calculate_trapezoid_integral()
 {
    message += "test_calculate_trapezoid_integral\n";
 
@@ -64,7 +64,7 @@ void NumericalIntegrationTest::test_calculate_trapezoid_integral(void)
 }
 
 
-void NumericalIntegrationTest::test_calculate_Simpson_integral(void)
+void NumericalIntegrationTest::test_calculate_Simpson_integral()
 {
    message += "test_calculate_Simpson_integral\n";
 
@@ -82,7 +82,7 @@ void NumericalIntegrationTest::test_calculate_Simpson_integral(void)
 }
 
 
-void NumericalIntegrationTest::run_test_case(void)
+void NumericalIntegrationTest::run_test_case()
 {
    message += "Running numerical integration test case...\n";
 
@@ -101,7 +101,7 @@ void NumericalIntegrationTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

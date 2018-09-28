@@ -6,7 +6,7 @@
 /*   P E R C E P T R O N   C L A S S   H E A D E R                                                              */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -39,7 +39,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit Perceptron(void);
+   explicit Perceptron();
 
    // INPUTS NUMBER CONSTRUCTOR
 
@@ -55,15 +55,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~Perceptron(void);
+   virtual ~Perceptron();
 
    // ASSIGNMENT OPERATOR
 
-   Perceptron& operator = (const Perceptron&);
+   Perceptron& operator =(const Perceptron&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const Perceptron&) const;
+   bool operator ==(const Perceptron&) const;
 
    // ENUMERATIONS
 
@@ -75,23 +75,23 @@ public:
 
    // Get methods
 
-   size_t get_inputs_number(void) const;
+   size_t get_inputs_number() const;
 
-   const ActivationFunction& get_activation_function(void) const;
-   std::string write_activation_function(void) const;
+   const ActivationFunction& get_activation_function() const;
+   string write_activation_function() const;
 
-   const double& get_bias(void) const;   
-   const Vector<double>& arrange_synaptic_weights(void) const;
+   const double& get_bias() const;   
+   const Vector<double>& arrange_synaptic_weights() const;
    const double& get_synaptic_weight(const size_t&) const;
 
-   size_t count_parameters_number(void) const;
-   Vector<double> arrange_parameters(void) const;
+   size_t count_parameters_number() const;
+   Vector<double> arrange_parameters() const;
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // Set methods
 
-   void set(void);
+   void set();
    void set(const size_t&);
    void set(const size_t&, const double&);
    void set(const Perceptron&);
@@ -99,7 +99,7 @@ public:
    void set_inputs_number(const size_t&);
 
    void set_activation_function(const ActivationFunction&);
-   void set_activation_function(const std::string&);
+   void set_activation_function(const string&);
 
    void set_bias(const double&);
    void set_synaptic_weights(const Vector<double>&);
@@ -111,7 +111,7 @@ public:
 
    // Growing and pruning
 
-   void grow_input(void);
+   void grow_input();
 
    void prune_input(const size_t&);
 
@@ -155,7 +155,7 @@ public:
 
    // Expression methods
 
-   std::string write_expression(const Vector<std::string>&, const std::string&) const;
+   string write_expression(const Vector<string>&, const string&) const;
 
 private: 
 
@@ -185,7 +185,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
