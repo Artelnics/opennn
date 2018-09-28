@@ -20,7 +20,7 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR 
 
-RandomSearchTest::RandomSearchTest(void) : UnitTesting()
+RandomSearchTest::RandomSearchTest() : UnitTesting()
 {
 }
 
@@ -29,13 +29,13 @@ RandomSearchTest::RandomSearchTest(void) : UnitTesting()
 
 /// Destructor.
 
-RandomSearchTest::~RandomSearchTest(void)
+RandomSearchTest::~RandomSearchTest()
 {
 }
 
 // METHODS
 
-void RandomSearchTest::test_constructor(void)
+void RandomSearchTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -53,67 +53,67 @@ void RandomSearchTest::test_constructor(void)
 }
 
 
-void RandomSearchTest::test_destructor(void)
+void RandomSearchTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void RandomSearchTest::test_get_training_rate_reduction_factor(void)
+void RandomSearchTest::test_get_training_rate_reduction_factor()
 {
    message += "test_get_training_rate_reduction_factor\n";
 }
 
 
-void RandomSearchTest::test_get_reserve_parameters_history(void)
+void RandomSearchTest::test_get_reserve_parameters_history()
 {
    message += "test_get_reserve_parameters_history\n";
 }
 
 
-void RandomSearchTest::test_get_reserve_parameters_norm_history(void)
+void RandomSearchTest::test_get_reserve_parameters_norm_history()
 {
    message += "test_get_reserve_parameters_norm_history\n";
 }
 
 
-void RandomSearchTest::test_get_reserve_loss_history(void)
+void RandomSearchTest::test_get_reserve_loss_history()
 {
    message += "test_get_reserve_loss_history\n";
 }
 
 
-void RandomSearchTest::test_set_training_rate_reduction_factor(void)
+void RandomSearchTest::test_set_training_rate_reduction_factor()
 {
    message += "test_set_training_rate_reduction_factor\n";
 }
 
 
-void RandomSearchTest::test_set_reserve_parameters_history(void)
+void RandomSearchTest::test_set_reserve_parameters_history()
 {
    message += "test_set_reserve_parameters_history\n";
 }
 
 
-void RandomSearchTest::test_set_reserve_parameters_norm_history(void)
+void RandomSearchTest::test_set_reserve_parameters_norm_history()
 {
    message += "test_set_reserve_parameters_norm_history\n";
 }
 
 
-void RandomSearchTest::test_set_reserve_loss_history(void)
+void RandomSearchTest::test_set_reserve_loss_history()
 {
    message += "test_set_reserve_loss_history\n";
 }
 
 
-void RandomSearchTest::test_calculate_training_direction(void)
+void RandomSearchTest::test_calculate_training_direction()
 {
    message += "test_calculate_training_direction\n";
 }
 
 
-void RandomSearchTest::test_perform_training(void)
+void RandomSearchTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -149,7 +149,7 @@ void RandomSearchTest::test_perform_training(void)
 }
 
 
-void RandomSearchTest::test_set_reserve_all_training_history(void)
+void RandomSearchTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -158,7 +158,7 @@ void RandomSearchTest::test_set_reserve_all_training_history(void)
 }
 
 
-void RandomSearchTest::test_to_XML(void)
+void RandomSearchTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -176,7 +176,7 @@ void RandomSearchTest::test_to_XML(void)
 }
 
 
-void RandomSearchTest::test_from_XML(void)
+void RandomSearchTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -199,7 +199,7 @@ void RandomSearchTest::test_from_XML(void)
 }
 
 
-void RandomSearchTest::run_test_case(void)
+void RandomSearchTest::run_test_case()
 {
    message += "Running random search test case...\n";
 
@@ -246,7 +246,7 @@ void RandomSearchTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

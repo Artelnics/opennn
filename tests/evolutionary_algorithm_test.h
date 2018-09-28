@@ -31,139 +31,139 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit EvolutionaryAlgorithmTest(void);
+   explicit EvolutionaryAlgorithmTest();
 
 
    // DESTRUCTOR
 
-   virtual ~EvolutionaryAlgorithmTest(void);
+   virtual ~EvolutionaryAlgorithmTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_population_size(void);
+   void test_get_population_size();
 
-   void test_get_population(void);
+   void test_get_population();
 
-   void test_get_loss(void);
-   void test_get_fitness(void);
-   void test_get_selection(void);
+   void test_get_loss();
+   void test_get_fitness();
+   void test_get_selection();
 
-   void test_get_selective_pressure(void);
-   void test_get_recombination_size(void);
-   void test_get_mutation_rate(void);
-   void test_get_mutation_range(void);
+   void test_get_selective_pressure();
+   void test_get_recombination_size();
+   void test_get_mutation_rate();
+   void test_get_mutation_range();
 
-   void test_get_maximum_generations_number(void);
+   void test_get_maximum_generations_number();
 
-   void test_get_reserve_population_history(void);
-   void test_get_reserve_mean_norm_history(void);
-   void test_get_reserve_standard_deviation_norm_history(void);
-   void test_get_reserve_best_norm_history(void);
-   void test_get_reserve_mean_loss_history(void);
-   void test_get_reserve_standard_deviation_loss_history(void);
-   void test_get_reserve_best_loss_history(void);
+   void test_get_reserve_population_history();
+   void test_get_reserve_mean_norm_history();
+   void test_get_reserve_standard_deviation_norm_history();
+   void test_get_reserve_best_norm_history();
+   void test_get_reserve_mean_loss_history();
+   void test_get_reserve_standard_deviation_loss_history();
+   void test_get_reserve_best_loss_history();
 
-   void test_get_fitness_assignment_method(void);
-   void test_get_selection_method(void);
-   void test_get_recombination_method(void);
-   void test_get_mutation_method(void);
+   void test_get_fitness_assignment_method();
+   void test_get_selection_method();
+   void test_get_recombination_method();
+   void test_get_mutation_method();
 
    // Set methods
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
-   void test_set_population_size(void);
+   void test_set_population_size();
 
-   void test_set_population(void);
+   void test_set_population();
 
-   void test_set_loss(void);
-   void test_set_fitness(void);
-   void test_set_selection(void);
+   void test_set_loss();
+   void test_set_fitness();
+   void test_set_selection();
 
-   void test_set_selective_pressure(void);
-   void test_set_recombination_size(void);
+   void test_set_selective_pressure();
+   void test_set_recombination_size();
 
-   void test_set_mutation_rate(void);
-   void test_set_mutation_range(void);
+   void test_set_mutation_rate();
+   void test_set_mutation_range();
 
-   void test_set_maximum_generations_number(void);
-   void test_set_mean_loss_goal(void);
-   void test_set_standard_deviation_loss_goal(void);
+   void test_set_maximum_generations_number();
+   void test_set_mean_loss_goal();
+   void test_set_standard_deviation_loss_goal();
 
-   void test_set_fitness_assignment_method(void);
-   void test_set_selection_method(void);
-   void test_set_recombination_method(void);
-   void test_set_mutation_method(void);
+   void test_set_fitness_assignment_method();
+   void test_set_selection_method();
+   void test_set_recombination_method();
+   void test_set_mutation_method();
 
-   void test_set_reserve_population_history(void);
-   void test_set_reserve_mean_norm_history(void);
-   void test_set_reserve_standard_deviation_norm_history(void);
-   void test_set_reserve_best_norm_history(void);
-   void test_set_reserve_mean_loss_history(void);
-   void test_set_reserve_standard_deviation_loss_history(void);
-   void test_set_reserve_best_loss_history(void);
+   void test_set_reserve_population_history();
+   void test_set_reserve_mean_norm_history();
+   void test_set_reserve_standard_deviation_norm_history();
+   void test_set_reserve_best_norm_history();
+   void test_set_reserve_mean_loss_history();
+   void test_set_reserve_standard_deviation_loss_history();
+   void test_set_reserve_best_loss_history();
 
-   void test_set_reserve_all_training_history(void);
+   void test_set_reserve_all_training_history();
 
    // Population methods
 
-   void test_get_individual(void);
-   void test_set_individual(void);
+   void test_get_individual();
+   void test_set_individual();
 
-   void test_randomize_population_uniform(void);
-   void test_randomize_population_normal(void);
+   void test_randomize_population_uniform();
+   void test_randomize_population_normal();
 
-   void test_calculate_population_norm(void);
+   void test_calculate_population_norm();
 
    // Population evaluation methods
 
-   void test_evaluate_population(void);
+   void test_evaluate_population();
 
    // Fitness assignment methods
 
-   void test_perform_linear_ranking_fitness_assignment(void);
+   void test_perform_linear_ranking_fitness_assignment();
 
    // Selection methods
 
-   void test_perform_elite_selection(void);
+   void test_perform_elite_selection();
 
-   void test_perform_roulette_wheel_selection(void);
+   void test_perform_roulette_wheel_selection();
 
    // Recombination methods
 
-   void test_perform_intermediate_recombination(void);
-   void test_perform_line_recombination(void);
+   void test_perform_intermediate_recombination();
+   void test_perform_line_recombination();
 
    // Mutation methods
 
-   void test_perform_normal_mutation(void);
-   void test_perform_uniform_mutation(void);
+   void test_perform_normal_mutation();
+   void test_perform_uniform_mutation();
 
    // Training methods
 
-   void test_perform_training(void);
+   void test_perform_training();
 
    // Training history methods
 
-   void test_get_training_history_XML(void);
+   void test_get_training_history_XML();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -171,7 +171,7 @@ public:
 
 
 // OpenNN: An Open Source Neural Networks C++ OpenNN.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This OpenNN is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

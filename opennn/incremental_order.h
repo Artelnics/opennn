@@ -6,7 +6,7 @@
 /*   I N C R E M E N T A L   O R D E R   C L A S S   H E A D E R                                                */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -35,7 +35,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ class IncrementalOrder : public OrderSelectionAlgorithm
 public:
     // DEFAULT CONSTRUCTOR
 
-    explicit IncrementalOrder(void);
+    explicit IncrementalOrder();
 
     // TRAINING STRATEGY CONSTRUCTOR
   /// ownership not passed
@@ -62,11 +62,11 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit IncrementalOrder(const std::string&);
+    explicit IncrementalOrder(const string&);
 
     // DESTRUCTOR
 
-    virtual ~IncrementalOrder(void);
+    virtual ~IncrementalOrder();
 
 
     // STRUCTURES
@@ -79,13 +79,13 @@ public:
     {
         /// Default constructor.
 
-        explicit IncrementalOrderResults(void) : OrderSelectionAlgorithm::OrderSelectionResults()
+        explicit IncrementalOrderResults() : OrderSelectionAlgorithm::OrderSelectionResults()
         {
         }
 
         /// Destructor.
 
-        virtual ~IncrementalOrderResults(void)
+        virtual ~IncrementalOrderResults()
         {
         }
 
@@ -96,36 +96,36 @@ public:
 
     // Get methods
 
-    const size_t& get_step(void) const;
+    const size_t& get_step() const;
 
-    const size_t& get_maximum_selection_failures(void) const;
+    const size_t& get_maximum_selection_failures() const;
 
     // Set methods
 
-    void set_default(void);
+    void set_default();
 
     void set_step(const size_t&);
 
     void set_maximum_selection_failures(const size_t&);
 
     // Order selection methods
+
   /// ownership passed - use delete to destroy
-    IncrementalOrderResults* perform_order_selection(void);
+    IncrementalOrderResults* perform_order_selection();
 
     // Serialization methods
 
-    Matrix<std::string> to_string_matrix(void) const;
+    Matrix<string> to_string_matrix() const;
 
   /// ownership passed - use delete to destroy
-    tinyxml2::XMLDocument* to_XML(void) const;
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     // void read_XML(   );
 
-
-    void save(const std::string&) const;
-    void load(const std::string&);
+    void save(const string&) const;
+    void load(const string&);
 
 private:
 
@@ -148,7 +148,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

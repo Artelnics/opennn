@@ -6,7 +6,7 @@
 /*   S I M U L A T E D   A N N E A L I N G   O R D E R   C L A S S   H E A D E R                                */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -35,7 +35,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ class SimulatedAnnealingOrder : public OrderSelectionAlgorithm
 public:
     // DEFAULT CONSTRUCTOR
 
-    explicit SimulatedAnnealingOrder(void);
+    explicit SimulatedAnnealingOrder();
 
     // TRAINING STRATEGY CONSTRUCTOR
   /// ownership not passed
@@ -61,11 +61,11 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit SimulatedAnnealingOrder(const std::string&);
+    explicit SimulatedAnnealingOrder(const string&);
 
     // DESTRUCTOR
 
-    virtual ~SimulatedAnnealingOrder(void);
+    virtual ~SimulatedAnnealingOrder();
 
 
     // STRUCTURES
@@ -78,13 +78,13 @@ public:
     {
         /// Default constructor.
 
-        explicit SimulatedAnnealingOrderResults(void) : OrderSelectionAlgorithm::OrderSelectionResults()
+        explicit SimulatedAnnealingOrderResults() : OrderSelectionAlgorithm::OrderSelectionResults()
         {
         }
 
         /// Destructor.
 
-        virtual ~SimulatedAnnealingOrderResults(void)
+        virtual ~SimulatedAnnealingOrderResults()
         {
         }
 
@@ -94,13 +94,13 @@ public:
 
     // Get methods
 
-    const double& get_cooling_rate(void) const;
+    const double& get_cooling_rate() const;
 
-    const double& get_minimum_temperature(void) const;
+    const double& get_minimum_temperature() const;
 
     // Set methods
 
-    void set_default(void);
+    void set_default();
 
     void set_cooling_rate(const double&);
 
@@ -108,23 +108,23 @@ public:
 
     // Order selection methods
 
-    size_t get_optimal_selection_loss_index(void) const;
+    size_t get_optimal_selection_loss_index() const;
 
-    SimulatedAnnealingOrderResults* perform_order_selection(void);
+    SimulatedAnnealingOrderResults* perform_order_selection();
 
     // Serialization methods
 
-    Matrix<std::string> to_string_matrix(void) const;
+    Matrix<string> to_string_matrix() const;
 
   /// ownership passed - use delete to destroy
-    tinyxml2::XMLDocument* to_XML(void) const;
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     //void read_XML(   );
 
-    void save(const std::string&) const;
-    void load(const std::string&);
+    void save(const string&) const;
+    void load(const string&);
 
 private:
 
@@ -147,7 +147,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

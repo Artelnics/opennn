@@ -6,7 +6,7 @@
 /*   R O C   A R E A   E R R O R   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -31,7 +31,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -47,7 +47,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit RocAreaError(void);
+   explicit RocAreaError();
 
    // NEURAL NETWORK CONSTRUCTOR
   /// ownership not passed
@@ -74,7 +74,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~RocAreaError(void);
+   virtual ~RocAreaError();
 
    // METHODS
 
@@ -84,21 +84,21 @@ public:
 
    // Checking methods
 
-   void check(void) const;
+   void check() const;
 
    // loss methods
 
-   double calculate_error(void) const;
+   double calculate_error() const;
 
-//   double calculate_selection_error(void) const;
+//   double calculate_selection_error() const;
 
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
 
-   Vector<double> calculate_gradient(void) const;
+   Vector<double> calculate_gradient() const;
 
-//   Matrix<double> calculate_Hessian(void) const;
+//   Matrix<double> calculate_Hessian() const;
 
-//   Matrix<double> calculate_single_hidden_layer_Hessian(void) const;
+//   Matrix<double> calculate_single_hidden_layer_Hessian() const;
 
    double calculate_error(const Vector<double>&) const;
 
@@ -113,22 +113,22 @@ public:
 
    // Objective terms methods
 
-//   Vector<double> calculate_terms(void) const;
+//   Vector<double> calculate_terms() const;
 //   Vector<double> calculate_terms(const Vector<double>&) const;
 
-//   Matrix<double> calculate_terms_Jacobian(void) const;
+//   Matrix<double> calculate_terms_Jacobian() const;
 
-//   ErrorTerm::FirstOrderTerms calculate_first_order_terms(void) const;
+//   ErrorTerm::FirstOrderTerms calculate_first_order_terms() const;
 
    // Squared errors methods
 
-//   Vector<double> calculate_squared_errors(void) const;
+//   Vector<double> calculate_squared_errors() const;
 
-//   std::string write_error_term_type(void) const;
+//   string write_error_term_type() const;
 
    // Serialization methods
 
-//   tinyxml2::XMLDocument* to_XML(void) const;
+//   tinyxml2::XMLDocument* to_XML() const;
 //   void from_XML(const tinyxml2::XMLDocument&);
 
 //   void write_XML(tinyxml2::XMLPrinter&) const;
@@ -148,7 +148,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

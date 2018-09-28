@@ -6,7 +6,7 @@
 /*   M O D E L   S E L E C T I O N   C L A S S                                                                  */
 /*                                                                                                              */ 
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -22,7 +22,7 @@ namespace OpenNN
 
 /// Default constructor. 
 
-ModelSelection::ModelSelection(void)
+ModelSelection::ModelSelection()
     : training_strategy_pointer(NULL)
     , incremental_order_pointer(NULL)
     , golden_section_order_pointer(NULL)
@@ -68,7 +68,7 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 /// File constructor. 
 /// @param file_name Name of XML model selection file. 
 
-ModelSelection::ModelSelection(const std::string& file_name)
+ModelSelection::ModelSelection(const string& file_name)
     : training_strategy_pointer(NULL)
     , incremental_order_pointer(NULL)
     , golden_section_order_pointer(NULL)
@@ -113,7 +113,7 @@ ModelSelection::ModelSelection(const tinyxml2::XMLDocument& model_selection_docu
 
 /// Destructor. 
 
-ModelSelection::~ModelSelection(void)
+ModelSelection::~ModelSelection()
 {
     // Delete inputs selection algorithms
 
@@ -139,23 +139,23 @@ ModelSelection::~ModelSelection(void)
 
 // METHODS
 
-// TrainingStrategy* get_training_strategy_pointer(void) const method
+// TrainingStrategy* get_training_strategy_pointer() const method
 
 /// Returns a pointer to the training strategy object.
 
-TrainingStrategy* ModelSelection::get_training_strategy_pointer(void) const
+TrainingStrategy* ModelSelection::get_training_strategy_pointer() const
 {
 #ifdef __OPENNN_DEBUG__
 
     if(!training_strategy_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "TrainingStrategy* get_training_strategy_pointer(void) const method.\n"
+               << "TrainingStrategy* get_training_strategy_pointer() const method.\n"
                << "Training strategy pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -163,12 +163,12 @@ TrainingStrategy* ModelSelection::get_training_strategy_pointer(void) const
     return(training_strategy_pointer);
 }
 
-// bool has_training_strategy(void) const method
+// bool has_training_strategy() const method
 
 /// Returns true if this model selection has a training strategy associated,
 /// and false otherwise.
 
-bool ModelSelection::has_training_strategy(void) const
+bool ModelSelection::has_training_strategy() const
 {
     if(training_strategy_pointer)
     {
@@ -180,137 +180,137 @@ bool ModelSelection::has_training_strategy(void) const
     }
 }
 
-// const OrderSelectionType& get_order_selection_type(void) const method
+// const OrderSelectionType& get_order_selection_type() const method
 
 /// Returns the type of algorithm for the order selection.
 
-const ModelSelection::OrderSelectionType& ModelSelection::get_order_selection_type(void) const
+const ModelSelection::OrderSelectionType& ModelSelection::get_order_selection_type() const
 {
     return(order_selection_type);
 }
 
-// const InputSelectionType& get_inputs_selection_type(void) const method
+// const InputSelectionType& get_inputs_selection_type() const method
 
 /// Returns the type of algorithm for the inputs selection.
 
-const ModelSelection::InputsSelectionType& ModelSelection::get_inputs_selection_type(void) const
+const ModelSelection::InputsSelectionType& ModelSelection::get_inputs_selection_type() const
 {
     return(inputs_selection_type);
 }
 
-// const ThresholdSelectionType& get_threshold_selection_type(void) const method
+// const ThresholdSelectionType& get_threshold_selection_type() const method
 
 /// Returns the type of algorithm for the threshold selection.
 
-const ModelSelection::ThresholdSelectionType& ModelSelection::get_threshold_selection_type(void) const
+const ModelSelection::ThresholdSelectionType& ModelSelection::get_threshold_selection_type() const
 {
     return(threshold_selection_type);
 }
 
-// IncrementalOrder* get_incremental_order_pointer(void) const method
+// IncrementalOrder* get_incremental_order_pointer() const method
 
 /// Returns a pointer to the incremental order selection algorithm.
 
-IncrementalOrder* ModelSelection::get_incremental_order_pointer(void) const
+IncrementalOrder* ModelSelection::get_incremental_order_pointer() const
 {
     return(incremental_order_pointer);
 }
 
-// GoldenSectionOrder* get_golden_section_order_pointer(void) const method
+// GoldenSectionOrder* get_golden_section_order_pointer() const method
 
 /// Returns a pointer to the golden section order selection algorithm.
 
-GoldenSectionOrder* ModelSelection::get_golden_section_order_pointer(void) const
+GoldenSectionOrder* ModelSelection::get_golden_section_order_pointer() const
 {
     return(golden_section_order_pointer);
 }
 
-// SimulatedAnnealingOrder* get_simulated_annealing_order_pointer(void) const method
+// SimulatedAnnealingOrder* get_simulated_annealing_order_pointer() const method
 
 /// Returns a pointer to the simulated annealing order selection algorithm.
 
-SimulatedAnnealingOrder* ModelSelection::get_simulated_annealing_order_pointer(void) const
+SimulatedAnnealingOrder* ModelSelection::get_simulated_annealing_order_pointer() const
 {
     return(simulated_annelaing_order_pointer);
 }
 
-// GrowingInputs* get_growing_inputs_pointer(void) const method
+// GrowingInputs* get_growing_inputs_pointer() const method
 
 /// Returns a pointer to the growing inputs selection algorithm.
 
-GrowingInputs* ModelSelection::get_growing_inputs_pointer(void) const
+GrowingInputs* ModelSelection::get_growing_inputs_pointer() const
 {
     return(growing_inputs_pointer);
 }
 
-// PruningInputs* get_pruning_inputs_pointer(void) const method
+// PruningInputs* get_pruning_inputs_pointer() const method
 
 /// Returns a pointer to the pruning inputs selection algorithm.
 
-PruningInputs* ModelSelection::get_pruning_inputs_pointer(void) const
+PruningInputs* ModelSelection::get_pruning_inputs_pointer() const
 {
     return(pruning_inputs_pointer);
 }
 
-// GeneticAlgorithm* get_genetic_algorithm_pointer(void) const method
+// GeneticAlgorithm* get_genetic_algorithm_pointer() const method
 
 /// Returns a pointer to the genetic inputs selection algorithm.
 
-GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer(void) const
+GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer() const
 {
     return(genetic_algorithm_pointer);
 }
 
-// F1ScoreOptimizationThreshold* get_f1_score_optimization_threshold_pointer(void) const method
+// F1ScoreOptimizationThreshold* get_f1_score_optimization_threshold_pointer() const method
 
 /// Returns a pointer to the f1 score optimiztion threshold selection algorithm.
 
-F1ScoreOptimizationThreshold* ModelSelection::get_f1_score_optimization_threshold_pointer(void) const
+F1ScoreOptimizationThreshold* ModelSelection::get_f1_score_optimization_threshold_pointer() const
 {
     return(f1_score_optimization_threshold_pointer);
 }
 
-// MatthewCorrelationOptimizationThreshold* get_matthew_correlation_optimization_threshold(void) const method
+// MatthewCorrelationOptimizationThreshold* get_matthew_correlation_optimization_threshold() const method
 
 /// Returns a pointer to the matthew correlation optimiztion threshold selection algorithm.
 
-MatthewCorrelationOptimizationThreshold* ModelSelection::get_matthew_correlation_optimization_threshold(void) const
+MatthewCorrelationOptimizationThreshold* ModelSelection::get_matthew_correlation_optimization_threshold() const
 {
     return(matthew_correlation_optimization_threshold_pointer);
 }
 
-// YoudenIndexOptimizationThreshold* get_youden_index_optimization_threshold(void) const method
+// YoudenIndexOptimizationThreshold* get_youden_index_optimization_threshold() const method
 
 /// Returns a pointer to the youden index optimiztion threshold selection algorithm.
 
-YoudenIndexOptimizationThreshold* ModelSelection::get_youden_index_optimization_threshold(void) const
+YoudenIndexOptimizationThreshold* ModelSelection::get_youden_index_optimization_threshold() const
 {
     return(youden_index_optimization_threshold_pointer);
 }
 
-// KappaCoefficientOptimizationThreshold* get_kappa_coefficient_optimization_threshold(void) const method
+// KappaCoefficientOptimizationThreshold* get_kappa_coefficient_optimization_threshold() const method
 
 /// Returns a pointer to the kappa coefficient optimiztion threshold selection algorithm.
 
-KappaCoefficientOptimizationThreshold* ModelSelection::get_kappa_coefficient_optimization_threshold(void) const
+KappaCoefficientOptimizationThreshold* ModelSelection::get_kappa_coefficient_optimization_threshold() const
 {
     return(kappa_coefficient_optimization_threshold_pointer);
 }
 
-// ROCCurveOptimizationThreshold* get_roc_curve_optimization_threshold(void) const method
+// ROCCurveOptimizationThreshold* get_roc_curve_optimization_threshold() const method
 
 /// Returns a pointer to the roc curve optimiztion threshold selection algorithm.
 
-ROCCurveOptimizationThreshold* ModelSelection::get_roc_curve_optimization_threshold(void) const
+ROCCurveOptimizationThreshold* ModelSelection::get_roc_curve_optimization_threshold() const
 {
     return(roc_curve_optimization_threshold_pointer);
 }
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the model selection object to their default values.
 
-void ModelSelection::set_default(void)
+void ModelSelection::set_default()
 {
     set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
     set_inputs_selection_type(ModelSelection::GROWING_INPUTS);
@@ -330,7 +330,7 @@ void ModelSelection::set_display(const bool& new_display)
 {
     display = new_display;
 
-    switch (inputs_selection_type)
+    switch(inputs_selection_type)
     {
     case NO_INPUTS_SELECTION:
     {
@@ -362,7 +362,7 @@ void ModelSelection::set_display(const bool& new_display)
     }
     }
 
-    switch (order_selection_type)
+    switch(order_selection_type)
     {
     case NO_ORDER_SELECTION:
     {
@@ -394,7 +394,7 @@ void ModelSelection::set_display(const bool& new_display)
     }
     }
 
-    switch (threshold_selection_type)
+    switch(threshold_selection_type)
     {
     case NO_THRESHOLD_SELECTION:
     {
@@ -442,7 +442,7 @@ void ModelSelection::set_display(const bool& new_display)
 // void set_order_selection_type(const OrderSelectionType&) method
 
 /// Sets a new method for selecting the order which have more impact on the targets.
-/// @param new_order_selection_type Method for selecting the order (NO_ORDER_SELECTION, INCREMENTAL_ORDER, GOLDEN_SECTION, SIMULATED_ANNEALING).
+/// @param new_order_selection_type Method for selecting the order(NO_ORDER_SELECTION, INCREMENTAL_ORDER, GOLDEN_SECTION, SIMULATED_ANNEALING).
 
 void ModelSelection::set_order_selection_type(const ModelSelection::OrderSelectionType& new_order_selection_type)
 {
@@ -450,7 +450,7 @@ void ModelSelection::set_order_selection_type(const ModelSelection::OrderSelecti
 
     order_selection_type = new_order_selection_type;
 
-    switch (new_order_selection_type)
+    switch(new_order_selection_type)
     {
     case NO_ORDER_SELECTION:
     {
@@ -478,13 +478,13 @@ void ModelSelection::set_order_selection_type(const ModelSelection::OrderSelecti
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_order_selection_method(const OrderSelectionType&) const method.\n"
                << "Unknow order selection method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
@@ -493,12 +493,12 @@ void ModelSelection::set_order_selection_type(const ModelSelection::OrderSelecti
 
 }
 
-// void set_order_selection_type(const std::string&) method
+// void set_order_selection_type(const string&) method
 
 /// Sets a new order selection algorithm from a string.
 /// @param new_order_selection_type String with the order selection type.
 
-void ModelSelection::set_order_selection_type(const std::string& new_order_selection_type)
+void ModelSelection::set_order_selection_type(const string& new_order_selection_type)
 {
     if(new_order_selection_type == "NO_ORDER_SELECTION")
     {
@@ -518,20 +518,20 @@ void ModelSelection::set_order_selection_type(const std::string& new_order_selec
     }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_order_selection_type(const std::string&) method.\n"
+               << "void set_order_selection_type(const string&) method.\n"
                << "Unknown order selection type: " << new_order_selection_type << ".\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
 // void set_inputs_selection_type(const InputSelectionType&) method
 
 /// Sets a new method for selecting the inputs which have more impact on the targets.
-/// @param new_inputs_selection_type Method for selecting the inputs (NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
+/// @param new_inputs_selection_type Method for selecting the inputs(NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM).
 
 void ModelSelection::set_inputs_selection_type(const ModelSelection::InputsSelectionType& new_inputs_selection_type)
 {
@@ -539,7 +539,7 @@ void ModelSelection::set_inputs_selection_type(const ModelSelection::InputsSelec
 
     inputs_selection_type = new_inputs_selection_type;
 
-    switch (new_inputs_selection_type)
+    switch(new_inputs_selection_type)
     {
     case NO_INPUTS_SELECTION:
     {
@@ -567,25 +567,25 @@ void ModelSelection::set_inputs_selection_type(const ModelSelection::InputsSelec
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_inputs_selection_method(const InputsSelectionType&) const method.\n"
                << "Unknow inputs selection method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
     }
 }
 
-// void set_inputs_selection_type(const std::string&) method
+// void set_inputs_selection_type(const string&) method
 
 /// Sets a new inputs selection algorithm from a string.
 /// @param new_inputs_selection_type String with the inputs selection type.
 
-void ModelSelection::set_inputs_selection_type(const std::string& new_inputs_selection_type)
+void ModelSelection::set_inputs_selection_type(const string& new_inputs_selection_type)
 {
     if(new_inputs_selection_type == "NO_INPUTS_SELECTION")
     {
@@ -605,17 +605,16 @@ void ModelSelection::set_inputs_selection_type(const std::string& new_inputs_sel
     }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_inputs_selection_type(const std::string&) method.\n"
+               << "void set_inputs_selection_type(const string&) method.\n"
                << "Unknown inputs selection type: " << new_inputs_selection_type << ".\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
-// void set_threshold_selection_type(const ThresholdSelectionType&) method
 
 /// Sets a new method for selecting the threshold to improve the final model.
 /// @param new_threshold_selection_type Method for selecting the threshold.
@@ -626,7 +625,7 @@ void ModelSelection::set_threshold_selection_type(const ModelSelection::Threshol
 
     threshold_selection_type = new_threshold_selection_type;
 
-    switch (new_threshold_selection_type)
+    switch(new_threshold_selection_type)
     {
     case NO_THRESHOLD_SELECTION:
     {
@@ -666,25 +665,25 @@ void ModelSelection::set_threshold_selection_type(const ModelSelection::Threshol
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_threshold_selection_method(const ThresholdSelectionType&) const method.\n"
                << "Unknow threshold selection method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
     }
 }
 
-// void set_threshold_selection_type(const std::string&) method
+// void set_threshold_selection_type(const string&) method
 
 /// Sets a new threshold selection algorithm from a string.
 /// @param new_threshold_selection_type String with the threshold selection type.
 
-void ModelSelection::set_threshold_selection_type(const std::string& new_threshold_selection_type)
+void ModelSelection::set_threshold_selection_type(const string& new_threshold_selection_type)
 {
     if(new_threshold_selection_type == "NO_THRESHOLD_SELECTION")
     {
@@ -712,13 +711,13 @@ void ModelSelection::set_threshold_selection_type(const std::string& new_thresho
     }
     else
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_threshold_selection_type(const std::string&) method.\n"
+               << "void set_threshold_selection_type(const string&) method.\n"
                << "Unknown threshold selection type: " << new_threshold_selection_type << ".\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
@@ -731,7 +730,7 @@ void ModelSelection::set_threshold_selection_type(const std::string& new_thresho
 
 void ModelSelection::set_approximation(const bool& new_approximation)
 {
-    switch (inputs_selection_type)
+    switch(inputs_selection_type)
     {
     case NO_INPUTS_SELECTION:
     {
@@ -759,13 +758,13 @@ void ModelSelection::set_approximation(const bool& new_approximation)
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_approximation(const bool&) const method.\n"
                << "Unknow inputs selection method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
@@ -806,13 +805,13 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_training_strategy_pointer(TrainingStrategy*) method.\n"
                << "Unknown order selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     }
 
@@ -841,13 +840,13 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_training_strategy_pointer(TrainingStrategy*) method.\n"
                << "Unknown inputs selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     }
 
@@ -886,13 +885,13 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void set_training_strategy_pointer(TrainingStrategy*) method.\n"
                << "Unknown threshold selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
     }
 }
@@ -969,62 +968,62 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
     {
         // Variables to send initialization
 
-        original_inputs_selection_type = (int)model_selection->get_inputs_selection_type();
+        original_inputs_selection_type =(int)model_selection->get_inputs_selection_type();
 
-        switch (original_inputs_selection_type)
+        switch(original_inputs_selection_type)
         {
-            case (int)ModelSelection::GROWING_INPUTS:
+            case(int)ModelSelection::GROWING_INPUTS:
             {
                 GrowingInputs* original_growing_inputs = model_selection->get_growing_inputs_pointer();
 
-                trials_number = (int)original_growing_inputs->get_trials_number();
+                trials_number =(int)original_growing_inputs->get_trials_number();
                 tolerance = original_growing_inputs->get_tolerance();
                 selection_loss_goal = original_growing_inputs->get_selection_loss_goal();
-                maximum_selection_failures = (int)original_growing_inputs->get_maximum_selection_failures();
-                max_min_inputs_number = (int)original_growing_inputs->get_maximum_inputs_number();
+                maximum_selection_failures =(int)original_growing_inputs->get_maximum_selection_failures();
+                max_min_inputs_number =(int)original_growing_inputs->get_maximum_inputs_number();
                 minimum_correlation = original_growing_inputs->get_minimum_correlation();
                 maximum_correlation = original_growing_inputs->get_maximum_correlation();
-                maximum_iterations_number = (int)original_growing_inputs->get_maximum_iterations_number();
-                maximum_time = (int)original_growing_inputs->get_maximum_time();
+                maximum_iterations_number =(int)original_growing_inputs->get_maximum_iterations_number();
+                maximum_time =(int)original_growing_inputs->get_maximum_time();
                 reserve_loss_loss_history = original_growing_inputs->get_reserve_loss_data();
                 reserve_selection_loss_loss_history = original_growing_inputs->get_reserve_selection_loss_data();
             }
             break;
 
-            case (int)ModelSelection::PRUNING_INPUTS:
+            case(int)ModelSelection::PRUNING_INPUTS:
             {
                 PruningInputs* original_pruning_inputs = model_selection->get_pruning_inputs_pointer();
 
-                trials_number = (int)original_pruning_inputs->get_trials_number();
+                trials_number =(int)original_pruning_inputs->get_trials_number();
                 tolerance = original_pruning_inputs->get_tolerance();
                 selection_loss_goal = original_pruning_inputs->get_selection_loss_goal();
-                maximum_selection_failures = (int)original_pruning_inputs->get_maximum_selection_failures();
-                max_min_inputs_number = (int)original_pruning_inputs->get_minimum_inputs_number();
+                maximum_selection_failures =(int)original_pruning_inputs->get_maximum_selection_failures();
+                max_min_inputs_number =(int)original_pruning_inputs->get_minimum_inputs_number();
                 minimum_correlation = original_pruning_inputs->get_minimum_correlation();
                 maximum_correlation = original_pruning_inputs->get_maximum_correlation();
-                maximum_iterations_number = (int)original_pruning_inputs->get_maximum_iterations_number();
-                maximum_time = (int)original_pruning_inputs->get_maximum_time();
+                maximum_iterations_number =(int)original_pruning_inputs->get_maximum_iterations_number();
+                maximum_time =(int)original_pruning_inputs->get_maximum_time();
                 reserve_loss_loss_history = original_pruning_inputs->get_reserve_loss_data();
                 reserve_selection_loss_loss_history = original_pruning_inputs->get_reserve_selection_loss_data();
             }
             break;
 
-            case (int)ModelSelection::GENETIC_ALGORITHM:
+            case(int)ModelSelection::GENETIC_ALGORITHM:
             {
                 GeneticAlgorithm* original_genetic_algorithm = model_selection->get_genetic_algorithm_pointer();
 
-                trials_number = (int)original_genetic_algorithm->get_trials_number();
+                trials_number =(int)original_genetic_algorithm->get_trials_number();
                 tolerance = original_genetic_algorithm->get_tolerance();
-                population_size = (int)original_genetic_algorithm->get_population_size();
+                population_size =(int)original_genetic_algorithm->get_population_size();
                 initialization_method = original_genetic_algorithm->get_initialization_method();
                 fitness_assignment_method = original_genetic_algorithm->get_fitness_assignment_method();
                 crossover_method = original_genetic_algorithm->get_crossover_method();
-                elitism_size = (int)original_genetic_algorithm->get_elitism_size();
+                elitism_size =(int)original_genetic_algorithm->get_elitism_size();
                 selective_pressure = original_genetic_algorithm->get_selective_pressure();
                 mutation_rate = original_genetic_algorithm->get_mutation_rate();
                 selection_loss_goal = original_genetic_algorithm->get_selection_loss_goal();
-                maximum_iterations_number = (int)original_genetic_algorithm->get_maximum_iterations_number();
-                maximum_time = (int)original_genetic_algorithm->get_maximum_time();
+                maximum_iterations_number =(int)original_genetic_algorithm->get_maximum_iterations_number();
+                maximum_time =(int)original_genetic_algorithm->get_maximum_time();
                 reserve_loss_loss_history  = original_genetic_algorithm->get_reserve_loss_data();
                 reserve_selection_loss_loss_history = original_genetic_algorithm->get_reserve_selection_loss_data();
                 reserve_generation_mean_history = original_genetic_algorithm->get_reserve_generation_mean();
@@ -1047,9 +1046,9 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
         MPI_Request req[9];
 
-        switch (original_inputs_selection_type)
+        switch(original_inputs_selection_type)
         {
-            case (int)ModelSelection::GROWING_INPUTS:
+            case(int)ModelSelection::GROWING_INPUTS:
 
                 MPI_Irecv(&maximum_selection_failures, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&max_min_inputs_number, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1060,7 +1059,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
                 break;
 
-            case (int)ModelSelection::PRUNING_INPUTS:
+            case(int)ModelSelection::PRUNING_INPUTS:
 
                 MPI_Irecv(&maximum_selection_failures, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&max_min_inputs_number, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1071,7 +1070,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
                 break;
 
-            case (int)ModelSelection::GENETIC_ALGORITHM:
+            case(int)ModelSelection::GENETIC_ALGORITHM:
 
                 MPI_Irecv(&population_size, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&initialization_method, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1108,9 +1107,9 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
         MPI_Request req[9];
 
-        switch (original_inputs_selection_type)
+        switch(original_inputs_selection_type)
         {
-            case (int)ModelSelection::GROWING_INPUTS:
+            case(int)ModelSelection::GROWING_INPUTS:
 
                 MPI_Isend(&maximum_selection_failures, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&max_min_inputs_number, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1121,7 +1120,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
                 break;
 
-            case (int)ModelSelection::PRUNING_INPUTS:
+            case(int)ModelSelection::PRUNING_INPUTS:
 
                 MPI_Isend(&maximum_selection_failures, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&max_min_inputs_number, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1132,7 +1131,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
                 break;
 
-            case (int)ModelSelection::GENETIC_ALGORITHM:
+            case(int)ModelSelection::GENETIC_ALGORITHM:
 
                 MPI_Isend(&population_size, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&initialization_method, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1169,9 +1168,9 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
 
     set_inputs_selection_type((ModelSelection::InputsSelectionType)original_inputs_selection_type);
 
-    switch (original_inputs_selection_type)
+    switch(original_inputs_selection_type)
     {
-        case (int)ModelSelection::GROWING_INPUTS:
+        case(int)ModelSelection::GROWING_INPUTS:
         {
             growing_inputs_pointer->set_trials_number(trials_number);
             growing_inputs_pointer->set_tolerance(tolerance);
@@ -1187,7 +1186,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
         }
         break;
 
-        case (int)ModelSelection::PRUNING_INPUTS:
+        case(int)ModelSelection::PRUNING_INPUTS:
         {
             pruning_inputs_pointer->set_trials_number(trials_number);
             pruning_inputs_pointer->set_tolerance(tolerance);
@@ -1203,7 +1202,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
         }
         break;
 
-        case (int)ModelSelection::GENETIC_ALGORITHM:
+        case(int)ModelSelection::GENETIC_ALGORITHM:
         {
             genetic_algorithm_pointer->set_trials_number(trials_number);
             genetic_algorithm_pointer->set_tolerance(tolerance);
@@ -1265,55 +1264,55 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
     {
         // Variables to send initialization
 
-        original_order_selection_type = (int)model_selection->get_order_selection_type();
+        original_order_selection_type =(int)model_selection->get_order_selection_type();
 
-        switch (original_order_selection_type)
+        switch(original_order_selection_type)
         {
-            case (int)ModelSelection::INCREMENTAL_ORDER:
+            case(int)ModelSelection::INCREMENTAL_ORDER:
             {
                 IncrementalOrder* original_incremental_order = model_selection->get_incremental_order_pointer();
 
-                minimum_order = (int)original_incremental_order->get_minimum_order();
-                maximum_order = (int)original_incremental_order->get_maximum_order();
-                step = (int)original_incremental_order->get_step();
-                trials_number = (int)original_incremental_order->get_trials_number();
+                minimum_order =(int)original_incremental_order->get_minimum_order();
+                maximum_order =(int)original_incremental_order->get_maximum_order();
+                step =(int)original_incremental_order->get_step();
+                trials_number =(int)original_incremental_order->get_trials_number();
                 tolerance = original_incremental_order->get_tolerance();
                 selection_loss_goal = original_incremental_order->get_selection_loss_goal();
-                maximum_selection_failures = (int)original_incremental_order->get_maximum_selection_failures();
-                maximum_time = (int)original_incremental_order->get_maximum_time();
+                maximum_selection_failures =(int)original_incremental_order->get_maximum_selection_failures();
+                maximum_time =(int)original_incremental_order->get_maximum_time();
                 reserve_loss_loss_history = original_incremental_order->get_reserve_loss_data();
                 reserve_selection_loss_loss_history = original_incremental_order->get_reserve_selection_loss_data();
             }
             break;
 
-            case (int)ModelSelection::GOLDEN_SECTION:
+            case(int)ModelSelection::GOLDEN_SECTION:
             {
                 GoldenSectionOrder* original_golden_section_order = model_selection->get_golden_section_order_pointer();
 
-                minimum_order = (int)original_golden_section_order->get_minimum_order();
-                maximum_order = (int)original_golden_section_order->get_maximum_order();
-                trials_number = (int)original_golden_section_order->get_trials_number();
+                minimum_order =(int)original_golden_section_order->get_minimum_order();
+                maximum_order =(int)original_golden_section_order->get_maximum_order();
+                trials_number =(int)original_golden_section_order->get_trials_number();
                 tolerance = original_golden_section_order->get_tolerance();
                 selection_loss_goal = original_golden_section_order->get_selection_loss_goal();
-                maximum_time = (int)original_golden_section_order->get_maximum_time();
+                maximum_time =(int)original_golden_section_order->get_maximum_time();
                 reserve_loss_loss_history = original_golden_section_order->get_reserve_loss_data();
                 reserve_selection_loss_loss_history = original_golden_section_order->get_reserve_selection_loss_data();
             }
             break;
 
-            case (int)ModelSelection::SIMULATED_ANNEALING:
+            case(int)ModelSelection::SIMULATED_ANNEALING:
             {
                 SimulatedAnnealingOrder* original_simulated_annealing = model_selection->get_simulated_annealing_order_pointer();
 
-                minimum_order = (int)original_simulated_annealing->get_minimum_order();
-                maximum_order = (int)original_simulated_annealing->get_maximum_order();
+                minimum_order =(int)original_simulated_annealing->get_minimum_order();
+                maximum_order =(int)original_simulated_annealing->get_maximum_order();
                 cooling_rate = original_simulated_annealing->get_cooling_rate();
-                trials_number = (int)original_simulated_annealing->get_trials_number();
+                trials_number =(int)original_simulated_annealing->get_trials_number();
                 tolerance = original_simulated_annealing->get_tolerance();
                 selection_loss_goal = original_simulated_annealing->get_selection_loss_goal();
                 minimum_temperature = original_simulated_annealing->get_minimum_temperature();
-                maximum_iterations_number = (int)original_simulated_annealing->get_maximum_iterations_number();
-                maximum_time = (int)original_simulated_annealing->get_maximum_time();
+                maximum_iterations_number =(int)original_simulated_annealing->get_maximum_iterations_number();
+                maximum_time =(int)original_simulated_annealing->get_maximum_time();
                 reserve_loss_loss_history = original_simulated_annealing->get_reserve_loss_data();
                 reserve_selection_loss_loss_history = original_simulated_annealing->get_reserve_selection_loss_data();
             }
@@ -1334,9 +1333,9 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
 
         MPI_Request req[8];
 
-        switch (original_order_selection_type)
+        switch(original_order_selection_type)
         {
-            case (int)ModelSelection::INCREMENTAL_ORDER:
+            case(int)ModelSelection::INCREMENTAL_ORDER:
 
                 MPI_Irecv(&step, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&maximum_selection_failures, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1345,7 +1344,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
 
                 break;
 
-            case (int)ModelSelection::SIMULATED_ANNEALING:
+            case(int)ModelSelection::SIMULATED_ANNEALING:
 
                 MPI_Irecv(&cooling_rate, 1, MPI_DOUBLE, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&minimum_temperature, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1377,9 +1376,9 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
 
         MPI_Request req[8];
 
-        switch (original_order_selection_type)
+        switch(original_order_selection_type)
         {
-            case (int)ModelSelection::INCREMENTAL_ORDER:
+            case(int)ModelSelection::INCREMENTAL_ORDER:
 
                 MPI_Isend(&step, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&maximum_selection_failures, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1388,7 +1387,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
 
                 break;
 
-            case (int)ModelSelection::SIMULATED_ANNEALING:
+            case(int)ModelSelection::SIMULATED_ANNEALING:
 
                 MPI_Isend(&cooling_rate, 1, MPI_DOUBLE, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&minimum_temperature, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1420,9 +1419,9 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
 
     set_order_selection_type((ModelSelection::OrderSelectionType)original_order_selection_type);
 
-    switch (original_order_selection_type)
+    switch(original_order_selection_type)
     {
-        case (int)ModelSelection::INCREMENTAL_ORDER:
+        case(int)ModelSelection::INCREMENTAL_ORDER:
         {
             incremental_order_pointer->set_minimum_order(minimum_order);
             incremental_order_pointer->set_maximum_order(maximum_order);
@@ -1437,7 +1436,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
         }
         break;
 
-        case (int)ModelSelection::GOLDEN_SECTION:
+        case(int)ModelSelection::GOLDEN_SECTION:
         {
             golden_section_order_pointer->set_minimum_order(minimum_order);
             golden_section_order_pointer->set_maximum_order(maximum_order);
@@ -1450,7 +1449,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
         }
         break;
 
-        case (int)ModelSelection::SIMULATED_ANNEALING:
+        case(int)ModelSelection::SIMULATED_ANNEALING:
         {
             simulated_annelaing_order_pointer->set_minimum_order(minimum_order);
             simulated_annelaing_order_pointer->set_maximum_order(maximum_order);
@@ -1492,11 +1491,11 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
     {
         // Variables to send initialization
 
-        original_threshold_selection_type = (int)model_selection->get_threshold_selection_type();
+        original_threshold_selection_type =(int)model_selection->get_threshold_selection_type();
 
-        switch (original_threshold_selection_type)
+        switch(original_threshold_selection_type)
         {
-            case (int)ModelSelection::F1_SCORE_OPTIMIZATION:
+            case(int)ModelSelection::F1_SCORE_OPTIMIZATION:
             {
                 F1ScoreOptimizationThreshold* original_f1_score_optimization = model_selection->get_f1_score_optimization_threshold_pointer();
 
@@ -1507,7 +1506,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
             }
             break;
 
-            case (int)ModelSelection::MATTHEW_CORRELATION:
+            case(int)ModelSelection::MATTHEW_CORRELATION:
             {
                 MatthewCorrelationOptimizationThreshold* original_matthew_correlation_optimization = model_selection->get_matthew_correlation_optimization_threshold();
 
@@ -1518,7 +1517,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
             }
             break;
 
-            case (int)ModelSelection::YOUDEN_INDEX:
+            case(int)ModelSelection::YOUDEN_INDEX:
             {
                 YoudenIndexOptimizationThreshold* original_youden_index_optimization = model_selection->get_youden_index_optimization_threshold();
 
@@ -1529,7 +1528,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
             }
             break;
 
-            case (int)ModelSelection::KAPPA_COEFFICIENT:
+            case(int)ModelSelection::KAPPA_COEFFICIENT:
             {
                 KappaCoefficientOptimizationThreshold* original_kappa_coefficient_optimization = model_selection->get_kappa_coefficient_optimization_threshold();
 
@@ -1540,7 +1539,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
             }
             break;
 
-            case (int)ModelSelection::ROC_CURVE_DISTANCE:
+            case(int)ModelSelection::ROC_CURVE_DISTANCE:
             {
                 ROCCurveOptimizationThreshold* original_roc_curve_optimization = model_selection->get_roc_curve_optimization_threshold();
 
@@ -1594,9 +1593,9 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
 
     set_threshold_selection_type((ModelSelection::ThresholdSelectionType)original_threshold_selection_type);
 
-    switch (original_threshold_selection_type)
+    switch(original_threshold_selection_type)
     {
-        case (int)ModelSelection::F1_SCORE_OPTIMIZATION:
+        case(int)ModelSelection::F1_SCORE_OPTIMIZATION:
         {
             f1_score_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
             f1_score_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
@@ -1605,7 +1604,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
         }
         break;
 
-        case (int)ModelSelection::MATTHEW_CORRELATION:
+        case(int)ModelSelection::MATTHEW_CORRELATION:
         {
             matthew_correlation_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
             matthew_correlation_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
@@ -1614,7 +1613,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
         }
             break;
 
-        case (int)ModelSelection::YOUDEN_INDEX:
+        case(int)ModelSelection::YOUDEN_INDEX:
         {
             youden_index_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
             youden_index_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
@@ -1623,7 +1622,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
         }
             break;
 
-        case (int)ModelSelection::KAPPA_COEFFICIENT:
+        case(int)ModelSelection::KAPPA_COEFFICIENT:
         {
             kappa_coefficient_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
             kappa_coefficient_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
@@ -1632,7 +1631,7 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
         }
             break;
 
-        case (int)ModelSelection::ROC_CURVE_DISTANCE:
+        case(int)ModelSelection::ROC_CURVE_DISTANCE:
         {
             roc_curve_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
             roc_curve_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
@@ -1647,11 +1646,11 @@ void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_sel
 }
 #endif
 
-// void destruct_order_selection(void) method
+// void destruct_order_selection() method
 
 /// This method deletes the order selection algorithm object which composes this model selection object.
 
-void ModelSelection::destruct_order_selection(void)
+void ModelSelection::destruct_order_selection()
 {
     delete incremental_order_pointer;
     delete golden_section_order_pointer;
@@ -1664,11 +1663,11 @@ void ModelSelection::destruct_order_selection(void)
     order_selection_type = NO_ORDER_SELECTION;
 }
 
-// void destruct_inputs_selection(void) method
+// void destruct_inputs_selection() method
 
 /// This method deletes the inputs selection algorithm object which composes this model selection object.
 
-void ModelSelection::destruct_inputs_selection(void)
+void ModelSelection::destruct_inputs_selection()
 {
     delete growing_inputs_pointer;
     delete pruning_inputs_pointer;
@@ -1681,11 +1680,11 @@ void ModelSelection::destruct_inputs_selection(void)
     inputs_selection_type = NO_INPUTS_SELECTION;
 }
 
-// void destruct_threshold_selection(void) method
+// void destruct_threshold_selection() method
 
 /// This method deletes the threshold selection algorithm object which composes this model selection object.
 
-void ModelSelection::destruct_threshold_selection(void)
+void ModelSelection::destruct_threshold_selection()
 {
     delete f1_score_optimization_threshold_pointer;
     delete matthew_correlation_optimization_threshold_pointer;
@@ -1702,24 +1701,24 @@ void ModelSelection::destruct_threshold_selection(void)
     threshold_selection_type = NO_THRESHOLD_SELECTION;
 }
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that the different pointers needed for performing the model selection are not NULL.
 
-void ModelSelection::check(void) const
+void ModelSelection::check() const
 {
 
     // Training algorithm stuff
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(!training_strategy_pointer)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to training strategy is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Loss index stuff
@@ -1729,10 +1728,10 @@ void ModelSelection::check(void) const
     if(!loss_index_pointer)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to loss functional is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Neural network stuff
@@ -1742,10 +1741,10 @@ void ModelSelection::check(void) const
     if(!neural_network_pointer)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to neural network is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -1753,19 +1752,19 @@ void ModelSelection::check(void) const
     if(!multilayer_perceptron_pointer)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to multilayer perceptron is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     if(multilayer_perceptron_pointer->is_empty())
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Multilayer Perceptron is empty.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Data set stuff
@@ -1775,10 +1774,10 @@ void ModelSelection::check(void) const
     if(!data_set_pointer)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Pointer to data set is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     const Instances& instances = data_set_pointer->get_instances();
@@ -1788,19 +1787,19 @@ void ModelSelection::check(void) const
     if(selection_instances_number == 0)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void check(void) const method.\n"
+               << "void check() const method.\n"
                << "Number of selection instances is zero.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 }
 
-// Vector<double> calculate_inputs_importance(void) const method
+// Vector<double> calculate_inputs_importance() const method
 
 /// Calculate the importance of the inputs, returns a vector with the selection loss of the neural network removing one input.
 
-Vector<double> ModelSelection::calculate_inputs_importance(void) const
+Vector<double> ModelSelection::calculate_inputs_importance() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1847,24 +1846,24 @@ Vector<double> ModelSelection::calculate_inputs_importance(void) const
 
     const double trained_selection_error = loss_index_copy.calculate_selection_error();
 
-    for (size_t i = 0; i < inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
     {
         neural_network_copy.prune_input(i);
 
         const double current_selection_error = loss_index_copy.calculate_selection_error();
 
-        if(current_selection_error > trained_selection_error)
-        {
-            input_importance[i] = 1;
-        }
-        else if(current_selection_error < trained_selection_error)
-        {
-            input_importance[i] = 0;
-        }
-        else
-        {
-            input_importance[i] = current_selection_error/trained_selection_error;
-        }
+//        if(current_selection_error > trained_selection_error)
+//        {
+//            input_importance[i] = 1;
+//        }
+//        else if(current_selection_error < trained_selection_error)
+//        {
+//            input_importance[i] = 0;
+//        }
+//        else
+//        {
+          input_importance[i] = current_selection_error/trained_selection_error;
+//        }
 
         neural_network_copy.grow_input();
 
@@ -1879,24 +1878,24 @@ Vector<double> ModelSelection::calculate_inputs_importance(void) const
     return input_importance;
 }
 
-// ModelSelectionResults perform_order_selection(void) method
+// ModelSelectionResults perform_order_selection() method
 
 /// Perform the order selection, returns a structure with the results of the order selection
 /// It also set the neural network of the training strategy pointer with the optimum parameters
 
-ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(void) const
+ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection() const
 {
 #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(order_selection_type == NO_ORDER_SELECTION)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "ModelSelectionResults perform_order_selection(void) const method.\n"
+               << "ModelSelectionResults perform_order_selection() const method.\n"
                << "None order selection term is used.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     check();
@@ -1933,13 +1932,13 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(vo
     }
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "ModelSelectionResults perform_order_selection(void) method.\n"
+               << "ModelSelectionResults perform_order_selection() method.\n"
                << "Unknown order selection method.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
 
         break;
     }
@@ -1948,24 +1947,23 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_order_selection(vo
     return(results);
 }
 
-// ModelSelectionResults perform_inputs_selection(void) method
 
 /// Perform the inputs selection, returns a structure with the results of the inputs selection.
 /// It also set the neural network of the training strategy pointer with the optimum parameters.
 
-ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(void) const
+ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection() const
 {
 #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(inputs_selection_type == NO_INPUTS_SELECTION)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "ModelSelectionResults perform_inputs_selection(void) const method.\n"
+               << "ModelSelectionResults perform_inputs_selection() const method.\n"
                << "None inputs selection term is used.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     check();
@@ -2005,13 +2003,13 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
         }
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: ModelSelection class.\n"
-                   << "ModelSelectionResults perform_inputs_selection(void) method.\n"
+                   << "ModelSelectionResults perform_inputs_selection() method.\n"
                    << "Unknown inputs selection method.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
 
             break;
         }
@@ -2020,24 +2018,24 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_inputs_selection(v
     return(results);
 }
 
-// ModelSelectionResults perform_threshold_selection(void) method
+// ModelSelectionResults perform_threshold_selection() method
 
 /// Perform the threshold selection, returns a structure with the results of the threshold selection.
 /// It also set the neural network with the optimum threshold.
 
-ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selection(void) const
+ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selection() const
 {
 #ifdef __OPENNN_DEBUG__
 
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     if(threshold_selection_type == NO_THRESHOLD_SELECTION)
     {
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "ModelSelectionResults perform_threshold_selection(void) const method.\n"
+               << "ModelSelectionResults perform_threshold_selection() const method.\n"
                << "None threshold selection term is used.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     check();
@@ -2095,13 +2093,13 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
         }
         default:
         {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: ModelSelection class.\n"
-                   << "ModelSelectionResults perform_threshold_selection(void) method.\n"
+                   << "ModelSelectionResults perform_threshold_selection() method.\n"
                    << "Unknown threshold selection method.\n";
 
-            throw std::logic_error(buffer.str());
+            throw logic_error(buffer.str());
 
             break;
         }
@@ -2110,12 +2108,12 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_threshold_selectio
     return(results);
 }
 
-// ModelSelectionResults perform_model_selection(void) const method
+// ModelSelectionResults perform_model_selection() const method
 
 /// @todo
 /// Perform inputs selection and order selection.
 
-ModelSelection::ModelSelectionResults ModelSelection::perform_model_selection(void) const
+ModelSelection::ModelSelectionResults ModelSelection::perform_model_selection() const
 {
     ModelSelectionResults model_selection_results;
 
@@ -2125,14 +2123,14 @@ ModelSelection::ModelSelectionResults ModelSelection::perform_model_selection(vo
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the model selection object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document. 
 
-tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
+tinyxml2::XMLDocument* ModelSelection::to_XML() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -2166,7 +2164,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* growing_inputs_element = growing_inputs_document->FirstChildElement("GrowingInputs");
 
-        DeepClone(inputs_selection_element, growing_inputs_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            inputs_selection_element->InsertEndChild( copy );
+        }
 
         delete growing_inputs_document;
     }
@@ -2183,7 +2184,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* pruning_inputs_element = pruning_inputs_document->FirstChildElement("PruningInputs");
 
-        DeepClone(inputs_selection_element, pruning_inputs_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            inputs_selection_element->InsertEndChild( copy );
+        }
 
         delete pruning_inputs_document;
     }
@@ -2200,7 +2204,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* genetic_algorithm_element = genetic_algorithm_document->FirstChildElement("GeneticAlgorithm");
 
-        DeepClone(inputs_selection_element, genetic_algorithm_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            inputs_selection_element->InsertEndChild( copy );
+        }
 
         delete genetic_algorithm_document;
     }
@@ -2208,13 +2215,13 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+               << "tinyxml2::XMLDocument* to_XML() const method.\n"
                << "Unknown inputs selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
         break;
     }
@@ -2243,7 +2250,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* incremental_order_element = incremental_order_document->FirstChildElement("IncrementalOrder");
 
-        DeepClone(order_selection_element, incremental_order_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=incremental_order_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            order_selection_element->InsertEndChild( copy );
+        }
 
         delete incremental_order_document;
     }
@@ -2260,7 +2270,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* golden_section_order_element = golden_section_order_document->FirstChildElement("GoldenSectionOrder");
 
-        DeepClone(order_selection_element, golden_section_order_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=golden_section_order_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            order_selection_element->InsertEndChild( copy );
+        }
 
         delete golden_section_order_document;
     }
@@ -2277,7 +2290,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* simulated_annealing_order_element = simulated_annealing_order_document->FirstChildElement("SimulatedAnnealingOrder");
 
-        DeepClone(order_selection_element, simulated_annealing_order_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=simulated_annealing_order_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            order_selection_element->InsertEndChild( copy );
+        }
 
         delete simulated_annealing_order_document;
     }
@@ -2285,13 +2301,13 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+               << "tinyxml2::XMLDocument* to_XML() const method.\n"
                << "Unknown order selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
         break;
     }
@@ -2320,7 +2336,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* f1_score_optimization_element = f1_score_optimization_document->FirstChildElement("F1ScoreOptimizationThreshold");
 
-        DeepClone(threshold_selection_element, f1_score_optimization_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=f1_score_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            threshold_selection_element->InsertEndChild( copy );
+        }
 
         delete f1_score_optimization_document;
     }
@@ -2337,7 +2356,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* matthew_correlation_optimization_element = matthew_correlation_optimization_document->FirstChildElement("MatthewCorrelationOptimizationThreshold");
 
-        DeepClone(threshold_selection_element, matthew_correlation_optimization_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=matthew_correlation_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            threshold_selection_element->InsertEndChild( copy );
+        }
 
         delete matthew_correlation_optimization_document;
     }
@@ -2354,7 +2376,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* youden_index_optimization_element = youden_index_optimization_document->FirstChildElement("YoudenIndexOptimizationThreshold");
 
-        DeepClone(threshold_selection_element, youden_index_optimization_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=youden_index_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            threshold_selection_element->InsertEndChild( copy );
+        }
 
         delete youden_index_optimization_document;
     }
@@ -2371,7 +2396,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* kappa_coefficient_optimization_element = kappa_coefficient_optimization_document->FirstChildElement("KappaCoefficientOptimizationThreshold");
 
-        DeepClone(threshold_selection_element, kappa_coefficient_optimization_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=kappa_coefficient_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            threshold_selection_element->InsertEndChild( copy );
+        }
 
         delete kappa_coefficient_optimization_document;
     }
@@ -2388,7 +2416,10 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
         const tinyxml2::XMLElement* roc_curve_optimization_element = roc_curve_optimization_document->FirstChildElement("ROCCurveOptimizationThreshold");
 
-        DeepClone(threshold_selection_element, roc_curve_optimization_element, document, NULL);
+        for( const tinyxml2::XMLNode* nodeFor=roc_curve_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+            tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+            threshold_selection_element->InsertEndChild( copy );
+        }
 
         delete roc_curve_optimization_document;
     }
@@ -2396,13 +2427,13 @@ tinyxml2::XMLDocument* ModelSelection::to_XML(void) const
 
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+               << "tinyxml2::XMLDocument* to_XML() const method.\n"
                << "Unknown threshold selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
         break;
     }
@@ -2472,7 +2503,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         file_stream.CloseElement();
 
@@ -2480,7 +2511,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
                << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                << "Unknown inputs selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
         break;
     }
@@ -2537,7 +2568,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         file_stream.CloseElement();
 
@@ -2545,7 +2576,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
                << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                << "Unknown order selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
         break;
     }
@@ -2626,7 +2657,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     default:
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         file_stream.CloseElement();
 
@@ -2634,7 +2665,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
                << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                << "Unknown order selection type.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
         break;
     }
@@ -2653,13 +2684,13 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Model Selection element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Inputs Selection
@@ -2668,7 +2699,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const std::string new_inputs_selection_type = element->Attribute("Type");
+            const string new_inputs_selection_type = element->Attribute("Type");
 
             set_inputs_selection_type(new_inputs_selection_type);
 
@@ -2683,10 +2714,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("GrowingInputs");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("GrowingInputs");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 growing_inputs_pointer->from_XML(new_document);
             }
@@ -2695,10 +2730,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("PruningInputs");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("PruningInputs");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 pruning_inputs_pointer->from_XML(new_document);
             }
@@ -2707,23 +2746,27 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("GeneticAlgorithm");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("GeneticAlgorithm");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 genetic_algorithm_pointer->from_XML(new_document);
             }
                 break;
             default:
             {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: ModelSelection class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Unknown inputs selection type.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
                 break;
             }
@@ -2736,7 +2779,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const std::string new_order_selection_type = element->Attribute("Type");
+            const string new_order_selection_type = element->Attribute("Type");
 
             set_order_selection_type(new_order_selection_type);
 
@@ -2751,10 +2794,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("IncrementalOrder");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("IncrementalOrder");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 incremental_order_pointer->from_XML(new_document);
             }
@@ -2763,10 +2810,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("GoldenSectionOrder");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("GoldenSectionOrder");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 golden_section_order_pointer->from_XML(new_document);
             }
@@ -2775,23 +2826,27 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("SimulatedAnnealingOrder");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("SimulatedAnnealingOrder");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 simulated_annelaing_order_pointer->from_XML(new_document);
             }
                 break;
             default:
             {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: ModelSelection class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Unknown order selection type.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
                 break;
             }
@@ -2804,7 +2859,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const std::string new_threshold_selection_type = element->Attribute("Type");
+            const string new_threshold_selection_type = element->Attribute("Type");
 
             set_threshold_selection_type(new_threshold_selection_type);
 
@@ -2819,10 +2874,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("F1ScoreOptimizationThreshold");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("F1ScoreOptimizationThreshold");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 f1_score_optimization_threshold_pointer->from_XML(new_document);
             }
@@ -2831,10 +2890,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("MatthewCorrelationOptimizationThreshold");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("MatthewCorrelationOptimizationThreshold");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 matthew_correlation_optimization_threshold_pointer->from_XML(new_document);
             }
@@ -2843,10 +2906,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("YoudenIndexOptimizationThreshold");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("YoudenIndexOptimizationThreshold");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 youden_index_optimization_threshold_pointer->from_XML(new_document);
             }
@@ -2855,10 +2922,14 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("KappaCoefficientOptimizationThreshold");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("KappaCoefficientOptimizationThreshold");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 kappa_coefficient_optimization_threshold_pointer->from_XML(new_document);
             }
@@ -2867,23 +2938,27 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element_clone = new_document.NewElement("ROCCurveOptimizationThreshold");
-                new_document.InsertFirstChild(element_clone);
+                tinyxml2::XMLElement* random_search_element = new_document.NewElement("ROCCurveOptimizationThreshold");
 
-                DeepClone(element_clone, element, &new_document, NULL);
+                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                    random_search_element->InsertEndChild( copy );
+                }
+
+                new_document.InsertEndChild(random_search_element);
 
                 roc_curve_optimization_threshold_pointer->from_XML(new_document);
             }
                 break;
             default:
             {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: ModelSelection class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Unknown order selection type.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
             }
                 break;
             }
@@ -2892,22 +2967,22 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// void print(void) method
+// void print() method
 
 /// Prints to the screen the XML representation of this model selection object. 
 
-void ModelSelection::print(void) const
+void ModelSelection::print() const
 {
-    std::cout << to_XML();
+    cout << to_XML();
 }
 
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves the model selection members to a XML file. 
 /// @param file_name Name of model selection XML file. 
 
-void ModelSelection::save(const std::string& file_name) const
+void ModelSelection::save(const string& file_name) const
 {
     tinyxml2::XMLDocument* document = to_XML();
 
@@ -2917,37 +2992,37 @@ void ModelSelection::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads the model selection members from a XML file. 
 /// @param file_name Name of model selection XML file. 
 
-void ModelSelection::load(const std::string& file_name)
+void ModelSelection::load(const string& file_name)
 {
     tinyxml2::XMLDocument document;
 
     if(document.LoadFile(file_name.c_str()))
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void load(const std::string&) method.\n"
+               << "void load(const string&) method.\n"
                << "Cannot load XML file " << file_name << ".\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     from_XML(document);
 }
 
-// void ModelSelectionResults::save(const std::string&) const method
+// void ModelSelectionResults::save(const string&) const method
 
 /// Saves the results structure to a data file.
 /// @param file_name Name of model selection results data file.
 
-void ModelSelection::ModelSelectionResults::save(const std::string& file_name) const
+void ModelSelection::ModelSelectionResults::save(const string& file_name) const
 {
-    std::ofstream file(file_name.c_str());
+    ofstream file(file_name.c_str());
 
     file << "% Model Selection Results\n";
 
@@ -2955,64 +3030,350 @@ void ModelSelection::ModelSelectionResults::save(const std::string& file_name) c
 
     if(incremental_order_results_pointer)
     {
-        file << incremental_order_results_pointer->to_string();
+        file << incremental_order_results_pointer->object_to_string();
     }
 
     if(golden_section_order_results_pointer)
     {
-        file << golden_section_order_results_pointer->to_string();
+        file << golden_section_order_results_pointer->object_to_string();
     }
 
     if(simulated_annealing_order_results_pointer)
     {
-        file << simulated_annealing_order_results_pointer->to_string();
+        file << simulated_annealing_order_results_pointer->object_to_string();
     }
 
     file << "\n% Inputs Selection Results\n";
 
     if(growing_inputs_results_pointer)
     {
-        file << growing_inputs_results_pointer->to_string();
+        file << growing_inputs_results_pointer->object_to_string();
     }
 
     if(pruning_inputs_results_pointer)
     {
-        file << pruning_inputs_results_pointer->to_string();
+        file << pruning_inputs_results_pointer->object_to_string();
     }
 
     if(genetic_algorithm_results_pointer)
     {
-        file << genetic_algorithm_results_pointer->to_string();
+        file << genetic_algorithm_results_pointer->object_to_string();
     }
 
     file << "\n% Threhold Selection Results\n";
 
     if(f1_score_opimization_results_pointer)
     {
-        file << f1_score_opimization_results_pointer->to_string();
+        file << f1_score_opimization_results_pointer->object_to_string();
     }
 
     if(matthew_correlation_optimization_results_pointer)
     {
-        file << matthew_correlation_optimization_results_pointer->to_string();
+        file << matthew_correlation_optimization_results_pointer->object_to_string();
     }
 
     if(youden_index_optimization_results_pointer)
     {
-        file << youden_index_optimization_results_pointer->to_string();
+        file << youden_index_optimization_results_pointer->object_to_string();
     }
 
     if(kappa_coefficient_optimization_results_pointer)
     {
-        file << kappa_coefficient_optimization_results_pointer->to_string();
+        file << kappa_coefficient_optimization_results_pointer->object_to_string();
     }
 
     if(roc_curve_optimization_results_pointer)
     {
-        file << roc_curve_optimization_results_pointer->to_string();
+        file << roc_curve_optimization_results_pointer->object_to_string();
     }
 
     file.close();
+}
+
+
+Vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const size_t& k)
+{
+    DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
+    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
+    LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(k < 2)
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t&).\n"
+              << "Number of iterations must be grater or equal than 2.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    if(!data_set_pointer || data_set_pointer->has_data())
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t&).\n"
+              << "There is no data set assigned.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    if(!neural_network_pointer)
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t&).\n"
+              << "There is no neural network assigned.\n";
+
+       throw logic_error(buffer.str());
+    }
+#endif
+
+    Instances* instances_pointer = data_set_pointer->get_instances_pointer();
+
+    const Vector<Instances::Use> original_uses = instances_pointer->arrange_uses();
+
+    instances_pointer->split_random_indices(1,0,0);
+
+    Vector<double> minimum_error_parameters;
+    double minimum_error = 1.0;
+
+    Vector<NeuralNetwork> neural_network_ensemble(k);
+    double cross_validation_error = 0.0;
+
+    for(size_t i = 0; i < k; i++)
+    {
+        instances_pointer->set_k_fold_cross_validation_uses(k,i);
+        neural_network_pointer->randomize_parameters_normal();
+
+        training_strategy_pointer->perform_training();
+
+        instances_pointer->testing_to_selection();
+
+        double current_error = loss_index_pointer->calculate_selection_error();
+
+        if(i == 0 || current_error < minimum_error)
+        {
+            minimum_error = current_error;
+            minimum_error_parameters = neural_network_pointer->arrange_parameters();
+        }
+
+        neural_network_ensemble[i].set(*neural_network_pointer);
+        cross_validation_error += current_error;
+
+        if(display)
+        {
+            cout << "Iteration: " << i << "/" << k << endl;
+            cout << "Current error: " << current_error << endl;
+        }
+    }
+
+    if(display)
+    {
+        cout << "Cross validation error: " << cross_validation_error/k << endl;
+    }
+
+    instances_pointer->set_uses(original_uses);
+    neural_network_pointer->set_parameters(minimum_error_parameters);
+
+    return neural_network_ensemble;
+}
+
+Vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const size_t& k, const double& selection_ratio)
+{
+    DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
+    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
+    LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(k < 2)
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_random_cross_validation(const size_t&, const double&).\n"
+              << "Number of iterations must be grater or equal than 2.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    if(selection_ratio <= 0.0 || selection_ratio >= 1.0)
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_random_cross_validation(const size_t&, const double&).\n"
+              << "The ratio of testing instances must be between 0.0 and 1.0.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    if(!data_set_pointer || data_set_pointer->has_data())
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_random_cross_validation(const size_t&, const double&).\n"
+              << "There is no data set assigned.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    if(!neural_network_pointer)
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_random_cross_validation(const size_t&, const double&).\n"
+              << "There is no neural network assigned.\n";
+
+       throw logic_error(buffer.str());
+    }
+#endif
+
+    Instances* instances_pointer = data_set_pointer->get_instances_pointer();
+
+    const Vector<Instances::Use> original_uses = instances_pointer->arrange_uses();
+
+    instances_pointer->split_random_indices(1,0,0);
+
+    Vector<double> minimum_error_parameters;
+    double minimum_error = 1.0;
+
+    Vector<NeuralNetwork> neural_network_ensemble(k);
+    double cross_validation_error = 0.0;
+
+    for(size_t i = 0; i < k; i++)
+    {
+        instances_pointer->split_random_indices(1-selection_ratio,0.0,selection_ratio);
+        neural_network_pointer->randomize_parameters_normal();
+
+        training_strategy_pointer->perform_training();
+
+        instances_pointer->testing_to_selection();
+
+        double current_error = loss_index_pointer->calculate_selection_error();
+
+        if(i == 0 || current_error < minimum_error)
+        {
+            minimum_error = current_error;
+            minimum_error_parameters = neural_network_pointer->arrange_parameters();
+        }
+
+        neural_network_ensemble[i].set(*neural_network_pointer);
+        cross_validation_error += current_error;
+
+        if(display)
+        {
+            cout << "Iteration: " << i << "/" << k << endl;
+            cout << "Current error: " << current_error << endl;
+        }
+    }
+
+    if(display)
+    {
+        cout << "Cross validation error: " << cross_validation_error/k << endl;
+    }
+
+    instances_pointer->set_uses(original_uses);
+    neural_network_pointer->set_parameters(minimum_error_parameters);
+
+    return neural_network_ensemble;
+}
+
+Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation()
+{
+    DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
+    NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
+    LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
+
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(!data_set_pointer || data_set_pointer->has_data())
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_positives_cross_validation().\n"
+              << "There is no data set assigned.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    if(!neural_network_pointer)
+    {
+       buffer << "OpenNN Exception: ModelSelection class.\n"
+              << "Vector<NeuralNetwork> perform_positives_cross_validation().\n"
+              << "There is no neural network assigned.\n";
+
+       throw logic_error(buffer.str());
+    }
+#endif
+
+    Instances* instances_pointer = data_set_pointer->get_instances_pointer();
+
+    const Vector<Instances::Use> original_uses = instances_pointer->arrange_uses();
+
+    Variables* variables = data_set_pointer->get_variables_pointer();
+
+    const Vector<size_t> inputs_indices = variables->arrange_inputs_indices();
+
+    const size_t target_index = variables->arrange_targets_indices()[0];
+
+    const Vector<size_t> positives_instances_indices = data_set_pointer->get_variable(target_index).calculate_greater_than_indices(0.5);
+
+    const size_t positives_instances_number = positives_instances_indices.size();
+
+    instances_pointer->split_random_indices(1,0,0);
+
+    Vector<double> minimum_error_parameters;
+    double minimum_error = 1.0;
+
+    Vector<NeuralNetwork> neural_network_ensemble(positives_instances_number);
+    double cross_validation_error = 0.0;
+
+    for(size_t i = 0; i < positives_instances_number; i++)
+    {
+        const size_t current_selection_instance_index = positives_instances_indices[i];
+        const Vector<double> current_selection_instance = data_set_pointer->get_instance(current_selection_instance_index);
+        const double target_data = current_selection_instance[target_index];
+        const Vector<double> current_inputs_selection_instance = current_selection_instance.get_subvector(inputs_indices);
+
+        instances_pointer->set_use(current_selection_instance_index, Instances::Testing);
+        neural_network_pointer->randomize_parameters_normal();
+
+        training_strategy_pointer->perform_training();
+
+        const double output_data = neural_network_pointer->calculate_outputs(current_inputs_selection_instance)[0];
+
+        double current_error = abs(target_data-output_data);
+        double current_loss = loss_index_pointer->calculate_loss();
+
+        if(i == 0 || current_error < minimum_error)
+        {
+            minimum_error = current_error;
+            minimum_error_parameters = neural_network_pointer->arrange_parameters();
+        }
+
+        instances_pointer->set_use(current_selection_instance_index, Instances::Training);
+
+        neural_network_ensemble[i].set(*neural_network_pointer);
+        cross_validation_error += current_error;
+
+        if(display)
+        {
+            cout << "Iteration: " << i+1 << "/" << positives_instances_number << endl;
+            cout << "instance index: " << current_selection_instance_index << endl;
+            cout << "Output data: " << output_data << endl;
+            cout << "Current loss: " << current_loss << endl;
+            cout << "Current error: " << current_error << endl;
+        }
+    }
+
+    if(display)
+    {
+        cout << "Cross validation error: " << cross_validation_error/positives_instances_number << endl;
+    }
+
+    instances_pointer->set_uses(original_uses);
+    neural_network_pointer->set_parameters(minimum_error_parameters);
+
+    return neural_network_ensemble;
 }
 
 }

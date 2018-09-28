@@ -18,6 +18,7 @@
 
 #include "unit_testing.h"
 
+using namespace std;
 using namespace OpenNN;
 
 class VectorTest : public UnitTesting 
@@ -31,183 +32,195 @@ public:
 
    // CONSTRUCTOR
 
-   explicit VectorTest(void);
+   explicit VectorTest();
 
    // DESTRUCTOR
 
-   virtual ~VectorTest(void);
+   virtual ~VectorTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);   
+   void test_assignment_operator();   
 
    // Reference operator
 
-   void test_reference_operator(void);
+   void test_reference_operator();
 
    // Arithmetic operators
 
-   void test_sum_operator(void);
-   void test_rest_operator(void);
-   void test_multiplication_operator(void);
-   void test_division_operator(void);
+   void test_sum_operator();
+   void test_rest_operator();
+   void test_multiplication_operator();
+   void test_division_operator();
 
    // Operation an assignment operators
    
-   void test_sum_assignment_operator(void);
-   void test_rest_assignment_operator(void);
-   void test_multiplication_assignment_operator(void);
-   void test_division_assignment_operator(void);
+   void test_sum_assignment_operator();
+   void test_rest_assignment_operator();
+   void test_multiplication_assignment_operator();
+   void test_division_assignment_operator();
 
    // Equality and relational operators
 
-   void test_equal_to_operator(void);
-   void test_not_equal_to_operator(void);
-   void test_greater_than_operator(void);
-   void test_less_than_operator(void);
-   void test_greater_than_or_equal_to_operator(void);
-   void test_less_than_or_equal_to_operator(void);
+   void test_equal_to_operator();
+   void test_not_equal_to_operator();
+   void test_greater_than_operator();
+   void test_less_than_operator();
+   void test_greater_than_or_equal_to_operator();
+   void test_less_than_or_equal_to_operator();
 
    // Output operator
 
-   void test_output_operator(void);
+   void test_output_operator();
 
    // Get methods
 
-   void test_get_size(void);
-   void test_get_display(void);
+   void test_get_size();
+   void test_get_display();
 
    // Set
 
-   void test_set(void);
+   void test_set();
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Resize methods
 
-   void test_resize(void);
+   void test_resize();
 
-   void test_tuck_in(void);
-   void test_take_out(void);
+   void test_tuck_in();
+   void test_take_out();
 
-   void test_remove_element(void);
+   void test_insert_element();
+   void test_split_element();
 
-   void test_get_assembly(void);
+   void test_remove_element();
+
+   void test_get_assembly();
+   void test_difference();
+
+   void test_intersection();
+
+   void test_arrange_unique();
 
    // Initialization
 
-   void test_initialize(void);
-   void test_initialize_sequential(void);
-   void test_randomize_uniform(void);
-   void test_randomize_normal(void);
+   void test_initialize();
+   void test_initialize_sequential();
+   void test_randomize_uniform();
+   void test_randomize_normal();
 
    // Checking methods
 
-   void test_contains(void);
-   void test_is_in(void);
-   void test_is_constant(void);
-   void test_is_crescent(void);
-   void test_is_decrescent(void);
+   void test_contains();
+   void test_is_in();
+   void test_is_constant();
+   void test_is_crescent();
+   void test_is_decrescent();
+
+   void test_impute_time_series_missing_values_mean();
 
    // Mathematical operations
 
-   void test_dot_vector(void);
-   void test_dot_matrix(void);
+   void test_dot_vector();
+   void test_dot_matrix();
 
-   void test_calculate_sum(void);
-   void test_calculate_partial_sum(void);
-   void test_calculate_product(void);
+   void test_calculate_sum();
+   void test_calculate_partial_sum();
+   void test_calculate_product();
 
-   void test_calculate_mean(void);
-   void test_calculate_standard_deviation(void);
-   void test_calculate_covariance(void);
+   void test_calculate_mean();
+   void test_calculate_standard_deviation();
+   void test_calculate_covariance();
 
-   void test_calculate_mean_standard_deviation(void);
+   void test_calculate_mean_standard_deviation();
 
-   void test_calculate_minimum(void);
-   void test_calculate_maximum(void);
+   void test_calculate_minimum();
+   void test_calculate_maximum();
 
-   void test_calculate_minimum_maximum(void);  
+   void test_calculate_minimum_maximum();  
 
-   void test_calculate_minimum_missing_values(void);
-   void test_calculate_maximum_missing_values(void);
+   void test_calculate_minimum_missing_values();
+   void test_calculate_maximum_missing_values();
 
-   void test_calculate_minimum_maximum_missing_values(void);
+   void test_calculate_minimum_maximum_missing_values();
 
-   void test_calculate_explained_variance(void);
+   void test_calculate_explained_variance();
 
-   void test_calculate_statistics(void);
+   void test_calculate_statistics();
 
-   void test_calculate_histogram(void);
+   void test_calculate_quartiles();
 
-   void test_calculate_bin(void);
-   void test_calculate_frequency(void);
-   void test_calculate_total_frequencies(void);
+   void test_calculate_histogram();
 
-   void test_calculate_maximal_indices(void);
-   void test_calculate_minimal_index(void);
-   void test_index(void);
-   void test_calculate_maximal_index(void);
-   void test_calculate_minimal_indices(void);
+   void test_calculate_bin();
+   void test_calculate_frequency();
+   void test_calculate_total_frequencies();
 
-   void test_calculate_minimal_maximal_index(void);
+   void test_calculate_maximal_indices();
+   void test_calculate_minimal_index();
+   void test_index();
+   void test_calculate_maximal_index();
+   void test_calculate_minimal_indices();
 
-   void test_calculate_cumulative_index(void);
-   void test_calculate_closest_index(void);
+   void test_calculate_minimal_maximal_index();
 
-   void test_calculate_norm(void);
-   void test_calculate_normalized(void);
+   void test_calculate_cumulative_index();
+   void test_calculate_closest_index();
 
-   void test_calculate_sum_squared_error(void);
-   void test_calculate_mean_squared_error(void);
-   void test_calculate_root_mean_squared_error(void);
+   void test_calculate_norm();
+   void test_calculate_normalized();
+
+   void test_calculate_sum_squared_error();
+   void test_calculate_mean_squared_error();
+   void test_calculate_root_mean_squared_error();
    
-   void test_apply_absolute_value(void);
+   void test_apply_absolute_value();
 
-   void test_calculate_lower_bounded(void);
-   void test_calculate_upper_bounded(void);
+   void test_calculate_lower_bounded();
+   void test_calculate_upper_bounded();
 
-   void test_calculate_lower_upper_bounded(void);
+   void test_calculate_lower_upper_bounded();
 
-   void test_apply_lower_bound(void);
-   void test_apply_upper_bound(void);
-   void test_apply_lower_upper_bounds(void);
+   void test_apply_lower_bound();
+   void test_apply_upper_bound();
+   void test_apply_lower_upper_bounds();
 
-   void test_calculate_less_rank(void);
-   void test_calculate_greater_rank(void);
+   void test_calculate_less_rank();
+   void test_calculate_greater_rank();
 
-   void test_calculate_linear_correlation(void);
-   void test_calculate_linear_correlation_missing_values(void);
+   void test_calculate_linear_correlation();
+   void test_calculate_linear_correlation_missing_values();
 
-   void test_calculate_linear_regression_parameters(void);
+   void test_calculate_linear_regression_parameters();
 
    // Scaling and unscaling
 
-   void test_scale_minimum_maximum(void);
-   void test_scale_mean_standard_deviation(void);
+   void test_scale_minimum_maximum();
+   void test_scale_mean_standard_deviation();
 
-   void test_unscale_minimum_maximum(void);
-   void test_unscale_mean_standard_deviation(void);
+   void test_unscale_minimum_maximum();
+   void test_unscale_mean_standard_deviation();
 
    // Parsing methods
 
-   void test_parse(void);
+   void test_parse();
 
    // Serizalization methods
 
-   void test_load(void);
-   void test_save(void);
+   void test_load();
+   void test_save();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 private:
 
@@ -222,7 +235,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,7 +6,7 @@
 /*   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,7 +30,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -46,7 +46,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit ProbabilisticLayer(void);
+   explicit ProbabilisticLayer();
 
    // PROBABILISTIC NEURONS NUMBER CONSTRUCTOR
 
@@ -58,15 +58,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~ProbabilisticLayer(void);
+   virtual ~ProbabilisticLayer();
 
    // ASSIGNMENT OPERATOR
 
-   ProbabilisticLayer& operator = (const ProbabilisticLayer&);
+   ProbabilisticLayer& operator =(const ProbabilisticLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const ProbabilisticLayer&) const;
+   bool operator ==(const ProbabilisticLayer&) const;
 
    // ENUMERATIONS
 
@@ -76,20 +76,20 @@ public:
 
    // GET METHODS
 
-   const size_t& get_probabilistic_neurons_number(void) const;
+   const size_t& get_probabilistic_neurons_number() const;
 
-   const double& get_decision_threshold(void) const;
+   const double& get_decision_threshold() const;
 
-   const ProbabilisticMethod& get_probabilistic_method(void) const;
-   std::string write_probabilistic_method(void) const;
-   std::string write_probabilistic_method_text(void) const;
+   const ProbabilisticMethod& get_probabilistic_method() const;
+   string write_probabilistic_method() const;
+   string write_probabilistic_method_text() const;
 
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // SET METHODS
 
-   void set(void);
+   void set();
    void set(const size_t&);
    void set(const ProbabilisticLayer&);
 
@@ -98,9 +98,9 @@ public:
    void set_decision_threshold(const double&);
 
    void set_probabilistic_method(const ProbabilisticMethod&);
-   void set_probabilistic_method(const std::string&);
+   void set_probabilistic_method(const string&);
 
-   virtual void set_default(void);
+   virtual void set_default();
 
    // Display messages
 
@@ -108,11 +108,11 @@ public:
 
    // Pruning and growing
 
-   void prune_probabilistic_neuron(void);
+   void prune_probabilistic_neuron();
 
    // Initialization methods
 
-   void initialize_random(void);
+   void initialize_random();
 
    // Probabilistic post-processing
 
@@ -142,20 +142,20 @@ public:
 
    // Expression methods
 
-   std::string write_binary_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_probability_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_competitive_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_softmax_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_no_probabilistic_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_binary_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_probability_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_competitive_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_softmax_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_no_probabilistic_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
   /// ownership passed - use delete to destroy
-   virtual tinyxml2::XMLDocument* to_XML(void) const;
+   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -188,7 +188,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

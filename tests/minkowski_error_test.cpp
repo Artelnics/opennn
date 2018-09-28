@@ -19,14 +19,14 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-MinkowskiErrorTest::MinkowskiErrorTest(void) : UnitTesting() 
+MinkowskiErrorTest::MinkowskiErrorTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-MinkowskiErrorTest::~MinkowskiErrorTest(void) 
+MinkowskiErrorTest::~MinkowskiErrorTest() 
 {
 }
 
@@ -34,7 +34,7 @@ MinkowskiErrorTest::~MinkowskiErrorTest(void)
 // METHODS
 
 
-void MinkowskiErrorTest::test_constructor(void)
+void MinkowskiErrorTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -65,13 +65,13 @@ void MinkowskiErrorTest::test_constructor(void)
 }
 
 
-void MinkowskiErrorTest::test_destructor(void)
+void MinkowskiErrorTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void MinkowskiErrorTest::test_get_Minkowski_parameter(void)
+void MinkowskiErrorTest::test_get_Minkowski_parameter()
 {
    message += "test_get_Minkowski_parameter\n";
 
@@ -83,13 +83,13 @@ void MinkowskiErrorTest::test_get_Minkowski_parameter(void)
 }
 
 
-void MinkowskiErrorTest::test_set_Minkowski_parameter(void)
+void MinkowskiErrorTest::test_set_Minkowski_parameter()
 {
    message += "test_set_Minkowski_parameter\n";
 }
 
 
-void MinkowskiErrorTest::test_calculate_loss(void)
+void MinkowskiErrorTest::test_calculate_loss()
 {
    message += "test_calculate_loss\n";
 
@@ -119,13 +119,13 @@ void MinkowskiErrorTest::test_calculate_loss(void)
 }
 
 
-void MinkowskiErrorTest::test_calculate_selection_loss(void)
+void MinkowskiErrorTest::test_calculate_selection_loss()
 {
    message += "test_calculate_selection_loss\n";  
 }
 
 
-void MinkowskiErrorTest::test_calculate_gradient(void)
+void MinkowskiErrorTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -274,7 +274,7 @@ void MinkowskiErrorTest::test_calculate_gradient(void)
 }
 
 
-void MinkowskiErrorTest::test_to_XML(void)   
+void MinkowskiErrorTest::test_to_XML()   
 {
    message += "test_to_XML\n";  
 
@@ -293,7 +293,7 @@ void MinkowskiErrorTest::test_to_XML(void)
 }
 
 
-void MinkowskiErrorTest::test_from_XML(void)   
+void MinkowskiErrorTest::test_from_XML()   
 {
    message += "test_from_XML\n";
 
@@ -317,7 +317,7 @@ void MinkowskiErrorTest::test_from_XML(void)
 }
 
 
-void MinkowskiErrorTest::run_test_case(void)
+void MinkowskiErrorTest::run_test_case()
 {
    message += "Running Minkowski error test case...\n";  
 
@@ -350,7 +350,7 @@ void MinkowskiErrorTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

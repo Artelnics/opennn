@@ -19,90 +19,90 @@
 using namespace OpenNN;
 
 
-PlugInTest::PlugInTest(void) : UnitTesting() 
+PlugInTest::PlugInTest() : UnitTesting() 
 {   
 }
 
 
-PlugInTest::~PlugInTest(void)
+PlugInTest::~PlugInTest()
 {
 }
 
 
-void PlugInTest::test_get_template_file_name(void)
+void PlugInTest::test_get_template_file_name()
 {
    message += "test_get_template_file_name\n";
 }
 
 
-void PlugInTest::test_get_input_file_name(void)
+void PlugInTest::test_get_input_file_name()
 {
    message += "test_get_input_file_name\n";
 }
 
 
-void PlugInTest::test_get_script_file_name(void)
+void PlugInTest::test_get_script_file_name()
 {
    message += "test_get_script_file_name\n";
 }
 
 
-void PlugInTest::test_get_output_file_name(void)
+void PlugInTest::test_get_output_file_name()
 {
    message += "test_get_output_file_name\n";
 }
 
 
-void PlugInTest::test_get_input_flags(void)
+void PlugInTest::test_get_input_flags()
 {
    message += "test_get_input_flags\n";
 }
 
 
-void PlugInTest::test_get_display(void)
+void PlugInTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void PlugInTest::test_set_template_file_name(void)
+void PlugInTest::test_set_template_file_name()
 {
    message += "test_set_template_file_name\n";
 }
 
 
-void PlugInTest::test_set_input_file_name(void)
+void PlugInTest::test_set_input_file_name()
 {
    message += "test_set_input_file_name\n";
 }
 
 
-void PlugInTest::test_set_script_file_name(void)
+void PlugInTest::test_set_script_file_name()
 {
    message += "test_set_script_file_name\n";
 }
 
 
-void PlugInTest::test_set_output_file_name(void)
+void PlugInTest::test_set_output_file_name()
 {
    message += "test_set_output_file_name\n";
 }
 
 
-void PlugInTest::test_set_input_flags(void)
+void PlugInTest::test_set_input_flags()
 {
    message += "test_set_input_flags\n";
 }
 
 
-void PlugInTest::test_set_display(void)
+void PlugInTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 // @todo
 
-void PlugInTest::test_write_input_file(void)
+void PlugInTest::test_write_input_file()
 {
    message += "test_write_input_file\n";
 
@@ -110,7 +110,7 @@ void PlugInTest::test_write_input_file(void)
 
    //PlugIn pi(&nn);
 
-   //Vector<std::string> input_flags;
+   //Vector<string> input_flags;
 
    //// Test
 
@@ -135,7 +135,7 @@ void PlugInTest::test_write_input_file(void)
 }
 
 
-void PlugInTest::test_run_script(void)
+void PlugInTest::test_run_script()
 {
    message += "test_run_script\n";
 
@@ -150,13 +150,13 @@ void PlugInTest::test_run_script(void)
 }
 
 
-void PlugInTest::test_read_output_file(void)
+void PlugInTest::test_read_output_file()
 {
    message += "test_read_output_file\n";
 
    PlugIn pi;
 
-   std::string output_file_name;
+   string output_file_name;
 
    // Test
 
@@ -166,7 +166,7 @@ void PlugInTest::test_read_output_file(void)
 }
 
 
-void PlugInTest::test_read_output_file_header(void)
+void PlugInTest::test_read_output_file_header()
 {
    message += "test_read_output_file_header\n";
 }
@@ -174,19 +174,19 @@ void PlugInTest::test_read_output_file_header(void)
 
 // @todo
 
-void PlugInTest::test_calculate_output_data(void)
+void PlugInTest::test_calculate_output_data()
 {
    
    message += "test_calculate_output_data\n";
 
    PlugIn pi;
 
-   std::string template_file_name;
-   std::string input_file_name;
-   std::string script_file_name;
-   std::string output_file_name;
+   string template_file_name;
+   string input_file_name;
+   string script_file_name;
+   string output_file_name;
 
-   Vector<std::string> input_flags;
+   Vector<string> input_flags;
 
    Vector<double> input_values;
 
@@ -215,32 +215,32 @@ void PlugInTest::test_calculate_output_data(void)
 }
 
 
-void PlugInTest::test_to_XML(void)   
+void PlugInTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 }
 
 
-void PlugInTest::test_from_XML(void)   
+void PlugInTest::test_from_XML()   
 {
    message += "test_from_XML\n";
 }
 
 
-void PlugInTest::test_save(void)
+void PlugInTest::test_save()
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/plug_in.xml";
+   string file_name = "../data/plug_in.xml";
 
    PlugIn pi;
 
-   std::string template_file_name;
-   std::string input_file_name;
-   std::string script_file_name;
-   std::string output_file_name;
+   string template_file_name;
+   string input_file_name;
+   string script_file_name;
+   string output_file_name;
 
-   Vector<std::string> input_flags;
+   Vector<string> input_flags;
 
    bool display;
 
@@ -284,13 +284,13 @@ void PlugInTest::test_save(void)
 }
 
 
-void PlugInTest::test_load(void)
+void PlugInTest::test_load()
 {
    message += "test_load\n";
 }
 
 
-void PlugInTest::run_test_case(void)
+void PlugInTest::run_test_case()
 {
    message += "Running plug-in test case...\n";  
 
@@ -341,7 +341,7 @@ void PlugInTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

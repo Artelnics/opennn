@@ -6,7 +6,7 @@
 /*   B O U N D I N G   L A Y E R   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -31,7 +31,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -46,7 +46,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit BoundingLayer(void);
+   explicit BoundingLayer();
 
    // BOUNDING NEURONS NUMBER CONSTRUCTOR
 
@@ -62,15 +62,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~BoundingLayer(void);
+   virtual ~BoundingLayer();
 
    // ASSIGNMENT OPERATOR
 
-   BoundingLayer& operator = (const BoundingLayer&);
+   BoundingLayer& operator =(const BoundingLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const BoundingLayer&) const;
+   bool operator ==(const BoundingLayer&) const;
 
    // ENUMERATIONS
 
@@ -80,33 +80,33 @@ public:
 
    // METHODS
 
-   bool is_empty(void) const;
+   bool is_empty() const;
 
-   size_t get_bounding_neurons_number(void) const;
+   size_t get_bounding_neurons_number() const;
 
    // Variables bounds
 
-   const BoundingMethod& get_bounding_method(void) const;
+   const BoundingMethod& get_bounding_method() const;
 
-   std::string write_bounding_method(void) const;
+   string write_bounding_method() const;
 
-   const Vector<double>& get_lower_bounds(void) const;
+   const Vector<double>& get_lower_bounds() const;
    double get_lower_bound(const size_t&) const;
 
-   const Vector<double>& get_upper_bounds(void) const;
+   const Vector<double>& get_upper_bounds() const;
    double get_upper_bound(const size_t&) const;
 
-   Vector< Vector<double>* > get_bounds(void);
+   Vector< Vector<double>* > get_bounds();
 
    // Variables bounds
 
-   void set(void);
+   void set();
    void set(const size_t&);
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
 
    void set_bounding_method(const BoundingMethod&);
-   void set_bounding_method(const std::string&);
+   void set_bounding_method(const string&);
 
    void set_lower_bounds(const Vector<double>&);
    void set_lower_bound(const size_t&, const double&);
@@ -118,7 +118,7 @@ public:
 
    void set_display(const bool&);
 
-   void set_default(void);
+   void set_default();
 
    // Pruning and growing
 
@@ -126,7 +126,7 @@ public:
 
    // Initialization
 
-   void initialize_random(void);
+   void initialize_random();
 
    // Lower and upper bounds
 
@@ -139,14 +139,15 @@ public:
 
    // Expression methods
 
-   std::string write_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_expression_php(const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
   /// ownership passed
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -179,7 +180,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

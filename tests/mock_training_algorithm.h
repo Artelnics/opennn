@@ -28,7 +28,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit MockTrainingAlgorithm(void); 
+   explicit MockTrainingAlgorithm(); 
 
 
    // GENERAL CONSTRUCTOR
@@ -38,7 +38,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~MockTrainingAlgorithm(void);
+   virtual ~MockTrainingAlgorithm();
 
 
    // STRUCTURES 
@@ -52,7 +52,7 @@ public:
 
    // Training methods
 
-   MockTrainingAlgorithmResults* perform_training(void);
+   MockTrainingAlgorithmResults* perform_training();
 
 
 };
@@ -62,7 +62,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

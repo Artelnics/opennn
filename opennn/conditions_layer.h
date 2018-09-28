@@ -6,7 +6,7 @@
 /*   C O N D I T I O N S   L A Y E R   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,7 +30,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -46,7 +46,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit ConditionsLayer(void);
+   explicit ConditionsLayer();
 
    // INPUTS-CONDITIONS NUMBER CONSTRUCTOR
 
@@ -62,15 +62,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~ConditionsLayer(void);
+   virtual ~ConditionsLayer();
 
    // ASSIGNMENT OPERATOR
 
-   ConditionsLayer& operator = (const ConditionsLayer&);
+   ConditionsLayer& operator =(const ConditionsLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const ConditionsLayer&) const;
+   bool operator ==(const ConditionsLayer&) const;
 
    // ENUMERATIONS
 
@@ -80,23 +80,23 @@ public:
 
    // GET METHODS
 
-   const size_t& get_external_inputs_number(void) const;
-   const size_t& get_conditions_neurons_number(void) const;
+   const size_t& get_external_inputs_number() const;
+   const size_t& get_conditions_neurons_number() const;
 
-   const ConditionsMethod& get_conditions_method(void) const;
-   std::string write_conditions_method(void) const;
+   const ConditionsMethod& get_conditions_method() const;
+   string write_conditions_method() const;
 
-   const Vector<double>& get_external_input_values(void) const;
+   const Vector<double>& get_external_input_values() const;
    const double& get_external_input_value(const size_t&) const;
    
-   const Matrix<double>& get_output_values(void) const;
+   const Matrix<double>& get_output_values() const;
    const double& get_output_value(const size_t&, const size_t&) const;
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // SET METHODS
 
-   void set(void);
+   void set();
    void set(const size_t&, const size_t&);
    void set(const ConditionsLayer&);
 
@@ -104,7 +104,7 @@ public:
    void set_conditions_neurons_number(const size_t&);
 
    void set_conditions_method(const ConditionsMethod&);
-   void set_conditions_method(const std::string&);
+   void set_conditions_method(const string&);
 
    void set_external_input_values(const Vector<double>&);
    void set_external_input_value(const size_t&, const double&);
@@ -114,13 +114,13 @@ public:
 
    void set_display(const bool&);
 
-   void set_default(void);
+   void set_default();
 
    // Conditions 
 
-   void initialize_random(void);
+   void initialize_random();
 
-   void check(void) const;
+   void check() const;
 
    // Particular solution
 
@@ -170,25 +170,25 @@ public:
 
    // Expression methods
 
-   virtual std::string write_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   virtual std::string write_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   virtual string write_particular_solution_expression(const Vector<string>&, const Vector<string>&) const;
+   virtual string write_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_one_condition_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_one_condition_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_one_condition_particular_solution_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_one_condition_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const;
    
-   std::string write_two_conditions_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const;
-   std::string write_two_conditions_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_two_conditions_particular_solution_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_two_conditions_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_output_expression(const Vector<std::string>&, const Vector<std::string>&, const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_output_expression(const Vector<string>&, const Vector<string>&, const Vector<string>&, const Vector<string>&) const;
 
-   std::string write_expression(const Vector<std::string>&, const Vector<std::string>&, const Vector<std::string>&) const;
+   string write_expression(const Vector<string>&, const Vector<string>&, const Vector<string>&) const;
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
   /// ownership passed
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -206,7 +206,7 @@ protected:
 
    size_t conditions_neurons_number;
 
-   /// Conditions method (one or two conditions).
+   /// Conditions method(one or two conditions).
 
    ConditionsMethod conditions_method;
 
@@ -230,7 +230,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

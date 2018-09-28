@@ -6,7 +6,7 @@
 /*   T R A I N I N G   A L G O R I T H M   C L A S S   H E A D E R                                              */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -30,13 +30,13 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
 
 /// This abstract class represents the concept of training algorithm for a neural network. 
-/// Any derived class must implement the perform_training(void) method.
+/// Any derived class must implement the perform_training() method.
 
 class TrainingAlgorithm
 {
@@ -45,7 +45,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit TrainingAlgorithm(void);
+   explicit TrainingAlgorithm();
 
    // GENERAL CONSTRUCTOR
   /// ownership not passed
@@ -57,15 +57,15 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~TrainingAlgorithm(void);
+   virtual ~TrainingAlgorithm();
 
     // ASSIGNMENT OPERATOR
 
-    virtual TrainingAlgorithm& operator = (const TrainingAlgorithm&);
+    virtual TrainingAlgorithm& operator =(const TrainingAlgorithm&);
 
     // EQUAL TO OPERATOR
 
-    virtual bool operator == (const TrainingAlgorithm&) const;
+    virtual bool operator ==(const TrainingAlgorithm&) const;
 
     // ENUMERATIONS
 
@@ -82,17 +82,17 @@ public:
 
    struct TrainingAlgorithmResults
    {
-       explicit TrainingAlgorithmResults(void)
+       explicit TrainingAlgorithmResults()
        {
 
        }
 
-       virtual ~TrainingAlgorithmResults(void)
+       virtual ~TrainingAlgorithmResults()
        {
 
        }
 
-       std::string write_stopping_condition(void) const;
+       string write_stopping_condition() const;
 
        /// Stopping condition of the algorithm.
 
@@ -100,18 +100,18 @@ public:
 
       /// Returns a string representation of the results structure. 
 
-      virtual std::string to_string(void) const
+      virtual string object_to_string() const
       {
-         std::string str;
+         string str;
 
          return(str);
       }
 
-       /// Returns a default (empty) string matrix with the final results from training.
+       /// Returns a default(empty) string matrix with the final results from training.
 
-       virtual Matrix<std::string> write_final_results(const size_t&) const
+       virtual Matrix<string> write_final_results(const size_t&) const
        {
-          Matrix<std::string> final_results;         
+          Matrix<string> final_results;         
 
           return(final_results);
        }
@@ -123,66 +123,66 @@ public:
    // Get methods
   /// ownership not passed
 
-   LossIndex* get_loss_index_pointer(void) const;
+   LossIndex* get_loss_index_pointer() const;
 
-   bool has_loss_index(void) const;
+   bool has_loss_index() const;
 
    // Utilities
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
-   const size_t& get_display_period(void) const;
+   const size_t& get_display_period() const;
 
-   const size_t& get_save_period(void) const;
+   const size_t& get_save_period() const;
 
-   const std::string& get_neural_network_file_name(void) const;
+   const string& get_neural_network_file_name() const;
 
    // Set methods
 
-   void set(void);
+   void set();
   /// ownership not passed
    void set(LossIndex*);
-   virtual void set_default(void);
+   virtual void set_default();
 
   /// ownership not passed
    virtual void set_loss_index_pointer(LossIndex*);
 
-   void set_display(const bool&);
+   virtual void set_display(const bool&);
 
    void set_display_period(const size_t&);
 
    void set_save_period(const size_t&);
-   void set_neural_network_file_name(const std::string&);
+   void set_neural_network_file_name(const string&);
 
    // Training methods
 
-   virtual void check(void) const;
+   virtual void check() const;
 
    /// Trains a neural network which has a loss functional associated. 
 
   /// ownership passed - use delete to destroy
-    virtual TrainingAlgorithmResults* perform_training(void) = 0;
+   virtual TrainingAlgorithmResults* perform_training() = 0;
 
-   virtual std::string write_training_algorithm_type(void) const;
+   virtual string write_training_algorithm_type() const;
 
    // Serialization methods
 
-   virtual std::string to_string(void) const;
-   void print(void) const;
+   virtual string object_to_string() const;
+   void print() const;
 
-   virtual Matrix<std::string> to_string_matrix(void) const;
+   virtual Matrix<string> to_string_matrix() const;
 
   /// ownership passed - use delete to destroy
-   virtual tinyxml2::XMLDocument* to_XML(void) const;
+   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    //virtual void read_XML(   );
 
-   void save(const std::string&) const;
-   void load(const std::string&);
+   void save(const string&) const;
+   void load(const string&);
 
-   virtual void initialize_random(void);
+   virtual void initialize_random();
 
 protected:
 
@@ -204,7 +204,7 @@ protected:
 
    /// Path where the neural network is saved.
 
-   std::string neural_network_file_name;
+   string neural_network_file_name;
 
    /// Display messages to screen.
 
@@ -217,7 +217,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

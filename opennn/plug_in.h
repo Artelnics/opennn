@@ -6,7 +6,7 @@
 /*   P L U G - I N   C L A S S   H E A D E R                                                                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -44,7 +44,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit PlugIn(void);
+   explicit PlugIn();
 
    // XML CONSTRUCTOR
 
@@ -52,7 +52,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~PlugIn(void);
+   virtual ~PlugIn();
 
    // ENUMERATIONS
 
@@ -62,64 +62,64 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   PlugIn& operator = (const PlugIn&);
+   PlugIn& operator =(const PlugIn&);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const PlugIn&) const;
+   bool operator ==(const PlugIn&) const;
 
    // METHODS
 
    // Get methods
 
-   const InputMethod& get_input_method(void) const;
-   std::string write_input_method(void) const;
+   const InputMethod& get_input_method() const;
+   string write_input_method() const;
     
-   const std::string& get_template_file_name(void) const;
-   const std::string& get_input_file_name(void) const;
+   const string& get_template_file_name() const;
+   const string& get_input_file_name() const;
 
-   const std::string& get_script_file_name(void) const;
+   const string& get_script_file_name() const;
 
-   const std::string& get_output_file_name(void) const;
+   const string& get_output_file_name() const;
 
-   const Vector<std::string>& get_input_flags(void) const;
-   const std::string& get_input_flag(const size_t&) const;
+   const Vector<string>& get_input_flags() const;
+   const string& get_input_flag(const size_t&) const;
 
    // Set methods
 
-   void set_default(void);
+   void set_default();
 
    void set_input_method(const InputMethod&);
-   void set_input_method(const std::string&);
+   void set_input_method(const string&);
 
-   void set_template_file_name(const std::string&);
-   void set_input_file_name(const std::string&);
+   void set_template_file_name(const string&);
+   void set_input_file_name(const string&);
 
-   void set_script_file_name(const std::string&);
+   void set_script_file_name(const string&);
 
-   void set_output_file_name(const std::string&);
+   void set_output_file_name(const string&);
 
-   void set_input_flags(const Vector<std::string>&);
+   void set_input_flags(const Vector<string>&);
 
    // Plug-In methods
 
    void write_input_file(const NeuralNetwork&) const;
    void write_input_file_independent_parameters(const NeuralNetwork&) const;
 
-   void run_script(void) const;
+   void run_script() const;
 
-   Matrix<double> read_output_file(void) const;
+   Matrix<double> read_output_file() const;
 
-   Matrix<double> read_output_file_header(void) const;
+   Matrix<double> read_output_file_header() const;
 
    Matrix<double> calculate_solutions(const NeuralNetwork&) const;
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
   /// ownership passed - use delete to destroy
-   tinyxml2::XMLDocument* to_XML(void) const;   
+   tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -136,23 +136,23 @@ private:
 
    /// Name of template file. 
 
-   std::string template_file_name;
+   string template_file_name;
 
    /// Name of input file.
 
-   std::string input_file_name;
+   string input_file_name;
 
    /// Name of script file. 
 
-   std::string script_file_name;
+   string script_file_name;
 
    /// Name of output file. 
 
-   std::string output_file_name;
+   string output_file_name;
 
    /// Vector of flags in the input file. 
 
-   Vector<std::string> input_flags;
+   Vector<string> input_flags;
 
    /// Number of rows in the output file. 
 
@@ -169,7 +169,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

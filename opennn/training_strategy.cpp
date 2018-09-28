@@ -6,7 +6,7 @@
 /*   T R A I N I N G   S T R A T E G Y   C L A S S                                                              */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates a training strategy object not associated to any loss functional object.  
 /// It also constructs the main training algorithm object. 
 
-TrainingStrategy::TrainingStrategy(void)
+TrainingStrategy::TrainingStrategy()
  : loss_index_pointer(NULL)
  , random_search_pointer(NULL)
  , evolutionary_algorithm_pointer(NULL)
@@ -66,6 +66,22 @@ TrainingStrategy::TrainingStrategy(LossIndex* new_loss_index_pointer)
    set_default();
 }
 
+TrainingStrategy::TrainingStrategy(LossIndex& new_loss_index)
+ : loss_index_pointer(&new_loss_index)
+ , random_search_pointer(NULL)
+ , evolutionary_algorithm_pointer(NULL)
+ , gradient_descent_pointer(NULL)
+ , conjugate_gradient_pointer(NULL)
+ , quasi_Newton_method_pointer(NULL)
+ , Levenberg_Marquardt_algorithm_pointer(NULL)
+ , Newton_method_pointer(NULL)
+{
+    set_initialization_type(NO_INITIALIZATION);
+    set_main_type(QUASI_NEWTON_METHOD);
+    set_refinement_type(NO_REFINEMENT);
+
+   set_default();
+}
 
 // XML CONSTRUCTOR
 
@@ -101,7 +117,7 @@ TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
 /// It also loads the members of this object from a XML file. 
 /// @param file_name Name of training strategy XML file.
 
-TrainingStrategy::TrainingStrategy(const std::string& file_name)
+TrainingStrategy::TrainingStrategy(const string& file_name)
  : loss_index_pointer(NULL)
  , random_search_pointer(NULL)
  , evolutionary_algorithm_pointer(NULL)
@@ -126,7 +142,7 @@ TrainingStrategy::TrainingStrategy(const std::string& file_name)
 /// Destructor.
 /// This destructor deletes the initialization, main and refinement training algorithm objects.
 
-TrainingStrategy::~TrainingStrategy(void)
+TrainingStrategy::~TrainingStrategy()
 {
     // Delete initialization algorithms
 
@@ -146,53 +162,53 @@ TrainingStrategy::~TrainingStrategy(void)
 // METHODS
 
 
-// void check_loss_index(void) const method
+// void check_loss_index() const method
 
 /// Throws an exception if the training strategy has not a loss functional associated.
 
-void TrainingStrategy::check_loss_index(void) const
+void TrainingStrategy::check_loss_index() const
 {
     if(!loss_index_pointer)
     {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-              << "void check_loss_index(void) const.\n"
+              << "void check_loss_index() const.\n"
               << "Pointer to loss functional is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
     }
 }
 
 
-// void check_training_algorithms(void) const method
+// void check_training_algorithms() const method
 
 /// Throws an exception if the training strategy does not have any
 /// initialization, main or refinement algorithms.
 
-void TrainingStrategy::check_training_algorithms(void) const
+void TrainingStrategy::check_training_algorithms() const
 {
     if(initialization_type == NO_INITIALIZATION
     && main_type == NO_MAIN
     && refinement_type == NO_REFINEMENT)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "void check_training_algorithms(void) const method.\n"
+               << "void check_training_algorithms() const method.\n"
                << "None initialization, main or refinement terms are used.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 }
 
 
-// void initialize_random(void) method
+// void initialize_random() method
 
 /// Initializes the initialization, main and refinement algorithms at random.
 /// @todo
 
-void TrainingStrategy::initialize_random(void)
+void TrainingStrategy::initialize_random()
 {
     // Initialization training algorithm
 
@@ -210,13 +226,13 @@ void TrainingStrategy::initialize_random(void)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "void initialize_random(void) method.\n"
+                << "void initialize_random() method.\n"
                 << "Unknown initialization training algorithm.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -228,33 +244,33 @@ void TrainingStrategy::initialize_random(void)
 }
 
 
-// LossIndex* get_loss_index_pointer(void) const method
+// LossIndex* get_loss_index_pointer() const method
 
 /// Returns a pointer to the loss functional object to which the training strategy is associated.
 
-LossIndex* TrainingStrategy::get_loss_index_pointer(void) const
+LossIndex* TrainingStrategy::get_loss_index_pointer() const
 {
     if(!loss_index_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "LossIndex* get_loss_index_pointer(void) const method.\n"
+               << "LossIndex* get_loss_index_pointer() const method.\n"
                << "Loss index pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
    return(loss_index_pointer);
 }
 
 
-// bool has_loss_index(void) const method
+// bool has_loss_index() const method
 
 /// Returns true if this training strategy has a loss functional associated,
 /// and false otherwise.
 
-bool TrainingStrategy::has_loss_index(void) const
+bool TrainingStrategy::has_loss_index() const
 {
     if(loss_index_pointer)
     {
@@ -267,195 +283,195 @@ bool TrainingStrategy::has_loss_index(void) const
 }
 
 
-// RandomSearch* get_random_search_pointer(void) const method
+// RandomSearch* get_random_search_pointer() const method
 
 /// Returns a pointer to the random search initialization algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-RandomSearch* TrainingStrategy::get_random_search_pointer(void) const
+RandomSearch* TrainingStrategy::get_random_search_pointer() const
 {
     if(!random_search_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "RandomSearch* get_random_search_pointer(void) const method.\n"
+               << "RandomSearch* get_random_search_pointer() const method.\n"
                << "Random search pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(random_search_pointer);
 }
 
 
-// EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer(void) const method
+// EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer() const method
 
 /// Returns a pointer to the evolutionary algorithm initialization algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-EvolutionaryAlgorithm* TrainingStrategy::get_evolutionary_algorithm_pointer(void) const
+EvolutionaryAlgorithm* TrainingStrategy::get_evolutionary_algorithm_pointer() const
 {
     if(!evolutionary_algorithm_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer(void) const method.\n"
+               << "EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer() const method.\n"
                << "Evolutionary algorithm pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(evolutionary_algorithm_pointer);
 }
 
 
-// GradientDescent* get_gradient_descent_pointer(void) const method
+// GradientDescent* get_gradient_descent_pointer() const method
 
 /// Returns a pointer to the gradient descent main algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-GradientDescent* TrainingStrategy::get_gradient_descent_pointer(void) const
+GradientDescent* TrainingStrategy::get_gradient_descent_pointer() const
 {
     if(!gradient_descent_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "GradientDescent* get_gradient_descent_pointer(void) const method.\n"
+               << "GradientDescent* get_gradient_descent_pointer() const method.\n"
                << "Gradient descent pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(gradient_descent_pointer);
 }
 
 
-// ConjugateGradient* get_conjugate_gradient_pointer(void) const method
+// ConjugateGradient* get_conjugate_gradient_pointer() const method
 
 /// Returns a pointer to the conjugate gradient main algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-ConjugateGradient* TrainingStrategy::get_conjugate_gradient_pointer(void) const
+ConjugateGradient* TrainingStrategy::get_conjugate_gradient_pointer() const
 {
     if(!conjugate_gradient_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "ConjugateGradient* get_conjugate_gradient_pointer(void) const method.\n"
+               << "ConjugateGradient* get_conjugate_gradient_pointer() const method.\n"
                << "Conjugate gradient pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(conjugate_gradient_pointer);
 }
 
 
-// QuasiNewtonMethod* get_quasi_Newton_method_pointer(void) const method
+// QuasiNewtonMethod* get_quasi_Newton_method_pointer() const method
 
 /// Returns a pointer to the Newton method main algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method_pointer(void) const
+QuasiNewtonMethod* TrainingStrategy::get_quasi_Newton_method_pointer() const
 {
     if(!quasi_Newton_method_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "QuasiNetwtonMethod* get_quasi_Newton_method_pointer(void) const method.\n"
+               << "QuasiNetwtonMethod* get_quasi_Newton_method_pointer() const method.\n"
                << "Quasi-Newton method pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(quasi_Newton_method_pointer);
 }
 
 
-// LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer(void) const method
+// LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer() const method
 
 /// Returns a pointer to the Levenberg-Marquardt main algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm_pointer(void) const
+LevenbergMarquardtAlgorithm* TrainingStrategy::get_Levenberg_Marquardt_algorithm_pointer() const
 {
     if(!Levenberg_Marquardt_algorithm_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer(void) const method.\n"
+               << "LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer() const method.\n"
                << "Levenberg-Marquardt algorithm pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(Levenberg_Marquardt_algorithm_pointer);
 }
 
 
-// NewtonMethod* get_Newton_method_pointer(void) const method
+// NewtonMethod* get_Newton_method_pointer() const method
 
 /// Returns a pointer to the Newton method refinement algorithm.
 /// It also throws an exception if that pointer is NULL.
 
-NewtonMethod* TrainingStrategy::get_Newton_method_pointer(void) const
+NewtonMethod* TrainingStrategy::get_Newton_method_pointer() const
 {
     if(!Newton_method_pointer)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "NewtonMethod* get_Newton_method_pointer(void) const method.\n"
+               << "NewtonMethod* get_Newton_method_pointer() const method.\n"
                << "Newton method pointer is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     return(Newton_method_pointer);
 }
 
 
-// const TrainingAlgorithmType& get_initialization_type(void) const method
+// const TrainingAlgorithmType& get_initialization_type() const method
 
 /// Returns the type of the initialization training algorithm composing this training strategy object.
 
-const TrainingStrategy::InitializationType& TrainingStrategy::get_initialization_type(void) const
+const TrainingStrategy::InitializationType& TrainingStrategy::get_initialization_type() const
 {
    return(initialization_type);
 }
 
 
-// const MainType& get_main_type(void) const method
+// const MainType& get_main_type() const method
 
 /// Returns the type of the main training algorithm composing this training strategy object.
 
-const TrainingStrategy::MainType& TrainingStrategy::get_main_type(void) const
+const TrainingStrategy::MainType& TrainingStrategy::get_main_type() const
 {
    return(main_type);
 }
 
 
-// const RefinementType& get_refinement_type(void) const method
+// const RefinementType& get_refinement_type() const method
 
 /// Returns the type of the refinement training algorithm composing this training strategy object.
 
-const TrainingStrategy::RefinementType& TrainingStrategy::get_refinement_type(void) const
+const TrainingStrategy::RefinementType& TrainingStrategy::get_refinement_type() const
 {
    return(refinement_type);
 }
 
 
-// std::string TrainingStrategy::write_initialization_type(void) const
+// string TrainingStrategy::write_initialization_type() const
 
 /// Returns a string with the type of the initialization training algorithm composing this training strategy object.
 
-std::string TrainingStrategy::write_initialization_type(void) const
+string TrainingStrategy::write_initialization_type() const
 {
    if(initialization_type == NO_INITIALIZATION)
    {
@@ -475,22 +491,22 @@ std::string TrainingStrategy::write_initialization_type(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "std::string write_initialization_type(void) const method.\n"
+             << "string write_initialization_type() const method.\n"
              << "Unknown training algorithm type.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// std::string TrainingStrategy::write_main_type(void) const
+// string TrainingStrategy::write_main_type() const
 
 /// Returns a string with the type of the main training algorithm composing this training strategy object.
 
-std::string TrainingStrategy::write_main_type(void) const
+string TrainingStrategy::write_main_type() const
 {
    if(main_type == NO_MAIN)
    {
@@ -518,30 +534,26 @@ std::string TrainingStrategy::write_main_type(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "std::string write_main_type(void) const method.\n"
+             << "string write_main_type() const method.\n"
              << "Unknown main type.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// std::string TrainingStrategy::write_refinement_type(void) const
+// string TrainingStrategy::write_refinement_type() const
 
 /// Returns a string with the type of the refinement training algorithm composing this training strategy object.
 
-std::string TrainingStrategy::write_refinement_type(void) const
+string TrainingStrategy::write_refinement_type() const
 {
    if(refinement_type == NO_REFINEMENT)
    {
       return("NO_REFINEMENT");
-   }
-   else if(refinement_type == NEWTON_METHOD)
-   {
-      return("NEWTON_METHOD");
    }
    else if(refinement_type == USER_REFINEMENT)
    {
@@ -549,22 +561,22 @@ std::string TrainingStrategy::write_refinement_type(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "std::string write_refinement_type(void) const method.\n"
+             << "string write_refinement_type() const method.\n"
              << "Unknown refinement type.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// std::string TrainingStrategy::write_initialization_type_text(void) const
+// string TrainingStrategy::write_initialization_type_text() const
 
 /// Returns a string with the initialization type in text format.
 
-std::string TrainingStrategy::write_initialization_type_text(void) const
+string TrainingStrategy::write_initialization_type_text() const
 {
    if(initialization_type == NO_INITIALIZATION)
    {
@@ -584,22 +596,22 @@ std::string TrainingStrategy::write_initialization_type_text(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "std::string write_initialization_type_text(void) const method.\n"
+             << "string write_initialization_type_text() const method.\n"
              << "Unknown training algorithm type.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// std::string TrainingStrategy::write_main_type_text(void) const
+// string TrainingStrategy::write_main_type_text() const
 
 /// Returns a string with the main type in text format.
 
-std::string TrainingStrategy::write_main_type_text(void) const
+string TrainingStrategy::write_main_type_text() const
 {
    if(main_type == NO_MAIN)
    {
@@ -627,30 +639,26 @@ std::string TrainingStrategy::write_main_type_text(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "std::string write_main_type_text(void) const method.\n"
+             << "string write_main_type_text() const method.\n"
              << "Unknown main type.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// std::string TrainingStrategy::write_refinement_type(void) const
+// string TrainingStrategy::write_refinement_type() const
 
 /// Returns a string with the refinement type in text format.
 
-std::string TrainingStrategy::write_refinement_type_text(void) const
+string TrainingStrategy::write_refinement_type_text() const
 {
    if(refinement_type == NO_REFINEMENT)
    {
       return("none");
-   }
-   else if(refinement_type == NEWTON_METHOD)
-   {
-      return("Newton method");
    }
    else if(refinement_type == USER_REFINEMENT)
    {
@@ -658,35 +666,35 @@ std::string TrainingStrategy::write_refinement_type_text(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "std::string write_refinement_type_text(void) const method.\n"
+             << "string write_refinement_type_text() const method.\n"
              << "Unknown refinement type.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen, or false if messages from
 /// this class can't be displayed on the screen.
 
-const bool& TrainingStrategy::get_display(void) const
+const bool& TrainingStrategy::get_display() const
 {
    return(display);
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets the loss functional pointer to NULL.
 /// It also destructs the initialization, main and refinement training algorithms. 
 /// Finally, it sets the rest of members to their default values. 
 
-void TrainingStrategy::set(void)
+void TrainingStrategy::set()
 {
    loss_index_pointer = NULL;
 
@@ -756,13 +764,13 @@ void TrainingStrategy::set_initialization_type(const InitializationType& new_ini
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void set_initialization_type(const InitializationType&) method.\n"
                 << "Unknown initialization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -826,13 +834,13 @@ void TrainingStrategy::set_main_type(const MainType& new_main_type)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void set_initialization_type(const MainType&) method.\n"
                 << "Unknown main type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -859,12 +867,6 @@ void TrainingStrategy::set_refinement_type(const RefinementType& new_refinement_
       }
       break;
 
-      case NEWTON_METHOD:
-      {
-         Newton_method_pointer = new NewtonMethod(loss_index_pointer);
-      }
-      break;
-
       case USER_REFINEMENT:
       {
          // do nothing
@@ -873,25 +875,25 @@ void TrainingStrategy::set_refinement_type(const RefinementType& new_refinement_
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void set_refinement_type(const RefinementType&) method.\n"
                 << "Unknown refinement type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
 }
 
 
-// void set_initialization_type(const std::string&) method
+// void set_initialization_type(const string&) method
 
 /// Sets a new initialization training algorithm from a string.
 /// @param new_initialization_type String with the initialization type.
 
-void TrainingStrategy::set_initialization_type(const std::string& new_initialization_type)
+void TrainingStrategy::set_initialization_type(const string& new_initialization_type)
 {
    if(new_initialization_type == "NO_INITIALIZATION")
    {
@@ -911,23 +913,23 @@ void TrainingStrategy::set_initialization_type(const std::string& new_initializa
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "void set_initialization_type(const std::string&) method.\n"
+             << "void set_initialization_type(const string&) method.\n"
              << "Unknown initialization type: " << new_initialization_type << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }   
 }
 
 
-// void set_main_type(const std::string&) method
+// void set_main_type(const string&) method
 
 /// Sets a new main training algorithm from a string containing the type.
 /// @param new_main_type String with the type of main training algorithm.
 
-void TrainingStrategy::set_main_type(const std::string& new_main_type)
+void TrainingStrategy::set_main_type(const string& new_main_type)
 {
    if(new_main_type == "NO_MAIN")
    {
@@ -959,24 +961,24 @@ void TrainingStrategy::set_main_type(const std::string& new_main_type)
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "void set_main_type(const std::string&) method.\n"
+             << "void set_main_type(const string&) method.\n"
              << "Unknown main type: " << new_main_type << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }   
 }
 
 
-// void set_refinement_type(const std::string&) method
+// void set_refinement_type(const string&) method
 
 /// Sets a new refinement algorithm from a string.
 /// It destructs the previous refinement algorithm object and constructs a new object.
 /// @param new_refinement_type String with the refinement training algorithm type.
 
-void TrainingStrategy::set_refinement_type(const std::string& new_refinement_type)
+void TrainingStrategy::set_refinement_type(const string& new_refinement_type)
 {
    if(new_refinement_type == "NO_REFINEMENT")
    {
@@ -992,13 +994,13 @@ void TrainingStrategy::set_refinement_type(const std::string& new_refinement_typ
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "void set_refinement_type(const std::string&) method.\n"
+             << "void set_refinement_type(const string&) method.\n"
              << "Unknown refinement type: " << new_refinement_type << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }   
 }
 
@@ -1042,13 +1044,13 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void set_loss_index_pointer(LossIndex*) method.\n"
                 << "Unknown initialization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1095,13 +1097,13 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void set_loss_index_pointer(LossIndex*) method.\n"
                 << "Unknown main type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1116,12 +1118,6 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
       }
       break;
 
-      case NEWTON_METHOD:
-      {
-           Newton_method_pointer->set_loss_index_pointer(new_loss_index_pointer);
-      }
-      break;
-
       case USER_REFINEMENT:
       {
          // do nothing
@@ -1130,13 +1126,13 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void set_loss_index_pointer(LossIndex) method.\n"
                 << "Unknown refinement type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1182,13 +1178,13 @@ void TrainingStrategy::set_display(const bool& new_display)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "Results set_display(void) method.\n"
+                << "Results set_display() method.\n"
                 << "Unknown initialization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1241,13 +1237,13 @@ void TrainingStrategy::set_display(const bool& new_display)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "Results set_display(void) method.\n"
+                << "Results set_display() method.\n"
                 << "Unknown main type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1262,12 +1258,6 @@ void TrainingStrategy::set_display(const bool& new_display)
       }
       break;
 
-      case NEWTON_METHOD:
-      {
-           Newton_method_pointer->set_display(display);
-      }
-      break;
-
       case USER_REFINEMENT:
       {
          // do nothing
@@ -1276,27 +1266,27 @@ void TrainingStrategy::set_display(const bool& new_display)
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "Results set_display(void) method.\n"
+                << "Results set_display() method.\n"
                 << "Unknown refinement type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
 }
 
 
-// void set_default(void) method 
+// void set_default() method 
 
 /// Sets the members of the training strategy object to their default values:
 /// <ul>
 /// <li> Display: true.
 /// </ul> 
 
-void TrainingStrategy::set_default(void)
+void TrainingStrategy::set_default()
 {
 
 
@@ -1344,13 +1334,13 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
     {
         // Variables to send initialization
 
-        original_main_type = (int)training_strategy->get_main_type();
+        original_main_type =(int)training_strategy->get_main_type();
 
-        switch (original_main_type)
+        switch(original_main_type)
         {
-            case (int)TrainingStrategy::GRADIENT_DESCENT:
+            case(int)TrainingStrategy::GRADIENT_DESCENT:
 
-                training_rate_method = (int)training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
+                training_rate_method =(int)training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
                 training_rate_tolerance = training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_tolerance();
 
                 return_minimum_selection_loss_model = training_strategy->get_gradient_descent_pointer()->get_return_minimum_selection_error_neural_network();
@@ -1358,9 +1348,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 minimum_loss_decrease = training_strategy->get_gradient_descent_pointer()->get_minimum_loss_increase();
                 loss_goal = training_strategy->get_gradient_descent_pointer()->get_loss_goal();
                 gradient_norm_goal = training_strategy->get_gradient_descent_pointer()->get_gradient_norm_goal();
-                maximum_selection_loss_increases = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_selection_loss_decreases();
-                maximum_iterations_number = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_iterations_number();
-                maximum_time = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_time();
+                maximum_selection_loss_increases =(int)training_strategy->get_gradient_descent_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number =(int)training_strategy->get_gradient_descent_pointer()->get_maximum_iterations_number();
+                maximum_time =(int)training_strategy->get_gradient_descent_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_gradient_descent_pointer()->get_reserve_parameters_norm_history();
                 reserve_training_loss_history = training_strategy->get_gradient_descent_pointer()->get_reserve_loss_history();
                 reserve_selection_loss_history = training_strategy->get_gradient_descent_pointer()->get_reserve_selection_loss_history();
@@ -1368,11 +1358,11 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 break;
 
-            case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+            case(int)TrainingStrategy::CONJUGATE_GRADIENT:
 
-                training_direction_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_training_direction_method();
+                training_direction_method =(int)training_strategy->get_conjugate_gradient_pointer()->get_training_direction_method();
 
-                training_rate_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
+                training_rate_method =(int)training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
                 training_rate_tolerance = training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_tolerance();
 
                 return_minimum_selection_loss_model = training_strategy->get_conjugate_gradient_pointer()->get_return_minimum_selection_error_neural_network();
@@ -1380,9 +1370,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 minimum_loss_decrease = training_strategy->get_conjugate_gradient_pointer()->get_minimum_loss_increase();
                 loss_goal = training_strategy->get_conjugate_gradient_pointer()->get_loss_goal();
                 gradient_norm_goal = training_strategy->get_conjugate_gradient_pointer()->get_gradient_norm_goal();
-                maximum_selection_loss_increases = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_selection_loss_decreases();
-                maximum_iterations_number = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_iterations_number();
-                maximum_time = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_time();
+                maximum_selection_loss_increases =(int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number =(int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_iterations_number();
+                maximum_time =(int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_parameters_norm_history();
                 reserve_training_loss_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_loss_history();
                 reserve_selection_loss_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_selection_loss_history();
@@ -1390,11 +1380,11 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 break;
 
-            case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+            case(int)TrainingStrategy::QUASI_NEWTON_METHOD:
 
-                inverse_hessian_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_inverse_Hessian_approximation_method();
+                inverse_hessian_method =(int)training_strategy->get_quasi_Newton_method_pointer()->get_inverse_Hessian_approximation_method();
 
-                training_rate_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
+                training_rate_method =(int)training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
                 training_rate_tolerance = training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_tolerance();
 
                 return_minimum_selection_loss_model = training_strategy->get_quasi_Newton_method_pointer()->get_return_minimum_selection_error_neural_network();
@@ -1402,9 +1392,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 minimum_loss_decrease = training_strategy->get_quasi_Newton_method_pointer()->get_minimum_loss_increase();
                 loss_goal = training_strategy->get_quasi_Newton_method_pointer()->get_loss_goal();
                 gradient_norm_goal = training_strategy->get_quasi_Newton_method_pointer()->get_gradient_norm_goal();
-                maximum_selection_loss_increases = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_selection_loss_decreases();
-                maximum_iterations_number = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_iterations_number();
-                maximum_time = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_time();
+                maximum_selection_loss_increases =(int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number =(int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_iterations_number();
+                maximum_time =(int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_parameters_norm_history();
                 reserve_training_loss_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_loss_history();
                 reserve_selection_loss_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_selection_loss_history();
@@ -1421,9 +1411,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 minimum_loss_decrease = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_minimum_loss_increase();
                 loss_goal = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_loss_goal();
                 gradient_norm_goal = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_gradient_norm_goal();
-                maximum_selection_loss_increases = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_selection_loss_decreases();
-                maximum_iterations_number = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_iterations_number();
-                maximum_time = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_time();
+                maximum_selection_loss_increases =(int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_selection_loss_decreases();
+                maximum_iterations_number =(int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_iterations_number();
+                maximum_time =(int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_parameters_norm_history();
                 reserve_training_loss_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_loss_history();
                 reserve_selection_loss_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_selection_loss_history();
@@ -1446,9 +1436,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
         MPI_Request req[12];
 
-        switch (original_main_type)
+        switch(original_main_type)
         {
-            case (int)TrainingStrategy::GRADIENT_DESCENT:
+            case(int)TrainingStrategy::GRADIENT_DESCENT:
 
                 MPI_Irecv(&training_rate_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&training_rate_tolerance, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1457,7 +1447,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 break;
 
-            case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+            case(int)TrainingStrategy::CONJUGATE_GRADIENT:
 
                 MPI_Irecv(&training_rate_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&training_rate_tolerance, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1468,7 +1458,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 break;
 
-            case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+            case(int)TrainingStrategy::QUASI_NEWTON_METHOD:
 
                 MPI_Irecv(&training_rate_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Irecv(&training_rate_tolerance, 1, MPI_DOUBLE, rank-1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1513,9 +1503,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
         MPI_Request req[12];
 
-        switch (original_main_type)
+        switch(original_main_type)
         {
-            case (int)TrainingStrategy::GRADIENT_DESCENT:
+            case(int)TrainingStrategy::GRADIENT_DESCENT:
 
                 MPI_Isend(&training_rate_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&training_rate_tolerance, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1524,7 +1514,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 break;
 
-            case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+            case(int)TrainingStrategy::CONJUGATE_GRADIENT:
 
                 MPI_Isend(&training_rate_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&training_rate_tolerance, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1535,7 +1525,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 break;
 
-            case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+            case(int)TrainingStrategy::QUASI_NEWTON_METHOD:
 
                 MPI_Isend(&training_rate_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD, &req[0]);
                 MPI_Isend(&training_rate_tolerance, 1, MPI_DOUBLE, rank+1, 2, MPI_COMM_WORLD, &req[1]);
@@ -1580,9 +1570,9 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
     set_main_type((TrainingStrategy::MainType)original_main_type);
 
-    switch (original_main_type)
+    switch(original_main_type)
     {
-        case (int)TrainingStrategy::GRADIENT_DESCENT:
+        case(int)TrainingStrategy::GRADIENT_DESCENT:
 
             gradient_descent_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
             gradient_descent_pointer->get_training_rate_algorithm_pointer()->set_training_rate_tolerance(training_rate_tolerance);
@@ -1602,7 +1592,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
             break;
 
-        case (int)TrainingStrategy::CONJUGATE_GRADIENT:
+        case(int)TrainingStrategy::CONJUGATE_GRADIENT:
 
             conjugate_gradient_pointer->set_training_direction_method((ConjugateGradient::TrainingDirectionMethod)training_direction_method);
 
@@ -1624,7 +1614,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
             break;
 
-        case (int)TrainingStrategy::QUASI_NEWTON_METHOD:
+        case(int)TrainingStrategy::QUASI_NEWTON_METHOD:
 
             quasi_Newton_method_pointer->set_inverse_Hessian_approximation_method((QuasiNewtonMethod::InverseHessianApproximationMethod)inverse_hessian_method);
 
@@ -1676,11 +1666,11 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 }
 #endif
 
-// void destruct_initialization(void) method
+// void destruct_initialization() method
 
 /// This method deletes the initialization training algorithm object which composes this training strategy object. 
 
-void TrainingStrategy::destruct_initialization(void)
+void TrainingStrategy::destruct_initialization()
 {
     delete random_search_pointer;
     delete evolutionary_algorithm_pointer;
@@ -1692,11 +1682,11 @@ void TrainingStrategy::destruct_initialization(void)
 }
 
 
-// void destruct_main(void) method
+// void destruct_main() method
 
 /// This method deletes the main training algorithm object which composes this training strategy object. 
 
-void TrainingStrategy::destruct_main(void)
+void TrainingStrategy::destruct_main()
 {
     delete gradient_descent_pointer;
     delete conjugate_gradient_pointer;
@@ -1712,11 +1702,11 @@ void TrainingStrategy::destruct_main(void)
 }
 
 
-// void destruct_refinement(void) method
+// void destruct_refinement() method
 
 /// This method deletes the refinement training algorithm object which composes this training strategy object. 
 
-void TrainingStrategy::destruct_refinement(void)
+void TrainingStrategy::destruct_refinement()
 {
    delete Newton_method_pointer;
 
@@ -1726,11 +1716,11 @@ void TrainingStrategy::destruct_refinement(void)
 }
 
 
-// void initialize_layers_autoencoding(void) method
+// void initialize_layers_autoencoding() method
 
 /// @todo
 
-void TrainingStrategy::initialize_layers_autoencoding(void)
+void TrainingStrategy::initialize_layers_autoencoding()
 {
     // Data set
 
@@ -1769,12 +1759,12 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 
     quasi_Newton_method.set_display_period(1000);
 
-    std::cout << "Layers number: " << architecture.size() - 1 << std::endl;
+    cout << "Layers number: " << architecture.size() - 1 << endl;
 
     for(size_t i = 1; i < architecture.size()-1; i++)
     {
-        std::cout << "Layer: " << i-1 << std::endl;
-        std::cout << "Size: " << architecture[i-1] << std::endl;
+        cout << "Layer: " << i-1 << endl;
+        cout << "Size: " << architecture[i-1] << endl;
 
         // Neural network
 
@@ -1811,7 +1801,7 @@ void TrainingStrategy::initialize_layers_autoencoding(void)
 }
 
 
-// Results perform_training(void) method
+// Results perform_training() method
 
 /// This is the most important method of this class. 
 /// It optimizes the loss functional of a neural network.
@@ -1866,13 +1856,13 @@ void TrainingStrategy::perform_training(TrainingStrategy::Results& training_stra
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "Results perform_training(void) method.\n"
+                << "Results perform_training() method.\n"
                 << "Unknown initialization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1941,13 +1931,13 @@ void TrainingStrategy::perform_training(TrainingStrategy::Results& training_stra
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "Results perform_training(void) method.\n"
+                << "Results perform_training() method.\n"
                 << "Unknown main type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1979,13 +1969,13 @@ void TrainingStrategy::perform_training(TrainingStrategy::Results& training_stra
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "Results perform_training(void) method.\n"
+                << "Results perform_training() method.\n"
                 << "Unknown refinement type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -1993,13 +1983,13 @@ void TrainingStrategy::perform_training(TrainingStrategy::Results& training_stra
 }
 
 
-// std::string to_string(void) const method
+// string object_to_string() const method
 
 /// Returns a string representation of the training strategy.
 
-std::string TrainingStrategy::to_string(void) const
+string TrainingStrategy::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "Training strategy\n";
 
@@ -2017,14 +2007,14 @@ std::string TrainingStrategy::to_string(void) const
 
       case RANDOM_SEARCH:
       {
-         buffer << random_search_pointer->to_string();
+         buffer << random_search_pointer->object_to_string();
 
       }
       break;
 
       case EVOLUTIONARY_ALGORITHM:
       {
-           buffer << evolutionary_algorithm_pointer->to_string();
+           buffer << evolutionary_algorithm_pointer->object_to_string();
       }
       break;
 
@@ -2036,13 +2026,13 @@ std::string TrainingStrategy::to_string(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "std::string to_string(void) const method.\n"
+                << "string object_to_string() const method.\n"
                 << "Unknown initialization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -2061,26 +2051,26 @@ std::string TrainingStrategy::to_string(void) const
 
       case GRADIENT_DESCENT:
       {
-         buffer << gradient_descent_pointer->to_string();
+         buffer << gradient_descent_pointer->object_to_string();
 
       }
       break;
 
       case CONJUGATE_GRADIENT:
       {
-           buffer << conjugate_gradient_pointer->to_string();
+           buffer << conjugate_gradient_pointer->object_to_string();
       }
       break;
 
       case QUASI_NEWTON_METHOD:
       {
-           buffer << quasi_Newton_method_pointer->to_string();
+           buffer << quasi_Newton_method_pointer->object_to_string();
       }
       break;
 
       case LEVENBERG_MARQUARDT_ALGORITHM:
       {
-           buffer << Levenberg_Marquardt_algorithm_pointer->to_string();
+           buffer << Levenberg_Marquardt_algorithm_pointer->object_to_string();
       }
       break;
 
@@ -2092,13 +2082,13 @@ std::string TrainingStrategy::to_string(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "std::string to_string(void) const method.\n"
+                << "string object_to_string() const method.\n"
                 << "Unknown main type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -2115,12 +2105,6 @@ std::string TrainingStrategy::to_string(void) const
       }
       break;
 
-      case NEWTON_METHOD:
-      {
-           buffer << Newton_method_pointer->to_string();
-      }
-      break;
-
       case USER_REFINEMENT:
       {
          // do nothing
@@ -2129,13 +2113,13 @@ std::string TrainingStrategy::to_string(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "std::string to_string(void) const method.\n"
+                << "string object_to_string() const method.\n"
                 << "Unknown refinement type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -2144,24 +2128,24 @@ std::string TrainingStrategy::to_string(void) const
 }
 
 
-// void print(void) const method
+// void print() const method
 
 /// Prints to the screen the string representation of the training strategy object.
 
-void TrainingStrategy::print(void) const
+void TrainingStrategy::print() const
 {
-   std::cout << to_string();
+   cout << object_to_string();
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Returns a default string representation in XML-type format of the training algorithm object.
 /// This containts the training operators, the training parameters, stopping criteria and other stuff.
 
-tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
+tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -2229,13 +2213,13 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+                << "tinyxml2::XMLDocument* to_XML() const method.\n"
                 << "Unknown initialization type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -2264,7 +2248,10 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
            const tinyxml2::XMLElement* gradient_descent_element = gradient_descent_document->FirstChildElement("GradientDescent");
 
-           DeepClone(main_element, gradient_descent_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               main_element->InsertEndChild( copy );
+           }
 
            delete gradient_descent_document;
       }
@@ -2281,7 +2268,10 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
            const tinyxml2::XMLElement* conjugate_gradient_element = conjugate_gradient_document->FirstChildElement("ConjugateGradient");
 
-           DeepClone(main_element, conjugate_gradient_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               main_element->InsertEndChild( copy );
+           }
 
            delete conjugate_gradient_document;
       }
@@ -2298,7 +2288,10 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
            const tinyxml2::XMLElement* quasi_Newton_method_element = quasi_Newton_method_document->FirstChildElement("QuasiNewtonMethod");
 
-           DeepClone(main_element, quasi_Newton_method_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               main_element->InsertEndChild( copy );
+           }
 
            delete quasi_Newton_method_document;
       }
@@ -2315,7 +2308,10 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
            const tinyxml2::XMLElement* Levenberg_Marquardt_algorithm_element = Levenberg_Marquardt_algorithm_document->FirstChildElement("LevenbergMarquardtAlgorithm");
 
-           DeepClone(main_element, Levenberg_Marquardt_algorithm_element, document, NULL);
+           for( const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               main_element->InsertEndChild( copy );
+           }
 
            delete Levenberg_Marquardt_algorithm_document;
       }
@@ -2329,13 +2325,13 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+                << "tinyxml2::XMLDocument* to_XML() const method.\n"
                 << "Unknown main type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -2348,23 +2344,6 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
       }
       break;
 
-      case NEWTON_METHOD:
-      {
-           tinyxml2::XMLElement* refinement_element = document->NewElement("Refinement");
-           training_strategy_element->LinkEndChild(refinement_element);
-
-           refinement_element->SetAttribute("Type", "NEWTON_METHOD");
-
-           const tinyxml2::XMLDocument* Newton_method_document = Newton_method_pointer->to_XML();
-
-           const tinyxml2::XMLElement* Newton_method_element = Newton_method_document->FirstChildElement("NewtonMethod");
-
-           DeepClone(refinement_element, Newton_method_element, document, NULL);
-
-           delete Newton_method_document;
-      }
-      break;
-
       case USER_REFINEMENT:
       {
          // do nothing
@@ -2373,13 +2352,13 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
-                << "tinyxml2::XMLDocument* to_XML(void) const method.\n"
+                << "tinyxml2::XMLDocument* to_XML() const method.\n"
                 << "Unknown refinement type.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
       }
       break;
    }
@@ -2407,7 +2386,7 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML(void) const
 
 void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("TrainingStrategy");
 
@@ -2480,7 +2459,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           file_stream.CloseElement();
 
@@ -2488,7 +2467,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
                  << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                  << "Unknown main type.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -2501,18 +2480,6 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
        }
        break;
 
-       case NEWTON_METHOD:
-       {
-            file_stream.OpenElement("Refinement");
-
-            file_stream.PushAttribute("Type", "NEWTON_METHOD");
-
-            Newton_method_pointer->write_XML(file_stream);
-
-            file_stream.CloseElement();
-       }
-       break;
-
        case USER_REFINEMENT:
        {
           // do nothing
@@ -2521,7 +2488,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        default:
        {
-          std::ostringstream buffer;
+          ostringstream buffer;
 
           file_stream.CloseElement();
 
@@ -2529,7 +2496,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
                  << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
                  << "Unknown refinement type.\n";
 
-          throw std::logic_error(buffer.str());
+          throw logic_error(buffer.str());
        }
        break;
     }
@@ -2550,13 +2517,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
    if(!root_element)
    {
-       std::ostringstream buffer;
+       ostringstream buffer;
 
        buffer << "OpenNN Exception: TrainingStrategy class.\n"
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Training strategy element is NULL.\n";
 
-       throw std::logic_error(buffer.str());
+       throw logic_error(buffer.str());
    }
 
    // Initialization
@@ -2565,7 +2532,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_initialization_type = element->Attribute("Type");
+          const string new_initialization_type = element->Attribute("Type");
 
           set_initialization_type(new_initialization_type);
 
@@ -2581,10 +2548,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              {
                   tinyxml2::XMLDocument new_document;
 
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("RandomSearch");
-                  new_document.InsertFirstChild(element_clone);
+                  tinyxml2::XMLElement* random_search_element = new_document.NewElement("RandomSearch");
 
-                  DeepClone(element_clone, element, &new_document, NULL);
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      random_search_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(random_search_element);
 
                   random_search_pointer->from_XML(new_document);
              }
@@ -2594,10 +2565,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              {
                   tinyxml2::XMLDocument new_document;
 
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("EvolutionaryAlgorithm");
-                  new_document.InsertFirstChild(element_clone);
+                  tinyxml2::XMLElement* evolutionary_algorithm_element = new_document.NewElement("EvolutionaryAlgorithm");
 
-                  DeepClone(element_clone, element, &new_document, NULL);
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      evolutionary_algorithm_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(evolutionary_algorithm_element);
 
                   evolutionary_algorithm_pointer->from_XML(new_document);
              }
@@ -2611,13 +2586,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
              default:
              {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: TrainingStrategy class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Unknown initialization type.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
              }
              break;
           }// end switch
@@ -2630,7 +2605,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_main_type = element->Attribute("Type");
+          const string new_main_type = element->Attribute("Type");
 
           set_main_type(new_main_type);
 
@@ -2646,10 +2621,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              {
                   tinyxml2::XMLDocument new_document;
 
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("GradientDescent");
-                  new_document.InsertFirstChild(element_clone);
+                  tinyxml2::XMLElement* gradient_descent_element = new_document.NewElement("GradientDescent");
 
-                  DeepClone(element_clone, element, &new_document, NULL);
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      gradient_descent_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(gradient_descent_element);
 
                   gradient_descent_pointer->from_XML(new_document);
              }
@@ -2659,10 +2638,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              {
                   tinyxml2::XMLDocument new_document;
 
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("ConjugateGradient");
-                  new_document.InsertFirstChild(element_clone);
+                  tinyxml2::XMLElement* conjugate_gradient_element = new_document.NewElement("ConjugateGradient");
 
-                  DeepClone(element_clone, element, &new_document, NULL);
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      conjugate_gradient_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(conjugate_gradient_element);
 
                   conjugate_gradient_pointer->from_XML(new_document);
              }
@@ -2672,10 +2655,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              {
                   tinyxml2::XMLDocument new_document;
 
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("QuasiNewtonMethod");
-                  new_document.InsertFirstChild(element_clone);
+                  tinyxml2::XMLElement* quasi_newton_method_element = new_document.NewElement("QuasiNewtonMethod");
 
-                  DeepClone(element_clone, element, &new_document, NULL);
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      quasi_newton_method_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(quasi_newton_method_element);
 
                   quasi_Newton_method_pointer->from_XML(new_document);
              }
@@ -2685,10 +2672,14 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              {
                   tinyxml2::XMLDocument new_document;
 
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("LevenbergMarquardtAlgorithm");
-                  new_document.InsertFirstChild(element_clone);
+                  tinyxml2::XMLElement* levenberg_marquardt_algorithm_element = new_document.NewElement("LevenbergMarquardtAlgorithm");
 
-                  DeepClone(element_clone, element, &new_document, NULL);
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      levenberg_marquardt_algorithm_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(levenberg_marquardt_algorithm_element);
 
                   Levenberg_Marquardt_algorithm_pointer->from_XML(new_document);
              }
@@ -2702,13 +2693,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
              default:
              {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: TrainingStrategy class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Unknown main type.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
              }
              break;
           }
@@ -2721,7 +2712,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_refinement_type = element->Attribute("Type");
+          const string new_refinement_type = element->Attribute("Type");
 
           set_refinement_type(new_refinement_type);
 
@@ -2733,19 +2724,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              }
              break;
 
-             case NEWTON_METHOD:
-             {
-                  tinyxml2::XMLDocument new_document;
-
-                  tinyxml2::XMLElement* element_clone = new_document.NewElement("NewtonMethod");
-                  new_document.InsertFirstChild(element_clone);
-
-                  DeepClone(element_clone, element, &new_document, NULL);
-
-                  Newton_method_pointer->from_XML(new_document);
-             }
-             break;
-
              case USER_REFINEMENT:
              {
                 // do nothing
@@ -2754,13 +2732,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
              default:
              {
-                std::ostringstream buffer;
+                ostringstream buffer;
 
                 buffer << "OpenNN Exception: TrainingStrategy class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                        << "Unknown refinement type.\n";
 
-                throw std::logic_error(buffer.str());
+                throw logic_error(buffer.str());
              }
              break;
           }
@@ -2773,15 +2751,15 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_display = element->GetText();
+          const string new_display = element->GetText();
 
           try
           {
              set_display(new_display != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2789,12 +2767,12 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the training algorithm object.
 /// @param file_name Name of training algorithm XML-type file. 
 
-void TrainingStrategy::save(const std::string& file_name) const
+void TrainingStrategy::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();   
 
@@ -2804,13 +2782,13 @@ void TrainingStrategy::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a gradient descent object from a XML-type file.
 /// Please mind about the file format, wich is specified in the User's Guide. 
 /// @param file_name Name of training algorithm XML-type file. 
 
-void TrainingStrategy::load(const std::string& file_name)
+void TrainingStrategy::load(const string& file_name)
 {
    set_default();
 
@@ -2818,13 +2796,13 @@ void TrainingStrategy::load(const std::string& file_name)
    
    if(document.LoadFile(file_name.c_str()))
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: TrainingStrategy class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
@@ -2833,7 +2811,7 @@ void TrainingStrategy::load(const std::string& file_name)
 
 // Results constructor
 
-TrainingStrategy::Results::Results(void)
+TrainingStrategy::Results::Results()
 {
     random_search_results_pointer = NULL;
 
@@ -2853,7 +2831,7 @@ TrainingStrategy::Results::Results(void)
 
 // Results destructor
 
-TrainingStrategy::Results::~Results(void)
+TrainingStrategy::Results::~Results()
 {
 //    delete random_search_results_pointer;
 
@@ -2872,48 +2850,48 @@ TrainingStrategy::Results::~Results(void)
 }
 
 
-// void Results::save(const std::string&) const method
+// void Results::save(const string&) const method
 
 /// Saves the results structure to a data file.
 /// @param file_name Name of training strategy results data file. 
 
-void TrainingStrategy::Results::save(const std::string& file_name) const
+void TrainingStrategy::Results::save(const string& file_name) const
 {
-   std::ofstream file(file_name.c_str());
+   ofstream file(file_name.c_str());
 
    if(random_search_results_pointer)
    {
-      file << random_search_results_pointer->to_string();
+      file << random_search_results_pointer->object_to_string();
    }
 
    if(evolutionary_algorithm_results_pointer)
    {
-      file << evolutionary_algorithm_results_pointer->to_string();
+      file << evolutionary_algorithm_results_pointer->object_to_string();
    }
 
    if(gradient_descent_results_pointer)
    {
-      file << gradient_descent_results_pointer->to_string();
+      file << gradient_descent_results_pointer->object_to_string();
    }
 
    if(conjugate_gradient_results_pointer)
    {
-      file << conjugate_gradient_results_pointer->to_string();
+      file << conjugate_gradient_results_pointer->object_to_string();
    }
 
    if(quasi_Newton_method_results_pointer)
    {
-      file << quasi_Newton_method_results_pointer->to_string();
+      file << quasi_Newton_method_results_pointer->object_to_string();
    }
 
    if(Levenberg_Marquardt_algorithm_results_pointer)
    {
-      file << Levenberg_Marquardt_algorithm_results_pointer->to_string();
+      file << Levenberg_Marquardt_algorithm_results_pointer->object_to_string();
    }
 
    if(Newton_method_results_pointer)
    {
-      file << Newton_method_results_pointer->to_string();
+      file << Newton_method_results_pointer->object_to_string();
    }
 
    file.close();
@@ -2923,7 +2901,7 @@ void TrainingStrategy::Results::save(const std::string& file_name) const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
