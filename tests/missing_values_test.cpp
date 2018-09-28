@@ -20,21 +20,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-MissingValuesTest::MissingValuesTest(void) : UnitTesting()
+MissingValuesTest::MissingValuesTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-MissingValuesTest::~MissingValuesTest(void)
+MissingValuesTest::~MissingValuesTest()
 {
 }
 
 
 // METHODS
 
-void MissingValuesTest::test_constructor(void)
+void MissingValuesTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -54,7 +54,7 @@ void MissingValuesTest::test_constructor(void)
 }
 
 
-void MissingValuesTest::test_destructor(void)
+void MissingValuesTest::test_destructor()
 {
    message += "test_destructor\n";
 
@@ -65,7 +65,7 @@ void MissingValuesTest::test_destructor(void)
 }
 
 
-void MissingValuesTest::test_assignment_operator(void)
+void MissingValuesTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -79,7 +79,7 @@ void MissingValuesTest::test_assignment_operator(void)
 }
 
 
-void MissingValuesTest::test_get_missing_values_number(void)
+void MissingValuesTest::test_get_missing_values_number()
 {
    message += "test_get_missing_values_number\n";
 
@@ -89,7 +89,7 @@ void MissingValuesTest::test_get_missing_values_number(void)
 }
 
 
-void MissingValuesTest::test_get_display(void)
+void MissingValuesTest::test_get_display()
 {
    message += "test_get_display\n";
 
@@ -105,7 +105,7 @@ void MissingValuesTest::test_get_display(void)
 }
 
 
-void MissingValuesTest::test_set(void)
+void MissingValuesTest::test_set()
 {
    message += "test_set\n";
 
@@ -121,7 +121,7 @@ void MissingValuesTest::test_set(void)
 }
 
 
-void MissingValuesTest::test_set_missing_values_number(void)
+void MissingValuesTest::test_set_missing_values_number()
 {
    message += "test_set_missing_values_number\n";
 
@@ -133,13 +133,13 @@ void MissingValuesTest::test_set_missing_values_number(void)
 }
 
 
-void MissingValuesTest::test_set_display(void)
+void MissingValuesTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void MissingValuesTest::test_convert_time_series(void)
+void MissingValuesTest::test_convert_time_series()
 {
     message += "test_convert_time_series\n";
 
@@ -176,9 +176,9 @@ void MissingValuesTest::test_convert_time_series(void)
 }
 
 
-/// @todo Complete method and tests.
+// @todo Complete method and tests.
 
-void MissingValuesTest::test_to_XML(void)
+void MissingValuesTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -206,9 +206,9 @@ void MissingValuesTest::test_to_XML(void)
 }
 
 
-/// @todo Complete method and tests.
+// @todo Complete method and tests.
 
-void MissingValuesTest::test_from_XML(void)
+void MissingValuesTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -221,7 +221,7 @@ void MissingValuesTest::test_from_XML(void)
 }
 
 
-void MissingValuesTest::run_test_case(void)
+void MissingValuesTest::run_test_case()
 {
    message += "Running missing values test case...\n";
 
@@ -260,7 +260,7 @@ void MissingValuesTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -207,4 +207,24 @@ Makefile*
 *.qmlproject.user
 *.qmlproject.user.*
 
+# Examples
+[Ee]xamples/*
+
+![Ee]xamples/airfoil_self_noise
+![Ee]xamples/breast_cancer
+![Ee]xamples/iris_plant
+![Ee]xamples/logical_operations
+![Ee]xamples/pima_indians_diabetes
+![Ee]xamples/simple_function_regression
+![Ee]xamples/simple_pattern_recognition
+![Ee]xamples/urinary_inflammations_diagnosis
+![Ee]xamples/yacht_hydrodynamics_design
+![Ee]xamples/yacht_hydrodynamics_production
+
+
+# Docs
+[Dd]ocs/
+
+[Pp]ybind/
+
 # Created by .ignore support plugin (hsz.mobi)

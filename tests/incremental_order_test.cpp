@@ -22,14 +22,14 @@ using namespace OpenNN;
 
 // CONSTRUCTOR
 
-IncrementalOrderTest::IncrementalOrderTest(void) : UnitTesting()
+IncrementalOrderTest::IncrementalOrderTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-IncrementalOrderTest::~IncrementalOrderTest(void)
+IncrementalOrderTest::~IncrementalOrderTest()
 {
 }
 
@@ -38,7 +38,7 @@ IncrementalOrderTest::~IncrementalOrderTest(void)
 
 // Constructor and destructor methods
 
-void IncrementalOrderTest::test_constructor(void)
+void IncrementalOrderTest::test_constructor()
 {
     message += "test_constructor\n";
 
@@ -53,7 +53,7 @@ void IncrementalOrderTest::test_constructor(void)
     assert_true(!io2.has_training_strategy(), LOG);
 }
 
-void IncrementalOrderTest::test_destructor(void)
+void IncrementalOrderTest::test_destructor()
 {
     message += "test_destructor\n";
 
@@ -65,7 +65,7 @@ void IncrementalOrderTest::test_destructor(void)
 
 // Set methods
 
-void IncrementalOrderTest::test_set_default(void)
+void IncrementalOrderTest::test_set_default()
 {
     message += "test_set_default\n";
 
@@ -73,11 +73,11 @@ void IncrementalOrderTest::test_set_default(void)
 
 // Order selection methods
 
-void IncrementalOrderTest::test_perform_order_selection(void)
+void IncrementalOrderTest::test_perform_order_selection()
 {
     message += "test_perform_order_selection\n";
 
-    std::string str;
+    string str;
     Matrix<double> data;
 
     Vector<Instances::Use> uses;
@@ -210,7 +210,7 @@ void IncrementalOrderTest::test_perform_order_selection(void)
 
 // Serialization methods
 
-void IncrementalOrderTest::test_to_XML(void)
+void IncrementalOrderTest::test_to_XML()
 {
     message += "test_to_XML\n";
 
@@ -223,7 +223,7 @@ void IncrementalOrderTest::test_to_XML(void)
 
 }
 
-void IncrementalOrderTest::test_from_XML(void)
+void IncrementalOrderTest::test_from_XML()
 {
     message += "test_from_XML\n";
 
@@ -238,7 +238,7 @@ void IncrementalOrderTest::test_from_XML(void)
 
 // Unit testing methods
 
-void IncrementalOrderTest::run_test_case(void)
+void IncrementalOrderTest::run_test_case()
 {
     message += "Running incremental order test case...\n";
 

@@ -31,28 +31,28 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit NumericalIntegrationTest(void);
+   explicit NumericalIntegrationTest();
 
 
    // DESTRUCTOR
 
-   virtual ~NumericalIntegrationTest(void);
+   virtual ~NumericalIntegrationTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Integration methods
 
-   void test_calculate_trapezoid_integral(void);
-   void test_calculate_Simpson_integral(void);
+   void test_calculate_trapezoid_integral();
+   void test_calculate_Simpson_integral();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -60,7 +60,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

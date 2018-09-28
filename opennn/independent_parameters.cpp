@@ -6,7 +6,7 @@
 /*   I N D E P E N D E N T   P A R A M E T E R S   C L A S S                                                    */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates a independent parameters object with zero parameters.
 /// This constructor also initializes the members of the object to their default values. 
 
-IndependentParameters::IndependentParameters(void)
+IndependentParameters::IndependentParameters()
 {
    set();
 }
@@ -62,7 +62,7 @@ IndependentParameters::IndependentParameters(const IndependentParameters& other_
 /// Destructor.
 /// This destructor does not delete any pointer.
 
-IndependentParameters::~IndependentParameters(void)
+IndependentParameters::~IndependentParameters()
 {
 }
 
@@ -73,7 +73,7 @@ IndependentParameters::~IndependentParameters(void)
 /// It assigns to this object the members of an existing independent parameters object.
 /// @param other_independent_parameters Independent parameters object to be assigned.
 
-IndependentParameters& IndependentParameters::operator = (const IndependentParameters& other_independent_parameters)
+IndependentParameters& IndependentParameters::operator =(const IndependentParameters& other_independent_parameters)
 {
    if(this != &other_independent_parameters) 
    {
@@ -98,14 +98,14 @@ IndependentParameters& IndependentParameters::operator = (const IndependentParam
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const IndependentParameters&) const method
+// bool operator ==(const IndependentParameters&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_independent_parameters Independent parameters object to be compared with.
 
-bool IndependentParameters::operator == (const IndependentParameters& other_independent_parameters) const
+bool IndependentParameters::operator ==(const IndependentParameters& other_independent_parameters) const
 {
    if(parameters == other_independent_parameters.parameters
    && names == other_independent_parameters.names
@@ -132,11 +132,11 @@ bool IndependentParameters::operator == (const IndependentParameters& other_inde
 
 // METHODS
 
-// const Vector<double> get_parameters(void) const method
+// const Vector<double> get_parameters() const method
 
 /// Returns the values of the independent parameters.
 
-const Vector<double>& IndependentParameters::get_parameters(void) const
+const Vector<double>& IndependentParameters::get_parameters() const
 {   
    return(parameters);    
 }
@@ -149,7 +149,7 @@ const Vector<double>& IndependentParameters::get_parameters(void) const
 
 double IndependentParameters::get_parameter(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -157,13 +157,13 @@ double IndependentParameters::get_parameter(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_parameter(const size_t&) const method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -172,26 +172,26 @@ double IndependentParameters::get_parameter(const size_t& index) const
 }
 
 
-// const Vector<std::string>& get_names(void) const method
+// const Vector<string>& get_names() const method
 
 /// Returns the names of the independent parameters. 
 /// Such names are only used to give the user basic information about the problem at hand.
 
-const Vector<std::string>& IndependentParameters::get_names(void) const
+const Vector<string>& IndependentParameters::get_names() const
 {
    return(names);    
 }
 
 
-// const std::string& get_name(const size_t&) const method
+// const string& get_name(const size_t&) const method
 
 /// Returns the name of a single independent parameter. 
 /// Such name is only used to give the user basic information about the problem at hand.
 /// @param index Index of independent parameter.
 
-const std::string& IndependentParameters::get_name(const size_t& index) const
+const string& IndependentParameters::get_name(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -199,13 +199,13 @@ const std::string& IndependentParameters::get_name(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
-             << "const std::string& get_name(const size_t&) const method.\n"
+             << "const string& get_name(const size_t&) const method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -214,26 +214,26 @@ const std::string& IndependentParameters::get_name(const size_t& index) const
 }
 
 
-// const Vector<std::string>& get_units(void) const method
+// const Vector<string>& get_units() const method
 
 /// Returns the units of the independent parameters. 
 /// Such units are only used to give the user basic information about the problem at hand.
 
-const Vector<std::string>& IndependentParameters::get_units(void) const
+const Vector<string>& IndependentParameters::get_units() const
 {
    return(units);
 }
 
 
-// const std::string& get_unit(const size_t&) const method
+// const string& get_unit(const size_t&) const method
 
 /// Returns the unit of a single independent parameter. 
 /// Such units are only used to give the user basic information about the problem at hand.
 /// @param index Index of independent parameter.
 
-const std::string& IndependentParameters::get_unit(const size_t& index) const
+const string& IndependentParameters::get_unit(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -241,13 +241,13 @@ const std::string& IndependentParameters::get_unit(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
-             << "const std::string get_units(const size_t&) const method.\n"
+             << "const string get_units(const size_t&) const method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -256,26 +256,26 @@ const std::string& IndependentParameters::get_unit(const size_t& index) const
 }
 
 
-// const Vector<std::string>& get_descriptions(void) const method
+// const Vector<string>& get_descriptions() const method
 
 /// Returns the descriptions of the independent parameters. 
 /// Such descriptions are only used to give the user basic information about the problem at hand.
 
-const Vector<std::string>& IndependentParameters::get_descriptions(void) const
+const Vector<string>& IndependentParameters::get_descriptions() const
 {
    return(descriptions);
 }
 
 
-// const std::string& get_description(const size_t&) const method
+// const string& get_description(const size_t&) const method
 
 /// Returns the description of a single independent parameter. 
 /// Such description is only used to give the user basic information about the problem at hand.
 /// @param index Index of independent parameter.
 
-const std::string& IndependentParameters::get_description(const size_t& index) const
+const string& IndependentParameters::get_description(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -283,13 +283,13 @@ const std::string& IndependentParameters::get_description(const size_t& index) c
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
-             << "const std::string get_description(const size_t&) const method.\n"
+             << "const string get_description(const size_t&) const method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -298,7 +298,7 @@ const std::string& IndependentParameters::get_description(const size_t& index) c
 }
 
 
-// Vector< Vector<std::string> > arrange_information(void) method
+// Vector< Vector<string> > arrange_information() method
 
 /// Returns all the available information about the independent parameters. 
 /// The format is a vector of subvectors of size three: 
@@ -308,9 +308,9 @@ const std::string& IndependentParameters::get_description(const size_t& index) c
 /// <li> Descriptions of independent parameters.
 /// </ul>
 
-Vector< Vector<std::string> > IndependentParameters::arrange_information(void) 
+Vector< Vector<string> > IndependentParameters::arrange_information() 
 {
-   Vector< Vector<std::string> > information(3);
+   Vector< Vector<string> > information(3);
  
    information[0] = names;
    information[1] = units;
@@ -320,12 +320,12 @@ Vector< Vector<std::string> > IndependentParameters::arrange_information(void)
 }
 
 
-// const Vector<double>& get_minimums(void) const method
+// const Vector<double>& get_minimums() const method
 
 /// Returns the minimum values of all the independent parameters.
 /// Such values are to be used for scaling and unscaling independent parameters with the minimum and maximum method. 
 
-const Vector<double>& IndependentParameters::get_minimums(void) const
+const Vector<double>& IndependentParameters::get_minimums() const
 {
    return(minimums);
 }
@@ -339,7 +339,7 @@ const Vector<double>& IndependentParameters::get_minimums(void) const
 
 double IndependentParameters::get_minimum(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -347,13 +347,13 @@ double IndependentParameters::get_minimum(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_minimum(const size_t&) const method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -362,13 +362,13 @@ double IndependentParameters::get_minimum(const size_t& index) const
 }
 
 
-// const Vector<double>& get_maximum(void) const method
+// const Vector<double>& get_maximum() const method
 
 /// Returns the maximum values of all the independent parameters.
 /// Such values are to be used for scaling and unscaling independent parameters with the minimum and maximum 
 /// method. 
 
-const Vector<double>& IndependentParameters::get_maximums(void) const
+const Vector<double>& IndependentParameters::get_maximums() const
 {
    return(maximums);              
 }
@@ -382,7 +382,7 @@ const Vector<double>& IndependentParameters::get_maximums(void) const
 
 double IndependentParameters::get_maximum(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -390,13 +390,13 @@ double IndependentParameters::get_maximum(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_maximum(const size_t&) const method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -405,12 +405,12 @@ double IndependentParameters::get_maximum(const size_t& index) const
 }
 
 
-// const Vector<double>& get_means(void) const method
+// const Vector<double>& get_means() const method
 
 /// Returns the mean values of all the independent parameters.
 /// Such values are to be used for scaling and unscaling independent parameters with the mean and standard deviation method. 
 
-const Vector<double>& IndependentParameters::get_means(void) const
+const Vector<double>& IndependentParameters::get_means() const
 {
    return(means);
 }
@@ -424,7 +424,7 @@ const Vector<double>& IndependentParameters::get_means(void) const
 
 double IndependentParameters::get_mean(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -432,13 +432,13 @@ double IndependentParameters::get_mean(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_mean(const size_t&) const method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -447,12 +447,12 @@ double IndependentParameters::get_mean(const size_t& index) const
 }
 
 
-// const Vector<double>& get_standard_deviations(void) const method
+// const Vector<double>& get_standard_deviations() const method
 
 /// Returns the standard deviation values of all the independent parameters.
 /// Such values are to be used for scaling and unscaling independent parameters with the mean and standard deviation method. 
 
-const Vector<double>& IndependentParameters::get_standard_deviations(void) const
+const Vector<double>& IndependentParameters::get_standard_deviations() const
 {
    return(standard_deviations);              
 }
@@ -466,7 +466,7 @@ const Vector<double>& IndependentParameters::get_standard_deviations(void) const
 
 double IndependentParameters::get_standard_deviation(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -474,13 +474,13 @@ double IndependentParameters::get_standard_deviation(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_standard_deviation(const size_t&) const method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -489,7 +489,7 @@ double IndependentParameters::get_standard_deviation(const size_t& index) const
 }
 
 
-// Vector< Vector<double> > arrange_minimum_maximum(void) method
+// Vector< Vector<double> > arrange_minimum_maximum() method
 
 /// Returns the minimum and maximum values of all the independent parameters.
 /// The format is a vector of two pointers to real vectors. 
@@ -497,7 +497,7 @@ double IndependentParameters::get_standard_deviation(const size_t& index) const
 /// The second element contains the maximum values of the independent parameters.
 /// Such values are to be used for scaling and unscaling independent parameters with the minimum and maximum method. 
 
-Vector< Vector<double> > IndependentParameters::arrange_minimums_maximums(void)
+Vector< Vector<double> > IndependentParameters::arrange_minimums_maximums()
 {
    Vector< Vector<double> > minimums_maximums(2);
 
@@ -508,14 +508,14 @@ Vector< Vector<double> > IndependentParameters::arrange_minimums_maximums(void)
 }
 
 
-// Vector< Vector<double> > arrange_means_standard_deviations(void) method
+// Vector< Vector<double> > arrange_means_standard_deviations() method
 
 /// Returns the mean and the standard deviation values of all the independent parameters in a single matrix. 
 /// The first row contains the mean values of the independent parameters.
 /// The second row contains the standard deviation values of the independent parameters.
 /// Such values are to be used for scaling and unscaling independent parameters with the mean and standard deviation method. 
 
-Vector< Vector<double> > IndependentParameters::arrange_means_standard_deviations(void)
+Vector< Vector<double> > IndependentParameters::arrange_means_standard_deviations()
 {
    Vector< Vector<double> > means_standard_deviations(2);
 
@@ -526,12 +526,12 @@ Vector< Vector<double> > IndependentParameters::arrange_means_standard_deviation
 }
 
 
-// Vector< Vector<double> > arrange_statistics(void) method
+// Vector< Vector<double> > arrange_statistics() method
 
 /// Returns a vector of vectors with the basic statistics of the independent parameters 
-/// (mean, standard deviation, minimum and maximum).
+///(mean, standard deviation, minimum and maximum).
 
-Vector< Vector<double> > IndependentParameters::arrange_statistics(void) 
+Vector< Vector<double> > IndependentParameters::arrange_statistics() 
 {
    Vector< Vector<double> > statistics(4);
 
@@ -544,21 +544,21 @@ Vector< Vector<double> > IndependentParameters::arrange_statistics(void)
 }
 
 
-// const ScalingMethod get_scaling_method(void) const method
+// const ScalingMethod get_scaling_method() const method
 
 /// Returns the method used for scaling and unscaling the independent parameters.
 
-const IndependentParameters::ScalingMethod& IndependentParameters::get_scaling_method(void) const
+const IndependentParameters::ScalingMethod& IndependentParameters::get_scaling_method() const
 {
    return(scaling_method);
 }
 
 
-// std::string write_scaling_method(void) const method
+// string write_scaling_method() const method
 
 /// Returns a string with the method used for scaling and unscaling the independent parameters.
 
-std::string IndependentParameters::write_scaling_method(void) const
+string IndependentParameters::write_scaling_method() const
 {
     if(scaling_method == NoScaling)
     {
@@ -574,23 +574,23 @@ std::string IndependentParameters::write_scaling_method(void) const
     }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "std::string write_scaling_method(void) const method.\n"
+             << "string write_scaling_method() const method.\n"
              << "Unknown scaling and unscaling method.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// const Vector<double>& get_lower_bounds(void) const method
+// const Vector<double>& get_lower_bounds() const method
 
 /// Returns the lower bounds of all the independent parameters.
 /// These values are used to postprocess the independent parameters so that they are not less than the lower bounds. 
 
-const Vector<double>& IndependentParameters::get_lower_bounds(void) const
+const Vector<double>& IndependentParameters::get_lower_bounds() const
 {
    return(lower_bounds);
 }
@@ -604,7 +604,7 @@ const Vector<double>& IndependentParameters::get_lower_bounds(void) const
 
 double IndependentParameters::get_lower_bound(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -612,13 +612,13 @@ double IndependentParameters::get_lower_bound(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_lower_bound(const size_t&) const method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -627,12 +627,12 @@ double IndependentParameters::get_lower_bound(const size_t& index) const
 }
 
 
-// const Vector<double>& get_upper_bounds(void) const method
+// const Vector<double>& get_upper_bounds() const method
 
 /// Returns the upper bounds of all the independent parameters.
 /// These values are used to postprocess the independent parameters so that they are not greater than the upper bounds. 
 
-const Vector<double>& IndependentParameters::get_upper_bounds(void) const
+const Vector<double>& IndependentParameters::get_upper_bounds() const
 {
    return(upper_bounds);
 }
@@ -646,7 +646,7 @@ const Vector<double>& IndependentParameters::get_upper_bounds(void) const
 
 double IndependentParameters::get_upper_bound(const size_t& index) const
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -654,13 +654,13 @@ double IndependentParameters::get_upper_bound(const size_t& index) const
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "double get_upper_bound(const size_t&) const method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -669,7 +669,7 @@ double IndependentParameters::get_upper_bound(const size_t& index) const
 }
 
 
-// Vector< Vector<double>* > get_bounds(void) method
+// Vector< Vector<double>* > get_bounds() method
 
 /// Returns the lower and upper bounds of all the independent parameters.
 /// The format is a vector of two pointers to real vectors.  
@@ -678,7 +678,7 @@ double IndependentParameters::get_upper_bound(const size_t& index) const
 /// These values are used to postprocess the independent parameters so that they are neither less than the lower 
 /// bounds nor greater than the upper bounds. 
 
-Vector< Vector<double>* > IndependentParameters::get_bounds(void)
+Vector< Vector<double>* > IndependentParameters::get_bounds()
 {
    Vector< Vector<double>* > bounds(2);
 
@@ -689,21 +689,21 @@ Vector< Vector<double>* > IndependentParameters::get_bounds(void)
 }
 
 
-// const BoundingMethod get_bounding_method(void) const method
+// const BoundingMethod get_bounding_method() const method
 
 /// Returns the method used for bounding the independent parameters.
 
-const IndependentParameters::BoundingMethod& IndependentParameters::get_bounding_method(void) const
+const IndependentParameters::BoundingMethod& IndependentParameters::get_bounding_method() const
 {
    return(bounding_method);
 }
 
 
-// std::string write_bounding_method(void) const method
+// string write_bounding_method() const method
 
 /// Returns a string with the method used for bounding the independent parameters.
 
-std::string IndependentParameters::write_bounding_method(void) const
+string IndependentParameters::write_bounding_method() const
 {
    if(bounding_method == NoBounding)
    {
@@ -715,34 +715,34 @@ std::string IndependentParameters::write_bounding_method(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "std::string write_bounding_method(void) const method.\n"
+             << "string write_bounding_method() const method.\n"
              << "Unknown bounding method.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages 
 /// from this class are not to be displayed on the screen.
 
-const bool& IndependentParameters::get_display(void) const
+const bool& IndependentParameters::get_display() const
 {
    return(display);
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets the number of independent parameters to be zero. 
 /// It also sets the rest of members to their default values.
 
-void IndependentParameters::set(void)
+void IndependentParameters::set()
 {
    set_parameters_number(0);
 
@@ -817,11 +817,11 @@ void IndependentParameters::set(const IndependentParameters& other_independent_p
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of this object to their default values. 
 
-void IndependentParameters::set_default(void)
+void IndependentParameters::set_default()
 {
    set_scaling_method(MinimumMaximum);
 
@@ -867,7 +867,7 @@ void IndependentParameters::set_parameters_number(const size_t& new_parameters_n
 
 void IndependentParameters::set_parameters(const Vector<double>& new_parameters)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -875,13 +875,13 @@ void IndependentParameters::set_parameters(const Vector<double>& new_parameters)
 
    if(new_parameters.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_parameters(const Vector<double>&) method.\n"
              << "Parameters size must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -900,7 +900,7 @@ void IndependentParameters::set_parameters(const Vector<double>& new_parameters)
 
 void IndependentParameters::set_parameter(const size_t& index, const double& new_parameter)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -908,13 +908,13 @@ void IndependentParameters::set_parameter(const size_t& index, const double& new
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_parameter(const size_t&, const double&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -925,15 +925,15 @@ void IndependentParameters::set_parameter(const size_t& index, const double& new
 }
 
 
-// void set_names(const Vector<std::string>&) method
+// void set_names(const Vector<string>&) method
 
 /// Sets new names for the independent parameters.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_names New names for the independent parameters.
 
-void IndependentParameters::set_names(const Vector<std::string>& new_names)
+void IndependentParameters::set_names(const Vector<string>& new_names)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -941,13 +941,13 @@ void IndependentParameters::set_names(const Vector<std::string>& new_names)
 
    if(new_names.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "void set_name(const Vector<std::string>&) method.\n"
+             << "void set_name(const Vector<string>&) method.\n"
              << "Size of names must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -958,16 +958,16 @@ void IndependentParameters::set_names(const Vector<std::string>& new_names)
 }
 
 
-// void set_name(const size_t&, const std::string&) method
+// void set_name(const size_t&, const string&) method
 
 /// Sets a new name for a single independent parameter.
 /// Such a value is only used to give the user basic information on the problem at hand.
 /// @param index Index of independent parameter.
 /// @param new_name New name for the independent parameter of index i.
 
-void IndependentParameters::set_name(const size_t& index, const std::string& new_name)
+void IndependentParameters::set_name(const size_t& index, const string& new_name)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    const size_t parameters_number = get_parameters_number();
 
@@ -975,13 +975,13 @@ void IndependentParameters::set_name(const size_t& index, const std::string& new
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "void set_name(const size_t&, const std::string&) method.\n"
+             << "void set_name(const size_t&, const string&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -997,15 +997,15 @@ void IndependentParameters::set_name(const size_t& index, const std::string& new
 }
 
 
-// void set_units(const Vector<std::string>&)
+// void set_units(const Vector<string>&)
 
 /// Sets new units for the independent parameters.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_units New units for the independent parameters.
 
-void IndependentParameters::set_units(const Vector<std::string>& new_units)
+void IndependentParameters::set_units(const Vector<string>& new_units)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1013,13 +1013,13 @@ void IndependentParameters::set_units(const Vector<std::string>& new_units)
 
    if(new_units.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
-             << "void set_units(const Vector<std::string>&) method.\n"
+             << "void set_units(const Vector<string>&) method.\n"
              << "Size must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1030,30 +1030,30 @@ void IndependentParameters::set_units(const Vector<std::string>& new_units)
 }
 
 
-// void set_unit(const size_t&, const std::string&) method
+// void set_unit(const size_t&, const string&) method
 
 /// Sets new units for a single independent parameter.
 /// Such a value is only used to give the user basic information on the problem at hand.
 /// @param index Index of independent parameter.
 /// @param new_unit New unit for the independent parameter with the previous index. 
 
-void IndependentParameters::set_unit(const size_t& index, const std::string& new_unit)
+void IndependentParameters::set_unit(const size_t& index, const string& new_unit)
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "void set_unit(const size_t&, const std::string&) method.\n"
+             << "void set_unit(const size_t&, const string&) method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1069,15 +1069,15 @@ void IndependentParameters::set_unit(const size_t& index, const std::string& new
 }
 
 
-// void set_descriptions(const Vector<std::string>&) method
+// void set_descriptions(const Vector<string>&) method
 
 /// Sets new descriptions for the independent parameters.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_descriptions New description for the independent parameters.
 
-void IndependentParameters::set_descriptions(const Vector<std::string>& new_descriptions)
+void IndependentParameters::set_descriptions(const Vector<string>& new_descriptions)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1085,13 +1085,13 @@ void IndependentParameters::set_descriptions(const Vector<std::string>& new_desc
 
    if(new_descriptions.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
-             << "void set_descriptions(const Vector<std::string>&) method.\n"
+             << "void set_descriptions(const Vector<string>&) method.\n"
              << "Size of descriptions must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1100,30 +1100,30 @@ void IndependentParameters::set_descriptions(const Vector<std::string>& new_desc
 }
 
 
-// void set_description(const size_t&, const std::string&) method
+// void set_description(const size_t&, const string&) method
 
 /// Sets a new description for a single independent parameter.
 /// Such a value is only used to give the user basic information on the problem at hand.
 /// @param index Index of independent parameter.
 /// @param new_description New description for the independent parameter with the previous index. 
 
-void IndependentParameters::set_description(const size_t& index, const std::string& new_description)
+void IndependentParameters::set_description(const size_t& index, const string& new_description)
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "void set_description(const size_t&, const std::string&) method.\n"
+             << "void set_description(const size_t&, const string&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1147,7 +1147,7 @@ void IndependentParameters::set_description(const size_t& index, const std::stri
 
 void IndependentParameters::set_minimums(const Vector<double>& new_minimums)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1155,13 +1155,13 @@ void IndependentParameters::set_minimums(const Vector<double>& new_minimums)
 
    if(new_minimums.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_minimums(const Vector<double>&) method.\n"
              << "Size of minimums must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1183,19 +1183,19 @@ void IndependentParameters::set_minimum(const size_t& index, const double& new_m
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_minimum(const size_t&, const double&) method.\n"
              << "Index of independent parameter must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1219,7 +1219,7 @@ void IndependentParameters::set_minimum(const size_t& index, const double& new_m
 
 void IndependentParameters::set_maximums(const Vector<double>& new_maximums)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1227,13 +1227,13 @@ void IndependentParameters::set_maximums(const Vector<double>& new_maximums)
 
    if(new_maximums.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_maximum(const Vector<double>&) method.\n"
              << "Size of maximums must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1255,19 +1255,19 @@ void IndependentParameters::set_maximum(const size_t& index, const double& new_m
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_maximum(const size_t&, const double&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1293,7 +1293,7 @@ void IndependentParameters::set_maximum(const size_t& index, const double& new_m
 
 void IndependentParameters::set_means(const Vector<double>& new_means)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1301,13 +1301,13 @@ void IndependentParameters::set_means(const Vector<double>& new_means)
 
    if(new_means.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_means(const Vector<double>&) method.\n"
              << "Size must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1329,19 +1329,19 @@ void IndependentParameters::set_mean(const size_t& index, const double& new_mean
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_mean(const size_t&, const double&) method.\n"
              << "Index of must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1369,7 +1369,7 @@ void IndependentParameters::set_mean(const size_t& index, const double& new_mean
 
 void IndependentParameters::set_standard_deviations(const Vector<double>& new_standard_deviations)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1377,13 +1377,13 @@ void IndependentParameters::set_standard_deviations(const Vector<double>& new_st
 
    if(new_standard_deviations.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_standard_deviations(const Vector<double>&) method.\n"
              << "Size must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1405,19 +1405,19 @@ void IndependentParameters::set_standard_deviation(const size_t& index, const do
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_standard_deviation(const size_t&, const double&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1448,7 +1448,7 @@ void IndependentParameters::set_standard_deviation(const size_t& index, const do
 
 void IndependentParameters::set_minimums_maximums(const Vector< Vector<double> >& new_minimums_maximums)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1456,24 +1456,24 @@ void IndependentParameters::set_minimums_maximums(const Vector< Vector<double> >
 
    if(new_minimums_maximums.size() != 2)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_minimum_maximum(const Vector< Vector<double> >&) method.\n"
              << "Number of rows must be 2.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
    else if(new_minimums_maximums[0].size() != parameters_number
         && new_minimums_maximums[1].size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_minimum_maximum(const Vector< Vector<double> >&) method.\n"
              << "Number of columns must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    // Check that minimum of independent parameters is not greater than their maximum
@@ -1482,13 +1482,13 @@ void IndependentParameters::set_minimums_maximums(const Vector< Vector<double> >
    {
       if(new_minimums_maximums[0][i] >= new_minimums_maximums[1][i])
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: IndependentParameters class.\n"
                 << "void set_minimums_maximums(const Vector< Vector<double> >&) method.\n"
                 << "Minimum of parameter "<< i << " is equal or greater than maximum of that parameter.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
    }
 
@@ -1512,11 +1512,11 @@ void IndependentParameters::set_minimums_maximums(const Vector< Vector<double> >
 
 void IndependentParameters::set_means_standard_deviations(const Vector< Vector<double> >& new_means_standard_deviations)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    const size_t parameters_number = get_parameters_number();
 
@@ -1528,7 +1528,7 @@ void IndependentParameters::set_means_standard_deviations(const Vector< Vector<d
              << "void set_means_standard_deviations(const Vector< Vector<double> >& ) method.\n"
              << "Number of rows must be 2.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
    else if(new_means_standard_deviations[0].size() != parameters_number
 	    && new_means_standard_deviations[1].size() != parameters_number)
@@ -1537,7 +1537,7 @@ void IndependentParameters::set_means_standard_deviations(const Vector< Vector<d
              << "void set_means_standard_deviations(const Vector< Vector<double> >& ) method.\n"
              << "Number of columns must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    // Check that standard deviation of independent parameters is not zero
@@ -1548,7 +1548,7 @@ void IndependentParameters::set_means_standard_deviations(const Vector< Vector<d
       {
          if(new_means_standard_deviations[1][i] < 1.0e-99)
          {
-            std::ostringstream buffer;
+            ostringstream buffer;
 
             buffer << "OpenNN Exception: IndependentParameters class: \n"
                    << "void set_means_standard_deviations(const Vector< Vector<double> >& ) method.\n"
@@ -1580,19 +1580,19 @@ void IndependentParameters::set_means_standard_deviations(const Vector< Vector<d
 
 void IndependentParameters::set_statistics(const Vector< Vector<double> >& new_statistics)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_statistics.size() != 4)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_statistics(const Vector< Vector<double> >&) method.\n"
              << "Size must be 6.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1620,13 +1620,13 @@ void IndependentParameters::set_scaling_method
 }
 
 
-// void set_scaling_method(const std::string&) method
+// void set_scaling_method(const string&) method
 
 /// Sets the method to be used for scaling and unscaling the independent parameters.
-/// The argument is a string containing the name of the method ("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
+/// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_method Scaling and unscaling method for the independent parameters.
 
-void IndependentParameters::set_scaling_method(const std::string& new_scaling_method)
+void IndependentParameters::set_scaling_method(const string& new_scaling_method)
 {
     if(new_scaling_method == "NoScaling")
     {
@@ -1642,22 +1642,22 @@ void IndependentParameters::set_scaling_method(const std::string& new_scaling_me
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "void set_scaling_method(const std::string&) method.\n"
+             << "void set_scaling_method(const string&) method.\n"
 			 << "Unknown independent parameters scaling method: " << new_scaling_method << ".\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// void set_lower_bound(void) method
+// void set_lower_bound() method
 
 /// Sets the lower bound of the independent parameters to an empty vector. 
 
-void IndependentParameters::set_lower_bounds(void)
+void IndependentParameters::set_lower_bounds()
 {
    const size_t parameters_number = get_parameters_number();
 
@@ -1673,7 +1673,7 @@ void IndependentParameters::set_lower_bounds(void)
 
 void IndependentParameters::set_lower_bounds(const Vector<double>& new_lower_bounds)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1681,13 +1681,13 @@ void IndependentParameters::set_lower_bounds(const Vector<double>& new_lower_bou
 
    if(new_lower_bounds.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_lower_bounds(const Vector<double>&) method.\n"
              << "Size must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1709,19 +1709,19 @@ void IndependentParameters::set_lower_bound(const size_t& index, const double& n
 {
    const size_t parameters_number = get_parameters_number();
 
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_lower_bound(const size_t&, const double&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1739,11 +1739,11 @@ void IndependentParameters::set_lower_bound(const size_t& index, const double& n
 }
 
 
-// void set_upper_bounds(void) method
+// void set_upper_bounds() method
 
 /// Sets the vector of upper bounds for the independent parameters to have size zero. 
 
-void IndependentParameters::set_upper_bounds(void)
+void IndependentParameters::set_upper_bounds()
 {
    const size_t parameters_number = get_parameters_number();
 
@@ -1760,7 +1760,7 @@ void IndependentParameters::set_upper_bounds(void)
 
 void IndependentParameters::set_upper_bounds(const Vector<double>& new_upper_bounds)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1768,13 +1768,13 @@ void IndependentParameters::set_upper_bounds(const Vector<double>& new_upper_bou
 
    if(new_upper_bounds.size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_upper_bound(const Vector<double>&) method.\n"
              << "Size of upper bounds must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1792,7 +1792,7 @@ void IndependentParameters::set_upper_bounds(const Vector<double>& new_upper_bou
 
 void IndependentParameters::set_upper_bound(const size_t& index, const double& new_upper_bound)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1800,13 +1800,13 @@ void IndependentParameters::set_upper_bound(const size_t& index, const double& n
 
    if(index >= parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
              << "void set_upper_bound(const size_t&, const double&) method.\n"
              << "Index must be less than number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1815,11 +1815,11 @@ void IndependentParameters::set_upper_bound(const size_t& index, const double& n
 }
 
 
-// void set_bounds(void) method
+// void set_bounds() method
 
 /// Sets the vectors of lower and upper bounds for the independent parameters to have size zero. 
 
-void IndependentParameters::set_bounds(void)
+void IndependentParameters::set_bounds()
 {
    set_lower_bounds();
    set_upper_bounds();
@@ -1838,7 +1838,7 @@ void IndependentParameters::set_bounds(void)
 
 void IndependentParameters::set_bounds(const Vector< Vector<double> >& new_bounds)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1846,24 +1846,24 @@ void IndependentParameters::set_bounds(const Vector< Vector<double> >& new_bound
 
    if(new_bounds.size() != 2)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_bounds(const Vector< Vector<double> >&) method.\n"
              << "Number of rows must be 2.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
       
    if(new_bounds[0].size() != parameters_number && new_bounds[1].size() != parameters_number)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n" 
              << "void set_bounds(const Vector< Vector<double> >&) method.\n"
              << "Number of columns must be equal to number of parameters.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -1887,13 +1887,13 @@ void IndependentParameters::set_bounding_method
 }
 
 
-// void set_bounding_method(const std::string&) method
+// void set_bounding_method(const string&) method
 
 /// Sets the method to be used for bounding the independent parameters.
-/// The argument is a string containing the name of the method ("NoBounding" or "Bounding").
+/// The argument is a string containing the name of the method("NoBounding" or "Bounding").
 /// @param new_bounding_method Bounding method for the independent parameters.
 
-void IndependentParameters::set_bounding_method(const std::string& new_bounding_method)
+void IndependentParameters::set_bounding_method(const string& new_bounding_method)
 {
     if(new_bounding_method == "NoBounding")
     {
@@ -1905,13 +1905,13 @@ void IndependentParameters::set_bounding_method(const std::string& new_bounding_
     }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: IndependentParameters class.\n"
-             << "void set_bounding_method(const std::string&) method.\n"
+             << "void set_bounding_method(const string&) method.\n"
              << "Unknown bounding method: " << new_bounding_method << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
@@ -1929,11 +1929,11 @@ void IndependentParameters::set_display(const bool& new_display)
 }
 
 
-// bool is_empty(void) const method
+// bool is_empty() const method
 
 /// Returns true if the number of parameters is zero, and false otherwise. 
 
-bool IndependentParameters::is_empty(void) const
+bool IndependentParameters::is_empty() const
 {
    if(parameters.empty())
    {
@@ -1959,11 +1959,11 @@ void IndependentParameters::initialize_parameters(const double& value)
 }
 
 
-// void randomize_parameters_uniform(void) method
+// void randomize_parameters_uniform() method
 
 /// Initializes the independent parameters with values comprised between -1 and +1.
 
-void IndependentParameters::randomize_parameters_uniform(void) 
+void IndependentParameters::randomize_parameters_uniform() 
 {
    parameters.randomize_uniform();
 
@@ -2017,12 +2017,12 @@ void IndependentParameters::randomize_parameters_uniform(const Vector< Vector<do
 }
 
 
-// void randomize_parameters_normal(void) method
+// void randomize_parameters_normal() method
 
 /// Initializes the independent parameters with random values chosen from a 
 /// normal distribution with mean 0 and standard deviation 1.
 
-void IndependentParameters::randomize_parameters_normal(void)
+void IndependentParameters::randomize_parameters_normal()
 {
    parameters.randomize_normal();
 
@@ -2078,12 +2078,12 @@ void IndependentParameters::randomize_parameters_normal(const Vector< Vector<dou
 }
 
 
-// void initialize_random(void) method
+// void initialize_random() method
 
 /// Initializes all the membes of this object with random values. 
 /// This is useful for testing purposes. 
 
-void IndependentParameters::initialize_random(void)
+void IndependentParameters::initialize_random()
 {
    const size_t parameters_number = rand()%10 + 1;
 
@@ -2152,12 +2152,12 @@ void IndependentParameters::initialize_random(void)
 }
 
 
-// Vector<double> calculate_scaled_parameters(void) const method
+// Vector<double> calculate_scaled_parameters() const method
 
 /// Preprocesses the independendent parameters according to their scaling and unscaling method.
 /// This form of scaling is used prior when getting the vector of parameters.
 
-Vector<double> IndependentParameters::calculate_scaled_parameters(void) const
+Vector<double> IndependentParameters::calculate_scaled_parameters() const
 {
    const size_t parameters_number = get_parameters_number();
 
@@ -2179,8 +2179,8 @@ Vector<double> IndependentParameters::calculate_scaled_parameters(void) const
             {
                if(display)
                {
-                  std::cout << "OpenNN Warning: IndependentParameters class.\n"
-                            << "Vector<double> calculate_scaled_parameters(void) const method.\n"
+                  cout << "OpenNN Warning: IndependentParameters class.\n"
+                            << "Vector<double> calculate_scaled_parameters() const method.\n"
                             << "Maximum and minimum of parameter " << i << " are equal.\n"
                             << "That parameter won't be scaled.\n"; 
                }
@@ -2207,8 +2207,8 @@ Vector<double> IndependentParameters::calculate_scaled_parameters(void) const
             {
                if(display)
                {
-                  std::cout << "OpenNN Warning: IndependentParameters class.\n"
-                            << "Vector<double> calculate_scaled_parameters(void) method.\n"
+                  cout << "OpenNN Warning: IndependentParameters class.\n"
+                            << "Vector<double> calculate_scaled_parameters() method.\n"
                             << "Standard deviation of parameter " << i << " is zero.\n"
                             << "That won't be unscaled.\n"; 
                }
@@ -2217,7 +2217,7 @@ Vector<double> IndependentParameters::calculate_scaled_parameters(void) const
             }
             else
             {
-               scaled_parameters[i] = (parameters[i] - means[i])/standard_deviations[i];
+               scaled_parameters[i] =(parameters[i] - means[i])/standard_deviations[i];
             }
          }
 
@@ -2227,20 +2227,20 @@ Vector<double> IndependentParameters::calculate_scaled_parameters(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: IndependentParameters class\n"
-                << "Vector<double> calculate_scaled_parameters(void) method.\n" 
+                << "Vector<double> calculate_scaled_parameters() method.\n" 
                 << "Unknown independent parameters scaling and unscaling method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }// end switch
 }
 
 
-// void unscale_parameters(void) method
+// void unscale_parameters() method
 
 /// Postprocesses the independendent parameters according to their scaling and unscaling method.
 /// This form of scaling is used when setting a new vector of parameters.
@@ -2265,8 +2265,8 @@ void IndependentParameters::unscale_parameters(const Vector<double>& scaled_para
             {      
                if(display)
                {
-                  std::cout << "OpenNN Warning: IndependentParameters class\n"
-                            << "void unscale_parameters(void) method.\n"
+                  cout << "OpenNN Warning: IndependentParameters class\n"
+                            << "void unscale_parameters() method.\n"
                             << "Standard deviation of parameter " << i << " is zero.\n" 
                             << "That parameter won't be scaled.\n";
                }
@@ -2289,8 +2289,8 @@ void IndependentParameters::unscale_parameters(const Vector<double>& scaled_para
             {      
                if(display)
                {
-                  std::cout << "OpenNN Warning: IndependentParameters class\n"
-                            << "void unscale_parameters(void) method.\n"
+                  cout << "OpenNN Warning: IndependentParameters class\n"
+                            << "void unscale_parameters() method.\n"
                             << "Maximum and minimum of parameter " << i << " are equal.\n"
                             << "That parameter won't be scaled.\n"; 
                }
@@ -2307,13 +2307,13 @@ void IndependentParameters::unscale_parameters(const Vector<double>& scaled_para
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: IndependentParameters class\n"
-                << "void unscale_parameters(void) method.\n" 
+                << "void unscale_parameters() method.\n" 
                 << "Unknown scaling and unscaling method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }// end switch       
@@ -2322,11 +2322,11 @@ void IndependentParameters::unscale_parameters(const Vector<double>& scaled_para
 }
 
 
-// void bound_parameters(void) const method
+// void bound_parameters() const method
 
 /// Makes the independent parameters to fall in the range defined by their lower and the upper bounds. 
 
-void IndependentParameters::bound_parameters(void)
+void IndependentParameters::bound_parameters()
 {
    const size_t parameters_number = get_parameters_number();
 
@@ -2383,13 +2383,11 @@ void IndependentParameters::bound_parameter(const size_t& index)
 }
 
 
-// std::string to_string(void) const method
-
 /// Returns a string representation of the current independent parameters object. 
 
-std::string IndependentParameters::to_string(void) const
+string IndependentParameters::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "Independent parameters\n"
           << "Parameters: " << parameters << "\n"
@@ -2411,14 +2409,14 @@ std::string IndependentParameters::to_string(void) const
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the independent parameters object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document-> 
 
-tinyxml2::XMLDocument* IndependentParameters::to_XML(void) const
+tinyxml2::XMLDocument* IndependentParameters::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -2450,7 +2448,7 @@ tinyxml2::XMLDocument* IndependentParameters::to_XML(void) const
       for(size_t i = 0; i < parameters_number; i++)
       {
          elements[i] = document->NewElement("Name");
-         elements[i]->SetAttribute("Index", (unsigned)i+1);
+         elements[i]->SetAttribute("Index",(unsigned)i+1);
          names_element->LinkEndChild(elements[i]);
       
          texts[i] = document->NewText(names[i].c_str());
@@ -2470,7 +2468,7 @@ tinyxml2::XMLDocument* IndependentParameters::to_XML(void) const
       for(size_t i = 0; i < parameters_number; i++)
       {
          elements[i] = document->NewElement("Unit");
-         elements[i]->SetAttribute("Index", (unsigned)i+1);
+         elements[i]->SetAttribute("Index",(unsigned)i+1);
          units_element->LinkEndChild(elements[i]);
       
          texts[i] = document->NewText(units[i].c_str());
@@ -2489,7 +2487,7 @@ tinyxml2::XMLDocument* IndependentParameters::to_XML(void) const
       for(size_t i = 0; i < parameters_number; i++)
       {
          elements[i] = document->NewElement("Description");
-         elements[i]->SetAttribute("Index", (unsigned)i+1);
+         elements[i]->SetAttribute("Index",(unsigned)i+1);
          descriptions_element->LinkEndChild(elements[i]);
       
          texts[i] = document->NewText(descriptions[i].c_str());
@@ -2625,7 +2623,7 @@ tinyxml2::XMLDocument* IndependentParameters::to_XML(void) const
 
 void IndependentParameters::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     const size_t parameters_number = get_parameters_number();
 
@@ -2650,7 +2648,7 @@ void IndependentParameters::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Name");
 
-        file_stream.PushAttribute("Index", (unsigned)i+1);
+        file_stream.PushAttribute("Index",(unsigned)i+1);
 
         file_stream.PushText(names[i].c_str());
 
@@ -2667,7 +2665,7 @@ void IndependentParameters::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Unit");
 
-        file_stream.PushAttribute("Index", (unsigned)i+1);
+        file_stream.PushAttribute("Index",(unsigned)i+1);
 
         file_stream.PushText(units[i].c_str());
 
@@ -2684,7 +2682,7 @@ void IndependentParameters::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Description");
 
-        file_stream.PushAttribute("Index", (unsigned)i+1);
+        file_stream.PushAttribute("Index",(unsigned)i+1);
 
         file_stream.PushText(descriptions[i].c_str());
 
@@ -2832,7 +2830,7 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
 
      if(names_element)
      {
-        Vector<std::string> new_names(parameters_number);
+        Vector<string> new_names(parameters_number);
 
         const tinyxml2::XMLElement* name_element = names_element->FirstChildElement("Name");
 
@@ -2860,9 +2858,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
         {
            set_names(new_names);
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -2873,7 +2871,7 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
 
      if(units_element)
      {
-        Vector<std::string> new_units(parameters_number);
+        Vector<string> new_units(parameters_number);
 
         const tinyxml2::XMLElement* variable_units_element = units_element->FirstChildElement("VariableUnits");
 
@@ -2901,9 +2899,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
         {
            set_units(new_units);
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -2914,7 +2912,7 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
 
      if(descriptions_element)
      {
-        Vector<std::string> new_descriptions(parameters_number);
+        Vector<string> new_descriptions(parameters_number);
 
         const tinyxml2::XMLElement* variable_description_element = descriptions_element->FirstChildElement("Description");
 
@@ -2942,9 +2940,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
         {
            set_descriptions(new_descriptions);
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -2966,9 +2964,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_minimums(new_minimums);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -2991,9 +2989,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximums(new_maximums);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -3016,9 +3014,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_means(new_means);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -3041,9 +3039,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_standard_deviations(new_standard_deviations);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -3066,9 +3064,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_lower_bounds(new_lower_bounds);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -3091,9 +3089,9 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_upper_bounds(new_upper_bounds);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -3105,15 +3103,15 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
 
      if(display_element)
      {
-        const std::string new_display_string = display_element->GetText();
+        const string new_display_string = display_element->GetText();
 
         try
         {
            set_display(new_display_string != "0");
         }
-        catch(const std::logic_error& e)
+        catch(const logic_error& e)
         {
-           std::cout << e.what() << std::endl;
+           cout << e.what() << endl;
         }
      }
   }
@@ -3122,7 +3120,7 @@ void IndependentParameters::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

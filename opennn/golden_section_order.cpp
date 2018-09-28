@@ -6,7 +6,7 @@
 /*   G O L D E N   S E C T I O N    O R D E R   C L A S S                                                       */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -21,7 +21,7 @@ namespace OpenNN {
 
 /// Default constructor.
 
-GoldenSectionOrder::GoldenSectionOrder(void)
+GoldenSectionOrder::GoldenSectionOrder()
     : OrderSelectionAlgorithm()
 {
 }
@@ -53,7 +53,7 @@ GoldenSectionOrder::GoldenSectionOrder(const tinyxml2::XMLDocument& golden_secti
 /// File constructor.
 /// @param file_name Name of XML golden section order file.
 
-GoldenSectionOrder::GoldenSectionOrder(const std::string& file_name)
+GoldenSectionOrder::GoldenSectionOrder(const string& file_name)
     : OrderSelectionAlgorithm(file_name)
 {
     load(file_name);
@@ -63,17 +63,17 @@ GoldenSectionOrder::GoldenSectionOrder(const std::string& file_name)
 
 /// Destructor.
 
-GoldenSectionOrder::~GoldenSectionOrder(void)
+GoldenSectionOrder::~GoldenSectionOrder()
 {
 }
 
 // METHODS
 
-// GoldenSectionOrderResults* perform_order_selection(void) method
+// GoldenSectionOrderResults* perform_order_selection() method
 
 /// Perform the order selection with the golden section method.
 
-GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order_selection(void)
+GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order_selection()
 {
     GoldenSectionOrderResults* results = new GoldenSectionOrderResults();
 
@@ -104,12 +104,12 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     size_t a = minimum_order;
     size_t b = maximum_order;
-    size_t ln = (int)(a+(1.-0.618)*(b-a));
-    size_t mu = (int)(a+0.618*(b-a));
+    size_t ln =(int)(a+(1.-0.618)*(b-a));
+    size_t mu =(int)(a+0.618*(b-a));
 
     if(display)
     {
-        std::cout << "Performing order selection with golden section method..." << std::endl;
+        cout << "Performing order selection with golden section method..." << endl;
     }
 
     time(&beginning_time);
@@ -163,22 +163,22 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if(display)
     {
-        std::cout << "Initial values: " << std::endl;
-        std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-        std::cout << "ln final training loss: " << ln_loss[0] << std::endl;
-        std::cout << "ln final selection loss: " << ln_loss[1] << std::endl;
-        std::cout << "mu final training loss: " << mu_loss[0] << std::endl;
-        std::cout << "mu final selection loss: " << mu_loss[1] << std::endl;
-        std::cout << "Elapsed time: " << elapsed_time << std::endl;
+        cout << "Initial values: " << endl;
+        cout << "a = " << a << " ln = " << ln << " mu = " << mu << " b = " << b << endl;
+        cout << "ln final training loss: " << ln_loss[0] << endl;
+        cout << "ln final selection loss: " << ln_loss[1] << endl;
+        cout << "mu final training loss: " << mu_loss[0] << endl;
+        cout << "mu final selection loss: " << mu_loss[1] << endl;
+        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
-    if((ln == mu) || (ln > mu) || (mu < ln))
+    if((ln == mu) ||(ln > mu) ||(mu < ln))
     {
         end = true;
 
         if(display)
         {
-            std::cout << "Algorithm finished " << std::endl;
+            cout << "Algorithm finished " << endl;
         }
 
         results->stopping_condition = GoldenSectionOrder::AlgorithmFinished;
@@ -192,7 +192,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             b = mu;
             mu = ln;
             mu_loss = ln_loss;
-            ln = (int)(a+(1.-0.618)*(b-a));
+            ln =(int)(a+(1.-0.618)*(b-a));
 
             ln_loss = perform_model_evaluation(ln);
             current_training_loss = ln_loss[0];
@@ -222,7 +222,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             a = ln;
             ln = mu;
             ln_loss = mu_loss;
-            mu = (int)(a+0.618*(b-a));
+            mu =(int)(a+0.618*(b-a));
 
             mu_loss = perform_model_evaluation(mu);
             current_training_loss = mu_loss[0];
@@ -255,13 +255,13 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
         // Stopping criteria
 
-        if((ln == mu) || (ln > mu))
+        if((ln == mu) ||(ln > mu))
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Algorithm finished " << std::endl;
+                cout << "Algorithm finished " << endl;
             }
 
             results->stopping_condition = GoldenSectionOrder::AlgorithmFinished;
@@ -272,18 +272,18 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             if(display)
             {
-                std::cout << "Maximum time reached." << std::endl;
+                cout << "Maximum time reached." << endl;
             }
 
             results->stopping_condition = GoldenSectionOrder::MaximumTime;
         }
-        else if(std::min(ln_loss[1],mu_loss[1]) <= selection_loss_goal)
+        else if(min(ln_loss[1],mu_loss[1]) <= selection_loss_goal)
         {
             end = true;
 
             if(display)
             {
-                std::cout << "Selection loss reached." << std::endl;
+                cout << "Selection loss reached." << endl;
             }
 
             results->stopping_condition = GoldenSectionOrder::SelectionLossGoal;
@@ -294,7 +294,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             if(display)
             {
-                std::cout << "Maximum number of iterations reached." << std::endl;
+                cout << "Maximum number of iterations reached." << endl;
             }
 
             results->stopping_condition = GoldenSectionOrder::MaximumIterations;
@@ -303,13 +303,13 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         if(display && !end)
         {
 
-            std::cout << "Iteration: " << iterations << std::endl;
-            std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-            std::cout << "ln final training loss: " << ln_loss[0] << std::endl;
-            std::cout << "ln final selection loss: " << ln_loss[1] << std::endl;
-            std::cout << "mu final training loss: " << mu_loss[0] << std::endl;
-            std::cout << "mu final selection loss: " << mu_loss[1] << std::endl;
-            std::cout << "Elapsed time: " << elapsed_time << std::endl;
+            cout << "Iteration: " << iterations << endl;
+            cout << "a = " << a << " ln = " << ln << " mu = " << mu << " b = " << b << endl;
+            cout << "ln final training loss: " << ln_loss[0] << endl;
+            cout << "ln final selection loss: " << ln_loss[1] << endl;
+            cout << "mu final training loss: " << mu_loss[0] << endl;
+            cout << "mu final selection loss: " << mu_loss[1] << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
     }
 
@@ -330,17 +330,17 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if(display)
     {
-        std::cout << "Iteration: " << iterations << std::endl;
-        std::cout << "a = " << a << "  ln = " << ln << " mu = " << mu << " b = " << b << std::endl;
-        std::cout << "a final training loss: " << perform_model_evaluation(a)[0] << std::endl;
-        std::cout << "a final selection loss: " << perform_model_evaluation(a)[1] << std::endl;
-        std::cout << "ln final training loss: " << ln_loss[0] << std::endl;
-        std::cout << "ln final selection loss: " << ln_loss[1] << std::endl;
-        std::cout << "mu final training loss: " << mu_loss[0] << std::endl;
-        std::cout << "mu final selection loss: " << mu_loss[1] << std::endl;
-        std::cout << "b final training loss: " << perform_model_evaluation(b)[0] << std::endl;
-        std::cout << "b final selection loss: " << perform_model_evaluation(b)[1] << std::endl;
-        std::cout << "Elapsed time: " << elapsed_time << std::endl;
+        cout << "Iteration: " << iterations << endl;
+        cout << "a = " << a << " ln = " << ln << " mu = " << mu << " b = " << b << endl;
+        cout << "a final training loss: " << perform_model_evaluation(a)[0] << endl;
+        cout << "a final selection loss: " << perform_model_evaluation(a)[1] << endl;
+        cout << "ln final training loss: " << ln_loss[0] << endl;
+        cout << "ln final selection loss: " << ln_loss[1] << endl;
+        cout << "mu final training loss: " << mu_loss[0] << endl;
+        cout << "mu final selection loss: " << mu_loss[1] << endl;
+        cout << "b final training loss: " << perform_model_evaluation(b)[0] << endl;
+        cout << "b final selection loss: " << perform_model_evaluation(b)[1] << endl;
+        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
     minimum = minimums.calculate_minimum();
@@ -386,7 +386,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     if(display)
     {
-        std::cout << "Optimal order: " << optimal_order << std::endl;
+        cout << "Optimal order: " << optimal_order << endl;
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
@@ -398,7 +398,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     }
     else
     {
-        for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
+        for(size_t i = 0; i <(perceptrons_number-optimal_order); i++)
             multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
     }
 
@@ -423,14 +423,14 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the order selection parameters, the stopping criteria
 /// and other user stuff concerning the golden section order object.
 
-tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
+tinyxml2::XMLDocument* GoldenSectionOrder::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -607,7 +607,7 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML(void) const
 
 void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     //file_stream.OpenElement("GoldenSectionOrder");
 
@@ -767,13 +767,13 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "GoldenSectionOrder element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Minimum order
@@ -788,9 +788,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               minimum_order = new_minimum_order;
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -807,9 +807,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               maximum_order = new_maximum_order;
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -826,9 +826,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_trials_number(new_trials_number);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -839,15 +839,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_loss_calculation_method = element->GetText();
+           const string new_loss_calculation_method = element->GetText();
 
            try
            {
               set_loss_calculation_method(new_loss_calculation_method);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -858,15 +858,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_parameters_data = element->GetText();
+           const string new_reserve_parameters_data = element->GetText();
 
            try
            {
               set_reserve_parameters_data(new_reserve_parameters_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -877,15 +877,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_loss_data = element->GetText();
+           const string new_reserve_loss_data = element->GetText();
 
            try
            {
               set_reserve_loss_data(new_reserve_loss_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -896,15 +896,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_selection_loss_data = element->GetText();
+           const string new_reserve_selection_loss_data = element->GetText();
 
            try
            {
               set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -915,15 +915,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_minimal_parameters = element->GetText();
+           const string new_reserve_minimal_parameters = element->GetText();
 
            try
            {
               set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -934,15 +934,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_display = element->GetText();
+           const string new_display = element->GetText();
 
            try
            {
               set_display(new_display != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -959,9 +959,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_selection_loss_goal(new_selection_loss_goal);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -978,9 +978,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_iterations_number(new_maximum_iterations_number);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -997,9 +997,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_time(new_maximum_time);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1016,21 +1016,21 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_tolerance(new_tolerance);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
 
 }
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the golden section order object.
 /// @param file_name Name of golden section order XML-type file.
 
-void GoldenSectionOrder::save(const std::string& file_name) const
+void GoldenSectionOrder::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -1040,12 +1040,12 @@ void GoldenSectionOrder::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a golden section order object from a XML-type file.
 /// @param file_name Name of golden section order XML-type file.
 
-void GoldenSectionOrder::load(const std::string& file_name)
+void GoldenSectionOrder::load(const string& file_name)
 {
    set_default();
 
@@ -1053,13 +1053,13 @@ void GoldenSectionOrder::load(const std::string& file_name)
 
    if(document.LoadFile(file_name.c_str()))
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: GoldenSectionOrder class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
@@ -1068,7 +1068,7 @@ void GoldenSectionOrder::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

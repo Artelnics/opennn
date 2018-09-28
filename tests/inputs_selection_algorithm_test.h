@@ -32,55 +32,55 @@ public:
 
    // CONSTRUCTOR
 
-   explicit InputsSelectionAlgorithmTest(void);
+   explicit InputsSelectionAlgorithmTest();
 
 
    // DESTRUCTOR
 
-   virtual ~InputsSelectionAlgorithmTest(void);
+   virtual ~InputsSelectionAlgorithmTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_training_strategy_pointer(void);
+   void test_get_training_strategy_pointer();
 
 
-   void test_get_loss_calculation_method(void);
+   void test_get_loss_calculation_method();
 
-   void test_write_loss_calculation_method(void) ;
+   void test_write_loss_calculation_method() ;
 
    // Set methods
 
-   void test_set_training_strategy_pointer(void);
+   void test_set_training_strategy_pointer();
 
-   void test_set_default(void);
+   void test_set_default();
 
-   void test_set_loss_calculation_method(void);
+   void test_set_loss_calculation_method();
 
    // Performances calculation methods
 
-   void test_set_neural_inputs(void);
+   void test_set_neural_inputs();
 
-   void test_perform_minimum_model_evaluation(void);
-   void test_perform_maximum_model_evaluation(void);
-   void test_perform_mean_model_evaluation(void);
+   void test_perform_minimum_model_evaluation();
+   void test_perform_maximum_model_evaluation();
+   void test_perform_mean_model_evaluation();
 
-   void test_get_final_losss(void);
+   void test_get_final_losss();
 
-   void test_perform_model_evaluation(void);
+   void test_perform_model_evaluation();
 
-   void test_get_parameters_order(void);
+   void test_get_parameters_order();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 

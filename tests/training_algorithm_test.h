@@ -32,52 +32,52 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit TrainingAlgorithmTest(void); 
+   explicit TrainingAlgorithmTest(); 
 
 
    // DESTRUCTOR
 
-   virtual ~TrainingAlgorithmTest(void);
+   virtual ~TrainingAlgorithmTest();
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Get methods
 
-   void test_get_loss_index_pointer(void);
+   void test_get_loss_index_pointer();
 
-   void test_get_display(void);
+   void test_get_display();
 
    // Set methods
 
-   void test_set_loss_index_pointer(void);
+   void test_set_loss_index_pointer();
 
-   void test_set_display(void);
+   void test_set_display();
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
    // Training methods
 
-   void test_perform_training(void);
+   void test_perform_training();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
-   void test_print(void);
-   void test_save(void);
-   void test_load(void);
+   void test_print();
+   void test_save();
+   void test_load();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -86,7 +86,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

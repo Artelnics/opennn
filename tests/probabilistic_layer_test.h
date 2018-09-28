@@ -42,68 +42,68 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit ProbabilisticLayerTest(void);
+   explicit ProbabilisticLayerTest();
 
 
    // DESTRUCTOR
 
-   virtual ~ProbabilisticLayerTest(void);
+   virtual ~ProbabilisticLayerTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
    // Probabilistic layer
 
-   void test_count_probabilistic_neurons_number(void);
+   void test_count_probabilistic_neurons_number();
 
    // Output variables probabilistic postprocessing
 
 
    // Display messages
 
-   void test_get_display(void);
+   void test_get_display();
 
    // SET METHODS
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
    // Display messages
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Neural network initialization methods
 
-   void test_initialize_random(void);
+   void test_initialize_random();
 
   // Probabilistic post-processing
 
-   void test_calculate_outputs(void);
-   void test_calculate_Jacobian(void);
-   void test_calculate_Hessian_form(void);
+   void test_calculate_outputs();
+   void test_calculate_Jacobian();
+   void test_calculate_Hessian_form();
 
    // Expression methods
 
-   void test_get_layer_expression(void);
+   void test_get_layer_expression();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -112,7 +112,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
