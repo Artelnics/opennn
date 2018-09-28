@@ -6,7 +6,7 @@
 /*   P E R F O R M A N C E   F U N C T I O N A L   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -51,14 +51,14 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
 
 /// This abstract class represents the concept of loss functional for a neural network. 
 /// A loss functional is composed of two terms: An error term and a regularization term.
-/// Any derived class must implement the calculate_loss(void) method.
+/// Any derived class must implement the calculate_loss() method.
 
 class LossIndex
 {
@@ -67,7 +67,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit LossIndex(void);
+   explicit LossIndex();
 
    // OBJECTIVE FUNCTIONAL CONSTRUCTOR
 
@@ -75,11 +75,15 @@ public:
 
    // NEURAL NETWORK CONSTRUCTOR
 
-   explicit LossIndex(NeuralNetwork*);
+    explicit LossIndex(NeuralNetwork*);
+
+    explicit LossIndex(NeuralNetwork&);
 
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
    explicit LossIndex(NeuralNetwork*, DataSet*);
+
+   explicit LossIndex(NeuralNetwork&, DataSet&);
 
    // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
 
@@ -91,7 +95,7 @@ public:
 
    // FILE CONSTRUCTOR
 
-   explicit LossIndex(const std::string&);
+   explicit LossIndex(const string&);
 
    // XML CONSTRUCTOR
 
@@ -104,7 +108,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~LossIndex(void);
+   virtual ~LossIndex();
 
    // STRUCTURES 
 
@@ -184,27 +188,27 @@ public:
 
    // Check methods
 
-   void check_neural_network(void) const;
+   void check_neural_network() const;
 
-   void check_error_terms(void) const;
+   void check_error_terms() const;
 
    // Get methods
 
    /// Returns a pointer to the neural network associated to the loss functional.
 
-   inline NeuralNetwork* get_neural_network_pointer(void) const 
+   inline NeuralNetwork* get_neural_network_pointer() const 
    {
       #ifdef __OPENNN_DEBUG__
 
       if(!neural_network_pointer)
       {
-           std::ostringstream buffer;
+           ostringstream buffer;
 
            buffer << "OpenNN Exception: LossIndex class.\n"
-                  << "NeuralNetwork* get_neural_network_pointer(void) const method.\n"
+                  << "NeuralNetwork* get_neural_network_pointer() const method.\n"
                   << "Neural network pointer is NULL.\n";
 
-           throw std::logic_error(buffer.str());
+           throw logic_error(buffer.str());
       }
 
       #endif
@@ -214,19 +218,19 @@ public:
 
    /// Returns a pointer to the mathematical model associated to the loss functional.
 
-   inline MathematicalModel* get_mathematical_model_pointer(void) const
+   inline MathematicalModel* get_mathematical_model_pointer() const
    {
         #ifdef __OPENNN_DEBUG__
 
         if(!mathematical_model_pointer)
         {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "MathematicalModel* get_mathematical_model_pointer(void) const method.\n"
+                    << "MathematicalModel* get_mathematical_model_pointer() const method.\n"
                     << "MathematicalModel pointer is NULL.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
         }
 
         #endif
@@ -236,19 +240,19 @@ public:
 
    /// Returns a pointer to the data set associated to the loss functional.
 
-   inline DataSet* get_data_set_pointer(void) const
+   inline DataSet* get_data_set_pointer() const
    {
         #ifdef __OPENNN_DEBUG__
 
         if(!data_set_pointer)
         {
-             std::ostringstream buffer;
+             ostringstream buffer;
 
              buffer << "OpenNN Exception: LossIndex class.\n"
-                    << "DataSet* get_data_set_pointer(void) const method.\n"
+                    << "DataSet* get_data_set_pointer() const method.\n"
                     << "DataSet pointer is NULL.\n";
 
-             throw std::logic_error(buffer.str());
+             throw logic_error(buffer.str());
         }
 
         #endif
@@ -256,46 +260,46 @@ public:
       return(data_set_pointer);
    }
 
-   bool has_neural_network(void) const;
-   bool has_mathematical_model(void) const;
-   bool has_data_set(void) const;
+   bool has_neural_network() const;
+   bool has_mathematical_model() const;
+   bool has_data_set() const;
 
-   bool has_selection(void) const;
+   bool has_selection() const;
 
-   bool is_sum_squared_terms(void) const;
+   bool is_sum_squared_terms() const;
 
    // Objective terms
 
-   SumSquaredError* get_sum_squared_error_pointer(void) const;
-   MeanSquaredError* get_mean_squared_error_pointer(void) const;
-   RootMeanSquaredError* get_root_mean_squared_error_pointer(void) const;
-   NormalizedSquaredError* get_normalized_squared_error_pointer(void) const;
-   MinkowskiError* get_Minkowski_error_pointer(void) const;
-   CrossEntropyError* get_cross_entropy_error_pointer(void) const;
-   WeightedSquaredError* get_weighted_squared_error_pointer(void) const;
-   RocAreaError* get_roc_area_error_pointer(void) const;
-   ErrorTerm* get_user_error_pointer(void) const;
+   SumSquaredError* get_sum_squared_error_pointer() const;
+   MeanSquaredError* get_mean_squared_error_pointer() const;
+   RootMeanSquaredError* get_root_mean_squared_error_pointer() const;
+   NormalizedSquaredError* get_normalized_squared_error_pointer() const;
+   MinkowskiError* get_Minkowski_error_pointer() const;
+   CrossEntropyError* get_cross_entropy_error_pointer() const;
+   WeightedSquaredError* get_weighted_squared_error_pointer() const;
+   RocAreaError* get_roc_area_error_pointer() const;
+   ErrorTerm* get_user_error_pointer() const;
 
    // Regularization terms
 
-   NeuralParametersNorm* get_neural_parameters_norm_pointer(void) const;
-   OutputsIntegrals* get_outputs_integrals_pointer(void) const;
-   RegularizationTerm* get_user_regularization_pointer(void) const;
+   NeuralParametersNorm* get_neural_parameters_norm_pointer() const;
+   OutputsIntegrals* get_outputs_integrals_pointer() const;
+   RegularizationTerm* get_user_regularization_pointer() const;
 
    // Functional type methods
 
-   const ErrorType& get_error_type(void) const;
-   const RegularizationType& get_regularization_type(void) const;
+   const ErrorType& get_error_type() const;
+   const RegularizationType& get_regularization_type() const;
 
-   std::string write_error_type(void) const;
-   std::string write_regularization_type(void) const;
+   string write_error_type() const;
+   string write_regularization_type() const;
 
-   std::string write_error_type_text(void) const;
-   std::string write_regularization_type_text(void) const;
+   string write_error_type_text() const;
+   string write_regularization_type_text() const;
 
    // Serialization methods
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // Set methods
 
@@ -307,7 +311,7 @@ public:
    void set_user_error_pointer(ErrorTerm*);
    void set_user_regularization_pointer(RegularizationTerm*);
 
-   void set_default(void);
+   void set_default();
 
 #ifdef __OPENNN_MPI__
    void set_MPI(DataSet*, NeuralNetwork*, const LossIndex*);
@@ -318,23 +322,23 @@ public:
    void set_error_type(const ErrorType&);
    void set_regularization_type(const RegularizationType&);
 
-   void set_error_type(const std::string&);
-   void set_regularization_type(const std::string&);
+   void set_error_type(const string&);
+   void set_regularization_type(const string&);
    
-   void destruct_error_term(void);
-   void destruct_regularization_term(void);
+   void destruct_error_term();
+   void destruct_regularization_term();
 
-   void destruct_all_terms(void);
+   void destruct_all_terms();
 
    void set_display(const bool&);
 
    // Loss index methods
 
-   double calculate_error(void) const;
-   double calculate_regularization(void) const;
+   double calculate_error() const;
+   double calculate_regularization() const;
 
 #ifdef __OPENNN_MPI__
-   double calculate_error_MPI(void) const;
+   double calculate_error_MPI() const;
 #endif
 
    double calculate_error(const Vector<double>&) const;
@@ -344,14 +348,14 @@ public:
    double calculate_error_MPI(const Vector<double>&) const;
 #endif
 
-   Vector<double> calculate_error_terms(void) const;
-   Matrix<double> calculate_error_terms_Jacobian(void) const;
+   Vector<double> calculate_error_terms() const;
+   Matrix<double> calculate_error_terms_Jacobian() const;
 
-   Vector<double> calculate_error_gradient(void) const;
-   Vector<double> calculate_regularization_gradient(void) const;
+   Vector<double> calculate_error_gradient() const;
+   Vector<double> calculate_regularization_gradient() const;
 
 #ifdef __OPENNN_MPI__
-   Vector<double> calculate_error_gradient_MPI(void) const;
+   Vector<double> calculate_error_gradient_MPI() const;
 #endif
 
    Vector<double> calculate_error_gradient(const Vector<double>&) const;
@@ -361,40 +365,40 @@ public:
    Vector<double> calculate_error_gradient_MPI(const Vector<double>&) const;
 #endif
 
-   Matrix<double> calculate_error_Hessian(void) const;
-   Matrix<double> calculate_regularization_Hessian(void) const;
+   Matrix<double> calculate_error_Hessian() const;
+   Matrix<double> calculate_regularization_Hessian() const;
 
    Matrix<double> calculate_error_Hessian(const Vector<double>&) const;
    Matrix<double> calculate_regularization_Hessian(const Vector<double>&) const;
 
-   double calculate_loss(void) const;
-   Vector<double> calculate_gradient(void) const;
-   Matrix<double> calculate_Hessian(void) const;
+   double calculate_loss() const;
+   Vector<double> calculate_gradient() const;
+   Matrix<double> calculate_Hessian() const;
 
    double calculate_loss(const Vector<double>&) const;
    Vector<double> calculate_gradient(const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
-   virtual Matrix<double> calculate_inverse_Hessian(void) const;
+   virtual Matrix<double> calculate_inverse_Hessian() const;
 
    virtual Vector<double> calculate_vector_dot_Hessian(const Vector<double>&) const;
 
-   Vector<double> calculate_terms(void) const;
-   Matrix<double> calculate_terms_Jacobian(void) const;
+   Vector<double> calculate_terms() const;
+   Matrix<double> calculate_terms_Jacobian() const;
 
-   virtual ZeroOrderloss calculate_zero_order_loss(void) const;
-   virtual FirstOrderloss calculate_first_order_loss(void) const;
-   virtual SecondOrderloss calculate_second_order_loss(void) const;
+   virtual ZeroOrderloss calculate_zero_order_loss() const;
+   virtual FirstOrderloss calculate_first_order_loss() const;
+   virtual SecondOrderloss calculate_second_order_loss() const;
 
-   double calculate_selection_error(void) const;
-   //double calculate_selection_regularization(void) const;
-   //double calculate_selection_constraints(void) const;
+   double calculate_selection_error() const;
+   //double calculate_selection_regularization() const;
+   //double calculate_selection_constraints() const;
 
 #ifdef __OPENNN_MPI__
-   double calculate_selection_error_MPI(void) const;
+   double calculate_selection_error_MPI() const;
 #endif
 
-   virtual double calculate_selection_loss(void) const;
+   virtual double calculate_selection_loss() const;
 
    // Taylor approximation methods
 
@@ -410,19 +414,19 @@ public:
 
    // Serialization methods
 
-   virtual tinyxml2::XMLDocument* to_XML(void) const;   
+   virtual tinyxml2::XMLDocument* to_XML() const;   
    virtual void from_XML(const tinyxml2::XMLDocument&);
    
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML(   );
 
-   virtual std::string to_string(void) const;
-   virtual void save(const std::string&) const;   
-   virtual void load(const std::string&);   
+   virtual string object_to_string() const;
+   virtual void save(const string&) const;   
+   virtual void load(const string&);   
 
-   virtual std::string write_information(void);   
+   virtual string write_information();   
 
-   void print(void) const;
+   void print() const;
 
 
 private:
@@ -506,7 +510,6 @@ private:
    /// Display messages to screen. 
 
    bool display;
-
 };
 
 }
@@ -514,7 +517,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

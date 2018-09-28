@@ -32,77 +32,77 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit OutputsTest(void);
+   explicit OutputsTest();
 
 
    // DESTRUCTOR
 
-   virtual ~OutputsTest(void);
+   virtual ~OutputsTest();
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor(void);
-   void test_destructor(void);
+   void test_constructor();
+   void test_destructor();
 
    // Assignment operators methods
 
-   void test_assignment_operator(void);
+   void test_assignment_operator();
 
    // Get methods
 
    // Outputs number
 
-   void test_get_outputs_number(void);
+   void test_get_outputs_number();
 
    // Output variables information
 
-   void test_arrange_names(void);
-   void test_get_name(void);
+   void test_arrange_names();
+   void test_get_name();
 
-   void test_arrange_units(void);
-   void test_get_unit(void);
+   void test_arrange_units();
+   void test_get_unit();
 
-   void test_arrange_descriptions(void);
-   void test_get_description(void);
+   void test_arrange_descriptions();
+   void test_get_description();
 
    // Display messages
 
-   void test_get_display(void);
+   void test_get_display();
 
    // SET METHODS
 
-   void test_set(void);
-   void test_set_default(void);
+   void test_set();
+   void test_set_default();
 
    // Output variables information
 
-   void test_set_names(void);
-   void test_set_name(void);
+   void test_set_names();
+   void test_set_name();
 
-   void test_set_units(void);
-   void test_set_unit(void);
+   void test_set_units();
+   void test_set_unit();
 
-   void test_set_descriptions(void);
-   void test_set_description(void);
+   void test_set_descriptions();
+   void test_set_description();
 
    // Display messages
 
-   void test_set_display(void);
+   void test_set_display();
 
    // Initialization methods
 
-   void test_initialize_random(void);
+   void test_initialize_random();
 
    // Serialization methods
 
-   void test_to_XML(void);
-   void test_from_XML(void);
+   void test_to_XML();
+   void test_from_XML();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 };
 
 
@@ -111,7 +111,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

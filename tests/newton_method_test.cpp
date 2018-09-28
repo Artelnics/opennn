@@ -20,19 +20,19 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-NewtonMethodTest::NewtonMethodTest(void) : UnitTesting() 
+NewtonMethodTest::NewtonMethodTest() : UnitTesting() 
 {   
 }
 
 
 // DESTRUCTOR
 
-NewtonMethodTest::~NewtonMethodTest(void)
+NewtonMethodTest::~NewtonMethodTest()
 {
 }
 
 
-void NewtonMethodTest::test_constructor(void)
+void NewtonMethodTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -50,13 +50,13 @@ void NewtonMethodTest::test_constructor(void)
 }
 
 
-void NewtonMethodTest::test_destructor(void)
+void NewtonMethodTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void NewtonMethodTest::test_calculate_gradient_descent_training_direction(void)
+void NewtonMethodTest::test_calculate_gradient_descent_training_direction()
 {
    message += "test_calculate_gradient_descent_training_direction\n";
 
@@ -77,16 +77,16 @@ void NewtonMethodTest::test_calculate_gradient_descent_training_direction(void)
 }
 
 
-void NewtonMethodTest::test_calculate_training_direction(void)
+void NewtonMethodTest::test_calculate_training_direction()
 {
    message += "test_calculate_training_direction\n";
 
 }
 
 
-/// @todo
+// @todo
 
-void NewtonMethodTest::test_perform_training(void)
+void NewtonMethodTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -180,7 +180,7 @@ void NewtonMethodTest::test_perform_training(void)
 }
 
 
-void NewtonMethodTest::test_to_XML(void)
+void NewtonMethodTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -198,7 +198,7 @@ void NewtonMethodTest::test_to_XML(void)
 }
 
 
-void NewtonMethodTest::test_from_XML(void)
+void NewtonMethodTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -216,7 +216,7 @@ void NewtonMethodTest::test_from_XML(void)
 }
 
 
-void NewtonMethodTest::test_resize_training_history(void)
+void NewtonMethodTest::test_resize_training_history()
 {
    message += "test_resize_training_history\n";
 
@@ -243,7 +243,7 @@ void NewtonMethodTest::test_resize_training_history(void)
 }
 
 
-void NewtonMethodTest::test_set_reserve_all_training_history(void)
+void NewtonMethodTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -265,7 +265,7 @@ void NewtonMethodTest::test_set_reserve_all_training_history(void)
 }
 
 
-void NewtonMethodTest::run_test_case(void)
+void NewtonMethodTest::run_test_case()
 {
    message += "Running Newton method test case...\n";
 
@@ -296,7 +296,7 @@ void NewtonMethodTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

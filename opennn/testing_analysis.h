@@ -6,7 +6,7 @@
 /*   T E S T I N G   A N A L Y S I S   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -46,7 +46,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit TestingAnalysis(void);
+   explicit TestingAnalysis();
 
    // NEURAL NETWORK CONSTRUCTOR
 
@@ -78,12 +78,12 @@ public:
 
    // FILE CONSTRUCTOR
 
-   explicit TestingAnalysis(const std::string&);
+   explicit TestingAnalysis(const string&);
 
 
    // DESTRUCTOR
 
-   virtual ~TestingAnalysis(void);
+   virtual ~TestingAnalysis();
 
     // STRUCTURES
 
@@ -91,17 +91,24 @@ public:
     /// Structure with the results from a linear regression analysis.
     ///
 
-    struct LinearRegressionResults
+    struct LinearRegressionAnalysis
     {
        /// Intercept, slope and correlation coefficient for each output variable.
 
-       Vector< LinearRegressionParameters<double> > linear_regression_parameters;
+       //LinearRegressionParameters<double> linear_regression_parameters;
 
        /// Target data from data set and output data from neural network.
 
-       Vector< Matrix<double> > target_output_data;
+       double correlation = -1;
 
-       void save(const std::string&) const;
+       double intercept = -1;
+
+       double slope = -1;
+
+       Vector<double> targets;
+       Vector<double> outputs;
+
+//       void save(const string&) const;
     };
 
     ///
@@ -117,6 +124,10 @@ public:
         /// Area under a ROC curve.
 
         double area_under_curve;
+
+        /// Confidence limit
+
+        double confidence_limit;
 
         /// Optimal threshold of a ROC curve.
 
@@ -170,11 +181,11 @@ public:
 
    // Get methods
 
-   NeuralNetwork* get_neural_network_pointer(void) const;
-   DataSet* get_data_set_pointer(void) const;
-   MathematicalModel* get_mathematical_model_pointer(void) const;
+   NeuralNetwork* get_neural_network_pointer() const;
+   DataSet* get_data_set_pointer() const;
+   MathematicalModel* get_mathematical_model_pointer() const;
 
-   const bool& get_display(void) const;
+   const bool& get_display() const;
 
    // Set methods
 
@@ -184,45 +195,74 @@ public:
 
    void set_display(const bool&);
 
-   void set_default(void);
+   void set_default();
 
    // Checking methods
 
-   void check(void) const;
+   void check() const;
 
    // Target and output data methods
 
-   Vector< Matrix<double> > calculate_target_output_data(void) const;
+   Vector< Matrix<double> > calculate_target_output_data() const;
+   Vector< Matrix<double> > calculate_forecasting_target_output_data() const;
 
    // Error data methods
 
-   Vector< Matrix<double> > calculate_error_data(void) const;
+   Vector< Matrix<double> > calculate_error_data() const;
+   Vector< Matrix<double> > calculate_forecasting_error_data() const;
 
-   Vector< Vector< Statistics<double> > > calculate_error_data_statistics(void) const;
-   Vector< Matrix<double> > calculate_error_data_statistics_matrices(void) const;
+   Vector< Statistics<double> > calculate_absolute_errors_statistics() const;
+   Vector< Statistics<double> > calculate_percentage_errors_statistics() const;
+
+   Vector< Vector< Statistics<double> > > calculate_error_data_statistics() const;
+   void print_error_data_statistics() const;
+
+   Vector< Vector< Statistics<double> > > calculate_forecasting_error_data_statistics() const;
+   Vector< Matrix<double> > calculate_error_data_statistics_matrices() const;
+   Vector< Matrix<double> > calculate_forecasting_error_data_statistics_matrices() const;
 
    Vector< Histogram<double> > calculate_error_data_histograms(const size_t& = 10) const;
+   Vector< Histogram<double> > calculate_forecasting_error_data_histograms(const size_t& = 10) const;
 
    Vector< Vector<size_t> > calculate_maximal_errors(const size_t& = 10) const;
+   Vector< Vector<size_t> > calculate_forecasting_maximal_errors(const size_t& = 10) const;
 
-   Vector<double> calculate_testing_errors(void) const;
-   Vector<double> calculate_classification_testing_errors(void) const;
+   Matrix<double> calculate_errors() const;
+   Matrix<double> calculate_binary_classification_errors() const;
+   Matrix<double> calculate_multiple_classification_errors() const;
+
+   Vector<double> calculate_training_errors() const;
+   Vector<double> calculate_binary_classification_training_errors() const;
+   Vector<double> calculate_multiple_classification_training_errors() const;
+
+   Vector<double> calculate_selection_errors() const;
+   Vector<double> calculate_binary_classification_selection_errors() const;
+   Vector<double> calculate_multiple_classification_selection_errors() const;
+
+   Vector<double> calculate_testing_errors() const;
+   Vector<double> calculate_forecasting_testing_errors() const;
+   Vector<double> calculate_binary_classification_testing_errors() const;
+   Vector<double> calculate_multiple_classification_testing_errors() const;
 
    double calculate_testing_normalized_squared_error(const Matrix<double>&, const Matrix<double>&) const;
    double calculate_testing_cross_entropy_error(const Matrix<double>&, const Matrix<double>&) const;
-   double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&) const;
+   double calculate_testing_weighted_squared_error(const Matrix<double>&, const Matrix<double>&, const Vector<double>& = Vector<double>()) const;
 
    // Linear regression analysis methods
 
-   Vector< LinearRegressionParameters<double> > calculate_linear_regression_parameters(void) const;
+   Vector< LinearRegressionParameters<double> > calculate_linear_regression_parameters() const;
+   Vector< LinearRegressionParameters<double> > calculate_forecasting_linear_regression_parameters() const;
 
-   LinearRegressionResults perform_linear_regression_analysis(void) const;
+   void print_linear_regression_correlations() const;
+
+   Vector<LinearRegressionAnalysis> perform_linear_regression_analysis() const;
+   LinearRegressionAnalysis perform_forecasting_linear_regression_analysis() const;
 
    // Binary classifcation methods
 
-   Vector<double> calculate_binary_classification_tests(void) const;
+   Vector<double> calculate_binary_classification_tests() const;
 
-   double calculate_logloss(void) const;
+   double calculate_logloss() const;
 
    // Confusion methods
 
@@ -231,44 +271,47 @@ public:
 
    Vector<size_t> calculate_positives_negatives_rate(const Matrix<double>&, const Matrix<double>&) const;
 
-   Matrix<size_t> calculate_confusion(void) const;
+   Matrix<size_t> calculate_confusion(const Matrix<double>&, const Matrix<double>&) const;
+   Matrix<size_t> calculate_confusion() const;
 
    // ROC curve
 
-   RocAnalysisResults perform_roc_analysis(void) const;
+   RocAnalysisResults perform_roc_analysis() const;
 
    double calculate_Wilcoxon_parameter(const double&, const double&) const;
 
    Matrix<double> calculate_roc_curve(const Matrix<double>& ,const Matrix<double>&) const;
    double calculate_area_under_curve(const Matrix<double>& ,const Matrix<double>&) const;
+   double calculate_area_under_curve_confidence_limit(const Matrix<double>&, const Matrix<double>&) const;
+   double calculate_area_under_curve_confidence_limit(const Matrix<double> &, const Matrix<double> &, const double&) const;
    double calculate_optimal_threshold(const Matrix<double>& ,const Matrix<double>&) const;
    double calculate_optimal_threshold(const Matrix<double>& ,const Matrix<double>&, const Matrix<double>&) const;
 
    // Lift Chart
 
-   Matrix<double> perform_cumulative_gain_analysis(void) const;
+   Matrix<double> perform_cumulative_gain_analysis() const;
    Matrix<double> calculate_cumulative_gain(const Matrix<double>& ,const Matrix<double>&) const;
    Matrix<double> calculate_negative_cumulative_gain(const Matrix<double>&, const Matrix<double>&)const;
 
-   Matrix<double> perform_lift_chart_analysis(void) const;
+   Matrix<double> perform_lift_chart_analysis() const;
    Matrix<double> calculate_lift_chart(const Matrix<double>&) const;
 
-   KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis(void) const;
+   KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
    Vector<double> calculate_maximum_gain(const Matrix<double>&, const Matrix<double>&) const;
 
    // Calibration plot
 
-   Matrix<double> perform_calibration_plot_analysis(void) const;
+   Matrix<double> perform_calibration_plot_analysis() const;
 
    Matrix<double> calculate_calibration_plot(const Matrix<double>& , const Matrix<double>&) const;
 
-   //Output histogram
+   // Output histogram
 
    Vector < Histogram <double> > calculate_output_histogram(const Matrix<double>& , const size_t& = 10) const;
 
    // Binary classification rates
 
-   BinaryClassifcationRates calculate_binary_classification_rates(void) const;
+   BinaryClassifcationRates calculate_binary_classification_rates() const;
 
    Vector<size_t> calculate_true_positive_instances(const Matrix<double>& , const Matrix<double>&, const Vector<size_t>&, const double&) const;
    Vector<size_t> calculate_false_positive_instances(const Matrix<double>& , const Matrix<double>&, const Vector<size_t>&, const double& ) const;
@@ -277,29 +320,34 @@ public:
 
    // Multiple classification rates
 
-   Matrix< Vector<size_t> > calculate_multiple_classification_rates(void) const;
+   Matrix< Vector<size_t> > calculate_multiple_classification_rates() const;
 
    Matrix< Vector<size_t> > calculate_multiple_classification_rates(const Matrix<double>&, const Matrix<double>&, const Vector<size_t>&) const;
 
    // Forecasting methods
 
    Vector< Vector<double> > calculate_error_autocorrelation(const size_t& = 10) const;
+   Vector< Vector<double> > calculate_forecasting_error_autocorrelation(const size_t& = 10) const;
    Vector< Vector<double> > calculate_input_error_cross_correlation(const size_t& = 10) const;
+   Vector< Vector<double> > calculate_forecasting_input_error_cross_correlation(const size_t& = 10) const;
+
+   Vector< Vector<double> > calculate_forecasting_time_series() const;
+
 
    // Serialization methods
 
-   std::string to_string(void) const;
+   string object_to_string() const;
 
-   void print(void) const;
+   void print() const;
 
-   virtual tinyxml2::XMLDocument* to_XML(void) const;
+   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    //virtual void read_XML(   );
 
-   void save(const std::string&) const;
-   void load(const std::string&);
+   void save(const string&) const;
+   void load(const string&);
 
 
 private: 
@@ -328,7 +376,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

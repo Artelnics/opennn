@@ -19,21 +19,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-DataSetTest::DataSetTest(void) : UnitTesting() 
+DataSetTest::DataSetTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-DataSetTest::~DataSetTest(void)
+DataSetTest::~DataSetTest()
 {
 }
 
 
 // METHODS
 
-void DataSetTest::test_constructor(void)
+void DataSetTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -71,7 +71,7 @@ void DataSetTest::test_constructor(void)
 
    // File constructor
 
-//   const std::string file_name = "../data/data_set.xml";
+//   const string file_name = "../data/data_set.xml";
 
 //   ds1.save(file_name);
 
@@ -90,7 +90,7 @@ void DataSetTest::test_constructor(void)
 }
 
 
-void DataSetTest::test_destructor(void)
+void DataSetTest::test_destructor()
 {
    message += "test_destructor\n";
 
@@ -100,7 +100,7 @@ void DataSetTest::test_destructor(void)
 }
 
 
-void DataSetTest::test_assignment_operator(void)
+void DataSetTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -112,7 +112,7 @@ void DataSetTest::test_assignment_operator(void)
 }
 
 
-void DataSetTest::test_get_instances_number(void) 
+void DataSetTest::test_get_instances_number() 
 {
    message += "test_get_instances_number\n";
 
@@ -122,7 +122,7 @@ void DataSetTest::test_get_instances_number(void)
 }
 
 
-void DataSetTest::test_get_variables_number(void) 
+void DataSetTest::test_get_variables_number() 
 {
    message += "test_get_variables_number\n";
 
@@ -132,7 +132,7 @@ void DataSetTest::test_get_variables_number(void)
 }
 
 
-void DataSetTest::test_get_variables(void) 
+void DataSetTest::test_get_variables() 
 {
    message += "test_get_variables\n";
 
@@ -145,7 +145,7 @@ void DataSetTest::test_get_variables(void)
 }
 
 
-void DataSetTest::test_get_display(void) 
+void DataSetTest::test_get_display() 
 {
    message += "test_get_display\n";
 
@@ -161,7 +161,7 @@ void DataSetTest::test_get_display(void)
 }
 
 
-void DataSetTest::test_get_data(void) 
+void DataSetTest::test_get_data() 
 {
    message += "test_get_data\n";
 
@@ -177,25 +177,25 @@ void DataSetTest::test_get_data(void)
 }
 
 
-void DataSetTest::test_arrange_training_data(void)
+void DataSetTest::test_arrange_training_data()
 {
    message += "test_arrange_training_data\n";
 }
 
 
-void DataSetTest::test_arrange_selection_data(void)
+void DataSetTest::test_arrange_selection_data()
 {
    message += "test_arrange_selection_data\n";
 }
 
 
-void DataSetTest::test_arrange_testing_data(void)
+void DataSetTest::test_arrange_testing_data()
 {
    message += "test_arrange_testing_data\n";
 }
 
 
-void DataSetTest::test_arrange_input_data(void) 
+void DataSetTest::test_arrange_input_data() 
 {
    message += "test_arrange_input_data\n";
 
@@ -214,7 +214,7 @@ void DataSetTest::test_arrange_input_data(void)
 }
 
 
-void DataSetTest::test_arrange_target_data(void) 
+void DataSetTest::test_arrange_target_data() 
 {
    message += "test_arrange_target_data\n";
 
@@ -233,7 +233,7 @@ void DataSetTest::test_arrange_target_data(void)
 }
 
 
-void DataSetTest::test_get_instance(void)
+void DataSetTest::test_get_instance()
 {
    message += "test_get_instance\n";
 
@@ -252,7 +252,7 @@ void DataSetTest::test_get_instance(void)
 }
 
 
-void DataSetTest::test_set(void) 
+void DataSetTest::test_set() 
 {
    message += "test_set\n";
 
@@ -275,7 +275,7 @@ void DataSetTest::test_set(void)
 }
 
 
-void DataSetTest::test_set_instances_number(void) 
+void DataSetTest::test_set_instances_number() 
 {
    message += "test_set_instances_number\n";
 
@@ -287,7 +287,7 @@ void DataSetTest::test_set_instances_number(void)
 }
 
 
-void DataSetTest::test_set_variables_number(void) 
+void DataSetTest::test_set_variables_number() 
 {
    message += "test_set_variables_number\n";
 
@@ -299,13 +299,13 @@ void DataSetTest::test_set_variables_number(void)
 }
 
 
-void DataSetTest::test_set_display(void) 
+void DataSetTest::test_set_display() 
 {
    message += "test_set_display\n";
 }
 
 
-void DataSetTest::test_set_data(void) 
+void DataSetTest::test_set_data() 
 {
    message += "test_set_data\n";
 
@@ -321,7 +321,7 @@ void DataSetTest::test_set_data(void)
 }
 
 
-void DataSetTest::test_set_instance(void)
+void DataSetTest::test_set_instance()
 {
    message += "test_set_instance\n";
 
@@ -337,7 +337,7 @@ void DataSetTest::test_set_instance(void)
 }
 
 
-void DataSetTest::test_add_instance(void) 
+void DataSetTest::test_add_instance() 
 {
    message += "test_add_instance\n";
 
@@ -356,19 +356,21 @@ void DataSetTest::test_add_instance(void)
 }
 
 
-void DataSetTest::test_subtract_instance(void) 
+// @todo
+
+void DataSetTest::test_subtract_instance() 
 {
-   message += "test_subtract_instance\n";
+//   message += "test_subtract_instance\n";
 
-   DataSet ds(3, 1, 1);
+//   DataSet ds(3, 1, 1);
 
-   ds.subtract_instance(1);
+//   ds.subtract_instance(1);
 
-   assert_true(ds.get_instances().get_instances_number() == 2, LOG);
+//   assert_true(ds.get_instances().get_instances_number() == 2, LOG);
 }
 
 
-void DataSetTest::test_calculate_data_statistics(void) 
+void DataSetTest::test_calculate_data_statistics() 
 {
    message += "test_calculate_data_statistics\n";
 
@@ -426,13 +428,13 @@ void DataSetTest::test_calculate_data_statistics(void)
 }
 
 
-void DataSetTest::test_calculate_data_statistics_missing_values(void)
+void DataSetTest::test_calculate_data_statistics_missing_values()
 {
     message += "test_calculate_data_statistics_missing_values\n";
 
-    const std::string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
-    std::ofstream file;
+    ofstream file;
 
     DataSet ds;
 
@@ -442,7 +444,7 @@ void DataSetTest::test_calculate_data_statistics_missing_values(void)
 
     Matrix<double> data;
 
-    std::string data_string;
+    string data_string;
 
     ds.set_separator("Space");
     ds.set_missing_values_label("?");
@@ -463,7 +465,7 @@ void DataSetTest::test_calculate_data_statistics_missing_values(void)
 }
 
 
-void DataSetTest::test_calculate_training_instances_statistics(void)
+void DataSetTest::test_calculate_training_instances_statistics()
 {
    message += "test_calculate_training_instances_statistics\n";
 
@@ -486,7 +488,7 @@ void DataSetTest::test_calculate_training_instances_statistics(void)
 }
 
 
-void DataSetTest::test_calculate_selection_instances_statistics(void)
+void DataSetTest::test_calculate_selection_instances_statistics()
 {
    message += "test_calculate_selection_instances_statistics\n";
 
@@ -508,7 +510,7 @@ void DataSetTest::test_calculate_selection_instances_statistics(void)
 }
 
 
-void DataSetTest::test_calculate_testing_instances_statistics(void)
+void DataSetTest::test_calculate_testing_instances_statistics()
 {
    message += "test_calculate_testing_instances_statistics\n";
 
@@ -530,68 +532,68 @@ void DataSetTest::test_calculate_testing_instances_statistics(void)
 }
 
 
-void DataSetTest::test_calculate_input_variables_statistics(void)
+void DataSetTest::test_calculate_input_statistics()
 {
-   message += "test_calculate_input_variables_statistics\n";
+   message += "test_calculate_input_statistics\n";
 }
 
 
-void DataSetTest::test_calculate_targets_statistics(void)
+void DataSetTest::test_calculate_targets_statistics()
 {
    message += "test_calculate_targets_statistics\n";
 }
 
 
-void DataSetTest::test_calculate_linear_correlations(void)
+void DataSetTest::test_calculate_linear_correlations()
 {
    message += "test_calculate_linear_correlations\n";
 }
 
-void DataSetTest::test_calculate_autocorrelation(void)
+void DataSetTest::test_calculate_autocorrelations()
 {
-    message += "test_calculate_autocorrelation\n";
+    message += "test_calculate_autocorrelations\n";
 
     DataSet ds;
 
-    Matrix<double> autocorrelation;
+    Matrix<double> autocorrelations;
 
     ds.set(20, 1, 1);
 
     ds.randomize_data_normal();
 
-    autocorrelation = ds.calculate_autocorrelation();
+    autocorrelations = ds.calculate_autocorrelations();
 
-    assert_true(autocorrelation.get_columns_number() == 10, LOG);
-    assert_true(autocorrelation.get_rows_number() == 2, LOG);
+    assert_true(autocorrelations.get_columns_number() == 10, LOG);
+    assert_true(autocorrelations.get_rows_number() == 2, LOG);
 }
 
 
-void DataSetTest::test_calculate_cross_correlation(void)
+void DataSetTest::test_calculate_cross_correlations()
 {
-    message += "test_calculate_cross_correlation";
+    message += "test_calculate_cross_correlations";
 
     DataSet ds;
 
-    Matrix< Vector<double> > cross_correlation;
+    Matrix< Vector<double> > cross_correlations;
 
     ds.set(20, 5, 1);
 
     ds.randomize_data_normal();
 
-    cross_correlation = ds.calculate_cross_correlation();
+    cross_correlations = ds.calculate_cross_correlations();
 
-    assert_true(cross_correlation.get_columns_number() == 6, LOG);
-    assert_true(cross_correlation.get_rows_number() == 6, LOG);
+    assert_true(cross_correlations.get_columns_number() == 6, LOG);
+    assert_true(cross_correlations.get_rows_number() == 6, LOG);
 }
 
 
-void DataSetTest::test_calculate_data_histograms(void)
+void DataSetTest::test_calculate_data_histograms()
 {
    message += "test_calculate_data_histograms\n";
 }
 
 
-void DataSetTest::test_filter_data(void)
+void DataSetTest::test_filter_data()
 {
    message += "test_filter_data\n";
 
@@ -619,7 +621,7 @@ void DataSetTest::test_filter_data(void)
 }
 
 
-void DataSetTest::test_scale_inputs_mean_standard_deviation(void) 
+void DataSetTest::test_scale_inputs_mean_standard_deviation() 
 {
    message += "test_scale_inputs_mean_standard_deviation\n";
 
@@ -640,7 +642,7 @@ void DataSetTest::test_scale_inputs_mean_standard_deviation(void)
 }
 
 
-void DataSetTest::test_scale_targets_mean_standard_deviation(void) 
+void DataSetTest::test_scale_targets_mean_standard_deviation() 
 {
    message += "test_scale_targets_mean_standard_deviation\n";
 
@@ -661,7 +663,7 @@ void DataSetTest::test_scale_targets_mean_standard_deviation(void)
 }
 
 
-void DataSetTest::test_scale_inputs_minimum_maximum(void) 
+void DataSetTest::test_scale_inputs_minimum_maximum() 
 {
    message += "test_scale_inputs_minimum_maximum\n";
 
@@ -682,7 +684,7 @@ void DataSetTest::test_scale_inputs_minimum_maximum(void)
 }
 
 
-void DataSetTest::test_scale_targets_minimum_maximum(void) 
+void DataSetTest::test_scale_targets_minimum_maximum() 
 {
    message += "test_scale_targets_minimum_maximum\n";
 
@@ -703,7 +705,7 @@ void DataSetTest::test_scale_targets_minimum_maximum(void)
 }
 
 
-void DataSetTest::test_scale_data_minimum_maximum(void)
+void DataSetTest::test_scale_data_minimum_maximum()
 {
    message += "test_scale_data_minimum_maximum\n";
 
@@ -731,7 +733,7 @@ void DataSetTest::test_scale_data_minimum_maximum(void)
 }
 
 
-void DataSetTest::test_scale_data_mean_standard_deviation(void)
+void DataSetTest::test_scale_data_mean_standard_deviation()
 {
    message += "test_scale_data_mean_standard_deviation\n";
 
@@ -759,19 +761,19 @@ void DataSetTest::test_scale_data_mean_standard_deviation(void)
 }
 
 
-void DataSetTest::test_unscale_data_mean_standard_deviation(void)
+void DataSetTest::test_unscale_data_mean_standard_deviation()
 {
    message += "test_unscale_data_mean_standard_deviation\n";
 }
 
 
-void DataSetTest::test_unscale_data_minimum_maximum(void)
+void DataSetTest::test_unscale_data_minimum_maximum()
 {
    message += "test_unscale_data_minimum_maximum\n";
 }
 
 
-void DataSetTest::test_unscale_inputs_mean_standard_deviation(void) 
+void DataSetTest::test_unscale_inputs_mean_standard_deviation() 
 {
    message += "test_unscale_inputs_mean_standard_deviation\n";
 
@@ -797,7 +799,7 @@ void DataSetTest::test_unscale_inputs_mean_standard_deviation(void)
 }
 
 
-void DataSetTest::test_unscale_targets_mean_standard_deviation(void) 
+void DataSetTest::test_unscale_targets_mean_standard_deviation() 
 {
    message += "test_unscale_targets_mean_standard_deviation\n";
    
@@ -818,13 +820,13 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation(void)
 }
 
 
-void DataSetTest::test_unscale_variables_mean_standard_deviation(void) 
+void DataSetTest::test_unscale_variables_mean_standard_deviation() 
 {
    message += "test_unscale_variables_mean_standard_deviation\n";
 }
 
 
-void DataSetTest::test_unscale_inputs_minimum_maximum(void) 
+void DataSetTest::test_unscale_inputs_minimum_maximum() 
 {
    message += "test_unscale_inputs_minimum_maximum\n"; 
 
@@ -849,7 +851,7 @@ void DataSetTest::test_unscale_inputs_minimum_maximum(void)
 }
 
 
-void DataSetTest::test_unscale_targets_minimum_maximum(void) 
+void DataSetTest::test_unscale_targets_minimum_maximum() 
 {
    message += "test_unscale_targets_minimum_maximum\n";
 
@@ -871,13 +873,13 @@ void DataSetTest::test_unscale_targets_minimum_maximum(void)
 }
 
 
-void DataSetTest::test_unscale_variables_minimum_maximum(void) 
+void DataSetTest::test_unscale_variables_minimum_maximum() 
 {
    message += "test_unscale_variables_minimum_maximum\n"; 
 }
 
 
-void DataSetTest::test_subtract_constant_variables(void)
+void DataSetTest::test_subtract_constant_variables()
 {
    message += "test_subtract_constant_variables\n"; 
 
@@ -896,26 +898,26 @@ void DataSetTest::test_subtract_constant_variables(void)
 }
 
 
-void DataSetTest::test_subtract_repeated_instances(void)
+void DataSetTest::test_subtract_repeated_instances()
 {
    message += "test_subtract_repeated_instances\n"; 
 }
 
 
-void DataSetTest::test_initialize_data(void)
+void DataSetTest::test_initialize_data()
 {
    message += "test_initialize_data\n";
 }
 
 
-void DataSetTest::test_calculate_target_distribution(void)
+void DataSetTest::test_calculate_target_distribution()
 {
     message += "test_calculate_target_distribution\n";
 
 }
 
 
-void DataSetTest::test_unuse_most_populated_target(void)
+void DataSetTest::test_unuse_most_populated_target()
 {
     message += "test_unused_most_populated_target\n";
 
@@ -961,7 +963,7 @@ void DataSetTest::test_unuse_most_populated_target(void)
     assert_true(ds3.get_instances().count_unused_instances_number() == 1, LOG);
 }
 
-void DataSetTest::test_balance_binary_targets_distribution(void)
+void DataSetTest::test_balance_binary_targets_distribution()
 {
     message += "test_balance_binary_target_distribution\n";
 
@@ -1195,7 +1197,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     {
     DataSet ds(4,1,1);
 
-    const std::string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
     ds.set_data_file_name(data_file_name);
     ds.set_header_line(false);
@@ -1203,13 +1205,13 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     ds.set_file_type("dat");
     ds.set_missing_values_label("NaN");
 
-    const std::string data_string =
+    const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,NaN\n"
     "7.0,3.2,0.0\n"
     "6.3,3.3,0.0";
 
-    std::ofstream file;
+    ofstream file;
 
     file.open(data_file_name.c_str());
     file << data_string;
@@ -1217,7 +1219,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
 
     ds.load_data();
 
-    ds.scrub_missing_values_unuse();
+    ds.impute_missing_values_unuse();
 
     ds.balance_binary_targets_distribution();
 
@@ -1232,7 +1234,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     {
     DataSet ds(16,1,1);
 
-    const std::string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
     ds.set_data_file_name(data_file_name);
     ds.set_header_line(false);
@@ -1240,7 +1242,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     ds.set_file_type("dat");
     ds.set_missing_values_label("NaN");
 
-    const std::string data_string =
+    const string data_string =
     "5.1,3.5,1.0\n"
     "7.0,3.2,1.0\n"
     "7.0,3.2,0.0\n"
@@ -1262,7 +1264,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
     "7.0,3.2,NaN\n"
     "6.3,3.3,NaN\n";
 
-    std::ofstream file;
+    ofstream file;
 
     file.open(data_file_name.c_str());
     file << data_string;
@@ -1270,7 +1272,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
 
     ds.load_data();
 
-    ds.scrub_missing_values_unuse();
+    ds.impute_missing_values_unuse();
 
     ds.balance_binary_targets_distribution();
 
@@ -1281,7 +1283,7 @@ void DataSetTest::test_balance_binary_targets_distribution(void)
 }
 
 
-void DataSetTest::test_balance_multiple_targets_distribution(void)
+void DataSetTest::test_balance_multiple_targets_distribution()
 {
     message += "test_balance_multiple_target_distribution\n";
 
@@ -1367,7 +1369,7 @@ void DataSetTest::test_balance_multiple_targets_distribution(void)
 }
 
 
-void DataSetTest::test_balance_function_regression_targets_distribution(void)
+void DataSetTest::test_balance_function_regression_targets_distribution()
 {
     message += "test_balance_function_regression_targets_distribution.\n";
 
@@ -1488,7 +1490,7 @@ void DataSetTest::test_calculate_instances_distances()
 }
 
 
-void DataSetTest::test_calculate_k_distances(void)
+void DataSetTest::test_calculate_k_distances()
 {
     message += "test_calculate_k_distances\n";
 
@@ -1510,12 +1512,12 @@ void DataSetTest::test_calculate_k_distances(void)
     k_distances = ds.calculate_k_distances(distances, nearest_neighbors_number);
 
     assert_true(k_distances.size() == 10, LOG);
-    assert_true(k_distances[0] == distances(0, distances.arrange_row(0).calculate_minimal_indices(nearest_neighbors_number + 1)[nearest_neighbors_number]), LOG);
-    assert_true(k_distances[9] == distances(9, distances.arrange_row(9).calculate_minimal_indices(nearest_neighbors_number + 1)[nearest_neighbors_number]), LOG);
+    assert_true(k_distances[0] == distances(0, distances.get_row(0).calculate_minimal_indices(nearest_neighbors_number + 1)[nearest_neighbors_number]), LOG);
+    assert_true(k_distances[9] == distances(9, distances.get_row(9).calculate_minimal_indices(nearest_neighbors_number + 1)[nearest_neighbors_number]), LOG);
 }
 
 
-void DataSetTest::test_calculate_reachability_distances(void)
+void DataSetTest::test_calculate_reachability_distances()
 {
     message += "test_calculate_reachability_distances\n";
 
@@ -1536,16 +1538,16 @@ void DataSetTest::test_calculate_reachability_distances(void)
 
     assert_true(reachability_distances.get_columns_number() == 10, LOG);
     assert_true(reachability_distances.get_rows_number() == 10, LOG);
-    assert_true(reachability_distances.arrange_row(0).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(1).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(2).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(3).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(4).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(5).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(6).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(7).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(8).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(9).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(0).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(1).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(2).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(3).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(4).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(5).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(6).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(7).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(8).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(9).is_in(3.0, 3.0), LOG);
 
     // Test
 
@@ -1556,16 +1558,16 @@ void DataSetTest::test_calculate_reachability_distances(void)
 
     assert_true(reachability_distances.get_columns_number() == 10, LOG);
     assert_true(reachability_distances.get_rows_number() == 10, LOG);
-    assert_true(reachability_distances.arrange_row(0).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(1).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(2).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(3).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(4).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(5).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(6).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(7).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(8).is_in(3.0, 3.0), LOG);
-    assert_true(reachability_distances.arrange_row(9).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(0).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(1).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(2).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(3).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(4).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(5).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(6).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(7).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(8).is_in(3.0, 3.0), LOG);
+    assert_true(reachability_distances.get_row(9).is_in(3.0, 3.0), LOG);
 }
 
 
@@ -1589,7 +1591,7 @@ void DataSetTest::test_calculate_reachability_density()
 }
 
 
-void DataSetTest::test_calculate_local_outlier_factor(void)
+void DataSetTest::test_calculate_local_outlier_factor()
 {
     message += "test_calculate_local_outlier_factor\n";
 
@@ -1624,7 +1626,7 @@ void DataSetTest::test_calculate_local_outlier_factor(void)
 }
 
 
-void DataSetTest::test_clean_local_outlier_factor(void)
+void DataSetTest::test_clean_local_outlier_factor()
 {
     message += "test_clean_local_outlier_factor\n";
 
@@ -1651,7 +1653,7 @@ void DataSetTest::test_clean_local_outlier_factor(void)
 }
 */
 
-void DataSetTest::test_clean_Tukey_outliers(void)
+void DataSetTest::test_clean_Tukey_outliers()
 {
     message += "test_clean_Tukey_outliers\n";
 
@@ -1681,14 +1683,14 @@ void DataSetTest::test_clean_Tukey_outliers(void)
 }
 
 
-void DataSetTest::test_generate_data_function_regression(void)
+void DataSetTest::test_generate_data_function_regression()
 {
     message += "test_generate_data_function_regression\n";
 
 }
 
 
-void DataSetTest::test_generate_data_binary_classification(void)
+void DataSetTest::test_generate_data_binary_classification()
 {
     message += "test_generate_data_binary_classification\n";
 
@@ -1708,14 +1710,14 @@ void DataSetTest::test_generate_data_binary_classification(void)
 }
 
 
-void DataSetTest::test_generate_data_multiple_classification(void)
+void DataSetTest::test_generate_data_multiple_classification()
 {
     message += "test_generate_data_multiple_classification\n";
 
 }
 
 
-void DataSetTest::test_to_XML(void) 
+void DataSetTest::test_to_XML() 
 {
    message += "test_to_XML\n";
 
@@ -1731,7 +1733,7 @@ void DataSetTest::test_to_XML(void)
 }
 
 
-void DataSetTest::test_from_XML(void) 
+void DataSetTest::test_from_XML() 
 {
    message += "test_from_XML\n";
 
@@ -1773,7 +1775,7 @@ void DataSetTest::test_from_XML(void)
 }
 
 
-void DataSetTest::test_print(void) 
+void DataSetTest::test_print() 
 {
    message += "test_print\n";
 
@@ -1785,11 +1787,11 @@ void DataSetTest::test_print(void)
 }
 
 
-void DataSetTest::test_save(void) 
+void DataSetTest::test_save() 
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/data_set.xml";
+   string file_name = "../data/data_set.xml";
 
    DataSet ds;
 
@@ -1799,12 +1801,12 @@ void DataSetTest::test_save(void)
 }
 
 
-void DataSetTest::test_load(void) 
+void DataSetTest::test_load() 
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/data_set.xml";
-   std::string data_file_name = "../data/data.dat";
+   string file_name = "../data/data_set.xml";
+   string data_file_name = "../data/data.dat";
 
    DataSet ds;
    DataSet ds_copy;
@@ -1854,17 +1856,17 @@ void DataSetTest::test_load(void)
 }
 
 
-void DataSetTest::test_print_data(void)
+void DataSetTest::test_print_data()
 {
    message += "test_print_data\n";
 }
 
 
-void DataSetTest::test_save_data(void)
+void DataSetTest::test_save_data()
 {
    message += "test_save_data\n";
 
-   std::string data_file_name = "../data/data.dat";
+   string data_file_name = "../data/data.dat";
 
    DataSet ds(2,2,2);
 
@@ -1876,13 +1878,13 @@ void DataSetTest::test_save_data(void)
 }
 
 
-void DataSetTest::test_load_data(void) 
+void DataSetTest::test_load_data() 
 {
    message += "test_load_data\n";
 
-   const std::string data_file_name = "../data/data.dat";
+   const string data_file_name = "../data/data.dat";
 
-   std::ofstream file;
+   ofstream file;
 
    DataSet ds;
 
@@ -1892,7 +1894,7 @@ void DataSetTest::test_load_data(void)
 
    Matrix<double> data;
 
-   std::string data_string;
+   string data_string;
 
    // Test
 
@@ -2287,7 +2289,7 @@ void DataSetTest::test_load_data(void)
 }
 
 
-void DataSetTest::test_get_data_statistics(void)
+void DataSetTest::test_get_data_statistics()
 {
    message += "test_get_data_statistics\n";
 
@@ -2295,88 +2297,88 @@ void DataSetTest::test_get_data_statistics(void)
 }
 
 
-void DataSetTest::test_print_data_statistics(void)
+void DataSetTest::test_print_data_statistics()
 {
    message += "test_print_data_statistics\n";
 }
 
 
-void DataSetTest::test_get_training_instances_statistics(void)
+void DataSetTest::test_get_training_instances_statistics()
 {
    message += "test_get_training_instances_statistics\n";
 
 }
 
 
-void DataSetTest::test_save_training_instances_statistics(void)
+void DataSetTest::test_save_training_instances_statistics()
 {
    message += "test_save_training_instances_statistics\n";
 }
 
 
-void DataSetTest::test_print_training_instances_statistics(void)
+void DataSetTest::test_print_training_instances_statistics()
 {
    message += "test_print_training_instances_statistics\n";
 }
 
 
-void DataSetTest::test_get_selection_instances_statistics(void)
+void DataSetTest::test_get_selection_instances_statistics()
 {
    message += "test_get_selection_instances_statistics\n";
 }
 
 
-void DataSetTest::test_save_selection_instances_statistics(void)
+void DataSetTest::test_save_selection_instances_statistics()
 {
    message += "test_save_selection_instances_statistics\n";
 }
 
 
-void DataSetTest::test_print_selection_instances_statistics(void)
+void DataSetTest::test_print_selection_instances_statistics()
 {
    message += "test_print_selection_instances_statistics\n";
 }
 
 
-void DataSetTest::test_get_testing_instances_statistics(void)
+void DataSetTest::test_get_testing_instances_statistics()
 {
    message += "test_get_testing_instances_statistics\n";
 }
 
 
-void DataSetTest::test_save_testing_instances_statistics(void)
+void DataSetTest::test_save_testing_instances_statistics()
 {
    message += "test_save_testing_instances_statistics\n";
 }
 
 
-void DataSetTest::test_print_testing_instances_statistics(void)
+void DataSetTest::test_print_testing_instances_statistics()
 {
    message += "test_print_testing_instances_statistics\n";
 }
 
 
-void DataSetTest::test_get_instances_statistics(void)
+void DataSetTest::test_get_instances_statistics()
 {
    message += "test_get_instances_statistics\n";
 }
 
 
-void DataSetTest::test_save_instances_statistics(void)
+void DataSetTest::test_save_instances_statistics()
 {
    message += "test_save_instances_statistics\n";
 }
 
 
-void DataSetTest::test_print_instances_statistics(void)
+void DataSetTest::test_print_instances_statistics()
 {
    message += "test_print_instances_statistics\n";
 }
 
 
-/// @todo Complete method and tests.
+// @todo Complete method and tests.
 
-void DataSetTest::test_convert_time_series(void)
+void DataSetTest::test_convert_time_series()
 {
    message += "test_convert_time_series\n";
 
@@ -2415,7 +2417,7 @@ void DataSetTest::test_convert_time_series(void)
 }
 
 
-void DataSetTest::test_convert_autoassociation(void)
+void DataSetTest::test_convert_autoassociation()
 {
    message += "test_convert_autoassociation\n";
 
@@ -2454,19 +2456,19 @@ void DataSetTest::test_convert_autoassociation(void)
 }
 
 
-void DataSetTest::test_convert_angular_variable_degrees(void)
+void DataSetTest::test_convert_angular_variable_degrees()
 {
    message += "test_convert_angular_variable_degrees\n";
 }
 
 
-void DataSetTest::test_convert_angular_variable_radians(void)
+void DataSetTest::test_convert_angular_variable_radians()
 {
    message += "test_convert_angular_variable_radians\n";
 }
 
 
-void DataSetTest::test_convert_angular_variables_degrees(void)
+void DataSetTest::test_convert_angular_variables_degrees()
 {
    message += "test_convert_angular_variables_degrees\n";
 
@@ -2487,9 +2489,9 @@ void DataSetTest::test_convert_angular_variables_degrees(void)
    ds.convert_angular_variables_degrees(angular_variables);
 
    assert_true(ds.get_variables().get_variables_number() == 3, LOG);
-   assert_true(ds.get_data().arrange_column(0).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(1).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(2).calculate_absolute_value() == 1.234, LOG);
+   assert_true(ds.get_data().get_column(0).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(1).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(2).calculate_absolute_value() == 1.234, LOG);
 
    // Test
 
@@ -2502,14 +2504,14 @@ void DataSetTest::test_convert_angular_variables_degrees(void)
    ds.convert_angular_variables_degrees(angular_variables);
 
    assert_true(ds.get_variables().get_variables_number() == 4, LOG);
-   assert_true(ds.get_data().arrange_column(0).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(1).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(2).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(3).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(0).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(1).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(2).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(3).calculate_absolute_value() <= 1.0, LOG);
 }
 
 
-void DataSetTest::test_convert_angular_variables_radians(void)
+void DataSetTest::test_convert_angular_variables_radians()
 {
    message += "test_convert_angular_variables_radians\n";
 
@@ -2530,9 +2532,9 @@ void DataSetTest::test_convert_angular_variables_radians(void)
    ds.convert_angular_variables_radians(angular_variables);
 
    assert_true(ds.get_variables().get_variables_number() == 3, LOG);
-   assert_true(ds.get_data().arrange_column(0).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(1).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(2).calculate_absolute_value() == 1.234, LOG);
+   assert_true(ds.get_data().get_column(0).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(1).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(2).calculate_absolute_value() == 1.234, LOG);
 
    // Test
 
@@ -2545,14 +2547,14 @@ void DataSetTest::test_convert_angular_variables_radians(void)
    ds.convert_angular_variables_radians(angular_variables);
 
    assert_true(ds.get_variables().get_variables_number() == 4, LOG);
-   assert_true(ds.get_data().arrange_column(0).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(1).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(2).calculate_absolute_value() <= 1.0, LOG);
-   assert_true(ds.get_data().arrange_column(3).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(0).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(1).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(2).calculate_absolute_value() <= 1.0, LOG);
+   assert_true(ds.get_data().get_column(3).calculate_absolute_value() <= 1.0, LOG);
 }
 
 
-void DataSetTest::test_convert_angular_variables(void)
+void DataSetTest::test_convert_angular_variables()
 {
    message += "test_convert_angular_variables\n";
 }
@@ -2560,13 +2562,13 @@ void DataSetTest::test_convert_angular_variables(void)
 
 // @todo
 
-void DataSetTest::test_scrub_missing_values(void)
+void DataSetTest::test_scrub_missing_values()
 {
     message += "test_scrub_missing_values\n";
 
-    const std::string data_file_name = "../data/data.dat";
+    const string data_file_name = "../data/data.dat";
 
-    std::ofstream file;
+    ofstream file;
 
     DataSet ds;
 
@@ -2578,7 +2580,7 @@ void DataSetTest::test_scrub_missing_values(void)
 
     Matrix<double> data;
 
-    std::string data_string;
+    string data_string;
 
     // Test
 
@@ -2638,13 +2640,237 @@ void DataSetTest::test_scrub_missing_values(void)
 }
 
 
-void DataSetTest::test_trim(void)
+void DataSetTest::test_impute_missing_values_time_series_mean()
+{
+    message += "test_impute_missing_values_time_series_mean\n";
+
+    Matrix<double> data;
+    string data_string;
+
+    ofstream file;
+
+
+    // Test 1
+
+    DataSet dataset_test1;
+    const string data_file_name_test1 = "../data/data_test1.dat";
+    dataset_test1.set_separator("Space");
+    dataset_test1.set_missing_values_label("-999.9");
+    dataset_test1.set_data_file_name(data_file_name_test1);
+    dataset_test1.set_file_type("dat");
+
+    data_string = "1.0\n"
+                  "-999.9\n"
+                  "3.0\n";
+
+    file.open(data_file_name_test1.c_str());
+    file << data_string;
+    file.close();
+
+    dataset_test1.load_data();
+
+    dataset_test1.impute_missing_values_time_series_mean();
+
+    data = dataset_test1.get_data();
+
+    assert_true(fabs(data(0,0) - 1.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,0) - 2.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,0) - 3.0) < 1.0e-3, LOG);
+
+
+//    dataset_test1.set_data_file_name("I:/Patri/test_data/data_test1.dat");
+//    dataset_test1.save_data();
+
+
+    // Test 2
+
+    DataSet dataset_test2;
+    const string data_file_name_test2 = "../data/data_test2.dat";
+    dataset_test2.set_separator("Space");
+    dataset_test2.set_missing_values_label("-999.9");
+    dataset_test2.set_data_file_name(data_file_name_test2);
+    dataset_test2.set_file_type("dat");
+
+    data_string = "1.0 4.0\n"
+                  "-999.9 -999.9\n"
+                  "3.0 6.0\n";
+
+    file.open(data_file_name_test2.c_str());
+    file << data_string;
+    file.close();
+
+    dataset_test2.load_data();
+
+    dataset_test2.impute_missing_values_time_series_mean();
+
+    data = dataset_test2.get_data();
+
+    assert_true(fabs(data(0,0) - 1.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,0) - 2.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,0) - 3.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(0,1) - 4.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,1) - 5.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,1) - 6.0) < 1.0e-3, LOG);
+
+
+//    dataset_test2.set_data_file_name("I:/Patri/test_data/data_test2.dat");
+//    dataset_test2.save_data();
+
+
+    // Test 3
+
+    DataSet dataset_test3;
+    const string data_file_name_test3 = "../data/data_test3.dat";
+    dataset_test3.set_separator("Space");
+    dataset_test3.set_missing_values_label("-999.9");
+    dataset_test3.set_data_file_name(data_file_name_test3);
+    dataset_test3.set_file_type("dat");
+
+    data_string = "-999.9 4.0\n"
+                  "2.0 5.0\n"
+                  "3.0 -999.9\n";
+
+    file.open(data_file_name_test3.c_str());
+    file << data_string;
+    file.close();
+
+    dataset_test3.load_data();
+
+    dataset_test3.impute_missing_values_time_series_mean();
+
+    data = dataset_test3.get_data();
+
+    assert_true(fabs(data(0,0) - 1.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,0) - 2.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,0) - 3.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(0,1) - 4.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,1) - 5.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,1) - 6.0) < 1.0e-3, LOG);
+
+
+//    dataset_test3.set_data_file_name("I:/Patri/test_data/data_test3.dat");
+//    dataset_test3.save_data();
+
+
+    // Test 4
+
+    DataSet dataset_test4;
+    const string data_file_name_test4 = "../data/data_test4.dat";
+    dataset_test4.set_separator("Space");
+    dataset_test4.set_missing_values_label("-999.9");
+    dataset_test4.set_data_file_name(data_file_name_test4);
+    dataset_test4.set_file_type("dat");
+
+    data_string = "1.0 5.0\n"
+                  "-999.9 -999.9\n"
+                  "-999.9 -999.9\n"
+                  "4.0 8.0\n";
+
+    file.open(data_file_name_test4.c_str());
+    file << data_string;
+    file.close();
+
+    dataset_test4.load_data();
+
+    dataset_test4.impute_missing_values_time_series_mean();
+
+    data = dataset_test4.get_data();
+
+    assert_true(fabs(data(0,0) - 1.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,0) - 2.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,0) - 3.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(3,0) - 4.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(0,1) - 5.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,1) - 6.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,1) - 7.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(3,1) - 8.0) < 1.0e-3, LOG);
+
+
+//    dataset_test4.set_data_file_name("I:/Patri/test_data/data_test4.dat");
+//    dataset_test4.save_data();
+
+
+    // Test 5
+
+    DataSet dataset_test5;
+    const string data_file_name_test5 = "../data/data_test5.dat";
+    dataset_test5.set_separator("Space");
+    dataset_test5.set_missing_values_label("-999.9");
+    dataset_test5.set_data_file_name(data_file_name_test5);
+    dataset_test5.set_file_type("dat");
+
+    data_string = "-999.9\n"
+                  "-999.9\n"
+                  "3.0\n"
+                  "4.0\n";
+
+    file.open(data_file_name_test5.c_str());
+    file << data_string;
+    file.close();
+
+    dataset_test5.load_data();
+
+    dataset_test5.impute_missing_values_time_series_mean();
+
+    data = dataset_test5.get_data();
+
+    assert_true(fabs(data(0,0) - 1.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,0) - 2.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,0) - 3.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(3,0) - 4.0) < 1.0e-3, LOG);
+
+
+//    dataset_test5.set_data_file_name("I:/Patri/test_data/data_test5.dat");
+//    dataset_test5.save_data();
+
+
+    // Test 6
+
+    DataSet dataset_test6;
+    const string data_file_name_test6 = "../data/data_test6.dat";
+    dataset_test6.set_separator("Space");
+    dataset_test6.set_missing_values_label("-999.9");
+    dataset_test6.set_data_file_name(data_file_name_test6);
+    dataset_test6.set_file_type("dat");
+
+    data_string = "-999.9 5.0\n"
+                  "-999.9 6.0\n"
+                  "3.0 -999.9\n"
+                  "4.0 -999.9\n";
+
+    file.open(data_file_name_test6.c_str());
+    file << data_string;
+    file.close();
+
+    dataset_test6.load_data();
+
+    dataset_test6.impute_missing_values_time_series_mean();
+
+    data = dataset_test6.get_data();
+
+    assert_true(fabs(data(0,0) - 1.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,0) - 2.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,0) - 3.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(3,0) - 4.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(0,1) - 5.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(1,1) - 6.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(2,1) - 7.0) < 1.0e-3, LOG);
+    assert_true(fabs(data(3,1) - 8.0) < 1.0e-3, LOG);
+
+
+//    dataset_test6.set_data_file_name("I:/Patri/test_data/data_test6.dat");
+//    dataset_test6.save_data();
+}
+
+
+
+void DataSetTest::test_trim()
 {
    message += "test_trim\n";
 
    DataSet ds;
 
-   std::string str;
+   string str;
 
    // Test
 
@@ -2680,14 +2906,14 @@ void DataSetTest::test_trim(void)
 }
 
 
-void DataSetTest::test_get_trimmed(void)
+void DataSetTest::test_get_trimmed()
 {
    message += "test_get_trimmed\n";
 
    DataSet ds;
 
-   std::string str1;
-   std::string str2;
+   string str1;
+   string str2;
 
    // Test
 
@@ -2723,13 +2949,13 @@ void DataSetTest::test_get_trimmed(void)
 }
 
 
-void DataSetTest::test_count_tokens(void)
+void DataSetTest::test_count_tokens()
 {
    message += "test_count_tokens\n";
 
    DataSet ds;
 
-   std::string str;
+   string str;
 
    size_t tokens_number;
 
@@ -2811,15 +3037,15 @@ void DataSetTest::test_count_tokens(void)
 }
 
 
-void DataSetTest::test_get_tokens(void)
+void DataSetTest::test_get_tokens()
 {
    message += "test_get_tokens\n";
 
    DataSet ds;
 
-   std::string str;
+   string str;
 
-   Vector<std::string> tokens;
+   Vector<string> tokens;
 
    // Test
 
@@ -2910,13 +3136,13 @@ void DataSetTest::test_get_tokens(void)
 }
 
 
-void DataSetTest::test_is_numeric(void)
+void DataSetTest::test_is_numeric()
 {
    message += "test_is_numeric\n";
 
    DataSet ds;
 
-   std::string str;
+   string str;
 
    // Test
 
@@ -2938,7 +3164,7 @@ void DataSetTest::test_is_numeric(void)
 }
 
 
-void DataSetTest::run_test_case(void)
+void DataSetTest::run_test_case()
 {
    message += "Running data set test case...\n";
 
@@ -3013,7 +3239,7 @@ void DataSetTest::run_test_case(void)
    test_calculate_selection_instances_statistics();
    test_calculate_testing_instances_statistics();
 
-   test_calculate_input_variables_statistics();
+   test_calculate_input_statistics();
    test_calculate_targets_statistics();
 
    // Correlation methods
@@ -3135,6 +3361,8 @@ void DataSetTest::run_test_case(void)
 
 //   test_scrub_missing_values();
 
+   test_impute_missing_values_time_series_mean();
+
    // String utilities
 
 //   test_trim();
@@ -3150,7 +3378,7 @@ void DataSetTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

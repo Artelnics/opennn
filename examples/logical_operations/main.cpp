@@ -29,169 +29,102 @@ int main(void)
 {
     try
     {
-        int rank = 0;
-
-#ifdef __OPENNN_MPI__
-
-        int size = 1;
-
-        MPI_Init(NULL,NULL);
-
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-#endif
-
-        if(rank == 0)
-        {
-            std::cout << "OpenNN. Logical Operations Application." << std::endl;
-        }
+        std::cout << "OpenNN. Logical Operations Application." << std::endl;
 
         srand((unsigned)time(NULL));
 
-        // Global variables
+        // Data set
 
         DataSet data_set;
 
-        NeuralNetwork neural_network;
+        data_set.set_data_file_name("../data/logical_operations.dat");
 
-        LossIndex loss_index;
+        data_set.load_data();
 
-        TrainingStrategy training_strategy;
+        Variables* variables_pointer = data_set.get_variables_pointer();
 
-        // Local variables
+        variables_pointer->set(2, 6);
 
-        DataSet local_data_set;
+        variables_pointer->set_name(0, "X");
+        variables_pointer->set_name(1, "Y");
+        variables_pointer->set_name(2, "AND");
+        variables_pointer->set_name(3, "OR");
+        variables_pointer->set_name(4, "NAND");
+        variables_pointer->set_name(5, "NOR");
+        variables_pointer->set_name(6, "XNOR");
+        variables_pointer->set_name(7, "XNOR");
 
-        NeuralNetwork local_neural_network;
+        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-        LossIndex local_loss_index;
+        // Neural network
 
-        TrainingStrategy local_training_strategy;
+        NeuralNetwork neural_network(2, 6, 6);
 
-        if(rank == 0)
-        {
-            // Data set
+        Inputs* inputs_pointer = neural_network.get_inputs_pointer();
 
-            data_set.set_data_file_name("../data/logical_operations.dat");
+        inputs_pointer->set_information(inputs_information);
 
-            data_set.load_data();
+        Outputs* outputs_pointer = neural_network.get_outputs_pointer();
 
-            Variables* variables_pointer = data_set.get_variables_pointer();
+        outputs_pointer->set_information(targets_information);
 
-            variables_pointer->set(2, 6);
+        // Loss index
 
-            variables_pointer->set_name(0, "X");
-            variables_pointer->set_name(1, "Y");
-            variables_pointer->set_name(2, "AND");
-            variables_pointer->set_name(3, "OR");
-            variables_pointer->set_name(4, "NAND");
-            variables_pointer->set_name(5, "NOR");
-            variables_pointer->set_name(6, "XNOR");
-            variables_pointer->set_name(7, "XNOR");
+        LossIndex loss_index(&neural_network, &data_set);
 
-            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-            // Neural network
+        // Training strategy
 
-            neural_network.set(2, 6, 6);
+        TrainingStrategy training_strategy(&loss_index);
 
-            Inputs* inputs_pointer = neural_network.get_inputs_pointer();
-
-            inputs_pointer->set_information(inputs_information);
-
-            Outputs* outputs_pointer = neural_network.get_outputs_pointer();
-
-            outputs_pointer->set_information(targets_information);
-
-            // Loss index
-
-            loss_index.set_data_set_pointer(&data_set);
-            loss_index.set_neural_network_pointer(&neural_network);
-
-            // Training strategy
-
-            training_strategy.set(&loss_index);
-        }
-
-#ifdef __OPENNN_MPI__
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        local_data_set.set_MPI(&data_set);
-
-        local_neural_network.set_MPI(&neural_network);
-
-        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
-
-        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        local_training_strategy.perform_training();
-#else
         training_strategy.perform_training();
-#endif
 
-        if(rank == 0)
-        {
-#ifdef __OPENNN_MPI__
-            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
-#endif
-            // Save results
+        // Save results
 
-            data_set.save("../data/data_set.xml");
+        data_set.save("../data/data_set.xml");
 
-            neural_network.save("../data/neural_network.xml");
+        neural_network.save("../data/neural_network.xml");
 
-            loss_index.save("../data/loss_index.xml");
+        loss_index.save("../data/loss_index.xml");
 
-            training_strategy.save("../data/training_strategy.xml");
+        training_strategy.save("../data/training_strategy.xml");
 
-            // Print results to screen
+        // Print results to screen
 
-            Vector<double> inputs(2, 0.0);
-            Vector<double> outputs(6, 0.0);
+        Vector<double> inputs(2, 0.0);
+        Vector<double> outputs(6, 0.0);
 
-            std::cout << "X Y AND OR NAND NOR XOR XNOR" << std::endl;
+        std::cout << "X Y AND OR NAND NOR XOR XNOR" << std::endl;
 
-            inputs[0] = 1.0;
-            inputs[1] = 1.0;
+        inputs[0] = 1.0;
+        inputs[1] = 1.0;
 
-            outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs);
 
-            std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
 
-            inputs[0] = 1.0;
-            inputs[1] = 0.0;
+        inputs[0] = 1.0;
+        inputs[1] = 0.0;
 
-            outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs);
 
-            std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
 
-            inputs[0] = 0.0;
-            inputs[1] = 1.0;
+        inputs[0] = 0.0;
+        inputs[1] = 1.0;
 
-            outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs);
 
-            std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
 
-            inputs[0] = 0.0;
-            inputs[1] = 0.0;
+        inputs[0] = 0.0;
+        inputs[1] = 0.0;
 
-            outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs);
 
-            std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
-        }
-
-#ifdef __OPENNN_MPI__
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        MPI_Finalize();
-
-#endif
+        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
 
         return(0);
     }

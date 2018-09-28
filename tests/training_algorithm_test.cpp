@@ -23,14 +23,14 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR 
 
-TrainingAlgorithmTest::TrainingAlgorithmTest(void) : UnitTesting() 
+TrainingAlgorithmTest::TrainingAlgorithmTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-TrainingAlgorithmTest::~TrainingAlgorithmTest(void)
+TrainingAlgorithmTest::~TrainingAlgorithmTest()
 {
 }
 
@@ -38,7 +38,7 @@ TrainingAlgorithmTest::~TrainingAlgorithmTest(void)
 // METHODS
 
 
-void TrainingAlgorithmTest::test_constructor(void)
+void TrainingAlgorithmTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -58,7 +58,7 @@ void TrainingAlgorithmTest::test_constructor(void)
 }
 
 
-void TrainingAlgorithmTest::test_destructor(void)
+void TrainingAlgorithmTest::test_destructor()
 {
    message += "test_destructor\n"; 
 
@@ -68,7 +68,7 @@ void TrainingAlgorithmTest::test_destructor(void)
 }
 
 
-void TrainingAlgorithmTest::test_get_loss_index_pointer(void)
+void TrainingAlgorithmTest::test_get_loss_index_pointer()
 {
    message += "test_get_loss_index_pointer\n"; 
 
@@ -80,7 +80,7 @@ void TrainingAlgorithmTest::test_get_loss_index_pointer(void)
 }
 
 
-void TrainingAlgorithmTest::test_get_display(void)
+void TrainingAlgorithmTest::test_get_display()
 {
    message += "test_get_warning_gradient_norm\n"; 
 
@@ -92,70 +92,70 @@ void TrainingAlgorithmTest::test_get_display(void)
 }
 
 
-void TrainingAlgorithmTest::test_set(void)
+void TrainingAlgorithmTest::test_set()
 {
    message += "test_set\n"; 
 }
 
 
-void TrainingAlgorithmTest::test_set_default(void)
+void TrainingAlgorithmTest::test_set_default()
 {
    message += "test_set_default\n"; 
 }
 
 
-void TrainingAlgorithmTest::test_set_loss_index_pointer(void)
+void TrainingAlgorithmTest::test_set_loss_index_pointer()
 {
    message += "test_set_loss_index_pointer\n"; 
 }
 
 
-void TrainingAlgorithmTest::test_set_display(void)
+void TrainingAlgorithmTest::test_set_display()
 {
    message += "test_set_display\n"; 
 }
 
 
-void TrainingAlgorithmTest::test_perform_training(void)
+void TrainingAlgorithmTest::test_perform_training()
 {
    message += "test_perform_training\n";
 }
 
 
-void TrainingAlgorithmTest::test_to_XML(void)
+void TrainingAlgorithmTest::test_to_XML()
 {
    message += "test_to_XML\n";
 }
    
 
-void TrainingAlgorithmTest::test_from_XML(void)
+void TrainingAlgorithmTest::test_from_XML()
 {
    message += "test_from_XML\n";
 }
 
 
-void TrainingAlgorithmTest::test_print(void)
+void TrainingAlgorithmTest::test_print()
 {
    message += "test_print\n";
 }
 
 
-void TrainingAlgorithmTest::test_save(void)
+void TrainingAlgorithmTest::test_save()
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/training_algorithm.xml";
+   string file_name = "../data/training_algorithm.xml";
 
    MockTrainingAlgorithm mta;
    mta.save(file_name);
 }
 
 
-void TrainingAlgorithmTest::test_load(void)
+void TrainingAlgorithmTest::test_load()
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/training_algorithm.xml";
+   string file_name = "../data/training_algorithm.xml";
 
    MockTrainingAlgorithm mta;
    mta.save(file_name);
@@ -163,7 +163,7 @@ void TrainingAlgorithmTest::test_load(void)
 }
 
 
-void TrainingAlgorithmTest::run_test_case(void)
+void TrainingAlgorithmTest::run_test_case()
 {
    message += "Running training algorithm test case...\n";
 
@@ -203,7 +203,7 @@ void TrainingAlgorithmTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   T E S T S   P R O J E C T                                                                     #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artelnics - Making intelligent use of data                                                    #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 
@@ -82,9 +81,13 @@ SOURCES += \
     testing_analysis_test.cpp \
     vector_test.cpp \
     matrix_test.cpp \
+    sparse_matrix_test.cpp \
     numerical_integration_test.cpp \
     numerical_differentiation_test.cpp \
-    main.cpp
+    main.cpp \
+    inputs_trending_layer_test.cpp \
+    outputs_trending_layer_test.cpp \
+    correlation_analysis_test.cpp
 
 HEADERS += \
     unit_testing.h \
@@ -142,14 +145,22 @@ HEADERS += \
     testing_analysis_test.h  \
     vector_test.h \
     matrix_test.h \
+    sparse_matrix_test.h \
     numerical_integration_test.h \
     numerical_differentiation_test.h \
-    opennn_tests.h
+    opennn_tests.h \
+    inputs_trending_layer_test.h \
+    outputs_trending_layer_test.h \
+    correlation_analysis_test.h
 
 win32-g++{
 QMAKE_LFLAGS += -static-libgcc
 QMAKE_LFLAGS += -static-libstdc++
 QMAKE_LFLAGS += -static
+
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+QMAKE_LFLAGS += -fopenmp -pthread -lgomp
+LIBS += -fopenmp -pthread -lgomp
 }
 
 # OpenNN library
@@ -166,21 +177,6 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../open
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/release/opennn.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
-
-# Tiny XML 2 library
-
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/release/ -ltinyxml2
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../tinyxml2/debug/ -ltinyxml2
-else:unix: LIBS += -L$$OUT_PWD/../tinyxml2/ -ltinyxml2
-
-INCLUDEPATH += $$PWD/../tinyxml2
-DEPENDPATH += $$PWD/../tinyxml2
-
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/libtinyxml2.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/libtinyxml2.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/release/tinyxml2.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/debug/tinyxml2.lib
-else:unix: PRE_TARGETDEPS += $$OUT_PWD/../tinyxml2/libtinyxml2.a
 
 # OpenMP library
 win32:!win32-g++{

@@ -6,7 +6,7 @@
 /*   O P E N   N E U R A L   N E T W O R K S   L I B R A R Y                                                    */
 /*                                                                                                              */ 
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -62,9 +62,13 @@
 #include "probabilistic_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
+#include "inputs_trending_layer.h"
+#include "outputs_trending_layer.h"
 #include "neural_network.h"
 
 // Loss index
+
+#include "correlation_analysis.h"
 
 #include "loss_index.h"
 #include "error_term.h"
@@ -78,6 +82,8 @@
 #include "normalized_squared_error.h"
 #include "root_mean_squared_error.h"
 #include "sum_squared_error.h"
+#include "weighted_squared_error.h"
+#include "weighted_squared_regression_error.h"
 
 // Testing analysis
 
@@ -97,16 +103,24 @@
 
 // Utilities
 
+#include "file_utilities.h"
+#include "math.h"
 #include "matrix.h"
+#include "sparse_matrix.h"
 #include "numerical_differentiation.h"
 #include "numerical_integration.h"
+#include "character_string.h"
+#include "association_rules.h"
+#include "text_analytics.h"
 #include "vector.h"
-#include "math.h"
+#include "tinyxml2.h"
+#include "correlation_analysis.h"
+
 
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

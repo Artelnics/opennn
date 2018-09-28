@@ -19,21 +19,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest(void) : UnitTesting() 
+LevenbergMarquardtAlgorithmTest::LevenbergMarquardtAlgorithmTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-LevenbergMarquardtAlgorithmTest::~LevenbergMarquardtAlgorithmTest(void)
+LevenbergMarquardtAlgorithmTest::~LevenbergMarquardtAlgorithmTest()
 {
 }
 
 
 // METHODS
 
-void LevenbergMarquardtAlgorithmTest::test_constructor(void)
+void LevenbergMarquardtAlgorithmTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -51,61 +51,61 @@ void LevenbergMarquardtAlgorithmTest::test_constructor(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_destructor(void)
+void LevenbergMarquardtAlgorithmTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_get_damping_parameter(void)
+void LevenbergMarquardtAlgorithmTest::test_get_damping_parameter()
 {
    message += "test_get_damping_parameter\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_get_damping_parameter_factor(void)
+void LevenbergMarquardtAlgorithmTest::test_get_damping_parameter_factor()
 {
    message += "test_get_damping_parameter_factor\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_get_minimum_damping_parameter(void)
+void LevenbergMarquardtAlgorithmTest::test_get_minimum_damping_parameter()
 {
    message += "test_get_minimum_damping_parameter\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_get_maximum_damping_parameter(void)
+void LevenbergMarquardtAlgorithmTest::test_get_maximum_damping_parameter()
 {
    message += "test_get_maximum_damping_parameter\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_set_damping_parameter(void)
+void LevenbergMarquardtAlgorithmTest::test_set_damping_parameter()
 {
    message += "test_set_damping_parameter\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_set_damping_parameter_factor(void)
+void LevenbergMarquardtAlgorithmTest::test_set_damping_parameter_factor()
 {
    message += "test_set_damping_parameter_factor\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_set_minimum_damping_parameter(void)
+void LevenbergMarquardtAlgorithmTest::test_set_minimum_damping_parameter()
 {
    message += "test_set_minimum_damping_parameter\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_set_maximum_damping_parameter(void)
+void LevenbergMarquardtAlgorithmTest::test_set_maximum_damping_parameter()
 {
    message += "test_set_maximum_damping_parameter\n";
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_calculate_loss(void)
+void LevenbergMarquardtAlgorithmTest::test_calculate_loss()
 {
     message += "test_calculate_loss\n";
 
@@ -137,7 +137,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_loss(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_calculate_gradient(void)
+void LevenbergMarquardtAlgorithmTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -193,7 +193,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_gradient(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
+void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation()
 {
    message += "test_calculate_Hessian_approximation\n";
 
@@ -299,7 +299,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_Hessian_approximation(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history(void)
+void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -320,7 +320,7 @@ void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history(void
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_perform_training(void)
+void LevenbergMarquardtAlgorithmTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -431,7 +431,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_resize_training_history(void)
+void LevenbergMarquardtAlgorithmTest::test_resize_training_history()
 {
    message += "test_resize_training_history\n";
 
@@ -458,7 +458,7 @@ void LevenbergMarquardtAlgorithmTest::test_resize_training_history(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_to_XML(void)   
+void LevenbergMarquardtAlgorithmTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 
@@ -470,7 +470,7 @@ void LevenbergMarquardtAlgorithmTest::test_to_XML(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_from_XML(void)
+void LevenbergMarquardtAlgorithmTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -478,7 +478,7 @@ void LevenbergMarquardtAlgorithmTest::test_from_XML(void)
 }
 
 
-void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(void)
+void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition()
 {
    message += "test_perform_Householder_QR_decomposition\n";
 
@@ -530,7 +530,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_Householder_QR_decomposition(
 }
 
 
-void LevenbergMarquardtAlgorithmTest::run_test_case(void)
+void LevenbergMarquardtAlgorithmTest::run_test_case()
 {
    message += "Running Levenberg-Marquardt algorithm test case...\n";
 
@@ -584,7 +584,7 @@ void LevenbergMarquardtAlgorithmTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,7 +6,7 @@
 /*   Q U A S I - N E W T O N   M E T H O D    C L A S S   H E A D E R                                           */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -39,7 +39,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -62,7 +62,7 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit QuasiNewtonMethod(void);
+   explicit QuasiNewtonMethod();
 
    // PERFORMANCE FUNCTIONAL CONSTRUCTOR
 
@@ -75,7 +75,7 @@ public:
 
    // DESTRUCTOR
 
-   virtual ~QuasiNewtonMethod(void);
+   virtual ~QuasiNewtonMethod();
 
    // STRUCTURES
 
@@ -87,7 +87,7 @@ public:
    {
        /// Default constructor.
 
-       explicit QuasiNewtonMethodResults(void) : TrainingAlgorithm::TrainingAlgorithmResults()
+       explicit QuasiNewtonMethodResults() : TrainingAlgorithm::TrainingAlgorithmResults()
        {
            quasi_Newton_method_pointer = NULL;
        }
@@ -101,7 +101,7 @@ public:
 
        /// Destructor.
 
-       virtual ~QuasiNewtonMethodResults(void)
+       virtual ~QuasiNewtonMethodResults()
        {
            quasi_Newton_method_pointer = NULL;
        }
@@ -202,74 +202,77 @@ public:
 
       // Methods
 
-      QuasiNewtonMethod* get_quasi_Newton_method_pointer(void) const;
+      QuasiNewtonMethod* get_quasi_Newton_method_pointer() const;
 
       void set_quasi_Newton_method_pointer(QuasiNewtonMethod*);
 
       void resize_training_history(const size_t&);
 
-      std::string to_string(void) const;
+      string object_to_string() const;
 
-      Matrix<std::string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const size_t& precision = 3) const;
    };
 
    // METHODS
 
    // Get methods
 
-   const TrainingRateAlgorithm& get_training_rate_algorithm(void) const;
-   TrainingRateAlgorithm* get_training_rate_algorithm_pointer(void);
+   const TrainingRateAlgorithm& get_training_rate_algorithm() const;
+   TrainingRateAlgorithm* get_training_rate_algorithm_pointer();
 
-   const InverseHessianApproximationMethod& get_inverse_Hessian_approximation_method(void) const;
-   std::string write_inverse_Hessian_approximation_method(void) const;
+   const InverseHessianApproximationMethod& get_inverse_Hessian_approximation_method() const;
+   string write_inverse_Hessian_approximation_method() const;
 
    // Training parameters
 
-   const double& get_warning_parameters_norm(void) const;
-   const double& get_warning_gradient_norm(void) const;
-   const double& get_warning_training_rate(void) const;
+   const double& get_warning_parameters_norm() const;
+   const double& get_warning_gradient_norm() const;
+   const double& get_warning_training_rate() const;
 
-   const double& get_error_parameters_norm(void) const;
-   const double& get_error_gradient_norm(void) const;
-   const double& get_error_training_rate(void) const;
+   const double& get_error_parameters_norm() const;
+   const double& get_error_gradient_norm() const;
+   const double& get_error_training_rate() const;
 
    // Stopping criteria
 
-   const double& get_minimum_parameters_increment_norm(void) const;
+   const double& get_minimum_parameters_increment_norm() const;
 
-   const double& get_minimum_loss_increase(void) const;
-   const double& get_loss_goal(void) const;
-   const double& get_gradient_norm_goal(void) const;
-   const size_t& get_maximum_selection_loss_decreases(void) const;
+   const double& get_minimum_loss_increase() const;
+   const double& get_loss_goal() const;
+   const double& get_gradient_norm_goal() const;
+   const size_t& get_maximum_selection_loss_decreases() const;
 
-   const size_t& get_maximum_iterations_number(void) const;
-   const double& get_maximum_time(void) const;
+   const size_t& get_maximum_iterations_number() const;
+   const double& get_maximum_time() const;
 
-   const bool& get_return_minimum_selection_error_neural_network(void) const;
+   const bool& get_return_minimum_selection_error_neural_network() const;
+   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
-   const bool& get_reserve_parameters_history(void) const;
-   const bool& get_reserve_parameters_norm_history(void) const;
+   const bool& get_reserve_parameters_history() const;
+   const bool& get_reserve_parameters_norm_history() const;
 
-   const bool& get_reserve_loss_history(void) const;
-   const bool& get_reserve_gradient_history(void) const;
-   const bool& get_reserve_gradient_norm_history(void) const;
-   const bool& get_reserve_inverse_Hessian_history(void) const;
-   const bool& get_reserve_selection_loss_history(void) const;
+   const bool& get_reserve_loss_history() const;
+   const bool& get_reserve_gradient_history() const;
+   const bool& get_reserve_gradient_norm_history() const;
+   const bool& get_reserve_inverse_Hessian_history() const;
+   const bool& get_reserve_selection_loss_history() const;
 
-   const bool& get_reserve_training_direction_history(void) const;
-   const bool& get_reserve_training_rate_history(void) const;
-   const bool& get_reserve_elapsed_time_history(void) const;
+   const bool& get_reserve_training_direction_history() const;
+   const bool& get_reserve_training_rate_history() const;
+   const bool& get_reserve_elapsed_time_history() const;
 
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
 
    void set_inverse_Hessian_approximation_method(const InverseHessianApproximationMethod&);
-   void set_inverse_Hessian_approximation_method(const std::string&);
+   void set_inverse_Hessian_approximation_method(const string&);
 
-   void set_default(void);
+   void set_display(const bool&);
+
+   void set_default();
 
    // Training parameters
 
@@ -294,6 +297,7 @@ public:
    void set_maximum_time(const double&);
 
    void set_return_minimum_selection_error_neural_network(const bool&);
+   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -319,10 +323,10 @@ public:
    Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const;
 
    Matrix<double> calculate_DFP_inverse_Hessian
-   (const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
+  (const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    Matrix<double> calculate_BFGS_inverse_Hessian
-   (const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
+  (const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    Matrix<double> calculate_inverse_Hessian_approximation(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
 
@@ -334,25 +338,25 @@ public:
 
    Vector<double> calculate_training_direction(const Vector<double>&, const Matrix<double>&) const;
 
-   QuasiNewtonMethodResults* perform_training(void);
+   QuasiNewtonMethodResults* perform_training();
 
    // Training history methods
 
    void set_reserve_all_training_history(const bool&);
 
-   std::string write_training_algorithm_type(void) const;
+   string write_training_algorithm_type() const;
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML(void) const;
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    //void read_XML(   );
 
 
-   std::string to_string(void) const;
-   Matrix<std::string> to_string_matrix(void) const;
+   string object_to_string() const;
+   Matrix<string> to_string_matrix() const;
 
 
 private: 
@@ -427,6 +431,10 @@ private:
 
    bool return_minimum_selection_error_neural_network;
 
+   /// True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+
+   bool apply_early_stopping;
+
    // TRAINING HISTORY
 
    /// True if the parameters history matrix is to be reserved, false otherwise.
@@ -468,6 +476,7 @@ private:
    /// True if the selection loss history vector is to be reserved, false otherwise.
 
    bool reserve_selection_loss_history;
+
 };
 
 }
@@ -476,7 +485,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
