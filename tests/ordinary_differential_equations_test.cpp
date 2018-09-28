@@ -18,111 +18,111 @@
 using namespace OpenNN;
 
 
-OrdinaryDifferentialEquationsTest::OrdinaryDifferentialEquationsTest(void) : UnitTesting() 
+OrdinaryDifferentialEquationsTest::OrdinaryDifferentialEquationsTest() : UnitTesting() 
 {   
 }
 
 
-OrdinaryDifferentialEquationsTest::~OrdinaryDifferentialEquationsTest(void)
+OrdinaryDifferentialEquationsTest::~OrdinaryDifferentialEquationsTest()
 {
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_constructor(void)
+void OrdinaryDifferentialEquationsTest::test_constructor()
 {
    message += "test_constructor\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_destructor(void)
+void OrdinaryDifferentialEquationsTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_get_points_number(void)
+void OrdinaryDifferentialEquationsTest::test_get_points_number()
 {
    message += "test_get_points_number\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_get_tolerance(void)
+void OrdinaryDifferentialEquationsTest::test_get_tolerance()
 {
    message += "test_get_tolerance\n";
 
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_get_initial_size(void)
+void OrdinaryDifferentialEquationsTest::test_get_initial_size()
 {
    message += "test_get_initial_size\n";
 
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_get_warning_size(void)
+void OrdinaryDifferentialEquationsTest::test_get_warning_size()
 {
    message += "test_get_warning_size\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_get_error_size(void)
+void OrdinaryDifferentialEquationsTest::test_get_error_size()
 {
    message += "test_get_error_size\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_get_display(void)
+void OrdinaryDifferentialEquationsTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_default(void)
+void OrdinaryDifferentialEquationsTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_points_number(void)
+void OrdinaryDifferentialEquationsTest::test_set_points_number()
 {
    message += "test_set_points_number\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_tolerance(void)
+void OrdinaryDifferentialEquationsTest::test_set_tolerance()
 {
    message += "test_set_tolerance\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_initial_size(void)
+void OrdinaryDifferentialEquationsTest::test_set_initial_size()
 {
    message += "test_set_initial_size\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_warning_size(void)
+void OrdinaryDifferentialEquationsTest::test_set_warning_size()
 {
    message += "test_set_warning_size\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_error_size(void)
+void OrdinaryDifferentialEquationsTest::test_set_error_size()
 {
    message += "test_set_error_size\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_set_display(void)
+void OrdinaryDifferentialEquationsTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_1(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_1()
 {
    message += "test_calculate_Runge_Kutta_integral_1\n";
 /*
@@ -165,9 +165,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_1(vo
 */
 }
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_2(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_2()
 {
    message += "test_calculate_Runge_Kutta_integral_2\n";
 /*
@@ -196,9 +196,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_2(vo
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_3(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_3()
 {
    message += "test_calculate_Runge_Kutta_integral_3\n";
 /*
@@ -230,9 +230,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_3(vo
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_4(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_4()
 {
    message += "test_calculate_Runge_Kutta_integral_4\n";
 /*
@@ -267,9 +267,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_4(vo
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_5(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_5()
 {
    message += "test_calculate_Runge_Kutta_integral_5\n";
 /*
@@ -307,9 +307,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_integral_5(vo
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_1(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_1()
 {
    message += "test_calculate_Runge_Kutta_Fehlberg_integral_1\n";
 /*
@@ -331,9 +331,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_inte
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_2(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_2()
 {
    message += "test_calculate_Runge_Kutta_Fehlberg_integral_2\n";
 /*
@@ -358,9 +358,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_inte
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_3(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_3()
 {
    message += "test_calculate_Runge_Kutta_Fehlberg_integral_3\n";
 
@@ -388,9 +388,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_inte
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_4(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_4()
 {
    message += "test_calculate_Runge_Kutta_Fehlberg_integral_4\n";
 /*
@@ -421,9 +421,9 @@ void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_inte
 }
 
 
-/// @todo Update tests.
+// @todo Update tests.
 
-void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_5(void)
+void OrdinaryDifferentialEquationsTest::test_calculate_Runge_Kutta_Fehlberg_integral_5()
 {
    message += "test_calculate_Runge_Kutta_Fehlberg_integral_5\n";
 /*
@@ -523,19 +523,19 @@ double OrdinaryDifferentialEquationsTest::calculate_x_squared_dot(const NeuralNe
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_to_XML(void)   
+void OrdinaryDifferentialEquationsTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::test_from_XML(void)   
+void OrdinaryDifferentialEquationsTest::test_from_XML()   
 {
    message += "test_from_XML\n";
 }
 
 
-void OrdinaryDifferentialEquationsTest::run_test_case(void)
+void OrdinaryDifferentialEquationsTest::run_test_case()
 {
    message += "Running ordinary differential equations test case...\n";
 
@@ -589,7 +589,7 @@ void OrdinaryDifferentialEquationsTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

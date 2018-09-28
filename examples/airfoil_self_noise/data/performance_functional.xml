@@ -1,6 +1,0 @@
-<PerformanceFunctional>
-    <Objective Type="NORMALIZED_SQUARED_ERROR"/>
-    <Regularization Type="NEURAL_PARAMETERS_NORM">
-        <NeuralParametersNormWeight>0.001</NeuralParametersNormWeight>
-    </Regularization>
-</PerformanceFunctional>

@@ -19,21 +19,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-ConjugateGradientTest::ConjugateGradientTest(void) : UnitTesting() 
+ConjugateGradientTest::ConjugateGradientTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-ConjugateGradientTest::~ConjugateGradientTest(void)
+ConjugateGradientTest::~ConjugateGradientTest()
 {
 }
 
 
 // METHODS
 
-void ConjugateGradientTest::test_constructor(void)
+void ConjugateGradientTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
@@ -51,13 +51,13 @@ void ConjugateGradientTest::test_constructor(void)
 }
 
 
-void ConjugateGradientTest::test_destructor(void)
+void ConjugateGradientTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void ConjugateGradientTest::test_get_training_direction_method(void)
+void ConjugateGradientTest::test_get_training_direction_method()
 {
    message += "test_get_training_direction_method\n";
 
@@ -71,13 +71,13 @@ void ConjugateGradientTest::test_get_training_direction_method(void)
 }
 
 
-void ConjugateGradientTest::test_get_training_direction_method_name(void)
+void ConjugateGradientTest::test_get_training_direction_method_name()
 {
    message += "test_get_training_direction_method_name\n";
 }
 
 
-void ConjugateGradientTest::test_set_training_direction_method(void)
+void ConjugateGradientTest::test_set_training_direction_method()
 {
    message += "test_set_training_direction_method\n";
 
@@ -91,7 +91,7 @@ void ConjugateGradientTest::test_set_training_direction_method(void)
 }
 
 
-void ConjugateGradientTest::test_set_reserve_all_training_history(void)
+void ConjugateGradientTest::test_set_reserve_all_training_history()
 {
    message += "test_set_reserve_all_training_history\n";
 
@@ -112,7 +112,7 @@ void ConjugateGradientTest::test_set_reserve_all_training_history(void)
 }
 
 
-void ConjugateGradientTest::test_calculate_PR_parameter(void)
+void ConjugateGradientTest::test_calculate_PR_parameter()
 {
    message += "test_calculate_PR_parameter\n";
 
@@ -138,7 +138,7 @@ void ConjugateGradientTest::test_calculate_PR_parameter(void)
 }
 
 
-void ConjugateGradientTest::test_calculate_FR_parameter(void)
+void ConjugateGradientTest::test_calculate_FR_parameter()
 {
    message += "test_calculate_FR_parameter\n";
 
@@ -163,7 +163,7 @@ void ConjugateGradientTest::test_calculate_FR_parameter(void)
 }
 
 
-void ConjugateGradientTest::test_calculate_PR_training_direction(void)
+void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
    message += "test_calculate_PR_training_direction\n";
 
@@ -191,7 +191,7 @@ void ConjugateGradientTest::test_calculate_PR_training_direction(void)
 }
 
 
-void ConjugateGradientTest::test_calculate_FR_training_direction(void)
+void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
    message += "test_calculate_FR_training_direction\n";
 
@@ -219,14 +219,14 @@ void ConjugateGradientTest::test_calculate_FR_training_direction(void)
 }
 
 
-void ConjugateGradientTest::test_calculate_training_direction(void)
+void ConjugateGradientTest::test_calculate_training_direction()
 {
    message += "test_calculate_training_direction\n";
 
 }
 
 
-void ConjugateGradientTest::test_perform_training(void)
+void ConjugateGradientTest::test_perform_training()
 {
    message += "test_perform_training\n";
 
@@ -334,7 +334,7 @@ void ConjugateGradientTest::test_perform_training(void)
 }
 
 
-void ConjugateGradientTest::test_to_XML(void)   
+void ConjugateGradientTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 
@@ -345,7 +345,7 @@ void ConjugateGradientTest::test_to_XML(void)
 }
 
 
-void ConjugateGradientTest::test_from_XML(void)
+void ConjugateGradientTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -369,7 +369,7 @@ void ConjugateGradientTest::test_from_XML(void)
 }
 
 
-void ConjugateGradientTest::run_test_case(void)
+void ConjugateGradientTest::run_test_case()
 {
    message += "Running conjugate gradient test case...\n";
 
@@ -413,7 +413,7 @@ void ConjugateGradientTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

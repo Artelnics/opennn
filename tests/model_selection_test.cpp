@@ -19,17 +19,17 @@
 using namespace OpenNN;
 
 
-ModelSelectionTest::ModelSelectionTest(void) : UnitTesting() 
+ModelSelectionTest::ModelSelectionTest() : UnitTesting() 
 {
 }
 
 
-ModelSelectionTest::~ModelSelectionTest(void) 
+ModelSelectionTest::~ModelSelectionTest() 
 {
 }
 
 
-void ModelSelectionTest::test_constructor(void)
+void ModelSelectionTest::test_constructor()
 {
     message += "test_constructor\n";
 
@@ -45,7 +45,7 @@ void ModelSelectionTest::test_constructor(void)
 }
 
 
-void ModelSelectionTest::test_destructor(void)
+void ModelSelectionTest::test_destructor()
 {
     message += "test_destructor\n";
 
@@ -55,7 +55,7 @@ void ModelSelectionTest::test_destructor(void)
 }
 
 
-void ModelSelectionTest::test_get_training_strategy_pointer(void)
+void ModelSelectionTest::test_get_training_strategy_pointer()
 {
     message += "test_get_training_algorithm_pointer\n";
 
@@ -66,7 +66,7 @@ void ModelSelectionTest::test_get_training_strategy_pointer(void)
     assert_true(ms.get_training_strategy_pointer() != NULL, LOG);
 }
 
-void ModelSelectionTest::test_set_training_strategy_pointer(void)
+void ModelSelectionTest::test_set_training_strategy_pointer()
 {
     message += "test_set_training_strategy_pointer\n";
 
@@ -80,12 +80,12 @@ void ModelSelectionTest::test_set_training_strategy_pointer(void)
 }
 
 
-void ModelSelectionTest::test_set_default(void)
+void ModelSelectionTest::test_set_default()
 {
     message += "test_set_default\n";
 }
 
-void ModelSelectionTest::test_perform_order_selection(void)
+void ModelSelectionTest::test_perform_order_selection()
 {
     message += "test_order_selection\n";
 
@@ -95,7 +95,7 @@ void ModelSelectionTest::test_perform_order_selection(void)
 }
 
 
-void ModelSelectionTest::test_to_XML(void)   
+void ModelSelectionTest::test_to_XML()   
 {
     message += "test_to_XML\n";
 
@@ -107,7 +107,7 @@ void ModelSelectionTest::test_to_XML(void)
     delete document;
 }
 
-void ModelSelectionTest::test_from_XML(void)
+void ModelSelectionTest::test_from_XML()
 {
     message += "test_from_XML\n";
 
@@ -125,22 +125,22 @@ void ModelSelectionTest::test_from_XML(void)
     assert_true(ms2.get_order_selection_type() == ModelSelection::INCREMENTAL_ORDER, LOG);
 }
 
-void ModelSelectionTest::test_save(void)
+void ModelSelectionTest::test_save()
 {
     message += "test_save\n";
 
-    std::string file_name = "../data/model_selection.xml";
+    string file_name = "../data/model_selection.xml";
 
     ModelSelection ms;
 
     ms.save(file_name);
 }
 
-void ModelSelectionTest::test_load(void)
+void ModelSelectionTest::test_load()
 {
     message += "test_load\n";
 
-    std::string file_name = "../data/model_selection.xml";
+    string file_name = "../data/model_selection.xml";
 
     ModelSelection ms;
 
@@ -154,7 +154,7 @@ void ModelSelectionTest::test_load(void)
 }
 
 
-void ModelSelectionTest::run_test_case(void)
+void ModelSelectionTest::run_test_case()
 {
     message += "Running model selection test case...\n";
 

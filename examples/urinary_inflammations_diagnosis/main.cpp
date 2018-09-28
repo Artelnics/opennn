@@ -32,219 +32,141 @@ int main(void)
 {
     try
     {
-        int rank = 0;
+        std::cout << "OpenNN. Urinary Inflammations Diagnosis Application." << std::endl;
 
-#ifdef __OPENNN_MPI__
-
-        int size = 1;
-
-        MPI_Init(NULL,NULL);
-
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-#endif
-
-        if(rank == 0)
-        {
-            std::cout << "OpenNN. Urinary Inflammations Diagnosis Application." << std::endl;
-        }
         srand((unsigned)time(NULL));
 
-        // Global variables
+        // Data set
 
         DataSet data_set;
 
-        NeuralNetwork neural_network;
+        data_set.set_data_file_name("../data/urinary_inflammations_diagnosis.dat");
 
-        LossIndex loss_index;
+        data_set.set_separator("Space");
 
-        TrainingStrategy training_strategy;
+        data_set.load_data();
 
-        ModelSelection model_selection;
+        // Variables
 
-        // Local variables
+        Variables* variables_pointer = data_set.get_variables_pointer();
 
-        DataSet local_data_set;
+        variables_pointer->set_name(0, "temperature");
+        variables_pointer->set_units(0, "degree_celsius");
+        variables_pointer->set_use(0, Variables::Input);
 
-        NeuralNetwork local_neural_network;
+        variables_pointer->set_name(1, "nausea");
+        variables_pointer->set_units(1, "boolean");
+        variables_pointer->set_use(1, Variables::Input);
 
-        LossIndex local_loss_index;
+        variables_pointer->set_name(2, "lumbar_pain");
+        variables_pointer->set_units(2, "boolean");
+        variables_pointer->set_use(2, Variables::Input);
 
-        TrainingStrategy local_training_strategy;
+        variables_pointer->set_name(3, "urine_pushing");
+        variables_pointer->set_units(3, "boolean");
+        variables_pointer->set_use(3, Variables::Input);
 
-        ModelSelection local_model_selection;
+        variables_pointer->set_name(4, "micturition_pain");
+        variables_pointer->set_units(4, "boolean");
+        variables_pointer->set_use(4, Variables::Input);
 
-        if(rank == 0)
-        {
-            // Data set
+        variables_pointer->set_name(5, "urethra_pain");
+        variables_pointer->set_units(5, "boolean");
+        variables_pointer->set_use(5, Variables::Input);
 
-            data_set.set_data_file_name("../data/urinary_inflammations_diagnosis.dat");
+        variables_pointer->set_name(6, "urinary_inflammation");
+        variables_pointer->set_units(6, "boolean");
+        variables_pointer->set_use(6, Variables::Unused);
 
-            data_set.set_separator("Space");
+        variables_pointer->set_name(7, "nephritis_renal_pelvis_origin");
+        variables_pointer->set_units(7, "boolean");
+        variables_pointer->set_use(7, Variables::Target);
 
-            data_set.load_data();
+        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
+        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
 
-            // Variables
+        // Instances
 
-            Variables* variables_pointer = data_set.get_variables_pointer();
+        Instances* instances_pointer = data_set.get_instances_pointer();
 
-            variables_pointer->set_name(0, "temperature");
-            variables_pointer->set_units(0, "degree_celsius");
-            variables_pointer->set_use(0, Variables::Input);
+        instances_pointer->split_random_indices();
 
-            variables_pointer->set_name(1, "nausea");
-            variables_pointer->set_units(1, "boolean");
-            variables_pointer->set_use(1, Variables::Input);
+        const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
-            variables_pointer->set_name(2, "lumbar_pain");
-            variables_pointer->set_units(2, "boolean");
-            variables_pointer->set_use(2, Variables::Input);
+        // Neural network
 
-            variables_pointer->set_name(3, "urine_pushing");
-            variables_pointer->set_units(3, "boolean");
-            variables_pointer->set_use(3, Variables::Input);
+        NeuralNetwork neural_network(6, 6, 1);
 
-            variables_pointer->set_name(4, "micturition_pain");
-            variables_pointer->set_units(4, "boolean");
-            variables_pointer->set_use(4, Variables::Input);
+        Inputs* inputs_pointer = neural_network.get_inputs_pointer();
 
-            variables_pointer->set_name(5, "urethra_pain");
-            variables_pointer->set_units(5, "boolean");
-            variables_pointer->set_use(5, Variables::Input);
+        inputs_pointer->set_information(inputs_information);
 
-            variables_pointer->set_name(6, "urinary_inflammation");
-            variables_pointer->set_units(6, "boolean");
-            variables_pointer->set_use(6, Variables::Unused);
+        Outputs* outputs_pointer = neural_network.get_outputs_pointer();
 
-            variables_pointer->set_name(7, "nephritis_renal_pelvis_origin");
-            variables_pointer->set_units(7, "boolean");
-            variables_pointer->set_use(7, Variables::Target);
+        outputs_pointer->set_information(targets_information);
 
-            const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-            const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        neural_network.construct_scaling_layer();
 
-            // Instances
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-            Instances* instances_pointer = data_set.get_instances_pointer();
+        scaling_layer_pointer->set_statistics(inputs_statistics);
 
-            instances_pointer->split_random_indices();
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
-            const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+        // Loss index
 
-            // Neural network
+        LossIndex loss_index(&neural_network, &data_set);
 
-            neural_network.set(6, 6, 1);
+        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-            Inputs* inputs_pointer = neural_network.get_inputs_pointer();
+        // Training strategy
 
-            inputs_pointer->set_information(inputs_information);
+        TrainingStrategy training_strategy(&loss_index);
 
-            Outputs* outputs_pointer = neural_network.get_outputs_pointer();
+        training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
 
-            outputs_pointer->set_information(targets_information);
+        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-            neural_network.construct_scaling_layer();
+        quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
 
-            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        training_strategy.set_display(false);
 
-            scaling_layer_pointer->set_statistics(inputs_statistics);
+        // Model selection
 
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::NoScaling);
+        ModelSelection model_selection(&training_strategy);
 
-            // Loss index
+        model_selection.set_inputs_selection_type(ModelSelection::GENETIC_ALGORITHM);
 
-            loss_index.set_data_set_pointer(&data_set);
-            loss_index.set_neural_network_pointer(&neural_network);
+        GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
 
-            // Training strategy
+        genetic_algorithm_pointer->set_approximation(false);
 
-            training_strategy.set(&loss_index);
+        genetic_algorithm_pointer->set_inicialization_method(GeneticAlgorithm::Random);
 
-            training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+        genetic_algorithm_pointer->set_display(true);
 
-            QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
-
-            quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
-
-            training_strategy.set_display(false);
-
-            // Model selection
-
-            model_selection.set_training_strategy_pointer(&training_strategy);
-
-            model_selection.set_inputs_selection_type(ModelSelection::GENETIC_ALGORITHM);
-
-            GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
-
-            genetic_algorithm_pointer->set_approximation(false);
-
-            genetic_algorithm_pointer->set_inicialization_method(GeneticAlgorithm::Random);
-
-            genetic_algorithm_pointer->set_display(true);
-        }
-
-#ifdef __OPENNN_MPI__
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        local_data_set.set_MPI(&data_set);
-
-        local_neural_network.set_MPI(&neural_network);
-
-        local_loss_index.set_MPI(&local_data_set,&local_neural_network,&loss_index);
-
-        local_training_strategy.set_MPI(&local_loss_index,&training_strategy);
-
-        local_model_selection.set_MPI(&local_training_strategy, &model_selection);
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        local_training_strategy.set_display(false);
-
-        local_model_selection.set_approximation(false);
-
-        ModelSelection::ModelSelectionResults model_selection_results = local_model_selection.perform_inputs_selection();
-#else
         ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_inputs_selection();
-#endif
 
-        if(rank == 0)
-        {
-#ifdef __OPENNN_MPI__
-            neural_network.set_multilayer_perceptron_pointer(local_neural_network.get_multilayer_perceptron_pointer());
-#endif
-            // Testing analysis
+        // Testing analysis
 
-            TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-            const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+        const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
 
-            // Save results
+        // Save results
 
-            ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        data_set.save("../data/data_set.xml");
 
-            scaling_layer_pointer->set_scaling_method(ScalingLayer::MinimumMaximum);
+        neural_network.save("../data/neural_network.xml");
+        neural_network.save_expression("../data/expression.txt");
 
-            data_set.save("../data/data_set.xml");
+        training_strategy.save("../data/training_strategy.xml");
 
-            neural_network.save("../data/neural_network.xml");
-            neural_network.save_expression("../data/expression.txt");
+        model_selection.save("../data/model_selection.xml");
+//        model_selection_results.save("../data/model_selection_results.dat");
 
-            training_strategy.save("../data/training_strategy.xml");
+        confusion.save("../data/confusion.dat");
 
-            model_selection.save("../data/model_selection.xml");
-            //        model_selection_results.save("../data/model_selection_results.dat");
-
-            confusion.save("../data/confusion.dat");
-        }
-
-#ifdef __OPENNN_MPI__
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        MPI_Finalize();
-#endif
         return(0);
     }
     catch(std::exception& e)

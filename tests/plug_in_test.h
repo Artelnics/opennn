@@ -31,59 +31,59 @@ public:
 
    // CONSTRUCTOR
 
-   explicit PlugInTest(void);
+   explicit PlugInTest();
 
    // DESTRUCTOR
 
-   virtual ~PlugInTest(void);
+   virtual ~PlugInTest();
 
    // Get methods
     
-   void test_get_template_file_name(void);
-   void test_get_input_file_name(void);
+   void test_get_template_file_name();
+   void test_get_input_file_name();
 
-   void test_get_script_file_name(void);
+   void test_get_script_file_name();
 
-   void test_get_output_file_name(void);
+   void test_get_output_file_name();
 
-   void test_get_input_flags(void);
-   void test_get_display(void);
+   void test_get_input_flags();
+   void test_get_display();
 
    // Set methods
 
-   void test_set_template_file_name(void);
-   void test_set_input_file_name(void);
+   void test_set_template_file_name();
+   void test_set_input_file_name();
 
-   void test_set_script_file_name(void);
+   void test_set_script_file_name();
 
-   void test_set_output_file_name(void);
+   void test_set_output_file_name();
 
-   void test_set_input_flags(void);
-   void test_set_display(void);
+   void test_set_input_flags();
+   void test_set_display();
 
    // Plug-In methods
 
-   void test_write_input_file(void);
+   void test_write_input_file();
 
-   void test_run_script(void);
+   void test_run_script();
 
-   void test_read_output_file(void);
+   void test_read_output_file();
 
-   void test_read_output_file_header(void);
+   void test_read_output_file_header();
 
-   void test_calculate_output_data(void);
+   void test_calculate_output_data();
 
    // Serialization methods
 
-   void test_to_XML(void);   
-   void test_from_XML(void);   
+   void test_to_XML();   
+   void test_from_XML();   
 
-   void test_save(void);
-   void test_load(void);
+   void test_save();
+   void test_load();
 
    // Unit testing methods
 
-   void run_test_case(void);
+   void run_test_case();
 
 };
 
@@ -92,7 +92,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

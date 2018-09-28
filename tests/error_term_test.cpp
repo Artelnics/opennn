@@ -21,33 +21,33 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-ErrorTermTest::ErrorTermTest(void) : UnitTesting() 
+ErrorTermTest::ErrorTermTest() : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-ErrorTermTest::~ErrorTermTest(void)
+ErrorTermTest::~ErrorTermTest()
 {
 }
 
 
 // METHODS
 
-void ErrorTermTest::test_constructor(void)
+void ErrorTermTest::test_constructor()
 {
    message += "test_constructor\n";
 }
 
 
-void ErrorTermTest::test_destructor(void)
+void ErrorTermTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void ErrorTermTest::test_assingment_operator(void)
+void ErrorTermTest::test_assingment_operator()
 {
    message += "test_assingment_operator\n";
 
@@ -59,7 +59,7 @@ void ErrorTermTest::test_assingment_operator(void)
 }
 
 
-void ErrorTermTest::test_equal_to_operator(void)
+void ErrorTermTest::test_equal_to_operator()
 {
    message += "test_equal_to_operator\n";
 
@@ -70,7 +70,7 @@ void ErrorTermTest::test_equal_to_operator(void)
 }
 
 
-void ErrorTermTest::test_get_neural_network_pointer(void)
+void ErrorTermTest::test_get_neural_network_pointer()
 {
    message += "test_get_neural_network_pointer\n";
 
@@ -84,7 +84,7 @@ void ErrorTermTest::test_get_neural_network_pointer(void)
 }
 
 
-void ErrorTermTest::test_get_numerical_differentiation_pointer(void)
+void ErrorTermTest::test_get_numerical_differentiation_pointer()
 {
    message += "test_get_numerical_differentiation_pointer\n";
 
@@ -98,7 +98,7 @@ void ErrorTermTest::test_get_numerical_differentiation_pointer(void)
 }
 
 
-void ErrorTermTest::test_get_display(void)
+void ErrorTermTest::test_get_display()
 {
    message += "test_get_display\n";
 
@@ -115,7 +115,7 @@ void ErrorTermTest::test_get_display(void)
 }
 
 
-void ErrorTermTest::test_set_neural_network_pointer(void)
+void ErrorTermTest::test_set_neural_network_pointer()
 {
    message += "test_set_neural_network_pointer\n";
 
@@ -130,7 +130,7 @@ void ErrorTermTest::test_set_neural_network_pointer(void)
 }
 
 
-void ErrorTermTest::test_set_numerical_differentiation_pointer(void)
+void ErrorTermTest::test_set_numerical_differentiation_pointer()
 {
    message += "test_set_numerical_differentiation_pointer\n";
 
@@ -141,7 +141,7 @@ void ErrorTermTest::test_set_numerical_differentiation_pointer(void)
 }
 
 
-void ErrorTermTest::test_set_default(void)
+void ErrorTermTest::test_set_default()
 {
    message += "test_set_default\n";
 
@@ -154,13 +154,13 @@ void ErrorTermTest::test_set_default(void)
 }
 
 
-void ErrorTermTest::test_set_display(void)
+void ErrorTermTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void ErrorTermTest::test_calculate_layers_delta(void)
+void ErrorTermTest::test_calculate_layers_delta()
 {
    message += "test_calculate_layers_delta\n";
 
@@ -240,7 +240,7 @@ void ErrorTermTest::test_calculate_layers_delta(void)
 
 // @todo
 
-void ErrorTermTest::test_calculate_interlayers_Delta(void)
+void ErrorTermTest::test_calculate_interlayers_Delta()
 {
    message += "test_calculate_interlayers_Delta\n";
 /*
@@ -371,7 +371,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    ds.set(1,10,5);
    ds.initialize_data(1.0);
 
-   inputs = ds.arrange_input_data().arrange_column(0);
+   inputs = ds.arrange_input_data().get_column(0);
 
    nn.set(10, 5);
    nn.get_multilayer_perceptron_pointer()->initialize_biases(0.0);
@@ -399,7 +399,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    ds.set(1,10,5);
    ds.randomize_data_normal();
 
-   inputs = ds.arrange_input_data().arrange_column(0);
+   inputs = ds.arrange_input_data().get_column(0);
 
    nn.set(10, 5);
 //   nn.get_multilayer_perceptron_pointer()->initialize_biases(0.0);
@@ -422,7 +422,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    ds.set(1,1,1);
    ds.randomize_data_normal();
 
-   inputs = ds.arrange_input_data().arrange_column(0);
+   inputs = ds.arrange_input_data().get_column(0);
 
    nn.set(1,1);
 
@@ -442,7 +442,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    ds.set(1,1,1);
    ds.randomize_data_uniform(0,1);
 
-   inputs = ds.arrange_input_data().arrange_column(0);
+   inputs = ds.arrange_input_data().get_column(0);
 
    nn.set(1,1);
 
@@ -462,7 +462,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    ds.set(1,1,1);
    ds.randomize_data_normal();
 
-   inputs = ds.arrange_input_data().arrange_column(0);
+   inputs = ds.arrange_input_data().get_column(0);
 
    nn.set(1,1);
 
@@ -482,8 +482,8 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
    ds.set(1,1,1);
    ds.randomize_data_normal();
 
-   inputs = ds.arrange_input_data().arrange_column(0);
-   targets = ds.arrange_target_data().arrange_column(0);
+   inputs = ds.arrange_input_data().get_column(0);
+   targets = ds.arrange_target_data().get_column(0);
 
    nn.set(1,1,1);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
@@ -516,7 +516,7 @@ void ErrorTermTest::test_calculate_interlayers_Delta(void)
 }
 
 
-void ErrorTermTest::test_calculate_point_gradient(void)
+void ErrorTermTest::test_calculate_point_gradient()
 {
    message += "test_calculate_point_gradient\n";
 
@@ -596,7 +596,7 @@ void ErrorTermTest::test_calculate_point_gradient(void)
 
 // @todo
 
-void ErrorTermTest::test_calculate_point_Hessian(void)
+void ErrorTermTest::test_calculate_point_Hessian()
 {
    message += "test_calculate_point_Hessian\n";
 /*
@@ -711,7 +711,7 @@ void ErrorTermTest::test_calculate_point_Hessian(void)
 }
 
 
-void ErrorTermTest::test_calculate_error(void)
+void ErrorTermTest::test_calculate_error()
 {
    message += "test_calculate_error\n";
 
@@ -729,7 +729,7 @@ void ErrorTermTest::test_calculate_error(void)
 }
 
 
-void ErrorTermTest::test_calculate_selection_error(void)
+void ErrorTermTest::test_calculate_selection_error()
 {
    message += "test_calculate_selection_error\n";
 
@@ -746,7 +746,7 @@ void ErrorTermTest::test_calculate_selection_error(void)
 }
 
 
-void ErrorTermTest::test_calculate_gradient(void)
+void ErrorTermTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -793,7 +793,7 @@ void ErrorTermTest::test_calculate_gradient(void)
 }
 
 
-void ErrorTermTest::test_calculate_Hessian(void)
+void ErrorTermTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
 
@@ -846,7 +846,7 @@ void ErrorTermTest::test_calculate_Hessian(void)
 }
 
 
-void ErrorTermTest::test_calculate_terms(void)
+void ErrorTermTest::test_calculate_terms()
 {
     message += "test_calculate_terms\n";
 
@@ -867,7 +867,7 @@ void ErrorTermTest::test_calculate_terms(void)
 }
 
 
-void ErrorTermTest::test_calculate_terms_Jacobian(void)
+void ErrorTermTest::test_calculate_terms_Jacobian()
 {
     message += "test_calculate_terms_Jacobian\n";
 
@@ -889,7 +889,7 @@ void ErrorTermTest::test_calculate_terms_Jacobian(void)
 }
 
 
-void ErrorTermTest::test_to_XML(void)
+void ErrorTermTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -905,13 +905,13 @@ void ErrorTermTest::test_to_XML(void)
 }
 
 
-void ErrorTermTest::test_write_information(void)
+void ErrorTermTest::test_write_information()
 {
    message += "test_write_information\n";
 
    MockErrorTerm mpt;
 
-   std::string information;
+   string information;
 
    // Test
 
@@ -921,7 +921,7 @@ void ErrorTermTest::test_write_information(void)
 }
 
 
-void ErrorTermTest::run_test_case(void)
+void ErrorTermTest::run_test_case()
 {
    message += "Running error term test case...\n";
 
@@ -990,7 +990,7 @@ void ErrorTermTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

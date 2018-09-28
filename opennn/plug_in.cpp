@@ -6,7 +6,7 @@
 /*   P L U G - I N   C L A S S                                                                                  */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -23,7 +23,7 @@ namespace OpenNN
 /// Default constructor.
 /// It constructs a default plug-in object, with zero independent and dependent variables. 
 
-PlugIn::PlugIn(void) : MathematicalModel()
+PlugIn::PlugIn() : MathematicalModel()
 {                                            
    set_default();
 }
@@ -46,20 +46,20 @@ PlugIn::PlugIn(const tinyxml2::XMLDocument& plug_in_document)
 /// Destructor. 
 /// It does not delete any object.  
 
-PlugIn::~PlugIn(void)
+PlugIn::~PlugIn()
 { 
 }
 
 
 // ASSIGNMENT OPERATOR
 
-// PlugIn& operator = (const PlugIn&) method
+// PlugIn& operator =(const PlugIn&) method
 
 /// Assignment operator. 
 /// It assigns to this object the members of an existing plug-in object.
 /// @param other_plug_in Plug-in object to be assigned.
 
-PlugIn& PlugIn::operator = (const PlugIn& other_plug_in)
+PlugIn& PlugIn::operator =(const PlugIn& other_plug_in)
 {
    if(this != &other_plug_in) 
    {
@@ -84,14 +84,14 @@ PlugIn& PlugIn::operator = (const PlugIn& other_plug_in)
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const PlugIn&) const method
+// bool operator ==(const PlugIn&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_plug_in Plug-in to be compared with.
 
-bool PlugIn::operator == (const PlugIn& other_plug_in) const
+bool PlugIn::operator ==(const PlugIn& other_plug_in) const
 {
    if(input_method == other_plug_in.input_method
    && template_file_name == other_plug_in.template_file_name
@@ -113,21 +113,21 @@ bool PlugIn::operator == (const PlugIn& other_plug_in) const
 
 // METHODS
 
-// const InputMethod& get_input_method(void) const method
+// const InputMethod& get_input_method() const method
 
 /// Returns the method for including the information into the input file. 
 
-const PlugIn::InputMethod& PlugIn::get_input_method(void) const
+const PlugIn::InputMethod& PlugIn::get_input_method() const
 {
    return(input_method);
 }
 
 
-// std::string write_input_method(void) const method
+// string write_input_method() const method
 
 /// Returns a string with the name of the method for including the information into the input file. 
 
-std::string PlugIn::write_input_method(void) const
+string PlugIn::write_input_method() const
 {
    switch(input_method)
    {
@@ -139,81 +139,81 @@ std::string PlugIn::write_input_method(void) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: PlugIn class.\n"
-                << "std::string get_input_method_name(void) const method.\n"
+                << "string get_input_method_name() const method.\n"
                 << "Unknown inputs method.\n";
  
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }   
 }
 
 
-// const std::string& get_template_file_name(void) method
+// const string& get_template_file_name() method
 
 /// Returns the name of the template file. 
 
-const std::string& PlugIn::get_template_file_name(void) const
+const string& PlugIn::get_template_file_name() const
 {
    return(template_file_name);
 }
 
 
-// const std::string& get_input_file_name(void) method
+// const string& get_input_file_name() method
 
 /// Returns the name of the input file. 
 
-const std::string& PlugIn::get_input_file_name(void) const
+const string& PlugIn::get_input_file_name() const
 {
    return(input_file_name);
 }
 
 
-// const std::string& get_script_file_name(void) method
+// const string& get_script_file_name() method
 
 /// Returns the name of the script file. 
 
-const std::string& PlugIn::get_script_file_name(void) const
+const string& PlugIn::get_script_file_name() const
 {
    return(script_file_name);
 }
 
 
-// const std::string& get_output_file_name(void) method
+// const string& get_output_file_name() method
 
 /// Returns the name of the output file. 
 
-const std::string& PlugIn::get_output_file_name(void) const
+const string& PlugIn::get_output_file_name() const
 {
    return(output_file_name);
 }
 
 
-// const Vector<std::string>& get_input_flags(void) const method
+// const Vector<string>& get_input_flags() const method
 
 /// Returns the vector of input file flags. 
 
-const Vector<std::string>& PlugIn::get_input_flags(void) const
+const Vector<string>& PlugIn::get_input_flags() const
 {
    return(input_flags);
 }
 
 
-// const std::string& get_input_flag(const size_t&) const method
+// const string& get_input_flag(const size_t&) const method
 
 /// Returns a single input file flag. 
 /// @param i Index of flag. 
 
-const std::string& PlugIn::get_input_flag(const size_t& i) const
+const string& PlugIn::get_input_flag(const size_t& i) const
 {
    return(input_flags[i]);
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the following default values in this object:
 /// <ul>
@@ -224,7 +224,7 @@ const std::string& PlugIn::get_input_flag(const size_t& i) const
 /// <li> Display: true. 
 /// </ul>
 
-void PlugIn::set_default(void)
+void PlugIn::set_default()
 {
    input_method = IndependentParametersInput;
 
@@ -250,12 +250,12 @@ void PlugIn::set_input_method(const InputMethod& new_input_method)
 }
 
 
-// void set_input_method(const std::string&) method
+// void set_input_method(const string&) method
 
 /// Sets the method for writting the input file from a string. 
 /// @param new_input_method Method for inputing the input file. 
 
-void PlugIn::set_input_method(const std::string& new_input_method)
+void PlugIn::set_input_method(const string& new_input_method)
 {
    if(new_input_method == "IndependentParameters")
    {
@@ -263,67 +263,67 @@ void PlugIn::set_input_method(const std::string& new_input_method)
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: PlugIn class.\n"
-             << "void set_input_method(const std::string&) method.\n"
+             << "void set_input_method(const string&) method.\n"
 			 << "Unknown plug-in method: " << new_input_method << ".\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// void set_template_file_name(const std::string&) method
+// void set_template_file_name(const string&) method
 
 /// Sets the name of the template file. 
 /// @param new_template_file_name Name of template file.
 
-void PlugIn::set_template_file_name(const std::string& new_template_file_name)
+void PlugIn::set_template_file_name(const string& new_template_file_name)
 {
    template_file_name = new_template_file_name;
 }
 
 
-// void set_input_file_name(const std::string&) method
+// void set_input_file_name(const string&) method
 
 /// Sets the name of the input file. 
 /// @param new_input_file_name Name of input file.
 
-void PlugIn::set_input_file_name(const std::string& new_input_file_name)
+void PlugIn::set_input_file_name(const string& new_input_file_name)
 {
    input_file_name = new_input_file_name;
 }
 
 
-// void set_script_file_name(const std::string&) method
+// void set_script_file_name(const string&) method
 
 /// Sets the name of the script file. 
 /// @param new_script_file_name Name of script file.
 
-void PlugIn::set_script_file_name(const std::string& new_script_file_name)
+void PlugIn::set_script_file_name(const string& new_script_file_name)
 {
    script_file_name = new_script_file_name;
 }
 
 
-// void set_output_file_name(const std::string&) method
+// void set_output_file_name(const string&) method
 
 /// Sets the name of the output file. 
 /// @param new_output_file_name Name of output file.
 
-void PlugIn::set_output_file_name(const std::string& new_output_file_name)
+void PlugIn::set_output_file_name(const string& new_output_file_name)
 {
    output_file_name = new_output_file_name;
 }
 
 
-// void set_input_flags(const Vector<std::string>&) method
+// void set_input_flags(const Vector<string>&) method
 
 /// Sets the flags in the input file. 
 /// @param new_input_flags Flags strings. 
 
-void PlugIn::set_input_flags(const Vector<std::string>& new_input_flags)
+void PlugIn::set_input_flags(const Vector<string>& new_input_flags)
 {
    input_flags = new_input_flags;
 }
@@ -346,13 +346,13 @@ void PlugIn::write_input_file(const NeuralNetwork& neural_network) const
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: PlugIn class.\n"
                 << "void write_input_file(const NeuralNetwork&) const method.\n"
                 << "Unknown input method.\n";
  
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }   
@@ -371,13 +371,13 @@ void PlugIn::write_input_file_independent_parameters(const NeuralNetwork& neural
 
    if(!independent_parameters_pointer)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: PlugIn class.\n"
-             << "void write_input_file_independent_parameters(void) const method.\n"
+             << "void write_input_file_independent_parameters() const method.\n"
              << "Pointer to independent parameters is null.\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 
    #endif
@@ -393,27 +393,27 @@ void PlugIn::write_input_file_independent_parameters(const NeuralNetwork& neural
    //if(input_flags_number != independent_parameters_number)
    //{
    //   buffer << "OpenNN Exception: PlugIn class.\n"
-   //          << "void write_input_file_independent_parameters(void) const method.\n"
+   //          << "void write_input_file_independent_parameters() const method.\n"
    //          << "Number of inputs flags must be equal to number of independent parameters.\n";
 
-   //   throw std::logic_error(buffer.str());         
+   //   throw logic_error(buffer.str());         
    //}
 
    //// Template file 
 
-   //std::ifstream template_file(template_file_name.c_str());
+   //ifstream template_file(template_file_name.c_str());
 
    //if(!template_file.is_open())
    //{
    //   buffer << "OpenNN Exception: PlugIn class.\n"
-   //          << "void write_input_file_independent_parameters(void) const method.\n"
+   //          << "void write_input_file_independent_parameters() const method.\n"
    //          << "Cannot open template file.\n";            
    //         
-   //   throw std::logic_error(buffer.str());
+   //   throw logic_error(buffer.str());
    //}
 
-   //std::string file_string;
-   //std::string line;
+   //string file_string;
+   //string line;
 
    //while(getline(template_file, line))
    //{
@@ -425,17 +425,17 @@ void PlugIn::write_input_file_independent_parameters(const NeuralNetwork& neural
 
    //// Convert values to string
 
-   //Vector<std::string> independent_parameters_string = independent_parameters.get_string_vector();
+   //Vector<string> independent_parameters_string = independent_parameters.get_string_vector();
 
    //// Replace flags by values as many times flags are found in string
 
    //for(size_t i = 0; i < input_flags_number; i++)
    //{
-   //   while(file_string.find(input_flags[i]) != std::string::npos)
+   //   while(file_string.find(input_flags[i]) != string::npos)
    //   {
    //      size_t found = file_string.find(input_flags[i]);
 
-   //      if(found != std::string::npos)
+   //      if(found != string::npos)
    //      {
    //         file_string.replace(file_string.find(input_flags[i]), input_flags[i].length(), independent_parameters_string[i]);
    //      }
@@ -444,15 +444,15 @@ void PlugIn::write_input_file_independent_parameters(const NeuralNetwork& neural
 
    //// Input file
 
-   //std::ofstream input_file(input_file_name.c_str());
+   //ofstream input_file(input_file_name.c_str());
    //
    //if(!input_file.is_open())
    //{
    //   buffer << "OpenNN Exception: PlugIn class.\n"
-   //          << "void write_input_file(void) const method.\n"
+   //          << "void write_input_file() const method.\n"
    //          << "Cannot open inputs file.\n";            
    //         
-   //   throw std::logic_error(buffer.str());
+   //   throw logic_error(buffer.str());
    //}
 
    //input_file << file_string << "\n";
@@ -461,11 +461,11 @@ void PlugIn::write_input_file_independent_parameters(const NeuralNetwork& neural
 }
 
 
-// void run_script(void) const
+// void run_script() const
 
 /// This method runs the script needed for executing the mathematical model. 
 
-void PlugIn::run_script(void) const
+void PlugIn::run_script() const
 {
    if(!script_file_name.empty())
    {
@@ -478,23 +478,23 @@ void PlugIn::run_script(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: PlugIn class.\n"
-             << "void run_script(void) const.\n"
+             << "void run_script() const.\n"
              << "Batch file_name is empty.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 }
 
 
-// Matrix<double> read_output_file(void) const method
+// Matrix<double> read_output_file() const method
 
 /// This method reads the output file from the mathematical model.
 /// Here the output file only contains a data matrix. 
 
-Matrix<double> PlugIn::read_output_file(void) const
+Matrix<double> PlugIn::read_output_file() const
 {
    Matrix<double> data(output_file_name);
 
@@ -502,29 +502,29 @@ Matrix<double> PlugIn::read_output_file(void) const
 }
 
 
-// Matrix<double> read_output_file_header(void) const method
+// Matrix<double> read_output_file_header() const method
 
 /// This method reads the output file from the mathematical model.
 /// Here the output file contains a header file and a data matrix. 
 
-Matrix<double> PlugIn::read_output_file_header(void) const
+Matrix<double> PlugIn::read_output_file_header() const
 {
    // Open outputs file for reading
 
-   std::ifstream output_file(output_file_name.c_str());
+   ifstream output_file(output_file_name.c_str());
    
    if(!output_file.is_open())
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: PlugIn class.\n"
-             << "Matrix<double> read_output_file_header(void) const method.\n"
+             << "Matrix<double> read_output_file_header() const method.\n"
              << "Cannot open outputs file.\n";            
             
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
-   std::string header;
+   string header;
    getline(output_file, header);
 
    Matrix<double> data;
@@ -558,13 +558,11 @@ Matrix<double> PlugIn::calculate_solutions(const NeuralNetwork& neural_network) 
 }
 
 
-// std::string to_string(void) const method
-
 /// Returns a string representation of the current plug-in object. 
 
-std::string PlugIn::to_string(void) const
+string PlugIn::object_to_string() const
 {
-   std::ostringstream buffer; 
+   ostringstream buffer; 
 
    buffer << "Plug-in\n" 
           << "Independent variables number: " << independent_variables_number << "\n" 
@@ -583,16 +581,16 @@ std::string PlugIn::to_string(void) const
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the plug-in object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document. 
 
-tinyxml2::XMLDocument* PlugIn::to_XML(void) const   
+tinyxml2::XMLDocument* PlugIn::to_XML() const   
 {
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLElement* plug_in_element = document->NewElement("PlugIn");
 
@@ -630,7 +628,7 @@ tinyxml2::XMLDocument* PlugIn::to_XML(void) const
       tinyxml2::XMLElement* input_method_element = document->NewElement("InputMethod");
       plug_in_element->LinkEndChild(input_method_element);
 
-      std::string input_method_name = write_input_method();
+      string input_method_name = write_input_method();
 
       tinyxml2::XMLText* input_method_text = document->NewText(input_method_name.c_str());
       input_method_element->LinkEndChild(input_method_text);
@@ -739,7 +737,7 @@ tinyxml2::XMLDocument* PlugIn::to_XML(void) const
 
 void PlugIn::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("PlugIn");
 
@@ -876,9 +874,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_independent_variables_number(atoi(text));
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -898,9 +896,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_dependent_variables_number(atoi(text));
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -920,9 +918,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_input_method(input_method_text);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -942,9 +940,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_template_file_name(template_file_name_text);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -964,9 +962,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_input_file_name(input_file_name_text);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -986,9 +984,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_script_file_name(script_file_name_text);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1008,9 +1006,9 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_output_file_name(output_file_name_text);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1026,16 +1024,16 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
 
         if(input_flags_text)
         {
-           Vector<std::string> new_input_flags;
+           Vector<string> new_input_flags;
            new_input_flags.parse(input_flags_text);
 
            try
            {
               set_input_flags(new_input_flags);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1053,13 +1051,13 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
         {
            try
            {
-              std::string display_string(display_text);
+              string display_string(display_text);
 
               set_display(display_string != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1069,7 +1067,7 @@ void PlugIn::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

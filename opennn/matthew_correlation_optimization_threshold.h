@@ -6,7 +6,7 @@
 /*   M A T T H E W   C O R R E L A T I O N   O P T I M I Z A T I O N   T H R E S H O L D   C L A S S   H E A D E R      */
 /*                                                                                                                      */
 /*   Fernando Gomez                                                                                                     */
-/*   Artelnics - Making intelligent use of data                                                                         */
+/*   Artificial Intelligence Techniques SL                                                                         */
 /*   fernandogomez@artelnics.com                                                                                        */
 /*                                                                                                                      */
 /************************************************************************************************************************/
@@ -35,7 +35,7 @@
 
 // TinyXml includes
 
-#include "../tinyxml2/tinyxml2.h"
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -49,7 +49,7 @@ class MatthewCorrelationOptimizationThreshold : public ThresholdSelectionAlgorit
 public:
     // DEFAULT CONSTRUCTOR
 
-    explicit MatthewCorrelationOptimizationThreshold(void);
+    explicit MatthewCorrelationOptimizationThreshold();
 
     // TRAINING STRATEGY CONSTRUCTOR
 
@@ -61,11 +61,11 @@ public:
 
     // FILE CONSTRUCTOR
 
-    explicit MatthewCorrelationOptimizationThreshold(const std::string&);
+    explicit MatthewCorrelationOptimizationThreshold(const string&);
 
     // DESTRUCTOR
 
-    virtual ~MatthewCorrelationOptimizationThreshold(void);
+    virtual ~MatthewCorrelationOptimizationThreshold();
 
 
     // STRUCTURES
@@ -78,13 +78,13 @@ public:
     {
         /// Default constructor.
 
-        explicit MatthewCorrelationOptimizationThresholdResults(void) : ThresholdSelectionAlgorithm::ThresholdSelectionResults()
+        explicit MatthewCorrelationOptimizationThresholdResults() : ThresholdSelectionAlgorithm::ThresholdSelectionResults()
         {
         }
 
         /// Destructor.
 
-        virtual ~MatthewCorrelationOptimizationThresholdResults(void)
+        virtual ~MatthewCorrelationOptimizationThresholdResults()
         {
         }
 
@@ -95,15 +95,15 @@ public:
 
     // Get methods
 
-    const double& get_minimum_threshold(void) const;
+    const double& get_minimum_threshold() const;
 
-    const double& get_maximum_threshold(void) const;
+    const double& get_maximum_threshold() const;
 
-    const double& get_step(void) const;
+    const double& get_step() const;
 
     // Set methods
 
-    void set_default(void);
+    void set_default();
 
     void set_minimum_threshold(const double&);
 
@@ -113,20 +113,20 @@ public:
 
     // Order selection methods
 
-    MatthewCorrelationOptimizationThresholdResults* perform_threshold_selection(void);
+    MatthewCorrelationOptimizationThresholdResults* perform_threshold_selection();
 
     // Serialization methods
 
-    Matrix<std::string> to_string_matrix(void) const;
+    Matrix<string> to_string_matrix() const;
 
-    tinyxml2::XMLDocument* to_XML(void) const;
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
     // void read_XML(   );
 
-    void save(const std::string&) const;
-    void load(const std::string&);
+    void save(const string&) const;
+    void load(const string&);
 
 private:
 
@@ -149,7 +149,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
