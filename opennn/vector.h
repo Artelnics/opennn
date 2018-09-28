@@ -11697,7 +11697,6 @@ ostream &operator<<(
   return(os);
 }
 
-
 template <class T>
 struct KMeansResults
 {
@@ -11707,8 +11706,28 @@ struct KMeansResults
 
 };
 
+template <class T, class U> Vector<T> operator+(const U& x, const Vector<T>& y) {
+  return y+x;
+}
+template <class T, class U> Vector<T> operator-(const U& x, const Vector<T>& y) {
+  Vector<T> r(y*-1);
+  return r+=x;
+}
+template <class T, class U> Vector<T> operator*(const U& x, const Vector<T>& y) {
+  return y*x;
+}
+template <class T, class U> Vector<T> operator/(const U& x, const Vector<T>& y) {
+  Vector<T> r(y.size());
+  for (size_t i=0; i<y.size(); ++i) r[i]=1/y[i];
+  return r*=x;
+}
 
-
+using std::sqrt; // ensure regular sqrt is available in this namespace
+template <class T> Vector<T> sqrt(const Vector<T>& x) {
+  Vector<T> r(x.size());
+  for (size_t i=0; i<x.size(); ++i) r[i]=std::sqrt(x[i]);
+  return r;
+}
 
 } // end namespace OpenNN
 
