@@ -1,19 +1,21 @@
 /****************************************************************************************************************/
-/*                                                                                                              */ 
+/*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
+/*   www.opennn.org                                                                                             */
 /*                                                                                                              */
 /*   B L A N K   A P P L I C A T I O N                                                                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Roberto Lopez                                                                                              */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
-/*                                                                                                              */  
+/*                                                                                                              */
 /****************************************************************************************************************/
 
 // System includes
 
 #include <iostream>
+#include <stdlib.h>
+#include <conio.h>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -24,35 +26,25 @@
 #include <stdint.h>
 #include <limits.h>
 
+
 // OpenNN includes
 
 #include "../opennn/opennn.h"
 
 using namespace OpenNN;
+using namespace std;
 
 int main(void)
 {
+    cout << "Hello world" << endl;
 
-    try
-    {
-        std::cout << "OpenNN. Blank Application." << std::endl;
+    return 0;
 
-        srand((unsigned int)time(NULL));
-
-        return(0);
-    }
-    catch(std::exception& e)
-    {
-        std::cout << e.what() << std::endl;
-
-        return(1);
-    }
-
-}  
+}
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Roberto Lopez.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

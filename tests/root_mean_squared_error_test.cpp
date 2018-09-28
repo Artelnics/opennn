@@ -21,7 +21,7 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-RootMeanSquaredErrorTest::RootMeanSquaredErrorTest(void) : UnitTesting() 
+RootMeanSquaredErrorTest::RootMeanSquaredErrorTest() : UnitTesting() 
 {
 }
 
@@ -30,7 +30,7 @@ RootMeanSquaredErrorTest::RootMeanSquaredErrorTest(void) : UnitTesting()
 
 /// Destructor.
 
-RootMeanSquaredErrorTest::~RootMeanSquaredErrorTest(void)
+RootMeanSquaredErrorTest::~RootMeanSquaredErrorTest()
 {
 
 }
@@ -38,7 +38,7 @@ RootMeanSquaredErrorTest::~RootMeanSquaredErrorTest(void)
 
 // METHODS
 
-void RootMeanSquaredErrorTest::test_constructor(void)
+void RootMeanSquaredErrorTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -68,13 +68,13 @@ void RootMeanSquaredErrorTest::test_constructor(void)
 }
 
 
-void RootMeanSquaredErrorTest::test_destructor(void)
+void RootMeanSquaredErrorTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void RootMeanSquaredErrorTest::test_calculate_loss(void)
+void RootMeanSquaredErrorTest::test_calculate_loss()
 {
    message += "test_calculate_loss\n";
 
@@ -105,7 +105,7 @@ void RootMeanSquaredErrorTest::test_calculate_loss(void)
 }
 
 
-void RootMeanSquaredErrorTest::test_calculate_gradient(void)
+void RootMeanSquaredErrorTest::test_calculate_gradient()
 {NumericalDifferentiation nd;
 
     NeuralNetwork nn;
@@ -176,7 +176,7 @@ void RootMeanSquaredErrorTest::test_calculate_gradient(void)
 }
 
 
-void RootMeanSquaredErrorTest::test_calculate_selection_loss(void)
+void RootMeanSquaredErrorTest::test_calculate_selection_loss()
 {
    message += "test_calculate_selection_loss\n";
 
@@ -194,19 +194,19 @@ void RootMeanSquaredErrorTest::test_calculate_selection_loss(void)
 }
 
 
-void RootMeanSquaredErrorTest::test_to_XML(void)   
+void RootMeanSquaredErrorTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 }
 
 
-void RootMeanSquaredErrorTest::test_from_XML(void)   
+void RootMeanSquaredErrorTest::test_from_XML()   
 {
    message += "test_from_XML\n";
 }
 
 
-void RootMeanSquaredErrorTest::run_test_case(void)
+void RootMeanSquaredErrorTest::run_test_case()
 {
    message += "Running root mean squared error test case...\n";
 
@@ -236,7 +236,7 @@ void RootMeanSquaredErrorTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -16,7 +16,6 @@ void printVector(const double* vector, int n)
     }
 
     printf("\n");
-
 }
 
 void createHandle(cublasHandle_t* handle)
@@ -40,7 +39,7 @@ int mallocCUDA(double** A_d, int nBytes)
 
     error = cudaMalloc(A_d, nBytes);
 
-    if (error != cudaSuccess)
+    if(error != cudaSuccess)
     {
         return 1;
     }
@@ -56,7 +55,7 @@ int memcpyCUDA(double* A_d, const double* A_h, int nBytes)
 
     error = cudaMemcpy(A_d, A_h, nBytes, cudaMemcpyHostToDevice);
 
-    if (error != cudaSuccess)
+    if(error != cudaSuccess)
     {
         return 1;
     }
@@ -83,7 +82,7 @@ void dfpInverseHessian(
 	double parameters_dot_gradient;
 	double gradient_dot_Hessian_dot_gradient;
 	
-    double* vector = (double*)malloc(n*sizeof(double));
+    double* vector =(double*)malloc(n*sizeof(double));
 
 	cublasHandle_t handle;
 	

@@ -6,7 +6,7 @@
 /*   R A N D O M   S E A R C H   C L A S S                                                                      */
 /*                                                                                                              */ 
 /*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -24,7 +24,7 @@ namespace OpenNN
 /// It creates a random search training algorithm not associated to any loss functional object. 
 /// It also initializes the class members to their default values.
 
-RandomSearch::RandomSearch(void) 
+RandomSearch::RandomSearch() 
  : TrainingAlgorithm()
 {
    set_default();
@@ -63,186 +63,186 @@ RandomSearch::RandomSearch(const tinyxml2::XMLDocument& document) : TrainingAlgo
 /// Destructor.
 /// It does not delete any object. 
 
-RandomSearch::~RandomSearch(void)
+RandomSearch::~RandomSearch()
 {
 
 }
 
 
-// const double& get_warning_parameters_norm(void) const method
+// const double& get_warning_parameters_norm() const method
 
 /// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen. 
 
-const double& RandomSearch::get_warning_parameters_norm(void) const
+const double& RandomSearch::get_warning_parameters_norm() const
 {
    return(warning_parameters_norm);       
 }
 
 
-// const double& get_warning_training_rate(void) const method
+// const double& get_warning_training_rate() const method
 
 /// Returns the training rate value at wich a warning message is written to the screen during line minimization.
 
-const double& RandomSearch::get_warning_training_rate(void) const
+const double& RandomSearch::get_warning_training_rate() const
 {
    return(warning_training_rate);
 }
 
 
-// const double& get_error_parameters_norm(void) const method
+// const double& get_error_parameters_norm() const method
 
 /// Returns the value for the norm of the parameters vector at wich an error message is 
 /// written to the screen and the program exits. 
 
-const double& RandomSearch::get_error_parameters_norm(void) const
+const double& RandomSearch::get_error_parameters_norm() const
 {
    return(error_parameters_norm);
 }
 
 
-// const double& get_error_training_rate(void) const method
+// const double& get_error_training_rate() const method
 
 /// Returns the training rate value at wich the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
 
-const double& RandomSearch::get_error_training_rate(void) const
+const double& RandomSearch::get_error_training_rate() const
 {
    return(error_training_rate);
 }
 
 
-// const double& get_loss_goal(void) const method
+// const double& get_loss_goal() const method
 
 /// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& RandomSearch::get_loss_goal(void) const
+const double& RandomSearch::get_loss_goal() const
 {
    return(loss_goal);
 }
 
 
-// const size_t& get_maximum_selection_loss_decreases(void) const method
+// const size_t& get_maximum_selection_loss_decreases() const method
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& RandomSearch::get_maximum_selection_loss_decreases(void) const
+const size_t& RandomSearch::get_maximum_selection_loss_decreases() const
 {
    return(maximum_selection_loss_decreases);
 }
 
 
-// const size_t& get_maximum_iterations_number(void) const method
+// const size_t& get_maximum_iterations_number() const method
 
 /// Returns the maximum number of iterations for training.
 
-const size_t& RandomSearch::get_maximum_iterations_number(void) const
+const size_t& RandomSearch::get_maximum_iterations_number() const
 {
    return(maximum_iterations_number);
 }
 
 
-// const double& get_maximum_time(void) const method
+// const double& get_maximum_time() const method
 
 /// Returns the maximum training time.  
 
-const double& RandomSearch::get_maximum_time(void) const
+const double& RandomSearch::get_maximum_time() const
 {
    return(maximum_time);
 }
 
 
-// const bool& get_reserve_parameters_history(void) const method
+// const bool& get_reserve_parameters_history() const method
 
 /// Returns true if the parameters history matrix is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_parameters_history(void) const
+const bool& RandomSearch::get_reserve_parameters_history() const
 {
    return(reserve_parameters_history);     
 }
 
 
-// const bool& get_reserve_parameters_norm_history(void) const method 
+// const bool& get_reserve_parameters_norm_history() const method 
 
 /// Returns true if the parameters norm history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_parameters_norm_history(void) const
+const bool& RandomSearch::get_reserve_parameters_norm_history() const
 {
    return(reserve_parameters_norm_history);     
 }
 
 
-// const bool& get_reserve_loss_history(void) const method
+// const bool& get_reserve_loss_history() const method
 
 /// Returns true if the loss history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_loss_history(void) const
+const bool& RandomSearch::get_reserve_loss_history() const
 {
    return(reserve_loss_history);     
 }
 
 
-// const bool& get_reserve_training_direction_history(void) const method
+// const bool& get_reserve_training_direction_history() const method
 
 /// Returns true if the training direction history matrix is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_training_direction_history(void) const
+const bool& RandomSearch::get_reserve_training_direction_history() const
 {
    return(reserve_training_direction_history);     
 }
 
 
-// const bool& get_reserve_training_rate_history(void) const method
+// const bool& get_reserve_training_rate_history() const method
 
 /// Returns true if the training rate history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_training_rate_history(void) const
+const bool& RandomSearch::get_reserve_training_rate_history() const
 {
    return(reserve_training_rate_history);     
 }
 
 
-// const bool& get_reserve_elapsed_time_history(void) const method
+// const bool& get_reserve_elapsed_time_history() const method
 
 /// Returns true if the elapsed time history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_elapsed_time_history(void) const
+const bool& RandomSearch::get_reserve_elapsed_time_history() const
 {
    return(reserve_elapsed_time_history);     
 }
 
 
-// const bool& get_reserve_selection_loss_history(void) const method
+// const bool& get_reserve_selection_loss_history() const method
 
 /// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& RandomSearch::get_reserve_selection_loss_history(void) const
+const bool& RandomSearch::get_reserve_selection_loss_history() const
 {
    return(reserve_selection_loss_history);
 }
 
 
-// const double& get_training_rate_reduction_factor(void) const method
+// const double& get_training_rate_reduction_factor() const method
 
 /// Returns the reducing factor for the training rate. 
 
-const double& RandomSearch::get_training_rate_reduction_factor(void) const
+const double& RandomSearch::get_training_rate_reduction_factor() const
 {
    return(training_rate_reduction_factor);
 }
 
 
-// const size_t& get_training_rate_reduction_period(void) const method
+// const size_t& get_training_rate_reduction_period() const method
 
 /// Returns the reducing period for the training rate. 
 
-const size_t& RandomSearch::get_training_rate_reduction_period(void) const
+const size_t& RandomSearch::get_training_rate_reduction_period() const
 {
    return(training_rate_reduction_period);
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets all the random search object members to their default values:
 /// <ul>
@@ -260,7 +260,7 @@ const size_t& RandomSearch::get_training_rate_reduction_period(void) const
 /// <li> Display period: 10
 /// </ul>
 
-void RandomSearch::set_default(void)
+void RandomSearch::set_default()
 {   
    // TRAINING PARAMETERS
 
@@ -400,19 +400,19 @@ void RandomSearch::set_reserve_all_training_history(const bool& new_reserve_all_
 
 void RandomSearch::set_warning_parameters_norm(const double& new_warning_parameters_norm)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_warning_parameters_norm < 0.0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: RandomSearch class.\n"
              << "void set_warning_parameters_norm(const double&) method.\n"
              << "Warning parameters norm must be equal or greater than 0.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -432,19 +432,19 @@ void RandomSearch::set_warning_parameters_norm(const double& new_warning_paramet
 
 void RandomSearch::set_warning_training_rate(const double& new_warning_training_rate)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_warning_training_rate < 0.0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: RandomSearch class.\n" 
              << "void set_warning_training_rate(const double&) method.\n"
              << "Warning training rate must be equal or greater than 0.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -461,19 +461,19 @@ void RandomSearch::set_warning_training_rate(const double& new_warning_training_
 
 void RandomSearch::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_parameters_norm < 0.0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: RandomSearch class.\n"
              << "void set_error_parameters_norm(const double&) method.\n"
              << "Error parameters norm must be equal or greater than 0.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -492,19 +492,19 @@ void RandomSearch::set_error_parameters_norm(const double& new_error_parameters_
 
 void RandomSearch::set_error_training_rate(const double& new_error_training_rate)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_training_rate < 0.0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: RandomSearch class.\n"
              << "void set_error_training_rate(const double&) method.\n"
              << "Error training rate must be equal or greater than 0.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -558,19 +558,19 @@ void RandomSearch::set_maximum_iterations_number(const size_t& new_maximum_itera
 
 void RandomSearch::set_maximum_time(const double& new_maximum_time)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_maximum_time < 0.0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: RandomSearch class.\n"
              << "void set_maximum_time(const double&) method.\n"
              << "Maximum time must be equal or greater than 0.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
    
    #endif
@@ -649,19 +649,19 @@ void RandomSearch::set_reserve_selection_loss_history(const bool& new_reserve_se
 
 void RandomSearch::set_display_period(const size_t& new_display_period)
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
      
    if(new_display_period <= 0)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: RandomSearch class.\n"
              << "void set_display_period(const double&) method.\n"
              << "First training rate must be greater than 0.\n";
 
-      throw std::logic_error(buffer.str());	  
+      throw logic_error(buffer.str());	  
    }
 
    #endif
@@ -671,11 +671,11 @@ void RandomSearch::set_display_period(const size_t& new_display_period)
 
 
 
-// Vector<double> calculate_training_direction(void) const method
+// Vector<double> calculate_training_direction() const method
 
 /// Calculates a random vector to be used as training direction.
 
-Vector<double> RandomSearch::calculate_training_direction(void) const
+Vector<double> RandomSearch::calculate_training_direction() const
 {   
    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -739,13 +739,13 @@ void RandomSearch::RandomSearchResults::resize_training_history(const size_t& ne
 }
 
 
-// std::string to_string(void) const method
+// string object_to_string() const method
 
 /// Returns a string representation of the current random search results structure. 
 
-std::string RandomSearch::RandomSearchResults::to_string(void) const
+string RandomSearch::RandomSearchResults::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    // Parameters history
 
@@ -810,30 +810,30 @@ std::string RandomSearch::RandomSearchResults::to_string(void) const
 }
 
 
-// Matrix<std::string> write_final_results(const size_t& precision) const method
+// Matrix<string> write_final_results(const size_t& precision) const method
 
-Matrix<std::string> RandomSearch::RandomSearchResults::write_final_results(const size_t& precision) const
+Matrix<string> RandomSearch::RandomSearchResults::write_final_results(const size_t& precision) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
-   Vector<std::string> names;
-   Vector<std::string> values;
+   Vector<string> names;
+   Vector<string> values;
 
    // Final parameters norm
 
    names.push_back("Final parameters norm");
 
    buffer.str("");
-   buffer << std::setprecision(precision) <<final_parameters_norm;
+   buffer << setprecision(precision) <<final_parameters_norm;
 
    values.push_back(buffer.str());
 
    // Final loss
 
-   names.push_back("Final loss");
+   names.push_back("Final training error");
 
    buffer.str("");
-   buffer << std::setprecision(precision) << final_loss;
+   buffer << setprecision(precision) << final_loss;
 
    values.push_back(buffer.str());
 
@@ -843,10 +843,10 @@ Matrix<std::string> RandomSearch::RandomSearchResults::write_final_results(const
 
    if(loss_index_pointer->has_selection())
    {
-       names.push_back("Final selection loss");
+       names.push_back("Final selection error");
 
        buffer.str("");
-       buffer << std::setprecision(precision) << final_selection_loss;
+       buffer << setprecision(precision) << final_selection_loss;
 
        values.push_back(buffer.str());
     }
@@ -856,7 +856,7 @@ Matrix<std::string> RandomSearch::RandomSearchResults::write_final_results(const
 //   names.push_back("Final training rate");
 
 //   buffer.str("");
-//   buffer << std::setprecision(precision) << final_training_rate;
+//   buffer << setprecision(precision) << final_training_rate;
 
 //   values.push_back(buffer.str());
 
@@ -874,30 +874,30 @@ Matrix<std::string> RandomSearch::RandomSearchResults::write_final_results(const
    names.push_back("Elapsed time");
 
    buffer.str("");
-   buffer << elapsed_time;
+   buffer << write_elapsed_time(elapsed_time);
 
    values.push_back(buffer.str());
 
    const size_t rows_number = names.size();
    const size_t columns_number = 2;
 
-   Matrix<std::string> final_results(rows_number, columns_number);
+   Matrix<string> final_results(rows_number, columns_number);
 
-   final_results.set_column(0, names);
-   final_results.set_column(1, values);
+   final_results.set_column(0, names, "name");
+   final_results.set_column(1, values, "value");
 
    return(final_results);
 }
 
 
-// RandomSearchResults* perform_training(void) method
+// RandomSearchResults* perform_training() method
 
 /// Trains a neural network with an associated loss functional according to the random search training algorithm.
 /// Training occurs according to the training parameters. 
 
-RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
+RandomSearch::RandomSearchResults* RandomSearch::perform_training()
 {
-   // Control sentence (if debug)
+   // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -912,7 +912,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 
    if(display)
    {
-      std::cout << "Training with random search...\n";
+      cout << "Training with random search...\n";
    }
    
 
@@ -964,7 +964,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 
        if(display && parameters_norm >= warning_parameters_norm)
        {
-          std::cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+          cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
        }
 
       // Loss index stuff
@@ -1047,7 +1047,6 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 //         results_pointer->potential_parameters_norm_history[iteration] = potential_parameters_norm;
 //      }
 
-
       if(reserve_elapsed_time_history)
       {
          results_pointer->elapsed_time_history[iteration] = elapsed_time;
@@ -1059,7 +1058,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Performance goal reached.\n";
+            cout << "Iteration " << iteration << ": Loss goal reached.\n";
          }
 
          stop_training = true;
@@ -1069,7 +1068,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Maximum number of iterations reached.\n";
+            cout << "Iteration " << iteration << ": Maximum number of iterations reached.\n";
          }
 
          stop_training = true;
@@ -1079,7 +1078,7 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
       {
          if(display)
          {
-            std::cout << "Iteration " << iteration << ": Maximum training time reached.\n";
+            cout << "Iteration " << iteration << ": Maximum training time reached.\n";
          }
 
          stop_training = true;
@@ -1094,17 +1093,17 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
       {
           if(display)
           {
-             std::cout << "Parameters norm: " << parameters_norm << "\n"
+             cout << "Parameters norm: " << parameters_norm << "\n"
                        << "Potential parameters norm: " << potential_parameters_norm << "\n"
                        << "Training loss: " << loss << "\n"
                        << loss_index_pointer->write_information()
                        << "Potential loss: " << potential_loss << "\n"
                        << "Training rate: " << training_rate << "\n"
-                       << "Elapsed time: " << elapsed_time << std::endl;
+                       << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
              if(selection_loss != 0)
              {
-                std::cout << "Selection loss: " << selection_loss << std::endl;
+                cout << "Selection loss: " << selection_loss << endl;
              }
           }
 
@@ -1125,18 +1124,18 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 
       else if(display && iteration % display_period == 0)
       {
-         std::cout << "Iteration " << iteration << ";\n"
+         cout << "Iteration " << iteration << ";\n"
                    << "Parameters norm: " << parameters_norm << "\n"
                    << "Potential parameters norm: " << potential_parameters_norm << "\n"
                    << "Training loss: " << loss << "\n"
                    << loss_index_pointer->write_information()
                    << "Potential loss: " << potential_loss << "\n"
                    << "Training rate: " << training_rate << "\n"
-                   << "Elapsed time: " << elapsed_time << std::endl; 
+                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl; 
 
          if(selection_loss != 0)
          {
-            std::cout << "Selection loss: " << selection_loss << std::endl;
+            cout << "Selection loss: " << selection_loss << endl;
          }
       }
 
@@ -1159,24 +1158,24 @@ RandomSearch::RandomSearchResults* RandomSearch::perform_training(void)
 }
 
 
-// std::string write_training_algorithm_type(void) const method
+// string write_training_algorithm_type() const method
 
-std::string RandomSearch::write_training_algorithm_type(void) const
+string RandomSearch::write_training_algorithm_type() const
 {
    return("RANDOM_SEARCH");
 }
 
 
-// Matrix<std::string> to_string_matrix(void) const method
+// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<std::string> RandomSearch::to_string_matrix(void) const
+Matrix<string> RandomSearch::to_string_matrix() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
-    Vector<std::string> labels;
-    Vector<std::string> values;
+    Vector<string> labels;
+    Vector<string> values;
 
    // Performance goal
 
@@ -1269,23 +1268,23 @@ Matrix<std::string> RandomSearch::to_string_matrix(void) const
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
 
-   Matrix<std::string> string_matrix(rows_number, columns_number);
+   Matrix<string> string_matrix(rows_number, columns_number);
 
-   string_matrix.set_column(0, labels);
-   string_matrix.set_column(1, values);
+   string_matrix.set_column(0, labels, "");
+   string_matrix.set_column(1, values, "");
 
     return(string_matrix);
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the training parameters, the stopping criteria
 /// and other user stuff concerning the random search object.
 
-tinyxml2::XMLDocument* RandomSearch::to_XML(void) const 
+tinyxml2::XMLDocument* RandomSearch::to_XML() const 
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -1561,7 +1560,7 @@ tinyxml2::XMLDocument* RandomSearch::to_XML(void) const
 
 void RandomSearch::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("RandomSearch");
 
@@ -1798,13 +1797,13 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: RandomSearch class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Random search element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // First training rate
@@ -1819,9 +1818,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_first_training_rate(new_first_training_rate);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1838,9 +1837,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_training_rate_reduction_factor(new_training_rate_reduction_factor);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1857,9 +1856,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_training_rate_reduction_period(new_training_rate_reduction_period);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1876,9 +1875,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_warning_parameters_norm(new_warning_parameters_norm);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -1895,9 +1894,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_warning_training_rate(new_warning_training_rate);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -1914,9 +1913,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
               set_error_parameters_norm(new_error_parameters_norm);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -1933,9 +1932,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_error_training_rate(new_error_training_rate);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -1952,9 +1951,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_loss_goal(new_loss_goal);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -1971,9 +1970,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -1990,9 +1989,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_maximum_iterations_number(new_maximum_iterations_number);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2009,9 +2008,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_maximum_time(new_maximum_time);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2022,15 +2021,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_parameters_history = element->GetText();
+          const string new_reserve_parameters_history = element->GetText();
 
           try
           {
              set_reserve_parameters_history(new_reserve_parameters_history != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2041,15 +2040,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_parameters_norm_history = element->GetText();
+          const string new_reserve_parameters_norm_history = element->GetText();
 
           try
           {
              set_reserve_parameters_norm_history(new_reserve_parameters_norm_history != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2060,15 +2059,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_loss_history = element->GetText();
+          const string new_reserve_loss_history = element->GetText();
 
           try
           {
              set_reserve_loss_history(new_reserve_loss_history != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2079,15 +2078,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_selection_loss_history = element->GetText();
+           const string new_reserve_selection_loss_history = element->GetText();
 
            try
            {
               set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -2098,15 +2097,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_training_direction_history = element->GetText();
+          const string new_reserve_training_direction_history = element->GetText();
 
           try
           {
              set_reserve_training_direction_history(new_reserve_training_direction_history != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2117,15 +2116,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_training_direction_norm_history = element->GetText();
+           const string new_reserve_training_direction_norm_history = element->GetText();
 
            try
            {
               set_reserve_training_direction_norm_history(new_reserve_training_direction_norm_history != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -2136,15 +2135,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_training_rate_history = element->GetText();
+          const string new_reserve_training_rate_history = element->GetText();
 
           try
           {
              set_reserve_training_rate_history(new_reserve_training_rate_history != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2155,15 +2154,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_reserve_elapsed_time_history = element->GetText();
+          const string new_reserve_elapsed_time_history = element->GetText();
 
           try
           {
              set_reserve_elapsed_time_history(new_reserve_elapsed_time_history != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2180,9 +2179,9 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
           {
              set_display_period(new_display_period);
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2193,15 +2192,15 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const std::string new_display = element->GetText();
+          const string new_display = element->GetText();
 
           try
           {
              set_display(new_display != "0");
           }
-          catch(const std::logic_error& e)
+          catch(const logic_error& e)
           {
-             std::cout << e.what() << std::endl;
+             cout << e.what() << endl;
           }
        }
    }
@@ -2211,7 +2210,7 @@ void RandomSearch::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

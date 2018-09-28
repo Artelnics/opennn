@@ -21,21 +21,21 @@ using namespace OpenNN;
 
 // GENERAL CONSTRUCTOR
 
-OutputsTest::OutputsTest(void) : UnitTesting()
+OutputsTest::OutputsTest() : UnitTesting()
 {
 }
 
 
 // DESTRUCTOR
 
-OutputsTest::~OutputsTest(void)
+OutputsTest::~OutputsTest()
 {
 }
 
 
 // METHODS
 
-void OutputsTest::test_constructor(void)
+void OutputsTest::test_constructor()
 {
    message += "test_constructor\n";
 
@@ -60,13 +60,13 @@ void OutputsTest::test_constructor(void)
 }
 
 
-void OutputsTest::test_destructor(void)
+void OutputsTest::test_destructor()
 {
    message += "test_destructor\n";
 }
 
 
-void OutputsTest::test_assignment_operator(void)
+void OutputsTest::test_assignment_operator()
 {
    message += "test_assignment_operator\n";
 
@@ -78,7 +78,7 @@ void OutputsTest::test_assignment_operator(void)
 }
 
 
-void OutputsTest::test_get_outputs_number(void)
+void OutputsTest::test_get_outputs_number()
 {
    message += "test_get_outputs_number\n";
 
@@ -96,32 +96,32 @@ void OutputsTest::test_get_outputs_number(void)
 }
 
 
-void OutputsTest::test_set(void)
+void OutputsTest::test_set()
 {
    message += "test_set\n";
 }
 
 
-void OutputsTest::test_set_default(void)
+void OutputsTest::test_set_default()
 {
    message += "test_set_default\n";
 }
 
 
-void OutputsTest::test_arrange_names(void)
+void OutputsTest::test_arrange_names()
 {
    message += "test_arrange_names\n";
 
    Outputs o;
 
-   Vector<std::string> names = o.arrange_names();
+   Vector<string> names = o.arrange_names();
 
    assert_true(names.size() == 0, LOG);
 
 }
 
 
-void OutputsTest::test_get_name(void)
+void OutputsTest::test_get_name()
 {
    message += "test_get_name\n";
 
@@ -134,19 +134,19 @@ void OutputsTest::test_get_name(void)
 }
 
 
-void OutputsTest::test_arrange_units(void)
+void OutputsTest::test_arrange_units()
 {
    message += "test_arrange_units\n";
 
    Outputs o;
 
-   Vector<std::string> units = o.arrange_units();
+   Vector<string> units = o.arrange_units();
 
    assert_true(units.size() == 0, LOG);
 }
 
 
-void OutputsTest::test_get_unit(void)
+void OutputsTest::test_get_unit()
 {
    message += "test_get_unit\n";
 
@@ -158,19 +158,19 @@ void OutputsTest::test_get_unit(void)
 }
 
 
-void OutputsTest::test_arrange_descriptions(void)
+void OutputsTest::test_arrange_descriptions()
 {
    message += "test_arrange_descriptions\n";
 
    Outputs o;
 
-   Vector<std::string> descriptions = o.arrange_descriptions();
+   Vector<string> descriptions = o.arrange_descriptions();
 
    assert_true(descriptions.size() == 0, LOG);
 }
 
 
-void OutputsTest::test_get_description(void)
+void OutputsTest::test_get_description()
 {
    message += "test_get_description\n";
 
@@ -182,55 +182,55 @@ void OutputsTest::test_get_description(void)
 }
 
 
-void OutputsTest::test_get_display(void)
+void OutputsTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void OutputsTest::test_set_names(void)
+void OutputsTest::test_set_names()
 {
    message += "test_set_names\n";
 }
 
 
-void OutputsTest::test_set_name(void)
+void OutputsTest::test_set_name()
 {
    message += "test_set_name\n";
 }
 
 
-void OutputsTest::test_set_units(void)
+void OutputsTest::test_set_units()
 {
    message += "test_set_units\n";
 }
 
 
-void OutputsTest::test_set_unit(void)
+void OutputsTest::test_set_unit()
 {
    message += "test_set_unit\n";
 }
 
 
-void OutputsTest::test_set_descriptions(void)
+void OutputsTest::test_set_descriptions()
 {
    message += "test_set_descriptions\n";
 }
 
 
-void OutputsTest::test_set_description(void)
+void OutputsTest::test_set_description()
 {
    message += "test_set_description\n";
 }
 
 
-void OutputsTest::test_set_display(void)
+void OutputsTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void OutputsTest::test_initialize_random(void)
+void OutputsTest::test_initialize_random()
 {
    message += "test_initialize_random\n";
 
@@ -243,7 +243,7 @@ void OutputsTest::test_initialize_random(void)
 }
 
 
-void OutputsTest::test_to_XML(void)
+void OutputsTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
@@ -261,7 +261,7 @@ void OutputsTest::test_to_XML(void)
 }
 
 
-void OutputsTest::test_from_XML(void)
+void OutputsTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
@@ -279,7 +279,7 @@ void OutputsTest::test_from_XML(void)
 }
 
 
-void OutputsTest::run_test_case(void)
+void OutputsTest::run_test_case()
 {
    message += "Running outputs test case...\n";
 
@@ -347,7 +347,7 @@ void OutputsTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,7 +6,7 @@
 /*   A N T   C O L O N Y   O P T I M I Z A T I O N   C L A S S                                                  */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -22,7 +22,7 @@ namespace OpenNN {
 
 /// Default constructor.
 
-AntColonyOptimization::AntColonyOptimization(void)
+AntColonyOptimization::AntColonyOptimization()
     : OrderSelectionAlgorithm()
 {
     set_default();
@@ -56,87 +56,65 @@ AntColonyOptimization::AntColonyOptimization(const tinyxml2::XMLDocument& ant_co
 /// File constructor.
 /// @param file_name Name of XML ant colony optimization file.
 
-AntColonyOptimization::AntColonyOptimization(const std::string& file_name)
+AntColonyOptimization::AntColonyOptimization(const string& file_name)
     : OrderSelectionAlgorithm(file_name)
 {
     load(file_name);
 }
 
-
-
 // DESTRUCTOR
 
 /// Destructor.
 
-AntColonyOptimization::~AntColonyOptimization(void)
+AntColonyOptimization::~AntColonyOptimization()
 {
 }
 
 // METHODS
 
-
-// const size_t& get_step(void) const method
-
-/// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm.
-
-const size_t& AntColonyOptimization::get_step(void) const
-{
-    return(step);
-}
-
-// const size_t& get_maximum_selection_failures(void) const method
+// const size_t& get_maximum_selection_failures() const method
 
 /// Returns the maximum number of selection failures in the model order selection algorithm.
 
-const size_t& AntColonyOptimization::get_maximum_selection_failures(void) const
+const size_t& AntColonyOptimization::get_maximum_selection_failures() const
 {
     return(maximum_selection_failures);
 }
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of the model selection object to their default values:
 
-void AntColonyOptimization::set_default(void)
+void AntColonyOptimization::set_default()
 {
-    step = 1;
-
     maximum_selection_failures = 10;
-}
 
-// void set_step(const size_t&) method
+    default_activation_function = Perceptron::HyperbolicTangent;
 
-/// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm in the model order selection process.
-/// @param new_step number of hidden perceptrons pointed.
+    ants_number = 4;
 
-void AntColonyOptimization::set_step(const size_t& new_step)
-{
-#ifdef __OPENNN_DEBUG__
+    evaporation_rate = 3;
 
-    if(new_step <= 0)
+    scaling_parameter = 2;
+
+    maximum_layers = 3;
+
+    pheromone_trail.set(maximum_layers);
+
+    const size_t columns_number = maximum_order - minimum_order + 1;
+
+    const size_t squared_columns_number = columns_number*columns_number;
+
+    pheromone_trail[0].set(1, columns_number, 1.0);
+
+    for(size_t i = 1; i < maximum_layers; i++)
     {
-        std::ostringstream buffer;
-
-        buffer << "OpenNN Exception: AntColonyOptimization class.\n"
-               << "void set_step(const size_t&) method.\n"
-               << "New_step (" << new_step << ") must be greater than 0.\n";
-
-        throw std::logic_error(buffer.str());
+        pheromone_trail[i].set(squared_columns_number, columns_number, 1.0);
     }
 
-    if(new_step > (maximum_order-minimum_order))
-    {
-        std::ostringstream buffer;
-        buffer << "OpenNN Exception: AntColonyOptimization class.\n"
-               << "void set_step(const size_t&) method.\n"
-               << "New_step must be less than the distance between maximum_order and minimum_order (" << maximum_order-minimum_order << ").\n";
+    architectures.set(ants_number, maximum_layers, minimum_order);
 
-        throw std::logic_error(buffer.str());
-    }
-
-#endif
-
-    step = new_step;
+    model_loss.set(ants_number);
 }
 
 // void set_maximum_selection_failures(const size_t&) method
@@ -150,13 +128,13 @@ void AntColonyOptimization::set_maximum_selection_failures(const size_t& new_max
 
     if(new_maximum_loss_failures <= 0)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: AntColonyOptimization class.\n"
                << "void set_maximum_selection_failures(const size_t&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
 #endif
@@ -164,11 +142,507 @@ void AntColonyOptimization::set_maximum_selection_failures(const size_t& new_max
     maximum_selection_failures = new_maximum_loss_failures;
 }
 
-// AntColonyOptimizationResults* perform_order_selection(void) method
+// Vector<double> perform_minimum_model_evaluation(const Vector<size_t>&) method
+
+/// Returns the minimum of the loss and selection loss in trials_number trainings
+/// @param architecture Architecture of the multilayer perceptron to be trained.
+
+Vector<double> AntColonyOptimization::perform_minimum_model_evaluation(const Vector<size_t>& architecture)
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(trials_number <= 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: AntColonyOptimization class.\n"
+               << "Vector<double> perform_minimum_model_evaluation(Vector<size_t>&) method.\n"
+               << "Number of parameters assay must be greater than 0.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    NeuralNetwork* neural_network = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
+
+    TrainingStrategy::Results training_strategy_results;
+
+    Vector<double> final(2, 10);
+
+    Vector<double> current_loss(2);
+
+    Vector<double> final_parameters;
+
+    bool flag_loss = false;
+    bool flag_selection = false;
+
+    for(size_t i = 0; i < architecture_history.size(); i++)
+    {
+        if(architecture_history[i] == architecture)
+        {
+            final[0] = loss_history[i];
+            flag_loss = true;
+        }
+    }
+
+    for(size_t i = 0; i < architecture_history.size(); i++)
+    {
+        if(architecture_history[i] == architecture)
+        {
+            final[1] = selection_loss_history[i];
+            flag_selection = true;
+        }
+    }
+
+    if(flag_loss && flag_selection)
+    {
+        return(final);
+    }
+
+    MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
+
+    multilayer_perceptron->set(architecture);
+
+    const size_t layers_number = multilayer_perceptron->get_layers_number();
+
+    // Set activation functions
+
+    multilayer_perceptron->set_layer_activation_function(0, default_activation_function);
+
+    for(size_t i = 1; i < layers_number-1; i++)
+    {
+        multilayer_perceptron->set_layer_activation_function(i, default_activation_function);
+    }
+
+    multilayer_perceptron->set_layer_activation_function(layers_number-1, Perceptron::Linear);
+
+    for(size_t i = 0; i < trials_number; i++)
+    {
+
+        neural_network->randomize_parameters_normal();
+#ifdef __OPENNN_MPI__
+
+        neural_network->set_MPI(neural_network);
+
+#endif
+        training_strategy_results = training_strategy_pointer->perform_training();
+
+        current_loss = get_final_losses(training_strategy_results);
+
+        if(!flag_loss && final[0] > current_loss[0])
+        {
+            final[0] = current_loss[0];
+
+            final_parameters.set(neural_network->arrange_parameters());
+        }
+
+        if(!flag_selection && final[1] > current_loss[1])
+        {
+            final[1] = current_loss[1];
+
+            final_parameters.set(neural_network->arrange_parameters());
+        }
+
+        if(display)
+        {
+            cout << "Trial number: " << i+1 << endl;
+            cout << "Training loss: " << final[0] << endl;
+            cout << "Selection loss: " << final[1] << endl;
+        }
+    }
+
+    architecture_history.push_back(architecture);
+
+    loss_history.push_back(final[0]);
+
+    selection_loss_history.push_back(final[1]);
+
+    parameters_history.push_back(final_parameters);
+
+    return final;
+}
+
+
+// Vector<double> perform_maximum_model_evaluation(const Vector<size_t>&) const method
+
+/// Returns the maximum of the loss and selection loss in trials_number trainings
+/// @param architecture Architecture of the multilayer perceptron to be trained.
+
+Vector<double> AntColonyOptimization::perform_maximum_model_evaluation(const Vector<size_t>& architecture)
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(trials_number <= 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: AntColonyOptimization class.\n"
+               << "Vector<double> perform_maximum_model_evaluation(Vector<size_t>&) method.\n"
+               << "Number of parameters assay must be greater than 0.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    NeuralNetwork* neural_network = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
+
+    TrainingStrategy::Results training_strategy_results;
+
+    Vector<double> final(2);
+    final[0] = 0;
+    final[1] = 0;
+
+    Vector<double> current_loss(2);
+
+    Vector<double> final_parameters;
+
+    bool flag_loss = false;
+    bool flag_selection = false;
+
+    for(size_t i = 0; i < architecture_history.size(); i++)
+    {
+        if(architecture_history[i] == architecture)
+        {
+            final[0] = loss_history[i];
+            flag_loss = true;
+        }
+    }
+
+
+
+    for(size_t i = 0; i < architecture_history.size(); i++)
+    {
+        if(architecture_history[i] == architecture)
+        {
+            final[1] = selection_loss_history[i];
+            flag_selection = true;
+        }
+    }
+
+
+    if(flag_loss && flag_selection)
+    {
+        return(final);
+    }
+
+    MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
+
+    multilayer_perceptron->set(architecture);
+
+    const size_t layers_number = multilayer_perceptron->get_layers_number();
+
+    // Set activation functions
+
+    multilayer_perceptron->set_layer_activation_function(0, default_activation_function);
+
+    for(size_t i = 1; i < layers_number-1; i++)
+    {
+        multilayer_perceptron->set_layer_activation_function(i, default_activation_function);
+    }
+
+    multilayer_perceptron->set_layer_activation_function(layers_number-1, Perceptron::Linear);
+
+    for(size_t i = 1; i < trials_number; i++)
+    {
+        if(display)
+        {
+            cout << "Trial number: " << i << endl;
+            cout << "Training loss: " << final[0] << endl;
+            cout << "Selection loss: " << final[1] << endl;
+        }
+
+        neural_network->randomize_parameters_normal();
+
+        training_strategy_results = training_strategy_pointer->perform_training();
+
+        current_loss = get_final_losses(training_strategy_results);
+
+        if(!flag_loss && final[0] < current_loss[0])
+        {
+            final[0] = current_loss[0];
+
+            final_parameters.set(neural_network->arrange_parameters());
+        }
+
+        if(!flag_selection && final[1] < current_loss[1])
+        {
+            final[1] = current_loss[1];
+
+            final_parameters.set(neural_network->arrange_parameters());
+        }
+
+        if(i == trials_number - 1 && display)
+        {
+            cout << "Trial number: " << trials_number << endl;
+            cout << "Training loss: " << final[0] << endl;
+            cout << "Selection loss: " << final[1] << endl;
+        }
+
+    }
+
+    architecture_history.push_back(architecture);
+
+    loss_history.push_back(final[0]);
+
+    selection_loss_history.push_back(final[1]);
+
+    parameters_history.push_back(final_parameters);
+
+    return final;
+}
+
+
+// Vector<double> perform_mean_model_evaluation(const Vector<size_t>&) method
+
+/// Returns the mean of the loss and selection loss in trials_number trainings
+/// @param architecture Architecture of the multilayer perceptron to be trained.
+
+Vector<double> AntColonyOptimization::perform_mean_model_evaluation(const Vector<size_t>& architecture)
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(trials_number <= 0)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: AntColonyOptimization class.\n"
+               << "Vector<double> perform_mean_model_evaluation(Vector<size_t>&) method.\n"
+               << "Number of parameters assay must be greater than 0.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    NeuralNetwork* neural_network = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
+
+    TrainingStrategy::Results training_strategy_results;
+
+    Vector<double> mean_final(2);
+    mean_final[0] = 0;
+    mean_final[1] = 0;
+
+    Vector<double> current_loss(2);
+
+    Vector<double> final_parameters;
+
+    bool flag_loss = false;
+    bool flag_selection = false;
+
+
+    for(size_t i = 0; i < architecture_history.size(); i++)
+    {
+        if(architecture_history[i] == architecture)
+        {
+            mean_final[0] = loss_history[i];
+            flag_loss = true;
+        }
+    }
+
+
+
+    for(size_t i = 0; i < architecture_history.size(); i++)
+    {
+        if(architecture_history[i] == architecture)
+        {
+            mean_final[1] = selection_loss_history[i];
+            flag_selection = true;
+        }
+    }
+
+
+    if(flag_loss && flag_selection)
+    {
+        return(mean_final);
+    }
+
+    MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
+
+    multilayer_perceptron->set(architecture);
+
+    const size_t layers_number = multilayer_perceptron->get_layers_number();
+
+    // Set activation functions
+
+    multilayer_perceptron->set_layer_activation_function(0, default_activation_function);
+
+    for(size_t i = 1; i < layers_number-1; i++)
+    {
+        multilayer_perceptron->set_layer_activation_function(i, default_activation_function);
+    }
+
+    multilayer_perceptron->set_layer_activation_function(layers_number-1, Perceptron::Linear);
+
+    for(size_t i = 1; i < trials_number; i++)
+    {
+        if(display)
+        {
+            cout << "Trial number: " << i << endl;
+            cout << "Training loss: " << mean_final[0] << endl;
+            cout << "Selection loss: " << mean_final[1] << endl;
+        }
+
+        neural_network->randomize_parameters_normal();
+
+        training_strategy_results = training_strategy_pointer->perform_training();
+
+        current_loss = get_final_losses(training_strategy_results);
+
+        if(!flag_loss)
+        {
+            mean_final[0] += current_loss[0]/trials_number;
+        }
+
+        if(!flag_selection)
+        {
+            mean_final[1] += current_loss[1]/trials_number;
+        }
+
+        if(i == trials_number - 1 && display)
+        {
+            cout << "Trial number: " << trials_number << endl;
+            cout << "Training loss: " << mean_final[0] << endl;
+            cout << "Selection loss: " << mean_final[1] << endl;
+        }
+
+    }
+
+    architecture_history.push_back(architecture);
+
+    loss_history.push_back(mean_final[0]);
+
+    selection_loss_history.push_back(mean_final[1]);
+
+    parameters_history.push_back(final_parameters);
+
+    return mean_final;
+}
+
+// Vector<double> perform_model_evaluation(const Vector<size_t>&) method
+
+/// Return loss and selection depending on the loss calculation method.
+/// @param architecture Architecture of the multilayer perceptron to be trained.
+
+Vector<double> AntColonyOptimization::perform_model_evaluation(const Vector<size_t>& architecture)
+{
+    switch(loss_calculation_method)
+    {
+    case Maximum:
+    {
+        return(perform_maximum_model_evaluation(architecture));
+    }
+    case Minimum:
+    {
+        return(perform_minimum_model_evaluation(architecture));
+    }
+    case Mean:
+    {
+        return(perform_mean_model_evaluation(architecture));
+    }
+    default:
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: OrderSelectionAlgorithm class.\n"
+               << "Vector<double> perform_model_evaluation(const Vector<size_t>&) method.\n"
+               << "Unknown loss calculation method.\n";
+
+        throw logic_error(buffer.str());
+    }
+    }
+}
+
+
+// void chose_paths() method
+
+/// Chose the path that each ant will follow.
+
+void AntColonyOptimization::chose_paths()
+{
+    double random;
+
+    architectures.initialize(0);
+
+    for(size_t i = 0; i < ants_number; i++)
+    {
+        Vector<double> initial_trial = pheromone_trail[0].get_row(0);
+
+        Vector<double> initial_trial_sum = initial_trial.calculate_cumulative();
+
+        double sum = initial_trial.calculate_sum();
+
+        random = calculate_random_uniform(0.,sum);
+
+        size_t selected_order;
+
+        for(size_t k = 0; k < initial_trial_sum.size(); k++)
+        {
+            if(k == 0 && random < initial_trial_sum[0])
+            {
+                selected_order = k;
+                k = initial_trial_sum.size();
+            }
+            else if(random < initial_trial_sum[k] && random >= initial_trial_sum[k-1])
+            {
+                selected_order = k;
+                k = initial_trial_sum.size();
+            }
+        }
+
+        architectures(i,0) = selected_order + minimum_order;
+
+        for(size_t j = 1; j < maximum_layers; j++)
+        {
+            size_t previous_order = architectures(i, j-1);
+
+            Vector<double> trial = pheromone_trail[0].get_row(previous_order - minimum_order);
+
+            Vector<double> trial_sum = trial.calculate_cumulative();
+
+            double sum = trial.calculate_sum();
+
+            random = calculate_random_uniform(0.,sum);
+
+            size_t selected_order;
+
+            for(size_t k = 0; k < trial_sum.size(); k++)
+            {
+                if(k == 0 && random < trial_sum[0])
+                {
+                    selected_order = k;
+                    k = trial_sum.size();
+                }
+                else if(random < trial_sum[k] && random >= trial_sum[k-1])
+                {
+                    selected_order = k;
+                    k = trial_sum.size();
+                }
+            }
+
+            architectures(i,j) = selected_order + minimum_order;
+        }
+    }
+}
+
+// void evaluate_ants() method
+
+/// Evaluate the model chosen by each ant.
+
+void AntColonyOptimization::evaluate_ants()
+{
+    for(size_t i = 0; i < ants_number; i++)
+    {
+
+    }
+}
+
+// AntColonyOptimizationResults* perform_order_selection() method
 
 /// Perform the order selection with the Incremental method.
 
-AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perform_order_selection(void)
+AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perform_order_selection()
 {
     AntColonyOptimizationResults* results = new AntColonyOptimizationResults();
 
@@ -197,15 +671,14 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
     if(display)
     {
-        std::cout << "Performing ant colony optimization..." << std::endl;
-        std::cout.flush();
+        cout << "Performing ant colony optimization..." << endl;
+        cout.flush();
     }
 
     time(&beginning_time);
 
-    while (!end)
+    while(!end)
     {
-        loss = perform_model_evaluation(order);
         current_training_loss = loss[0];
         current_selection_loss = loss[1];
 
@@ -231,7 +704,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
         }
 
         if(iterations == 0
-        || (optimum_selection_loss > current_selection_loss
+        ||(optimum_selection_loss > current_selection_loss
         && fabs(optimum_selection_loss - current_selection_loss) > tolerance))
         {
             optimal_order = order;
@@ -256,7 +729,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
             if(display)
             {
-                std::cout << "Maximum time reached." << std::endl;
+                cout << "Maximum time reached." << endl;
             }
 
             results->stopping_condition = AntColonyOptimization::MaximumTime;
@@ -267,7 +740,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
             if(display)
             {
-                std::cout << "Selection loss reached." << std::endl;
+                cout << "Selection loss reached." << endl;
             }
 
             results->stopping_condition = AntColonyOptimization::SelectionLossGoal;
@@ -279,7 +752,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
             if(display)
             {
-                std::cout << "Maximum number of iterations reached." << std::endl;
+                cout << "Maximum number of iterations reached." << endl;
             }
 
             results->stopping_condition = AntColonyOptimization::MaximumIterations;
@@ -290,7 +763,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
             if(display)
             {
-                std::cout << "Maximum selection failures ("<<selection_failures<<") reached." << std::endl;
+                cout << "Maximum selection failures("<<selection_failures<<") reached." << endl;
             }
 
             results->stopping_condition = AntColonyOptimization::MaximumSelectionFailures;
@@ -301,7 +774,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
             if(display)
             {
-                std::cout << "Algorithm finished" << std::endl;
+                cout << "Algorithm finished" << endl;
             }
 
             results->stopping_condition = AntColonyOptimization::AlgorithmFinished;
@@ -309,26 +782,20 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
         if(display)
         {
-            std::cout << "Iteration: " << iterations << std::endl
-                      << "Hidden neurons number: " << order << std::endl
-                      << "Training loss: " << loss[0] << std::endl
-                      << "Selection loss: " << loss[1] << std::endl
-                      << "Elapsed time: " << elapsed_time << std::endl;
-        }
-
-
-        if(!end)
-        {
-            order = std::min(maximum_order, order+step);
+            cout << "Iteration: " << iterations << endl
+                      << "Hidden neurons number: " << order << endl
+                      << "Training loss: " << loss[0] << endl
+                      << "Selection loss: " << loss[1] << endl
+                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
     }
 
     if(display)
     {
-        std::cout << std::endl
-                  << "Optimal order: " << optimal_order << std:: endl
-                  << "Optimum selection loss: " << optimum_selection_loss << std::endl
-                  << "Corresponding training loss: " << optimum_training_loss << std::endl;
+        cout << endl
+                  << "Optimal order: " << optimal_order <<  endl
+                  << "Optimum selection loss: " << optimum_selection_loss << endl
+                  << "Corresponding training loss: " << optimum_training_loss << endl;
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
@@ -340,7 +807,7 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
     }
     else
     {
-        for (size_t i = 0; i < (perceptrons_number-optimal_order); i++)
+        for(size_t i = 0; i <(perceptrons_number-optimal_order); i++)
         {
             multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
         }
@@ -355,23 +822,23 @@ AntColonyOptimization::AntColonyOptimizationResults* AntColonyOptimization::perf
 
     results->optimal_order = optimal_order;
     results->final_selection_loss = optimum_selection_loss;
-    results->final_loss = perform_model_evaluation(optimal_order)[0];
+//    results->final_loss = perform_model_evaluation(optimal_order)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
 
     return(results);
 }
 
-// Matrix<std::string> to_string_matrix(void) const method
+// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<std::string> AntColonyOptimization::to_string_matrix(void) const
+Matrix<string> AntColonyOptimization::to_string_matrix() const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
-    Vector<std::string> labels;
-    Vector<std::string> values;
+    Vector<string> labels;
+    Vector<string> values;
 
    // Minimum order
 
@@ -388,15 +855,6 @@ Matrix<std::string> AntColonyOptimization::to_string_matrix(void) const
 
    buffer.str("");
    buffer << maximum_order;
-
-   values.push_back(buffer.str());
-
-   // Step
-
-   labels.push_back("Step");
-
-   buffer.str("");
-   buffer << step;
 
    values.push_back(buffer.str());
 
@@ -491,23 +949,23 @@ Matrix<std::string> AntColonyOptimization::to_string_matrix(void) const
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
 
-   Matrix<std::string> string_matrix(rows_number, columns_number);
+   Matrix<string> string_matrix(rows_number, columns_number);
 
-   string_matrix.set_column(0, labels);
-   string_matrix.set_column(1, values);
+   string_matrix.set_column(0, labels, "name");
+   string_matrix.set_column(1, values, "value");
 
     return(string_matrix);
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the ant colony optimization parameters, the stopping criteria
 /// and other user stuff concerning the ant colony optimization object.
 
-tinyxml2::XMLDocument* AntColonyOptimization::to_XML(void) const
+tinyxml2::XMLDocument* AntColonyOptimization::to_XML() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
@@ -539,18 +997,6 @@ tinyxml2::XMLDocument* AntColonyOptimization::to_XML(void) const
 
    buffer.str("");
    buffer << maximum_order;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-   }
-
-   // Step
-   {
-   element = document->NewElement("Step");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << step;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -708,7 +1154,7 @@ tinyxml2::XMLDocument* AntColonyOptimization::to_XML(void) const
 
 void AntColonyOptimization::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     //file_stream.OpenElement("AntColonyOptimization");
 
@@ -729,17 +1175,6 @@ void AntColonyOptimization::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << maximum_order;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Step
-
-    file_stream.OpenElement("Step");
-
-    buffer.str("");
-    buffer << step;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -838,13 +1273,13 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
     if(!root_element)
     {
-        std::ostringstream buffer;
+        ostringstream buffer;
 
         buffer << "OpenNN Exception: AntColonyOptimization class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "AntColonyOptimization element is NULL.\n";
 
-        throw std::logic_error(buffer.str());
+        throw logic_error(buffer.str());
     }
 
     // Minimum order
@@ -859,9 +1294,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               minimum_order = new_minimum_order;
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -878,9 +1313,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               maximum_order = new_maximum_order;
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -897,9 +1332,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_trials_number(new_trials_number);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -910,34 +1345,15 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_loss_calculation_method = element->GetText();
+           const string new_loss_calculation_method = element->GetText();
 
            try
            {
               set_loss_calculation_method(new_loss_calculation_method);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
-           }
-        }
-    }
-
-    // Step
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Step");
-
-        if(element)
-        {
-           const size_t new_step = atoi(element->GetText());
-
-           try
-           {
-              set_step(new_step);
-           }
-           catch(const std::logic_error& e)
-           {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -948,15 +1364,15 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_parameters_data = element->GetText();
+           const string new_reserve_parameters_data = element->GetText();
 
            try
            {
               set_reserve_parameters_data(new_reserve_parameters_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -967,15 +1383,15 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_loss_data = element->GetText();
+           const string new_reserve_loss_data = element->GetText();
 
            try
            {
               set_reserve_loss_data(new_reserve_loss_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -986,15 +1402,15 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_selection_loss_data = element->GetText();
+           const string new_reserve_selection_loss_data = element->GetText();
 
            try
            {
               set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1005,15 +1421,15 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_reserve_minimal_parameters = element->GetText();
+           const string new_reserve_minimal_parameters = element->GetText();
 
            try
            {
               set_reserve_minimal_parameters(new_reserve_minimal_parameters != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1024,15 +1440,15 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const std::string new_display = element->GetText();
+           const string new_display = element->GetText();
 
            try
            {
               set_display(new_display != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1049,9 +1465,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_selection_loss_goal(new_selection_loss_goal);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1068,9 +1484,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_iterations_number(new_maximum_iterations_number);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1087,9 +1503,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_time(new_maximum_time);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1106,9 +1522,9 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_tolerance(new_tolerance);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
@@ -1125,20 +1541,20 @@ void AntColonyOptimization::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_maximum_selection_failures(new_maximum_selection_failures);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
     }
 }
 
-// void save(const std::string&) const method
+// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the ant colony optimization object.
 /// @param file_name Name of ant colony optimization XML-type file.
 
-void AntColonyOptimization::save(const std::string& file_name) const
+void AntColonyOptimization::save(const string& file_name) const
 {
    tinyxml2::XMLDocument* document = to_XML();
 
@@ -1148,12 +1564,12 @@ void AntColonyOptimization::save(const std::string& file_name) const
 }
 
 
-// void load(const std::string&) method
+// void load(const string&) method
 
 /// Loads a ant colony optimization object from a XML-type file.
 /// @param file_name Name of ant colony optimization XML-type file.
 
-void AntColonyOptimization::load(const std::string& file_name)
+void AntColonyOptimization::load(const string& file_name)
 {
    set_default();
 
@@ -1161,13 +1577,13 @@ void AntColonyOptimization::load(const std::string& file_name)
 
    if(document.LoadFile(file_name.c_str()))
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: AntColonyOptimization class.\n"
-             << "void load(const std::string&) method.\n"
+             << "void load(const string&) method.\n"
              << "Cannot load XML file " << file_name << ".\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    from_XML(document);
@@ -1178,7 +1594,7 @@ void AntColonyOptimization::load(const std::string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

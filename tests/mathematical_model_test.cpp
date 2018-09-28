@@ -18,29 +18,29 @@
 using namespace OpenNN;
 
 
-MathematicalModelTest::MathematicalModelTest(void) : UnitTesting() 
+MathematicalModelTest::MathematicalModelTest() : UnitTesting() 
 {   
 }
 
 
-MathematicalModelTest::~MathematicalModelTest(void)
+MathematicalModelTest::~MathematicalModelTest()
 {
 }
 
 
-void MathematicalModelTest::test_get_display(void)
+void MathematicalModelTest::test_get_display()
 {
    message += "test_get_display\n";
 }
 
 
-void MathematicalModelTest::test_set_display(void)
+void MathematicalModelTest::test_set_display()
 {
    message += "test_set_display\n";
 }
 
 
-void MathematicalModelTest::test_to_XML(void)   
+void MathematicalModelTest::test_to_XML()   
 {
    message += "test_to_XML\n";
 
@@ -58,7 +58,7 @@ void MathematicalModelTest::test_to_XML(void)
 }
 
 
-void MathematicalModelTest::test_from_XML(void)   
+void MathematicalModelTest::test_from_XML()   
 {
    message += "test_from_XML\n";
 
@@ -80,11 +80,11 @@ void MathematicalModelTest::test_from_XML(void)
 }
 
 
-void MathematicalModelTest::test_save(void)
+void MathematicalModelTest::test_save()
 {
    message += "test_save\n";
 
-   std::string file_name = "../data/mathematical_model.xml";
+   string file_name = "../data/mathematical_model.xml";
 
    MathematicalModel mm;
 
@@ -94,11 +94,11 @@ void MathematicalModelTest::test_save(void)
 }
 
 
-void MathematicalModelTest::test_load(void)
+void MathematicalModelTest::test_load()
 {
    message += "test_load\n";
 
-   std::string file_name = "../data/mathematical_model.xml";
+   string file_name = "../data/mathematical_model.xml";
 
    MathematicalModel mm;
 
@@ -109,7 +109,7 @@ void MathematicalModelTest::test_load(void)
 }
 
 
-void MathematicalModelTest::run_test_case(void)
+void MathematicalModelTest::run_test_case()
 {
    message += "Running mathematical model test case...\n";  
 
@@ -136,7 +136,7 @@ void MathematicalModelTest::run_test_case(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2016 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

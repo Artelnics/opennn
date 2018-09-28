@@ -6,7 +6,7 @@
 /*   C O N D I T I O N S   L A Y E R   C L A S S                                                                */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -23,7 +23,7 @@ namespace OpenNN
 /// Default constructor. 
 /// It creates a conditions layer object.
 
-ConditionsLayer::ConditionsLayer(void)
+ConditionsLayer::ConditionsLayer()
 {
    set();
 
@@ -73,7 +73,7 @@ ConditionsLayer::ConditionsLayer(const ConditionsLayer& other_conditions_layer)
 
 /// Destructor.
 
-ConditionsLayer::~ConditionsLayer(void)
+ConditionsLayer::~ConditionsLayer()
 {
 }
 
@@ -84,7 +84,7 @@ ConditionsLayer::~ConditionsLayer(void)
 /// It assigns to this object the members of an existing conditions layer object.
 /// @param other_conditions_layer Conditions layer object to be assigned.
 
-ConditionsLayer& ConditionsLayer::operator = (const ConditionsLayer& other_conditions_layer)
+ConditionsLayer& ConditionsLayer::operator =(const ConditionsLayer& other_conditions_layer)
 {
    if(this != &other_conditions_layer) 
    {
@@ -102,14 +102,14 @@ ConditionsLayer& ConditionsLayer::operator = (const ConditionsLayer& other_condi
 
 // EQUAL TO OPERATOR
 
-// bool operator == (const ConditionsLayer&) const method
+// bool operator ==(const ConditionsLayer&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_conditions_layer Conditions layer to be compared with.
 
-bool ConditionsLayer::operator == (const ConditionsLayer& other_conditions_layer) const
+bool ConditionsLayer::operator ==(const ConditionsLayer& other_conditions_layer) const
 {
     if(external_inputs_number == other_conditions_layer.external_inputs_number
     && conditions_neurons_number == other_conditions_layer.conditions_neurons_number
@@ -129,43 +129,43 @@ bool ConditionsLayer::operator == (const ConditionsLayer& other_conditions_layer
 
 // METHODS
 
-// const size_t& get_external_inputs_number(void) const method
+// const size_t& get_external_inputs_number() const method
 
 /// Returns the number of external inputs. 
 
-const size_t& ConditionsLayer::get_external_inputs_number(void) const
+const size_t& ConditionsLayer::get_external_inputs_number() const
 {
    return(external_inputs_number);
 }
 
 
-// const size_t& get_conditions_neurons_number(void) const method
+// const size_t& get_conditions_neurons_number() const method
 
 /// Returns the number of conditions neurons. 
 
-const size_t& ConditionsLayer::get_conditions_neurons_number(void) const
+const size_t& ConditionsLayer::get_conditions_neurons_number() const
 {
    return(conditions_neurons_number);
 }
 
 
-// const ConditionsMethod& get_conditions_method(void) const method
+// const ConditionsMethod& get_conditions_method() const method
 
 /// Returns the method for calculating the conditions.
 /// Avaliable methods include one conditions, two conditions or user defined conditions.
 
-const ConditionsLayer::ConditionsMethod& ConditionsLayer::get_conditions_method(void) const
+const ConditionsLayer::ConditionsMethod& ConditionsLayer::get_conditions_method() const
 {
    return(conditions_method);
 }
 
 
-// std::string write_conditions_method(void) const method
+// string write_conditions_method() const method
 
 /// Returns a string with the name of the method for calculating the conditions.
 /// Avaliable methods include one conditions, two conditions or user defined conditions.
 
-std::string ConditionsLayer::write_conditions_method(void) const
+string ConditionsLayer::write_conditions_method() const
 {
    if(conditions_method == OneCondition)
    {
@@ -177,22 +177,22 @@ std::string ConditionsLayer::write_conditions_method(void) const
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ConditionsLayer class.\n"
-             << "std::string write_conditions_method(void) const method.\n"
+             << "string write_conditions_method() const method.\n"
              << "Unknown conditions method.\n";
  
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
 
-// const Vector<double>& get_external_input_values(void) const method
+// const Vector<double>& get_external_input_values() const method
 
 /// Returns the input values for the conditions. 
 
-const Vector<double>& ConditionsLayer::get_external_input_values(void) const
+const Vector<double>& ConditionsLayer::get_external_input_values() const
 {
    return(external_input_values);
 }
@@ -209,11 +209,11 @@ const double& ConditionsLayer::get_external_input_value(const size_t& i) const
 }   
 
 
-// const Matrix<double>& get_output_values(void) const method
+// const Matrix<double>& get_output_values() const method
 
 /// Returns the output values for the conditions. 
 
-const Matrix<double>& ConditionsLayer::get_output_values(void) const
+const Matrix<double>& ConditionsLayer::get_output_values() const
 {
    return(output_values);
 }
@@ -231,23 +231,23 @@ const double& ConditionsLayer::get_output_value(const size_t& i, const size_t& j
 }
 
 
-// const bool& get_display(void) const method
+// const bool& get_display() const method
 
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages 
 /// from this class are not to be displayed on the screen.
 
-const bool& ConditionsLayer::get_display(void) const
+const bool& ConditionsLayer::get_display() const
 {
    return(display);
 }
 
 
-// void set(void) method
+// void set() method
 
 /// Sets a conditions layer object with zero inputs and zero outputs.
 /// It also sets the rest of members to their default values. 
 
-void ConditionsLayer::set(void)
+void ConditionsLayer::set()
 {
    external_inputs_number = 0;
 
@@ -292,11 +292,11 @@ void ConditionsLayer::set(const ConditionsLayer& other_conditions_layer)
 }
 
 
-// void set_default(void) method
+// void set_default() method
 
 /// Sets the members of this conditions layer object to their default values. 
 
-void ConditionsLayer::set_default(void)
+void ConditionsLayer::set_default()
 {
    conditions_method = TwoConditions;
 
@@ -350,12 +350,12 @@ void ConditionsLayer::set_conditions_method(const ConditionsMethod& new_conditio
 }
 
 
-// void set_conditions_method(const std::string&) method
+// void set_conditions_method(const string&) method
 
 /// Sets a new conditions method from the string. 
 /// @param new_conditions_method String with the name of the conditions method. 
 
-void ConditionsLayer::set_conditions_method(const std::string& new_conditions_method)
+void ConditionsLayer::set_conditions_method(const string& new_conditions_method)
 {
    if(new_conditions_method == "OneCondition")
    {
@@ -371,13 +371,13 @@ void ConditionsLayer::set_conditions_method(const std::string& new_conditions_me
    }
    else
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: ConditionsLayer class.\n"
-             << "void set_conditions_method(const std::string&) method.\n"
+             << "void set_conditions_method(const string&) method.\n"
 			 << "Unknown conditions method: " << new_conditions_method << ".\n";
 
-	  throw std::logic_error(buffer.str());
+	  throw logic_error(buffer.str());
    }
 }
 
@@ -442,33 +442,33 @@ void ConditionsLayer::set_display(const bool& new_display)
 }
 
 
-// void initialize_random(void) method
+// void initialize_random() method
 
 /// @todo
 
-void ConditionsLayer::initialize_random(void)
+void ConditionsLayer::initialize_random()
 {
 
 }
 
 
-// void check(void) const method
+// void check() const method
 
 /// Checks that all the members of the conditions layer are correct before calculating the outputs from that layer.
 
-void ConditionsLayer::check(void) const
+void ConditionsLayer::check() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    if(conditions_method == OneCondition || conditions_method == TwoConditions)
    {
       if(external_inputs_number != 1)
       {
          buffer << "OpenNN Exception: BoundingLayer class.\n" 
-                << "void check(void) const method.\n"
+                << "void check() const method.\n"
                 << "Number of external inputs must be one.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
    }
 
@@ -480,10 +480,10 @@ void ConditionsLayer::check(void) const
    if(output_values_rows_number != conditions_neurons_number)
    {
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
-             << "void check(void) const method.\n"
+             << "void check() const method.\n"
              << "Number of rows in output values is not equal to number of conditions neurons.\n";
 
-      throw std::logic_error(buffer.str());
+      throw logic_error(buffer.str());
    }
 
    if(conditions_method == OneCondition)
@@ -491,19 +491,19 @@ void ConditionsLayer::check(void) const
       if(external_input_values_size != 1)
 	  {	  
          buffer << "OpenNN Exception: BoundingLayer class.\n" 
-                << "void check(void) const method.\n"
+                << "void check() const method.\n"
                 << "Size of input values is not 1.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
 	  }
 
 	  if(output_values_columns_number != 1)
 	  {
          buffer << "OpenNN Exception: BoundingLayer class.\n" 
-                << "void check(void) const method.\n"
+                << "void check() const method.\n"
                 << "Number of columns in output values is not 1.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
 	  }
    }
    else if(conditions_method == OneCondition)
@@ -511,19 +511,19 @@ void ConditionsLayer::check(void) const
       if(external_input_values_size != 2)
 	  {	  
          buffer << "OpenNN Exception: BoundingLayer class.\n" 
-                << "void check(void) const method.\n"
+                << "void check() const method.\n"
                 << "Size of input values is not 2.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
 	  }
 
 	  if(output_values_columns_number != 2)
 	  {
          buffer << "OpenNN Exception: BoundingLayer class.\n" 
-                << "void check(void) const method.\n"
+                << "void check() const method.\n"
                 << "Number of columns in output values is not 2.\n";
 
-         throw std::logic_error(buffer.str());
+         throw logic_error(buffer.str());
 	  }
    }
 }
@@ -552,13 +552,13 @@ Vector<double> ConditionsLayer::calculate_particular_solution(const Vector<doubl
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "Vector<double> calculate_particular_solution(const Vector<double>&) const method.\n"               
+                << "Vector<double> calculate_particular_solution(const Vector<double>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
@@ -588,13 +588,13 @@ Matrix<double> ConditionsLayer::calculate_particular_solution_Jacobian(const Vec
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "Matrix<double> calculate_particular_solution_Jacobian(const Vector<double>&) const method.\n"               
+                << "Matrix<double> calculate_particular_solution_Jacobian(const Vector<double>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
@@ -624,13 +624,13 @@ Vector< Matrix<double> >  ConditionsLayer::calculate_particular_solution_Hessian
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "Vector< Matrix<double> > calculate_particular_solution_Hessian_form(const Vector<double>&) const method.\n"               
+                << "Vector< Matrix<double> > calculate_particular_solution_Hessian_form(const Vector<double>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
@@ -660,13 +660,13 @@ Vector<double> ConditionsLayer::calculate_homogeneous_solution(const Vector<doub
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "Vector<double> calculate_homogeneous_solution(const Vector<double>&) const method.\n"               
+                << "Vector<double> calculate_homogeneous_solution(const Vector<double>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
@@ -696,13 +696,13 @@ Matrix<double> ConditionsLayer::calculate_homogeneous_solution_Jacobian(const Ve
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "Matrix<double> calculate_homogeneous_solution_Jacobian(const Vector<double>&) const method.\n"               
+                << "Matrix<double> calculate_homogeneous_solution_Jacobian(const Vector<double>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
@@ -732,13 +732,13 @@ Vector< Matrix<double> > ConditionsLayer::calculate_homogeneous_solution_Hessian
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "Matrix<double> calculate_homogeneous_solution_Hessian_form(const Vector<double>&) const method.\n"               
+                << "Matrix<double> calculate_homogeneous_solution_Hessian_form(const Vector<double>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
@@ -925,13 +925,13 @@ Vector<double> ConditionsLayer::calculate_two_conditions_particular_solution(con
 
    if(xb - xa < 1.0e-99)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
              << "Vector<double> calculate_two_conditions_particular_solution(const Vector<double>&) const method.\n"
              << "Both input values are the same.\n";
 
-	  throw std::logic_error(buffer.str());   
+	  throw logic_error(buffer.str());   
    }
 
    #endif
@@ -946,7 +946,7 @@ Vector<double> ConditionsLayer::calculate_two_conditions_particular_solution(con
       ya = output_values(i,0);
       yb = output_values(i,1);
 
-      particular_solutions[i] = ya + (yb-ya)*(x-xa)/(double)(xb-xa);
+      particular_solutions[i] = ya +(yb-ya)*(x-xa)/(double)(xb-xa);
    }
 
    return(particular_solutions);
@@ -973,13 +973,13 @@ Matrix<double> ConditionsLayer::calculate_two_conditions_particular_solution_Jac
 
    if(xb - xa < 1.0e-99)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
              << "Matrix<double> calculate_two_conditions_particular_solution_Jacobian(const Vector<double>&) const method.\n"
              << "Both input values are the same.\n";
 
-	  throw std::logic_error(buffer.str());   
+	  throw logic_error(buffer.str());   
    }
 
    #endif
@@ -987,7 +987,7 @@ Matrix<double> ConditionsLayer::calculate_two_conditions_particular_solution_Jac
    const double ya = output_values(0,0);
    const double yb = output_values(0,1);
 
-   Matrix<double> particular_solution_Jacobian(1, 1, (yb-ya)/(xb-xa));
+   Matrix<double> particular_solution_Jacobian(1, 1,(yb-ya)/(xb-xa));
 
    return(particular_solution_Jacobian);
 }
@@ -1034,18 +1034,18 @@ Vector<double> ConditionsLayer::calculate_two_conditions_homogeneous_solution(co
 
    if(xb - xa < 1.0e-99)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
              << "Matrix<double> calculate_two_conditions_particular_solution_Jacobian(const Vector<double>&) const method.\n"
              << "Both input values are the same.\n";
 
-	  throw std::logic_error(buffer.str());   
+	  throw logic_error(buffer.str());   
    }
 
    #endif
 
-   const Vector<double> homogeneous_solutions(conditions_neurons_number, (x-xa)*(x-xb));
+   const Vector<double> homogeneous_solutions(conditions_neurons_number,(x-xa)*(x-xb));
 
    return(homogeneous_solutions);
 }
@@ -1073,18 +1073,18 @@ Matrix<double> ConditionsLayer::calculate_two_conditions_homogeneous_solution_Ja
 
    if(xb - xa < 1.0e-99)
    {
-      std::ostringstream buffer;
+      ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n" 
              << "Matrix<double> calculate_two_conditions_particular_solution_Jacobian(const Vector<double>&) const method.\n"
              << "Both input values are the same.\n";
 
-	  throw std::logic_error(buffer.str());   
+	  throw logic_error(buffer.str());   
    }
 
    #endif
 
-   Matrix<double> homogeneous_solution_Jacobian(1, 1, (x-xa) + (x-xb));
+   Matrix<double> homogeneous_solution_Jacobian(1, 1,(x-xa) +(x-xb));
 
    return(homogeneous_solution_Jacobian);
 }
@@ -1109,7 +1109,7 @@ Vector< Matrix<double> > ConditionsLayer::calculate_two_conditions_homogeneous_s
 }
 
 
-// std::string write_expression(const Vector<std::string>&, const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_expression(const Vector<string>&, const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the boundary conditions function. 
 /// @param external_inputs_names Names of external inputs. 
@@ -1117,12 +1117,12 @@ Vector< Matrix<double> > ConditionsLayer::calculate_two_conditions_homogeneous_s
 /// @param outputs_names Names of outputs. 
 /// @todo
 
-std::string ConditionsLayer::write_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& inputs_names, const Vector<std::string>& outputs_names) const
+string ConditionsLayer::write_expression(const Vector<string>& external_inputs_names, const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
-   Vector<std::string> particular_solutions_names(conditions_neurons_number);
-   Vector<std::string> homogeneous_solutions_names(conditions_neurons_number);
+   Vector<string> particular_solutions_names(conditions_neurons_number);
+   Vector<string> homogeneous_solutions_names(conditions_neurons_number);
 
    for(size_t i = 0; i < conditions_neurons_number; i++)
    {
@@ -1161,14 +1161,14 @@ std::string ConditionsLayer::write_expression(const Vector<std::string>& externa
 }
 
 
-// std::string write_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_particular_solution_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns the expression of the particular solution function. 
 /// @param external_inputs_names Names of external inputs. 
 /// @param particular_solutions_names Names of particular solutions. 
 /// @todo
 
-std::string ConditionsLayer::write_particular_solution_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& particular_solutions_names) const
+string ConditionsLayer::write_particular_solution_expression(const Vector<string>& external_inputs_names, const Vector<string>& particular_solutions_names) const
 {
    switch(conditions_method)
    {
@@ -1186,27 +1186,27 @@ std::string ConditionsLayer::write_particular_solution_expression(const Vector<s
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "std::string write_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method.\n"               
+                << "string write_particular_solution_expression(const Vector<string>&, const Vector<string>&) const method.\n"              
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
 }
 
 
-// std::string write_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns the expression of the homogeneous solution function. 
 /// @param external_inputs_names Names of external inputs. 
 /// @param homogeneous_solutions_names Names of homogeneous solutions. 
 /// @todo
 
-std::string ConditionsLayer::write_homogeneous_solution_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& homogeneous_solutions_names) const
+string ConditionsLayer::write_homogeneous_solution_expression(const Vector<string>& external_inputs_names, const Vector<string>& homogeneous_solutions_names) const
 {
    switch(conditions_method)
    {
@@ -1224,28 +1224,28 @@ std::string ConditionsLayer::write_homogeneous_solution_expression(const Vector<
 
       default:
       {
-         std::ostringstream buffer;
+         ostringstream buffer;
 
          buffer << "OpenNN Exception: ScalingLayer class\n"
-                << "std::string write_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method.\n"
+                << "string write_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const method.\n"
                 << "Unknown conditions method.\n";
 
-	     throw std::logic_error(buffer.str());
+	     throw logic_error(buffer.str());
       }
       break;
    }
 }
 
 
-// std::string write_one_condition_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_one_condition_particular_solution_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// @param external_inputs_names Names of external inputs. 
 /// @param particular_solutions_names Names of particular solutions. 
 /// @todo
 
-std::string ConditionsLayer::write_one_condition_particular_solution_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& particular_solutions_names) const
+string ConditionsLayer::write_one_condition_particular_solution_expression(const Vector<string>& external_inputs_names, const Vector<string>& particular_solutions_names) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    for(size_t i = 0; i < conditions_neurons_number; i++)
    {
@@ -1256,15 +1256,15 @@ std::string ConditionsLayer::write_one_condition_particular_solution_expression(
 }
 
 
-// std::string write_one_condition_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_one_condition_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// @param external_inputs_names Names of external inputs. 
 /// @param homogeneous_solutions_names Names of homogeneous solutions. 
 /// @todo
 
-std::string ConditionsLayer::write_one_condition_homogeneous_solution_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& homogeneous_solutions_names) const
+string ConditionsLayer::write_one_condition_homogeneous_solution_expression(const Vector<string>& external_inputs_names, const Vector<string>& homogeneous_solutions_names) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    for(size_t i = 0; i < conditions_neurons_number; i++)
    {
@@ -1275,15 +1275,15 @@ std::string ConditionsLayer::write_one_condition_homogeneous_solution_expression
 }
    
 
-// std::string write_two_conditions_particular_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_two_conditions_particular_solution_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// @param external_inputs_names Names of external inputs. 
 /// @param particular_solutions_names Names of particular solutions. 
 /// @todo
 
-std::string ConditionsLayer::write_two_conditions_particular_solution_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& particular_solutions_names) const
+string ConditionsLayer::write_two_conditions_particular_solution_expression(const Vector<string>& external_inputs_names, const Vector<string>& particular_solutions_names) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    for(size_t i = 0; i < conditions_neurons_number; i++)
    {
@@ -1294,15 +1294,15 @@ std::string ConditionsLayer::write_two_conditions_particular_solution_expression
 }
 
 
-// std::string write_two_conditions_homogeneous_solution_expression(const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_two_conditions_homogeneous_solution_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// @param external_inputs_names Names of external inputs. 
 /// @param homogeneous_solutions_names Names of homogeneous solutions. 
 /// @todo
 
-std::string ConditionsLayer::write_two_conditions_homogeneous_solution_expression(const Vector<std::string>& external_inputs_names, const Vector<std::string>& homogeneous_solutions_names) const
+string ConditionsLayer::write_two_conditions_homogeneous_solution_expression(const Vector<string>& external_inputs_names, const Vector<string>& homogeneous_solutions_names) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    for(size_t i = 0; i < conditions_neurons_number; i++)
    {
@@ -1313,7 +1313,7 @@ std::string ConditionsLayer::write_two_conditions_homogeneous_solution_expressio
 }
 
 
-// std::string write_output_expression(const Vector<std::string>&, const Vector<std::string>&, const Vector<std::string>&, const Vector<std::string>&) const method
+// string write_output_expression(const Vector<string>&, const Vector<string>&, const Vector<string>&, const Vector<string>&) const method
 
 /// Returns the mathematical expression of the function represented by the conditions layer. 
 /// @param particular_solutions_names Names of particular solutions. 
@@ -1321,9 +1321,9 @@ std::string ConditionsLayer::write_two_conditions_homogeneous_solution_expressio
 /// @param inputs_names Names of inputs. 
 /// @param outputs_names Names of outputs. 
 
-std::string ConditionsLayer::write_output_expression(const Vector<std::string>& particular_solutions_names, const Vector<std::string>& homogeneous_solutions_names, const Vector<std::string>& inputs_names, const Vector<std::string>& outputs_names) const
+string ConditionsLayer::write_output_expression(const Vector<string>& particular_solutions_names, const Vector<string>& homogeneous_solutions_names, const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    for(size_t i = 0; i < conditions_neurons_number; i++)
    {
@@ -1334,13 +1334,13 @@ std::string ConditionsLayer::write_output_expression(const Vector<std::string>& 
 }
 
 
-// std::string to_string(void) const method
+// string object_to_string() const method
 
 /// Returns a string representation of the current conditions layer object. 
 
-std::string ConditionsLayer::to_string(void) const
+string ConditionsLayer::object_to_string() const
 {
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    buffer << "Conditions layer\n"
           << "External inputs number: " << external_inputs_number << "\n"
@@ -1354,15 +1354,15 @@ std::string ConditionsLayer::to_string(void) const
 }
 
 
-// tinyxml2::XMLDocument* to_XML(void) const method
+// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the conditions layer object into a document of the TinyXML library.
 
-tinyxml2::XMLDocument* ConditionsLayer::to_XML(void) const
+tinyxml2::XMLDocument* ConditionsLayer::to_XML() const
 {
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   std::ostringstream buffer;
+   ostringstream buffer;
 
    tinyxml2::XMLElement* conditions_layer_element = document->NewElement("ConditionsLayer");
 
@@ -1450,7 +1450,7 @@ tinyxml2::XMLDocument* ConditionsLayer::to_XML(void) const
 
 void ConditionsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
 
     file_stream.OpenElement("ConditionsLayer");
 
@@ -1557,9 +1557,9 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_external_inputs_number(atoi(text));
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1579,9 +1579,9 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
            {
               set_conditions_neurons_number(atoi(text));
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1599,13 +1599,13 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
            try
            {
-              std::string new_conditions_method(text);
+              string new_conditions_method(text);
 
               set_conditions_method(new_conditions_method);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1628,9 +1628,9 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
               set_external_input_values(new_external_input_values);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1655,9 +1655,9 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
               set_output_values(new_output_values);
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1675,13 +1675,13 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
            try
            {
-              const std::string string(text);
+              const string string(text);
 
               set_display(string != "0");
            }
-           catch(const std::logic_error& e)
+           catch(const logic_error& e)
            {
-              std::cout << e.what() << std::endl;
+              cout << e.what() << endl;
            }
         }
      }
@@ -1691,7 +1691,7 @@ void ConditionsLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (c) 2005-2016 Roberto Lopez.
+// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
