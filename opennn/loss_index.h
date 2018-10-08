@@ -3,7 +3,7 @@
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
 /*                                                                                                              */
-/*   P E R F O R M A N C E   F U N C T I O N A L   C L A S S   H E A D E R                                      */
+/*   L O S S   I N D E X   C L A S S   H E A D E R                                                              */
 /*                                                                                                              */
 /*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
@@ -11,8 +11,8 @@
 /*                                                                                                              */
 /****************************************************************************************************************/
 
-#ifndef __PERFORMANCEFUNCTIONAL_H__
-#define __PERFORMANCEFUNCTIONAL_H__
+#ifndef __LOSSINDEX_H__
+#define __LOSSINDEX_H__
 
 // System includes
 

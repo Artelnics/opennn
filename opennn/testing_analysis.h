@@ -212,7 +212,10 @@ public:
    Vector< Matrix<double> > calculate_forecasting_error_data() const;
 
    Vector< Statistics<double> > calculate_absolute_errors_statistics() const;
+   Vector< Statistics<double> > calculate_absolute_errors_statistics(const Matrix<double>&, const Matrix<double>&) const;
+
    Vector< Statistics<double> > calculate_percentage_errors_statistics() const;
+   Vector< Statistics<double> > calculate_percentage_errors_statistics(const Matrix<double>&, const Matrix<double>&) const;
 
    Vector< Vector< Statistics<double> > > calculate_error_data_statistics() const;
    void print_error_data_statistics() const;
@@ -251,6 +254,7 @@ public:
    // Linear regression analysis methods
 
    Vector< LinearRegressionParameters<double> > calculate_linear_regression_parameters() const;
+   Vector< LinearRegressionParameters<double> > calculate_linear_regression_parameters(const Matrix<double>&, const Matrix<double>&) const;
    Vector< LinearRegressionParameters<double> > calculate_forecasting_linear_regression_parameters() const;
 
    void print_linear_regression_correlations() const;

@@ -218,10 +218,6 @@ public:
    void set_time_index(const size_t&);
    void set_unuse_indices(const Vector<size_t>&);
 
-   void set_input_indices(const Vector<int>&);
-   void set_target_indices(const Vector<int>&);
-   void set_time_index(const int&);
-
    void set_default_uses();
 
    // Information methods

@@ -1781,49 +1781,6 @@ void Variables::set_unuse_indices(const Vector<size_t>& unused_indices)
 }
 
 
-// void set_input_indices(const Vector<int>&) method
-
-/// Sets the variables of the given indices as inputs.
-/// @param input_indices Indices of the variables to set as intputs.
-
-void Variables::set_input_indices(const Vector<int>& input_indices)
-{
-    const size_t indices_size = input_indices.size();
-
-    for(size_t i = 0; i < indices_size; i++)
-    {
-        set_use(input_indices[i], Input);
-    }
-}
-
-
-// void set_target_indices(const Vector<int>&) method
-
-/// Sets the variables of the given indices as targets.
-/// @param target_indices Indices of the variables to set as targets.
-
-void Variables::set_target_indices(const Vector<int>& target_indices)
-{
-    const size_t targets_size = target_indices.size();
-
-    for(size_t i = 0; i < targets_size; i++)
-    {
-        set_use(target_indices[i], Target);
-    }
-}
-
-
-// void set_time_index(const int&) method
-
-/// Sets the variable of the given index as time.
-/// @param time_index Index of the variable to set as time.
-
-void Variables::set_time_index(const int& time_index)
-{
-    set_use(time_index, Time);
-}
-
-
 // void set_default_uses() method
 
 /// Sets the default uses for the input and target variables:

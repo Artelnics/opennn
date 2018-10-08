@@ -25,7 +25,7 @@ namespace OpenNN
 /// It creates a training algorithm object not associated to any loss functional object.  
 
 TrainingAlgorithm::TrainingAlgorithm()
- : loss_index_pointer(NULL)
+ : loss_index_pointer(nullptr)
 { 
    set_default();
 }
@@ -51,7 +51,7 @@ TrainingAlgorithm::TrainingAlgorithm(LossIndex* new_loss_index_pointer)
 /// It also loads the other members from a XML document.
 
 TrainingAlgorithm::TrainingAlgorithm(const tinyxml2::XMLDocument& document)
- : loss_index_pointer(NULL)
+ : loss_index_pointer(nullptr)
 { 
    from_XML(document);
 }

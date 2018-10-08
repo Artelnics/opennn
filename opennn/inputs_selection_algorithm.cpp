@@ -23,7 +23,7 @@ namespace OpenNN {
 /// Default constructor.
 
 InputsSelectionAlgorithm::InputsSelectionAlgorithm()
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     set_default();
 }
@@ -47,7 +47,7 @@ InputsSelectionAlgorithm::InputsSelectionAlgorithm(TrainingStrategy* new_trainin
 /*/// @param file_name Name of XML inputs selection file.*/
 
 InputsSelectionAlgorithm::InputsSelectionAlgorithm(const string&)
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
 }
 
@@ -58,7 +58,7 @@ InputsSelectionAlgorithm::InputsSelectionAlgorithm(const string&)
 /*/// @param inputs_selection_document Pointer to a TinyXML document containing the inputs selection algorithm data.*/
 
 InputsSelectionAlgorithm::InputsSelectionAlgorithm(const tinyxml2::XMLDocument&)
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
 }
 

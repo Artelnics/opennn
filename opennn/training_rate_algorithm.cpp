@@ -25,7 +25,7 @@ namespace OpenNN
 /// It also initializes the class members to their default values. 
 
 TrainingRateAlgorithm::TrainingRateAlgorithm()
- : loss_index_pointer(NULL)
+ : loss_index_pointer(nullptr)
 { 
    set_default();
 }
@@ -53,7 +53,7 @@ TrainingRateAlgorithm::TrainingRateAlgorithm(LossIndex* new_loss_index_pointer)
 /// @param document Pointer to a TinyXML document->
 
 TrainingRateAlgorithm::TrainingRateAlgorithm(const tinyxml2::XMLDocument& document)
- : loss_index_pointer(NULL)
+ : loss_index_pointer(nullptr)
 { 
    from_XML(document);
 }

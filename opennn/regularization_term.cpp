@@ -25,8 +25,8 @@ namespace OpenNN
 /// It also initializes all the rest of class members to their default values.
 
 RegularizationTerm::RegularizationTerm()
- : neural_network_pointer(NULL), 
-   numerical_differentiation_pointer(NULL)
+ : neural_network_pointer(nullptr), 
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 }
@@ -42,7 +42,7 @@ RegularizationTerm::RegularizationTerm()
 
 RegularizationTerm::RegularizationTerm(NeuralNetwork* new_neural_network_pointer)
  : neural_network_pointer(new_neural_network_pointer), 
-   numerical_differentiation_pointer(NULL)
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 }
@@ -56,8 +56,8 @@ RegularizationTerm::RegularizationTerm(NeuralNetwork* new_neural_network_pointer
 /// @param error_term_document Pointer to a TinyXML document with the object data.
 
 RegularizationTerm::RegularizationTerm(const tinyxml2::XMLDocument& error_term_document)
- : neural_network_pointer(NULL), 
-   numerical_differentiation_pointer(NULL)
+ : neural_network_pointer(nullptr), 
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 
@@ -72,8 +72,8 @@ RegularizationTerm::RegularizationTerm(const tinyxml2::XMLDocument& error_term_d
 /// @param other_error_term Error term object to be copied.
 
 RegularizationTerm::RegularizationTerm(const RegularizationTerm& other_error_term)
- : neural_network_pointer(NULL), 
-   numerical_differentiation_pointer(NULL)
+ : neural_network_pointer(nullptr), 
+   numerical_differentiation_pointer(nullptr)
 {
    neural_network_pointer = other_error_term.neural_network_pointer;
 

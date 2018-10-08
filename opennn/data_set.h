@@ -350,7 +350,6 @@ public:
 
    // Information methods
 
-
    void print_missing_values_information() const;
 
    void print_input_target_correlations() const;

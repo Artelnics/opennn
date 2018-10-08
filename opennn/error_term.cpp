@@ -25,9 +25,9 @@ namespace OpenNN
 /// It also initializes all the rest of class members to their default values.
 
 ErrorTerm::ErrorTerm()
- : neural_network_pointer(NULL), 
-   data_set_pointer(NULL),
-   numerical_differentiation_pointer(NULL)
+ : neural_network_pointer(nullptr), 
+   data_set_pointer(nullptr),
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 }
@@ -43,8 +43,8 @@ ErrorTerm::ErrorTerm()
 
 ErrorTerm::ErrorTerm(NeuralNetwork* new_neural_network_pointer)
  : neural_network_pointer(new_neural_network_pointer), 
-   data_set_pointer(NULL),
-   numerical_differentiation_pointer(NULL)
+   data_set_pointer(nullptr),
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 }
@@ -59,9 +59,9 @@ ErrorTerm::ErrorTerm(NeuralNetwork* new_neural_network_pointer)
 /// @param new_data_set_pointer Pointer to a data set object.
 
 ErrorTerm::ErrorTerm(DataSet* new_data_set_pointer)
- : neural_network_pointer(NULL), 
+ : neural_network_pointer(nullptr), 
    data_set_pointer(new_data_set_pointer),
-   numerical_differentiation_pointer(NULL)
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 }
@@ -79,7 +79,7 @@ ErrorTerm::ErrorTerm(DataSet* new_data_set_pointer)
 ErrorTerm::ErrorTerm(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
  : neural_network_pointer(new_neural_network_pointer), 
    data_set_pointer(new_data_set_pointer),
-   numerical_differentiation_pointer(NULL)
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 }
@@ -93,9 +93,9 @@ ErrorTerm::ErrorTerm(NeuralNetwork* new_neural_network_pointer, DataSet* new_dat
 /// @param error_term_document Pointer to a TinyXML document with the object data.
 
 ErrorTerm::ErrorTerm(const tinyxml2::XMLDocument& error_term_document)
- : neural_network_pointer(NULL), 
-   data_set_pointer(NULL),
-   numerical_differentiation_pointer(NULL)
+ : neural_network_pointer(nullptr), 
+   data_set_pointer(nullptr),
+   numerical_differentiation_pointer(nullptr)
 {
    set_default();
 
@@ -110,9 +110,9 @@ ErrorTerm::ErrorTerm(const tinyxml2::XMLDocument& error_term_document)
 /// @param other_error_term Error term object to be copied.
 
 ErrorTerm::ErrorTerm(const ErrorTerm& other_error_term)
- : neural_network_pointer(NULL), 
-   data_set_pointer(NULL),
-   numerical_differentiation_pointer(NULL)
+ : neural_network_pointer(nullptr), 
+   data_set_pointer(nullptr),
+   numerical_differentiation_pointer(nullptr)
 {
    neural_network_pointer = other_error_term.neural_network_pointer;
 

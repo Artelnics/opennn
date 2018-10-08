@@ -23,7 +23,7 @@ namespace OpenNN {
 /// Default constructor.
 
 OrderSelectionAlgorithm::OrderSelectionAlgorithm()
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     set_default();
 }
@@ -47,7 +47,7 @@ OrderSelectionAlgorithm::OrderSelectionAlgorithm(TrainingStrategy* new_training_
 /*/// @param file_name Name of XML order selection file.*/
 
 OrderSelectionAlgorithm::OrderSelectionAlgorithm(const string&)
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     //load(file_name);
 }
@@ -59,7 +59,7 @@ OrderSelectionAlgorithm::OrderSelectionAlgorithm(const string&)
 /*/// @param order_selection_document Pointer to a TinyXML document containing the order selection algorithm data.*/
 
 OrderSelectionAlgorithm::OrderSelectionAlgorithm(const tinyxml2::XMLDocument& )
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     //from_XML(order_selection_document);
 }

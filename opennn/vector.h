@@ -94,7 +94,7 @@ public:
 
   // File constructor.
 
-  explicit Vector(const string &);
+    explicit Vector(const string&);
 
   // Sequential constructor.
 
@@ -495,6 +495,7 @@ public:
   //double calculate_distance(const Vector<double> &) const;
 
   double calculate_distance(const Vector<T> &) const;
+  double calculate_weighted_distance(const Vector<T>&, const Vector<double>&) const;
 
   double calculate_sum_squared_error(const Vector<double> &) const;
   double calculate_sum_squared_error(const Matrix<T> &, const size_t &,
@@ -541,6 +542,9 @@ public:
 
   Vector<size_t> sort_ascending_indices() const;
   Vector<T> sort_ascending_values() const;
+
+  Vector<size_t> calculate_lower_indices(const size_t&) const;
+  Vector<T> calculate_lower_values(const size_t&) const;
 
   Vector<size_t> sort_descending_indices() const;
   Vector<T> sort_descending_values() const;
@@ -638,9 +642,12 @@ public:
   void scale_standard_deviation(const Vector<T> &);
 
   Vector<T> calculate_scaled_minimum_maximum() const;
+  Vector<T> calculate_scaled_minimum_maximum_0_1() const;
 
   Vector<T> calculate_scaled_minimum_maximum(const Vector<T> &,
                                              const Vector<T> &) const;
+
+  Vector<T> calculate_scaled_mean_standard_deviation() const;
 
   Vector<T> calculate_scaled_mean_standard_deviation(const Vector<T> &,
                                                      const Vector<T> &) const;
@@ -658,6 +665,8 @@ public:
   void unscale_minimum_maximum(const Vector<T> &, const Vector<T> &);
 
   void unscale_mean_standard_deviation(const Vector<T> &, const Vector<T> &);
+
+  Vector<T> calculate_reverse_scaling(void) const;
 
   // Arranging methods
 
@@ -1614,7 +1623,7 @@ template <class T> bool Vector<T>::is_decrescent() const
 {
   for(size_t i = 0; i < this->size() - 1; i++)
   {
-    if((*this)[i] <(*this)[i + 1]) return(false);
+    if((*this)[i] < (*this)[i + 1]) return(false);
   }
 
   return(true);
@@ -6366,7 +6375,8 @@ size_t Vector<T>::calculate_sample_index_proportional_probability() const
 
 /// Returns the vector norm.
 
-template <class T> double Vector<T>::calculate_norm() const {
+template <class T>
+double Vector<T>::calculate_norm() const {
   const size_t this_size = this->size();
 
   // Control sentence(if debug)
@@ -6377,9 +6387,7 @@ template <class T> double Vector<T>::calculate_norm() const {
     norm +=(*this)[i] *(*this)[i];
   }
 
-  norm = sqrt(norm);
-
-  return(norm);
+    return sqrt(norm);
 }
 
 
@@ -6526,7 +6534,6 @@ template <class T> Vector<T> Vector<T>::calculate_normalized() const {
   return(normalized);
 }
 
-// double calculate_distance(const Vector<double>&) const method
 
 /// Returns the distance between the elements of this vector and the elements of
 /// another vector.
@@ -6560,6 +6567,40 @@ double Vector<T>::calculate_distance(const Vector<T> &other_vector) const {
         error =(*this)[i] - other_vector[i];
 
         distance += error * error;
+    }
+
+    return(sqrt(distance));
+}
+
+
+template <class T>
+double Vector<T>::calculate_weighted_distance(const Vector<T>& other_vector, const Vector<double>& weights) const {
+
+    const size_t this_size = this->size();
+#ifdef __OPENNN_DEBUG__
+
+  const size_t other_size = other_vector.size();
+
+  if(other_size != this_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Vector Template.\n"
+           << "double calculate_distance(const Vector<T>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    double distance = 0.0;
+    double error;
+
+    for(size_t i = 0; i < this_size; i++) {
+        error =(*this)[i] - other_vector[i];
+
+        distance += error * error * weights[i];
     }
 
     return(sqrt(distance));
@@ -7187,6 +7228,22 @@ Vector<T> Vector<T>::sort_ascending_values() const
 
     return sorted;
 }
+
+
+
+template <class T>
+Vector<size_t> Vector<T>::calculate_lower_indices(const size_t& indices_number) const
+{
+    return sort_ascending_indices().get_subvector(0,indices_number-1);
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_lower_values(const size_t& indices_number) const
+{
+    return sort_ascending_values().get_subvector(0,indices_number-1);
+}
+
 
 /// Returns the vector of the indices of the vector sorted by greater ranks.
 
@@ -8296,6 +8353,30 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum() const
 }
 
 
+template <class T>
+Vector<T> Vector<T>::calculate_scaled_minimum_maximum_0_1() const
+{
+    const double minimum = calculate_minimum();
+    const double maximum = calculate_maximum();
+
+    if(maximum-minimum < 1.0e-99)
+    {
+      return (*this);
+    }
+
+    const size_t this_size =(*this).size();
+
+    Vector<T> normalized(this_size);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+      normalized[i] = ((*this)[i] - minimum)/(maximum - minimum);
+    }
+
+    return(normalized);
+}
+
+
 // void scale_minimum_maximum(const T&, const T&) method
 
 /// Normalizes the elements of this vector using the minimum and maximum method.
@@ -8550,6 +8631,30 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum(const Vector<T> &minimum,
   }
 
   return(scaled_minimum_maximum);
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_scaled_mean_standard_deviation() const
+{
+    const double mean = calculate_mean();
+    const double standard_deviation = calculate_standard_deviation();
+
+    if(standard_deviation < 1.0e-99)
+    {
+      return (*this);
+    }
+
+    const size_t this_size =(*this).size();
+
+    Vector<T> normalized(this_size);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        normalized[i] =((*this)[i] - mean)/standard_deviation;
+    }
+
+    return(normalized);
 }
 
 
@@ -8909,6 +9014,24 @@ void Vector<T>::unscale_mean_standard_deviation(
      (*this)[i] =(*this)[i] * standard_deviation[i] + mean[i];
     }
   }
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_reverse_scaling(void) const
+{
+    const size_t this_size = this->size();
+
+    Vector<T> reverse_scaling_vector(this_size);
+
+    reverse_scaling_vector[0] = 1;
+
+    for(size_t i = 1; i < this_size; i++)
+    {
+        reverse_scaling_vector[i] = ((*this)[this_size-1]-(*this)[i])/((*this)[this_size-1]-(*this)[0]);
+    }
+
+    return reverse_scaling_vector;
 }
 
 

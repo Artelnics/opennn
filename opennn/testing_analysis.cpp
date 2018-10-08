@@ -26,9 +26,9 @@ namespace OpenNN
 /// By default, it constructs the function regression testing object. 
 
 TestingAnalysis::TestingAnalysis()
- : neural_network_pointer(NULL),
-   data_set_pointer(NULL),
-   mathematical_model_pointer(NULL)
+ : neural_network_pointer(nullptr),
+   data_set_pointer(nullptr),
+   mathematical_model_pointer(nullptr)
 {
    set_default();
 }
@@ -43,8 +43,8 @@ TestingAnalysis::TestingAnalysis()
 
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer)
 : neural_network_pointer(new_neural_network_pointer),
-   data_set_pointer(NULL),
-   mathematical_model_pointer(NULL)
+   data_set_pointer(nullptr),
+   mathematical_model_pointer(nullptr)
 {
    set_default();
 }
@@ -58,8 +58,8 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer)
 /// @param new_mathematical_model_pointer Pointer to a mathematical model object.
 
 TestingAnalysis::TestingAnalysis(MathematicalModel* new_mathematical_model_pointer)
-: neural_network_pointer(NULL),
-   data_set_pointer(NULL),
+: neural_network_pointer(nullptr),
+   data_set_pointer(nullptr),
    mathematical_model_pointer(new_mathematical_model_pointer)
 {
    set_default();
@@ -74,9 +74,9 @@ TestingAnalysis::TestingAnalysis(MathematicalModel* new_mathematical_model_point
 /// @param new_data_set_pointer Pointer to a data set object.
 
 TestingAnalysis::TestingAnalysis(DataSet* new_data_set_pointer)
-: neural_network_pointer(NULL),
+: neural_network_pointer(nullptr),
    data_set_pointer(new_data_set_pointer),
-   mathematical_model_pointer(NULL)
+   mathematical_model_pointer(nullptr)
 {
    set_default();
 }
@@ -92,7 +92,7 @@ TestingAnalysis::TestingAnalysis(DataSet* new_data_set_pointer)
 
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, MathematicalModel* new_mathematical_model_pointer)
  : neural_network_pointer(new_neural_network_pointer),
-   data_set_pointer(NULL),
+   data_set_pointer(nullptr),
    mathematical_model_pointer(new_mathematical_model_pointer)
 {
    set_default();
@@ -110,7 +110,7 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, Math
 TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
  : neural_network_pointer(new_neural_network_pointer),
    data_set_pointer(new_data_set_pointer),
-   mathematical_model_pointer(NULL)
+   mathematical_model_pointer(nullptr)
 {
    set_default();
 }
@@ -142,9 +142,9 @@ TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network_pointer, Data
 /// @param testing_analysis_document XML document containing the member data.
 
 TestingAnalysis::TestingAnalysis(const tinyxml2::XMLDocument& testing_analysis_document)
- : neural_network_pointer(NULL),
-   data_set_pointer(NULL),
-   mathematical_model_pointer(NULL)
+ : neural_network_pointer(nullptr),
+   data_set_pointer(nullptr),
+   mathematical_model_pointer(nullptr)
 {
    set_default();
 
@@ -160,9 +160,9 @@ TestingAnalysis::TestingAnalysis(const tinyxml2::XMLDocument& testing_analysis_d
 /// @param file_name Name of testing analysis XML file.  
 
 TestingAnalysis::TestingAnalysis(const string& file_name)
- : neural_network_pointer(NULL),
-   data_set_pointer(NULL),
-   mathematical_model_pointer(NULL)
+ : neural_network_pointer(nullptr),
+   data_set_pointer(nullptr),
+   mathematical_model_pointer(nullptr)
 {
    set_default();
 
@@ -511,17 +511,21 @@ Vector< LinearRegressionParameters<double> > TestingAnalysis::calculate_linear_r
    const Matrix<double> target_data = data_set_pointer->arrange_testing_target_data();
    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
-   Vector<double> target_variable(testing_instances_number);
-   Vector<double> output_variable(testing_instances_number);
+   const Vector< LinearRegressionParameters<double> > linear_regression_parameters = calculate_linear_regression_parameters(target_data,output_data);
+
+   return(linear_regression_parameters);
+}
+
+
+Vector< LinearRegressionParameters<double> > TestingAnalysis::calculate_linear_regression_parameters(const Matrix<double>& target, const Matrix<double>& output) const
+{
+    const size_t outputs_number = data_set_pointer->get_variables_pointer()->count_targets_number();
 
    Vector< LinearRegressionParameters<double> > linear_regression_parameters(outputs_number);
 
    for(size_t i = 0; i < outputs_number; i++)
    {
-       target_variable = target_data.get_column(i);
-       output_variable = output_data.get_column(i);
-
-       linear_regression_parameters[i] = output_variable.calculate_linear_regression_parameters(target_variable);
+       linear_regression_parameters[i] = output.get_column(i).calculate_linear_regression_parameters(target.get_column(i));
    }
 
    return(linear_regression_parameters);
@@ -950,13 +954,22 @@ Vector< Statistics<double> > TestingAnalysis::calculate_absolute_errors_statisti
 
     // Neural network
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    // Error statistics
+
+    Vector< Statistics<double> > statistics = calculate_absolute_errors_statistics(target_data,output_data);
+
+    return statistics;
+}
+
+
+Vector< Statistics<double> > TestingAnalysis::calculate_absolute_errors_statistics(const Matrix<double>& target_data,
+                                                                                   const Matrix<double>& output_data) const
+{
+    const size_t outputs_number = data_set_pointer->get_variables().count_targets_number();
 
     Vector< Statistics<double> > statistics(outputs_number);
-
-    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
     for(size_t i = 0; i < outputs_number; i++)
     {
@@ -979,28 +992,34 @@ Vector< Statistics<double> > TestingAnalysis::calculate_percentage_errors_statis
 
     // Neural network
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    // Error statistics
+
+    Vector< Statistics<double> > statistics = calculate_percentage_errors_statistics(target_data,output_data);
+
+    return statistics;
+}
+
+
+Vector< Statistics<double> > TestingAnalysis::calculate_percentage_errors_statistics(const Matrix<double>& target_data,
+                                                                                     const Matrix<double>& output_data) const
+{
+    const size_t outputs_number = data_set_pointer->get_variables().count_targets_number();
 
     Vector< Statistics<double> > statistics(outputs_number);
-
-    const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
 
     for(size_t i = 0; i < outputs_number; i++)
     {
         const Vector<double> targets = target_data.get_column(i);
         const Vector<double> outputs = output_data.get_column(i);
 
-        const double range = targets.calculate_maximum() - targets.calculate_minimum();
-
-        const Vector<double> percentage_error =(outputs - targets).calculate_absolute_value()*100.0/range;
-
-        statistics[i] = percentage_error.calculate_statistics();
+        statistics[i] =(((outputs - targets).calculate_absolute_value())*100.0/targets).calculate_statistics();
     }
 
     return statistics;
 }
+
 
 // Vector< Vector< Statistics<double> > > calculate_error_data_statistics() const method
 

@@ -71,9 +71,9 @@ void SumSquaredErrorTest::test_destructor()
 }
 
 
-void SumSquaredErrorTest::test_calculate_loss()   
+void SumSquaredErrorTest::test_calculate_error()
 {
-   message += "test_calculate_loss\n";
+   message += "test_calculate_error\n";
 
    NeuralNetwork nn;
    Vector<double> parameters;
@@ -84,7 +84,7 @@ void SumSquaredErrorTest::test_calculate_loss()
 
    SumSquaredError sse(&nn, &ds);
 
-   double loss;
+   double error;
 
    // Test
 
@@ -94,9 +94,9 @@ void SumSquaredErrorTest::test_calculate_loss()
    ds.set(1, 1, 1);
    ds.initialize_data(0.0);
 
-   loss = sse.calculate_error();
+   error = sse.calculate_error();
 
-   assert_true(loss == 0.0, LOG);
+   assert_true(error == 0.0, LOG);
 
    // Test
 
@@ -106,9 +106,9 @@ void SumSquaredErrorTest::test_calculate_loss()
    ds.set(1, 1, 1);
    ds.initialize_data(1.0);
 
-   loss = sse.calculate_error();
+   error = sse.calculate_error();
 
-   assert_true(loss == 1.0, LOG);
+   assert_true(error == 1.0, LOG);
 
    // Test
 
@@ -147,6 +147,40 @@ void SumSquaredErrorTest::test_calculate_loss()
    missing_values_pointer->append(0, 0);
 
 //   assert_true(sse.calculate_loss() == 0.0, LOG);
+
+   // Test
+
+   data = {{-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1},
+           {-1,1,1,1,1}};
+
+   DataSet data_set(data);
+
+   data_set.get_variables_pointer()->set_target_indices({2,3,4});
+
+   NeuralNetwork neural_network(2, 4, 3);
+
+   Matrix<double> input_data = data.get_submatrix_columns({0,1});
+
+   Matrix<double> output_data = neural_network.calculate_output_data(input_data);
+
+    //    cout << output_data << endl;
+
+    SumSquaredError sum_squared_error(&neural_network, &data_set);
+
+    cout << data << endl;
+    cout << input_data << endl;
+    cout << output_data << endl;
+    cout << sum_squared_error.calculate_error() << endl;
+
+    system("pause");
 }
 
 
@@ -827,7 +861,7 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian()
 }
 
 
-void SumSquaredErrorTest::test_calculate_selection_loss()
+void SumSquaredErrorTest::test_calculate_selection_error()
 {
    message += "test_calculate_selection_loss\n";
 
@@ -955,8 +989,8 @@ void SumSquaredErrorTest::run_test_case()
 
    // Objective methods
 
-   test_calculate_loss();
-   test_calculate_selection_loss();
+   test_calculate_error();
+   test_calculate_selection_error();
 
    test_calculate_gradient();
 

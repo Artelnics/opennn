@@ -86,6 +86,7 @@ public:
 
    size_t count_parameters_number() const;
    Vector<double> arrange_parameters() const;
+   double calculate_parameters_norm() const;
 
    const bool& get_display() const;
 
@@ -152,6 +153,7 @@ public:
    double calculate_output(const Vector<double>&, const Vector<double>&) const;
    Vector<double> calculate_gradient(const Vector<double>&, const Vector<double>&) const;
    Matrix<double> calculate_Hessian(const Vector<double>&, const Vector<double>&) const;
+
 
    // Expression methods
 

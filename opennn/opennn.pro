@@ -216,9 +216,6 @@ include(../mpi.pri)
     #neuralengine.pro > include(../opennn/cuda.pri)
     #test.pro > #include(../cuda.pri)
 
-
-
-
 #DEFINES += __OPENNN_CUDA__
 
 contains(DEFINES, __OPENNN_CUDA__){
@@ -269,7 +266,7 @@ CUDA_OBJECTS_DIR = $$OBJECTS_DIR
 
 # Configuration of the Cuda compiler
 CONFIG(debug, debug|release) {
-    # Debug mode
+#     Debug mode
     cuda_d.input = CUDA_SOURCES
     cuda_d.output = debug/${QMAKE_FILE_BASE}_cuda.o
     cuda_d.commands = $$CUDA_DIR/bin/nvcc -D_DEBUG $$NVCC_OPTIONS $$CUDA_INC $$CUDA_LIBS --machine $$SYSTEM_TYPE -arch=$$CUDA_ARCH -c -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}
@@ -277,7 +274,7 @@ CONFIG(debug, debug|release) {
     QMAKE_EXTRA_COMPILERS += cuda_d
 }
 else {
-    # Release mode
+#     Release mode
     cuda.input = CUDA_SOURCES
     cuda.output = release/${QMAKE_FILE_BASE}_cuda.o
     cuda.commands = $$CUDA_DIR/bin/nvcc $$NVCC_OPTIONS $$CUDA_INC $$CUDA_LIBS --machine $$SYSTEM_TYPE -arch=$$CUDA_ARCH -c -o ${QMAKE_FILE_OUT} ${QMAKE_FILE_NAME}

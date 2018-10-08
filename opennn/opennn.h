@@ -68,8 +68,6 @@
 
 // Loss index
 
-#include "correlation_analysis.h"
-
 #include "loss_index.h"
 #include "error_term.h"
 #include "regularization_term.h"
@@ -115,7 +113,7 @@
 #include "vector.h"
 #include "tinyxml2.h"
 #include "correlation_analysis.h"
-
+#include "k_nearest_neighbors.h"
 
 #endif
 

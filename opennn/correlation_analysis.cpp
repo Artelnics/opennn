@@ -397,6 +397,8 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     DataSet data_set(data);
 
+    data_set.get_instances_pointer()->set_training();
+
     const Vector<Statistics<double>> inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
     NeuralNetwork neural_network(1,1);
@@ -422,12 +424,14 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     WeightedSquaredError* weighted_squared_error = loss_index.get_weighted_squared_error_pointer();
 
     weighted_squared_error->set_weights();
+
     weighted_squared_error->set_normalization_coefficient();
 
     loss_index.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
 
     TrainingStrategy training_strategy(&loss_index);
 
+    training_strategy.set_display(false);
     training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
     training_strategy.set_display(false);
 
@@ -792,6 +796,9 @@ Vector<double> CorrelationAnalysis::calculate_cross_correlations(const Vector<do
 
 double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const Vector<double>& y)
 {
+    if (x.is_constant(0.01)) return 0;
+    else if (y.is_constant(0.01)) return 0;
+
     Vector<double> new_x = x;
     Vector<double> new_y = y;
     const bool this_binary = x.is_binary();
@@ -899,14 +906,14 @@ Vector<double> CorrelationAnalysis::calculate_correlations(const Matrix<double>&
 {
     const size_t columns_number = input_matrix.get_columns_number();
 
-    const Vector<double> x = input_matrix.get_column(index);
+    const Vector<double> y = input_matrix.get_column(index);
 
     Vector<double> correlations(columns_number);
 
 //#pragma omp parallel for
     for(int i=0; i<columns_number; i++)
     {
-        Vector<double> y = input_matrix.get_column(i);
+        Vector<double> x = input_matrix.get_column(i);
         correlations[i] = calculate_correlation(x,y);
     }
 
@@ -1104,6 +1111,28 @@ double CorrelationAnalysis::calculate_logistic_function(const Vector<double>& co
     }
 
     return(1.0/(1.0+exp(-exponential)));
+}
+
+
+Matrix<double> CorrelationAnalysis::remove_correlations(const Matrix<double>& data, const size_t& index, const double& minimum_correlation)
+{
+    double new_minimum_correlation = minimum_correlation;
+
+    const Vector<double> correlations = calculate_correlations(data,index).calculate_absolute_value();
+
+    size_t columns_to_keep_number = correlations.count_greater_equal_to(new_minimum_correlation);
+
+    do
+    {
+        new_minimum_correlation = new_minimum_correlation - 0.05;
+
+        columns_to_keep_number = correlations.count_greater_equal_to(new_minimum_correlation);
+    }
+    while(columns_to_keep_number < 5);
+
+    const Vector<size_t> indices_to_remove = correlations.get_indices_less_than(new_minimum_correlation);
+
+    return data.delete_columns(indices_to_remove);
 }
 
 }

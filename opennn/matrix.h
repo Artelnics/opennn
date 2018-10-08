@@ -52,6 +52,8 @@ public:
 
     explicit Matrix(const string&);
 
+    explicit Matrix(const string&, const char&, const bool&);
+
     Matrix(const Matrix&);
 
     Matrix(const initializer_list< Vector<T> >&);
@@ -367,8 +369,13 @@ public:
     Matrix<T> delete_last_rows(const size_t&) const;
     Matrix<T> get_last_rows(const size_t&) const;
 
+    Matrix<T> delete_last_columns(const size_t&) const;
+
     Matrix<T> delete_column(const size_t&) const;
     Matrix<T> delete_columns(const Vector<size_t>&) const;
+
+    Matrix<T> delete_first_columns(const size_t&) const;
+
 
     Matrix<T> delete_column(const string&) const;
     Matrix<T> delete_columns(const Vector<string>&) const;
@@ -440,6 +447,8 @@ public:
     Vector<int> calculate_rows_sum_int() const;
     Vector<T> calculate_rows_sum() const;
     Vector<T> calculate_columns_sum() const;
+
+    Vector<T> calculate_columns_mean() const;
 
     void sum_row(const size_t&, const Vector<T>&);
 
@@ -559,6 +568,11 @@ public:
 
     Matrix<size_t> calculate_greater_than_indices(const T&) const;
 
+    Matrix<T> calculate_softmax_rows() const;
+    Matrix<T> calculate_softmax_columns() const;
+
+    Matrix<T> calculate_reverse_columns() const;
+
     void remove_trends(const Vector< LinearRegressionParameters<double> >&, const size_t&);
 
     void remove_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&, const Vector< Vector<size_t> >&);
@@ -641,6 +655,10 @@ public:
     Vector<T> solve_LDLT(const Vector<double>&) const;
 
     double calculate_distance(const size_t&, const size_t&) const;
+
+    Vector<double> calculate_distance(const Vector<T>&) const;
+
+    Vector<double> calculate_weighted_distance(const Vector<T>&, const Vector<double>&) const;
 
     void filter(const T&, const T&);
 
@@ -737,6 +755,10 @@ public:
 
     KMeansResults<T> calculate_k_means(const size_t&) const;
 
+    // Bounding methods
+
+    Matrix<T> calculate_lower_bounded(const T&) const;
+    Matrix<T> calculate_upper_bounded(const T&) const;
 
     // Correlation methods
 
@@ -897,6 +919,15 @@ Matrix<T>::Matrix(const string& file_name) : vector<T>()
    columns_number = 0;
 
    load(file_name);
+}
+
+template <class T>
+Matrix<T>::Matrix(const string& file_name, const char& separator, const bool& header) : vector<T>()
+{
+   rows_number = 0;
+   columns_number = 0;
+
+   load_csv(file_name, separator, header);
 }
 
 
@@ -4459,11 +4490,19 @@ Matrix<T> Matrix<T>::delete_rows_with_value(const T& value) const
 template <class T>
 Matrix<T> Matrix<T>::delete_first_rows(const size_t& number) const
 {
-    const size_t rows_number = get_rows_number();
 
     const Vector<size_t> indices(number, 1, rows_number-1);
 
     return get_submatrix_rows(indices);
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::delete_first_columns(const size_t& number) const
+{
+    const Vector<size_t> indices(number, 1, columns_number-1);
+
+    return get_submatrix_columns(indices);
 }
 
 
@@ -4474,6 +4513,7 @@ Matrix<T> Matrix<T>::get_first_rows(const size_t& number) const
 
     return get_submatrix_rows(indices);
 }
+
 
 
 
@@ -4509,14 +4549,22 @@ T Matrix<T>::get_last(const string& column_name) const
     return(*this)(rows_number-1, column_index);
 }
 
+
 template <class T>
 Matrix<T> Matrix<T>::delete_last_rows(const size_t& number) const
 {
-    const size_t rows_number = get_rows_number();
-
     const Vector<size_t> indices(0, 1, rows_number-number-1);
 
     return get_submatrix_rows(indices);
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::delete_last_columns(const size_t& number) const
+{
+    const Vector<size_t> indices(0, 1, columns_number-number-1);
+
+    return get_submatrix_columns(indices);
 }
 
 
@@ -5717,6 +5765,13 @@ Vector<T> Matrix<T>::calculate_columns_sum() const
    }
 
    return(columns_sum);
+}
+
+
+template <class T>
+Vector<T> Matrix<T>::calculate_columns_mean() const
+{
+   return calculate_columns_sum()/(double)rows_number;
 }
 
 
@@ -8584,6 +8639,60 @@ Matrix<size_t> Matrix<T>::calculate_greater_than_indices(const T& value) const
 }
 
 
+template <class T>
+Matrix<T> Matrix<T>::calculate_softmax_rows() const
+{
+    Matrix<T> softmax(rows_number,columns_number);
+
+    for (size_t i = 0; i < rows_number; i++)
+    {
+        softmax.set_row(i,(*this).get_row(i).calculate_softmax());
+    }
+
+    return softmax;
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_softmax_columns() const
+{
+    Matrix<T> softmax(rows_number,columns_number);
+
+    for (size_t i = 0; i < columns_number; i++)
+    {
+        softmax.set_column(i,(*this).get_column(i).calculate_softmax());
+    }
+
+    return softmax;
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_reverse_columns() const
+{
+    Matrix<T> reverse(rows_number,columns_number);
+
+    for (size_t i = 0; i < rows_number; i++)
+    {
+        for (size_t j = 0; j < columns_number; j++)
+        {
+            reverse(i,j) = (*this)(i, columns_number-j-1);
+        }
+    }
+
+    Vector<string> reverse_header(columns_number);
+
+    for(size_t i = 0; i < columns_number; i++)
+    {
+        reverse_header[i] = header[columns_number-i-1];
+    }
+
+    reverse.set_header(reverse_header);
+
+    return reverse;
+}
+
+
 /// Scales the matrix elements with the mean and standard deviation method.
 /// It updates the data in the matrix.
 /// @param statistics Vector of statistics structures conatining the mean and standard deviation values for the scaling.
@@ -10212,6 +10321,68 @@ double Matrix<T>::calculate_distance(const size_t& first_index, const size_t& se
 
 
 template <class T>
+Vector<double> Matrix<T>::calculate_distance(const Vector<T>& instance) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+     if(empty())
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "calculate_distance(const size_t&, const size_t&) const method.\n"
+               << "Matrix is empty.\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+     Vector<double> distances(rows_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        distances[i] = (*this).get_row(i).calculate_distance(instance);
+    }
+
+    return(distances);
+}
+
+
+template <class T>
+Vector<double> Matrix<T>::calculate_weighted_distance(const Vector<T>& instance, const Vector<double>& weights) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+     if(empty())
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "calculate_distance(const size_t&, const size_t&) const method.\n"
+               << "Matrix is empty.\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+     Vector<double> distances(rows_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        distances[i] = (*this).get_row(i).calculate_weighted_distance(instance,weights);
+    }
+
+    return(distances);
+}
+
+
+template <class T>
 void Matrix<T>::filter(const T& minimum, const T& maximum)
 {
     for(size_t i = 0; i < this->size(); i++)
@@ -11536,7 +11707,7 @@ size_t Matrix<T>::count_dates(const size_t& column_index,
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        date = (time_t)(*this)(i, column_index);
+        date = (time_t)stoi((*this)(i, column_index));
 
         if(date >= start_date && date <= end_date)
         {
@@ -11587,7 +11758,7 @@ Matrix<T> Matrix<T>::filter_dates(const size_t& column_index,
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        date =(time_t)(*this)(i, column_index);
+        date =(time_t)stoi((*this)(i, column_index));
 
         if(date >= start_date && date <= end_date)
         {
@@ -13146,6 +13317,42 @@ KMeansResults<T> Matrix<T>::calculate_k_means(const size_t& k) const
 }
 
 
+template <class T>
+Matrix<T> Matrix<T>::calculate_lower_bounded(const T & lower_bound) const
+{
+    const size_t this_size = this->size();
+
+    Matrix<T> bounded_matrix(*this);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+      if((*this)[i] < lower_bound)
+      {
+        bounded_matrix[i] = lower_bound;
+      }
+    }
+
+    return(bounded_matrix);
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_upper_bounded(const T & upper_bound) const
+{
+    const size_t this_size = this->size();
+
+    Matrix<T> bounded_matrix(*this);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+      if((*this)[i] > upper_bound)
+      {
+        bounded_matrix[i] = upper_bound;
+      }
+    }
+
+    return(bounded_matrix);
+}
 
 
 // void print() const method
@@ -14073,13 +14280,10 @@ Vector< Vector<T> > Matrix<T>::to_vector_of_vectors() const
 template <class T>
 void Matrix<T>::print_preview() const
 {
-    cout << "Rows number: " << rows_number << endl
-         << "Columns number: " << columns_number << endl;
+   cout << "Rows number: " << rows_number << endl
+        << "Columns number: " << columns_number << endl;
 
-    if(header != "")
-    {
-        cout << "Header:\n" << header << endl;
-    }
+   cout << "Header:\n" << header << endl;
 
    if(rows_number > 0)
    {

@@ -496,13 +496,9 @@ Matrix<double> SumSquaredError::calculate_single_hidden_layer_Hessian() const
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    //const size_t training_instances_number = instances.count_training_instances_number();
-
     const Vector<size_t> training_indices = instances.arrange_training_indices();
 
     size_t training_index;
-
-    //const MissingValues& missing_values = data_set_pointer->get_missing_values();
 
     const Variables& variables = data_set_pointer->get_variables();
 
@@ -697,9 +693,6 @@ Vector<double> SumSquaredError::calculate_terms() const
    // Neural network stuff
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
    // Data set stuff
 

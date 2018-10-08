@@ -144,6 +144,10 @@ public:
 
     static Vector<double> calculate_logistic_error_gradient(const Vector<double>&, const Vector<double>&, const Vector<double>&);
 
+    // Remove methods
+
+    static Matrix<double> remove_correlations(const Matrix<double>&, const size_t&, const double&);
+
 };
 
 }

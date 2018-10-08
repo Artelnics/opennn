@@ -22,7 +22,7 @@ namespace OpenNN {
 /// Default constructor.
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm()
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     set_default();
 }
@@ -46,7 +46,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(TrainingStrategy* new_t
 /*/// @param file_name Name of XML order selection file.*/
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const string&)
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     //load(file_name);
 }
@@ -58,7 +58,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const string&)
 /*/// @param threshold_selection_document Pointer to a TinyXML document containing the threshold selection algorithm data.*/
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const tinyxml2::XMLDocument& )
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     //from_XML(order_selection_document);
 }

@@ -29,9 +29,6 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-
 #include "opennn.h"
 
 // TinyXml includes
@@ -47,63 +44,100 @@ class KNearestNeighbors
 
 public:
 
+    enum Method {Softmax, Unitary, MinMax, MeanStd};
+
     // DEFAULT CONSTRUCTOR
 
     explicit KNearestNeighbors();
 
     // DATASET CONSTRUCTOR
 
-    explicit KNearestNeighbors(DataSet* dataset);
-
+    explicit KNearestNeighbors(DataSet*);
 
     // DESTRUCTOR
 
     virtual ~KNearestNeighbors();
 
-    /// Instances  object(training, selection and testing instances).
+    // STRUCTURES
 
-    Instances instances;
+    struct Neighbors
+    {
+        explicit Neighbors() {}
+
+        virtual ~Neighbors() {}
+
+        Matrix<double> distances;
+        Matrix<size_t> indices;
+    };
 
 
     // METHODS
 
     // Get methods
-    size_t get_k() const;
 
+    size_t get_k() const;
 
     // Set methods
 
-    void set_dataset(DataSet* dataset);
-    void set_k(size_t k);
+    void set_dataset(DataSet*);
+
+    void set_k(const size_t&);
+
+    void set_weights(const Matrix<double>&);
+
+    void set_normalization_method(const Method&);
+
+    void set_normalization_method(const string&);
 
     // Algorithm methods
 
-    Matrix<double> calculate_instances_distances() const;
+    Matrix<double> calculate_correlation_weights(void) const;
 
-    Vector<double> calculate_instance_distances(const Vector<double>& input) const;
+    Vector<double> calculate_distances_weights(const Vector<double>&) const;
 
-    Matrix<size_t> calculate_k_nearest_neighbors(const Matrix<double>& distances) const;
+    Neighbors calculate_k_nearest_neighbors(const Vector<double>&) const;
 
-    Vector<size_t> calculate_k_nearest_neighbors(const Vector<double>& distances) const;
+    // Output methods
 
-    Vector<double> calculate_k_distances(const Matrix<double>& distances) const;
+    Vector<double> calculate_outputs(const Vector<double>&) const;
 
-    Matrix<double> calculate_reachability_distances(const Matrix<double>& distances, const Vector<double>& k_distances) const;
+    Vector<double> calculate_outputs(const Neighbors&) const;
 
-    Vector<double> calculate_reachability_density(const Matrix<double>& distances) const;
+    // Output data methods
 
-    Vector<double> calculate_output(const Vector<double>& input) const;
+    Matrix<double> calculate_output_data(const Matrix<double>&) const;
 
-    Matrix<double> calculate_output_data(const Matrix<double>& input_data) const;
+    Matrix<double> calculate_selection_output_data(void) const;
 
-    Matrix<double> calculate_testing_output() const;
+    Matrix<double> calculate_testing_output_data(void) const;
+
+    // Error methods
+
+    Vector< Statistics<double> > calculate_testing_error_statistics(void) const;
+
+    Vector< Statistics<double> > calculate_selection_error_statistics(void) const;
+
+    Vector< Statistics<double> > calculate_error_statistics(const Matrix<double>&, const Matrix<double>&) const;
+
+    // Selection methods
+
+    void perform_k_selection(const size_t&, const size_t&);
+
+    // Reachability distances methods (outliers)
+
+    Matrix<double> calculate_reachability_distances(const Matrix<double>&, const Vector<double>&) const;
+
+    Vector<double> calculate_reachability_density(const Matrix<double>&) const;
 
 private:
 
-    size_t k = 3;
+    DataSet* data_set_pointer;
 
-    DataSet* data_set_pointer = NULL;
+    size_t k;
 
+    Matrix<double> weights;
+
+    Method normalization_method;
 };
 
 }

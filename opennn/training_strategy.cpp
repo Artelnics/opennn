@@ -25,14 +25,14 @@ namespace OpenNN
 /// It also constructs the main training algorithm object. 
 
 TrainingStrategy::TrainingStrategy()
- : loss_index_pointer(NULL)
- , random_search_pointer(NULL)
- , evolutionary_algorithm_pointer(NULL)
- , gradient_descent_pointer(NULL)
- , conjugate_gradient_pointer(NULL)
- , quasi_Newton_method_pointer(NULL)
- , Levenberg_Marquardt_algorithm_pointer(NULL)
- , Newton_method_pointer(NULL)
+ : loss_index_pointer(nullptr)
+ , random_search_pointer(nullptr)
+ , evolutionary_algorithm_pointer(nullptr)
+ , gradient_descent_pointer(nullptr)
+ , conjugate_gradient_pointer(nullptr)
+ , quasi_Newton_method_pointer(nullptr)
+ , Levenberg_Marquardt_algorithm_pointer(nullptr)
+ , Newton_method_pointer(nullptr)
 {
     set_initialization_type(NO_INITIALIZATION);
     set_main_type(QUASI_NEWTON_METHOD);
@@ -51,13 +51,13 @@ TrainingStrategy::TrainingStrategy()
 
 TrainingStrategy::TrainingStrategy(LossIndex* new_loss_index_pointer)
  : loss_index_pointer(new_loss_index_pointer)
- , random_search_pointer(NULL)
- , evolutionary_algorithm_pointer(NULL)
- , gradient_descent_pointer(NULL)
- , conjugate_gradient_pointer(NULL)
- , quasi_Newton_method_pointer(NULL)
- , Levenberg_Marquardt_algorithm_pointer(NULL)
- , Newton_method_pointer(NULL)
+ , random_search_pointer(nullptr)
+ , evolutionary_algorithm_pointer(nullptr)
+ , gradient_descent_pointer(nullptr)
+ , conjugate_gradient_pointer(nullptr)
+ , quasi_Newton_method_pointer(nullptr)
+ , Levenberg_Marquardt_algorithm_pointer(nullptr)
+ , Newton_method_pointer(nullptr)
 {
     set_initialization_type(NO_INITIALIZATION);
     set_main_type(QUASI_NEWTON_METHOD);
@@ -68,13 +68,13 @@ TrainingStrategy::TrainingStrategy(LossIndex* new_loss_index_pointer)
 
 TrainingStrategy::TrainingStrategy(LossIndex& new_loss_index)
  : loss_index_pointer(&new_loss_index)
- , random_search_pointer(NULL)
- , evolutionary_algorithm_pointer(NULL)
- , gradient_descent_pointer(NULL)
- , conjugate_gradient_pointer(NULL)
- , quasi_Newton_method_pointer(NULL)
- , Levenberg_Marquardt_algorithm_pointer(NULL)
- , Newton_method_pointer(NULL)
+ , random_search_pointer(nullptr)
+ , evolutionary_algorithm_pointer(nullptr)
+ , gradient_descent_pointer(nullptr)
+ , conjugate_gradient_pointer(nullptr)
+ , quasi_Newton_method_pointer(nullptr)
+ , Levenberg_Marquardt_algorithm_pointer(nullptr)
+ , Newton_method_pointer(nullptr)
 {
     set_initialization_type(NO_INITIALIZATION);
     set_main_type(QUASI_NEWTON_METHOD);
@@ -91,14 +91,14 @@ TrainingStrategy::TrainingStrategy(LossIndex& new_loss_index)
 /// @param document Document of the TinyXML library.
 
 TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
- : loss_index_pointer(NULL)
- , random_search_pointer(NULL)
- , evolutionary_algorithm_pointer(NULL)
- , gradient_descent_pointer(NULL)
- , conjugate_gradient_pointer(NULL)
- , quasi_Newton_method_pointer(NULL)
- , Levenberg_Marquardt_algorithm_pointer(NULL)
- , Newton_method_pointer(NULL)
+ : loss_index_pointer(nullptr)
+ , random_search_pointer(nullptr)
+ , evolutionary_algorithm_pointer(nullptr)
+ , gradient_descent_pointer(nullptr)
+ , conjugate_gradient_pointer(nullptr)
+ , quasi_Newton_method_pointer(nullptr)
+ , Levenberg_Marquardt_algorithm_pointer(nullptr)
+ , Newton_method_pointer(nullptr)
 {
     set_initialization_type(NO_INITIALIZATION);
     set_main_type(QUASI_NEWTON_METHOD);
@@ -118,14 +118,14 @@ TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
 /// @param file_name Name of training strategy XML file.
 
 TrainingStrategy::TrainingStrategy(const string& file_name)
- : loss_index_pointer(NULL)
- , random_search_pointer(NULL)
- , evolutionary_algorithm_pointer(NULL)
- , gradient_descent_pointer(NULL)
- , conjugate_gradient_pointer(NULL)
- , quasi_Newton_method_pointer(NULL)
- , Levenberg_Marquardt_algorithm_pointer(NULL)
- , Newton_method_pointer(NULL)
+ : loss_index_pointer(nullptr)
+ , random_search_pointer(nullptr)
+ , evolutionary_algorithm_pointer(nullptr)
+ , gradient_descent_pointer(nullptr)
+ , conjugate_gradient_pointer(nullptr)
+ , quasi_Newton_method_pointer(nullptr)
+ , Levenberg_Marquardt_algorithm_pointer(nullptr)
+ , Newton_method_pointer(nullptr)
 {
     set_initialization_type(NO_INITIALIZATION);
     set_main_type(QUASI_NEWTON_METHOD);

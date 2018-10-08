@@ -61,6 +61,7 @@ public:
 
    void test_count_parameters_number();
    void test_arrange_parameters();
+   void test_calculate_parameters_norm();
 
    void test_get_display();
 

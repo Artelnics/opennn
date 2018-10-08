@@ -1429,6 +1429,14 @@ void Perceptron::prune_input(const size_t& index)
 }
 
 
+double Perceptron::calculate_parameters_norm() const
+{
+    const Vector<double> parameters = arrange_parameters();
+
+    return parameters.calculate_norm();
+}
+
+
 // string write_expression(const Vector<string>&, const string&) const method
 
 /// Returns a string with the mathematical expression represented by the perceptron.

@@ -179,6 +179,27 @@ void PerceptronTest::test_arrange_parameters()
 }
 
 
+void PerceptronTest::test_calculate_parameters_norm()
+{
+   message += "test_arrange_parameters\n";
+
+   Perceptron p(3);
+
+   p.set_bias(-0.5);
+
+   p.set_synaptic_weights({1.0, -0.75, 0.25});
+
+   double parameters_norm = p.calculate_parameters_norm();
+
+   cout << parameters_norm << endl;
+
+   system("pause");
+
+
+   assert_true(fabs(parameters_norm - 0.6614) < 0.001, LOG);
+}
+
+
 void PerceptronTest::test_get_display()
 {
    message += "test_get_display\n";
@@ -1216,6 +1237,7 @@ void PerceptronTest::run_test_case()
    test_get_synaptic_weight();
    test_count_parameters_number();
    test_arrange_parameters();
+   test_calculate_parameters_norm();
    test_get_display();
 
    // Set methods

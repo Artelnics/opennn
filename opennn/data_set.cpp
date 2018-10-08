@@ -1085,17 +1085,13 @@ DataSet DataSet::get_testing_data_set() const
 {
     const Vector<size_t> testing_indices = instances.arrange_testing_indices();
 
-
     Matrix<double> testing_data = data.get_submatrix_rows(instances.arrange_testing_indices()).delete_columns(variables.arrange_targets_indices());
 
-
     DataSet testing_data_set(testing_data);
-
 
     testing_data_set.instances.set_testing();
 
     testing_data_set.variables.set_input();
-
 
     return(testing_data_set);
 
