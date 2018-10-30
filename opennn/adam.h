@@ -125,7 +125,7 @@ namespace OpenNN
       /// @param new_size Size of training history variables. 
       void resize_training_history(const size_t&);
 
-      std::string to_string(void) const override;
+      std::string object_to_string() const override;
 
       //Matrix<std::string> write_final_results(const size_t& precision = 3) const;
     };

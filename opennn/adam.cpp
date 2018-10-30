@@ -34,7 +34,7 @@ namespace OpenNN
 
 
 
-  std::string Adam::AdamResults::to_string(void) const
+  std::string Adam::AdamResults::object_to_string() const
   {
    std::ostringstream buffer;
 
@@ -276,10 +276,9 @@ Adam::AdamResults* Adam::perform_training()
    // Loss index stuff
 
    double selection_loss = 0.0; 
-   double old_selection_loss = 0.0;
+   double old_selection_loss = std::numeric_limits<double>::max();
       
    double loss = 0.0;
-   double old_loss = 0.0;
    double loss_increase = 1e99;
 
    Vector<double> gradient(parameters_number);
@@ -293,10 +292,8 @@ Adam::AdamResults* Adam::perform_training()
 
    Vector<double> training_direction(parameters_number);
 
-   const double first_training_rate = 0.01;
-
    Vector<double> minimum_selection_error_parameters(parameters_number);
-   double minimum_selection_error;
+   double minimum_selection_error=std::numeric_limits<double>::max(); 
 
    bool stop_training = false;
 
@@ -331,20 +328,13 @@ Adam::AdamResults* Adam::perform_training()
 
       selection_loss = loss_index_pointer->calculate_selection_loss();
 
-      if(iteration == 0)
-      {
-          minimum_selection_error = selection_loss;
-
-          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
-      }
-      else if(iteration != 0 && selection_loss > old_selection_loss)
+      if(selection_loss > old_selection_loss)
       {
          selection_failures++;
       }
       else if(selection_loss < minimum_selection_error)
       {
           minimum_selection_error = selection_loss;
-
           minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
       }
 
@@ -425,7 +415,6 @@ Adam::AdamResults* Adam::perform_training()
       }
 
       else if(iteration != 0 && loss_increase <= minimum_loss_increase)
-      if(iteration != 0 && loss_increase <= minimum_loss_increase)
       {
          if(display)
          {
@@ -564,8 +553,6 @@ Adam::AdamResults* Adam::perform_training()
       neural_network_pointer->set_parameters(parameters);
 
       // Update stuff
-
-      old_loss = loss;
       old_selection_loss = selection_loss;
    
    } 
