@@ -1620,7 +1620,15 @@ Matrix<double> ErrorTerm::calculate_single_hidden_layer_point_Hessian
 
 Vector<double> ErrorTerm::calculate_gradient() const
 {
-    #ifdef __OPENNN_DEBUG__
+  // the following code assumes that this errorTerm has a
+  // data_set. This logic ought to be split out into a derived class
+  // that handles such things, but for now check whether there is a
+  // data_set, and call the numerical differention method if not.
+
+  if (!data_set_pointer)
+    return calculate_gradient(neural_network_pointer->arrange_parameters());
+
+#ifdef __OPENNN_DEBUG__
 
     check();
 
