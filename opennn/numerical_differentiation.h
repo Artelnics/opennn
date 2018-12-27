@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   N U M E R I C A L   D I F F E R E N T I A T I O N   C L A S S   H E A D E R                                */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -53,11 +53,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   NumericalDifferentiation& operator =(const NumericalDifferentiation&);
+   NumericalDifferentiation& operator = (const NumericalDifferentiation&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const NumericalDifferentiation&) const;
+   bool operator == (const NumericalDifferentiation&) const;
 
    /// Enumeration of available methods for numerical differentiation.
 
@@ -87,7 +87,7 @@ public:
 
    Vector<double> calculate_h(const Vector<double>&) const;
 
-   Vector<double> calculate_backward_differences_derivative(const Vector<double>&, const Vector<double>&) const;
+   Vector<double> calculate_backward_differences_derivatives(const Vector<double>&, const Vector<double>&) const;
 
    // Serialization methods
 
@@ -100,29 +100,25 @@ public:
 
    // DERIVATIVE METHODS
 
-   // double calculate_forward_differences_derivative(const T&, double(T::*f)(const double&) const , double) const method
-
    /// Returns the derivative of a function using the forward differences method. 
    /// @param t  Object constructor containing the member method to differentiate.  
    /// @param f Pointer to the member method.
    /// @param x Differentiation point. 
 
    template<class T> 
-   double calculate_forward_differences_derivative(const T& t, double(T::*f)(const double&) const, const double& x) const
+   double calculate_forward_differences_derivatives(const T& t, double(T::*f)(const double&) const, const double& x) const
    {
-      const double y =(t.*f)(x);
+      const double y = (t.*f)(x);
 
       const double h = calculate_h(x);
 
-	  const double y_forward =(t.*f)(x + h);
+	  const double y_forward = (t.*f)(x + h);
      
-      const double d =(y_forward - y)/h;
+      const double d = (y_forward - y)/h;
      
       return(d);
    }
 
-
-   // double calculate_central_differences_derivative(const T&, double(T::*f)(const double&) const , double) const method
 
    /// Returns the derivative of a function using the central differences method. 
    /// @param t  Object constructor containing the member method to differentiate.  
@@ -130,21 +126,19 @@ public:
    /// @param x Differentiation point. 
 
    template<class T>  
-   double calculate_central_differences_derivative(const T& t, double(T::*f)(const double&) const , const double& x) const
+   double calculate_central_differences_derivatives(const T& t, double(T::*f)(const double&) const , const double& x) const
    {
       const double h = calculate_h(x);
 
-	  const double y_forward =(t.*f)(x+h);
+	  const double y_forward = (t.*f)(x+h);
 
-	  const double y_backward =(t.*f)(x-h);
+	  const double y_backward = (t.*f)(x-h);
      
-      const double d =(y_forward - y_backward)/(2.0*h);
+      const double d = (y_forward - y_backward)/(2.0*h);
 
       return(d);
    }
 
-
-   // double calculate_derivative(const T&, double(T::*f)(const double&) const , double) const method
 
    /// Returns the derivative of a function acording to the numerical differentiation method to be used. 
    /// @param t  Object constructor containing the member method to differentiate.  
@@ -152,39 +146,24 @@ public:
    /// @param x Differentiation point. 
 
    template<class T> 
-   double calculate_derivative(const T& t, double(T::*f)(const double&) const , const double& x) const
+   double calculate_derivatives(const T& t, double(T::*f)(const double&) const , const double& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_derivative(t, f, x));
+            return(calculate_forward_differences_derivatives(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_derivative(t, f, x));
-    	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_derivative(const T&, double(T::*f)(const double&) const , const double&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
+            return(calculate_central_differences_derivatives(t, f, x));
+    	 }   	     
       }
+
+      return 0.0;
    }
 
-
-   // Vector<double> calculate_forward_differences_derivative
-   //(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the derivatives of a vector function using the forward differences method. 
    /// @param t  Object constructor containing the member method to differentiate.  
@@ -192,23 +171,20 @@ public:
    /// @param x Input vector. 
 
    template<class T> 
-   Vector<double> calculate_forward_differences_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector<double> calculate_forward_differences_derivatives(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
       const Vector<double> h = calculate_h(x);
 
-	  const Vector<double> y =(t.*f)(x);
+	  const Vector<double> y = (t.*f)(x);
 
       const Vector<double> x_forward = x + h;     
-	  const Vector<double> y_forward =(t.*f)(x_forward);
+	  const Vector<double> y_forward = (t.*f)(x_forward);
 
-	  const Vector<double> d =(y_forward - y)/h;
+	  const Vector<double> d = (y_forward - y)/h;
 
       return(d);
    }
 
-
-   // Vector<double> calculate_central_differences_derivative
-   //(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the derivatives of a vector function using the central differences method. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -216,26 +192,23 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_central_differences_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector<double> calculate_central_differences_derivatives(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
       const Vector<double> h = calculate_h(x);
      
       const Vector<double> x_forward = x + h;
       const Vector<double> x_backward = x - h;
 
-	  const Vector<double> y_forward =(t.*f)(x_forward);
-	  const Vector<double> y_backward =(t.*f)(x_backward);
+	  const Vector<double> y_forward = (t.*f)(x_forward);
+	  const Vector<double> y_backward = (t.*f)(x_backward);
 
-	  const Vector<double> y =(t.*f)(x);
+	  const Vector<double> y = (t.*f)(x);
 
-      const Vector<double> d =(y_forward - y_backward)/(h*2.0);
+      const Vector<double> d = (y_forward - y_backward)/(h*2.0);
 
       return(d);
    }
 
-
-   // Vector<double> calculate_derivative
-   //(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the derivatives of a vector function acording to the numerical differentiation method to be used. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -243,39 +216,25 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector<double> calculate_derivatives(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_derivative(t, f, x));
-         }
-	     break;
+            return(calculate_forward_differences_derivatives(t, f, x));
+         }	     
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_derivative(t, f, x));
+            return(calculate_central_differences_derivatives(t, f, x));
     	 }
-   	     break;
 
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_derivative(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
-
-   // Vector<double> calculate_forward_differences_derivative
-   //(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the derivatives of a vector function using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -285,23 +244,20 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_forward_differences_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector<double> calculate_forward_differences_derivatives(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      const Vector<double> y =(t.*f)(dummy, x);
+      const Vector<double> y = (t.*f)(dummy, x);
 
       const Vector<double> h = calculate_h(x);     
       const Vector<double> x_forward = x + h;     
 
-	  const Vector<double> y_forward =(t.*f)(dummy, x_forward);
+	  const Vector<double> y_forward = (t.*f)(dummy, x_forward);
 
-	  const Vector<double> d =(y_forward - y)/h;
+	  const Vector<double> d = (y_forward - y)/h;
 
       return(d);
    }
 
-
-   // Vector<double> calculate_central_differences_derivative
-   //(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the derivatives of a vector function using the central differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -311,24 +267,21 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_central_differences_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector<double> calculate_central_differences_derivatives(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
       const Vector<double> h = calculate_h(x);     
 
       const Vector<double> x_forward = x + h;
       const Vector<double> x_backward = x - h;
 
-	  const Vector<double> y_forward =(t.*f)(dummy, x_forward);
-	  const Vector<double> y_backward =(t.*f)(dummy, x_backward);
+	  const Vector<double> y_forward = (t.*f)(dummy, x_forward);
+	  const Vector<double> y_backward = (t.*f)(dummy, x_backward);
 
-      const Vector<double> d =(y_forward - y_backward)/(h*2.0);
+      const Vector<double> d = (y_forward - y_backward)/(h*2.0);
 
       return(d);
    }
 
-
-   // Vector<double> calculate_derivative
-   //(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the derivatives of a vector function according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -338,41 +291,26 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector<double> calculate_derivatives(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_derivative(t, f, dummy, x));
+            return(calculate_forward_differences_derivatives(t, f, dummy, x));
          }
-	     break;
 
          case CentralDifferences:
          {
-           return(calculate_central_differences_derivative(t, f, dummy, x));
-    	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_derivative(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
+           return(calculate_central_differences_derivatives(t, f, dummy, x));
+    	 } 	     
       }
+
+      return Vector<double>();
    }
 
 
    // SECOND DERIVATIVE METHODS
-
-
-   // double calculate_forward_differences_second_derivative(const T&, double(T::*f)(const double&) const , const double&) const method
 
    /// Returns the second derivative of a function using the forward differences method. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -380,100 +318,82 @@ public:
    /// @param x: Differentiation point. 
 
    template<class T> 
-   double calculate_forward_differences_second_derivative(const T& t, double(T::*f)(const double&) const, const double& x) const
+   double calculate_forward_differences_second_derivatives(const T& t, double(T::*f)(const double&) const, const double& x) const
    {   
       const double h = calculate_h(x);
 
       const double x_forward_2 = x + 2.0*h;
 
-      const double y_forward_2 =(t.*f)(x_forward_2);
+      const double y_forward_2 = (t.*f)(x_forward_2);
 
       const double x_forward = x + h;
 
-      const double y_forward =(t.*f)(x_forward);
+      const double y_forward = (t.*f)(x_forward);
 
-      const double y =(t.*f)(x);
+      const double y = (t.*f)(x);
        
       return((y_forward_2 - 2*y_forward + y)/pow(h, 2));
    }
 
 
-   // double calculate_central_differences_second_derivative(const T&, double(T::*f)(const double&) const , const double&) const method
-
-   /// Returns the second derivative of a function using the central differences method. 
+   /// Returns the second derivative of a function using the central differences method.
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Differentiation point. 
 
    template<class T> 
-   double calculate_central_differences_second_derivative(const T& t, double(T::*f)(const double&) const , const double& x) const
+   double calculate_central_differences_second_derivatives(const T& t, double(T::*f)(const double&) const , const double& x) const
    {
       const double h = calculate_h(x);
 
       const double x_forward_2 = x + 2.0*h;
 
-      const double y_forward_2 =(t.*f)(x_forward_2);
+      const double y_forward_2 = (t.*f)(x_forward_2);
 
       const double x_forward = x + h;
 
-      const double y_forward =(t.*f)(x_forward);
+      const double y_forward = (t.*f)(x_forward);
 
-      const double y =(t.*f)(x);
+      const double y = (t.*f)(x);
 
       const double x_backward = x - h;  
 
-      const double y_backward =(t.*f)(x_backward);
+      const double y_backward = (t.*f)(x_backward);
 
       const double x_backward_2 = x - 2.0*h;
 
-      const double y_backward_2 =(t.*f)(x_backward_2);
+      const double y_backward_2 = (t.*f)(x_backward_2);
     
-      const double d2 =(-y_forward_2 + 16.0*y_forward -30.0*y + 16.0*y_backward - y_backward_2)/(12.0*pow(h, 2));  
+      const double d2 = (-y_forward_2 + 16.0*y_forward -30.0*y + 16.0*y_backward - y_backward_2)/(12.0*pow(h, 2));  
 
       return(d2);
    }
 
 
-   // double calculate_second_derivative(const T&, double(T::*f)(const double&) const , const double&) const method
-
-   /// Returns the second derivative of a function acording to the numerical differentiation method to be used. 
+   /// Returns the second derivative of a function acording to the numerical differentiation method to be used.
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Differentiation point. 
 
    template<class T> 
-   double calculate_second_derivative(const T& t, double(T::*f)(const double&) const , const double& x) const
+   double calculate_second_derivatives(const T& t, double(T::*f)(const double&) const , const double& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_second_derivative(t, f, x));
+            return(calculate_forward_differences_second_derivatives(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_second_derivative(t, f, x));
-    	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_second_derivative(const T& t, double(T::*f)(const double&) const, const double&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
+            return(calculate_central_differences_second_derivatives(t, f, x));
+    	 }   	    
       }
+
+      return 0.0;
    }
 
-
-   // Vector<double> calculate_forward_differences_second_derivative(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the second derivative of a vector function using the forward differences method. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -481,23 +401,21 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_forward_differences_second_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector<double> calculate_forward_differences_second_derivatives(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
-      const Vector<double> y =(t.*f)(x);
+      const Vector<double> y = (t.*f)(x);
 
       const Vector<double> h = calculate_h(x);
 
       const Vector<double> x_forward = x + h;
       const Vector<double> x_forward_2 = x + h*2.0;
 
-      const Vector<double> y_forward =(t.*f)(x_forward);
-      const Vector<double> y_forward_2 =(t.*f)(x_forward_2);
+      const Vector<double> y_forward = (t.*f)(x_forward);
+      const Vector<double> y_forward_2 = (t.*f)(x_forward_2);
 
       return((y_forward_2 - y_forward*2.0 + y)/(h*h));
    }
 
-
-   // Vector<double> calculate_central_differences_second_derivative(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the second derivative of a vector function using the central differences method. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -505,7 +423,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_central_differences_second_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector<double> calculate_central_differences_second_derivatives(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {      
       const Vector<double> h = calculate_h(x);
 
@@ -515,19 +433,19 @@ public:
       const Vector<double> x_backward = x - h;
       const Vector<double> x_backward_2 = x - h*2.0;
 
-      const Vector<double> y =(t.*f)(x);
+      const Vector<double> y = (t.*f)(x);
 
-      const Vector<double> y_forward =(t.*f)(x_forward);
-      const Vector<double> y_forward_2 =(t.*f)(x_forward_2);
+      const Vector<double> y_forward = (t.*f)(x_forward);
+      const Vector<double> y_forward_2 = (t.*f)(x_forward_2);
 
-      const Vector<double> y_backward =(t.*f)(x_backward);
-      const Vector<double> y_backward_2 =(t.*f)(x_backward_2);
+      const Vector<double> y_backward = (t.*f)(x_backward);
+      const Vector<double> y_backward_2 = (t.*f)(x_backward_2);
 
       return((y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0));
    }
 
 
-   // Vector<double> calculate_second_derivative(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
+   // Vector<double> calculate_second_derivatives(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the second derivative of a vector function acording to the numerical differentiation method to be used. 
    /// @param t : Object constructor containing the member method to differentiate.  
@@ -535,38 +453,24 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_second_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector<double> calculate_second_derivatives(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_second_derivative(t, f, x));
+            return(calculate_forward_differences_second_derivatives(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_second_derivative(t, f, x));
+            return(calculate_central_differences_second_derivatives(t, f, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_second_derivative(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
-
-   // Matrix<double> calculate_second_derivative(const T& , double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& , const Vector<double>& ) const
 
    /// Returns the second derivative of a vector function using the forward differences method.
    /// @param t : Object constructor containing the member method to differentiate.
@@ -577,7 +481,7 @@ public:
    /// @param x2: Input vector.
 
    template<class T>
-   Matrix<double> calculate_forward_differences_second_derivative(const T& t, double(T::*f)(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const,
+   Matrix<double> calculate_forward_differences_second_derivatives(const T& t, double(T::*f)(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const,
                                                                   const size_t& dummy_1, const Vector<double>& x1, const size_t& dummy_2,const Vector<double>& x2) const
    {
        const size_t n = x1.size();
@@ -585,7 +489,7 @@ public:
 
       Matrix<double> M(n, m);
 
-      double y =(t.*f)(dummy_1, x1, dummy_2, x2);
+      double y = (t.*f)(dummy_1, x1, dummy_2, x2);
 
       double h1, h2;
 
@@ -613,11 +517,11 @@ public:
 
               x2_forward_2[j] += 2.0*h2;
 
-              y_forward =(t.*f)(dummy_1, x1_forward, dummy_2, x2_forward);
+              y_forward = (t.*f)(dummy_1, x1_forward, dummy_2, x2_forward);
 
-              y_forward_2 =(t.*f)(dummy_1, x1_forward_2, dummy_2, x2_forward_2);
+              y_forward_2 = (t.*f)(dummy_1, x1_forward_2, dummy_2, x2_forward_2);
 
-              M(i,j) =(y_forward_2 - 2*y_forward + y)/(h1*h2);
+              M(i,j) = (y_forward_2 - 2*y_forward + y)/(h1*h2);
 
               x2_forward[j] -= h2;
 
@@ -634,7 +538,7 @@ public:
    }
 
 
-   // Vector<double> calculate_forward_differences_second_derivative(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
+   // Vector<double> calculate_forward_differences_second_derivatives(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the second derivatives of a vector function using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -644,23 +548,23 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_forward_differences_second_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector<double> calculate_forward_differences_second_derivatives(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      const Vector<double> y =(t.*f)(dummy, x);
+      const Vector<double> y = (t.*f)(dummy, x);
 
       const Vector<double> h = calculate_h(x);
 
       const Vector<double> x_forward = x + h;
       const Vector<double> x_forward_2 = x + h*2.0;
 
-      const Vector<double> y_forward =(t.*f)(dummy, x_forward);
-      const Vector<double> y_forward_2 =(t.*f)(dummy, x_forward_2);
+      const Vector<double> y_forward = (t.*f)(dummy, x_forward);
+      const Vector<double> y_forward_2 = (t.*f)(dummy, x_forward_2);
 
       return((y_forward_2 - y_forward*2.0 + y)/(h*h));
    }
 
 
-   // Vector<double> calculate_central_differences_second_derivative(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
+   // Vector<double> calculate_central_differences_second_derivatives(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the second derivatives of a vector function using the central differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -670,7 +574,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_central_differences_second_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector<double> calculate_central_differences_second_derivatives(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {      
       const Vector<double> h = calculate_h(x);
 
@@ -680,19 +584,19 @@ public:
       const Vector<double> x_backward = x - h;
       const Vector<double> x_backward_2 = x - h*2.0;
 
-      const Vector<double> y =(t.*f)(dummy, x);
+      const Vector<double> y = (t.*f)(dummy, x);
 
-      const Vector<double> y_forward =(t.*f)(dummy, x_forward);
-      const Vector<double> y_forward_2 =(t.*f)(dummy, x_forward_2);
+      const Vector<double> y_forward = (t.*f)(dummy, x_forward);
+      const Vector<double> y_forward_2 = (t.*f)(dummy, x_forward_2);
 
-      const Vector<double> y_backward =(t.*f)(dummy, x_backward);
-      const Vector<double> y_backward_2 =(t.*f)(dummy, x_backward_2);
+      const Vector<double> y_backward = (t.*f)(dummy, x_backward);
+      const Vector<double> y_backward_2 = (t.*f)(dummy, x_backward_2);
 
       return((y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0));
    }
 
 
-   // Vector<double> calculate_second_derivative(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
+   // Vector<double> calculate_second_derivatives(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the second derivatives of a vector function acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -702,40 +606,26 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector<double> calculate_second_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector<double> calculate_second_derivatives(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_second_derivative(t, f, dummy, x));
+            return(calculate_forward_differences_second_derivatives(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_second_derivative(t, f, dummy, x));
+            return(calculate_central_differences_second_derivatives(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_second_derivative(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
 
    // GRADIENT METHODS
-
-   // Vector<double> calculate_forward_differences_gradient(const T&, double(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&) const. 
@@ -750,7 +640,7 @@ public:
 
       double h;
 
-      double y =(t.*f)(x);
+      double y = (t.*f)(x);
       
 	  Vector<double> x_forward(x);
   
@@ -763,10 +653,10 @@ public:
          h = calculate_h(x[i]);
  
          x_forward[i] += h;
-         y_forward =(t.*f)(x_forward);
+         y_forward = (t.*f)(x_forward);
          x_forward[i] -= h;
 
-         g[i] =(y_forward - y)/h; 
+         g[i] = (y_forward - y)/h; 
       }
 
       return(g);
@@ -801,21 +691,19 @@ public:
          h = calculate_h(x[i]);
 
          x_forward[i] += h;
-         y_forward =(t.*f)(x_forward);
+         y_forward = (t.*f)(x_forward);
          x_forward[i] -= h;
 
          x_backward[i] -= h;
-         y_backward =(t.*f)(x_backward);
+         y_backward = (t.*f)(x_backward);
          x_backward[i] += h;
 
-         g[i] =(y_forward - y_backward)/(2.0*h); 
+         g[i] = (y_forward - y_backward)/(2.0*h); 
       }
 
       return(g);
    }
 
-
-   // Vector<double> calculate_gradient(const T&, double(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&) const. 
@@ -832,30 +720,16 @@ public:
          {
             return(calculate_forward_differences_gradient(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_gradient(t, f, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_gradient(const T& t, double(T::*f)(const Vector<double>&) const, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
-
-   // Vector<double> calculate_forward_differences_gradient(const T&, double(T::*f)(const Vector<double>&), const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&). 
@@ -870,7 +744,7 @@ public:
 
       double h;
 
-      double y =(t.*f)(x);
+      double y = (t.*f)(x);
       
 	  Vector<double> x_forward(x);
   
@@ -883,10 +757,10 @@ public:
          h = calculate_h(x[i]);
  
          x_forward[i] += h;
-         y_forward =(t.*f)(x_forward);
+         y_forward = (t.*f)(x_forward);
          x_forward[i] -= h;
 
-         g[i] =(y_forward - y)/h; 
+         g[i] = (y_forward - y)/h; 
       }
 
       return(g);
@@ -921,21 +795,19 @@ public:
          h = calculate_h(x[i]);
 
          x_forward[i] += h;
-         y_forward =(t.*f)(x_forward);
+         y_forward = (t.*f)(x_forward);
          x_forward[i] -= h;
 
          x_backward[i] -= h;
-         y_backward =(t.*f)(x_backward);
+         y_backward = (t.*f)(x_backward);
          x_backward[i] += h;
 
-         g[i] =(y_forward - y_backward)/(2.0*h); 
+         g[i] = (y_forward - y_backward)/(2.0*h); 
       }
 
       return(g);
    }
 
-
-   // Vector<double> calculate_gradient(const T&, double(T::*f)(const Vector<double>&), const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&) const. 
@@ -952,30 +824,16 @@ public:
          {
             return(calculate_forward_differences_gradient(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_gradient(t, f, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_gradient(const T& t, double(T::*f)(const Vector<double>&), const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
-
-   // Vector<double> calculate_forward_differences_gradient(const T&, double(T::*f)(const Vector<double>&, const Vector<double>&), const Vector<double>&, const Vector<double>&) const
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&, const Vector<double>&) const. 
@@ -992,7 +850,7 @@ public:
 
       double h;
 
-      const double y =(t.*f)(dummy, x);
+      const double y = (t.*f)(dummy, x);
       
       Vector<double> x_forward(x);
   
@@ -1005,17 +863,15 @@ public:
          h = calculate_h(x[i]);
  
          x_forward[i] += h;
-         y_forward =(t.*f)(dummy, x_forward);
+         y_forward = (t.*f)(dummy, x_forward);
          x_forward[i] -= h;
 
-         g[i] =(y_forward - y)/h; 
+         g[i] = (y_forward - y)/h; 
       }
 
       return(g);
    }
 
-
-   // Vector<double> calculate_central_differences_gradient(const T&, double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions using the central differences method. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&, const Vector<double>&) const. 
@@ -1045,21 +901,19 @@ public:
          h = calculate_h(x[i]);
  
          x_forward[i] += h;
-         y_forward =(t.*f)(dummy, x_forward);
+         y_forward = (t.*f)(dummy, x_forward);
          x_forward[i] -= h;
 
          x_backward[i] -= h;
-         y_backward =(t.*f)(dummy, x_backward);
+         y_backward = (t.*f)(dummy, x_backward);
          x_backward[i] += h;
 
-         g[i] =(y_forward - y_backward)/(2.0*h); 
+         g[i] = (y_forward - y_backward)/(2.0*h); 
       }
 
       return(g);
    }
 
-
-   // Vector<double> calculate_gradient(const T&, double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&, const Vector<double>&) const. 
@@ -1078,30 +932,16 @@ public:
          {
             return(calculate_forward_differences_gradient(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_gradient(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_gradient(const T& t, double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
-
-   // Vector<double> calculate_forward_differences_gradient(const T&, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const. 
@@ -1114,11 +954,11 @@ public:
    template<class T> 
    Vector<double> calculate_forward_differences_gradient(const T& t, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h;
 
-      double y =(t.*f)(dummy, x);
+      double y = (t.*f)(dummy, x);
       
 	  Vector<double> x_forward(x);
   
@@ -1131,10 +971,50 @@ public:
          h = calculate_h(x[i]);
  
          x_forward[i] += h;
-         y_forward =(t.*f)(dummy, x_forward);
+         y_forward = (t.*f)(dummy, x_forward);
          x_forward[i] -= h;
 
-         g[i] =(y_forward - y)/h; 
+         g[i] = (y_forward - y)/h; 
+      }
+
+      return(g);
+   }
+
+   // Vector<double> calculate_forward_differences_gradient(const T&, double(T::*f)(const size_t&, const Vector<double>&) const, const Vector<size_t>&, const Vector<double>&) const method
+
+   /// Returns the gradient of a function of several dimensions using the forward differences method.
+   /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const.
+   /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy: Dummy integer for the method prototype.
+   /// @param x: Input vector.
+
+   template<class T>
+   Vector<double> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Vector<size_t>&, const Vector<double>&) const, const Vector<size_t>& dummy, const Vector<double>& x) const
+   {
+      const size_t n = x.size();
+
+      double h;
+
+      double y = (t.*f)(dummy, x);
+
+      Vector<double> x_forward(x);
+
+      double y_forward;
+
+      Vector<double> g(n);
+
+      for(size_t i = 0; i < n; i++)
+      {
+         h = calculate_h(x[i]);
+
+         x_forward[i] += h;
+
+         y_forward = (t.*f)(dummy, x_forward);
+         x_forward[i] -= h;
+
+         g[i] = (y_forward - y)/h;
       }
 
       return(g);
@@ -1154,7 +1034,7 @@ public:
    template<class T> 
    Vector<double> calculate_central_differences_gradient(const T& t, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {      
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h;
 
@@ -1171,21 +1051,105 @@ public:
          h = calculate_h(x[i]);
  
          x_forward[i] += h;
-         y_forward =(t.*f)(dummy, x_forward);
+         y_forward = (t.*f)(dummy, x_forward);
          x_forward[i] -= h;
 
          x_backward[i] -= h;
-         y_backward =(t.*f)(dummy, x_backward);
+         y_backward = (t.*f)(dummy, x_backward);
          x_backward[i] += h;
 
-         g[i] =(y_forward - y_backward)/(2.0*h); 
+         g[i] = (y_forward - y_backward)/(2.0*h); 
       }
 
       return(g);
    }
 
 
-   // Vector<double> calculate_gradient(const T&, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
+   // Vector<double> calculate_central_differences_gradient(const T&, Vector<double>(T::*f)(const size_t&, const Matrix<double>&) const, const size_t&, const Matrix<double>&) const method
+
+   /// Returns the gradient of a function of several dimensions using the central differences method.
+   /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const.
+   /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy: Dummy integer for the method prototype.
+   /// @param x: Input vector.
+
+   template<class T>
+   Vector<double> calculate_central_differences_gradient(const T& t, Vector<double>(T::*f)(const size_t&, const Matrix<double>&) const, const size_t& dummy, const Matrix<double>& x) const
+   {
+      const size_t n = x.size();
+
+      double h;
+
+      Vector<double> x_forward(x);
+      Vector<double> x_backward(x);
+
+      double y_forward;
+      double y_backward;
+
+      Vector<double> g(n);
+
+      for(size_t i = 0; i < n; i++)
+      {
+         h = calculate_h(x[i]);
+
+         x_forward[i] += h;
+         y_forward = (t.*f)(dummy, x_forward);
+         x_forward[i] -= h;
+
+         x_backward[i] -= h;
+         y_backward = (t.*f)(dummy, x_backward);
+         x_backward[i] += h;
+
+         g[i] = (y_forward - y_backward)/(2.0*h);
+      }
+
+      return(g);
+   }
+
+   // Vector<double> calculate_central_differences_gradient(const T&, double(T::*f)(const Vector<size_t>&, const Vector<double>&) const, const Vector<size_t>&, const Vector<double>&) const method
+
+   /// Returns the gradient of a function of several dimensions using the central differences method.
+   /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const.
+   /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy: Dummy integer for the method prototype.
+   /// @param x: Input vector.
+
+   template<class T>
+   Vector<double> calculate_central_differences_gradient(const T& t, double(T::*f)(const Vector<size_t>&, const Vector<double>&) const, const Vector<size_t>& dummy, const Vector<double>& x) const
+   {
+      const size_t n = x.size();
+
+      double h;
+      Vector<double> x_forward(x);
+      Vector<double> x_backward(x);
+
+      double y_forward;
+      double y_backward;
+
+      Vector<double> g(n);
+
+      for(size_t i = 0; i < n; i++)
+      {
+         h = calculate_h(x[i]);
+
+         x_forward[i] += h;
+         y_forward = (t.*f)(dummy, x_forward);
+         x_forward[i] -= h;
+
+         x_backward[i] -= h;
+         y_backward = (t.*f)(dummy, x_backward);
+         x_backward[i] += h;
+
+         g[i] = (y_forward - y_backward)/(2.0*h);
+      }
+
+      return(g);
+   }
+
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const. 
@@ -1204,33 +1168,82 @@ public:
          {
             return(calculate_forward_differences_gradient(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_gradient(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector<double> calculate_gradient(const T& t, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<double>();
    }
 
 
+   /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used.
+   /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const.
+   /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy: Dummy integer for the method prototype.
+   /// @param x: Input vector.
+
+   template<class T>
+   Vector<double> calculate_gradient(const T& t, double(T::*f)(const Vector<size_t>&, const Vector<double>&) const, const Vector<size_t>& dummy, const Vector<double>& x) const
+   {
+      switch(numerical_differentiation_method)
+      {
+         case ForwardDifferences:
+         {
+            return(calculate_forward_differences_gradient(t, f, dummy, x));
+         }
+
+         case CentralDifferences:
+         {
+            return(calculate_central_differences_gradient(t, f, dummy, x));
+         }
+      }
+
+      return Vector<double>();
+   }
+
+
+   template<class T>
+   Matrix<double> calculate_central_differences_gradient_matrix(const T& t, Vector<double>(T::*f)(const size_t&, const Matrix<double>&) const, const size_t& integer, const Matrix<double>& x) const
+   {
+       const size_t rows_number = x.get_rows_number();
+       const size_t columns_number = x.get_columns_number();
+
+      Matrix<double> gradient(rows_number, columns_number);
+
+      double h;
+      Matrix<double> x_forward(x);
+      Matrix<double> x_backward(x);
+
+      double y_forward;
+      double y_backward;
+
+      for(size_t i = 0; i < rows_number; i++)
+      {
+          for(size_t j = 0; j < columns_number; j++)
+          {
+             h = calculate_h(x(i,j));
+
+             x_forward(i,j) += h;
+             y_forward = (t.*f)(integer, x_forward)[i];
+             x_forward(i,j) -= h;
+
+             x_backward(i,j) -= h;
+             y_backward = (t.*f)(integer, x_backward)[i];
+             x_backward(i,j) += h;
+
+             gradient(i,j) = (y_forward - y_backward)/(2.0*h);
+          }
+      }
+
+      return gradient;
+   }
+
    // HESSIAN METHODS
-
-
-   // Matrix<double> calculate_forward_differences_Hessian(const T&, double(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the Hessian matrix of a function of several dimensions using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&) const. 
@@ -1241,14 +1254,14 @@ public:
    template<class T> 
    Matrix<double> calculate_forward_differences_Hessian(const T& t, double(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
       Matrix<double> H(n, n);
 
       double h_i;
       double h_j;
 
-      double y =(t.*f)(x);
+      double y = (t.*f)(x);
 
       Vector<double> x_forward_2i(x);
       Vector<double> x_forward_ij(x);
@@ -1265,30 +1278,30 @@ public:
          h_i = calculate_h(x[i]);
 
          x_forward_i[i] += h_i;       
-         y_forward_i =(t.*f)(x_forward_i);
+         y_forward_i = (t.*f)(x_forward_i);
          x_forward_i[i] -= h_i;       
 
          x_forward_2i[i] += 2.0*h_i;       
-         y_forward_2i =(t.*f)(x_forward_2i);
+         y_forward_2i = (t.*f)(x_forward_2i);
          x_forward_2i[i] -= 2.0*h_i;       
 
-         H(i,i) =(y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
+         H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
 
          for(size_t j = i; j < n; j++)
          {
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(x_forward_j);
+            y_forward_j = (t.*f)(x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_ij[i] += h_i; 
             x_forward_ij[j] += h_j; 
-            y_forward_ij =(t.*f)(x_forward_ij);   
+            y_forward_ij = (t.*f)(x_forward_ij);   
             x_forward_ij[i] -= h_i; 
             x_forward_ij[j] -= h_j; 
             
-            H(i,j) =(y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
          } 
       }
 
@@ -1315,9 +1328,9 @@ public:
    template<class T> 
    Matrix<double> calculate_central_differences_Hessian(const T& t, double(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
-      double y =(t.*f)(x);
+      double y = (t.*f)(x);
 
       Matrix<double> H(n, n);
 
@@ -1353,22 +1366,22 @@ public:
          h_i = calculate_h(x[i]);
 
          x_backward_2i[i] -= 2.0*h_i; 
-         y_backward_2i =(t.*f)(x_backward_2i);
+         y_backward_2i = (t.*f)(x_backward_2i);
          x_backward_2i[i] += 2.0*h_i; 
 
          x_backward_i[i] -= h_i; 
-         y_backward_i =(t.*f)(x_backward_i);
+         y_backward_i = (t.*f)(x_backward_i);
          x_backward_i[i] += h_i; 
 
          x_forward_i[i] += h_i; 
-         y_forward_i =(t.*f)(x_forward_i);
+         y_forward_i = (t.*f)(x_forward_i);
          x_forward_i[i] -= h_i; 
 
          x_forward_2i[i] += 2.0*h_i; 
-         y_forward_2i =(t.*f)(x_forward_2i);
+         y_forward_2i = (t.*f)(x_forward_2i);
          x_forward_2i[i] -= 2.0*h_i; 
 
-         H(i,i) =(-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
+         H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
 
          for(size_t j = i; j < n; j++)
          {
@@ -1376,29 +1389,29 @@ public:
 
             x_backward_ij[i] -= h_i;  
             x_backward_ij[j] -= h_j;  
-            y_backward_ij =(t.*f)(x_backward_ij);   
+            y_backward_ij = (t.*f)(x_backward_ij);   
             x_backward_ij[i] += h_i;  
             x_backward_ij[j] += h_j;  
 
             x_forward_ij[i] += h_i;  
             x_forward_ij[j] += h_j;  
-            y_forward_ij =(t.*f)(x_forward_ij);   
+            y_forward_ij = (t.*f)(x_forward_ij);   
             x_forward_ij[i] -= h_i;  
             x_forward_ij[j] -= h_j;  
             
             x_backward_i_forward_j[i] -= h_i;
             x_backward_i_forward_j[j] += h_j;
-            y_backward_i_forward_j =(t.*f)(x_backward_i_forward_j);   
+            y_backward_i_forward_j = (t.*f)(x_backward_i_forward_j);   
             x_backward_i_forward_j[i] += h_i;
             x_backward_i_forward_j[j] -= h_j;
 
             x_forward_i_backward_j[i] += h_i;
             x_forward_i_backward_j[j] -= h_j;
-            y_forward_i_backward_j =(t.*f)(x_forward_i_backward_j);   
+            y_forward_i_backward_j = (t.*f)(x_forward_i_backward_j);   
             x_forward_i_backward_j[i] -= h_i;
             x_forward_i_backward_j[j] += h_j;
  
-            H(i,j) =(y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
          }
       }
 
@@ -1413,8 +1426,6 @@ public:
       return(H);
    }
 
-
-   // Matrix<double> calculate_Hessian(const T&, double(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the Hessian matrix of a function of several dimensions acording to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: double f(const Vector<double>&) const. 
@@ -1431,26 +1442,14 @@ public:
          {
             return(calculate_forward_differences_Hessian(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Hessian(t, f, x));
          }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_Hessian(const T& t, double(T::*f)(const Vector<double>&) const, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-         }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
 
@@ -1467,14 +1466,14 @@ public:
    template<class T> 
    Matrix<double> calculate_forward_differences_Hessian(const T& t, double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
       Matrix<double> H(n, n);
 
       double h_i;
       double h_j;
 
-      double y =(t.*f)(dummy, x);
+      double y = (t.*f)(dummy, x);
 
       Vector<double> x_forward_2i(x);
       Vector<double> x_forward_ij(x);
@@ -1491,30 +1490,30 @@ public:
          h_i = calculate_h(x[i]);
 
          x_forward_i[i] += h_i;       
-         y_forward_i =(t.*f)(dummy, x_forward_i);
+         y_forward_i = (t.*f)(dummy, x_forward_i);
          x_forward_i[i] -= h_i;       
 
          x_forward_2i[i] += 2.0*h_i;       
-         y_forward_2i =(t.*f)(dummy, x_forward_2i);
+         y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i[i] -= 2.0*h_i;       
 
-         H(i,i) =(y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
+         H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
 
          for(size_t j = i; j < n; j++)
          {
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(dummy, x_forward_j);
+            y_forward_j = (t.*f)(dummy, x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_ij[i] += h_i; 
             x_forward_ij[j] += h_j; 
-            y_forward_ij =(t.*f)(dummy, x_forward_ij);   
+            y_forward_ij = (t.*f)(dummy, x_forward_ij);   
             x_forward_ij[i] -= h_i; 
             x_forward_ij[j] -= h_j; 
             
-            H(i,j) =(y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
          } 
       }
 
@@ -1543,9 +1542,9 @@ public:
    template<class T> 
    Matrix<double> calculate_central_differences_Hessian(const T& t, double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
-      double y =(t.*f)(dummy, x);
+      double y = (t.*f)(dummy, x);
 
       Matrix<double> H(n, n);
 
@@ -1581,22 +1580,22 @@ public:
          h_i = calculate_h(x[i]);
 
          x_backward_2i[i] -= 2.0*h_i; 
-         y_backward_2i =(t.*f)(dummy, x_backward_2i);
+         y_backward_2i = (t.*f)(dummy, x_backward_2i);
          x_backward_2i[i] += 2.0*h_i; 
 
          x_backward_i[i] -= h_i; 
-         y_backward_i =(t.*f)(dummy, x_backward_i);
+         y_backward_i = (t.*f)(dummy, x_backward_i);
          x_backward_i[i] += h_i; 
 
          x_forward_i[i] += h_i; 
-         y_forward_i =(t.*f)(dummy, x_forward_i);
+         y_forward_i = (t.*f)(dummy, x_forward_i);
          x_forward_i[i] -= h_i; 
 
          x_forward_2i[i] += 2.0*h_i; 
-         y_forward_2i =(t.*f)(dummy, x_forward_2i);
+         y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i[i] -= 2.0*h_i; 
 
-         H(i,i) =(-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
+         H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
 
          for(size_t j = i; j < n; j++)
          {
@@ -1604,29 +1603,29 @@ public:
 
             x_backward_ij[i] -= h_i;  
             x_backward_ij[j] -= h_j;  
-            y_backward_ij =(t.*f)(dummy, x_backward_ij);   
+            y_backward_ij = (t.*f)(dummy, x_backward_ij);   
             x_backward_ij[i] += h_i;  
             x_backward_ij[j] += h_j;  
 
             x_forward_ij[i] += h_i;  
             x_forward_ij[j] += h_j;  
-            y_forward_ij =(t.*f)(dummy, x_forward_ij);   
+            y_forward_ij = (t.*f)(dummy, x_forward_ij);   
             x_forward_ij[i] -= h_i;  
             x_forward_ij[j] -= h_j;  
             
             x_backward_i_forward_j[i] -= h_i;
             x_backward_i_forward_j[j] += h_j;
-            y_backward_i_forward_j =(t.*f)(dummy, x_backward_i_forward_j);   
+            y_backward_i_forward_j = (t.*f)(dummy, x_backward_i_forward_j);   
             x_backward_i_forward_j[i] += h_i;
             x_backward_i_forward_j[j] -= h_j;
 
             x_forward_i_backward_j[i] += h_i;
             x_forward_i_backward_j[j] -= h_j;
-            y_forward_i_backward_j =(t.*f)(dummy, x_forward_i_backward_j);   
+            y_forward_i_backward_j = (t.*f)(dummy, x_forward_i_backward_j);   
             x_forward_i_backward_j[i] -= h_i;
             x_forward_i_backward_j[j] += h_j;
  
-            H(i,j) =(y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
          }
       }
 
@@ -1661,30 +1660,16 @@ public:
          {
             return(calculate_forward_differences_Hessian(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Hessian(t, f, dummy, x));
          }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_Hessian(const T& t, double(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-         }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
-
-   // Matrix<double> calculate_forward_differences_Hessian(const T&, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the Hessian matrix of a function of several dimensions using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const. 
@@ -1697,14 +1682,14 @@ public:
    template<class T> 
    Matrix<double> calculate_forward_differences_Hessian(const T& t, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
       Matrix<double> H(n, n);
 
       double h_i;
       double h_j;
 
-      double y =(t.*f)(dummy, x);
+      double y = (t.*f)(dummy, x);
 
       Vector<double> x_forward_2i(x);
       Vector<double> x_forward_ij(x);
@@ -1721,30 +1706,30 @@ public:
          h_i = calculate_h(x[i]);
 
          x_forward_i[i] += h_i;       
-         y_forward_i =(t.*f)(dummy, x_forward_i);
+         y_forward_i = (t.*f)(dummy, x_forward_i);
          x_forward_i[i] -= h_i;       
 
          x_forward_2i[i] += 2.0*h_i;       
-         y_forward_2i =(t.*f)(dummy, x_forward_2i);
+         y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i[i] -= 2.0*h_i;       
 
-         H(i,i) =(y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
+         H(i,i) = (y_forward_2i - 2*y_forward_i + y)/pow(h_i, 2);  
 
          for(size_t j = i; j < n; j++)
          {
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(dummy, x_forward_j);
+            y_forward_j = (t.*f)(dummy, x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_ij[i] += h_i; 
             x_forward_ij[j] += h_j; 
-            y_forward_ij =(t.*f)(dummy, x_forward_ij);   
+            y_forward_ij = (t.*f)(dummy, x_forward_ij);   
             x_forward_ij[i] -= h_i; 
             x_forward_ij[j] -= h_j; 
             
-            H(i,j) =(y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i - y_forward_j + y)/(h_i*h_j);
          } 
       }
 
@@ -1773,9 +1758,9 @@ public:
    template<class T> 
    Matrix<double> calculate_central_differences_Hessian(const T& t, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      size_t n = x.size();
+      const size_t n = x.size();
 
-      double y =(t.*f)(dummy, x);
+      double y = (t.*f)(dummy, x);
 
       Matrix<double> H(n, n);
 
@@ -1811,22 +1796,22 @@ public:
          h_i = calculate_h(x[i]);
 
          x_backward_2i[i] -= 2.0*h_i; 
-         y_backward_2i =(t.*f)(dummy, x_backward_2i);
+         y_backward_2i = (t.*f)(dummy, x_backward_2i);
          x_backward_2i[i] += 2.0*h_i; 
 
          x_backward_i[i] -= h_i; 
-         y_backward_i =(t.*f)(dummy, x_backward_i);
+         y_backward_i = (t.*f)(dummy, x_backward_i);
          x_backward_i[i] += h_i; 
 
          x_forward_i[i] += h_i; 
-         y_forward_i =(t.*f)(dummy, x_forward_i);
+         y_forward_i = (t.*f)(dummy, x_forward_i);
          x_forward_i[i] -= h_i; 
 
          x_forward_2i[i] += 2.0*h_i; 
-         y_forward_2i =(t.*f)(dummy, x_forward_2i);
+         y_forward_2i = (t.*f)(dummy, x_forward_2i);
          x_forward_2i[i] -= 2.0*h_i; 
 
-         H(i,i) =(-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
+         H(i,i) = (-y_forward_2i + 16.0*y_forward_i -30.0*y + 16.0*y_backward_i - y_backward_2i)/(12.0*pow(h_i, 2));  
 
          for(size_t j = i; j < n; j++)
          {
@@ -1834,29 +1819,29 @@ public:
 
             x_backward_ij[i] -= h_i;  
             x_backward_ij[j] -= h_j;  
-            y_backward_ij =(t.*f)(dummy, x_backward_ij);   
+            y_backward_ij = (t.*f)(dummy, x_backward_ij);   
             x_backward_ij[i] += h_i;  
             x_backward_ij[j] += h_j;  
 
             x_forward_ij[i] += h_i;  
             x_forward_ij[j] += h_j;  
-            y_forward_ij =(t.*f)(dummy, x_forward_ij);   
+            y_forward_ij = (t.*f)(dummy, x_forward_ij);   
             x_forward_ij[i] -= h_i;  
             x_forward_ij[j] -= h_j;  
             
             x_backward_i_forward_j[i] -= h_i;
             x_backward_i_forward_j[j] += h_j;
-            y_backward_i_forward_j =(t.*f)(dummy, x_backward_i_forward_j);   
+            y_backward_i_forward_j = (t.*f)(dummy, x_backward_i_forward_j);   
             x_backward_i_forward_j[i] += h_i;
             x_backward_i_forward_j[j] -= h_j;
 
 			x_forward_i_backward_j[i] += h_i;
 			x_forward_i_backward_j[j] -= h_j;
-            y_forward_i_backward_j =(t.*f)(dummy, x_forward_i_backward_j);   
+            y_forward_i_backward_j = (t.*f)(dummy, x_forward_i_backward_j);   
 			x_forward_i_backward_j[i] -= h_i;
 			x_forward_i_backward_j[j] += h_j;
  
-            H(i,j) =(y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
+            H(i,j) = (y_forward_ij - y_forward_i_backward_j - y_backward_i_forward_j + y_backward_ij)/(4.0*h_i*h_j);
          }
       }
 
@@ -1891,32 +1876,18 @@ public:
          {
             return(calculate_forward_differences_Hessian(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Hessian(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_Hessian(const T& t, double(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
 
    // JACOBIAN METHODS
-
-   // Matrix<double> calculate_forward_differences_Jacobian(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&, const Vector<double>&) const. 
@@ -1927,11 +1898,11 @@ public:
    template<class T> 
    Matrix<double> calculate_forward_differences_Jacobian(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(x); 
+      Vector<double> y = (t.*f)(x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -1944,12 +1915,12 @@ public:
          h = calculate_h(x[j]);
 
          x_forward[j] += h;
-         y_forward =(t.*f)(x_forward);   
+         y_forward = (t.*f)(x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		  {
-		     J(i,j) =(y_forward[i] - y[i])/h;
+		     J(i,j) = (y_forward[i] - y[i])/h;
 		  }
 	  }
 
@@ -1968,11 +1939,11 @@ public:
    template<class T> 
    Matrix<double> calculate_central_differences_Jacobian(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(x); 
+      Vector<double> y = (t.*f)(x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -1988,24 +1959,22 @@ public:
          h = calculate_h(x[j]);
 
          x_backward[j] -= h;
-         y_backward =(t.*f)(x_backward);   
+         y_backward = (t.*f)(x_backward);   
          x_backward[j] += h;
 
          x_forward[j] += h;
-         y_forward =(t.*f)(x_forward);   
+         y_forward = (t.*f)(x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y_backward[i])/(2.0*h);
+		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
 		 }
 	  }
 
       return(J);
    }
 
-
-   // Matrix<double> calculate_Jacobian(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&, const Vector<double>&) const. 
@@ -2022,30 +1991,16 @@ public:
          {
             return(calculate_forward_differences_Jacobian(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Jacobian(t, f, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Matrix<double> calculate_Jacobian(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
-
-   // Matrix<double> calculate_forward_differences_Jacobian(const T&, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&, const Vector<double>&) const. 
@@ -2057,11 +2012,11 @@ public:
    template<class T> 
    Matrix<double> calculate_forward_differences_Jacobian(const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy, x); 
+      Vector<double> y = (t.*f)(dummy, x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -2074,12 +2029,12 @@ public:
          h = calculate_h(x[j]);
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy, x_forward);   
+         y_forward = (t.*f)(dummy, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		  {
-		     J(i,j) =(y_forward[i] - y[i])/h;
+		     J(i,j) = (y_forward[i] - y[i])/h;
 		  }
 	  }
 
@@ -2099,11 +2054,11 @@ public:
    template<class T> 
    Matrix<double> calculate_central_differences_Jacobian(const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy, x); 
+      Vector<double> y = (t.*f)(dummy, x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -2119,24 +2074,22 @@ public:
          h = calculate_h(x[j]);
 
          x_backward[j] -= h;
-         y_backward =(t.*f)(dummy, x_backward);   
+         y_backward = (t.*f)(dummy, x_backward);   
          x_backward[j] += h;
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy, x_forward);   
+         y_forward = (t.*f)(dummy, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y_backward[i])/(2.0*h);
+		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
 		 }
 	  }
 
       return(J);
    }
 
-
-   // Matrix<double> calculate_Jacobian(const T&, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&, const Vector<double>&) const. 
@@ -2154,31 +2107,16 @@ public:
          {
             return(calculate_forward_differences_Jacobian(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Jacobian(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Matrix<double> calculate_Jacobian(const T&, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
-
-
-   // Matrix<double> calculate_forward_differences_Jacobian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&) const. 
@@ -2191,11 +2129,11 @@ public:
    template<class T> 
    Matrix<double> calculate_forward_differences_Jacobian(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy, x); 
+      Vector<double> y = (t.*f)(dummy, x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -2208,12 +2146,12 @@ public:
          h = calculate_h(x[j]);
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy, x_forward);   
+         y_forward = (t.*f)(dummy, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y[i])/h;
+		    J(i,j) = (y_forward[i] - y[i])/h;
 		 }
 	  }
 
@@ -2234,11 +2172,11 @@ public:
    template<class T> 
    Matrix<double> calculate_central_differences_Jacobian(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy, x); 
+      Vector<double> y = (t.*f)(dummy, x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -2254,16 +2192,16 @@ public:
          h = calculate_h(x[j]);
 
          x_backward[j] -= h;
-         y_backward =(t.*f)(dummy, x_backward);   
+         y_backward = (t.*f)(dummy, x_backward);   
          x_backward[j] += h;
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy, x_forward);   
+         y_forward = (t.*f)(dummy, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y_backward[i])/(2.0*h);
+		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
 		 }
 	  }
 
@@ -2290,30 +2228,16 @@ public:
          {
             return(calculate_forward_differences_Jacobian(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Jacobian(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Matrix<double> calculate_Jacobian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
-
-   // Matrix<double> calculate_forward_differences_Jacobian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&, const Vector<double>&) const. 
@@ -2328,11 +2252,11 @@ public:
    Matrix<double> calculate_forward_differences_Jacobian
   (const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t& dummy_int, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy_int, dummy_vector, x); 
+      Vector<double> y = (t.*f)(dummy_int, dummy_vector, x); 
 
       double h;
 
-      size_t n = x.size();
+      const size_t n = x.size();
       size_t m = y.size();
 
       Vector<double> x_forward(x);
@@ -2345,12 +2269,12 @@ public:
          h = calculate_h(x[j]);
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy_int, dummy_vector, x_forward);   
+         y_forward = (t.*f)(dummy_int, dummy_vector, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y[i])/h;
+		    J(i,j) = (y_forward[i] - y[i])/h;
 		 }
 	  }
 
@@ -2375,7 +2299,7 @@ public:
    {
       const size_t n = x.size();
 
-      const Vector<double> y =(t.*f)(dummy_int, dummy_vector, x); 
+      const Vector<double> y = (t.*f)(dummy_int, dummy_vector, x); 
       const size_t m = y.size();
 
       double h;
@@ -2393,16 +2317,16 @@ public:
          h = calculate_h(x[j]);
 
          x_backward[j] -= h;
-         y_backward =(t.*f)(dummy_int, dummy_vector, x_backward);   
+         y_backward = (t.*f)(dummy_int, dummy_vector, x_backward);   
          x_backward[j] += h;
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy_int, dummy_vector, x_forward);   
+         y_forward = (t.*f)(dummy_int, dummy_vector, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y_backward[i])/(2.0*h);
+		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
 		 }
 	  }
 
@@ -2431,31 +2355,16 @@ public:
          {
             return(calculate_forward_differences_Jacobian(t, f, dummy_int, dummy_vector, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Jacobian(t, f, dummy_int, dummy_vector, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Matrix<double> calculate_Jacobian\n"
-                   << "(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
-
-   // Matrix<double> calculate_forward_differences_Jacobian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&, const Vector<double>&) const. 
@@ -2470,7 +2379,7 @@ public:
    Matrix<double> calculate_forward_differences_Jacobian
   (const T& t, Vector<double>(T::*f)(const size_t&, const size_t&, const Vector<double>&) const, const size_t& dummy_int_1, const size_t& dummy_int_2, const Vector<double>& x) const
    {
-      const Vector<double> y =(t.*f)(dummy_int_1, dummy_int_2, x); 
+      const Vector<double> y = (t.*f)(dummy_int_1, dummy_int_2, x); 
 
       const size_t n = x.size();
       const size_t m = y.size();
@@ -2487,12 +2396,12 @@ public:
          h = calculate_h(x[j]);
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy_int_1, dummy_int_2, x_forward);   
+         y_forward = (t.*f)(dummy_int_1, dummy_int_2, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y[i])/h;
+		    J(i,j) = (y_forward[i] - y[i])/h;
 		 }
 	  }
 
@@ -2515,7 +2424,7 @@ public:
    Matrix<double> calculate_central_differences_Jacobian
   (const T& t, Vector<double>(T::*f)(const size_t&, const size_t&, const Vector<double>&) const, const size_t& dummy_int_1, const size_t& dummy_int_2, const Vector<double>& x) const
    {
-      const Vector<double> y =(t.*f)(dummy_int_1, dummy_int_2, x); 
+      const Vector<double> y = (t.*f)(dummy_int_1, dummy_int_2, x); 
 
       const size_t n = x.size();
       const size_t m = y.size();
@@ -2535,24 +2444,22 @@ public:
          h = calculate_h(x[j]);
 
          x_backward[j] -= h;
-         y_backward =(t.*f)(dummy_int_1, dummy_int_2, x_backward);   
+         y_backward = (t.*f)(dummy_int_1, dummy_int_2, x_backward);   
          x_backward[j] += h;
 
          x_forward[j] += h;
-         y_forward =(t.*f)(dummy_int_1, dummy_int_2, x_forward);   
+         y_forward = (t.*f)(dummy_int_1, dummy_int_2, x_forward);   
          x_forward[j] -= h;
          
 	     for(size_t i = 0; i < m; i++)
 		 {
-		    J(i,j) =(y_forward[i] - y_backward[i])/(2.0*h);
+		    J(i,j) = (y_forward[i] - y_backward[i])/(2.0*h);
 		 }
 	  }
 
       return(J);
    }
 
-
-   // Matrix<double> calculate_Jacobian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: double f(const size_t&, const Vector<double>&, const Vector<double>&) const. 
@@ -2573,34 +2480,21 @@ public:
          {
             return(calculate_forward_differences_Jacobian(t, f, dummy_int_1, dummy_int_2, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
             return(calculate_central_differences_Jacobian(t, f, dummy_int_1, dummy_int_2, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Matrix<double> calculate_Jacobian\n"
-                   << "(const T&, Vector<double>(T::*f)(const size_t&, const size_t&, const Vector<double>&) const, const size_t&, const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Matrix<double>();
    }
 
 
    // HESSIAN FORM METHODS
 
 
-   // Vector< Matrix <double> > calculate_forward_differences_Hessian_form(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
+   // Vector< Matrix <double> > calculate_forward_differences_Hessian(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&) const. 
@@ -2609,12 +2503,12 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_forward_differences_Hessian_form(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector< Matrix <double> > calculate_forward_differences_Hessian(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {      
-      Vector<double> y =(t.*f)(x);   
+      Vector<double> y = (t.*f)(x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -2642,30 +2536,30 @@ public:
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(x_forward_j);
+            y_forward_j = (t.*f)(x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_2j[j] += 2.0*h_j;       
-            y_forward_2j =(t.*f)(x_forward_2j);
+            y_forward_2j = (t.*f)(x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j;       
 
-            H[i](j,j) =(y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
 
             for(size_t k = j; k < n; k++)
 			{
                h_k = calculate_h(x[k]);
 
                x_forward_k[k] += h_k;       
-               y_forward_k =(t.*f)(x_forward_k);
+               y_forward_k = (t.*f)(x_forward_k);
                x_forward_k[k] -= h_k;       
 
                x_forward_jk[j] += h_j; 
                x_forward_jk[k] += h_k; 
-               y_forward_jk =(t.*f)(x_forward_jk);   
+               y_forward_jk = (t.*f)(x_forward_jk);   
                x_forward_jk[j] -= h_j; 
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
 			}
 		 }
 
@@ -2682,7 +2576,7 @@ public:
    }
 
 
-   // Vector< Matrix <double> > calculate_central_differences_Hessian_form(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
+   // Vector< Matrix <double> > calculate_central_differences_Hessian(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&) const. 
@@ -2691,12 +2585,12 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_central_differences_Hessian_form(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector< Matrix <double> > calculate_central_differences_Hessian(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(x);   
+      Vector<double> y = (t.*f)(x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -2736,22 +2630,22 @@ public:
             h_j = calculate_h(x[j]);
 
             x_backward_2j[j] -= 2.0*h_j; 
-            y_backward_2j =(t.*f)(x_backward_2j);
+            y_backward_2j = (t.*f)(x_backward_2j);
             x_backward_2j[j] += 2.0*h_j; 
 
             x_backward_j[j] -= h_j; 
-            y_backward_j =(t.*f)(x_backward_j);
+            y_backward_j = (t.*f)(x_backward_j);
             x_backward_j[j] += h_j; 
 
             x_forward_j[j] += h_j; 
-            y_forward_j =(t.*f)(x_forward_j);
+            y_forward_j = (t.*f)(x_forward_j);
             x_forward_j[j] -= h_j; 
 
             x_forward_2j[j] += 2.0*h_j; 
-            y_forward_2j =(t.*f)(x_forward_2j);
+            y_forward_2j = (t.*f)(x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j; 
 
-            H[i](j,j) =(-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
 
             for(size_t k = j; k < n; k++)
             {
@@ -2759,29 +2653,29 @@ public:
 
                x_backward_jk[j] -= h_j;  
                x_backward_jk[k] -= h_k;  
-               y_backward_jk =(t.*f)(x_backward_jk);   
+               y_backward_jk = (t.*f)(x_backward_jk);   
                x_backward_jk[j] += h_j;  
                x_backward_jk[k] += h_k;  
 
                x_forward_jk[j] += h_j;  
                x_forward_jk[k] += h_k;  
-               y_forward_jk =(t.*f)(x_forward_jk);   
+               y_forward_jk = (t.*f)(x_forward_jk);   
                x_forward_jk[j] -= h_j;  
                x_forward_jk[k] -= h_k;  
             
                x_backward_j_forward_k[j] -= h_j;
                x_backward_j_forward_k[k] += h_k;
-               y_backward_j_forward_k =(t.*f)(x_backward_j_forward_k);   
+               y_backward_j_forward_k = (t.*f)(x_backward_j_forward_k);   
                x_backward_j_forward_k[j] += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
 			   x_forward_j_backward_k[j] += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
-               y_forward_j_backward_k =(t.*f)(x_forward_j_backward_k);   
+               y_forward_j_backward_k = (t.*f)(x_forward_j_backward_k);   
 			   x_forward_j_backward_k[j] -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
             }
          }
 	  
@@ -2798,7 +2692,7 @@ public:
    }
 
 
-   // Vector< Matrix<double> > calculate_Hessian_form(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
+   // Vector< Matrix<double> > calculate_Hessian(const T&, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Vector<double> f(const Vector<double>&) const. 
@@ -2807,39 +2701,24 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix<double> > calculate_Hessian_form(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
+   Vector< Matrix<double> > calculate_Hessian(const T& t, Vector<double>(T::*f)(const Vector<double>&) const, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Hessian_form(t, f, x));
+            return(calculate_forward_differences_Hessian(t, f, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Hessian_form(t, f, x));
+            return(calculate_central_differences_Hessian(t, f, x));
          }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_Hessian_form(const T& t, Vector<double>(T::*f)(const Vector<double>&), const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector< Matrix<double> >();
    }
 
-
-   // Vector< Matrix <double> > calculate_forward_differences_Hessian_form
-   //(const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&, const Vector<double>&) const. 
@@ -2850,13 +2729,13 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_forward_differences_Hessian_form
+   Vector< Matrix <double> > calculate_forward_differences_Hessian
   (const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {      
-      Vector<double> y =(t.*f)(dummy_vector, x);   
+      Vector<double> y = (t.*f)(dummy_vector, x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -2884,30 +2763,30 @@ public:
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(dummy_vector, x_forward_j);
+            y_forward_j = (t.*f)(dummy_vector, x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_2j[j] += 2.0*h_j;       
-            y_forward_2j =(t.*f)(dummy_vector, x_forward_2j);
+            y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j;       
 
-            H[i](j,j) =(y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
 
 	        for(size_t k = j; k < n; k++)
 		    {
                h_k = calculate_h(x[k]);
 
                x_forward_k[k] += h_k;       
-               y_forward_k =(t.*f)(dummy_vector, x_forward_k);
+               y_forward_k = (t.*f)(dummy_vector, x_forward_k);
                x_forward_k[k] -= h_k;       
 
                x_forward_jk[j] += h_j; 
                x_forward_jk[k] += h_k; 
-               y_forward_jk =(t.*f)(dummy_vector, x_forward_jk);   
+               y_forward_jk = (t.*f)(dummy_vector, x_forward_jk);   
                x_forward_jk[j] -= h_j; 
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
 			}
 		 }
 
@@ -2924,7 +2803,7 @@ public:
    }
 
 
-   // Vector< Matrix <double> > calculate_central_differences_Hessian_form
+   // Vector< Matrix <double> > calculate_central_differences_Hessian
    //(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
@@ -2936,13 +2815,13 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_central_differences_Hessian_form
+   Vector< Matrix <double> > calculate_central_differences_Hessian
   (const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy_vector, x);   
+      Vector<double> y = (t.*f)(dummy_vector, x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -2982,22 +2861,22 @@ public:
             h_j = calculate_h(x[j]);
 
             x_backward_2j[j] -= 2.0*h_j; 
-            y_backward_2j =(t.*f)(dummy_vector, x_backward_2j);
+            y_backward_2j = (t.*f)(dummy_vector, x_backward_2j);
             x_backward_2j[j] += 2.0*h_j; 
 
             x_backward_j[j] -= h_j; 
-            y_backward_j =(t.*f)(dummy_vector, x_backward_j);
+            y_backward_j = (t.*f)(dummy_vector, x_backward_j);
             x_backward_j[j] += h_j; 
 
             x_forward_j[j] += h_j; 
-            y_forward_j =(t.*f)(dummy_vector, x_forward_j);
+            y_forward_j = (t.*f)(dummy_vector, x_forward_j);
             x_forward_j[j] -= h_j; 
 
             x_forward_2j[j] += 2.0*h_j; 
-            y_forward_2j =(t.*f)(dummy_vector, x_forward_2j);
+            y_forward_2j = (t.*f)(dummy_vector, x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j; 
 
-            H[i](j,j) =(-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
 
             for(size_t k = j; k < n; k++)
             {
@@ -3005,29 +2884,29 @@ public:
 
                x_backward_jk[j] -= h_j;  
                x_backward_jk[k] -= h_k;  
-               y_backward_jk =(t.*f)(dummy_vector, x_backward_jk);   
+               y_backward_jk = (t.*f)(dummy_vector, x_backward_jk);   
                x_backward_jk[j] += h_j;  
                x_backward_jk[k] += h_k;  
 
                x_forward_jk[j] += h_j;  
                x_forward_jk[k] += h_k;  
-               y_forward_jk =(t.*f)(dummy_vector, x_forward_jk);   
+               y_forward_jk = (t.*f)(dummy_vector, x_forward_jk);   
                x_forward_jk[j] -= h_j;  
                x_forward_jk[k] -= h_k;  
             
                x_backward_j_forward_k[j] -= h_j;
                x_backward_j_forward_k[k] += h_k;
-               y_backward_j_forward_k =(t.*f)(dummy_vector, x_backward_j_forward_k);   
+               y_backward_j_forward_k = (t.*f)(dummy_vector, x_backward_j_forward_k);   
                x_backward_j_forward_k[j] += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
 			   x_forward_j_backward_k[j] += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
-               y_forward_j_backward_k =(t.*f)(dummy_vector, x_forward_j_backward_k);   
+               y_forward_j_backward_k = (t.*f)(dummy_vector, x_forward_j_backward_k);   
 			   x_forward_j_backward_k[j] -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
             }
          }
 	  
@@ -3044,7 +2923,7 @@ public:
    }
 
 
-   // Vector< Matrix<double> > calculate_Hessian_form
+   // Vector< Matrix<double> > calculate_Hessian
    //(const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
@@ -3056,40 +2935,25 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix<double> > calculate_Hessian_form
+   Vector< Matrix<double> > calculate_Hessian
   (const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Hessian_form(t, f, dummy_vector, x));
+            return(calculate_forward_differences_Hessian(t, f, dummy_vector, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Hessian_form(t, f, dummy_vector, x));
+            return(calculate_central_differences_Hessian(t, f, dummy_vector, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector< Matrix<double> > calculate_Hessian_form\n"
-                   << "(const T& t, Vector<double>(T::*f)(const Vector<double>&, const Vector<double>&) const, const Vector<double>&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<Matrix<double>>();
    }
 
-
-   // Vector< Matrix <double> > calculate_forward_differences_Hessian_form(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -3100,12 +2964,12 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_forward_differences_Hessian_form(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector< Matrix <double> > calculate_forward_differences_Hessian(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {      
-      Vector<double> y =(t.*f)(dummy, x);   
+      Vector<double> y = (t.*f)(dummy, x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -3133,30 +2997,30 @@ public:
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(dummy, x_forward_j);
+            y_forward_j = (t.*f)(dummy, x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_2j[j] += 2.0*h_j;       
-            y_forward_2j =(t.*f)(dummy, x_forward_2j);
+            y_forward_2j = (t.*f)(dummy, x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j;       
 
-            H[i](j,j) =(y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
 
 	         for(size_t k = j; k < n; k++)
 			   {
                h_k = calculate_h(x[k]);
 
                x_forward_k[k] += h_k;       
-               y_forward_k =(t.*f)(dummy, x_forward_k);
+               y_forward_k = (t.*f)(dummy, x_forward_k);
                x_forward_k[k] -= h_k;       
 
                x_forward_jk[j] += h_j; 
                x_forward_jk[k] += h_k; 
-               y_forward_jk =(t.*f)(dummy, x_forward_jk);   
+               y_forward_jk = (t.*f)(dummy, x_forward_jk);   
                x_forward_jk[j] -= h_j; 
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
             }
 		 }
 
@@ -3173,7 +3037,7 @@ public:
    }
 
 
-   // Vector< Matrix <double> > calculate_central_differences_Hessian_form(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
+   // Vector< Matrix <double> > calculate_central_differences_Hessian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -3184,12 +3048,12 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_central_differences_Hessian_form(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector< Matrix <double> > calculate_central_differences_Hessian(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
-      Vector<double> y =(t.*f)(dummy, x);   
+      Vector<double> y = (t.*f)(dummy, x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -3229,22 +3093,22 @@ public:
             h_j = calculate_h(x[j]);
 
             x_backward_2j[j] -= 2.0*h_j; 
-            y_backward_2j =(t.*f)(dummy, x_backward_2j);
+            y_backward_2j = (t.*f)(dummy, x_backward_2j);
             x_backward_2j[j] += 2.0*h_j; 
 
             x_backward_j[j] -= h_j; 
-            y_backward_j =(t.*f)(dummy, x_backward_j);
+            y_backward_j = (t.*f)(dummy, x_backward_j);
             x_backward_j[j] += h_j; 
 
             x_forward_j[j] += h_j; 
-            y_forward_j =(t.*f)(dummy, x_forward_j);
+            y_forward_j = (t.*f)(dummy, x_forward_j);
             x_forward_j[j] -= h_j; 
 
             x_forward_2j[j] += 2.0*h_j; 
-            y_forward_2j =(t.*f)(dummy, x_forward_2j);
+            y_forward_2j = (t.*f)(dummy, x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j; 
 
-            H[i](j,j) =(-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
 
             for(size_t k = j; k < n; k++)
             {
@@ -3252,29 +3116,29 @@ public:
 
                x_backward_jk[j] -= h_j;  
                x_backward_jk[k] -= h_k;  
-               y_backward_jk =(t.*f)(dummy, x_backward_jk);   
+               y_backward_jk = (t.*f)(dummy, x_backward_jk);   
                x_backward_jk[j] += h_j;  
                x_backward_jk[k] += h_k;  
 
                x_forward_jk[j] += h_j;  
                x_forward_jk[k] += h_k;  
-               y_forward_jk =(t.*f)(dummy, x_forward_jk);   
+               y_forward_jk = (t.*f)(dummy, x_forward_jk);   
                x_forward_jk[j] -= h_j;  
                x_forward_jk[k] -= h_k;  
             
                x_backward_j_forward_k[j] -= h_j;
                x_backward_j_forward_k[k] += h_k;
-               y_backward_j_forward_k =(t.*f)(dummy, x_backward_j_forward_k);   
+               y_backward_j_forward_k = (t.*f)(dummy, x_backward_j_forward_k);   
                x_backward_j_forward_k[j] += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
 			   x_forward_j_backward_k[j] += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
-               y_forward_j_backward_k =(t.*f)(dummy, x_forward_j_backward_k);   
+               y_forward_j_backward_k = (t.*f)(dummy, x_forward_j_backward_k);   
 			   x_forward_j_backward_k[j] -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
             }
          }
 	  
@@ -3291,7 +3155,7 @@ public:
    }
 
 
-   // Vector< Matrix<double> > calculate_Hessian_form(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
+   // Vector< Matrix<double> > calculate_Hessian(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&) const. 
@@ -3302,39 +3166,24 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix<double> > calculate_Hessian_form(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
+   Vector< Matrix<double> > calculate_Hessian(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&) const, const size_t& dummy, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Hessian_form(t, f, dummy, x));
+            return(calculate_forward_differences_Hessian(t, f, dummy, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Hessian_form(t, f, dummy, x));
+            return(calculate_central_differences_Hessian(t, f, dummy, x));
     	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "double calculate_Hessian_form(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&), const size_t&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
       }
+
+      return Vector<Matrix<double>>();
    }
 
-
-   // Vector< Matrix <double> > calculate_forward_differences_Hessian_form
-   //(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
    /// The function to be differentiated is of the following form: Vector<double> f(const size_t&, const Vector<double>&, const Vector<double>&) const. 
@@ -3346,13 +3195,13 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_forward_differences_Hessian_form
+   Vector< Matrix <double> > calculate_forward_differences_Hessian
   (const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t& dummy_int, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {      
-      Vector<double> y =(t.*f)(dummy_int, dummy_vector, x);   
+      Vector<double> y = (t.*f)(dummy_int, dummy_vector, x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -3380,30 +3229,30 @@ public:
             h_j = calculate_h(x[j]);
 
             x_forward_j[j] += h_j;       
-            y_forward_j =(t.*f)(dummy_int, dummy_vector, x_forward_j);
+            y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
             x_forward_j[j] -= h_j;       
 
             x_forward_2j[j] += 2.0*h_j;       
-            y_forward_2j =(t.*f)(dummy_int, dummy_vector, x_forward_2j);
+            y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j;       
 
-            H[i](j,j) =(y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
+            H[i](j,j) = (y_forward_2j[i] - 2.0*y_forward_j[i] + y[i])/pow(h_j, 2);
 
 	        for(size_t k = j; k < n; k++)
 		    {
                h_k = calculate_h(x[k]);
 
                x_forward_k[k] += h_k;       
-               y_forward_k =(t.*f)(dummy_int, dummy_vector, x_forward_k);
+               y_forward_k = (t.*f)(dummy_int, dummy_vector, x_forward_k);
                x_forward_k[k] -= h_k;       
 
                x_forward_jk[j] += h_j; 
                x_forward_jk[k] += h_k; 
-               y_forward_jk =(t.*f)(dummy_int, dummy_vector, x_forward_jk);   
+               y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);   
                x_forward_jk[j] -= h_j; 
                x_forward_jk[k] -= h_k; 
             
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j[i] - y_forward_k[i] + y[i])/(h_j*h_k);
 			}
 		 }
 
@@ -3420,7 +3269,7 @@ public:
    }
 
 
-   // Vector< Matrix <double> > calculate_central_differences_Hessian_form
+   // Vector< Matrix <double> > calculate_central_differences_Hessian
    //(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
@@ -3433,13 +3282,13 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix <double> > calculate_central_differences_Hessian_form
+   Vector< Matrix <double> > calculate_central_differences_Hessian
   (const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t& dummy_int, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {
-      const Vector<double> y =(t.*f)(dummy_int, dummy_vector, x);   
+      const Vector<double> y = (t.*f)(dummy_int, dummy_vector, x);   
 
       size_t s = y.size();
-      size_t n = x.size();
+      const size_t n = x.size();
 
       double h_j;
       double h_k;
@@ -3479,22 +3328,22 @@ public:
             h_j = calculate_h(x[j]);
 
             x_backward_2j[j] -= 2.0*h_j; 
-            y_backward_2j =(t.*f)(dummy_int, dummy_vector, x_backward_2j);
+            y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
             x_backward_2j[j] += 2.0*h_j; 
 
             x_backward_j[j] -= h_j; 
-            y_backward_j =(t.*f)(dummy_int, dummy_vector, x_backward_j);
+            y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
             x_backward_j[j] += h_j; 
 
             x_forward_j[j] += h_j; 
-            y_forward_j =(t.*f)(dummy_int, dummy_vector, x_forward_j);
+            y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
             x_forward_j[j] -= h_j; 
 
             x_forward_2j[j] += 2.0*h_j; 
-            y_forward_2j =(t.*f)(dummy_int, dummy_vector, x_forward_2j);
+            y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
             x_forward_2j[j] -= 2.0*h_j; 
 
-            H[i](j,j) =(-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+            H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
 
             for(size_t k = j; k < n; k++)
             {
@@ -3502,29 +3351,29 @@ public:
 
                x_backward_jk[j] -= h_j;  
                x_backward_jk[k] -= h_k;  
-               y_backward_jk =(t.*f)(dummy_int, dummy_vector, x_backward_jk);   
+               y_backward_jk = (t.*f)(dummy_int, dummy_vector, x_backward_jk);   
                x_backward_jk[j] += h_j;  
                x_backward_jk[k] += h_k;  
 
                x_forward_jk[j] += h_j;  
                x_forward_jk[k] += h_k;  
-               y_forward_jk =(t.*f)(dummy_int, dummy_vector, x_forward_jk);   
+               y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);   
                x_forward_jk[j] -= h_j;  
                x_forward_jk[k] -= h_k;  
             
                x_backward_j_forward_k[j] -= h_j;
                x_backward_j_forward_k[k] += h_k;
-               y_backward_j_forward_k =(t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);   
+               y_backward_j_forward_k = (t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);   
                x_backward_j_forward_k[j] += h_j;
                x_backward_j_forward_k[k] -= h_k;
 
 			   x_forward_j_backward_k[j] += h_j;
 			   x_forward_j_backward_k[k] -= h_k;
-               y_forward_j_backward_k =(t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);   
+               y_forward_j_backward_k = (t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);   
 			   x_forward_j_backward_k[j] -= h_j;
 			   x_forward_j_backward_k[k] += h_k;
  
-               H[i](j,k) =(y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+               H[i](j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
             }
          }
 	  
@@ -3541,7 +3390,7 @@ public:
    }
 
 
-   // Vector< Matrix<double> > calculate_Hessian_form
+   // Vector< Matrix<double> > calculate_Hessian
    //(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
@@ -3554,40 +3403,27 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Vector< Matrix<double> > calculate_Hessian_form
+   Vector< Matrix<double> > calculate_Hessian
   (const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t& dummy_int, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {
       switch(numerical_differentiation_method)
       {
          case ForwardDifferences:
          {
-            return(calculate_forward_differences_Hessian_form(t, f, dummy_int, dummy_vector, x));
+            return(calculate_forward_differences_Hessian(t, f, dummy_int, dummy_vector, x));
       	 }
-	     break;
 
          case CentralDifferences:
          {
-            return(calculate_central_differences_Hessian_form(t, f, dummy_int, dummy_vector, x));
-    	 }
-   	     break;
-
-         default:
-         {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Vector< Matrix<double> > calculate_Hessian_form\n"
-                   << "(const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method.\n"
-                   << "Unknown numerical differentiation method.\n";
- 
-            throw logic_error(buffer.str());
-	     }
-	     break;
+            return(calculate_central_differences_Hessian(t, f, dummy_int, dummy_vector, x));
+    	 }   	         
       }
+
+      return Vector< Matrix<double> >();
    }
 
 
-   // Matrix< Matrix <double> > calculate_central_differences_Hessian_form
+   // Matrix< Matrix <double> > calculate_central_differences_Hessian
    //(const T&, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t&, const Vector<double>&, const Vector<double>&) const method
 
    /// Returns the Hessian matrices, as a matrix of matrices, of a function of many inputs and many outputs using the central differences method.
@@ -3603,10 +3439,10 @@ public:
    Matrix< Matrix <double> > calculate_central_differences_Hessian_matrices
   (const T& t, Vector<double>(T::*f)(const size_t&, const Vector<double>&, const Vector<double>&) const, const size_t& dummy_int, const Vector<double>& dummy_vector, const Vector<double>& x) const
    {
-       const Vector<double> y =(t.*f)(dummy_int, dummy_vector, x);
+       const Vector<double> y = (t.*f)(dummy_int, dummy_vector, x);
 
        size_t s = y.size();
-       size_t n = x.size();
+       const size_t n = x.size();
 
        double h_j;
        double h_k;
@@ -3650,22 +3486,22 @@ public:
                    h_j = calculate_h(x[j]);
 
                    x_backward_2j[j] -= 2.0*h_j;
-                   y_backward_2j =(t.*f)(dummy_int, dummy_vector, x_backward_2j);
+                   y_backward_2j = (t.*f)(dummy_int, dummy_vector, x_backward_2j);
                    x_backward_2j[j] += 2.0*h_j;
 
                    x_backward_j[j] -= h_j;
-                   y_backward_j =(t.*f)(dummy_int, dummy_vector, x_backward_j);
+                   y_backward_j = (t.*f)(dummy_int, dummy_vector, x_backward_j);
                    x_backward_j[j] += h_j;
 
                    x_forward_j[j] += h_j;
-                   y_forward_j =(t.*f)(dummy_int, dummy_vector, x_forward_j);
+                   y_forward_j = (t.*f)(dummy_int, dummy_vector, x_forward_j);
                    x_forward_j[j] -= h_j;
 
                    x_forward_2j[j] += 2.0*h_j;
-                   y_forward_2j =(t.*f)(dummy_int, dummy_vector, x_forward_2j);
+                   y_forward_2j = (t.*f)(dummy_int, dummy_vector, x_forward_2j);
                    x_forward_2j[j] -= 2.0*h_j;
 
-                   H[i](j,j) =(-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
+                   H[i](j,j) = (-y_forward_2j[i] + 16.0*y_forward_j[i] -30.0*y[i] + 16.0*y_backward_j[i] - y_backward_2j[i])/(12.0*pow(h_j, 2));
 
                    for(size_t k = j; k < s; k++)
                    {
@@ -3673,29 +3509,29 @@ public:
 
                        x_backward_jk[j] -= h_j;
                        x_backward_jk[k] -= h_k;
-                       y_backward_jk =(t.*f)(dummy_int, dummy_vector, x_backward_jk);
+                       y_backward_jk = (t.*f)(dummy_int, dummy_vector, x_backward_jk);
                        x_backward_jk[j] += h_j;
                        x_backward_jk[k] += h_k;
 
                        x_forward_jk[j] += h_j;
                        x_forward_jk[k] += h_k;
-                       y_forward_jk =(t.*f)(dummy_int, dummy_vector, x_forward_jk);
+                       y_forward_jk = (t.*f)(dummy_int, dummy_vector, x_forward_jk);
                        x_forward_jk[j] -= h_j;
                        x_forward_jk[k] -= h_k;
 
                        x_backward_j_forward_k[j] -= h_j;
                        x_backward_j_forward_k[k] += h_k;
-                       y_backward_j_forward_k =(t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);
+                       y_backward_j_forward_k = (t.*f)(dummy_int, dummy_vector, x_backward_j_forward_k);
                        x_backward_j_forward_k[j] += h_j;
                        x_backward_j_forward_k[k] -= h_k;
 
                        x_forward_j_backward_k[j] += h_j;
                        x_forward_j_backward_k[k] -= h_k;
-                       y_forward_j_backward_k =(t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);
+                       y_forward_j_backward_k = (t.*f)(dummy_int, dummy_vector, x_forward_j_backward_k);
                        x_forward_j_backward_k[j] -= h_j;
                        x_forward_j_backward_k[k] += h_k;
 
-                       H(i,t)(j,k) =(y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
+                       H(i,t)(j,k) = (y_forward_jk[i] - y_forward_j_backward_k[i] - y_backward_j_forward_k[i] + y_backward_jk[i])/(4.0*h_j*h_k);
                    }
                }
 
@@ -3751,4 +3587,3 @@ private:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

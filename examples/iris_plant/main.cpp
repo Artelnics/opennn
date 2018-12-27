@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   I R I S   P L A N T   A P P L I C A T I O N                                                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */  
 /****************************************************************************************************************/
 
@@ -32,7 +31,7 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Iris Plant Application." << std::endl;
+        cout << "OpenNN. Iris Plant Application." << endl;
 
         srand((unsigned)time(NULL));
 
@@ -75,8 +74,8 @@ int main(void)
         variables_pointer->set_name(6, "iris_virginica");
         variables_pointer->set_use(6, Variables::Target);
 
-        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        const Matrix<string> inputs_information = variables_pointer->get_inputs_information();
+        const Matrix<string> targets_information = variables_pointer->get_targets_information();
 
         // Instances
 
@@ -112,21 +111,15 @@ int main(void)
 
         probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Softmax);
 
-        // Loss index
-
-        LossIndex loss_index(&neural_network, &data_set);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         // Training strategy
 
-        TrainingStrategy training_strategy(&loss_index);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
+        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
 
         training_strategy.set_display(false);
 
@@ -134,13 +127,13 @@ int main(void)
 
         ModelSelection model_selection(&training_strategy);
 
-        model_selection.set_order_selection_type(ModelSelection::GOLDEN_SECTION);
+        model_selection.set_order_selection_method(ModelSelection::GOLDEN_SECTION);
 
         GoldenSectionOrder* golden_section_order_pointer = model_selection.get_golden_section_order_pointer();
 
         golden_section_order_pointer->set_tolerance(1.0e-7);
 
-        ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_order_selection();
+        ModelSelection::Results model_selection_results = model_selection.perform_order_selection();
 
         // Testing analysis
 
@@ -164,9 +157,9 @@ int main(void)
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cout << e.what() << std::endl;
+        cout << e.what() << endl;
 
         return(1);
     }
@@ -174,7 +167,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

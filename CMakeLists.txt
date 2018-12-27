@@ -28,7 +28,6 @@ endif()
 # Uncomment next line to compile without using C++11
 #add_definitions(-D__Cpp11__)
 
-add_subdirectory(tinyxml2)
 add_subdirectory(opennn)
 include_directories(opennn)
 add_subdirectory(examples)

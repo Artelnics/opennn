@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   D A T A   S E T   T E S T   C L A S S   H E A D E R                                                        */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -62,12 +62,12 @@ public:
 
    void test_get_data();
 
-   void test_arrange_training_data();
-   void test_arrange_selection_data();
-   void test_arrange_testing_data();
+   void test_get_training_data();
+   void test_get_selection_data();
+   void test_get_testing_data();
 
-   void test_arrange_input_data();
-   void test_arrange_target_data();
+   void test_get_inputs();
+   void test_get_targets();
   
    // Instance methods
 

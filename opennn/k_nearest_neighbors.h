@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   K   N E A R E S T   N E I G H B O R S   H E A D E R                                                        */
 /*                                                                                                              */
-/*   Javier Sanchez                                                                                             */
+/*   Javier Sanchez, Alberto Quesada                                                                            */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   javiersanchez@artelnics.com                                                                                */
+/*   javiersanchez@artelnics.com, albertoquesada@artelnics.com                                                  */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -35,7 +35,6 @@
 
 #include "tinyxml2.h"
 
-
 namespace OpenNN
 {
 
@@ -44,7 +43,8 @@ class KNearestNeighbors
 
 public:
 
-    enum Method {Softmax, Unitary, MinMax, MeanStd};
+    enum ScalingMethod{Softmax, Unitary, MinMax, MeanStd};
+    enum DistanceMethod{Euclidean, Manhattan};
 
     // DEFAULT CONSTRUCTOR
 
@@ -70,7 +70,6 @@ public:
         Matrix<size_t> indices;
     };
 
-
     // METHODS
 
     // Get methods
@@ -85,9 +84,13 @@ public:
 
     void set_weights(const Matrix<double>&);
 
-    void set_normalization_method(const Method&);
+    void set_scaling_method(const ScalingMethod&);
 
-    void set_normalization_method(const string&);
+    void set_scaling_method(const string&);
+
+    void set_distance_method(const DistanceMethod&);
+
+    void set_distance_method(const string&);
 
     // Algorithm methods
 
@@ -95,7 +98,9 @@ public:
 
     Vector<double> calculate_distances_weights(const Vector<double>&) const;
 
-    Neighbors calculate_k_nearest_neighbors(const Vector<double>&) const;
+    Neighbors calculate_k_nearest_neighbors_unsupervised(const Vector<double>&) const;
+
+    Neighbors calculate_k_nearest_neighbors_supervised(const Vector<double>&) const;
 
     // Output methods
 
@@ -105,11 +110,11 @@ public:
 
     // Output data methods
 
-    Matrix<double> calculate_output_data(const Matrix<double>&) const;
+    Matrix<double> calculate_outputs(const Matrix<double>&) const;
 
-    Matrix<double> calculate_selection_output_data(void) const;
+    Matrix<double> calculate_selection_outputs(void) const;
 
-    Matrix<double> calculate_testing_output_data(void) const;
+    Matrix<double> calculate_testing_outputs(void) const;
 
     // Error methods
 
@@ -137,7 +142,8 @@ private:
 
     Matrix<double> weights;
 
-    Method normalization_method;
+    ScalingMethod scaling_method;
+    DistanceMethod distance_method;
 };
 
 }

@@ -74,7 +74,6 @@ GeneticAlgorithm::~GeneticAlgorithm()
 
 // METHODS
 
-// const Vector< Vector<bool> >& get_population() const method
 
 /// Returns the population matrix.
 
@@ -83,7 +82,6 @@ const Vector< Vector<bool> >& GeneticAlgorithm::get_population() const
     return(population);
 }
 
-// const Matrix<double>& get_loss() const method
 
 /// Returns the training and selection losses of the population.
 
@@ -92,7 +90,6 @@ const Matrix<double>& GeneticAlgorithm::get_loss() const
     return(loss);
 }
 
-// const Vector<double>& get_fitness() const method
 
 /// Returns the fitness of the population.
 
@@ -101,7 +98,6 @@ const Vector<double>& GeneticAlgorithm::get_fitness() const
     return(fitness);
 }
 
-// const InitializationMethod& get_initialization_method() const method
 
 /// Returns the method for the initialization of the population.
 
@@ -110,7 +106,6 @@ const GeneticAlgorithm::InitializationMethod& GeneticAlgorithm::get_initializati
     return(initialization_method);
 }
 
-// const CrossoverMethod& get_crossover_method() const method
 
 /// Returns the method for the crossover of the population.
 
@@ -119,7 +114,6 @@ const GeneticAlgorithm::CrossoverMethod& GeneticAlgorithm::get_crossover_method(
     return(crossover_method);
 }
 
-// const FitnessAssignment& get_fitness_assignment_method() const method
 
 /// Returns the method for the fitness assignment of the population.
 
@@ -129,8 +123,6 @@ const GeneticAlgorithm::FitnessAssignment& GeneticAlgorithm::get_fitness_assignm
 }
 
 
-// const size_t& get_population_size() const method
-
 /// Returns the size of the population.
 
 const size_t& GeneticAlgorithm::get_population_size() const
@@ -138,7 +130,6 @@ const size_t& GeneticAlgorithm::get_population_size() const
     return(population_size);
 }
 
-// const double& get_mutation_rate() const method
 
 /// Returns the rate used in the mutation.
 
@@ -147,7 +138,6 @@ const double& GeneticAlgorithm::get_mutation_rate() const
     return(mutation_rate);
 }
 
-// const size_t& get_elitism_size() const method
 
 /// Returns the size of the elite in the selection.
 
@@ -156,7 +146,6 @@ const size_t& GeneticAlgorithm::get_elitism_size() const
     return(elitism_size);
 }
 
-// const size_t& get_crossover_first_point() const method
 
 /// Returns the first point used for the crossover.
 
@@ -165,7 +154,6 @@ const size_t& GeneticAlgorithm::get_crossover_first_point() const
     return(crossover_first_point);
 }
 
-// const size_t& get_crossover_second_point() const method
 
 /// Returns the second point used for the crossover.
 
@@ -174,7 +162,6 @@ const size_t& GeneticAlgorithm::get_crossover_second_point() const
     return(crossover_second_point);
 }
 
-// const double& get_selective_pressure() const method
 
 /// Returns the selective pressure used for the fitness assignment.
 
@@ -183,7 +170,6 @@ const double& GeneticAlgorithm::get_selective_pressure() const
     return(selective_pressure);
 }
 
-// const double& get_incest_prevention_distance() const method
 
 /// Returns the incest prevention distance used for the crossover.
 
@@ -192,7 +178,6 @@ const double& GeneticAlgorithm::get_incest_prevention_distance() const
     return(incest_prevention_distance);
 }
 
-// const bool& get_reserve_generation_mean() const method
 
 /// Returns true if the generation mean of the selection losses are to be reserved, and false otherwise.
 
@@ -201,7 +186,6 @@ const bool& GeneticAlgorithm::get_reserve_generation_mean() const
     return(reserve_generation_mean);
 }
 
-// const bool& get_reserve_generation_standard_deviation() const method
 
 /// Returns true if the generation standard deviation of the selection losses are to be reserved, and false otherwise.
 
@@ -210,7 +194,6 @@ const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation() const
     return(reserve_generation_standard_deviation);
 }
 
-// const bool& get_reserve_generation_minimum_selection() const method
 
 /// Returns true if the generation minimum selection loss are to be reserved, and false otherwise.
 
@@ -219,7 +202,6 @@ const bool& GeneticAlgorithm::get_reserve_generation_minimum_selection() const
     return(reserve_generation_minimum_selection);
 }
 
-// const bool& get_reserve_generation_optimum_loss() const method
 
 /// Returns true if the generation optimum loss error are to be reserved, and false otherwise.
 
@@ -228,7 +210,6 @@ const bool& GeneticAlgorithm::get_reserve_generation_optimum_loss() const
     return(reserve_generation_optimum_loss);
 }
 
-// string write_initialization_method() const method
 
 /// Return a string with the initialization method of genetic algorithm.
 
@@ -236,30 +217,19 @@ string GeneticAlgorithm::write_initialization_method() const
 {
     switch(initialization_method)
     {
-    case Random:
-    {
-        return("Random");
+        case Random:
+        {
+            return("Random");
+        }
+        case Weigthed:
+        {
+            return("Weigthed");
+        }
     }
-    case Weigthed:
-    {
-        return("Weigthed");
-    }
-    default:
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "string write_initialization_method() const method.\n"
-               << "Unknown initialization method.\n";
-
-        throw logic_error(buffer.str());
-
-        break;
-    }
-    }
+    return string();
 }
 
-// string write_crossover_method() const method
 
 /// Return a string with the crossover method of genetic algorithm.
 
@@ -267,34 +237,23 @@ string GeneticAlgorithm::write_crossover_method() const
 {
     switch(crossover_method)
     {
-    case OnePoint:
-    {
-        return("OnePoint");
+        case OnePoint:
+        {
+            return("OnePoint");
+        }
+        case TwoPoint:
+        {
+            return("TwoPoint");
+        }
+        case Uniform:
+        {
+            return("Uniform");
+        }
     }
-    case TwoPoint:
-    {
-        return("TwoPoint");
-    }
-    case Uniform:
-    {
-        return("Uniform");
-    }
-    default:
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "string write_crossover_method() const method.\n"
-               << "Unknown crossover method.\n";
-
-        throw logic_error(buffer.str());
-
-        break;
-    }
-    }
+    return string();
 }
 
-// string write_fitness_assignment_method() const method
 
 /// Return a string with the fitness assignment method of genetic algorithm.
 
@@ -302,39 +261,27 @@ string GeneticAlgorithm::write_fitness_assignment_method() const
 {
     switch(fitness_assignment_method)
     {
-    case ObjectiveBased:
-    {
-        return("ObjectiveBased");
+        case ObjectiveBased:
+        {
+            return("ObjectiveBased");
+        }
+        case RankBased:
+        {
+            return("RankBased");
+        }
     }
-    case RankBased:
-    {
-        return("RankBased");
-    }
-    default:
-    {
-        ostringstream buffer;
 
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "string write_fitness_assignment_method() const method.\n"
-               << "Unknown fitness assignment method.\n";
-
-        throw logic_error(buffer.str());
-
-        break;
-    }
-    }
+    return string();
 }
 
-
-// void set_default() method
 
 /// Sets the members of the genetic algorithm object to their default values.
 
 void GeneticAlgorithm::set_default()
 {
-    size_t inputs_number ;
+    size_t inputs_number;
 
-    if(training_strategy_pointer == NULL
+    if(training_strategy_pointer == nullptr
     || !training_strategy_pointer->has_loss_index())
     {
         maximum_iterations_number = 100;
@@ -347,7 +294,7 @@ void GeneticAlgorithm::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
-        maximum_iterations_number =(size_t)max(100.,inputs_number*5.);
+        maximum_iterations_number = static_cast<size_t>(max(100.,inputs_number*5.));
 
         mutation_rate = 1./inputs_number;
 
@@ -393,7 +340,6 @@ void GeneticAlgorithm::set_default()
 
 }
 
-// void set_population(const Vector< Vector<bool> >&) method
 
 /// Sets a new popualtion.
 /// @param new_population New population matrix.
@@ -410,7 +356,7 @@ void GeneticAlgorithm::set_population(const Vector< Vector<bool> >& new_populati
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to training strategy is NULL.\n";
+               << "Pointer to training strategy is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -423,7 +369,7 @@ void GeneticAlgorithm::set_population(const Vector< Vector<bool> >& new_populati
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to loss functional is NULL.\n";
+               << "Pointer to loss index is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -436,7 +382,7 @@ void GeneticAlgorithm::set_population(const Vector< Vector<bool> >& new_populati
     {
         buffer << "OpenNN Exception: InputsSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to neural network is NULL.\n";
+               << "Pointer to neural network is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -470,7 +416,6 @@ void GeneticAlgorithm::set_population(const Vector< Vector<bool> >& new_populati
     population.set(new_population);
 }
 
-// void set_loss(const Matrix<double>&) method
 
 /// Sets a new training losses of the population.
 /// @param new_loss New training losses.
@@ -506,7 +451,6 @@ void GeneticAlgorithm::set_loss(const Matrix<double>& new_loss)
     loss.set(new_loss);
 }
 
-// void set_fitness(const Vector<double>&) method
 
 /// Sets a new fitness for the population.
 /// @param new_fitness New fitness values.
@@ -545,7 +489,6 @@ void GeneticAlgorithm::set_fitness(const Vector<double>& new_fitness)
     fitness.set(new_fitness);
 }
 
-// void set_inicialization_method(const InitializationMethod&) method
 
 /// Sets a new method to initiate the population in the algorithm.
 /// @param new_initialization_method Method to initialize the population(Random or Weighted).
@@ -555,7 +498,6 @@ void GeneticAlgorithm::set_inicialization_method(const InitializationMethod& new
     initialization_method = new_initialization_method;
 }
 
-// void set_fitness_assignment_method(const FitnessAssignment&) method
 
 /// Sets a new method to assign the fitness in the algorithm.
 /// @param new_fitness_assignment_method Method to assign the fitness(RankBased or ObjectiveBased).
@@ -565,7 +507,6 @@ void GeneticAlgorithm::set_fitness_assignment_method(const FitnessAssignment& ne
     fitness_assignment_method = new_fitness_assignment_method;
 }
 
-// void set_crossover_method(const CrossoverMethod&) method
 
 /// Sets a new method to perform the crossover in the algorithm.
 /// @param new_crossover_method Method to perform the crossover of the selected population(Uniform, OnePoint or TwoPoint).
@@ -575,7 +516,6 @@ void GeneticAlgorithm::set_crossover_method(const CrossoverMethod& new_crossover
     crossover_method = new_crossover_method;
 }
 
-// void set_inicialization_method(const string&) method
 
 /// Sets a new initialization method from a string.
 /// @param new_initialization_method String with the crossover method.
@@ -604,7 +544,6 @@ void GeneticAlgorithm::set_inicialization_method(const string& new_initializatio
     }
 }
 
-// void set_fitness_assignment_method(const string&) method
 
 /// Sets a new fitness assignment method from a string.
 /// @param new_fitness_assignment_method String with the fitness assignment method.
@@ -633,7 +572,6 @@ void GeneticAlgorithm::set_fitness_assignment_method(const string& new_fitness_a
     }
 }
 
-// void set_crossover_method(const string&) method
 
 /// Sets a new crossover method from a string.
 /// @param new_crossover_method String with the crossover method.
@@ -667,7 +605,6 @@ void GeneticAlgorithm::set_crossover_method(const string& new_crossover_method)
     }
 }
 
-// void set_population_size(const size_t&) method
 
 /// Sets a new population size. It must be greater than 4.
 /// @param new_population_size Size of the population.
@@ -692,7 +629,6 @@ void GeneticAlgorithm::set_population_size(const size_t& new_population_size)
     population_size = new_population_size;
 }
 
-// void set_mutation_rate(const double&) method
 
 /// Sets a new rate used in the mutation.
 /// It is a number between 0 and 1.
@@ -718,7 +654,6 @@ void GeneticAlgorithm::set_mutation_rate(const double& new_mutation_rate)
     mutation_rate = new_mutation_rate;
 }
 
-// void set_elitism_size(const size_t&) method
 
 /// Sets the number of individuals with the greatest fitness selected.
 /// @param new_elitism_size Size of the elitism.
@@ -743,7 +678,6 @@ void GeneticAlgorithm::set_elitism_size(const size_t& new_elitism_size)
     elitism_size = new_elitism_size;
 }
 
-// void set_crossover_first_point(const size_t&) method
 
 /// Sets the point of for the OnePoint and TwoPoint crossover.
 /// If it is set to 0, the algorithm will select it randomly for each crossover.
@@ -769,7 +703,6 @@ void GeneticAlgorithm::set_crossover_first_point(const size_t& new_crossover_fir
     crossover_first_point = new_crossover_first_point;
 }
 
-// void set_crossover_second_point(const size_t&) method
 
 /// Sets the point of for the TwoPoint crossover.
 /// If it is set to 0, the algorithm will select it randomly for each crossover.
@@ -806,7 +739,6 @@ void GeneticAlgorithm::set_crossover_second_point(const size_t& new_crossover_se
     crossover_second_point = new_crossover_second_point;
 }
 
-// void set_selective_pressure(const double&) method
 
 /// Sets a new value for the selective pressure parameter.
 /// Linear ranking allows values for the selective pressure greater than 0.
@@ -832,7 +764,6 @@ void GeneticAlgorithm::set_selective_pressure(const double& new_selective_pressu
     selective_pressure = new_selective_pressure;
 }
 
-// void set_incest_prevention_distance(const double&) method
 
 /// Sets a new value for the incest prevention distance used in the crossover.
 /// @param new_incest_prevention_distance Incest prevention distance value.
@@ -842,7 +773,6 @@ void GeneticAlgorithm::set_incest_prevention_distance(const double& new_incest_p
     incest_prevention_distance = new_incest_prevention_distance;
 }
 
-// void set_reserve_generation_mean(const bool&) method
 
 /// Sets the reserve flag for the generation mean history.
 /// @param new_reserve_generation_mean Flag value.
@@ -852,7 +782,6 @@ void GeneticAlgorithm::set_reserve_generation_mean(const bool& new_reserve_gener
     reserve_generation_mean = new_reserve_generation_mean;
 }
 
-// void set_reserve_generation_standard_deviation(const bool&) method
 
 /// Sets the reserve flag for the generation standard deviation history.
 /// @param new_reserve_generation_standard_deviation Flag value.
@@ -862,7 +791,6 @@ void GeneticAlgorithm::set_reserve_generation_standard_deviation(const bool& new
     reserve_generation_standard_deviation = new_reserve_generation_standard_deviation;
 }
 
-// void set_reserve_generation_minimum_selection(const bool&) method
 
 /// Sets the reserve flag for the generation minimum selection loss history.
 /// @param new_reserve_generation_minimum_selection Flag value.
@@ -872,7 +800,6 @@ void GeneticAlgorithm::set_reserve_generation_minimum_selection(const bool& new_
     reserve_generation_minimum_selection = new_reserve_generation_minimum_selection;
 }
 
-// void set_reserve_generation_optimum_loss(const bool&) method
 
 /// Sets the reserve flag for the optimum loss error history.
 /// @param new_reserve_generation_optimum_loss Flag value.
@@ -886,7 +813,6 @@ void GeneticAlgorithm::set_reserve_generation_optimum_loss(const bool& new_reser
 
 // Population methods
 
-// void initialize_population() method
 
 /// Initialize the population depending on the intialization method.
 
@@ -922,20 +848,9 @@ void GeneticAlgorithm::initialize_population()
         initialize_weighted_population();
         break;
     }
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void initialize_population() method.\n"
-               << "Unknown initialization method.\n";
-
-        throw logic_error(buffer.str());
-    }
     }
 }
 
-// void initialize_random_population() method
 
 /// Initialize the population with the random intialization method.
 
@@ -976,7 +891,7 @@ void GeneticAlgorithm::initialize_random_population()
 
         if(zero_ocurrences == inputs_number)
         {
-            inputs[rand()%inputs_number] = true;
+            inputs[static_cast<size_t>(rand())%inputs_number] = true;
         }
 
         if(population.contains(inputs) && random_loops <= 5)
@@ -995,7 +910,6 @@ void GeneticAlgorithm::initialize_random_population()
     }
 }
 
-// void initialize_weighted_population() method
 
 /// Initialize the population with the weighted intialization method.
 
@@ -1067,7 +981,7 @@ void GeneticAlgorithm::initialize_weighted_population()
 
         if(zero_ocurrences == inputs_number)
         {
-            inputs[rand()%inputs_number] = true;
+            inputs[static_cast<size_t>(rand())%inputs_number] = true;
         }
 
         if(population.contains(inputs) && random_loops <= 5)
@@ -1086,7 +1000,6 @@ void GeneticAlgorithm::initialize_weighted_population()
     }
 }
 
-// void evaluate_population() method
 
 /// Evaluate a population.
 /// Perform the trainings of the neural networks and calculate their fitness.
@@ -1131,19 +1044,19 @@ void GeneticAlgorithm::evaluate_population()
 #ifdef __OPENNN_MPI__
         // Send population
 
-        const int inputs_number =(int)population[i].size();
+        const int inputs_number = (int)population[i].size();
         Vector<int> individual_int(inputs_number);
 
         for(int j = 0; j < inputs_number; j++)
         {
-            individual_int[j] =(int)population[i][j];
+            individual_int[j] = (int)population[i][j];
         }
 
         MPI_Bcast(individual_int.data(), inputs_number, MPI_INT, 0, MPI_COMM_WORLD);
 
         for(int j = 0; j < inputs_number; j++)
         {
-            population[i][j] =(individual_int[j] == 1);
+            population[i][j] = (individual_int[j] == 1);
         }
 
 #endif
@@ -1178,7 +1091,6 @@ void GeneticAlgorithm::evaluate_population()
     calculate_fitness();
 }
 
-// void calculate_fitness() method
 
 /// Calculate the fitness with the errors depending on the fitness assignment method.
 
@@ -1211,23 +1123,12 @@ void GeneticAlgorithm::calculate_fitness()
         calculate_rank_fitness();
         break;
     }
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void calculate_fitness() method.\n"
-               << "Unknown fitness assignment method.\n";
-
-        throw logic_error(buffer.str());
-    }
     }
 
 }
 
-// void calculate_objetive_fitness() method
 
-/// Calculate the fitness with objective based fitness assignment method.
+/// Calculate the fitness with error based fitness assignment method.
 
 void GeneticAlgorithm::calculate_objetive_fitness()
 {
@@ -1240,7 +1141,6 @@ void GeneticAlgorithm::calculate_objetive_fitness()
     }
 }
 
-// void calculate_objetive_fitness() method
 
 /// Calculate the fitness with rank based fitness assignment method.
 
@@ -1256,7 +1156,6 @@ void GeneticAlgorithm::calculate_rank_fitness()
     }
 }
 
-// void evolve_population() method
 
 /// Evolve the population to a new generation.
 /// Perform the selection, crossover and mutation of the current generation.
@@ -1284,7 +1183,7 @@ void GeneticAlgorithm::evolve_population()
 
         if(zero_ocurrences == population[i].size())
         {
-            population[i][rand()%population[i].size()] = true;
+            population[i][static_cast<size_t>(rand())%population[i].size()] = true;
         }
     }
 
@@ -1292,7 +1191,6 @@ void GeneticAlgorithm::evolve_population()
 
 // Selection methods
 
-// void perform_selection() method
 
 /// Selects for crossover some individuals from the population.
 
@@ -1324,13 +1222,13 @@ void GeneticAlgorithm::perform_selection()
 
 #endif
 
-    const size_t selected_population_size =(size_t)(population_size/2);
+    const size_t selected_population_size = static_cast<size_t>(population_size/2);
 
     Vector< Vector<bool> > population_copy;
 
     Vector<bool> selected_population(population.size(),false);
 
-    size_t selected_index;
+    size_t selected_index = 0;
 
     Vector<double> fitness_sum = fitness.calculate_cumulative();
 
@@ -1406,7 +1304,6 @@ void GeneticAlgorithm::perform_selection()
 
 // Crossover methods
 
-// void perform_crossover() method
 
 /// Perform the crossover depending on the crossover method.
 
@@ -1444,20 +1341,9 @@ void GeneticAlgorithm::perform_crossover()
         perform_uniform_crossover();
         break;
     }
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void perform_crossover() method.\n"
-               << "Unknown crossover method.\n";
-
-        throw logic_error(buffer.str());
-    }
     }
 }
 
-// void perform_1point_crossover() method
 
 /// Perform the OnePoint crossover method.
 
@@ -1482,13 +1368,13 @@ void GeneticAlgorithm::perform_1point_crossover()
 
     while(new_population.size() < population_size)
     {
-        parent1_index = rand()%selected_population;
-        parent2_index = rand()%selected_population;
+        parent1_index = static_cast<size_t>(rand())%selected_population;
+        parent2_index = static_cast<size_t>(rand())%selected_population;
 
         random_loops = 0;
-        while(population[parent1_index].calculate_distance(population[parent2_index]) <= incest_prevention_distance)
+        while(population[parent1_index].calculate_euclidean_distance(population[parent2_index]) <= incest_prevention_distance)
         {
-            parent2_index = rand()%selected_population;
+            parent2_index = static_cast<size_t>(rand())%selected_population;
             random_loops++;
 
             if(random_loops == 5 && parent1_index != selected_population-1)
@@ -1508,7 +1394,7 @@ void GeneticAlgorithm::perform_1point_crossover()
 
         if(crossover_first_point == 0)
         {
-            first_point = 1 + rand()%(inputs_number-1);
+            first_point = 1 + static_cast<size_t>(rand())%(inputs_number-1);
         }
 
         for(size_t i = 0; i < inputs_number; i++)
@@ -1535,7 +1421,6 @@ void GeneticAlgorithm::perform_1point_crossover()
     set_population(new_population);
 }
 
-// void perform_2point_crossover() method
 
 /// Perform the TwoPoint crossover method.
 
@@ -1561,13 +1446,13 @@ void GeneticAlgorithm::perform_2point_crossover()
 
     while(new_population.size() < population_size)
     {
-        parent1_index = rand()%selected_population;
-        parent2_index = rand()%selected_population;
+        parent1_index = static_cast<size_t>(rand())%selected_population;
+        parent2_index = static_cast<size_t>(rand())%selected_population;
 
         random_loops = 0;
-        while(population[parent1_index].calculate_distance(population[parent2_index]) <= incest_prevention_distance)
+        while(population[parent1_index].calculate_euclidean_distance(population[parent2_index]) <= incest_prevention_distance)
         {
-            parent2_index = rand()%selected_population;
+            parent2_index = static_cast<size_t>(rand())%selected_population;
             random_loops++;
 
             if(random_loops == 5 && parent1_index != selected_population-1)
@@ -1587,12 +1472,12 @@ void GeneticAlgorithm::perform_2point_crossover()
 
         if(crossover_first_point == 0)
         {
-            first_point = 1 + rand()%(inputs_number-2);
+            first_point = 1 + static_cast<size_t>(rand())%(inputs_number-2);
         }
 
         if(crossover_second_point == 0)
         {
-            second_point = first_point + rand()%(inputs_number-1-first_point);
+            second_point = first_point + static_cast<size_t>(rand())%(inputs_number-1-first_point);
         }
 
         for(size_t i = 0; i < inputs_number; i++)
@@ -1625,8 +1510,6 @@ void GeneticAlgorithm::perform_2point_crossover()
 }
 
 
-// void perform_uniform_crossover() method
-
 /// Perform the uniform crossover method.
 
 void GeneticAlgorithm::perform_uniform_crossover()
@@ -1649,13 +1532,13 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
     while(new_population.size() < population_size)
     {
-        parent1_index = rand()%selected_population;
-        parent2_index = rand()%selected_population;
+        parent1_index = static_cast<size_t>(rand())%selected_population;
+        parent2_index = static_cast<size_t>(rand())%selected_population;
 
         random_loops = 0;
-        while(population[parent1_index].calculate_distance(population[parent2_index]) <= incest_prevention_distance)
+        while(population[parent1_index].calculate_euclidean_distance(population[parent2_index]) <= incest_prevention_distance)
         {
-            parent2_index = rand()%selected_population;
+            parent2_index = static_cast<size_t>(rand())%selected_population;
             random_loops++;
 
             if(random_loops == 5 && parent1_index != selected_population-1)
@@ -1701,7 +1584,6 @@ void GeneticAlgorithm::perform_uniform_crossover()
 
 // Mutation methods
 
-// void perform_mutation() method
 
 /// Perform the mutation of the individuals generated in the crossover.
 
@@ -1740,7 +1622,6 @@ void GeneticAlgorithm::perform_mutation()
     }
 }
 
-// size_t get_optimal_individual_index() const method
 
 /// Return the index of the optimal individual of the population considering the tolerance.
 
@@ -1776,7 +1657,6 @@ size_t GeneticAlgorithm::get_optimal_individual_index() const
     return(index);
 }
 
-// GeneticAlgorithmResults* perform_inputs_selection() method
 
 /// Perform the inputs selection with the genetic method.
 
@@ -1810,7 +1690,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double previous_minimum_selection_error = 1e10;
 
     double optimum_selection_error = 1e10;
-    double optimum_loss_error;
+    double optimum_loss_error = 0.0;
     Vector<bool> optimal_inputs;
     Vector<double> optimal_parameters;
 
@@ -1821,14 +1701,14 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     size_t index = 0;
 
     time_t beginning_time, current_time;
-    double elapsed_time;
+    double elapsed_time = 0.0;
 
     if(display)
     {
         cout << "Performing genetic inputs selection..." << endl;
     }
 
-    original_uses = variables->arrange_uses();
+    original_uses = variables->get_uses();
 
     current_uses = original_uses;
 
@@ -1909,7 +1789,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
         }
-        else if(current_minimum_selection_error <= selection_loss_goal)
+        else if(current_minimum_selection_error <= selection_error_goal)
         {
             end = true;
 
@@ -1953,7 +1833,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         if(display)
         {
             cout << "Generation: " << iterations << endl;
-            cout << "Generation optimal inputs: " << variables->arrange_inputs_name().vector_to_string() << " " << endl;
+            cout << "Generation optimal inputs: " << variables->get_inputs_name().vector_to_string() << " " << endl;
             cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
             cout << "Generation optimum selection loss: " << current_minimum_selection_error << endl;
             cout << "Corresponding training loss: " << current_minimum_loss_error << endl;
@@ -1972,9 +1852,9 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         results->loss_data.set(loss_history);
     }
 
-    if(reserve_selection_loss_data)
+    if(reserve_selection_error_data)
     {
-        results->selection_loss_data.set(selection_loss_history);
+        results->selection_error_data.set(selection_error_history);
     }
 
     if(reserve_parameters_data)
@@ -1989,7 +1869,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     }
 
     results->optimal_inputs = optimal_inputs;
-    results->final_selection_loss = optimum_selection_error;
+    results->final_selection_error = optimum_selection_error;
     results->final_loss = perform_model_evaluation(optimal_inputs)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
@@ -2017,7 +1897,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     if(neural_network_pointer->has_inputs())
     {
-        neural_network_pointer->get_inputs_pointer()->set_names(variables->arrange_inputs_name());
+        neural_network_pointer->get_inputs_pointer()->set_names(variables->get_inputs_name());
     }
 
     time(&current_time);
@@ -2027,7 +1907,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     {
         if(neural_network_pointer->has_inputs())
         {
-            cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->arrange_names().vector_to_string() << endl;
+            cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->get_names().vector_to_string() << endl;
         }
 
         cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
@@ -2039,7 +1919,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     return results;
 }
 
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -2151,7 +2030,7 @@ Matrix<string> GeneticAlgorithm::to_string_matrix() const
    labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_loss_goal;
+   buffer << selection_error_goal;
 
    values.push_back(buffer.str());
 
@@ -2196,7 +2075,7 @@ Matrix<string> GeneticAlgorithm::to_string_matrix() const
 
    buffer.str("");
 
-   if(reserve_selection_loss_data)
+   if(reserve_selection_error_data)
    {
        buffer << "true";
    }
@@ -2252,7 +2131,6 @@ Matrix<string> GeneticAlgorithm::to_string_matrix() const
     return(string_matrix);
 }
 
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the genetic algorithm parameters, the stopping criteria
 /// and other user stuff concerning the genetic algorithm object.
@@ -2269,8 +2147,8 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
 
     document->InsertFirstChild(root_element);
 
-    tinyxml2::XMLElement* element = NULL;
-    tinyxml2::XMLText* text = NULL;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
     // Regression
 //    {
@@ -2413,7 +2291,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << selection_loss_goal;
+        buffer << selection_error_goal;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -2542,7 +2420,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
 //        root_element->LinkEndChild(element);
 
 //        buffer.str("");
-//        buffer << reserve_selection_loss_data;
+//        buffer << reserve_selection_error_data;
 
 //        text = document->NewText(buffer.str().c_str());
 //        element->LinkEndChild(text);
@@ -2599,8 +2477,6 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
     return(document);
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the genetic algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -2728,7 +2604,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_loss_goal;
+    buffer << selection_error_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2805,8 +2681,6 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this genetic algorithm object.
 /// @param document TinyXML document containing the member data.
 
@@ -2820,7 +2694,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "GeneticAlgorithm element is NULL.\n";
+               << "GeneticAlgorithm element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -2839,7 +2713,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2850,7 +2724,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_trials_number = atoi(element->GetText());
+            const size_t new_trials_number = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -2858,7 +2732,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2877,7 +2751,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2896,7 +2770,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2915,7 +2789,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2934,7 +2808,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2945,7 +2819,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_population_size = atoi(element->GetText());
+            const size_t new_population_size = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -2953,7 +2827,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2972,7 +2846,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -2991,7 +2865,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3002,7 +2876,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_elitism_size = atoi(element->GetText());
+            const size_t new_elitism_size = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -3010,7 +2884,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3021,7 +2895,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_crossover_first_point = atoi(element->GetText());
+            const size_t new_crossover_first_point = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -3029,7 +2903,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3040,7 +2914,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_crossover_second_point = atoi(element->GetText());
+            const size_t new_crossover_second_point = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -3048,7 +2922,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3067,7 +2941,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3086,7 +2960,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3105,7 +2979,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3124,7 +2998,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3143,7 +3017,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3162,7 +3036,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3181,7 +3055,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3192,15 +3066,15 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_selection_loss_data = element->GetText();
+            const string new_reserve_selection_error_data = element->GetText();
 
             try
             {
-                set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
+                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3219,7 +3093,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3238,7 +3112,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3249,15 +3123,15 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_selection_loss_goal = atof(element->GetText());
+            const double new_selection_error_goal = atof(element->GetText());
 
             try
             {
-                set_selection_loss_goal(new_selection_loss_goal);
+                set_selection_error_goal(new_selection_error_goal);
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3268,7 +3142,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_maximum_iterations_number = atoi(element->GetText());
+            const size_t new_maximum_iterations_number = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -3276,7 +3150,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3295,7 +3169,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3314,7 +3188,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3333,7 +3207,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -3352,14 +3226,13 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
 
 }
 
-// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the genetic algorithm object.
 /// @param file_name Name of genetic algorithm XML-type file.
@@ -3373,8 +3246,6 @@ void GeneticAlgorithm::save(const string& file_name) const
    delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a genetic algorithm object from a XML-type file.
 /// @param file_name Name of genetic algorithm XML-type file.
@@ -3399,7 +3270,6 @@ void GeneticAlgorithm::load(const string& file_name)
    from_XML(document);
 }
 
-// string object_to_string() const method
 
 /// Returns a string representation of the current genetic algorithm results structure.
 
@@ -3415,20 +3285,20 @@ string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
                << parameters_data.to_row_matrix() << "\n";
     }
 
-    // Performance history
+    // Loss history
 
     if(!loss_data.empty())
     {
-        buffer << "% Performance history:\n"
+        buffer << "% Loss history:\n"
                << loss_data.to_row_matrix() << "\n";
     }
 
     // selection loss history
 
-    if(!selection_loss_data.empty())
+    if(!selection_error_data.empty())
     {
         buffer << "% Selection loss history:\n"
-               << selection_loss_data.to_row_matrix() << "\n";
+               << selection_error_data.to_row_matrix() << "\n";
     }
 
     // Generation optimum loss history
@@ -3478,15 +3348,15 @@ string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
 
     // Optimum selection loss
 
-    if(final_selection_loss != 0)
+    if(fabs(final_selection_error - 0) > numeric_limits<double>::epsilon())
     {
         buffer << "% Optimum selection loss:\n"
-               << final_selection_loss << "\n";
+               << final_selection_error << "\n";
     }
 
     // Final loss
 
-    if(final_loss != 0)
+    if(fabs(final_loss - 0) > numeric_limits<double>::epsilon())
     {
         buffer << "% Final loss:\n"
                << final_loss << "\n";

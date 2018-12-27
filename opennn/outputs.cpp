@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   O U T P U T S   C L A S S                                                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -84,7 +83,7 @@ Outputs::~Outputs()
 /// It assigns to this object the members of an existing outputs object.
 /// @param other_outputs Outputs object to be assigned.
 
-Outputs& Outputs::operator =(const Outputs& other_outputs)
+Outputs& Outputs::operator = (const Outputs& other_outputs)
 {
     if(this != &other_outputs)
     {
@@ -102,14 +101,13 @@ Outputs& Outputs::operator =(const Outputs& other_outputs)
 
 // EQUAL TO OPERATOR
 
-// bool operator ==(const Outputs&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_outputs Outputs object to be compared with.
 
-bool Outputs::operator ==(const Outputs& other_outputs) const
+bool Outputs::operator == (const Outputs& other_outputs) const
 {
     if(/*items == other_outputs.items
                                                    */ display == other_outputs.display)
@@ -122,8 +120,6 @@ bool Outputs::operator ==(const Outputs& other_outputs) const
     }
 }
 
-
-// bool is_empty() const method
 
 /// Returns true if both the number of outputs is zero, and false otherwise.
 
@@ -142,12 +138,10 @@ bool Outputs::is_empty() const
 }
 
 
-// Vector<string> arrange_names() const method
-
 /// Returns the names of the output variables.
 /// Such names are only used to give the user basic information about the problem at hand.
 
-Vector<string> Outputs::arrange_names() const
+Vector<string> Outputs::get_names() const
 {
     const size_t outputs_number = get_outputs_number();
 
@@ -161,8 +155,6 @@ Vector<string> Outputs::arrange_names() const
     return(names);
 }
 
-
-// const string& get_name(const size_t&) const method
 
 /// Returns the name of a single output variable.
 /// Such a name is only used to give the user basic information about the problem at hand.
@@ -193,18 +185,14 @@ const string& Outputs::get_name(const size_t& index) const
 }
 
 
-// Vector<string> arrange_descriptions() const method
-
 /// Returns the descriptions of the output variables as strings. 
 /// Such descriptions are only used to give the user basic information about the problem at hand.
 
-Vector<string> Outputs::arrange_descriptions() const
+Vector<string> Outputs::get_descriptions() const
 {
     return(descriptions);
 }
 
-
-// const string& get_description(const size_t&) const method
 
 /// Returns the description of a single output variable as a string.
 /// Such a description is only used to give the user basic information about the problem at hand.
@@ -235,12 +223,10 @@ const string& Outputs::get_description(const size_t& index) const
 }
 
 
-// Vector<string> arrange_units() const method
-
 /// Returns the units of the output variables as strings. 
 /// Such units are only used to give the user basic information about the problem at hand.
 
-Vector<string> Outputs::arrange_units() const
+Vector<string> Outputs::get_units() const
 {
     const size_t outputs_number = get_outputs_number();
 
@@ -251,10 +237,9 @@ Vector<string> Outputs::arrange_units() const
         units[i] = items[i].units;
     }
 
-    return(units);}
+    return(units);
+}
 
-
-// const string& get_unit(const size_t&) const method
 
 /// Returns the units of a single output variable as a string. 
 /// Such units are only used to give the user basic information about the problem at hand.
@@ -285,14 +270,12 @@ const string& Outputs::get_unit(const size_t& index) const
 }
 
 
-// Matrix<string> arrange_information() const method
-
 /// Returns all the available information about the outputs as a single matrix of strings.
 /// The number of rows is the number of outputs.
 /// The number of columns is three.
 /// Each row contains the information of a single output(name, units and description).
 
-Matrix<string> Outputs::arrange_information() const
+Matrix<string> Outputs::get_information() const
 {
     const size_t outputs_number = get_outputs_number();
 
@@ -309,8 +292,6 @@ Matrix<string> Outputs::arrange_information() const
 }
 
 
-// const bool& get_display() const method
-
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages 
 /// from this class are not to be displayed on the screen.
 
@@ -319,8 +300,6 @@ const bool& Outputs::get_display() const
     return(display);
 }
 
-
-// void set() method
 
 /// Sets zero outputs.
 /// It also sets the rest of members to their default values. 
@@ -332,8 +311,6 @@ void Outputs::set()
     set_default();
 }
 
-
-// void set(const size_t&) method
 
 /// Sets a new number of outputs.
 /// It also sets the rest of members to their default values. 
@@ -347,8 +324,6 @@ void Outputs::set(const size_t& new_outputs_number)
 }
 
 
-// void set(const Outputs&) method
-
 /// Sets the members of this outputs object with those from another object of the same class.
 /// @param other_outputs Outputs object to be copied.
 
@@ -360,8 +335,6 @@ void Outputs::set(const Outputs& other_outputs)
 }
 
 
-// void set(const Vector<Item>&) method
-
 /// Sets all the outputs from a single vector of items.
 /// @param new_items Output items.
 
@@ -371,8 +344,6 @@ void Outputs::set(const Vector<Item>& new_items)
 }
 
 
-// void set_outputs_number(const size_t&) method
-
 /// Sets a new number of outputs.
 /// @param new_outputs_number Number of outputs. 
 
@@ -381,8 +352,6 @@ void Outputs::set_outputs_number(const size_t& new_outputs_number)
     items.set(new_outputs_number);
 }
 
-
-// void set_default() method
 
 /// Sets the members of this object to their default values.
 
@@ -405,8 +374,6 @@ void Outputs::set_default()
     set_display(true);
 }
 
-
-// void set_names(const Vector<string>&) method
 
 /// Sets the names of the output variables.
 /// Such values are only used to give the user basic information on the problem at hand.
@@ -444,8 +411,6 @@ void Outputs::set_names(const Vector<string>& new_names)
 }
 
 
-// void set_name(const size_t&, const string&) method
-
 /// Sets the name of a single output variable.
 /// Such value is only used to give the user basic information on the problem at hand.
 /// @param index Index of output variable.
@@ -477,8 +442,6 @@ void Outputs::set_name(const size_t& index, const string& new_name)
     items[index].name = new_name;
 }
 
-
-// void set_units(const Vector<string>&) method
 
 /// Sets new units for all the output variables.
 /// Such values are only used to give the user basic information on the problem at hand.
@@ -512,8 +475,6 @@ void Outputs::set_units(const Vector<string>& new_units)
     units = new_units;
 }
 
-
-// void set_units(const size_t&, const string&) method
 
 /// Sets new units for a single output variable.
 /// Such value is only used to give the user basic information on the problem at hand.
@@ -552,8 +513,6 @@ void Outputs::set_unit(const size_t& index, const string& new_units)
 }
 
 
-// void set_descriptions(const Vector<string>&) method
-
 /// Sets new descriptions for all the output variables.
 /// Such values are only used to give the user basic information on the problem at hand.
 /// @param new_descriptions New description for the output variables.
@@ -586,8 +545,6 @@ void Outputs::set_descriptions(const Vector<string>& new_descriptions)
     descriptions = new_descriptions;
 }
 
-
-// void set_description(const size_t&, const string&) method
 
 /// Sets a new description for a single output variable.
 /// Such value is only used to give the user basic information on the problem at hand.
@@ -626,8 +583,6 @@ void Outputs::set_description(const size_t& index, const string& new_description
 }
 
 
-// void set_information(const Matrix<string>&) method
-
 /// Sets all the possible information about the output variables.
 /// The format is a vector of vectors of size three:
 /// <ul>
@@ -651,8 +606,23 @@ void Outputs::set_information(const Matrix<string>& new_information)
     }
 }
 
+void Outputs::set_information_vector_of_vector(const vector< vector<string> >& new_information)
+{
+    const size_t targets_number = new_information.size();
 
-// void set_display(const bool&) method
+    Matrix<string> targets_information(targets_number, 3);
+
+        for(size_t i = 0; i < targets_number; i++)
+        {
+
+            targets_information(i,0) = new_information[i][0];
+            targets_information(i,1) = new_information[i][1];
+            targets_information(i,2) = new_information[i][2];
+        }
+
+    set_information(targets_information);
+}
+
 
 /// Sets a new display value. 
 /// If it is set to true messages from this class are to be displayed on the screen;
@@ -665,8 +635,6 @@ void Outputs::set_display(const bool& new_display)
 }
 
 
-// void grow_output() method
-
 /// Appends a new item to the outputs.
 
 void Outputs::grow_output()
@@ -676,8 +644,6 @@ void Outputs::grow_output()
     items.push_back(item);
 }
 
-
-// void prune_output(const size_t&) method
 
 /// Removes a given item from the outputs.
 /// @param index Index of item to be pruned.
@@ -703,11 +669,9 @@ void Outputs::prune_output(const size_t& index)
 
 #endif
 
-    items.erase(items.begin()+index);
+    items.erase(items.begin()+static_cast<unsigned>(index));
 }
 
-
-// Vector<string> write_default_outputs_name() const method
 
 /// Returns the default names for the output variables:
 /// <ul>
@@ -761,8 +725,6 @@ string Outputs::object_to_string() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Serializes the outputs information object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -778,8 +740,8 @@ tinyxml2::XMLDocument* Outputs::to_XML() const
 
     document->InsertFirstChild(outputs_element);
 
-    tinyxml2::XMLElement* element = NULL;
-    tinyxml2::XMLText* text = NULL;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
     // Outputs number
     {
@@ -796,7 +758,7 @@ tinyxml2::XMLDocument* Outputs::to_XML() const
     for(size_t i = 0; i < outputs_number; i++)
     {
         element = document->NewElement("Item");
-        element->SetAttribute("Index",(unsigned)i+1);
+        element->SetAttribute("Index",static_cast<unsigned>(i)+1);
         outputs_element->LinkEndChild(element);
 
         // Name
@@ -840,8 +802,6 @@ tinyxml2::XMLDocument* Outputs::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the outputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -870,7 +830,7 @@ void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("Item");
 
-        file_stream.PushAttribute("Index",(unsigned)i+1);
+        file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
 
         // Name
 
@@ -904,8 +864,6 @@ void Outputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this outputs object.
 /// @param document XML document containing the member data.
 
@@ -919,7 +877,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: Outputs class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Outputs element is NULL.\n";
+               << "Outputs element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -932,12 +890,12 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: Outputs class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Outputs number element is NULL.\n";
+               << "Outputs number element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t outputs_number = atoi(outputs_number_element->GetText());
+    const size_t outputs_number = static_cast<size_t>(atoi(outputs_number_element->GetText()));
 
     set(outputs_number);
 
@@ -954,7 +912,7 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: Outputs class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Item " << i+1 << " is NULL.\n";
+                   << "Item " << i+1 << " is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -1010,7 +968,6 @@ void Outputs::from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
-// void to_PMML(tinyxml2::XMLElement*, const bool&, const bool&, const Vector< Statistics<double> >&) method
 
 /// Serializes the outputs object into a PMML document.
 /// @param element XML element to append the outputs object.
@@ -1089,7 +1046,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
         }
         else
         {
-            for(size_t i = 0 ; i< outputs_number; i++)
+            for(size_t i = 0; i < outputs_number; i++)
             {
                 string output_name = get_name(i);
 
@@ -1107,7 +1064,7 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
     {
         unsigned number_of_layers = element->Parent()->ToElement()->UnsignedAttribute("numberOfLayers");
 
-        for(size_t i = 0; i < outputs_number ; i++)
+        for(size_t i = 0; i < outputs_number; i++)
         {
             string output_name = get_name(i);
 
@@ -1157,8 +1114,6 @@ void Outputs::to_PMML(tinyxml2::XMLElement* element, const bool& is_probabilisti
 
 }
 
-
-// void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool&, const Vector< Statistics<double> >&) method
 
 /// Serializes the outputs data dictonary into a PMML document.
 /// @param file_stream TinyXML file to append the data dictionary.
@@ -1219,8 +1174,6 @@ void Outputs::write_PMML_data_dictionary(tinyxml2::XMLPrinter& file_stream, cons
 }
 
 
-// void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool&) method
-
 /// Serializes the outputs mining schema into a PMML document.
 /// @param file_stream TinyXML file to append the mining schema.
 /// @param is_probabilistic True if the output is a probability, false otherwise.
@@ -1240,7 +1193,7 @@ void Outputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream, const 
     }
     else
     {
-        for(size_t i = 0 ; i< outputs_number; i++)
+        for(size_t i = 0; i < outputs_number; i++)
         {
             string output_name = get_name(i);
 
@@ -1255,8 +1208,6 @@ void Outputs::write_PMML_mining_schema(tinyxml2::XMLPrinter& file_stream, const 
 }
 
 
-// void write_PMML_neural_outputs(tinyxml2::XMLPrinter&, const bool& , const bool& is_data_unscaled = false, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >() ) method
-
 /// Serializes the neural outputs into a PMML document.
 /// @param file_stream TinyXML file to append the neural outputs.
 /// @param number_of_layers Number of layers of the multilayer perceptron.
@@ -1267,7 +1218,7 @@ void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_
 {
     const size_t outputs_number = get_outputs_number();
 
-    for(size_t i = 0; i < outputs_number ; i++)
+    for(size_t i = 0; i < outputs_number; i++)
     {
         string output_name = get_name(i);
 

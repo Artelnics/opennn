@@ -128,9 +128,9 @@ public:
 
     static Matrix<double> calculate_correlations(const Matrix<double>&);
 
-    static Vector<double> calculate_correlations(const Matrix<double>& , const size_t&);
+    static Vector<double> calculate_correlations(const Matrix<double>&, const size_t&);
 
-    static Matrix<double> calculate_correlations(const Matrix<double>& , const Vector<size_t>&);
+    static Matrix<double> calculate_correlations(const Matrix<double>&, const Vector<size_t>&);
 
     // Multiple correlation methods
 

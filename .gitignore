@@ -227,4 +227,7 @@ Makefile*
 
 [Pp]ybind/
 
+[Bb]ranches/
+[Pp]ublic_html/
+
 # Created by .ignore support plugin (hsz.mobi)

@@ -10,6 +10,8 @@
 /*                                                                                                              */
 /****************************************************************************************************************/
 
+#pragma once
+
 #ifndef __MATRIX_H__
 #define __MATRIX_H__
 
@@ -32,6 +34,7 @@ using namespace std;
 
 namespace OpenNN
 {
+
 
 /// This template class defines a matrix for general purpose use.
 /// This matrix also implements some mathematical methods which can be useful. 
@@ -66,7 +69,7 @@ public:
 
     // ASSIGNMENT OPERATORS
 
-    inline Matrix<T>& operator =(const Matrix<T>&);
+    inline Matrix<T>& operator = (const Matrix<T>&);
 
     // REFERENCE OPERATORS
 
@@ -78,13 +81,13 @@ public:
 
     inline const T& operator()(const size_t&, const string&) const;
 
-    bool operator ==(const Matrix<T>&) const;
+    bool operator == (const Matrix<T>&) const;
 
-    bool operator ==(const T&) const;
+    bool operator == (const T&) const;
 
-    bool operator !=(const Matrix<T>&) const;
+    bool operator != (const Matrix<T>&) const;
 
-    bool operator !=(const T& value) const;
+    bool operator != (const T& value) const;
 
     bool operator >(const Matrix<T>&) const;
 
@@ -94,13 +97,13 @@ public:
 
     bool operator <(const T& value) const;
 
-    bool operator >=(const Matrix<T>&) const;
+    bool operator >= (const Matrix<T>&) const;
 
-    bool operator >=(const T&) const;
+    bool operator >= (const T&) const;
 
-    bool operator <=(const Matrix<T>&) const;
+    bool operator <= (const Matrix<T>&) const;
 
-    bool operator <=(const T&) const;
+    bool operator <= (const T&) const;
 
     bool compare_rows(const size_t&, const Matrix<T>&, const size_t&) const;
 
@@ -146,6 +149,7 @@ public:
     void set_header(const size_t&, const string&);
 
     void tuck_in(const size_t&, const size_t&, const Matrix<T>&);
+    void tuck_in(const size_t&, const size_t&, const Vector<T>&);
 
     size_t count_diagonal_elements() const;
 
@@ -173,6 +177,9 @@ public:
     size_t count_equal_to(const string&, const Vector<T>&) const;
     size_t count_equal_to(const string&, const T&, const string&, const T&) const;
 
+    Vector<size_t> count_equal_to_by_rows(const T&) const;
+    Vector<double> count_equal_to_by_rows(const T&, const Vector<double>&) const;
+
     size_t count_not_equal_to(const T&) const;
 
     size_t count_not_equal_to(const size_t&, const T&) const;
@@ -184,7 +191,11 @@ public:
     size_t count_not_equal_to(const string&, const T&, const string&, const T&) const;
 
     size_t count_rows_equal_to(const T&) const;
+    size_t count_rows_not_equal_to(const T&) const;
+    Vector<size_t> get_rows_equal_to(const T&) const;
+
     size_t count_rows_equal_to(const Vector<size_t>&, const T&) const;
+
     bool is_row_equal_to(const size_t&, const Vector<size_t>&, const T&) const;
 
     Matrix<T> get_submatrix(const Vector<size_t>&, const Vector<size_t>&) const;
@@ -316,19 +327,19 @@ public:
 
     void initialize_diagonal(const size_t&, const Vector<T>&);
 
-    Matrix<T> sum_diagonal(const T&) const;
+    void sum_diagonal(const T&);
 
-    Matrix<T> sum_diagonal(const Vector<T>&) const;
+    void sum_diagonal(const Vector<T>&);
 
-    void append_row(const Vector<T>&);
+    Matrix<T> append_row(const Vector<T>&) const;
 
-    Matrix<T> append_column(const Vector<T>&, const string& = "");
+    Matrix<T> append_column(const Vector<T>&, const string& = "") const;
 
     Matrix<T> insert_row(const size_t&, const Vector<T>&) const;
     void insert_row_values(const size_t&, const size_t&, const Vector<T>&);
 
-    Matrix<T> insert_column(const size_t&, const Vector<T>&, const string& = "");
-    Matrix<T> insert_column(const string&, const Vector<T>&, const string& = "");
+    Matrix<T> insert_column(const size_t&, const Vector<T>&, const string& = "") const;
+    Matrix<T> insert_column(const string&, const Vector<T>&, const string& = "") const;
 
     Matrix<T> add_columns(const size_t&) const;
     Matrix<T> add_columns_first(const size_t&) const;
@@ -350,21 +361,21 @@ public:
     Matrix<T> left_join(const Matrix<T>&, const string&, const string&, const string&, const string&, const string& = "", const string& = "") const;
     Matrix<T> left_join(const Matrix<T>&, const size_t&, const size_t&) const;
 
-    Matrix<T> merge(const Matrix<T>&, const size_t&, const size_t&) const;
+    T get_first(const size_t&) const;
+    T get_first(const string&) const;
+
+    T get_last(const size_t&) const;
+    T get_last(const string&) const;
 
     Matrix<T> delete_row(const size_t&) const;
     Matrix<T> delete_rows(const Vector<size_t>&) const;
 
     Matrix<T> delete_rows_with_value(const T&) const;
 
+    Matrix<T> delete_rows_equal_to(const T&) const;
+
     Matrix<T> delete_first_rows(const size_t&) const;
     Matrix<T> get_first_rows(const size_t&) const;
-
-    T get_first(const size_t&) const;
-    T get_first(const string&) const;
-
-    T get_last(const size_t&) const;
-    T get_last(const string&) const;
 
     Matrix<T> delete_last_rows(const size_t&) const;
     Matrix<T> get_last_rows(const size_t&) const;
@@ -376,16 +387,19 @@ public:
 
     Matrix<T> delete_first_columns(const size_t&) const;
 
-
     Matrix<T> delete_column(const string&) const;
     Matrix<T> delete_columns(const Vector<string>&) const;
 
-    Matrix<T> remove_constant_rows() const;
-    Matrix<T> remove_constant_columns() const;
+    Matrix<T> delete_columns_name_contains(const Vector<string>&) const;
 
-    Matrix<T> remove_binary_columns() const;
+    Vector<size_t> get_constant_columns_indices() const;
 
-    Matrix<T> remove_binary_columns(const double&) const;
+    Matrix<T> delete_constant_rows() const;
+    Matrix<T> delete_constant_columns() const;
+
+    Matrix<T> delete_binary_columns() const;
+
+    Matrix<T> delete_binary_columns(const double&) const;
 
     Matrix<T> assemble_rows(const Matrix<T>&) const;
 
@@ -400,11 +414,16 @@ public:
     Matrix<T> sort_ascending_strings_absolute_value(const size_t&) const;
     Matrix<T> sort_descending_strings_absolute_value(const size_t&) const;
 
+    Matrix<T> sort_rank_rows(const Vector<size_t>&) const;
+
     void initialize(const T&);
+    void initialize(const Vector<T>&);
     void replace(const T&, const T&);
 
     void replace(const string&, const T&, const string&, const T&, const T&);
     void replace(const string&, const T&, const T&, const string&, const T&, const T&);
+
+    void replace_header(const string&, const string&);
 
     void replace_in_row(const size_t&, const T&, const T&);
     void replace_in_column(const size_t&, const T&, const T&);
@@ -426,6 +445,8 @@ public:
     void replace_column_contains(const string&, const string&, const string&);
     size_t count_column_contains(const string&, const string&) const;
 
+    Vector<size_t> count_column_occurrences(const T&) const;
+
     bool has_column_value(const size_t&, const T&) const;
 
     void randomize_uniform(const double& = -1.0, const double& = 1.0);
@@ -440,6 +461,9 @@ public:
 
     void initialize_diagonal(const T&);
 
+    void update_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&);
+    void update_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&);
+
     // Mathematical methods
 
     T calculate_sum() const;
@@ -447,10 +471,15 @@ public:
     Vector<int> calculate_rows_sum_int() const;
     Vector<T> calculate_rows_sum() const;
     Vector<T> calculate_columns_sum() const;
+    T calculate_column_sum(const size_t&) const;
 
     Vector<T> calculate_columns_mean() const;
 
     void sum_row(const size_t&, const Vector<T>&);
+    Matrix<T> sum_rows(const Vector<T>&) const;
+    Matrix<T> subtract_rows(const Vector<T>&) const;
+//    Matrix<T> sum_rows(const Vector<T>&) const;
+    Matrix<T> multiply_rows(const Vector<T>&) const;
 
     double calculate_trace() const;
 
@@ -568,20 +597,23 @@ public:
 
     Matrix<size_t> calculate_greater_than_indices(const T&) const;
 
+    Matrix<T> calculate_competitive() const;
     Matrix<T> calculate_softmax_rows() const;
     Matrix<T> calculate_softmax_columns() const;
+    Matrix<T> calculate_normalized_columns() const;
+    Matrix<T> calculate_scaled_minimum_maximum_0_1_columns() const;
+    Matrix<T> calculate_scaled_mean_standard_deviation_columns() const;
 
     Matrix<T> calculate_reverse_columns() const;
 
-    void remove_trends(const Vector< LinearRegressionParameters<double> >&, const size_t&);
+    void delete_trends(const Vector< LinearRegressionParameters<double> >&, const size_t&);
 
-    void remove_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&, const Vector< Vector<size_t> >&);
+    void delete_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&, const Vector< Vector<size_t> >&);
 
-    void remove_inputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&,
+    void delete_inputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&,
                                             const Vector<size_t>&, const Vector< Vector<size_t> >&);
 
-
-    void remove_outputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&,
+    void delete_outputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >&, const size_t&,
                                              const Vector<size_t>&, const Vector< Vector<size_t> >&);
 
     void scale_mean_standard_deviation(const Vector< Statistics<T> >&);
@@ -593,8 +625,10 @@ public:
     void scale_columns_mean_standard_deviation(const Vector< Statistics<T> >&, const Vector<size_t>&);
 
     void scale_minimum_maximum(const Vector< Statistics<T> >&);
+    void scale_range(const Vector< Statistics<T> >&, const T& minimum, const T& maximum);
 
     Vector< Statistics<T> > scale_minimum_maximum();
+    Vector< Statistics<T> > scale_range(const T&, const T&);
 
     void scale_rows_minimum_maximum(const Vector< Statistics<T> >&, const Vector<size_t>&);
 
@@ -633,12 +667,18 @@ public:
     Vector< Vector<size_t> > calculate_minimal_maximal_indices() const;
 
     double calculate_sum_squared_error(const Matrix<double>&) const;
+    Vector<double> calculate_error_rows(const Matrix<double>&) const;
+    Vector<double> calculate_sum_squared_error_rows(const Matrix<double>&) const;
+
+    double calculate_cross_entropy_error(const Matrix<double>&) const;
 
     double calculate_minkowski_error(const Matrix<double>&, const double&) const;
 
+    double calculate_weighted_sum_squared_error(const Matrix<double>&, const double&, const double&) const;
+
     double calculate_sum_squared_error(const Vector<double>&) const;
 
-    Vector<double> calculate_rows_norm() const;
+    Vector<double> calculate_rows_L2_norm() const;
 
     Matrix<T> calculate_absolute_value() const;
 
@@ -654,60 +694,73 @@ public:
 
     Vector<T> solve_LDLT(const Vector<double>&) const;
 
-    double calculate_distance(const size_t&, const size_t&) const;
+    double calculate_euclidean_distance(const size_t&, const size_t&) const;
 
-    Vector<double> calculate_distance(const Vector<T>&) const;
+    Vector<double> calculate_euclidean_distance(const Vector<T>&) const;
 
-    Vector<double> calculate_weighted_distance(const Vector<T>&, const Vector<double>&) const;
+    Vector<double> calculate_euclidean_distance(const Matrix<T>&) const;
+
+    Vector<double> calculate_euclidean_weighted_distance(const Vector<T>&, const Vector<double>&) const;
+
+    double calculate_manhattan_distance(const size_t&, const size_t&) const;
+
+    Vector<double> calculate_manhattan_distance(const Vector<T>&) const;
+
+    Vector<double> calculate_manhattan_weighted_distance(const Vector<T>&, const Vector<double>&) const;
+
+    void divide_by_rows(const Vector<T>&);
 
     void filter(const T&, const T&);
 
-    Matrix<T> operator +(const T&) const;
+    Matrix<T> operator + (const T&) const;
 
-    Matrix<T> operator +(const Vector<T>&) const;
+    Matrix<T> operator + (const Matrix<T>&) const;
 
-    Matrix<T> operator +(const Matrix<T>&) const;
+    Matrix<T> operator - (const T& scalar) const;
 
-    Matrix<T> operator -(const T& scalar) const;
+    Matrix<T> operator - (const Matrix<T>&) const;
 
-    Matrix<T> operator -(const Vector<T>&) const;
+    Matrix<T> operator * (const T&) const;
 
-    Matrix<T> operator -(const Matrix<T>&) const;
+    Matrix<T> operator * (const Matrix<T>&) const;
 
-    Matrix<T> operator *(const T&) const;
+    Matrix<T> operator / (const T&) const;
 
-    Matrix<T> operator *(const Vector<T>&) const;
+    Matrix<T> operator / (const Vector<T>&) const;
 
-    Matrix<T> operator *(const Matrix<T>&) const;
+    Matrix<T> operator / (const Matrix<T>&) const;
 
-    Matrix<T> operator /(const T&) const;
+    void operator += (const T& value);
 
-    Matrix<T> operator /(const Vector<T>&) const;
+    void operator += (const Matrix<T>& other_matrix);
 
-    Matrix<T> operator /(const Matrix<T>&) const;
+    void operator -= (const T&);
 
-    void operator +=(const T& value);
+    void operator -= (const Matrix<T>&);
 
-    void operator +=(const Matrix<T>& other_matrix);
+    void operator *= (const T&);
 
-    void operator -=(const T&);
+    void operator *= (const Matrix<T>&);
 
-    void operator -=(const Matrix<T>&);
+    void operator /= (const T&);
 
-    void operator *=(const T&);
-
-    void operator *=(const Matrix<T>&);
-
-    void operator /=(const T&);
-
-    void operator /=(const Matrix<T>&);
+    void operator /= (const Matrix<T>&);
 
     Vector<double> dot(const Vector<double>&) const;
 
     Matrix<double> dot(const Matrix<double>&) const;
 
+    void dot(const Matrix<double>&, const Matrix<double>&);
+    void sum_dot(const Matrix<double>&, const Matrix<double>&);
+
+//    Matrix<double> dot(const Vector< Matrix<double> >&) const;
+
+    Matrix<double> calculate_linear_combinations(const Matrix<double>&, const Vector<double>&) const;
+
     Matrix<double> calculate_eigenvalues() const;
     Matrix<double> calculate_eigenvectors() const;
+
+    void direct(const Vector<T>&, const Vector<T>&);
 
     Matrix<T> direct(const Matrix<T>&) const;
 
@@ -735,7 +788,10 @@ public:
 
     void convert_time_column_dd_mm_dd_yyyy_hh(const string&, const char&);
 
-    void convert_time_column_yyyy_mm(const string&, const char&);
+    void convert_time_column_yyyy_MM(const string&, const char&);
+
+    void convert_time_column_yyyy_MM_dd_hh_mm_ss(const string&, const char&);
+
 
     void convert_time_column_dd_mm_yyyy(const string&, const char&);
     void convert_time_column_mm_dd_yyyy(const string&, const char&);
@@ -743,7 +799,7 @@ public:
     void timestamp_to_date(const string&);
 
     void convert_time_series(const size_t&, const size_t&, const size_t&);
-    Matrix<T> arrange_time_series(const size_t&, const size_t&);
+    Matrix<T> get_time_series(const size_t&, const size_t&);
 
     Matrix<T> calculate_lag_plot_matrix(const size_t&, const size_t&);
 
@@ -760,12 +816,12 @@ public:
     Matrix<T> calculate_lower_bounded(const T&) const;
     Matrix<T> calculate_upper_bounded(const T&) const;
 
+    Matrix<T> calculate_lower_upper_bounded(const Vector<T>&, const Vector<T>&) const;
+
+
     // Correlation methods
 
     Vector<T> calculate_multiple_linear_regression_parameters(const Vector<T>&) const;
-    double calculate_multiple_linear_correlation(const Vector<T>&) const;
-
-    double calculate_multiple_logistic_correlation(const Vector<T>&) const;
 
     // Serialization methods
 
@@ -794,8 +850,10 @@ public:
     Matrix<string> to_string_matrix(const size_t& = 3) const;
     SparseMatrix<T> to_sparse_matrix() const;
 
-    Matrix<size_t> string_to_size_t() const;
-    Matrix<double> string_to_double() const;
+    Matrix<double> bool_to_double(const double& exception_value = 999) const;
+
+    Matrix<size_t> string_to_size_t(const size_t& exception_value = 999) const;
+    Matrix<double> string_to_double(const double& exception_value = 999) const;
 
     vector<T> to_std_vector() const;
 
@@ -813,6 +871,7 @@ public:
     Matrix<T> impute_missing_values_time_series_previous(const size_t&, const double&) const;
 
     static time_t to_time_t(const size_t&, const size_t&, const size_t&);
+    static time_t to_time_t(const size_t&, const size_t&, const size_t&, const size_t&, const size_t&, const size_t&);
 
 private:
 
@@ -928,6 +987,7 @@ Matrix<T>::Matrix(const string& file_name, const char& separator, const bool& he
    columns_number = 0;
 
    load_csv(file_name, separator, header);
+
 }
 
 
@@ -979,7 +1039,7 @@ Matrix<T>::~Matrix()
 /// @param other_matrix Matrix to be assigned.
 
 template <class T>
-Matrix<T>& Matrix<T>::operator =(const Matrix<T>& other_matrix)
+Matrix<T>& Matrix<T>::operator = (const Matrix<T>& other_matrix)
 {
     if(other_matrix.rows_number != rows_number || other_matrix.columns_number != columns_number)
     {
@@ -1020,7 +1080,7 @@ inline T& Matrix<T>::operator()(const size_t& row, const size_t& column)
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "operator()(const size_t&, const size_t&).\n"
-             << "Row index(" << row << ") must be less than number of rows(" << rows_number << ").\n";
+             << "Row index (" << row << ") must be less than number of rows (" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -1030,7 +1090,7 @@ inline T& Matrix<T>::operator()(const size_t& row, const size_t& column)
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "operator()(const size_t&, const size_t&).\n"
-             << "Column index(" << column << ") must be less than number of columns(" << columns_number << ").\n";
+             << "Column index (" << column << ") must be less than number of columns (" << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -1062,7 +1122,7 @@ inline const T& Matrix<T>::operator()(const size_t& row, const size_t& column) c
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "operator()(const size_t&, const size_t&).\n"
-             << "Row index(" << row << ") must be less than number of rows(" << rows_number << ").\n";
+             << "Row index (" << row << ") must be less than number of rows (" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -1072,7 +1132,7 @@ inline const T& Matrix<T>::operator()(const size_t& row, const size_t& column) c
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "operator()(const size_t&, const size_t&).\n"
-             << "Column index(" << column << ") must be less than number of columns(" << columns_number << ").\n";
+             << "Column index (" << column << ") must be less than number of columns (" << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -1105,14 +1165,12 @@ inline const T& Matrix<T>::operator()(const size_t& row, const string& column_na
 }
 
 
-// bool operator ==(const Matrix<T>&) const
-
 /// Equivalent relational operator between this matrix and other matrix.
 /// It produces true if all the elements of the two matrices are equal, and false otherwise.
 /// @param other_matrix Matrix to be compared with.
 
 template <class T>
-bool Matrix<T>::operator ==(const Matrix<T>& other_matrix) const
+bool Matrix<T>::operator == (const Matrix<T>& other_matrix) const
 {
    const size_t other_rows_number = other_matrix.get_rows_number();
    const size_t other_columns_number = other_matrix.get_columns_number();
@@ -1140,14 +1198,12 @@ bool Matrix<T>::operator ==(const Matrix<T>& other_matrix) const
 }
 
 
-// bool operator ==(const T&)
-
 /// Equivalent relational operator between this matrix and a Type value.
 /// It produces true if all the elements of this matrix are equal to the Type value, and false otherwise.
 /// @param value Type value to be compared with.
 
 template <class T>
-bool Matrix<T>::operator ==(const T& value) const
+bool Matrix<T>::operator == (const T& value) const
 {
    for(size_t i = 0; i < this->size(); i++)
    {
@@ -1161,14 +1217,12 @@ bool Matrix<T>::operator ==(const T& value) const
 }
 
 
-// bool operator !=(const Matrix<T>&)
-
 /// Not equivalent relational operator between this matrix and other matrix.
 /// It produces true if the two matrices have any not equal element, and false otherwise.
 /// @param other_matrix Matrix to be compared with.
 
 template <class T>
-bool Matrix<T>::operator !=(const Matrix<T>& other_matrix) const
+bool Matrix<T>::operator != (const Matrix<T>& other_matrix) const
 {
    // Control sentence(if debug)
 
@@ -1182,7 +1236,7 @@ bool Matrix<T>::operator !=(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "bool operator !=(const Matrix<T>&) const.\n"
+             << "bool operator != (const Matrix<T>&) const.\n"
              << "Both numbers of rows must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -1192,7 +1246,7 @@ bool Matrix<T>::operator !=(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "bool operator !=(const Matrix<T>&) const.\n"
+             << "bool operator != (const Matrix<T>&) const.\n"
              << "Both numbers of columns must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -1212,14 +1266,12 @@ bool Matrix<T>::operator !=(const Matrix<T>& other_matrix) const
 }
 
 
-// bool operator !=(const T&) const
-
 /// Not equivalent relational operator between this matrix and a Type value.
 /// It produces true if some element of this matrix is not equal to the Type value, and false otherwise.
 /// @param value Type value to be compared with.
 
 template <class T>
-bool Matrix<T>::operator !=(const T& value) const
+bool Matrix<T>::operator != (const T& value) const
 {
    // Control sentence(if debug)
 
@@ -1234,8 +1286,6 @@ bool Matrix<T>::operator !=(const T& value) const
    return(false);
 }
 
-
-// bool operator >(const Matrix<T>&) const
 
 /// Greater than relational operator between this matrix and other vector.
 /// It produces true if all the elements of this matrix are greater than the corresponding elements of the other matrix,
@@ -1287,8 +1337,6 @@ bool Matrix<T>::operator >(const Matrix<T>& other_matrix) const
 }
 
 
-// bool operator >(const T&) const
-
 /// Greater than relational operator between this matrix and a Type value.
 /// It produces true if all the elements of this matrix are greater than the Type value, and false otherwise.
 /// @param value Type value to be compared with.
@@ -1307,8 +1355,6 @@ bool Matrix<T>::operator >(const T& value) const
     return(true);
 }
 
-
-// bool operator <(const Matrix<T>&) const
 
 /// Less than relational operator between this matrix and other matrix.
 /// It produces true if all the elements of this matrix are less than the corresponding elements of the other matrix,
@@ -1360,8 +1406,6 @@ bool Matrix<T>::operator <(const Matrix<T>& other_matrix) const
 }
 
 
-// bool operator <(const T&) const
-
 /// Less than relational operator between this matrix and a Type value.
 /// It produces true if all the elements of this matrix are less than the Type value, and false otherwise.
 /// @param value Type value to be compared with.
@@ -1381,15 +1425,13 @@ bool Matrix<T>::operator <(const T& value) const
 }
 
 
-// bool operator >=(const Matrix<T>&) const
-
 /// Greater than or equal to relational operator between this matrix and other matrix.
 /// It produces true if all the elements of this matrix are greater than or equal to the corresponding elements of the
 /// other matrix, and false otherwise.
 /// @param other_matrix Matrix to be compared with.
 
 template <class T>
-bool Matrix<T>::operator >=(const Matrix<T>& other_matrix) const
+bool Matrix<T>::operator >= (const Matrix<T>& other_matrix) const
 {
    // Control sentence(if debug)
 
@@ -1403,7 +1445,7 @@ bool Matrix<T>::operator >=(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "bool operator >=(const Matrix<T>&) const.\n"
+             << "bool operator >= (const Matrix<T>&) const.\n"
              << "Both numbers of rows must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -1413,7 +1455,7 @@ bool Matrix<T>::operator >=(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "bool operator >=(const Matrix<T>&) const.\n"
+             << "bool operator >= (const Matrix<T>&) const.\n"
              << "Both numbers of columns must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -1433,14 +1475,12 @@ bool Matrix<T>::operator >=(const Matrix<T>& other_matrix) const
 }
 
 
-// bool operator >=(const T&) const
-
 /// Greater than or equal to than relational operator between this matrix and a Type value.
 /// It produces true if all the elements of this matrix are greater than or equal to the Type value, and false otherwise.
 /// @param value Type value to be compared with.
 
 template <class T>
-bool Matrix<T>::operator >=(const T& value) const
+bool Matrix<T>::operator >= (const T& value) const
 {
    for(size_t i = 0; i < this->size(); i++)
    {
@@ -1454,15 +1494,13 @@ bool Matrix<T>::operator >=(const T& value) const
 }
 
 
-// bool operator <=(const Matrix<T>&) const
-
 /// Less than or equal to relational operator between this matrix and other matrix.
 /// It produces true if all the elements of this matrix are less than or equal to the corresponding elements of the
 /// other matrix, and false otherwise.
 /// @param other_matrix Matrix to be compared with.
 
 template <class T>
-bool Matrix<T>::operator <=(const Matrix<T>& other_matrix) const
+bool Matrix<T>::operator <= (const Matrix<T>& other_matrix) const
 {
    // Control sentence(if debug)
 
@@ -1476,7 +1514,7 @@ bool Matrix<T>::operator <=(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "bool operator >=(const Matrix<T>&) const.\n"
+             << "bool operator >= (const Matrix<T>&) const.\n"
              << "Both numbers of rows must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -1486,7 +1524,7 @@ bool Matrix<T>::operator <=(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "bool operator >=(const Matrix<T>&) const.\n"
+             << "bool operator >= (const Matrix<T>&) const.\n"
              << "Both numbers of columns must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -1506,14 +1544,12 @@ bool Matrix<T>::operator <=(const Matrix<T>& other_matrix) const
 }
 
 
-// bool operator <=(const T&) const
-
 /// Less than or equal to than relational operator between this matrix and a Type value.
 /// It produces true if all the elements of this matrix are less than or equal to the Type value, and false otherwise.
 /// @param value Type value to be compared with.
 
 template <class T>
-bool Matrix<T>::operator <=(const T& value) const
+bool Matrix<T>::operator <= (const T& value) const
 {
    for(size_t i = 0; i < this->size(); i++)
    {
@@ -1529,8 +1565,6 @@ bool Matrix<T>::operator <=(const T& value) const
 
 // METHODS
 
-// size_t get_rows_number() const method
-
 /// Returns the number of rows in the matrix.
 
 template <class T>
@@ -1539,8 +1573,6 @@ const size_t& Matrix<T>::get_rows_number() const
    return(rows_number);
 }
 
-
-// size_t get_columns_number() const method
 
 /// Returns the number of columns in the matrix.
 
@@ -1712,8 +1744,6 @@ size_t Matrix<T>::get_empty_row_index() const
 }
 
 
-// void set() method
-
 /// This method set the numbers of rows and columns of the matrix to zero.
 
 template <class T>
@@ -1727,8 +1757,6 @@ void Matrix<T>::set()
    vector<T>().swap(*this);
 }
 
-
-// void set(const size_t&, const size_t&) method
 
 /// This method set new numbers of rows and columns in the matrix.
 /// @param new_rows_number Number of rows.
@@ -1762,8 +1790,6 @@ void Matrix<T>::set(const size_t& new_rows_number, const size_t& new_columns_num
    }
 }
 
-
-// void set(const size_t&, const size_t&, const T&) method
 
 /// This method set new numbers of rows and columns in the matrix.
 /// It also initializes all the matrix elements to a given value.
@@ -1806,8 +1832,6 @@ void Matrix<T>::set(const size_t& new_rows_number, const size_t& new_columns_num
 }
 
 
-// void set(const Matrix&) method
-
 /// Sets all the members of the matrix to those of another matrix.
 /// @param other_matrix Setting matrix.
 
@@ -1819,14 +1843,12 @@ void Matrix<T>::set(const Matrix<T>& other_matrix)
 
     set(rows_number,columns_number);
 
-    for(size_t i = 0; i <(size_t)this->size(); i++)
+    for(size_t i = 0; i <static_cast<size_t>(this->size()); i++)
     {
        (*this)[i] = other_matrix[i];
     }
 }
 
-
-// void set(const string&) method
 
 /// Sets the members of this object by loading them from a data file.
 /// @param file_name Name of data file.
@@ -1884,8 +1906,6 @@ void Matrix<T>::set(const initializer_list< Vector<T> >& columns)
 }
 
 
-// void set_identity(const size_t&) method
-
 /// Sets the matrix to be squared, with elements equal one in the diagonal and zero outside the diagonal.
 /// @param new_size New number of rows and columns in this matrix.
 
@@ -1896,8 +1916,6 @@ void Matrix<T>::set_identity(const size_t& new_size)
    initialize_identity();
 }
 
-
-// void set_rows_number(const size_t&) method
 
 /// Sets a new number of rows in the matrix.
 /// @param new_rows_number Number of matrix rows.
@@ -1911,8 +1929,6 @@ void Matrix<T>::set_rows_number(const size_t& new_rows_number)
    }
 }
 
-
-// void set_columns_number(const size_t&) method
 
 /// Sets a new number of columns in the matrix.
 /// @param new_columns_number Number of matrix columns.
@@ -1961,7 +1977,7 @@ void Matrix<T>::tuck_in(const size_t& row_position, const size_t& column_positio
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void tuck_in(const size_t&, const size_t&, const Matrix<T>&) const method.\n"
+             << "void insert(const size_t&, const size_t&, const Matrix<T>&) const method.\n"
              << "Cannot tuck in matrix.\n";
 
       throw logic_error(buffer.str());
@@ -1972,7 +1988,7 @@ void Matrix<T>::tuck_in(const size_t& row_position, const size_t& column_positio
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void tuck_in(const size_t&, const size_t&, const Matrix<T>&) const method.\n"
+             << "void insert(const size_t&, const size_t&, const Matrix<T>&) const method.\n"
              << "Cannot tuck in matrix.\n";
 
       throw logic_error(buffer.str());
@@ -1989,6 +2005,54 @@ void Matrix<T>::tuck_in(const size_t& row_position, const size_t& column_positio
    }
 }
 
+
+/// Tuck in a vector to a given row of the matrix
+/// @param row_position Insertion row position.
+/// @param column_position Insertion row position.
+/// @param other_vector Vector to be inserted.
+
+template <class T>
+void Matrix<T>::tuck_in(const size_t& row_position, const size_t& column_position, const Vector<T>& other_vector)
+{
+//   const size_t other_rows_number = other_vector.get_rows_number();
+   const size_t other_columns_number = other_vector.size();
+
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(row_position  > rows_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void insert(const size_t&, const size_t&, const Vector<T>&) const method.\n"
+             << "Cannot tuck in vector.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   if(column_position + other_columns_number > columns_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "void insert(const size_t&, const size_t&, const Vector<T>&) const method.\n"
+             << "Cannot tuck in vector.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+//   for(size_t i = 0; i < other_rows_number; i++)
+//   {
+     for(size_t j = 0; j < other_columns_number; j++)
+     {
+       (*this)(row_position,column_position+j) = other_vector[j];
+     }
+//   }
+}
 
 /// Returns the number of elements in the diagonal which are not zero.
 /// This method is only defined for square matrices.
@@ -2024,8 +2088,6 @@ size_t Matrix<T>::count_diagonal_elements() const
     return(count);
 }
 
-
-// size_t count_off_diagonal_elements() const method
 
 /// Returns the number of elements outside the diagonal which are not zero.
 /// This method is only defined for square matrices.
@@ -2155,7 +2217,7 @@ size_t Matrix<T>::count_equal_to(const size_t& column_1_index, const Vector<T>& 
     {
         if((*this)(i, column_2_index) == value_2)
         {
-            matrix_element =(*this)(i, column_1_index);
+            matrix_element = (*this)(i, column_1_index);
 
             for(size_t j = 0; j < values_1_size; j++)
             {
@@ -2203,7 +2265,7 @@ size_t Matrix<T>::count_equal_to(const size_t& column_1_index, const Vector<T>& 
         &&(*this)(i, column_3_index) == value_3
         &&(*this)(i, column_4_index) == value_4)
         {
-            matrix_element =(*this)(i, column_1_index);
+            matrix_element = (*this)(i, column_1_index);
 
             for(size_t j = 0; j < values_1_size; j++)
             {
@@ -2310,6 +2372,35 @@ size_t Matrix<T>::count_equal_to(const string& column_1_name, const T& value_1,
     return(count_equal_to(column_1_index, value_1, column_2_index, value_2));
 }
 
+
+template <class T>
+Vector<size_t> Matrix<T>::count_equal_to_by_rows(const T& value) const
+{
+    Vector<size_t> count_by_rows(rows_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        count_by_rows[i] = this->get_row(i).count_equal_to(value);
+    }
+
+    return count_by_rows;
+}
+
+
+template <class T>
+Vector<double> Matrix<T>::count_equal_to_by_rows(const T& value, const Vector<double>& weights) const
+{
+    Vector<double> count_by_rows(rows_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        count_by_rows[i] = this->get_row(i).count_equal_to(value, weights);
+    }
+
+    return count_by_rows;
+}
+
+
 template <class T>
 size_t Matrix<T>::count_not_equal_to(const T& value) const
 {
@@ -2404,6 +2495,7 @@ size_t Matrix<T>::count_not_equal_to(const string& column_1_name, const T& value
     return(count_not_equal_to(column_1_index, value_1, column_2_index, value_2));
 }
 
+
 template <class T>
 size_t Matrix<T>::count_rows_equal_to(const T& value) const
 {
@@ -2425,11 +2517,41 @@ size_t Matrix<T>::count_rows_equal_to(const T& value) const
     return count;
 }
 
+
+template <class T>
+size_t Matrix<T>::count_rows_not_equal_to(const T& value) const
+{
+    size_t count = 0;
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        if(get_row(i) != value) count++;
+    }
+
+    return count;
+}
+
+
+template <class T>
+Vector<size_t> Matrix<T>::get_rows_equal_to(const T& value) const
+{
+    Vector<size_t> indices;
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        if(get_row(i) == value)
+        {
+            indices.push_back(i);
+        }
+    }
+
+    return indices;
+}
+
+
 template <class T>
 size_t Matrix<T>::count_rows_equal_to(const Vector<size_t>& column_indices, const T& value) const
 {
-    const size_t column_indices_size = column_indices.size();
-
     size_t count = 0;
 
     for(size_t i = 0; i < rows_number; i++)
@@ -2483,7 +2605,7 @@ Matrix<T> Matrix<T>::get_submatrix(const Vector<size_t>& row_indices, const Vect
       for(size_t j = 0; j < column_indices_size; j++)
       {
          column_index = column_indices[j];
-         sub_matrix(i,j) =(*this)(row_index,column_index);
+         sub_matrix(i,j) = (*this)(row_index,column_index);
       }
    }
 
@@ -2509,7 +2631,7 @@ Matrix<T> Matrix<T>::get_submatrix_rows(const Vector<size_t>& row_indices) const
 
       for(size_t j = 0; j < columns_number; j++)
       {
-         sub_matrix(i,j) =(*this)(row_index,j);
+         sub_matrix(i,j) = (*this)(row_index,j);
       }
    }
 
@@ -2566,7 +2688,7 @@ Matrix<T> Matrix<T>::get_submatrix_columns(const Vector<size_t>& column_indices)
       {
          column_index = column_indices[j];
 
-         sub_matrix(i,j) =(*this)(i,column_index);
+         sub_matrix(i,j) = (*this)(i,column_index);
       }
    }
 
@@ -2580,8 +2702,6 @@ Matrix<T> Matrix<T>::get_submatrix_columns(const Vector<size_t>& column_indices)
    return(sub_matrix);
 }
 
-
-// Vector<T> get_row(const size_t&) const method
 
 /// Returns the row i of the matrix.
 /// @param i Index of row.
@@ -2599,7 +2719,7 @@ Vector<T> Matrix<T>::get_row(const size_t& i) const
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Vector<T> get_row(const size_t&) const method.\n"
-             << "Row index(" << i << ") must be less than number of rows(" << rows_number << ").\n";
+             << "Row index (" << i << ") must be less than number of rows (" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -2610,7 +2730,7 @@ Vector<T> Matrix<T>::get_row(const size_t& i) const
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      row[j] =(*this)(i,j);
+      row[j] = (*this)(i,j);
    }
 
    return(row);
@@ -2646,8 +2766,6 @@ Vector<T> Matrix<T>::get_rows(const size_t& first_index, const size_t& last_inde
 }
 
 
-// Vector<T> get_row(const size_t&, const Vector<size_t>&) const method
-
 /// Returns the row i of the matrix, but only the elements specified by given indices.
 /// @param row_index Index of row.
 /// @param column_indices Column indices of row.
@@ -2665,7 +2783,7 @@ Vector<T> Matrix<T>::get_row(const size_t& row_index, const Vector<size_t>& colu
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Vector<T> get_row(const size_t&, const Vector<size_t>&) const method.\n"
-             << "Row index(" << row_index << ") must be less than number of rows(" << rows_number << ").\n";
+             << "Row index (" << row_index << ") must be less than number of rows(" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -2678,7 +2796,7 @@ Vector<T> Matrix<T>::get_row(const size_t& row_index, const Vector<size_t>& colu
 
    for(size_t i = 0; i < size; i++)
    {
-      row[i] =(*this)(row_index,column_indices[i]);
+      row[i] = (*this)(row_index,column_indices[i]);
    }
 
    return(row);
@@ -2698,7 +2816,7 @@ size_t Matrix<T>::get_previous_row_index(const size_t& row_index, const size_t& 
 
        buffer << "OpenNN Exception: Matrix Template.\n"
               << "size_t Matrix<T>::get_previous_row_index(const size_t&, const size_t&) const method.\n"
-              << "Row index(" << row_index << ") must be less than number of rows(" << rows_number << ").\n";
+              << "Row index (" << row_index << ") must be less than number of rows (" << rows_number << ").\n";
 
        throw logic_error(buffer.str());
     }
@@ -2709,20 +2827,20 @@ size_t Matrix<T>::get_previous_row_index(const size_t& row_index, const size_t& 
 
        buffer << "OpenNN Exception: Matrix Template.\n"
               << "size_t Matrix<T>::get_previous_row_index(const size_t&, const size_t&) const method.\n"
-              << "Column index(" << column_index << ") must be less than number of columns(" << columns_number << ").\n";
+              << "Column index (" << column_index << ") must be less than number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
 
-    const T value =(*this)(row_index, column_index);
+    const T value = (*this)(row_index, column_index);
 
-    for(int i =(int)row_index-1; i >= 0; --i)
+    for(int i = static_cast<int>(row_index)-1; i >= 0; --i)
     {
         if((*(this))(i, column_index) == value)
         {
-            return((size_t)i);
+            return(static_cast<size_t>(i));
         }
     }
 
@@ -2743,11 +2861,11 @@ size_t Matrix<T>::get_previous_row_index(const size_t& row_index, const string& 
 template <class T>
 size_t Matrix<T>::count_previous_values(const size_t& row_index, const size_t& column_index) const
 {
-    const T value =(*this)(row_index, column_index);
+    const T value = (*this)(row_index, column_index);
 
     size_t count = 0;
 
-    for(int i =(int)row_index-1; i >= 0; --i)
+    for(int i = static_cast<int>(row_index)-1; i >= 0; --i)
     {
         if((*this)(i, column_index) == value)
         {
@@ -2758,7 +2876,6 @@ size_t Matrix<T>::count_previous_values(const size_t& row_index, const size_t& c
     return(count);
 }
 
-// Vector<T> get_column(const size_t&) const method
 
 /// Returns the column j of the matrix.
 /// @param j Index of column.
@@ -2787,7 +2904,7 @@ Vector<T> Matrix<T>::get_column(const size_t& j) const
 
    for(size_t i = 0; i < rows_number; i++)
    {
-      column[i] =(*this)(i,j);
+      column[i] = (*this)(i,j);
    }
 
    return(column);
@@ -2829,9 +2946,6 @@ Matrix<T> Matrix<T>::get_columns(const Vector<string>& column_names) const
 }
 
 
-
-// Vector<T> get_column(const size_t&) const method
-
 /// Returns the column j of the matrix, but only those elements specified by given indices.
 /// @param column_index Index of column.
 /// @param row_indices Row indices of column.
@@ -2862,7 +2976,7 @@ Vector<T> Matrix<T>::get_column(const size_t& column_index, const Vector<size_t>
 
    for(size_t i = 0; i < size; i++)
    {
-      column[i] =(*this)(row_indices[i],column_index);
+      column[i] = (*this)(row_indices[i],column_index);
    }
 
    return(column);
@@ -2887,7 +3001,6 @@ Matrix<T> Matrix<T>::get_columns_contain(const string& find_what) const
 }
 
 
-
 // @todo Improve this method
 
 template <class T>
@@ -2901,7 +3014,7 @@ Matrix<T> Matrix<T>::get_unique_elements_rows() const
 
     for(int i = 1; i < rows_number; i++)
     {
-        const Vector<string> row =(*this).get_row(i);
+        const Vector<string> row = (*this).get_row(i);
 
         size_t index = 0;
 
@@ -3010,6 +3123,7 @@ size_t Matrix<T>::count_unique(const string& column_1_name, const T& value_1, co
     return(elements.get_unique_elements().size());
 }
 
+
 template <class T>
 Vector<size_t> Matrix<T>::count_unique_elements() const
 {
@@ -3023,7 +3137,6 @@ Vector<size_t> Matrix<T>::count_unique_elements() const
     return(unique_elements);
 }
 
-// Vector<T> get_diagonal() const method
 
 /// Returns the diagonal of the matrix.
 
@@ -3051,14 +3164,12 @@ Vector<T> Matrix<T>::get_diagonal() const
 
    for(size_t i = 0; i < rows_number; i++)
    {
-      diagonal[i] =(*this)(i,i);
+      diagonal[i] = (*this)(i,i);
    }
 
    return(diagonal);
 }
 
-
-// void set_row(const size_t&, const Vector<T>&) const method
 
 /// Sets new values of a single row in the matrix.
 /// @param row_index Index of row.
@@ -3105,8 +3216,6 @@ void Matrix<T>::set_row(const size_t& row_index, const Vector<T>& new_row)
    }
 }
 
-
-// void set_row(const size_t&, const T&) method
 
 /// Sets a new value of a single row in the matrix.
 /// @param row_index Index of row.
@@ -3282,9 +3391,6 @@ void Matrix<T>::set_column(const size_t& column_index, const T& value, const str
 }
 
 
-// void set_diagonal(const T&) method
-
-
 /// Sets a new value for the diagonal elements in the matrix.
 /// The matrix must be square.
 /// @param new_diagonal New value of diagonal.
@@ -3318,8 +3424,6 @@ void Matrix<T>::set_diagonal(const T& new_diagonal)
 }
 
 
-// void set_diagonal(const Vector<T>&) method
-
 /// Sets new values of the diagonal in the matrix.
 /// The matrix must be square.
 /// @param new_diagonal New values of diagonal.
@@ -3350,7 +3454,7 @@ void Matrix<T>::set_diagonal(const Vector<T>& new_diagonal)
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "set_diagonal(const Vector<T>&) const.\n"
-             << "Size of diagonal(" << size << ") is not equal to size of matrix(" << rows_number << ").\n";
+             << "Size of diagonal(" << size << ") is not equal to size of matrix (" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -3366,8 +3470,6 @@ void Matrix<T>::set_diagonal(const Vector<T>& new_diagonal)
 }
 
 
-// void initialize_diagonal(const size_t&, const T&) method
-
 /// Sets this matrix to be diagonal.
 /// A diagonal matrix is a square matrix in which the entries outside the main diagonal are all zero.
 /// It also initializes the elements on the main diagonal to a unique given value.
@@ -3381,8 +3483,6 @@ void Matrix<T>::initialize_diagonal(const size_t& new_size, const T& new_value)
    set_diagonal(new_value);
 }
 
-
-// void initialize_diagonal(const size_t&, const Vector<T>&) method
 
 /// Sets this matrix to be diagonal.
 /// A diagonal matrix is a square matrix in which the entries outside the main diagonal are all zero.
@@ -3422,7 +3522,7 @@ void Matrix<T>::initialize_diagonal(const size_t& new_size, const Vector<T>& new
 /// @param value New summing value.
 
 template <class T>
-Matrix<T> Matrix<T>::sum_diagonal(const T& value) const
+void Matrix<T>::sum_diagonal(const T& value)
 {
    // Control sentence(if debug)
 
@@ -3433,7 +3533,7 @@ Matrix<T> Matrix<T>::sum_diagonal(const T& value) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "sum_diagonal(const T&) const.\n"
+             << "sum_diagonal(const T&).\n"
              << "Matrix must be square.\n";
 
       throw logic_error(buffer.str());
@@ -3441,14 +3541,10 @@ Matrix<T> Matrix<T>::sum_diagonal(const T& value) const
 
    #endif
 
-   Matrix<T> sum(*this);
-
    for(size_t i = 0; i < rows_number; i++)
    {
-      sum(i,i) += value;
+      (*this)(i,i) += value;
    }
-
-   return(sum);
 }
 
 
@@ -3457,7 +3553,7 @@ Matrix<T> Matrix<T>::sum_diagonal(const T& value) const
 /// @param new_summing_values Vector of summing values.
 
 template <class T>
-Matrix<T> Matrix<T>::sum_diagonal(const Vector<T>& new_summing_values) const
+void Matrix<T>::sum_diagonal(const Vector<T>& new_summing_values)
 {
    // Control sentence(if debug)
 
@@ -3468,7 +3564,7 @@ Matrix<T> Matrix<T>::sum_diagonal(const Vector<T>& new_summing_values) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "sum_diagonal(const Vector<T>&) const.\n"
+             << "sum_diagonal(const Vector<T>&).\n"
              << "Matrix must be square.\n";
 
       throw logic_error(buffer.str());
@@ -3481,7 +3577,7 @@ Matrix<T> Matrix<T>::sum_diagonal(const Vector<T>& new_summing_values) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "sum_diagonal(const Vector<T>&) const.\n"
+             << "sum_diagonal(const Vector<T>&).\n"
              << "Size must be equal to number of rows.\n";
 
       throw logic_error(buffer.str());
@@ -3489,18 +3585,12 @@ Matrix<T> Matrix<T>::sum_diagonal(const Vector<T>& new_summing_values) const
 
    #endif
 
-   Matrix<T> sum(*this);
-
    for(size_t i = 0; i < rows_number; i++)
    {
-      sum(i,i) += new_summing_values[i];
+      (*this)(i,i) += new_summing_values[i];
    }
-
-   return(sum);
 }
 
-
-// void append_row(const Vector<T>&) const method
 
 /// This method appends a new row to the matrix.
 /// The size of the row vector must be equal to the number of columns of the matrix.
@@ -3508,7 +3598,7 @@ Matrix<T> Matrix<T>::sum_diagonal(const Vector<T>& new_summing_values) const
 /// @param new_row Row to be appended.
 
 template <class T>
-void Matrix<T>::append_row(const Vector<T>& new_row)
+Matrix<T> Matrix<T>::append_row(const Vector<T>& new_row) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -3527,32 +3617,36 @@ void Matrix<T>::append_row(const Vector<T>& new_row)
 
     #endif
 
+    Matrix<T> copy;
+
     if(this->empty())
     {
-        set(1,new_row.size());
-        set_row(0,new_row);
+        copy.set(1,new_row.size());
+        copy.set_row(0,new_row);
 
-        return;
+        return copy;
     }
 
-    Matrix<T> copy(*this);
+    copy.set(rows_number+1, columns_number);
 
-    set(rows_number+1, columns_number);
-
-    for(size_t i = 0; i < copy.get_rows_number(); i++)
+    for(size_t i = 0; i < rows_number; i++)
     {
-        for(size_t j = 0; j < copy.get_columns_number(); j++)
+        for(size_t j = 0; j < columns_number; j++)
         {
-           (*this)(i,j) = copy(i,j);
+           copy(i,j) = (*this)(i,j);
         }
     }
 
-    set_row(rows_number-1, new_row);
+    copy.set_row(rows_number, new_row);
+
+    if(header != "") copy.set_header(header);
+
+    return copy;
 }
 
 
 template <class T>
-Matrix<T> Matrix<T>::append_column(const Vector<T>& new_column, const string& new_name)
+Matrix<T> Matrix<T>::append_column(const Vector<T>& new_column, const string& new_name) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -3591,7 +3685,7 @@ Matrix<T> Matrix<T>::append_column(const Vector<T>& new_column, const string& ne
        {
            for(size_t j = 0; j < columns_number; j++)
            {
-               new_matrix(i,j) =(*this)(i,j);
+               new_matrix(i,j) = (*this)(i,j);
            }
 
            new_matrix(i,columns_number) = new_column[i];
@@ -3655,7 +3749,7 @@ Matrix<T> Matrix<T>::insert_row(const size_t& position, const Vector<T>& new_row
    {
        for(size_t j = 0; j < columns_number; j++)
        {
-           new_matrix(i,j) =(*this)(i,j);
+           new_matrix(i,j) = (*this)(i,j);
        }
    }
 
@@ -3668,7 +3762,7 @@ Matrix<T> Matrix<T>::insert_row(const size_t& position, const Vector<T>& new_row
    {
        for(size_t j = 0; j < columns_number; j++)
        {
-           new_matrix(i,j) =(*this)(i-1,j);
+           new_matrix(i,j) = (*this)(i-1,j);
        }
    }
 
@@ -3690,15 +3784,13 @@ void Matrix<T>::insert_row_values(const size_t& row_index, const size_t& column_
 }
 
 
-// void insert_column(const size_t&, const Vector<T>&) const method
-
 /// Inserts a new column in a given position.
 /// Note that this method resizes the matrix, which can be computationally expensive.
 /// @param position Index of new column.
 /// @param new_column Vector with the column contents.
 
 template <class T>
-Matrix<T> Matrix<T>::insert_column(const size_t& position, const Vector<T>& new_column, const string& new_name)
+Matrix<T> Matrix<T>::insert_column(const size_t& position, const Vector<T>& new_column, const string& new_name) const
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -3713,7 +3805,7 @@ Matrix<T> Matrix<T>::insert_column(const size_t& position, const Vector<T>& new_
        throw logic_error(buffer.str());
     }
 
-   const size_t size =(size_t)new_column.size();
+   const size_t size = static_cast<size_t>(new_column.size());
 
    if(size != rows_number)
    {
@@ -3736,14 +3828,14 @@ Matrix<T> Matrix<T>::insert_column(const size_t& position, const Vector<T>& new_
    {
        for(size_t j = 0; j < position; j++)
        {
-           new_matrix(i,j) =(*this)(i,j);
+           new_matrix(i,j) = (*this)(i,j);
        }
 
        new_matrix(i,position) = new_column[i];
 
        for(size_t j = position+1; j < new_columns_number; j++)
        {
-           new_matrix(i,j) =(*this)(i,j-1);
+           new_matrix(i,j) = (*this)(i,j-1);
        }
    }
 
@@ -3759,7 +3851,7 @@ Matrix<T> Matrix<T>::insert_column(const size_t& position, const Vector<T>& new_
 
 
 template <class T>
-Matrix<T> Matrix<T>::insert_column(const string& column_name, const Vector<T>& new_column, const string& new_name)
+Matrix<T> Matrix<T>::insert_column(const string& column_name, const Vector<T>& new_column, const string& new_name) const
 {
     const size_t column_index = get_column_index(column_name);
 
@@ -3785,7 +3877,7 @@ Matrix<T> Matrix<T>::add_columns(const size_t& columns_to_add) const
     {
         for(size_t j = 0; j < columns_number; j++)
         {
-            new_matrix(i,j) =(*this)(i,j);
+            new_matrix(i,j) = (*this)(i,j);
         }
     }
 
@@ -3793,6 +3885,7 @@ Matrix<T> Matrix<T>::add_columns(const size_t& columns_to_add) const
 
     return new_matrix;
 }
+
 
 template <class T>
 Matrix<T> Matrix<T>::add_columns_first(const size_t& columns_to_add) const
@@ -3812,7 +3905,7 @@ Matrix<T> Matrix<T>::add_columns_first(const size_t& columns_to_add) const
     {
         for(size_t j = 0; j < columns_number; j++)
         {
-            new_matrix(i,columns_to_add+j) =(*this)(i,j);
+            new_matrix(i,columns_to_add+j) = (*this)(i,j);
         }
     }
 
@@ -3820,6 +3913,7 @@ Matrix<T> Matrix<T>::add_columns_first(const size_t& columns_to_add) const
 
     return new_matrix;
 }
+
 
 template <class T>
 void Matrix<T>::split_column(const string& column_name, const Vector<string>& new_columns_name, const char& delimiter, const string& missing_value_label)
@@ -3854,7 +3948,6 @@ void Matrix<T>::split_column(const string& column_name, const Vector<string>& ne
     }
 
     set(new_matrix);
-
 }
 
 
@@ -3932,6 +4025,7 @@ void Matrix<T>::merge_columns(const size_t& column_1_index, const size_t& column
    (*this) = insert_column(indices[0],joined_column);
 }
 
+
 template <class T>
 Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const string& columns_1_name, const string& columns_2_name,
                                     const string& left_header_tag, const string& right_header_tag) const
@@ -3951,9 +4045,9 @@ Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const string&
 
     size_t merged_rows_number = columns_1.count_equal_to(columns_2);
 
-    Vector<T> merged_header = header_1.remove_element(columns_1_index) + left_header_tag;
+    Vector<T> merged_header = header_1.delete_element(columns_1_index) + left_header_tag;
 
-    merged_header = merged_header.assemble(header_2.remove_element(columns_2_index) + right_header_tag);
+    merged_header = merged_header.assemble(header_2.delete_element(columns_2_index) + right_header_tag);
 
     merged_header = merged_header.insert_element(columns_1_index, columns_1_name);
 
@@ -3988,7 +4082,7 @@ Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const string&
 
             for(size_t k = 0; k < columns_number; k++)
             {
-                merged_matrix(current_merged_row_index,k) =(*this)(i,k);
+                merged_matrix(current_merged_row_index,k) = (*this)(i,k);
             }
 
             for(size_t k = 0; k < other_columns_number; k++)
@@ -4009,6 +4103,7 @@ Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const string&
 
     return merged_matrix;
 }
+
 
 template <class T>
 Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const size_t& columns_1_index, const size_t& columns_2_index) const
@@ -4051,7 +4146,7 @@ Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const size_t&
 
             for(size_t k = 0; k < columns_number; k++)
             {
-                merged_matrix(current_merged_row_index,k) =(*this)(i,k);
+                merged_matrix(current_merged_row_index,k) = (*this)(i,k);
             }
 
             for(size_t k = 0; k < other_columns_number; k++)
@@ -4073,6 +4168,7 @@ Matrix<T> Matrix<T>::merge_matrices(const Matrix<T>& other_matrix, const size_t&
     return merged_matrix;
 }
 
+
 template <class T>
 Matrix<T> Matrix<T>::right_join(const Matrix<T>& other_matrix, const string& columns_1_name, const string& columns_2_name,
                                 const string& left_header_tag, const string& right_header_tag) const
@@ -4089,9 +4185,9 @@ Matrix<T> Matrix<T>::right_join(const Matrix<T>& other_matrix, const string& col
     const Vector<T> header_1 = this->get_header();
     const Vector<T> header_2 = other_matrix.get_header();
 
-    Vector<T> merged_header = header_1.remove_element(columns_1_index) + left_header_tag;
+    Vector<T> merged_header = header_1.delete_element(columns_1_index) + left_header_tag;
 
-    merged_header = merged_header.assemble(header_2.remove_element(columns_2_index) + right_header_tag);
+    merged_header = merged_header.assemble(header_2.delete_element(columns_2_index) + right_header_tag);
 
     merged_header = merged_header.insert_element(columns_1_index, columns_1_name);
 
@@ -4134,11 +4230,11 @@ Matrix<T> Matrix<T>::right_join(const Matrix<T>& other_matrix, const string& col
                 {
                     if(k < columns_1_index)
                     {
-                        merged_matrix(current_row_index,k) =(*this)(current_row_1_index,k);
+                        merged_matrix(current_row_index,k) = (*this)(current_row_1_index,k);
                     }
                     else if(k > columns_1_index)
                     {
-                        merged_matrix(current_row_index,k) =(*this)(current_row_1_index,k);
+                        merged_matrix(current_row_index,k) = (*this)(current_row_1_index,k);
                     }
                 }
 
@@ -4153,6 +4249,7 @@ Matrix<T> Matrix<T>::right_join(const Matrix<T>& other_matrix, const string& col
 
     return merged_matrix;
 }
+
 
 template <class T>
 Matrix<T> Matrix<T>::left_join(const Matrix<T>& other_matrix, const string& columns_1_name, const string& columns_2_name,
@@ -4173,15 +4270,86 @@ Matrix<T> Matrix<T>::left_join(const Matrix<T>& other_matrix, const string& colu
     const Vector<T> header_1 = this->get_header();
     const Vector<T> header_2 = other_matrix.get_header();
 
-    Vector<T> merged_header = header_1.remove_element(columns_1_index) + left_header_tag;
+    Vector<T> merged_header = header_1.delete_element(columns_1_index) + left_header_tag;
 
-    merged_header = merged_header.assemble(header_2.remove_element(columns_2_index) + right_header_tag);
+    merged_header = merged_header.assemble(header_2.delete_element(columns_2_index) + right_header_tag);
 
     merged_header = merged_header.insert_element(columns_1_index, columns_1_name);
 
     Matrix<T> merged_matrix = this->add_columns(other_columns_number-1);
 
     merged_matrix.set_header(merged_header);
+
+    Vector<size_t> columns_1_sorted_indices = columns_1.sort_ascending_indices();
+    Vector<size_t> columns_2_sorted_indices = columns_2.sort_ascending_indices();
+
+    size_t columns_2_pointer = 0;
+
+    for(size_t i = 0; i < columns_1_size; i++)
+    {
+        const size_t current_row_index = columns_1_sorted_indices[i];
+
+        const T current_index_value = columns_1[current_row_index];
+
+        if(columns_2[columns_2_sorted_indices[columns_2_pointer]] > current_index_value)
+        {
+            continue;
+        }
+
+        while(columns_2_pointer < columns_2_size)
+        {
+            const size_t current_row_2_index = columns_2_sorted_indices[columns_2_pointer];
+
+            if(columns_2[current_row_2_index] < current_index_value)
+            {
+                columns_2_pointer++;
+
+                continue;
+            }
+            else if(columns_2[current_row_2_index] == current_index_value)
+            {
+                for(size_t k = 0; k < other_columns_number; k++)
+                {
+                    if(k < columns_2_index)
+                    {
+                        merged_matrix(current_row_index,k+columns_number) = other_matrix(current_row_2_index,k);
+                    }
+                    else if(k > columns_2_index)
+                    {
+                        merged_matrix(current_row_index,k+columns_number-1) = other_matrix(current_row_2_index,k);
+                    }
+                }
+
+                break;
+            }
+            else if(columns_2[current_row_2_index] > current_index_value)
+            {
+                break;
+            }
+        }
+
+        if(columns_2_pointer >= columns_2_size)
+        {
+            break;
+        }
+    }
+
+    return merged_matrix;
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::left_join(const Matrix<T>& other_matrix, const size_t& columns_1_index, const size_t& columns_2_index) const
+{
+    const size_t other_columns_number = other_matrix.get_columns_number();
+
+    const Vector<T> columns_1 = this->get_column(columns_1_index);
+    const Vector<T> columns_2 = other_matrix.get_column(columns_2_index);
+
+    const size_t columns_1_size = columns_1.size();
+    const size_t columns_2_size = columns_2.size();
+
+    Matrix<T> merged_matrix = this->add_columns(other_columns_number-1);
 
     Vector<size_t> columns_1_sorted_indices = columns_1.sort_ascending_indices();
     Vector<size_t> columns_2_sorted_indices = columns_2.sort_ascending_indices();
@@ -4261,14 +4429,13 @@ Matrix<T> Matrix<T>::left_join(const Matrix<T>& other_matrix, const string& matr
     const size_t matrix_1_columns_1_size = matrix_1_columns_1.size();
     const size_t matrix_1_columns_2_size = matrix_1_columns_2.size();
     const size_t matrix_2_columns_1_size = matrix_2_columns_1.size();
-    const size_t matrix_2_columns_2_size = matrix_2_columns_2.size();
 
     const Vector<T> header_1 = this->get_header();
     const Vector<T> header_2 = other_matrix.get_header();
 
-    Vector<T> merged_header = header_1.remove_element(matrix_1_columns_2_index).remove_element(matrix_1_columns_1_index) + left_header_tag;
+    Vector<T> merged_header = header_1.delete_element(matrix_1_columns_2_index).delete_element(matrix_1_columns_1_index) + left_header_tag;
 
-    merged_header = merged_header.assemble(header_2.remove_element(matrix_2_columns_2_index).remove_element(matrix_2_columns_1_index) + right_header_tag);
+    merged_header = merged_header.assemble(header_2.delete_element(matrix_2_columns_2_index).delete_element(matrix_2_columns_1_index) + right_header_tag);
 
     merged_header = merged_header.insert_element(matrix_1_columns_1_index, matrix_1_name_1).insert_element(matrix_1_columns_2_index,matrix_1_name_2);
 
@@ -4342,22 +4509,6 @@ Matrix<T> Matrix<T>::left_join(const Matrix<T>& other_matrix, const string& matr
 }
 
 
-template <class T>
-Matrix<T> Matrix<T>::merge(const Matrix<T>& other, const size_t& this_column_index, const size_t& other_column_index) const
-{
-//    const Vector<T> this_ids = this->get_column(this_column_index);
-//    const Vector<T> other_ids = other.get_column(other_column_index);
-
-//    const Vector<T> unique = this_ids.assemble(other_ids).get_unique_elements();
-
-//    const size_t unique_size = unique.size();
-
-    Matrix<T> new_matrix;
-
-
-    return new_matrix;
-}
-
 /// This method removes the row with given index.
 /// Note that resizing is here necessary and this method can be very inefficient.
 /// @param row_index Index of row to be removed.
@@ -4396,7 +4547,7 @@ Matrix<T> Matrix<T>::delete_row(const size_t& row_index) const
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-        new_matrix(i,j) =(*this)(i,j);
+        new_matrix(i,j) = (*this)(i,j);
       }
    }
 
@@ -4404,7 +4555,7 @@ Matrix<T> Matrix<T>::delete_row(const size_t& row_index) const
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-         new_matrix(i-1,j) =(*this)(i,j);
+         new_matrix(i-1,j) = (*this)(i,j);
       }
    }
 
@@ -4420,11 +4571,11 @@ Matrix<T> Matrix<T>::delete_row(const size_t& row_index) const
 template <class T>
 Matrix<T> Matrix<T>::delete_rows(const Vector<size_t>& rows_to_remove) const
 {
-    const size_t rows_to_remove_number = rows_to_remove.size();
+    const size_t rows_to_delete_number = rows_to_remove.size();
 
-    if(rows_to_remove_number == 0) return Matrix<T>(*this);
+    if(rows_to_delete_number == 0) return Matrix<T>(*this);
 
-    const size_t rows_to_keep_number = rows_number - rows_to_remove_number;
+    const size_t rows_to_keep_number = rows_number - rows_to_delete_number;
 
     Vector<size_t> rows_to_keep(rows_to_keep_number);
 
@@ -4488,6 +4639,15 @@ Matrix<T> Matrix<T>::delete_rows_with_value(const T& value) const
 
 
 template <class T>
+Matrix<T> Matrix<T>::delete_rows_equal_to(const T& value) const
+{
+    const Vector<size_t> indices = get_rows_equal_to(value);
+
+    return delete_rows(indices);
+}
+
+
+template <class T>
 Matrix<T> Matrix<T>::delete_first_rows(const size_t& number) const
 {
 
@@ -4513,8 +4673,6 @@ Matrix<T> Matrix<T>::get_first_rows(const size_t& number) const
 
     return get_submatrix_rows(indices);
 }
-
-
 
 
 template <class T>
@@ -4579,8 +4737,6 @@ Matrix<T> Matrix<T>::get_last_rows(const size_t& number) const
 }
 
 
-// void delete_column(const size_t&) method
-
 /// This method removes the column with given index.
 /// Note that resizing is here necessary and this method can be very inefficient.
 /// @param column_index Index of column to be removed.
@@ -4619,7 +4775,7 @@ Matrix<T> Matrix<T>::delete_column(const size_t& column_index) const
    {
       for(size_t j = 0; j < column_index; j++)
       {
-        new_matrix(i,j) =(*this)(i,j);
+        new_matrix(i,j) = (*this)(i,j);
       }
    }
 
@@ -4627,13 +4783,13 @@ Matrix<T> Matrix<T>::delete_column(const size_t& column_index) const
    {
       for(size_t j = column_index+1; j < columns_number; j++)
       {
-         new_matrix(i,j-1) =(*this)(i,j);
+         new_matrix(i,j-1) = (*this)(i,j);
       }
    }
 
    if(header != "")
    {
-       Vector<string> new_header = get_header().remove_element(column_index);
+       const Vector<string> new_header = get_header().delete_index(column_index);
 
        new_matrix.set_header(new_header);
    }
@@ -4641,8 +4797,6 @@ Matrix<T> Matrix<T>::delete_column(const size_t& column_index) const
    return new_matrix;
 }
 
-
-// void delete_column(const size_t&) method
 
 /// This method removes the column with given index.
 /// Note that resizing is here necessary and this method can be very inefficient.
@@ -4677,9 +4831,9 @@ Matrix<T> Matrix<T>::delete_column(const string& column_name) const
 
 
 template <class T>
-Matrix<T> Matrix<T>::delete_columns(const Vector<size_t>& remove_indices) const
+Matrix<T> Matrix<T>::delete_columns(const Vector<size_t>& delete_indices) const
 {
-    if(remove_indices.empty())
+    if(delete_indices.empty())
     {
         return Matrix<T>(*this);
     }
@@ -4690,7 +4844,7 @@ Matrix<T> Matrix<T>::delete_columns(const Vector<size_t>& remove_indices) const
 
     for(size_t i = 0; i < columns_number; i++)
     {
-        if(!remove_indices.contains(i))
+        if(!delete_indices.contains(i))
         {
             keep_indices.push_back(i);
         }
@@ -4710,16 +4864,38 @@ Matrix<T> Matrix<T>::delete_columns(const Vector<size_t>& remove_indices) const
 
 
 template <class T>
-Matrix<T> Matrix<T>::delete_columns(const Vector<string>& remove_names) const
+Matrix<T> Matrix<T>::delete_columns(const Vector<string>& delete_names) const
 {
-    const Vector<size_t> indices = get_column_indices(remove_names);
+    const Vector<size_t> indices = get_column_indices(delete_names);
 
     return delete_columns(indices);
 }
 
 
 template <class T>
-Matrix<T> Matrix<T>::remove_constant_columns() const
+Matrix<T> Matrix<T>::delete_columns_name_contains(const Vector<string>& substrings) const
+{
+    Vector<size_t> indices;
+
+    for(size_t i = 0; i < columns_number; i++)
+    {
+        for(size_t j = 0; j < substrings.size(); j++)
+        {
+            if(header[i].find(substrings[j]) != string::npos)
+            {
+                indices.push_back(i);
+
+                break;
+            }
+        }
+    }
+
+    return delete_columns(indices);
+}
+
+
+template <class T>
+Vector<size_t> Matrix<T>::get_constant_columns_indices() const
 {
     Vector<size_t> constant_columns;
 
@@ -4731,12 +4907,19 @@ Matrix<T> Matrix<T>::remove_constant_columns() const
         }
     }
 
-    return delete_columns(constant_columns);
+    return constant_columns;
 }
 
 
 template <class T>
-Matrix<T> Matrix<T>::remove_binary_columns() const
+Matrix<T> Matrix<T>::delete_constant_columns() const
+{
+    return delete_columns(get_constant_columns_indices());
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::delete_binary_columns() const
 {
     const Vector<size_t> binary_columns = get_binary_column_indices();
 
@@ -4745,7 +4928,7 @@ Matrix<T> Matrix<T>::remove_binary_columns() const
 
 
 template <class T>
-Matrix<T> Matrix<T>::remove_binary_columns(const double& minimum_support) const
+Matrix<T> Matrix<T>::delete_binary_columns(const double& minimum_support) const
 {
     const Vector<size_t> binary_columns = get_binary_column_indices();
 
@@ -4755,7 +4938,7 @@ Matrix<T> Matrix<T>::remove_binary_columns(const double& minimum_support) const
 
     for(size_t i = 0; i < binary_columns_number; i++)
     {
-        const double support = get_column(binary_columns[i]).calculate_sum()/(double)rows_number;
+        const double support = get_column(binary_columns[i]).calculate_sum()/static_cast<double>(rows_number);
 
         if(support < minimum_support) columns_to_remove.push_back(binary_columns[i]);
     }
@@ -4765,7 +4948,7 @@ Matrix<T> Matrix<T>::remove_binary_columns(const double& minimum_support) const
 
 
 template <class T>
-Matrix<T> Matrix<T>::remove_constant_rows() const
+Matrix<T> Matrix<T>::delete_constant_rows() const
 {
     Vector<size_t> constant_rows;
 
@@ -4801,7 +4984,7 @@ Matrix<T> Matrix<T>::assemble_rows(const Matrix<T>& other_matrix) const
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Matrix<T> assemble_rows(const Matrix<T>&) const method.\n"
-             << "Number of columns of other matrix(" << other_columns_number << ") must be equal to number of columns of this matrix(" << columns_number << ").\n";
+             << "Number of columns of other matrix (" << other_columns_number << ") must be equal to number of columns of this matrix (" << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -4816,7 +4999,7 @@ Matrix<T> Matrix<T>::assemble_rows(const Matrix<T>& other_matrix) const
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-         assembly(i,j) =(*this)(i,j);
+         assembly(i,j) = (*this)(i,j);
       }
    }
 
@@ -4862,7 +5045,7 @@ Matrix<T> Matrix<T>::sort_ascending(const size_t& column_index) const
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) =(*this)(index, j);
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
@@ -4887,7 +5070,7 @@ Matrix<T> Matrix<T>::sort_ascending_strings(const size_t& column_index) const
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) =(*this)(index, j);
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
@@ -4914,7 +5097,7 @@ Matrix<T> Matrix<T>::sort_descending_strings(const size_t& column_index) const
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) =(*this)(index, j);
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
@@ -4941,7 +5124,7 @@ Matrix<T> Matrix<T>::sort_ascending_strings_absolute_value(const size_t& column_
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) =(*this)(index, j);
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
@@ -4966,11 +5149,43 @@ Matrix<T> Matrix<T>::sort_descending_strings_absolute_value(const size_t& column
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) =(*this)(index, j);
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
     return(sorted);
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::sort_rank_rows(const Vector<size_t>& rank) const
+{
+    #ifdef __OPENNN_DEBUG__
+    const size_t rank_size = rank.size();
+
+      if(rows_number != rank_size) {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "Matrix<T> sort_rank_rows(const Vector<size_t>&) const.\n"
+               << "Matrix number of rows is " << rows_number << " and rank size is " << rank_size
+               << " and they must be the same.\n";
+
+        throw logic_error(buffer.str());
+      }
+
+    #endif
+
+    Matrix<T> sorted_matrix(rows_number,columns_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        sorted_matrix.set_row(i,(*this).get_row(rank[i]));
+    }
+
+    if(header != "") sorted_matrix.set_header(header);
+
+    return sorted_matrix;
 }
 
 
@@ -5002,7 +5217,7 @@ Matrix<T> Matrix<T>::sort_descending(const size_t& column_index) const
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            sorted(i,j) =(*this)(index, j);
+            sorted(i,j) = (*this)(index, j);
         }
     }
 
@@ -5025,7 +5240,7 @@ Matrix<T> Matrix<T>::assemble_columns(const Matrix<T>& other_matrix) const
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Matrix<T> assemble_columns(const Matrix<T>&) const method.\n"
-             << "Number of rows of other matrix(" << other_rows_number << ") must be equal to number of rows of this matrix(" << rows_number << ").\n";
+             << "Number of rows of other matrix (" << other_rows_number << ") must be equal to number of rows of this matrix (" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -5040,7 +5255,7 @@ Matrix<T> Matrix<T>::assemble_columns(const Matrix<T>& other_matrix) const
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-         assembly(i,j) =(*this)(i,j);
+         assembly(i,j) = (*this)(i,j);
       }
       for(size_t j = 0; j < other_columns_number; j++)
       {
@@ -5061,6 +5276,19 @@ template <class T>
 void Matrix<T>::initialize(const T& value)
 {
     fill((*this).begin(),(*this).end(), value);
+}
+
+
+template <class T>
+void Matrix<T>::initialize(const Vector<T>& v)
+{
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            (*this)(i,j)  = v[j];
+        }
+    }
 }
 
 
@@ -5113,6 +5341,15 @@ void Matrix<T>::replace(const string& column_1, const T& value_1_find, const T& 
 
 
 template <class T>
+void Matrix<T>::replace_header(const string& find_what, const string& replace_with)
+{
+    for(size_t i = 0; i < columns_number; i++)
+        if(header[i] == find_what)
+            header[i] = replace_with;
+}
+
+
+template <class T>
 void Matrix<T>::replace_in_row(const size_t& row_index, const T& find_what, const T& replace_with)
 {
     for(size_t i = 0; i < columns_number; i++)
@@ -5156,7 +5393,7 @@ void Matrix<T>::replace_substring(const string& find_what, const string& replace
     {
         size_t position = 0;
 
-        while((position =(*this)[i].find(find_what, position)) != string::npos)
+        while((position = (*this)[i].find(find_what, position)) != string::npos)
         {
             (*this)[i].replace(position, find_what.length(), replace_with);
 
@@ -5173,7 +5410,7 @@ void Matrix<T>::replace_substring(const size_t& column_index, const string& find
     {
         size_t position = 0;
 
-        while((position =(*this)(i, column_index).find(find_what, position)) != string::npos)
+        while((position = (*this)(i, column_index).find(find_what, position)) != string::npos)
         {
             (*this)(i, column_index).replace(position, find_what.length(), replace_with);
 
@@ -5317,6 +5554,23 @@ size_t Matrix<T>::count_column_contains(const string& column_name, const string&
 
 
 template <class T>
+Vector<size_t> Matrix<T>::count_column_occurrences(const T& value) const
+{
+    Vector<size_t> occurrences(columns_number, 0.0);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            if((*this)(i,j) == value) occurrences[j]++;
+        }
+    }
+
+    return occurrences;
+}
+
+
+template <class T>
 bool Matrix<T>::has_column_value(const size_t& column_index, const T& value) const
 {
     for(size_t i = 0; i < rows_number; i++)
@@ -5358,7 +5612,7 @@ void Matrix<T>::randomize_uniform(const double& minimum, const double& maximum)
 
    for(size_t i = 0; i < this->size(); i++)
    {
-     (*this)[i] =(T)calculate_random_uniform(minimum, maximum);
+     (*this)[i] = static_cast<T>(calculate_random_uniform(minimum, maximum));
    }
 }
 
@@ -5648,6 +5902,334 @@ void Matrix<T>::initialize_diagonal(const T& value)
 }
 
 
+/// Returns an approximation of the inverse Hessian matrix according to the Davidon-Fletcher-Powel
+///(DFP) algorithm.
+/// @param old_parameters A previous set of parameters.
+/// @param old_gradient The gradient of the error function for that previous set of parameters.
+/// @param old_inverse_Hessian The Hessian of the error function for that previous set of parameters.
+/// @param parameters Actual set of parameters.
+/// @param gradient The gradient of the error function for the actual set of parameters.
+
+template <class T>
+void Matrix<T>::update_DFP_inverse_Hessian(const Vector<double>& old_parameters, const Vector<double>& parameters,
+                                           const Vector<double>& old_gradient, const Vector<double>& gradient)
+{
+   ostringstream buffer;
+
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+//   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+//   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+//   const size_t old_parameters_size = old_parameters.size();
+//   const size_t parameters_size = parameters.size();
+
+//   if(old_parameters_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Size of old parameters vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+//   else if(parameters_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Size of parameters vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   const size_t old_gradient_size = old_gradient.size();
+//   const size_t gradient_size = gradient.size();
+
+//   if(old_gradient_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Size of old gradient vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+//   else if(gradient_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Size of gradient vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   const size_t rows_number = old_inverse_Hessian.get_rows_number();
+//   const size_t columns_number = old_inverse_Hessian.get_columns_number();
+
+//   if(rows_number != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Number of rows in old inverse Hessian must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+//   else if(columns_number != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Number of columns in old inverse Hessian must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+   #endif
+
+   // Parameters difference Vector
+
+   const Vector<double> parameters_difference = parameters - old_parameters;
+
+   // Control sentence(if debug)
+
+   if(parameters_difference.calculate_absolute_value() < numeric_limits<double>::min())
+   {
+      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Parameters difference vector is zero.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   // Gradient difference Vector
+
+   const Vector<double> gradient_difference = gradient - old_gradient;
+
+   if(gradient_difference.calculate_absolute_value() < 1.0e-50)
+   {
+      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Gradient difference vector is zero.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+//   if(this->calculate_absolute_value() < 1.0e-50)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Old inverse Hessian matrix is zero.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+   const double parameters_dot_gradient = parameters_difference.dot(gradient_difference);
+
+//   if(fabs(parameters_dot_gradient) < 1.0e-50)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Denominator of first term is zero.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+//   else if(fabs(gradient_difference.dot(old_inverse_Hessian).dot(gradient_difference)) < 1.0e-50)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Denominator of second term is zero.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+   const Vector<double> Hessian_dot_gradient_difference = this->dot(gradient_difference);
+
+   Matrix<double> term_1;
+   term_1.direct(parameters_difference,parameters_difference);
+   term_1 /= parameters_dot_gradient;
+
+   (*this) += term_1;
+
+   term_1.clear();
+
+   Matrix<double> term_2;
+   term_2.direct(Hessian_dot_gradient_difference, Hessian_dot_gradient_difference);
+   term_2 /= gradient_difference.dot(Hessian_dot_gradient_difference);
+
+   (*this) -= term_2;
+
+   term_2.clear();
+}
+
+
+/// Returns an approximation of the inverse Hessian matrix according to the
+/// Broyden-Fletcher-Goldfarb-Shanno(BGFS) algorithm.
+/// @param old_parameters A previous set of parameters.
+/// @param old_gradient The gradient of the error function for that previous set of parameters.
+/// @param old_inverse_Hessian The Hessian of the error function for that previous set of parameters.
+/// @param parameters Actual set of parameters.
+/// @param gradient The gradient of the error function for the actual set of parameters.
+
+template <class T>
+void Matrix<T>::update_BFGS_inverse_Hessian(const Vector<double>& old_parameters, const Vector<double>& parameters,
+const Vector<double>& old_gradient, const Vector<double>& gradient)
+{
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+//   ostringstream buffer;
+
+//   const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+//   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+//   const size_t old_parameters_size = old_parameters.size();
+//   const size_t parameters_size = parameters.size();
+
+//   if(old_parameters_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Size of old parameters vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+//   else if(parameters_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Size of parameters vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   const size_t old_gradient_size = old_gradient.size();
+
+//   if(old_gradient_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method."
+//             << endl
+//             << "Size of old gradient vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   const size_t gradient_size = gradient.size();
+
+//   if(gradient_size != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method."
+//             << endl
+//             << "Size of gradient vector must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   const size_t rows_number = old_inverse_Hessian.get_rows_number();
+//   const size_t columns_number = old_inverse_Hessian.get_columns_number();
+
+//   if(rows_number != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Number of rows in old inverse Hessian must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   if(columns_number != parameters_number)
+//   {
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Number of columns in old inverse Hessian must be equal to number of parameters.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+   #endif
+
+   // Parameters difference Vector
+
+   const Vector<double> parameters_difference = parameters - old_parameters;
+
+//   if(parameters_difference.calculate_absolute_value() < 1.0e-50)
+//   {
+//       ostringstream buffer;
+
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Parameters difference vector is zero.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+   // Gradient difference Vector
+
+   const Vector<double> gradient_difference = gradient - old_gradient;
+
+//   if(gradient_difference.calculate_absolute_value() < numeric_limits<double>::min())
+//   {
+//       ostringstream buffer;
+
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Gradient difference vector is zero.\n";
+
+//      throw logic_error(buffer.str());
+//   }
+
+//   if(old_inverse_Hessian.calculate_absolute_value() < 1.0e-50)
+//   {
+//       ostringstream buffer;
+
+//      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
+//             << "Matrix<double> calculate_BFGS_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Old inverse Hessian matrix is zero.\n";
+
+//	  throw logic_error(buffer.str());
+//   }
+
+   // BGFS Vector
+
+   const double parameters_dot_gradient = parameters_difference.dot(gradient_difference);
+   const Vector<double> Hessian_dot_gradient = this->dot(gradient_difference);
+   const double gradient_dot_Hessian_dot_gradient = gradient_difference.dot(Hessian_dot_gradient);
+
+   const Vector<double> BFGS = parameters_difference/parameters_dot_gradient
+   - Hessian_dot_gradient/gradient_dot_Hessian_dot_gradient;
+
+   // Calculate inverse Hessian approximation
+
+   Matrix<double> term_1;
+   term_1.direct(parameters_difference, parameters_difference);
+   term_1 /= parameters_dot_gradient;
+
+   (*this) += term_1;
+
+   term_1.clear();
+
+   Matrix<double> term_2;
+   term_2.direct(Hessian_dot_gradient, Hessian_dot_gradient);
+   term_2 /= gradient_dot_Hessian_dot_gradient;
+
+   (*this) -= term_2;
+
+   term_2.clear();
+
+   Matrix<double> term_3;
+   term_3.direct(BFGS, BFGS);
+   term_3 *= gradient_dot_Hessian_dot_gradient;
+
+   (*this) += term_3;
+
+   term_3.clear();
+}
+
+
+
 /// Returns the sum of all the elements in the matrix.
 
 template <class T>
@@ -5657,7 +6239,7 @@ T Matrix<T>::calculate_sum() const
 
    for(size_t i = 0; i < this->size(); i++)
    {
-        sum +=(*this)[i];
+        sum += (*this)[i];
    }
 
    return(sum);
@@ -5692,7 +6274,7 @@ Vector<T> Matrix<T>::calculate_rows_sum() const
    {
        for(size_t j = 0; j < columns_number; j++)
        {
-            rows_sum[i] +=(*this)(i,j);
+            rows_sum[i] += (*this)(i,j);
        }
    }
 
@@ -5760,7 +6342,7 @@ Vector<T> Matrix<T>::calculate_columns_sum() const
    {
        for(size_t j = 0; j < columns_number; j++)
        {
-            columns_sum[j] +=(*this)(i,j);
+            columns_sum[j] += (*this)(i,j);
        }
    }
 
@@ -5769,9 +6351,25 @@ Vector<T> Matrix<T>::calculate_columns_sum() const
 
 
 template <class T>
+T Matrix<T>::calculate_column_sum(const size_t& column_index) const
+{
+   T column_sum = 0.0;
+
+   for(size_t i = 0; i < rows_number; i++)
+   {
+       column_sum += (*this)(i,column_index);
+   }
+
+   return(column_sum);
+}
+
+
+
+
+template <class T>
 Vector<T> Matrix<T>::calculate_columns_mean() const
 {
-   return calculate_columns_sum()/(double)rows_number;
+   return calculate_columns_sum()/static_cast<double>(rows_number);
 }
 
 
@@ -5805,6 +6403,115 @@ void Matrix<T>::sum_row(const size_t& row_index, const Vector<T>& vector)
 }
 
 
+/// Sums the values of all the rows of this matrix with the values of a given vector.
+/// The size of the vector must be equal to the number of columns.
+
+template <class T>
+Matrix<T> Matrix<T>::sum_rows(const Vector<T>& vector) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(vector.size() != columns_number)
+    {
+       ostringstream buffer;
+
+       cout << "OpenNN Exception: Matrix Template.\n"
+                 << "void sum_rows(const Vector<T>&) method.\n"
+                 << "Size of vector must be equal to number of columns.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+    Matrix<T> new_matrix(rows_number, columns_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {          
+           new_matrix(i,j) = (*this)(i,j) + vector[j];
+        }
+    }
+
+    return new_matrix;
+}
+
+
+/// Subtracts the values of all the rows of this matrix with the values of a given vector.
+/// The size of the vector must be equal to the number of columns.
+
+template <class T>
+Matrix<T> Matrix<T>::subtract_rows(const Vector<T>& vector) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(vector.size() != columns_number)
+    {
+       ostringstream buffer;
+
+       cout << "OpenNN Exception: Matrix Template.\n"
+                 << "void subtract_rows(const Vector<T>&) method.\n"
+                 << "Size of vector must be equal to number of columns.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+    Matrix<T> new_matrix(rows_number, columns_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+           new_matrix(i,j) = (*this)(i,j) - vector[j];
+        }
+    }
+
+    return new_matrix;
+}
+
+
+
+template <class T>
+Matrix<T> Matrix<T>::multiply_rows(const Vector<T>& vector) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    if(vector.size() != columns_number)
+    {
+       ostringstream buffer;
+
+       cout << "OpenNN Exception: Matrix Template.\n"
+                 << "void multiply_rows(const Vector<T>&) method.\n"
+                 << "Size of vector must be equal to number of columns.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+    Matrix<T> new_matrix(rows_number, columns_number, 0.0);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+           new_matrix(i,j) *= vector[j];
+        }
+    }
+
+    return new_matrix;
+}
+
+
 /// Returns the trace of the matrix, which is defined to be the sum of the main diagonal elements.
 /// The matrix must be square.
 
@@ -5832,7 +6539,7 @@ double Matrix<T>::calculate_trace() const
 
    for(size_t i = 0; i < rows_number; i++)
    {
-      trace +=(*this)(i,i);
+      trace += (*this)(i,i);
    }
 
    return(trace);
@@ -5870,10 +6577,10 @@ Vector<double> Matrix<T>::calculate_mean() const
    {
       for(size_t i = 0; i < rows_number; i++)
       {
-         mean[j] +=(*this)(i,j);
+         mean[j] += (*this)(i,j);
       }
 
-      mean[j] /=(double)rows_number;
+      mean[j] /= static_cast<double>(rows_number);
    }
 
    return(mean);
@@ -5920,10 +6627,10 @@ double Matrix<T>::calculate_mean(const size_t& column_index) const
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        mean +=(*this)(i,column_index);
+        mean += (*this)(i,column_index);
     }
 
-   mean /=(double)rows_number;
+   mean /= static_cast<double>(rows_number);
 
    return(mean);
 }
@@ -5950,10 +6657,10 @@ Vector<double> Matrix<T>::calculate_mean(const Vector<size_t>& column_indices) c
 
       for(size_t i = 0; i < rows_number; i++)
       {
-         mean[j] +=(*this)(i,column_index);
+         mean[j] += (*this)(i,column_index);
       }
 
-      mean[j] /=(double)rows_number;
+      mean[j] /= static_cast<double>(rows_number);
    }
 
    return(mean);
@@ -6057,10 +6764,10 @@ Vector<double> Matrix<T>::calculate_mean(const Vector<size_t>& row_indices, cons
       {
          row_index = row_indices[i];
 
-         mean[j] +=(*this)(row_index,column_index);
+         mean[j] += (*this)(row_index,column_index);
       }
 
-      mean[j] /=(double)rows_number;
+      mean[j] /= static_cast<double>(rows_number);
    }
 
    return(mean);
@@ -6076,7 +6783,7 @@ Vector<double> Matrix<T>::calculate_mean_monthly_occurrences() const
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        row =(*this).get_row(i);
+        row = (*this).get_row(i);
 
         row = row.filter_not_equal_to(0);
 
@@ -6235,32 +6942,32 @@ Vector<double> Matrix<T>::calculate_mean_missing_values(const Vector<size_t>& ro
 
     #pragma omp parallel for schedule(dynamic)
 
-   for(int i = 0; i <(int)column_indices_size; i++)
+   for(int i = 0; i < static_cast<int>(column_indices_size); i++)
    {
-       used_rows[i] = row_indices.get_difference(missing_indices[i]);
+       used_rows[static_cast<size_t>(i)] = row_indices.get_difference(missing_indices[static_cast<size_t>(i)]);
    }
 
     #pragma omp parallel for schedule(dynamic)
 
-   for(int j = 0; j <(int)column_indices_size; j++)
+   for(int j = 0; j < static_cast<int>(column_indices_size); j++)
    {
-      const size_t column_index = column_indices[j];
+      const size_t column_index = column_indices[static_cast<size_t>(j)];
 
       size_t count = 0;
 
-      const size_t current_rows_number = used_rows[j].size();
+      const size_t current_rows_number = used_rows[static_cast<size_t>(j)].size();
 
       for(size_t i = 0; i < current_rows_number; i++)
       {
-         const size_t row_index = used_rows[j][i];
+         const size_t row_index = used_rows[static_cast<size_t>(j)][i];
 
-         mean[j] +=(*this)(row_index,column_index);
+         mean[j] += (*this)(row_index,column_index);
          count++;
       }
 
       if(count != 0)
       {
-          mean[j] /=(double)count;
+          mean[static_cast<size_t>(j)] /= static_cast<double>(count);
       }
    }
 
@@ -6324,15 +7031,15 @@ Matrix<double> Matrix<T>::calculate_time_series_mean_missing_values(const Vector
 
                if(minimum == 0 )
                {
-                   step =(*this)(next_index + 1,column_index) -(*this)(next_index,column_index);
+                   step = (*this)(next_index + 1,column_index) -(*this)(next_index,column_index);
 
-                   next_value =(*this)(next_index,column_index);
+                   next_value = (*this)(next_index,column_index);
 
-                   for(int k = 0; k <(int)mean_indices_size; k++)
+                   for(int k = 0; k < static_cast<int>(mean_indices_size); k++)
                    {
-                       current_row = mean_indices[k];
+                       current_row = mean_indices[static_cast<size_t>(k)];
 
-                       means(current_row,column_index) = next_value - step *(mean_indices_size - k);
+                       means(current_row,column_index) = next_value - step *(mean_indices_size - static_cast<size_t>(k));
                    }
 
                    mean_indices.clear();
@@ -6340,13 +7047,13 @@ Matrix<double> Matrix<T>::calculate_time_series_mean_missing_values(const Vector
                }
                else if(maximum == row_indices_size - 1)
                {
-                   step =(*this)(previous_index,column_index) -(*this)(previous_index - 1,column_index);
+                   step = (*this)(previous_index,column_index) -(*this)(previous_index - 1,column_index);
 
-                   previous_value =(*this)(previous_index,column_index);
+                   previous_value = (*this)(previous_index,column_index);
 
-                   for(int k = 0; k <(int)mean_indices_size; k++)
+                   for(int k = 0; k < static_cast<int>(mean_indices_size); k++)
                    {
-                       current_row = mean_indices[k];
+                       current_row = mean_indices[static_cast<size_t>(k)];
 
                        means(current_row,column_index) = previous_value + step *(k+1);
                    }
@@ -6356,13 +7063,13 @@ Matrix<double> Matrix<T>::calculate_time_series_mean_missing_values(const Vector
                }
                else
                {
-                   step =((*this)(next_index,column_index) -(*this)(previous_index,column_index) ) /(double)(mean_indices_size + 1.0);
+                   step = ((*this)(next_index,column_index) -(*this)(previous_index,column_index) ) /static_cast<double>(mean_indices_size + 1.0);
 
-                   previous_value =(*this)(previous_index,column_index);
+                   previous_value = (*this)(previous_index,column_index);
 
-                   for(int k = 0; k <(int)mean_indices_size; k++)
+                   for(int k = 0; k < static_cast<int>(mean_indices_size); k++)
                    {
-                       current_row = mean_indices[k];
+                       current_row = mean_indices[static_cast<size_t>(k)];
 
                        means(current_row,column_index) = previous_value + step *(k+1);
                    }
@@ -6377,8 +7084,6 @@ Matrix<double> Matrix<T>::calculate_time_series_mean_missing_values(const Vector
     return(means);
 }
 
-
-// Vector<double> calculate_mean_standard_deviation() const method
 
 /// Returns a vector of vectors with the mean and standard deviation values of all the matrix columns.
 /// The size of the vector is two.
@@ -6550,10 +7255,10 @@ Vector< Vector<double> > Matrix<T>::calculate_mean_standard_deviation(const Vect
       {
          row_index = row_indices[i];
 
-         mean[j] +=(*this)(row_index,column_index);
+         mean[j] += (*this)(row_index,column_index);
       }
 
-      mean[j] /=(double)rows_number;
+      mean[j] /= static_cast<double>(rows_number);
    }
 
    // Standard deviation
@@ -6570,7 +7275,7 @@ Vector< Vector<double> > Matrix<T>::calculate_mean_standard_deviation(const Vect
       {
          row_index = row_indices[i];
 
-         standard_deviation[j] +=((*this)(row_index,column_index) - mean[j])*((*this)(row_index,column_index) - mean[j]);
+         standard_deviation[j] += ((*this)(row_index,column_index) - mean[j])*((*this)(row_index,column_index) - mean[j]);
       }
 
       standard_deviation[j] = sqrt(standard_deviation[j]/(rows_number-1.0));
@@ -6587,13 +7292,13 @@ Vector< Vector<double> > Matrix<T>::calculate_mean_standard_deviation(const Vect
 template <class T>
 T Matrix<T>::calculate_minimum() const
 {
-   T minimum =(T)1.0e99;
+   T minimum = static_cast<T>(numeric_limits<double>::max());
 
    for(size_t i = 0; i < this->size(); i++)
    {
          if((*this)[i] < minimum)
          {
-            minimum =(*this)[i];
+            minimum = (*this)[i];
          }
    }
 
@@ -6636,7 +7341,7 @@ Vector<double> Matrix<T>::calculate_median() const
 
        if(rows_number % 2 == 0)
        {
-         median[j] =(sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
+         median[j] = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
        }
        else
        {
@@ -6692,7 +7397,7 @@ double Matrix<T>::calculate_median(const size_t& column_index) const
 
    if(rows_number % 2 == 0)
    {
-     median =(sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
+     median = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
    }
    else
    {
@@ -6728,7 +7433,7 @@ Vector<double> Matrix<T>::calculate_median(const Vector<size_t>& column_indices)
 
       if(rows_number % 2 == 0)
       {
-        median[j] =(sorted_column[rows_number * 2 / 4] + sorted_column[rows_number * 2 / 4 + 1])/2;
+        median[j] = (sorted_column[rows_number * 2 / 4] + sorted_column[rows_number * 2 / 4 + 1])/2;
       }
       else
       {
@@ -6838,7 +7543,7 @@ Vector<double> Matrix<T>::calculate_median(const Vector<size_t>& row_indices, co
 
       if(row_indices_size % 2 == 0)
       {
-        median[j] =(sorted_column[row_indices_size*2/4] + sorted_column[row_indices_size*2/4 + 1])/2;
+        median[j] = (sorted_column[row_indices_size*2/4] + sorted_column[row_indices_size*2/4 + 1])/2;
       }
       else
       {
@@ -6958,18 +7663,18 @@ Vector<double> Matrix<T>::calculate_median_missing_values(const Vector<size_t>& 
 
     #pragma omp parallel for schedule(dynamic)
 
-   for(int i = 0; i <(int)column_indices_size; i++)
+   for(int i = 0; i < static_cast<int>(column_indices_size); i++)
    {
-       used_rows[i] = row_indices.get_difference(missing_indices[i]);
+       used_rows[static_cast<size_t>(i)] = row_indices.get_difference(missing_indices[static_cast<size_t>(i)]);
    }
 
     #pragma omp parallel for schedule(dynamic)
 
-   for(int j = 0; j <(int)column_indices_size; j++)
+   for(int j = 0; j < static_cast<int>(column_indices_size); j++)
    {
-      const size_t column_index = column_indices[j];
+      const size_t column_index = column_indices[static_cast<size_t>(j)];
 
-      const size_t current_rows_number = used_rows[j].size();
+      const size_t current_rows_number = used_rows[static_cast<size_t>(j)].size();
 
       Vector<T> sorted_column(this->get_column(column_index, used_rows[j]));
 
@@ -6977,7 +7682,7 @@ Vector<double> Matrix<T>::calculate_median_missing_values(const Vector<size_t>& 
 
       if(current_rows_number % 2 == 0)
       {
-        median[j] =(sorted_column[current_rows_number*2/4] + sorted_column[current_rows_number*2/4+1])/2;
+        median[j] = (sorted_column[current_rows_number*2/4] + sorted_column[current_rows_number*2/4+1])/2;
       }
       else
       {
@@ -7002,7 +7707,7 @@ Vector< double > Matrix<T>::calculate_missing_values_percentage() const
     {
        column = get_column(i);
 
-       missing_values[i] = column.count_equal_to("NA")*100.0/((double)rows_number-1.0);
+       missing_values[i] = column.count_equal_to("NA")*100.0/static_cast<double>(rows_number-1.0);
     }
 
     return(missing_values);
@@ -7014,13 +7719,13 @@ Vector< double > Matrix<T>::calculate_missing_values_percentage() const
 template <class T>
 T Matrix<T>::calculate_maximum() const
 {
-    T maximum =(T)-1.0e99;
+    T maximum = static_cast<T>(-numeric_limits<double>::max());
 
     for(size_t i = 0; i < this->size(); i++)
     {
           if((*this)[i] > maximum)
           {
-             maximum =(*this)[i];
+             maximum = (*this)[i];
           }
     }
 
@@ -7035,8 +7740,8 @@ T Matrix<T>::calculate_maximum() const
 template <class T>
 Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum() const
 {
-   Vector<T> minimum(columns_number,(T)1.0e99);
-   Vector<T> maximum(columns_number,(T)-1.0e99);
+   Vector<T> minimum(columns_number,static_cast<T>(numeric_limits<double>::max()));
+   Vector<T> maximum(columns_number,static_cast<T>(-numeric_limits<double>::max()));
 
    for(size_t j = 0; j < columns_number; j++)
    {
@@ -7044,12 +7749,12 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum() const
       {
          if((*this)(i,j) < minimum[j])
          {
-            minimum[j] =(*this)(i,j);
+            minimum[j] = (*this)(i,j);
          }
 
          if((*this)(i,j) > maximum[j])
          {
-            maximum[j] =(*this)(i,j);
+            maximum[j] = (*this)(i,j);
          }
       }
    }
@@ -7088,8 +7793,8 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& c
 
    size_t column_index;
 
-   Vector<T> minimum(column_indices_size, (T)1.0e99);
-   Vector<T> maximum(column_indices_size,(T)-1.0e99);
+   Vector<T> minimum(column_indices_size, static_cast<T>(numeric_limits<double>::max()));
+   Vector<T> maximum(column_indices_size,static_cast<T>(-numeric_limits<double>::max()));
 
    for(size_t j = 0; j < column_indices_size; j++)
    {
@@ -7099,12 +7804,12 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& c
       {
          if((*this)(i,column_index) < minimum[j])
          {
-            minimum[j] =(*this)(i,column_index);
+            minimum[j] = (*this)(i,column_index);
          }
 
          if((*this)(i,column_index) > maximum[j])
          {
-            maximum[j] =(*this)(i,column_index);
+            maximum[j] = (*this)(i,column_index);
          }
       }
    }
@@ -7125,8 +7830,8 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& r
    const size_t row_indices_size = row_indices.size();
    const size_t column_indices_size = column_indices.size();
 
-   Vector<T> minimum(column_indices_size,(T) 1.0e99);
-   Vector<T> maximum(column_indices_size,(T)-1.0e99);
+   Vector<T> minimum(column_indices_size,static_cast<T>(numeric_limits<double>::max()));
+   Vector<T> maximum(column_indices_size,static_cast<T>(-numeric_limits<double>::max()));
 
    size_t row_index;
    size_t column_index;
@@ -7141,12 +7846,12 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& r
 
          if((*this)(row_index,column_index) < minimum[j])
          {
-            minimum[j] =(*this)(row_index,column_index);
+            minimum[j] = (*this)(row_index,column_index);
          }
 
          if((*this)(row_index,column_index) > maximum[j])
          {
-            maximum[j] =(*this)(row_index,column_index);
+            maximum[j] = (*this)(row_index,column_index);
          }
       }
    }
@@ -7160,13 +7865,13 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& r
 template <class T>
 T Matrix<T>::calculate_column_minimum(const size_t& column_index) const
 {
-   T minimum =(T)1.0e99;
+   T minimum = static_cast<T>(numeric_limits<double>::max());
 
    for(size_t i = 0; i < rows_number; i++)
    {
          if((*this)(i,column_index) < minimum)
          {
-            minimum =(*this)[i];
+            minimum = (*this)[i];
          }
    }
 
@@ -7179,13 +7884,13 @@ T Matrix<T>::calculate_column_minimum(const size_t& column_index) const
 template <class T>
 T Matrix<T>::calculate_column_maximum(const size_t& column_index) const
 {
-    T maximum =(T)-1.0e99;
+    T maximum = static_cast<T>(-numeric_limits<double>::max());
 
     for(size_t i = 0; i < rows_number; i++)
     {
           if((*this)(i,column_index) > maximum)
           {
-             maximum =(*this)[i];
+             maximum = (*this)[i];
           }
     }
 
@@ -7200,20 +7905,20 @@ T Matrix<T>::calculate_column_maximum(const size_t& column_index) const
 template <class T>
 Vector<T> Matrix<T>::calculate_means_integers() const
 {
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-if(columns_number != 2)
-{
-   ostringstream buffer;
+    if(columns_number != 2)
+    {
+       ostringstream buffer;
 
-   buffer << "OpenNN Exception: Matrix template.\n"
-          << "Vector<T> calculate_means_integers(const Vector<size_t>&) const method.\n"
-          << "Number of columns must be two.\n";
+       buffer << "OpenNN Exception: Matrix template.\n"
+              << "Vector<T> calculate_means_integers(const Vector<size_t>&) const method.\n"
+              << "Number of columns must be two.\n";
 
-   throw logic_error(buffer.str());
-}
+       throw logic_error(buffer.str());
+    }
 
-#endif
+    #endif
 
     const Vector<size_t> integers = this->get_column(0).get_integer_elements(get_rows_number());
 
@@ -7231,20 +7936,20 @@ Vector<T> Matrix<T>::calculate_means_integers(const Vector<size_t>& integers) co
 {
     const size_t integers_number = integers.size();
 
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-if(integers_number == 0)
-{
-   ostringstream buffer;
+    if(integers_number == 0)
+    {
+       ostringstream buffer;
 
-   buffer << "OpenNN Exception: Matrix template.\n"
-          << "Vector<T> calculate_means_integers(const Vector<size_t>&) const method.\n"
-          << "Number of integers must be greater than 0.\n";
+       buffer << "OpenNN Exception: Matrix template.\n"
+              << "Vector<T> calculate_means_integers(const Vector<size_t>&) const method.\n"
+              << "Number of integers must be greater than 0.\n";
 
-   throw logic_error(buffer.str());
-}
+       throw logic_error(buffer.str());
+    }
 
-#endif
+    #endif
 
     const size_t rows_number = this->get_rows_number();
 
@@ -7264,14 +7969,14 @@ if(integers_number == 0)
         {
             if((*this)(j,0) == current_integer)
             {
-                sum +=(*this)(j,1);
+                sum += (*this)(j,1);
                 count++;
             }
         }
 
         if(count != 0)
         {
-            means[i] =(T)sum/(T)count;
+            means[i] = static_cast<T>(sum)/static_cast<T>(count);
         }
         else
         {
@@ -7291,20 +7996,20 @@ if(integers_number == 0)
 template <class T>
 Vector<T> Matrix<T>::calculate_means_integers_missing_values(const Vector<Vector<size_t>>& missing_indices) const
 {
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-if(columns_number != 2)
-{
-   ostringstream buffer;
+    if(columns_number != 2)
+    {
+       ostringstream buffer;
 
-   buffer << "OpenNN Exception: Matrix template.\n"
-          << "Vector<T> calculate_means_integers(const Vector<size_t>&) const method.\n"
-          << "Number of columns must be two.\n";
+       buffer << "OpenNN Exception: Matrix template.\n"
+              << "Vector<T> calculate_means_integers(const Vector<size_t>&) const method.\n"
+              << "Number of columns must be two.\n";
 
-   throw logic_error(buffer.str());
-}
+       throw logic_error(buffer.str());
+    }
 
-#endif
+    #endif
 
     const Vector<size_t> integers = this->get_column(0).get_integer_elements(get_rows_number());
 
@@ -7323,32 +8028,32 @@ Vector<T> Matrix<T>::calculate_means_integers_missing_values(const Vector<size_t
 {
     const size_t integers_number = integers.size();
 
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-if(columns_number != 2)
-{
-   ostringstream buffer;
+    if(columns_number != 2)
+    {
+       ostringstream buffer;
 
-   buffer << "OpenNN Exception: Matrix template.\n"
-          << "Vector<T> calculate_means_integers(const Vector<size_t>&, const Vector< Vector<size_t> >&) const method.\n"
-          << "Number of columns must be two.\n";
+       buffer << "OpenNN Exception: Matrix template.\n"
+              << "Vector<T> calculate_means_integers(const Vector<size_t>&, const Vector< Vector<size_t> >&) const method.\n"
+              << "Number of columns must be two.\n";
 
-   throw logic_error(buffer.str());
-}
+       throw logic_error(buffer.str());
+    }
 
 
-if(integers_number == 0)
-{
-   ostringstream buffer;
+    if(integers_number == 0)
+    {
+       ostringstream buffer;
 
-   buffer << "OpenNN Exception: Matrix template.\n"
-          << "Vector<T> calculate_means_integers(const Vector<size_t>&, const Vector< Vector<size_t> >&) const method.\n"
-          << "Number of integers must be greater than 0.\n";
+       buffer << "OpenNN Exception: Matrix template.\n"
+              << "Vector<T> calculate_means_integers(const Vector<size_t>&, const Vector< Vector<size_t> >&) const method.\n"
+              << "Number of integers must be greater than 0.\n";
 
-   throw logic_error(buffer.str());
-}
+       throw logic_error(buffer.str());
+    }
 
-#endif
+    #endif
 
     const size_t rows_number = this->get_rows_number();
 
@@ -7370,7 +8075,7 @@ if(integers_number == 0)
             {
                 if(!missing_indices[1].contains(j))
                 {
-                    sum +=(*this)(j,1);
+                    sum += (*this)(j,1);
                     count++;
                 }
             }
@@ -7378,7 +8083,7 @@ if(integers_number == 0)
 
         if(count != 0)
         {
-            means[i] =(T)sum/(T)count;
+            means[i] = static_cast<T>(sum)/static_cast<T>(count);
         }
         else
         {
@@ -7423,20 +8128,20 @@ Vector<T> Matrix<T>::calculate_means_binary_column() const
     {
         if((*this)(i,0) == 0.0)
         {
-            means[0] +=(*this)(i,1);
+            means[0] += (*this)(i,1);
             count++;
         }
         else if((*this)(i,0) == 1.0)
         {
-            means[1] +=(*this)(i,1);
+            means[1] += (*this)(i,1);
             count++;
         }
     }
 
     if(count != 0)
     {
-        means[0] =(T)means[0]/(T)count;
-        means[1] =(T)means[1]/(T)count;
+        means[0] = static_cast<T>(means[0])/static_cast<T>(count);
+        means[1] = static_cast<T>(means[1])/static_cast<T>(count);
     }
     else
     {
@@ -7469,14 +8174,14 @@ Vector<T> Matrix<T>::calculate_means_binary_columns() const
         {
             if((*this)(j,i) == 1.0)
             {
-                sum +=(*this)(j,columns_number-1);
+                sum += (*this)(j,columns_number-1);
                 count++;
             }
         }
 
         if(count != 0)
         {
-            means[i] =(T)sum/(T)count;
+            means[i] = static_cast<T>(sum)/static_cast<T>(count);
         }
         else
         {
@@ -7523,12 +8228,12 @@ Vector<T> Matrix<T>::calculate_means_binary_column_missing_values(const Vector< 
         {
             if((*this)(i,0) == 0.0)
             {
-                means[0] +=(*this)(i,1);
+                means[0] += (*this)(i,1);
                 count++;
             }
             else if((*this)(i,0) == 1.0)
             {
-                means[1] +=(*this)(i,1);
+                means[1] += (*this)(i,1);
                 count++;
             }
         }
@@ -7536,8 +8241,8 @@ Vector<T> Matrix<T>::calculate_means_binary_column_missing_values(const Vector< 
 
     if(count != 0)
     {
-        means[0] =(T)means[0]/(T)count;
-        means[1] =(T)means[1]/(T)count;
+        means[0] = static_cast<T>(means[0])/static_cast<T>(count);
+        means[1] = static_cast<T>(means[1])/static_cast<T>(count);
     }
     else
     {
@@ -7573,7 +8278,7 @@ Vector<T> Matrix<T>::calculate_means_binary_columns_missing_values(const Vector<
             {
                 if(!missing_indices[i].contains(j))
                 {
-                    sum +=(*this)(j,columns_number-1);
+                    sum += (*this)(j,columns_number-1);
                     count++;
                 }
             }
@@ -7581,7 +8286,7 @@ Vector<T> Matrix<T>::calculate_means_binary_columns_missing_values(const Vector<
 
         if(count != 0)
         {
-            means[i] =(T)sum/(T)count;
+            means[i] = static_cast<T>(sum)/static_cast<T>(count);
         }
         else
         {
@@ -7604,7 +8309,7 @@ Vector<T> Matrix<T>::calculate_means_continiuous(const size_t& bins_number) cons
     const T minimum = this->get_column(0).calculate_minimum();
     const T maximum = this->get_column(1).calculate_maximum();
 
-    const double step =(double)(minimum+maximum)/(double)bins_number;
+    const double step = static_cast<double>(minimum+maximum)/static_cast<double>(bins_number);
 
     double previous_limit = minimum;
     double current_limit = minimum + step;
@@ -7619,17 +8324,17 @@ Vector<T> Matrix<T>::calculate_means_continiuous(const size_t& bins_number) cons
         {
             if(i == bins_number-2 &&(*this)(j,0) >= previous_limit &&(*this)(j,1) <= current_limit)
             {
-                means[0] +=(*this)(j,0);
+                means[0] += (*this)(j,0);
                 count++;
             }
             else if((*this)(j,0) >= previous_limit &&(*this)(j,1) < current_limit)
             {
-                means[0] +=(*this)(j,0);
+                means[0] += (*this)(j,0);
                 count++;
             }
         }
 
-        means[i] =(T)means[i]/(T)count;
+        means[i] = static_cast<T>(means[i])/static_cast<T>(count);
     }
 
     return means;
@@ -7648,7 +8353,7 @@ Vector<T> Matrix<T>::calculate_means_continiuous_missing_values(const Vector< Ve
     const T minimum = this->get_column(0).calculate_minimum();
     const T maximum = this->get_column(1).calculate_maximum();
 
-    const double step =(double)(minimum+maximum)/(double)bins_number;
+    const double step = static_cast<double>(minimum+maximum)/static_cast<double>(bins_number);
 
     double previous_limit = minimum;
     double current_limit = minimum + step;
@@ -7665,18 +8370,18 @@ Vector<T> Matrix<T>::calculate_means_continiuous_missing_values(const Vector< Ve
             {
                 if(i == bins_number-2 &&(*this)(j,0) >= previous_limit &&(*this)(j,1) <= current_limit)
                 {
-                    means[0] +=(*this)(j,0);
+                    means[0] += (*this)(j,0);
                     count++;
                 }
                 else if((*this)(j,0) >= previous_limit &&(*this)(j,1) < current_limit)
                 {
-                    means[0] +=(*this)(j,0);
+                    means[0] += (*this)(j,0);
                     count++;
                 }
             }
         }
 
-        means[i] =(T)means[i]/(T)count;
+        means[i] = static_cast<T>(means[i])/static_cast<T>(count);
     }
 
     return means;
@@ -7713,7 +8418,7 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics() const
 
 #pragma omp parallel for private(column)
 
-   for(int i = 0; i <(int)columns_number; i++)
+   for(int i = 0; i < static_cast<int>(columns_number); i++)
    {
       column = get_column(i);
 
@@ -7812,26 +8517,26 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector<size_t>& ro
 
 #pragma omp parallel for private(column_index)
 
-        for(int j = 0; j < column_indices_size; j++)
+        for(int j = 0; j < static_cast<int>(column_indices_size); j++)
         {
-            column_index = column_indices[j];
+            column_index = column_indices[static_cast<size_t>(j)];
 
             if((*this)(row_index,column_index) < minimums[j])
             {
-                minimums[j] =(*this)(row_index,column_index);
+                minimums[j] = (*this)(row_index,column_index);
             }
 
             if((*this)(row_index,column_index) > maximums[j])
             {
-                maximums[j] =(*this)(row_index,column_index);
+                maximums[j] = (*this)(row_index,column_index);
             }
 
-            sums[j] +=(*this)(row_index,column_index);
-            squared_sums[j] +=(*this)(row_index,column_index) *(*this)(row_index,column_index);
+            sums[j] += (*this)(row_index,column_index);
+            squared_sums[j] += (*this)(row_index,column_index) *(*this)(row_index,column_index);
         }
     }
 
-    const Vector<double> mean = sums/(double)row_indices_size;
+    const Vector<double> mean = sums/static_cast<double>(row_indices_size);
 
     Vector<double> standard_deviation(column_indices_size, 0.0);
 
@@ -7884,28 +8589,28 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector< Vector<siz
 
     #pragma omp parallel for
 
-    for(int i = 0; i <(int)column_indices_size; i++)
+    for(int i = 0; i < static_cast<int>(column_indices_size); i++)
     {
-        const size_t column_index = column_indices[i];
+        const size_t column_index = column_indices[static_cast<size_t>(i)];
 
-        const size_t current_rows_number = row_indices[i].size();
+        const size_t current_rows_number = row_indices[static_cast<size_t>(i)].size();
 
         for(size_t j = 0; j < current_rows_number; j++)
         {
-            const size_t row_index = row_indices[i][j];
+            const size_t row_index = row_indices[static_cast<size_t>(i)][j];
 
             if((*this)(row_index,column_index) < minimums[i])
             {
-                minimums[i] =(*this)(row_index,column_index);
+                minimums[i] = (*this)(row_index,column_index);
             }
 
             if((*this)(row_index,column_index) > maximums[i])
             {
-                maximums[i] =(*this)(row_index,column_index);
+                maximums[i] = (*this)(row_index,column_index);
             }
 
-            sums[i] +=(*this)(row_index,column_index);
-            squared_sums[i] +=(*this)(row_index,column_index) *(*this)(row_index,column_index);
+            sums[i] += (*this)(row_index,column_index);
+            squared_sums[i] += (*this)(row_index,column_index) *(*this)(row_index,column_index);
         }
     }
 
@@ -7917,7 +8622,7 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector< Vector<siz
 
         if(current_rows_number > 1)
         {
-            const double numerator = squared_sums[i] -(sums[i] * sums[i]) /(double)current_rows_number;
+            const double numerator = squared_sums[i] -(sums[i] * sums[i]) /static_cast<double>(current_rows_number);
             const double denominator = current_rows_number - 1.0;
 
             standard_deviation[i] = sqrt(numerator/denominator);
@@ -7928,7 +8633,7 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector< Vector<siz
     {
         statistics[i].minimum = minimums[i];
         statistics[i].maximum = maximums[i];
-        statistics[i].mean = sums[i]/(double)row_indices[i].size();
+        statistics[i].mean = sums[i]/static_cast<double>(row_indices[i].size());
         statistics[i].standard_deviation = standard_deviation[i];
     }
 
@@ -8136,9 +8841,9 @@ Vector< Statistics<T> > Matrix<T>::calculate_columns_statistics_missing_values(c
 
 #pragma omp parallel for private(index, column) schedule(dynamic)
 
-    for(int i = 0; i <(int)column_indices_size; i++)
+    for(int i = 0; i < static_cast<int>(column_indices_size); i++)
     {
-        index = column_indices[i];
+        index = column_indices[static_cast<size_t>(i)];
 
         column = get_column(index);
 
@@ -8387,20 +9092,20 @@ Vector< Vector<double> >  Matrix<T>::calculate_box_plots(const Vector<Vector<siz
 {
     const size_t columns_number = columns_indices.size();
 
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-if(columns_number == rows_indices.size())
-{
-   ostringstream buffer;
+    if(columns_number == rows_indices.size())
+    {
+       ostringstream buffer;
 
-   buffer << "OpenNN Exception: Matrix template."
-          << "void calculate_box_plots() const method.\n"
-          << "Size of row indices must be equal to the number of columns.\n";
+       buffer << "OpenNN Exception: Matrix template."
+              << "void calculate_box_plots() const method.\n"
+              << "Size of row indices must be equal to the number of columns.\n";
 
-   throw logic_error(buffer.str());
-}
+       throw logic_error(buffer.str());
+    }
 
-#endif
+    #endif
 
     Vector< Vector<double> > box_plots(columns_number);
 
@@ -8408,11 +9113,11 @@ if(columns_number == rows_indices.size())
 
     #pragma omp parallel for private(column)
 
-    for(int i = 0; i <(int)columns_number; i++)
+    for(int i = 0; i < static_cast<int>(columns_number); i++)
     {
-        box_plots[i].resize(5);
+        box_plots[static_cast<size_t>(i)].resize(5);
 
-        const size_t rows_number = rows_indices[i].size();
+        const size_t rows_number = rows_indices[static_cast<size_t>(i)].size();
 
         column = this->get_column(columns_indices[i]).get_subvector(rows_indices[i]);
 
@@ -8420,23 +9125,23 @@ if(columns_number == rows_indices.size())
 
         // Minimum
 
-        box_plots[i][0] = column[0];
+        box_plots[static_cast<size_t>(i)][0] = column[0];
 
         if(rows_number % 2 == 0)
         {
             // First quartile
 
-            box_plots[i][1] =(column[rows_number / 4] + column[rows_number / 4 + 1]) / 2.0;
+            box_plots[static_cast<size_t>(i)][1] = (column[rows_number / 4] + column[rows_number / 4 + 1]) / 2.0;
 
             // Second quartile
 
-            box_plots[i][2] =(column[rows_number * 2 / 4] +
+            box_plots[static_cast<size_t>(i)][2] = (column[rows_number * 2 / 4] +
                            column[rows_number * 2 / 4 + 1]) /
                           2.0;
 
             // Third quartile
 
-            box_plots[i][3] =(column[rows_number * 3 / 4] +
+            box_plots[static_cast<size_t>(i)][3] = (column[rows_number * 3 / 4] +
                            column[rows_number * 3 / 4 + 1]) /
                           2.0;
         }
@@ -8444,20 +9149,20 @@ if(columns_number == rows_indices.size())
         {
             // First quartile
 
-            box_plots[i][1] = column[rows_number / 4];
+            box_plots[static_cast<size_t>(i)][1] = column[rows_number / 4];
 
             // Second quartile
 
-            box_plots[i][2] = column[rows_number * 2 / 4];
+            box_plots[static_cast<size_t>(i)][2] = column[rows_number * 2 / 4];
 
             //Third quartile
 
-            box_plots[i][3] = column[rows_number * 3 / 4];
+            box_plots[static_cast<size_t>(i)][3] = column[rows_number * 3 / 4];
         }
 
         // Maximum
 
-        box_plots[i][4] = column[rows_number-1];
+        box_plots[static_cast<size_t>(i)][4] = column[rows_number-1];
     }
 
     return box_plots;
@@ -8494,11 +9199,11 @@ Matrix<double> Matrix<T>::calculate_covariance_matrix() const
 
     for(size_t i = 0; i < size; i++)
     {
-        first_column =(*this).get_column(i);
+        first_column = (*this).get_column(i);
 
         for(size_t j = i; j < size; j++)
         {
-            second_column =(*this).get_column(j);
+            second_column = (*this).get_column(j);
 
             covariance_matrix(i,j) = first_column.calculate_covariance(second_column);
             covariance_matrix(j,i) = covariance_matrix(i,j);
@@ -8640,6 +9345,22 @@ Matrix<size_t> Matrix<T>::calculate_greater_than_indices(const T& value) const
 
 
 template <class T>
+Matrix<T> Matrix<T>::calculate_competitive() const
+{
+    Matrix<T> competitive(rows_number, columns_number, 0);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        const size_t maximal_index = get_row(i).calculate_maximal_index();
+
+        competitive(i, maximal_index) = 1;
+    }
+
+    return(competitive);
+}
+
+
+template <class T>
 Matrix<T> Matrix<T>::calculate_softmax_rows() const
 {
     Matrix<T> softmax(rows_number,columns_number);
@@ -8662,6 +9383,52 @@ Matrix<T> Matrix<T>::calculate_softmax_columns() const
     {
         softmax.set_column(i,(*this).get_column(i).calculate_softmax());
     }
+
+    return softmax;
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_normalized_columns() const
+{
+    Matrix<T> softmax(rows_number,columns_number);
+
+    for (size_t i = 0; i < columns_number; i++)
+    {
+        softmax.set_column(i,(*this).get_column(i).calculate_normalized());
+    }
+
+    return softmax;
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_scaled_minimum_maximum_0_1_columns() const
+{
+    Matrix<T> softmax(rows_number,columns_number);
+
+    for (size_t i = 0; i < columns_number; i++)
+    {
+        softmax.set_column(i,(*this).get_column(i).calculate_scaled_minimum_maximum_0_1());
+    }
+
+    if(header != "") softmax.set_header(header);
+
+    return softmax;
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::calculate_scaled_mean_standard_deviation_columns() const
+{
+    Matrix<T> softmax(rows_number,columns_number);
+
+    for (size_t i = 0; i < columns_number; i++)
+    {
+        softmax.set_column(i,(*this).get_column(i).calculate_scaled_mean_standard_deviation());
+    }
+
+    if(header != "") softmax.set_header(header);
 
     return softmax;
 }
@@ -8722,7 +9489,7 @@ void Matrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> >& sta
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].standard_deviation < 1e-99)
+      if(statistics[j].standard_deviation < numeric_limits<double>::min())
       {
          // Do nothing
       }
@@ -8730,7 +9497,7 @@ void Matrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> >& sta
       {
          for(size_t i = 0; i < rows_number; i++)
          {
-           (*this)(i,j) =((*this)(i,j) - statistics[j].mean)/statistics[j].standard_deviation;
+           (*this)(i,j) = ((*this)(i,j) - statistics[j].mean)/statistics[j].standard_deviation;
          }
       }
    }
@@ -8743,7 +9510,7 @@ void Matrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> >& sta
 /// @param column_index Index of the time column.
 
 template <class T>
-void Matrix<T>::remove_trends(const Vector< LinearRegressionParameters<double> >& trends, const size_t& column_index)
+void Matrix<T>::delete_trends(const Vector< LinearRegressionParameters<double> >& trends, const size_t& column_index)
 {
     size_t index = 0;
 
@@ -8753,7 +9520,7 @@ void Matrix<T>::remove_trends(const Vector< LinearRegressionParameters<double> >
         {
             if(j != column_index)
             {
-               (*this)(i,j) =(*this)(i,j) -(trends[index].intercept + trends[index].slope *(*this)(i, column_index));
+               (*this)(i,j) = (*this)(i,j) -(trends[index].intercept + trends[index].slope *(*this)(i, column_index));
 
                 index++;
             }
@@ -8770,14 +9537,14 @@ void Matrix<T>::remove_trends(const Vector< LinearRegressionParameters<double> >
 /// @param missing_indices Indices of the rows with missing values.
 
 template <class T>
-void Matrix<T>::remove_trends_missing_values(const Vector< LinearRegressionParameters<double> >& trends, const size_t& column_index,
+void Matrix<T>::delete_trends_missing_values(const Vector< LinearRegressionParameters<double> >& trends, const size_t& column_index,
                                               const Vector< Vector<size_t> >& missing_indices)
 {
     for(size_t j = 0; j < columns_number; j++)
     {
         if(j != column_index)
         {
-            const Vector<size_t> used_rows =(Vector<size_t>(0, 1, rows_number - 1)).get_difference(missing_indices[j]);
+            const Vector<size_t> used_rows = (Vector<size_t>(0, 1, rows_number - 1)).get_difference(missing_indices[j]);
 
             const size_t used_rows_number = used_rows.size();
 
@@ -8785,7 +9552,7 @@ void Matrix<T>::remove_trends_missing_values(const Vector< LinearRegressionParam
 
             for(size_t i = 0; i < used_rows_number; i++)
             {
-               (*this)(used_rows[i], j) =(*this)(used_rows[i], j) -(trends[index].intercept + trends[index].slope *(*this)(used_rows[i], column_index));
+               (*this)(used_rows[i], j) = (*this)(used_rows[i], j) -(trends[index].intercept + trends[index].slope *(*this)(used_rows[i], column_index));
             }
 
             index++;
@@ -8803,7 +9570,7 @@ void Matrix<T>::remove_trends_missing_values(const Vector< LinearRegressionParam
 /// @param missing_indices Indices of the rows with missing values.
 
 template <class T>
-void Matrix<T>::remove_inputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >& trends, const size_t& column_index,
+void Matrix<T>::delete_inputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >& trends, const size_t& column_index,
                                                     const Vector<size_t>& column_indices, const Vector< Vector<size_t> >& missing_indices)
 {
     size_t used_columns_number = column_indices.size();
@@ -8816,13 +9583,13 @@ void Matrix<T>::remove_inputs_trends_missing_values(const Vector< LinearRegressi
     {
         current_column = column_indices[j];
 
-        const Vector<size_t> used_rows =(Vector<size_t>(0, 1, rows_number - 1)).get_difference(missing_indices[current_column]);
+        const Vector<size_t> used_rows = (Vector<size_t>(0, 1, rows_number - 1)).get_difference(missing_indices[current_column]);
 
         const size_t used_rows_number = used_rows.size();
 
         for(size_t i = 0; i < used_rows_number; i++)
         {
-           (*this)(used_rows[i], current_column) =(*this)(used_rows[i], current_column) -
+           (*this)(used_rows[i], current_column) = (*this)(used_rows[i], current_column) -
                    (trends[trends_index].intercept + trends[trends_index].slope *(*this)(used_rows[i], column_index));
         }
 
@@ -8840,7 +9607,7 @@ void Matrix<T>::remove_inputs_trends_missing_values(const Vector< LinearRegressi
 /// @param missing_indices Indices of the rows with missing values.
 
 template <class T>
-void Matrix<T>::remove_outputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >& trends,
+void Matrix<T>::delete_outputs_trends_missing_values(const Vector< LinearRegressionParameters<double> >& trends,
                                                      const size_t& column_index,
                                                      const Vector<size_t>& column_indices,
                                                      const Vector< Vector<size_t> >& missing_indices)
@@ -8855,13 +9622,13 @@ void Matrix<T>::remove_outputs_trends_missing_values(const Vector< LinearRegress
     {
         current_column = column_indices[j];
 
-        const Vector<size_t> used_rows =(Vector<size_t>(0, 1, rows_number - 1)).get_difference(missing_indices[current_column]);
+        const Vector<size_t> used_rows = (Vector<size_t>(0, 1, rows_number - 1)).get_difference(missing_indices[current_column]);
 
         const size_t used_rows_number = used_rows.size();
 
         for(size_t i = 0; i < used_rows_number; i++)
         {
-           (*this)(used_rows[i], current_column) =(*this)(used_rows[i], current_column) -
+           (*this)(used_rows[i], current_column) = (*this)(used_rows[i], current_column) -
                    (trends[trends_index].intercept + trends[trends_index].slope *(*this)(used_rows[i], column_index));
         }
 
@@ -8917,7 +9684,7 @@ void Matrix<T>::scale_rows_mean_standard_deviation(const Vector< Statistics<T> >
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].standard_deviation < 1e-99)
+       if(statistics[j].standard_deviation < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -8927,7 +9694,7 @@ void Matrix<T>::scale_rows_mean_standard_deviation(const Vector< Statistics<T> >
           {
              row_index = row_indices[i];
 
-            (*this)(row_index,j) =((*this)(row_index,j) - statistics[j].mean)/statistics[j].standard_deviation;
+            (*this)(row_index,j) = ((*this)(row_index,j) - statistics[j].mean)/statistics[j].standard_deviation;
           }
        }
     }
@@ -8970,7 +9737,7 @@ void Matrix<T>::scale_columns_mean_standard_deviation(const Vector< Statistics<T
 
    for(size_t j = 0; j < columns_indices_size; j++)
    {
-      if(statistics[j].standard_deviation < 1e-99)
+      if(statistics[j].standard_deviation < numeric_limits<double>::min())
       {
          // Do nothing
       }
@@ -8980,9 +9747,9 @@ void Matrix<T>::scale_columns_mean_standard_deviation(const Vector< Statistics<T
 
 #pragma omp parallel for
 
-         for(int i = 0; i <(int)rows_number; i++)
+         for(int i = 0; i < static_cast<int>(rows_number); i++)
          {
-           (*this)(i,column_index) =((*this)(i,column_index) - statistics[j].mean)/statistics[j].standard_deviation;
+           (*this)(i,column_index) = ((*this)(i,column_index) - statistics[j].mean)/statistics[j].standard_deviation;
          }
       }
    }
@@ -9018,7 +9785,7 @@ void Matrix<T>::scale_minimum_maximum(const Vector< Statistics<T> >& statistics)
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
       {
             // Do nothing
       }
@@ -9033,9 +9800,51 @@ void Matrix<T>::scale_minimum_maximum(const Vector< Statistics<T> >& statistics)
 }
 
 
+template <class T>
+void Matrix<T>::scale_range(const Vector< Statistics<T> >& statistics, const T& minimum, const T& maximum)
+{
+   #ifdef __OPENNN_DEBUG__
+
+   const size_t size = statistics.size();
+
+   if(size != columns_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix template."
+             << "void scale_minimum_maximum(const Vector< Statistics<T> >&) method.\n"
+             << "Size of statistics vector must be equal to number of columns.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   // Rescale data
+
+   for(size_t j = 0; j < columns_number; j++)
+   {
+      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+      {
+          for(size_t i = 0; i < rows_number; i++)
+          {
+               (*this)(i,j) = 0.0;
+          }
+      }
+      else
+      {
+         for(size_t i = 0; i < rows_number; i++)
+         {
+           (*this)(i,j) = (maximum-minimum)*((*this)(i,j) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)+minimum;
+         }
+      }
+   }
+}
+
 /// Scales the data using the minimum and maximum method and
 /// the minimum and maximum values calculated from the matrix.
 /// It also returns the statistics of all the columns.
+
 
 template <class T>
 Vector< Statistics<T> > Matrix<T>::scale_minimum_maximum()
@@ -9043,6 +9852,17 @@ Vector< Statistics<T> > Matrix<T>::scale_minimum_maximum()
     const Vector< Statistics<T> > statistics = calculate_statistics();
 
     scale_minimum_maximum(statistics);
+
+    return(statistics);
+}
+
+
+template <class T>
+Vector< Statistics<T> > Matrix<T>::scale_range(const T& minimum, const T& maximum)
+{
+    const Vector< Statistics<T> > statistics = calculate_statistics();
+
+    scale_range(statistics, minimum, maximum);
 
     return(statistics);
 }
@@ -9082,7 +9902,7 @@ void Matrix<T>::scale_rows_minimum_maximum(const Vector< Statistics<T> >& statis
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9141,7 +9961,7 @@ void Matrix<T>::scale_columns_minimum_maximum(const Vector< Statistics<T> >& sta
        {
 //#pragma omp parallel for
 
-          for(int i = 0; i <(int)rows_number; i++)
+          for(int i = 0; i < static_cast<int>(rows_number); i++)
           {
             (*this)(i,column_index) = 2.0*((*this)(i,column_index) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum) - 1.0;
           }
@@ -9179,7 +9999,7 @@ void Matrix<T>::scale_logarithmic(const Vector< Statistics<T> >& statistics)
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
       {
             // Do nothing
       }
@@ -9187,7 +10007,7 @@ void Matrix<T>::scale_logarithmic(const Vector< Statistics<T> >& statistics)
       {
          for(size_t i = 0; i < rows_number; i++)
          {
-           (*this)(i,j) = log(1.0+(2.0*((*this)(i,j) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
+           (*this)(i,j) = log(1.0+ (2.0*((*this)(i,j) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
          }
       }
    }
@@ -9243,7 +10063,7 @@ void Matrix<T>::scale_rows_logarithmic(const Vector< Statistics<T> >& statistics
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9253,7 +10073,7 @@ void Matrix<T>::scale_rows_logarithmic(const Vector< Statistics<T> >& statistics
           {
              row_index = row_indices[i];
 
-            (*this)(row_index,j) = log(1.0+(2.0*((*this)(row_index,j) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
+            (*this)(row_index,j) = log(1.0+ (2.0*((*this)(row_index,j) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
           }
        }
     }
@@ -9298,7 +10118,7 @@ void Matrix<T>::scale_columns_logarithmic(const Vector< Statistics<T> >& statist
     {
        column_index = column_indices[j];
 
-       if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9306,9 +10126,9 @@ void Matrix<T>::scale_columns_logarithmic(const Vector< Statistics<T> >& statist
        {
 #pragma omp parallel for
 
-          for(int i = 0; i <(int)rows_number; i++)
+          for(int i = 0; i < static_cast<int>(rows_number); i++)
           {
-            (*this)(i,column_index) = log(1.0+(2.0*((*this)(i,column_index) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
+            (*this)(i,column_index) = log(1.0+ (2.0*((*this)(i,column_index) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
           }
        }
     }
@@ -9342,7 +10162,7 @@ void Matrix<T>::unscale_mean_standard_deviation(const Vector< Statistics<T> >& s
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].standard_deviation < 1e-99)
+      if(statistics[j].standard_deviation < numeric_limits<double>::min())
       {
          // Do nothing
       }
@@ -9350,7 +10170,7 @@ void Matrix<T>::unscale_mean_standard_deviation(const Vector< Statistics<T> >& s
       {
          for(size_t i = 0; i < rows_number; i++)
          {
-           (*this)(i,j) =(*this)(i,j)*statistics[j].standard_deviation + statistics[j].mean;
+           (*this)(i,j) = (*this)(i,j)*statistics[j].standard_deviation + statistics[j].mean;
          }
       }
    }
@@ -9371,7 +10191,7 @@ void Matrix<T>::unscale_rows_mean_standard_deviation(const Vector< Statistics<T>
 
     for(size_t j = 0;  j < columns_number; j++)
     {
-       if(statistics[j].standard_deviation < 1e-99)
+       if(statistics[j].standard_deviation < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9381,7 +10201,7 @@ void Matrix<T>::unscale_rows_mean_standard_deviation(const Vector< Statistics<T>
           {
              row_index = row_indices[i];
 
-            (*this)(row_index,j) =(*this)(row_index,j)*statistics[j].standard_deviation + statistics[j].mean;
+            (*this)(row_index,j) = (*this)(row_index,j)*statistics[j].standard_deviation + statistics[j].mean;
           }
        }
     }
@@ -9420,11 +10240,11 @@ void Matrix<T>::unscale_columns_mean_standard_deviation(const Vector< Statistics
    {
       column_index = column_indices[j];
 
-      if(statistics[j].standard_deviation > 1e-99)
+      if(statistics[j].standard_deviation > numeric_limits<double>::min())
       {
          for(size_t i = 0; i < rows_number; i++)
          {
-           (*this)(i,column_index) =(*this)(i,column_index)*statistics[j].standard_deviation + statistics[j].mean;
+           (*this)(i,column_index) = (*this)(i,column_index)*statistics[j].standard_deviation + statistics[j].mean;
          }
       }
    }
@@ -9457,7 +10277,7 @@ void Matrix<T>::unscale_minimum_maximum(const Vector< Statistics<T> >& statistic
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
       {
          cout << "OpenNN Warning: Matrix template.\n"
                    << "void unscale_minimum_maximum(const Vector< Statistics<T> >&) const method.\n"
@@ -9491,7 +10311,7 @@ void Matrix<T>::unscale_rows_minimum_maximum(const Vector< Statistics<T> >& stat
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9508,8 +10328,6 @@ void Matrix<T>::unscale_rows_minimum_maximum(const Vector< Statistics<T> >& stat
     }
 }
 
-
-// void unscale_columns_minimum_maximum(const Vector< Statistics<T> >&, const Vector<size_t>&) method
 
 /// Unscales given columns in the matrix with the minimum and maximum method.
 /// @param statistics Vector of statistics structures containing the minimum and maximum values for the unscaling.
@@ -9553,8 +10371,6 @@ void Matrix<T>::unscale_columns_minimum_maximum(const Vector< Statistics<T> >& s
 }
 
 
-// void unscale_logarithmic(const Vector< Statistics<T> >&) method
-
 /// Unscales the matrix columns with the logarithmic method.
 /// @param statistics Vector of statistics which contains the minimum and maximum scaling values.
 /// The size of that vector must be equal to the number of columns in this matrix.
@@ -9581,7 +10397,7 @@ void Matrix<T>::unscale_logarithmic(const Vector< Statistics<T> >& statistics)
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
       {
          cout << "OpenNN Warning: Matrix template.\n"
                    << "void unscale_minimum_maximum(const Vector< Statistics<T> >&) const method.\n"
@@ -9601,8 +10417,6 @@ void Matrix<T>::unscale_logarithmic(const Vector< Statistics<T> >& statistics)
 }
 
 
-// void unscale_rows_logarithmic(const Vector< Statistics<T> >&, const Vector<size_t>&) method
-
 /// Unscales given rows using the logarithimic method.
 /// @param statistics Vector of statistics structures for all the columns.
 /// The size of this vector must be equal to the number of columns.
@@ -9617,7 +10431,7 @@ void Matrix<T>::unscale_rows_logarithmic(const Vector< Statistics<T> >& statisti
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9634,8 +10448,6 @@ void Matrix<T>::unscale_rows_logarithmic(const Vector< Statistics<T> >& statisti
     }
 }
 
-
-// void unscale_columns_logarithmic(const Vector< Statistics<T> >&, const Vector<size_t>&) method
 
 /// Unscales given columns in the matrix with the logarithmic method.
 /// @param statistics Vector of statistics structures containing the minimum and maximum values for the unscaling.
@@ -9669,7 +10481,7 @@ void Matrix<T>::unscale_columns_logarithmic(const Vector< Statistics<T> >& stati
     {
         column_index = column_indices[j];
 
-       if(statistics[column_index].maximum - statistics[column_index].minimum < 1e-99)
+       if(statistics[column_index].maximum - statistics[column_index].minimum < numeric_limits<double>::min())
        {
           // Do nothing
        }
@@ -9685,14 +10497,12 @@ void Matrix<T>::unscale_columns_logarithmic(const Vector< Statistics<T> >& stati
 }
 
 
-// Vector<size_t> calculate_minimal_indices() const method
-
 /// Returns the row and column indices corresponding to the entry with minimum value.
 
 template <class T>
 Vector<size_t> Matrix<T>::calculate_minimal_indices() const
 {
-   T minimum =(*this)(0,0);
+   T minimum = (*this)(0,0);
    Vector<size_t> minimal_indices(2, 0);
 
    for(size_t i = 0; i < rows_number; i++)
@@ -9701,7 +10511,7 @@ Vector<size_t> Matrix<T>::calculate_minimal_indices() const
       {
          if((*this)(i,j) < minimum)
          {
-            minimum =(*this)(i,j);
+            minimum = (*this)(i,j);
             minimal_indices[0] = i;
             minimal_indices[1] = j;
          }
@@ -9712,14 +10522,12 @@ Vector<size_t> Matrix<T>::calculate_minimal_indices() const
 }
 
 
-// Vector<size_t> calculate_maximal_indices() const method
-
 /// Returns the row and column indices corresponding to the entry with maximum value.
 
 template <class T>
 Vector<size_t> Matrix<T>::calculate_maximal_indices() const
 {
-   T maximum =(*this)(0,0);
+   T maximum = (*this)(0,0);
 
    Vector<size_t> maximal_indices(2, 0);
 
@@ -9729,7 +10537,7 @@ Vector<size_t> Matrix<T>::calculate_maximal_indices() const
       {
          if((*this)(i,j) > maximum)
          {
-            maximum =(*this)(i,j);
+            maximum = (*this)(i,j);
             maximal_indices[0] = i;
             maximal_indices[1] = j;
          }
@@ -9740,8 +10548,6 @@ Vector<size_t> Matrix<T>::calculate_maximal_indices() const
 }
 
 
-// Vector< Vector<size_t> > calculate_minimal_maximal_indices() const method
-
 /// Returns the row and column indices corresponding to the entries with minimum and maximum values.
 /// The format is a vector of two vectors.
 /// Each subvector also has two elements.
@@ -9750,8 +10556,8 @@ Vector<size_t> Matrix<T>::calculate_maximal_indices() const
 template <class T>
 Vector< Vector<size_t> > Matrix<T>::calculate_minimal_maximal_indices() const
 {
-   T minimum =(*this)(0,0);
-   T maximum =(*this)(0,0);
+   T minimum = (*this)(0,0);
+   T maximum = (*this)(0,0);
 
    Vector<size_t> minimal_indices(2, 0);
    Vector<size_t> maximal_indices(2, 0);
@@ -9762,14 +10568,14 @@ Vector< Vector<size_t> > Matrix<T>::calculate_minimal_maximal_indices() const
       {
          if((*this)(i,j) < minimum)
          {
-            minimum =(*this)(i,j);
+            minimum = (*this)(i,j);
             minimal_indices[0] = i;
             minimal_indices[1] = j;
          }
 
          if((*this)(i,j) > maximum)
          {
-            maximum =(*this)(i,j);
+            maximum = (*this)(i,j);
             maximal_indices[0] = i;
             maximal_indices[1] = j;
          }
@@ -9783,8 +10589,6 @@ Vector< Vector<size_t> > Matrix<T>::calculate_minimal_maximal_indices() const
    return(minimal_maximal_indices);
 }
 
-
-// double calculate_sum_squared_error(const Matrix<double>&) const method
 
 /// Returns the sum squared error between the elements of this matrix and the elements of another matrix.
 /// @param other_matrix Other matrix.
@@ -9824,20 +10628,157 @@ double Matrix<T>::calculate_sum_squared_error(const Matrix<double>& other_matrix
 
    #endif
 
+   double error = 0.0;
 
    double sum_squared_error = 0.0;
 
-//#pragma omp parallel for reduction(+:sum_squared_error)
+   for(int i = 0; i < this->size(); i++)
+   {      
+        error = (*this)[i] - other_matrix[i];
 
-   for(int i = 0; i < rows_number; i++)
-   {
-        sum_squared_error +=((*this)[i] - other_matrix[i])*((*this)[i] - other_matrix[i]);
+        sum_squared_error += error*error;
    }
 
    return(sum_squared_error);
 }
 
-// double calculate_sum_squared_error(const Vector<double>&) const method
+
+template <class T>
+Vector<double> Matrix<T>::calculate_error_rows(const Matrix<double>& other_matrix) const
+{
+    Vector<double> error_rows(rows_number, 0.0);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            error_rows[i] += ((*this)(i,j) - other_matrix(i,j))*((*this)(i,j) - other_matrix(i,j));
+        }
+
+        error_rows[i] = sqrt(error_rows[i]);
+    }
+
+    return error_rows;
+}
+
+
+/// Returns the sum squared error between rows of this matrix and the elements of another matrix.
+/// @param other_matrix Other matrix.
+
+template <class T>
+Vector<double> Matrix<T>::calculate_sum_squared_error_rows(const Matrix<double>& other_matrix) const
+{
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   const size_t other_rows_number = other_matrix.get_rows_number();
+
+   if(other_rows_number != rows_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "double calculate_sum_squared_error(const Matrix<double>&) const method.\n"
+             << "Other number of rows must be equal to this number of rows.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   const size_t other_columns_number = other_matrix.get_columns_number();
+
+   if(other_columns_number != columns_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "double calculate_sum_squared_error(const Matrix<double>&) const method.\n"
+             << "Other number of columns must be equal to this number of columns.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+
+   Vector<double> sum_squared_error_rows(rows_number, 0.0);
+
+//#pragma omp parallel for reduction(+:sum_squared_error)
+
+   double sum_squared_error = 0.0;
+
+   for(int i = 0; i < rows_number; i++)
+   {
+       sum_squared_error = 0.0;
+
+       for(int j = 0; j < columns_number; j++)
+       {
+           sum_squared_error += ((*this)(i,j) - other_matrix(i,j))*((*this)(i,j) - other_matrix(i,j));
+       }
+
+       sum_squared_error_rows[static_cast<unsigned>(i)] = sum_squared_error;
+
+   }
+
+   return(sum_squared_error_rows);
+}
+
+
+template <class T>
+double Matrix<T>::calculate_cross_entropy_error(const Matrix<double>& other_matrix) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t other_rows_number = other_matrix.get_rows_number();
+
+    if(other_rows_number != rows_number)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "double calculate_cross_entropy_error(const Matrix<double>&) const method.\n"
+              << "Other number of rows must be equal to this number of rows.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    const size_t other_columns_number = other_matrix.get_columns_number();
+
+    if(other_columns_number != columns_number)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "double calculate_cross_entropy_error(const Matrix<double>&) const method.\n"
+              << "Other number of columns must be equal to this number of columns.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+    double cross_entropy_error = 0.0;
+
+    for(int i = 0; i < rows_number; i++)
+    {
+        for(int j = 0; j < columns_number; j++)
+        {
+            if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < std::numeric_limits<double>::min())
+            {
+                cross_entropy_error -= log(1.0 - (*this)(i,j));
+            }
+            else if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < std::numeric_limits<double>::min())
+            {
+                cross_entropy_error -= log((*this)(i,j));
+            }
+        }
+    }
+
+    return cross_entropy_error;
+}
+
 
 /// Returns the minkowski error between the elements of this matrix and the elements of another matrix.
 /// @param other_matrix Other matrix.x.
@@ -9878,18 +10819,85 @@ double Matrix<T>::calculate_minkowski_error(const Matrix<double>& other_matrix, 
 
     #endif
 
-
     double minkowski_error = 0.0;
 
-    for(size_t i = 0; i < rows_number; i++)
+    for(size_t i = 0; i < this->size(); i++)
     {
          minkowski_error += pow(fabs((*this)[i] - other_matrix[i]), minkowski_parameter);
     }
 
-    return(minkowski_error);
+    return minkowski_error;
 }
 
-// double calculate_sum_squared_error(const Vector<double>&) const method
+
+
+template <class T>
+double Matrix<T>::calculate_weighted_sum_squared_error(const Matrix<double>& other_matrix, const double& positives_weight, const double& negatives_weight) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t other_rows_number = other_matrix.get_rows_number();
+
+    if(other_rows_number != rows_number)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "double calculate_minkowski_error(const Matrix<double>&, const double&) const method.\n"
+              << "Other number of rows must be equal to this number of rows.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    const size_t other_columns_number = other_matrix.get_columns_number();
+
+    if(other_columns_number != columns_number)
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "double calculate_minkowski_error(const Matrix<double>&, const double&) const method.\n"
+              << "Other number of columns must be equal to this number of columns.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+    double weighted_sum_squared_error = 0.0;
+
+    double error = 0.0;
+
+    for(size_t i = 0; i < this->size(); i++)
+    {
+        error = (*this)[i] - other_matrix[i];
+
+        if(other_matrix[i] == 1.0)
+        {
+            weighted_sum_squared_error += positives_weight*error*error;
+        }
+        else if(other_matrix[i] == 0.0)
+        {
+            weighted_sum_squared_error += negatives_weight*error*error;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Matrix template.\n"
+                   << "double calculate_error() const method.\n"
+                   << "Other matrix is neither a positive nor a negative.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    return weighted_sum_squared_error;
+}
+
+
 
 /// This method retuns the sum squared error between the elements of this matrix and the elements of a vector, by columns.
 /// The size of the vector must be equal to the number of columns of this matrix.
@@ -9923,7 +10931,7 @@ double Matrix<T>::calculate_sum_squared_error(const Vector<double>& vector) cons
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-         sum_squared_error +=((*this)(i,j) - vector[j])*((*this)(i,j) - vector[j]);
+         sum_squared_error += ((*this)(i,j) - vector[j])*((*this)(i,j) - vector[j]);
       }
    }
 
@@ -9931,13 +10939,11 @@ double Matrix<T>::calculate_sum_squared_error(const Vector<double>& vector) cons
 }
 
 
-// Vector<double> calculate_rows_norm() const method
-
 /// Returns a vector with the norm of each row.
 /// The size of that vector is the number of rows.
 
 template <class T>
-Vector<double> Matrix<T>::calculate_rows_norm() const
+Vector<double> Matrix<T>::calculate_rows_L2_norm() const
 {
    Vector<double> rows_norm(rows_number, 0.0);
 
@@ -9945,7 +10951,7 @@ Vector<double> Matrix<T>::calculate_rows_norm() const
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-         rows_norm[i] +=(*this)(i,j)*(*this)(i,j);
+         rows_norm[i] += (*this)(i,j)*(*this)(i,j);
       }
 
       rows_norm[i] = sqrt(rows_norm[i]);
@@ -9966,7 +10972,7 @@ Matrix<T> Matrix<T>::calculate_absolute_value() const
     {
           if((*this)[i] > 0)
           {
-             absolute_value[i] =(*this)[i];
+             absolute_value[i] = (*this)[i];
           }
           else
           {
@@ -9989,15 +10995,13 @@ Matrix<T> Matrix<T>::calculate_transpose() const
    {
       for(size_t j = 0; j < rows_number; j++)
       {
-         transpose(i,j) =(*this)(j,i);
+         transpose(i,j) = (*this)(j,i);
       }
    }
 
    return(transpose);
 }
 
-
-// Type calculate_determinant() const method
 
 /// Returns the determinant of a square matrix.
 
@@ -10036,11 +11040,11 @@ T Matrix<T>::calculate_determinant() const
 
    if(rows_number == 1)
    {
-      determinant =(*this)(0,0);
+      determinant = (*this)(0,0);
    }
    else if(rows_number == 2)
    {
-      determinant =(*this)(0,0)*(*this)(1,1) -(*this)(1,0)*(*this)(0,1);
+      determinant = (*this)(0,0)*(*this)(1,1) -(*this)(1,0)*(*this)(0,1);
    }
    else
    {
@@ -10063,13 +11067,13 @@ T Matrix<T>::calculate_determinant() const
                   continue;
                }
 
-               sub_matrix(i-1,j2) =(*this)(i,j);
+               sub_matrix(i-1,j2) = (*this)(i,j);
 
                j2++;
             }
          }
 
-         //sign =(size_t)(pow(-1.0, row_index+2.0));
+         //sign = static_cast<size_t>(pow(-1.0, row_index+2.0));
 
          sign = static_cast<int>((((row_index + 2) % 2) == 0) ? 1 : -1 );
 
@@ -10108,7 +11112,7 @@ Matrix<T> Matrix<T>::calculate_cofactor() const
             {
                if(jj == j) continue;
 
-               c(i1,j1) =(*this)(ii,jj);
+               c(i1,j1) = (*this)(ii,jj);
                j1++;
             }
             i1++;
@@ -10240,8 +11244,6 @@ Matrix<T> Matrix<T>::calculate_LU_inverse() const
 }
 
 
-// Vector<T> solve_LDLT(const Vector<double>&) const method
-
 /// Solve a system of the form Ax = b, using the Cholesky decomposition.
 /// A is this matrix and must be positive or negative semidefinite.
 /// @param b Independent term of the system.
@@ -10289,12 +11291,10 @@ Vector<T> Matrix<T>::solve_LDLT(const Vector<double>& b) const
 }
 
 
-// double calculate_distances(const size_t&, const size_t&) const
-
 /// Calculates the distance between two rows in the matix
 
 template <class T>
-double Matrix<T>::calculate_distance(const size_t& first_index, const size_t& second_index) const
+double Matrix<T>::calculate_euclidean_distance(const size_t& first_index, const size_t& second_index) const
 {
     // Control sentence(if debug)
 
@@ -10305,7 +11305,7 @@ double Matrix<T>::calculate_distance(const size_t& first_index, const size_t& se
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Matrix Template.\n"
-               << "calculate_distance(const size_t&, const size_t&) const method.\n"
+               << "calculate_euclidean_distance(const size_t&, const size_t&) const method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -10316,12 +11316,12 @@ double Matrix<T>::calculate_distance(const size_t& first_index, const size_t& se
     const Vector<T> first_row = get_row(first_index);
     const Vector<T> second_row = get_row(second_index);
 
-    return(first_row.calculate_distance(second_row));
+    return(first_row.calculate_euclidean_distance(second_row));
 }
 
 
 template <class T>
-Vector<double> Matrix<T>::calculate_distance(const Vector<T>& instance) const
+Vector<double> Matrix<T>::calculate_euclidean_distance(const Vector<T>& instance) const
 {
     // Control sentence(if debug)
 
@@ -10332,7 +11332,7 @@ Vector<double> Matrix<T>::calculate_distance(const Vector<T>& instance) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Matrix Template.\n"
-               << "calculate_distance(const size_t&, const size_t&) const method.\n"
+               << "calculate_euclidean_distance(const Vector<T>&) const method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -10344,15 +11344,37 @@ Vector<double> Matrix<T>::calculate_distance(const Vector<T>& instance) const
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        distances[i] = (*this).get_row(i).calculate_distance(instance);
+        distances[i] = (*this).get_row(i).calculate_euclidean_distance(instance);
     }
 
     return(distances);
 }
 
 
+template<class T>
+Vector<double> Matrix<T>::calculate_euclidean_distance(const Matrix<T>& other_matrix) const
+{
+    Vector<double> distances(rows_number, 0.0);
+    double error;
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            error = (*this)(i,j) - other_matrix(i,j);
+
+            distances[i] += error * error;
+        }
+
+        distances[i] = sqrt(distances[i]);
+    }
+
+    return((distances));
+}
+
+
 template <class T>
-Vector<double> Matrix<T>::calculate_weighted_distance(const Vector<T>& instance, const Vector<double>& weights) const
+Vector<double> Matrix<T>::calculate_euclidean_weighted_distance(const Vector<T>& instance, const Vector<double>& weights) const
 {
     // Control sentence(if debug)
 
@@ -10363,7 +11385,7 @@ Vector<double> Matrix<T>::calculate_weighted_distance(const Vector<T>& instance,
         ostringstream buffer;
 
         buffer << "OpenNN Exception: Matrix Template.\n"
-               << "calculate_distance(const size_t&, const size_t&) const method.\n"
+               << "calculate_euclidean_weighted_distance(const Vector<T>&, const Vector<double>&) const method.\n"
                << "Matrix is empty.\n";
 
         throw logic_error(buffer.str());
@@ -10375,10 +11397,131 @@ Vector<double> Matrix<T>::calculate_weighted_distance(const Vector<T>& instance,
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        distances[i] = (*this).get_row(i).calculate_weighted_distance(instance,weights);
+        distances[i] = (*this).get_row(i).calculate_euclidean_weighted_distance(instance,weights);
     }
 
     return(distances);
+}
+
+
+/// Calculates the distance between two rows in the matix
+
+template <class T>
+double Matrix<T>::calculate_manhattan_distance(const size_t& first_index, const size_t& second_index) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+     if(empty())
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "calculate_manhattan_distance(const size_t&, const size_t&) const method.\n"
+               << "Matrix is empty.\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+    const Vector<T> first_row = get_row(first_index);
+    const Vector<T> second_row = get_row(second_index);
+
+    return(first_row.calculate_manhattan_distance(second_row));
+}
+
+
+template <class T>
+Vector<double> Matrix<T>::calculate_manhattan_distance(const Vector<T>& instance) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+     if(empty())
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "calculate_manhattan_distance(const size_t&, const size_t&) const method.\n"
+               << "Matrix is empty.\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+     Vector<double> distances(rows_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        distances[i] = (*this).get_row(i).calculate_manhattan_distance(instance);
+    }
+
+    return(distances);
+}
+
+
+template <class T>
+Vector<double> Matrix<T>::calculate_manhattan_weighted_distance(const Vector<T>& instance, const Vector<double>& weights) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+     if(empty())
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "calculate_manhattan_weighted_distance(const Vector<T>&, const Vector<double>&) const method.\n"
+               << "Matrix is empty.\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+     Vector<double> distances(rows_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        distances[i] = (*this).get_row(i).calculate_manhattan_weighted_distance(instance,weights);
+    }
+
+    return(distances);
+}
+
+
+template <class T>
+void Matrix<T>::divide_by_rows(const Vector<T>& vector)
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+     if(rows_number != vector.size())
+     {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Matrix Template.\n"
+               << "divide_by_rows(const Vector<T>&) method.\n"
+               << "Size of vector (" << vector.size() << ") must be equal to number of rows (" << rows_number <<").\n";
+
+        throw logic_error(buffer.str());
+     }
+
+     #endif
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            (*this)(i,j) /= vector[i];
+        }
+    }
 }
 
 
@@ -10398,7 +11541,7 @@ void Matrix<T>::filter(const T& minimum, const T& maximum)
 /// @param scalar Scalar value to be added to this matrix.
 
 template <class T>
-Matrix<T> Matrix<T>::operator +(const T& scalar) const
+Matrix<T> Matrix<T>::operator + (const T& scalar) const
 {
    Matrix<T> sum(rows_number, columns_number);
 
@@ -10408,50 +11551,11 @@ Matrix<T> Matrix<T>::operator +(const T& scalar) const
 }
 
 
-/// Sum matrix+vector arithmetic operator.
-/// @param vector Vector to be added to this matrix.
-
-template <class T>
-Matrix<T> Matrix<T>::operator +(const Vector<T>& vector) const
-{
-   // Control sentence(if debug)
-
-   #ifdef __OPENNN_DEBUG__
-
-   const size_t size = vector.size();
-
-   if(size != rows_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> operator +(const Vector<T>&) const.\n"
-             << "Size of vector must be equal to number of rows.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   Matrix<T> sum(rows_number, columns_number);
-
-   for(size_t i = 0; i < rows_number; i++)
-   {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-         sum(i,j) =(*this)(i,j) + vector[i];
-      }
-   }
-
-   return(sum);
-}
-
-
 /// Sum matrix+matrix arithmetic operator.
 /// @param other_matrix Matrix to be added to this vector.
 
 template <class T>
-Matrix<T> Matrix<T>::operator +(const Matrix<T>& other_matrix) const
+Matrix<T> Matrix<T>::operator + (const Matrix<T>& other_matrix) const
 {
    // Control sentence(if debug)
 
@@ -10465,8 +11569,8 @@ Matrix<T> Matrix<T>::operator +(const Matrix<T>& other_matrix) const
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> operator +(const Matrix<T>&) const.\n"
-             << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+             << "Matrix<T> operator + (const Matrix<T>&) const.\n"
+             << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -10495,45 +11599,6 @@ Matrix<T> Matrix<T>::operator -(const T& scalar) const
 }
 
 
-/// Sum matrix-vector arithmetic operator.
-/// @param vector Vector to be subtracted to this matrix.
-
-template <class T>
-Matrix<T> Matrix<T>::operator -(const Vector<T>& vector) const
-{
-   // Control sentence(if debug)
-
-   #ifdef __OPENNN_DEBUG__
-
-   const size_t size = vector.size();
-
-   if(size != rows_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> operator -(const Vector<T>&) const.\n"
-             << "Size of vector must be equal to number of rows.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   Matrix<T> difference(rows_number, columns_number);
-
-   for(size_t i = 0; i < rows_number; i++)
-   {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-         difference(i,j) =(*this)(i,j) - vector[i];
-      }
-   }
-
-   return(difference);
-}
-
-
 /// Difference matrix-matrix arithmetic operator.
 /// @param other_matrix Matrix to be subtracted to this matrix.
 
@@ -10553,7 +11618,7 @@ Matrix<T> Matrix<T>::operator -(const Matrix<T>& other_matrix) const
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Matrix<T> operator -(const Matrix<T>&) const method.\n"
-             << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix("<< rows_number << "," << columns_number <<").\n";
+             << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix ("<< rows_number << "," << columns_number <<").\n";
 
       throw logic_error(buffer.str());
    }
@@ -10578,49 +11643,10 @@ Matrix<T> Matrix<T>::operator *(const T& scalar) const
 
     for(size_t i = 0; i < this->size(); i++)
     {
-        product[i] =(*this)[i]*scalar;
+        product[i] = (*this)[i]*scalar;
     }
 
     return(product);
-}
-
-
-/// Row by element matrix*row arithmetic operator.
-/// @param vector vector to be multiplied to this matrix.
-
-template <class T>
-Matrix<T> Matrix<T>::operator *(const Vector<T>& vector) const
-{
-   // Control sentence(if debug)
-
-   #ifdef __OPENNN_DEBUG__
-
-   const size_t size = vector.size();
-
-   if(size != rows_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: Matrix Template.\n"
-             << "Matrix<T> operator *(const Vector<T>&) const method.\n"
-             << "Vector size(" << size << ")  must be equal to number of matrix rows(" << rows_number << ").\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   Matrix<T> product(rows_number, columns_number);
-
-   for(size_t i = 0; i < rows_number; i++)
-   {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-         product(i,j) =(*this)(i,j)*vector[i];
-      }
-   }
-
-   return(product);
 }
 
 
@@ -10643,7 +11669,7 @@ Matrix<T> Matrix<T>::operator *(const Matrix<T>& other_matrix) const
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Matrix<T> operator *(const Matrix<T>&) const method.\n"
-             << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+             << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -10654,7 +11680,7 @@ Matrix<T> Matrix<T>::operator *(const Matrix<T>& other_matrix) const
 
    for(size_t i = 0; i < this->size(); i++)
    {
-         product[i] =(*this)[i]*other_matrix[i];
+         product[i] = (*this)[i]*other_matrix[i];
    }
 
    return(product);
@@ -10671,7 +11697,7 @@ Matrix<T> Matrix<T>::operator /(const T& scalar) const
 
     for(size_t i = 0; i < results.size(); i++)
     {
-        results[i] =(*this)[i]/scalar;
+        results[i] = (*this)[i]/scalar;
     }
 
     return(results);
@@ -10690,13 +11716,13 @@ Matrix<T> Matrix<T>::operator /(const Vector<T>& vector) const
 
    const size_t size = vector.size();
 
-   if(size != columns_number)
+   if(size != rows_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Matrix<T> operator /(const Vector<T>&) const.\n"
-             << "Size of vector must be equal to number of columns.\n";
+             << "Size of vector must be equal to number of rows.\n";
 
       throw logic_error(buffer.str());
    }
@@ -10709,7 +11735,7 @@ Matrix<T> Matrix<T>::operator /(const Vector<T>& vector) const
    {
       for(size_t j = 0; j < columns_number; j++)
       {
-         cocient(i,j) =(*this)(i,j)/vector[j];
+         cocient(i,j) = (*this)(i,j)/vector[i];
       }
    }
 
@@ -10747,20 +11773,18 @@ Matrix<T> Matrix<T>::operator /(const Matrix<T>& other_matrix) const
 
    for(size_t i = 0; i < rows_number; i++)
    {
-         cocient[i] =(*this)[i]/other_matrix[i];
+         cocient[i] = (*this)[i]/other_matrix[i];
    }
 
    return(cocient);
 }
 
 
-// void operator +=(const T&)
-
 /// Scalar sum and assignment operator.
 /// @param value Scalar value to be added to this matrix.
 
 template <class T>
-void Matrix<T>::operator +=(const T& value)
+void Matrix<T>::operator += (const T& value)
 {
    for(size_t i = 0; i < rows_number; i++)
    {
@@ -10772,13 +11796,11 @@ void Matrix<T>::operator +=(const T& value)
 }
 
 
-// void operator +=(const Matrix<T>&)
-
 /// Matrix sum and assignment operator.
 /// @param other_matrix Matrix to be added to this matrix.
 
 template <class T>
-void Matrix<T>::operator +=(const Matrix<T>& other_matrix)
+void Matrix<T>::operator += (const Matrix<T>& other_matrix)
 {
    // Control sentence(if debug)
 
@@ -10791,7 +11813,7 @@ void Matrix<T>::operator +=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator +=(const Matrix<T>&).\n"
+             << "void operator += (const Matrix<T>&).\n"
              << "Both numbers of rows must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -10804,7 +11826,7 @@ void Matrix<T>::operator +=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator +=(const Matrix<T>&).\n"
+             << "void operator += (const Matrix<T>&).\n"
              << "Both numbers of columns must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -10812,23 +11834,18 @@ void Matrix<T>::operator +=(const Matrix<T>& other_matrix)
 
    #endif
 
-   for(size_t i = 0; i < rows_number; i++)
+   for(size_t i = 0; i < this->size(); i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-        (*this)(i,j) += other_matrix(i,j);
-      }
+        (*this)[i] += other_matrix[i];
    }
 }
 
-
-// void operator -=(const T&)
 
 /// Scalar rest and assignment operator.
 /// @param value Scalar value to be subtracted to this matrix.
 
 template <class T>
-void Matrix<T>::operator -=(const T& value)
+void Matrix<T>::operator -= (const T& value)
 {
    for(size_t i = 0; i < rows_number; i++)
    {
@@ -10840,13 +11857,11 @@ void Matrix<T>::operator -=(const T& value)
 }
 
 
-// void operator -=(const Matrix<T>&)
-
 /// Matrix rest and assignment operator.
 /// @param other_matrix Matrix to be subtracted to this matrix.
 
 template <class T>
-void Matrix<T>::operator -=(const Matrix<T>& other_matrix)
+void Matrix<T>::operator -= (const Matrix<T>& other_matrix)
 {
    // Control sentence(if debug)
 
@@ -10859,7 +11874,7 @@ void Matrix<T>::operator -=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator -=(const Matrix<T>&).\n"
+             << "void operator -= (const Matrix<T>&).\n"
              << "Both numbers of rows must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -10872,7 +11887,7 @@ void Matrix<T>::operator -=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator -=(const Matrix<T>&).\n"
+             << "void operator -= (const Matrix<T>&).\n"
              << "Both numbers of columns must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -10880,41 +11895,31 @@ void Matrix<T>::operator -=(const Matrix<T>& other_matrix)
 
    #endif
 
-   for(size_t i = 0; i < rows_number; i++)
+   for(size_t i = 0; i < this->size(); i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-        (*this)(i,j) -= other_matrix(i,j);
-      }
+        (*this)[i] -= other_matrix[i];
    }
 }
 
-
-// void operator *=(const T&)
 
 /// Scalar product and assignment operator.
 /// @param value Scalar value to be multiplied to this matrix.
 
 template <class T>
-void Matrix<T>::operator *=(const T& value)
+void Matrix<T>::operator *= (const T& value)
 {
-   for(size_t i = 0; i < rows_number; i++)
+   for(size_t i = 0; i < this->size(); i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-        (*this)(i,j) *= value;
-      }
+        (*this)[i] *= value;
    }
 }
 
-
-// void operator *=(const Matrix<T>&)
 
 /// Matrix product and assignment operator.
 /// @param other_matrix Matrix to be multiplied to this matrix.
 
 template <class T>
-void Matrix<T>::operator *=(const Matrix<T>& other_matrix)
+void Matrix<T>::operator *= (const Matrix<T>& other_matrix)
 {
    // Control sentence(if debug)
 
@@ -10927,50 +11932,40 @@ void Matrix<T>::operator *=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator *=(const Matrix<T>&).\n"
-             << "The number of rows in the other matrix(" << other_rows_number << ")"
-             << " is not equal to the number of rows in this matrix(" << rows_number << ").\n";
+             << "void operator *= (const Matrix<T>&).\n"
+             << "The number of rows in the other matrix (" << other_rows_number << ")"
+             << " is not equal to the number of rows in this matrix (" << rows_number << ").\n";
 
       throw logic_error(buffer.str());
    }
 
    #endif
 
-   for(size_t i = 0; i < rows_number; i++)
+   for(size_t i = 0; i < this->size(); i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-        (*this)(i,j) *= other_matrix(i,j);
-      }
+        (*this)[i] *= other_matrix[i];
    }
 }
 
-
-// void operator /=(const T&)
 
 /// Scalar division and assignment operator.
 /// @param value Scalar value to be divided to this matrix.
 
 template <class T>
-void Matrix<T>::operator /=(const T& value)
+void Matrix<T>::operator /= (const T& value)
 {
-   for(size_t i = 0; i < rows_number; i++)
+   for(size_t i = 0; i < this->size(); i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-        (*this)(i,j) /= value;
-      }
+        (*this)[i] /= value;
    }
 }
 
-
-// void operator /=(const Matrix<T>&)
 
 /// Matrix division and assignment operator.
 /// @param other_matrix Matrix to be divided to this matrix.
 
 template <class T>
-void Matrix<T>::operator /=(const Matrix<T>& other_matrix)
+void Matrix<T>::operator /= (const Matrix<T>& other_matrix)
 {
    // Control sentence(if debug)
 
@@ -10983,7 +11978,7 @@ void Matrix<T>::operator /=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator /=(const Matrix<T>&).\n"
+             << "void operator /= (const Matrix<T>&).\n"
              << "Both numbers of rows must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -10996,7 +11991,7 @@ void Matrix<T>::operator /=(const Matrix<T>& other_matrix)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
-             << "void operator /=(const Matrix<T>&).\n"
+             << "void operator /= (const Matrix<T>&).\n"
              << "Both numbers of columns must be the same.\n";
 
       throw logic_error(buffer.str());
@@ -11004,17 +11999,12 @@ void Matrix<T>::operator /=(const Matrix<T>& other_matrix)
 
    #endif
 
-   for(size_t i = 0; i < rows_number; i++)
+   for(size_t i = 0; i < this->size(); i++)
    {
-      for(size_t j = 0; j < columns_number; j++)
-      {
-        (*this)(i,j) /= other_matrix(i,j);
-      }
+        (*this)[i] /= other_matrix[i];
    }
 }
 
-
-// Vector<double> dot(const Vector<double>&) const method
 
 /// Returns the dot product of this matrix with a vector.
 /// The size of the vector must be equal to the number of columns of the matrix.
@@ -11046,9 +12036,7 @@ Vector<double> Matrix<T>::dot(const Vector<double>& vector) const
 
    Vector<double> product(rows_number);
 
-//#pragma omp parallel for if(rows_number > 1000)
-
-//   for(int i = 0; i <(int)rows_number; i++)
+//   for(int i = 0; i < static_cast<int>(rows_number); i++)
 //   {
 //       product[i] = 0;
 
@@ -11068,8 +12056,6 @@ Vector<double> Matrix<T>::dot(const Vector<double>& vector) const
 }
 
 
-// Matrix<double> dot(const Matrix<double>&) const method
-
 /// Returns the dot product of this matrix with another matrix.
 /// @param other_matrix Matrix to be multiplied to this matrix.
 
@@ -11083,13 +12069,14 @@ Matrix<double> Matrix<T>::dot(const Matrix<double>& other_matrix) const
 
    #ifdef __OPENNN_DEBUG__
 
+
    if(other_rows_number != columns_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "Matrix<T> dot(const Matrix<T>&) const method.\n"
-             << "The number of rows of the other matrix(" << other_rows_number << ") must be equal to the number of columns of this matrix(" << columns_number << ").\n";
+             << "The number of rows of the other matrix (" << other_rows_number << ") must be equal to the number of columns of this matrix (" << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -11098,10 +12085,13 @@ Matrix<double> Matrix<T>::dot(const Matrix<double>& other_matrix) const
 
    Matrix<T> product(rows_number, other_columns_number);
 
-//   for(size_t i = 0; i < rows_number; i++) {
-//     for(size_t j = 0; j < other_columns_number; j++) {
-//       for(size_t k = 0; k < columns_number; k++) {
-//         product(i,j) +=(*this)(i,k)*other_matrix(k,j);
+//   for(size_t i = 0; i < rows_number; i++)
+//   {
+//     for(size_t j = 0; j < other_columns_number; j++)
+//     {
+//       for(size_t k = 0; k < columns_number; k++)
+//       {
+//            product(i,j) += (*this)(i,k)*other_matrix(k,j);
 //       }
 //     }
 //   }
@@ -11116,7 +12106,128 @@ Matrix<double> Matrix<T>::dot(const Matrix<double>& other_matrix) const
 }
 
 
-// Matrix<double> calculate_eigenvalues() const method
+template <class T>
+void Matrix<T>::dot(const Matrix<double>& a, const Matrix<double>& b)
+{    
+    const size_t a_rows_number = a.get_rows_number();
+    const size_t a_columns_number = a.get_columns_number();
+
+    const size_t b_columns_number = b.get_columns_number();
+
+    if(rows_number != a_rows_number || columns_number != b_columns_number)
+    {
+        set(a_rows_number, b_columns_number);
+    }
+
+    initialize(0.0);
+
+   for(size_t i = 0; i < a_rows_number; i++)
+   {
+     for(size_t j = 0; j < b_columns_number; j++)
+     {
+       for(size_t k = 0; k < a_columns_number; k++)
+       {
+            (*this)(i,j) += a(i,k)*b(k,j);
+       }
+     }
+   }
+}
+
+
+template <class T>
+void Matrix<T>::sum_dot(const Matrix<double>& a, const Matrix<double>& b)
+{
+    const size_t a_rows_number = a.get_rows_number();
+    const size_t a_columns_number = a.get_columns_number();
+
+    const size_t b_columns_number = b.get_columns_number();
+
+//    if(rows_number != a_rows_number || columns_number != b_columns_number)
+//    {
+//        set(a_rows_number, b_columns_number);
+//    }
+
+   for(size_t i = 0; i < a_rows_number; i++)
+   {
+     for(size_t j = 0; j < b_columns_number; j++)
+     {
+       for(size_t k = 0; k < a_columns_number; k++)
+       {
+            (*this)(i,j) += a(i,k)*b(k,j);
+       }
+     }
+   }
+}
+
+
+template <class T>
+Matrix<double> Matrix<T>::calculate_linear_combinations(const Matrix<double>& other_matrix, const Vector<double>& other_vector) const
+{
+   const size_t other_columns_number = other_matrix.get_columns_number();
+
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   const size_t other_rows_number = other_matrix.get_rows_number();
+
+   if(other_rows_number != columns_number)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Matrix Template.\n"
+             << "Matrix<T> calculate_linear_combinations(const Matrix<T>&) const method.\n"
+             << "The number of rows of the other matrix (" << other_rows_number << ") must be equal to the number of columns of this matrix (" << columns_number << ").\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   const size_t new_rows_number = rows_number;
+   const size_t new_columns_number = other_columns_number;
+
+   Matrix<T> new_matrix(new_rows_number, new_columns_number);
+
+   //new_matrix.initialize(other_vector);
+
+   double sum;
+
+   for(size_t i = 0; i < rows_number; i++)
+   {
+     for(size_t j = 0; j < other_columns_number; j++)
+     {
+        sum = 0.0;
+
+       for(size_t k = 0; k < columns_number; k++)
+       {
+            sum += (*this)(i,k)*other_matrix(k,j);
+       }
+
+       sum += other_vector[j];
+
+       new_matrix(i,j) = sum;
+     }
+   }
+
+   return(new_matrix);
+}
+
+
+/*
+template<class T>
+Matrix<double> Matrix<T>::dot(const Vector< Matrix<double> >& vector_matrix) const
+{
+    Matrix<double> result(rows_number, vector_matrix[0].get_columns_number());
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        result.set_row(i, this->get_row(i).dot(vector_matrix[i]));
+    }
+
+    return result;
+}
+*/
 
 /// Calculates the eigen values of this matrix, which must be squared.
 /// Returns a matrix with only one column and rows the same as this matrix with the eigenvalues.
@@ -11158,7 +12269,7 @@ Matrix<double> Matrix<T>::calculate_eigenvalues() const
 
     #ifdef __OPENNN_DEBUG__
 
-    if((*this).get_columns_number() !=(*this).get_rows_number())
+    if((*this).get_columns_number() != (*this).get_rows_number())
     {
        ostringstream buffer;
 
@@ -11182,8 +12293,6 @@ Matrix<double> Matrix<T>::calculate_eigenvalues() const
     return(eigenvalues);
 }
 
-
-// Matrix<double> calculate_eigenvectors() const method
 
 /// Calculates the eigenvectors of this matrix, which must be squared.
 /// Returns a matrix whose columns are the eigenvectors.
@@ -11225,7 +12334,7 @@ Matrix<double> Matrix<T>::calculate_eigenvectors() const
 
     #ifdef __OPENNN_DEBUG__
 
-    if((*this).get_columns_number() !=(*this).get_rows_number())
+    if((*this).get_columns_number() != (*this).get_rows_number())
     {
        ostringstream buffer;
 
@@ -11276,7 +12385,7 @@ Matrix<T> Matrix<T>::direct(const Matrix<T>& other_matrix) const
                     alpha = other_rows_number*i+k;
                     beta = other_columns_number*j+l;
 
-                    direct(alpha,beta) =(*this)(i,j)*other_matrix(k,l);
+                    direct(alpha,beta) = (*this)(i,j)*other_matrix(k,l);
                 }
             }
         }
@@ -11286,7 +12395,24 @@ Matrix<T> Matrix<T>::direct(const Matrix<T>& other_matrix) const
 }
 
 
-// bool empty() const method
+template <class T>
+void Matrix<T>::direct(const Vector<T>& v1, const Vector<T>& v2)
+{
+    const size_t new_size = v1.size();
+
+    set(new_size, new_size);
+
+    #pragma omp parallel for
+
+    for(int i = 0; i < static_cast<int>(new_size); i++)
+    {
+      for(size_t j = 0; j < new_size; j++)
+      {
+        (*this)(i, j) = v1[i] * v2[j];
+      }
+    }
+}
+
 
 /// Returns true if number of rows and columns is zero.
 
@@ -11304,8 +12430,6 @@ bool Matrix<T>::empty() const
 }
 
 
-// bool is_square() const method
-
 /// Returns true if this matrix is square.
 /// A square matrix has the same numbers of rows and columns.
 
@@ -11322,8 +12446,6 @@ bool Matrix<T>::is_square() const
    }
 }
 
-
-// bool is_symmetric() const method
 
 /// Returns true if this matrix is symmetric.
 /// A symmetric matrix is a squared matrix which is equal to its transpose.
@@ -11361,8 +12483,6 @@ bool Matrix<T>::is_symmetric() const
 }
 
 
-// bool is_antisymmetric() const method
-
 /// Returns true if this matrix is antysymmetric.
 /// A symmetric matrix is a squared matrix which its opposed is equal to its transpose.
 
@@ -11398,8 +12518,6 @@ bool Matrix<T>::is_antisymmetric() const
    }
 }
 
-
-// bool is_diagonal() const method
 
 /// Returns true if this matrix is diagonal.
 /// A diagonal matrix is which the entries outside the main diagonal are zero.
@@ -11438,8 +12556,6 @@ bool Matrix<T>::is_diagonal() const
    return(true);
 }
 
-
-// bool is_scalar() const method
 
 /// Returns true if this matrix is scalar.
 /// A scalar matrix is a diagonal matrix whose diagonal elements all contain the same scalar.
@@ -11510,8 +12626,6 @@ bool Matrix<T>::is_identity() const
 }
 
 
-// bool is_binary() const method
-
 /// Returns true if this matrix has binary values.
 
 template <class T>
@@ -11528,8 +12642,6 @@ bool Matrix<T>::is_binary() const
    return(true);
 }
 
-
-// bool is_column_binary(const size_t) const method
 
 /// Returns true if a column this matrix has binary values.
 
@@ -11580,8 +12692,6 @@ bool Matrix<T>::compare_rows(const size_t& row_index, const Matrix<T>& other_mat
 }
 
 
-// bool is_constant(const double&) const method
-
 /// Returns true if all the elements have the same value within a defined
 /// tolerance,
 /// and false otherwise.
@@ -11595,7 +12705,7 @@ template <class T> bool Matrix<T>::is_column_constant(const size_t& column_index
     return(false);
   }
 
-  const T initial_value =(*this)(0, column_index);
+  const T initial_value = (*this)(0, column_index);
 
   for(size_t i = 1; i < rows_number; i++)
   {
@@ -11707,7 +12817,7 @@ size_t Matrix<T>::count_dates(const size_t& column_index,
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        date = (time_t)stoi((*this)(i, column_index));
+        date = static_cast<time_t>(stoi((*this)(i, column_index)));
 
         if(date >= start_date && date <= end_date)
         {
@@ -11758,7 +12868,7 @@ Matrix<T> Matrix<T>::filter_dates(const size_t& column_index,
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        date =(time_t)stoi((*this)(i, column_index));
+        date = static_cast<time_t>(stoi((*this)(i, column_index)));
 
         if(date >= start_date && date <= end_date)
         {
@@ -11805,11 +12915,11 @@ size_t Matrix<T>::count_dates_string(const size_t& column_index,
 
         try
         {
-            date =(time_t)stoi((*this)(i, column_index));
+            date = static_cast<time_t>(stoi((*this)(i, column_index)));
         }
         catch(exception& e)
         {
-            cout << e.what() << ": " << (*this)(i, column_index) << endl;
+            cerr << e.what() << ": " << (*this)(i, column_index) << endl;
         }
 
         if(date >= start_date && date <= end_date)
@@ -11861,11 +12971,11 @@ Matrix<T> Matrix<T>::filter_dates_string(const size_t& column_index,
     {
         try
         {
-            date =(time_t)stoi((*this)(i, column_index));
+            date = static_cast<time_t>(stoi((*this)(i, column_index)));
         }
         catch(exception& e)
         {
-            cout << e.what() << ": " <<(*this)(i, column_index) << endl;
+            cerr << e.what() << ": " <<(*this)(i, column_index) << endl;
         }
 
         if(date >= start_date && date <= end_date)
@@ -11907,7 +13017,7 @@ Matrix<T> Matrix<T>::fill_missing_dates_dd_mm_yyyy(const string& column_name, co
 
     const time_t end_date = stoi(data(rows_number-1, column_index));
 
-    const size_t days_number =(end_date+86400-start_date)/86400;
+    const size_t days_number = (end_date+86400-start_date)/86400;
 
     const size_t new_rows_number = 1+days_number;
 
@@ -12222,7 +13332,7 @@ Matrix<T> Matrix<T>::filter_column_equal_to(const size_t& column_1_index, const 
         &&(*this)(i,column_3_index) == value_3
         &&(*this)(i,column_4_index) == value_4)
         {
-            matrix_element =(*this)(i,column_1_index);
+            matrix_element = (*this)(i,column_1_index);
 
             for(size_t j = 0; j < values_1_size; j++)
             {
@@ -12380,7 +13490,6 @@ Matrix<T> Matrix<T>::filter_column_less_than(const string& column_name, const T&
 
     return(filter_column_less_than(column_index, value));
 }
-
 
 
 template <class T>
@@ -12564,8 +13673,9 @@ void Matrix<T>::convert_time_column_dd_mm_dd_yyyy_hh(const string& column_name, 
     }
 }
 
+
 template <class T>
-void Matrix<T>::convert_time_column_yyyy_mm(const string& column_name, const char& separator)
+void Matrix<T>::convert_time_column_yyyy_MM(const string& column_name, const char& separator)
 {
     // data format -> 1985-4
     const size_t column_index = get_column_index(column_name);
@@ -12647,6 +13757,7 @@ void Matrix<T>::convert_time_column_yyyy_mm(const string& column_name, const cha
     }
 }
 
+
 template <class T>
 void Matrix<T>::convert_time_column_dd_mm_yyyy(const string& column_name, const char& separator)
 {
@@ -12695,7 +13806,6 @@ void Matrix<T>::convert_time_column_dd_mm_yyyy(const string& column_name, const 
        (*this)(i, column_index) = to_string(time);
     }
 }
-
 
 
 template <class T>
@@ -12748,6 +13858,92 @@ void Matrix<T>::convert_time_column_mm_dd_yyyy(const string& column_name, const 
         year = stoi(date_elements[2]);
 
         const time_t time = to_time_t(day, month, year);
+
+       (*this)(i,column_index) = to_string(time);
+    }
+}
+
+
+template <class T>
+void Matrix<T>::convert_time_column_yyyy_MM_dd_hh_mm_ss(const string& column_name, const char& separator)
+{
+    // date format: 01/31/2017/01/00/00
+
+    const size_t column_index = get_column_index(column_name);
+
+    vector<string> date_elements;
+
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        if((*this)(i,column_index) == "")
+        {
+            continue;
+        }
+
+        date_elements = split_string((*this)(i,column_index), separator);
+
+        if(date_elements.size() != 6)
+        {
+            continue;
+        }
+
+        // Year
+
+        year = stoi(date_elements[0]);
+
+        // Month
+
+        month = stoi(date_elements[1]);
+
+        if(month < 1 || month > 12)
+        {
+            cout << "Unknown month: " << month << endl;
+        }
+
+        // Day
+
+        day = stoi(date_elements[2]);
+
+        if(day < 1 || day > 31)
+        {
+            cout << "Unknown day: " << day << endl;
+        }
+
+        // Hour
+
+        hour = stoi(date_elements[3]);
+
+        if(hour < 0 || hour > 23)
+        {
+            cout << "Unknown hour: " << hour << endl;
+        }
+
+        // Minute
+
+        minute = stoi(date_elements[4]);
+
+        if(minute < 0 || minute > 59)
+        {
+            cout << "Unknown minute: " << minute << endl;
+        }
+
+        // Second
+
+        second = stoi(date_elements[5]);
+
+        if(second < 0 || second > 59)
+        {
+            cout << "Unknown second: " << second << endl;
+        }
+
+        const time_t time = to_time_t(day, month, year, hour, minute, second);
 
        (*this)(i,column_index) = to_string(time);
     }
@@ -12811,11 +14007,11 @@ void Matrix<T>::convert_time_series(const size_t& time_index, const size_t& lags
 
 
 template <class T>
-Matrix<T> Matrix<T>::arrange_time_series(const size_t& lags_number, const size_t& time_variable_index)
+Matrix<T> Matrix<T>::get_time_series(const size_t& lags_number, const size_t& time_variable_index)
 {
     const Vector<T> time = get_column(time_variable_index);
 
-    Matrix<T> matrix =(*this);
+    Matrix<T> matrix = (*this);
 
     matrix = matrix.delete_column(time_variable_index);
 
@@ -12853,12 +14049,12 @@ Matrix<T> Matrix<T>::arrange_time_series(const size_t& lags_number, const size_t
 template <class T>
 Matrix<T> Matrix<T>::calculate_lag_plot_matrix(const size_t& maximum_lags_number, const size_t& column_index)
 {
-    Matrix<T> matrix =(*this);
+    Matrix<T> matrix = (*this);
 
     matrix = matrix.delete_column(column_index);
 
     const size_t new_rows_number = rows_number - maximum_lags_number;
-    const size_t new_columns_number =(columns_number - 1) *(1 + maximum_lags_number);
+    const size_t new_columns_number = (columns_number - 1) *(1 + maximum_lags_number);
 
     Matrix<T> lag_plot_matrix(new_rows_number, new_columns_number);
 
@@ -12880,8 +14076,6 @@ Matrix<T> Matrix<T>::calculate_lag_plot_matrix(const size_t& maximum_lags_number
 }
 
 
-// void convert_association() method
-
 /// Arranges the matrix in a proper format for association.
 /// Note that this method sets new numbers of columns in the matrix.
 
@@ -12893,8 +14087,6 @@ void Matrix<T>::convert_association()
     set(copy.assemble_columns(copy));
 }
 
-
-// void convert_angular_variables_degrees(const size_t&) method
 
 /// Converts a given column, representing angles in degrees, to two different columns with the sinus and the cosinus of the corresponding angles.
 /// Note that this method sets a new number of columns in the matrix.
@@ -12938,8 +14130,8 @@ void Matrix<T>::convert_angular_variables_degrees(const size_t& column_index)
         }
         else
         {
-            sin_angle[i] =(T)-99.9;
-            cos_angle[i] =(T)-99.9;
+            sin_angle[i] = static_cast<T>(-99.9);
+            cos_angle[i] = static_cast<T>(-99.9);
         }
     }
 
@@ -12947,8 +14139,6 @@ void Matrix<T>::convert_angular_variables_degrees(const size_t& column_index)
     set(insert_column(column_index+1, cos_angle, ""));
 }
 
-
-// void convert_angular_variables_radians(const size_t&) method
 
 /// Converts a given column, representing angles in radians, to two different columns with the sinus and the cosinus of the corresponding angles.
 /// Note that this method sets a new number of columns in the matrix.
@@ -13026,74 +14216,6 @@ template <class T> Vector<T> Matrix<T>::calculate_multiple_linear_regression_par
 }
 
 
-// double calculate_multiple_linear_correlation(const Vector<T>&) const
-
-/// Calculates the multiple linear correlation coefficient.
-/// @param other Independent vector
-
-template <class T>
-double Matrix<T>::calculate_multiple_linear_correlation(const Vector<T>& other) const
-{
-    if(this->get_columns_number() == 1) // Simple linear correlation
-    {
-//        return this->get_column(0).calculate_linear_correlation(other);
-//        return CorrelationAnalysis::calculate_linear_correlation(this->get_column(0), other);
-    }
-
-    const Vector<double> multiple_linear_regression_parameters = calculate_multiple_linear_regression_parameters(other);
-
-    const Vector<double> other_approximation =(*this).dot(multiple_linear_regression_parameters);
-
-//    return other.calculate_linear_correlation(other_approximation);
-//    return CorrelationAnalysis::calculate_linear_correlation(other, other_approximation);
-}
-
-template <class T>
-double Matrix<T>::calculate_multiple_logistic_correlation(const Vector<T>& other) const
-{
-    if(columns_number == 1) // Simple linear correlation
-    {
-        return this->get_column(0).calculate_logistic_correlation(other);
-//        return CorrelationAnalysis::calculate_logistic_correlation(this->get_column(0), other);
-    }
-
-    Vector<double> coefficients(columns_number+1,0.0);
-
-    coefficients[0] = 1.0;
-
-    Vector<double> error_gradient = calculate_logistic_error_gradient(coefficients,other);
-
-    for(size_t i = 0; i < 150; i++)
-    {
-        const Vector<double> current_gradient = error_gradient.get_last(columns_number+1);
-
-        coefficients -= current_gradient*0.01;
-
-        error_gradient = calculate_logistic_error_gradient(coefficients,other);
-
-        if(error_gradient[0] < 1.0e-3) break;
-        if(current_gradient < 1.0e-3) break;
-    }
-
-    Vector<T> output(rows_number);
-
-    for(size_t i = 0; i < rows_number; i++)
-    {
-        const Vector<double> x = get_row(i);
-
-        output[i] = this->calculate_logistic_function(coefficients,x);
-    }
-
-    double correlation = output.calculate_linear_correlation(other);
-
-    if(correlation <= 0)
-    {
-        return 0.0;
-    }
-
-    return correlation;
-}
-
 template <class T>
 double Matrix<T>::calculate_logistic_function(const Vector<double>& coefficients, const Vector<T>& x) const
 {
@@ -13108,6 +14230,7 @@ double Matrix<T>::calculate_logistic_function(const Vector<double>& coefficients
 
     return(1.0/(1.0+exp(-exponential)));
 }
+
 
 template <class T>
 Vector<double> Matrix<T>::calculate_logistic_error_gradient(const Vector<double>& coefficients, const Vector<T>& other) const
@@ -13151,7 +14274,7 @@ Vector<double> Matrix<T>::calculate_logistic_error_gradient(const Vector<double>
     }
     else
     {
-        positives_weight =(double)negatives_number/(double)positives_number;
+        positives_weight = static_cast<double>(negatives_number)/static_cast<double>(positives_number);
     }
 
 #pragma omp parallel for
@@ -13173,12 +14296,12 @@ Vector<double> Matrix<T>::calculate_logistic_error_gradient(const Vector<double>
 
         Vector<double> this_error_gradient(coefficients.size()+1, 0.0);
 
-        this_error_gradient[0] +=(other[i]*positives_weight +(1-other[i])*negatives_weight)*(other[i] - current_logistic_function)*(other[i] - current_logistic_function)/2;
-        this_error_gradient[1] -=(other[i]*positives_weight +(1-other[i])*negatives_weight)*gradient_multiply;
+        this_error_gradient[0] += (other[i]*positives_weight + (1-other[i])*negatives_weight)*(other[i] - current_logistic_function)*(other[i] - current_logistic_function)/2;
+        this_error_gradient[1] -= (other[i]*positives_weight + (1-other[i])*negatives_weight)*gradient_multiply;
 
         for(size_t j = 2; j <= coefficients.size(); j++)
         {
-            this_error_gradient[j] -=(other[i]*positives_weight +(1-other[i])*negatives_weight)*x[j-2]*gradient_multiply;
+            this_error_gradient[j] -= (other[i]*positives_weight + (1-other[i])*negatives_weight)*x[j-2]*gradient_multiply;
         }
 
 #pragma omp critical
@@ -13187,7 +14310,7 @@ Vector<double> Matrix<T>::calculate_logistic_error_gradient(const Vector<double>
         }
     }
 
-    return error_gradient/(double)(negatives_weight*negatives_number);
+    return error_gradient/static_cast<double>(negatives_weight*negatives_number);
 }
 
 template <class T>
@@ -13235,7 +14358,7 @@ KMeansResults<T> Matrix<T>::calculate_k_means(const size_t& k) const
 
             const double minimum_distance = distances.calculate_minimum();
 
-            minimum_distances[j] = minimum_distance;
+            minimum_distances[static_cast<size_t>(j)] = minimum_distance;
         }
 
         size_t sample_index = minimum_distances.calculate_sample_index_proportional_probability();
@@ -13289,7 +14412,7 @@ KMeansResults<T> Matrix<T>::calculate_k_means(const size_t& k) const
             const size_t minimum_distance_index = distances.calculate_minimal_index();
 
 #pragma omp critical
-            clusters[minimum_distance_index].push_back(i);
+            clusters[minimum_distance_index].push_back(static_cast<size_t>(i));
         }
 
         for(size_t i = 0; i < k; i++)
@@ -13355,7 +14478,22 @@ Matrix<T> Matrix<T>::calculate_upper_bounded(const T & upper_bound) const
 }
 
 
-// void print() const method
+template <class T>
+Matrix<T> Matrix<T>::calculate_lower_upper_bounded(const Vector<T>& lower_bounds, const Vector<T>& upper_bounds) const
+{
+    Matrix<T> bounded_matrix(*this);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            if(bounded_matrix(i,j) < lower_bounds[j]) bounded_matrix(i,j) = lower_bounds[j];
+            else if(bounded_matrix(i,j) > upper_bounds[j]) bounded_matrix(i,j) = upper_bounds[j];
+        }
+    }
+
+    return bounded_matrix;
+}
 
 /// Prints to the screen in the matrix object.
 
@@ -13365,8 +14503,6 @@ void Matrix<T>::print() const
    cout << *this << endl;
 }
 
-
-// void load(const string&) method
 
 /// Loads the numbers of rows and columns and the values of the matrix from a data file.
 /// @param file_name File name.
@@ -13423,7 +14559,7 @@ void Matrix<T>::load(const string& file_name)
 
        const vector<string> results(it, end);
 
-      const size_t new_columns_number =(size_t)results.size();
+      const size_t new_columns_number =static_cast<size_t>(results.size());
 
       size_t new_rows_number = 1;
 
@@ -13505,7 +14641,7 @@ void Matrix<T>::load_csv(const string& file_name, const char& delim, const bool&
            results.push_back(token);
        }
 
-       const size_t new_columns_number =(size_t)results.size();
+       const size_t new_columns_number = static_cast<size_t>(results.size());
 
        size_t new_rows_number = 1;
 
@@ -13557,6 +14693,8 @@ void Matrix<T>::load_csv(const string& file_name, const char& delim, const bool&
        {
            getline(file, line);
 
+           //std::replace(line.begin(), line.end(), delim, ' ');
+
            istringstream buffer(line);
 
            for(size_t j = 0; j < columns_number; j++)
@@ -13565,7 +14703,9 @@ void Matrix<T>::load_csv(const string& file_name, const char& delim, const bool&
 
                getline(buffer, token, delim);
 
-              (*this)(i,j) = token;
+               (*this)(i,j) = token;
+
+               //buffer >> (*this)(i,j);
            }
        }
     }
@@ -13575,8 +14715,6 @@ void Matrix<T>::load_csv(const string& file_name, const char& delim, const bool&
     file.close();
 }
 
-
-// void load_binary(const string&) method
 
 /// Loads the numbers of rows and columns and the values of the matrix from a binary file.
 /// @param file_name Name of binary file.
@@ -13625,6 +14763,7 @@ void Matrix<T>::load_binary(const string& file_name)
 
     file.close();
 }
+
 
 template <class T>
 void Matrix<T>::load_product_strings(const string& file_name, const char& separator)
@@ -13695,7 +14834,7 @@ void Matrix<T>::load_product_strings(const string& file_name, const char& separa
 
         products = products.get_unique_elements();
 
-        const size_t new_columns_number =(size_t)products.size();
+        const size_t new_columns_number = static_cast<size_t>(products.size());
 
         set(new_rows_number, new_columns_number, 0);
 
@@ -13727,8 +14866,6 @@ void Matrix<T>::load_product_strings(const string& file_name, const char& separa
 
 }
 
-
-// void save(const string&) const method
 
 /// Saves the values of the matrix to a data file separated by spaces.
 /// @param file_name File name.
@@ -13769,8 +14906,6 @@ void Matrix<T>::save(const string& file_name) const
 }
 
 
-// void save_binary(const string&) const method
-
 /// Saves the values of the matrix to a binary file.
 /// @param file_name File name.
 
@@ -13806,7 +14941,7 @@ void Matrix<T>::save_binary(const string& file_name) const
 
    for(int i = 0; i < this->size(); i++)
    {
-       value =(*this)[i];
+       value = (*this)[i];
 
        file.write(reinterpret_cast<char*>(&value), size);
    }
@@ -13816,8 +14951,6 @@ void Matrix<T>::save_binary(const string& file_name) const
    file.close();
 }
 
-
-// void save_csv(const string&, const Vector<string>&) const method
 
 /// Saves the values of the matrix to a data file separated by commas.
 /// @param file_name File name.
@@ -13899,7 +15032,6 @@ void Matrix<T>::save_csv(const string& file_name, const char& separator,  const 
    file.close();
 }
 
-// void save_json(const string&, const Vector<string>&) const method
 
 /// Saves the values of the matrix to a data file in JSON format.
 /// @param file_name File name.
@@ -13985,8 +15117,6 @@ void Matrix<T>::save_json(const string& file_name, const Vector<string>& column_
 }
 
 
-// void parse(const string&) method
-
 /// This method takes a string representation of a matrix and sets this matrix
 /// from that data.
 /// @param str String to be parsed.
@@ -14015,7 +15145,7 @@ void Matrix<T>::parse(const string& str)
 
         const vector<string> results(it, end);
 
-        const size_t new_columns_number =(size_t)results.size();
+        const size_t new_columns_number = static_cast<size_t>(results.size());
 
         size_t new_rows_number = 1;
 
@@ -14047,8 +15177,6 @@ void Matrix<T>::parse(const string& str)
 }
 
 
-// string matrix_to_string(const string&) const method
-
 /// Returns a string representation of this matrix.
 /// The elements are separated by spaces.
 /// The rows are separated by the character "\n".
@@ -14060,9 +15188,9 @@ string Matrix<T>::matrix_to_string(const char& separator) const
 
    if(rows_number > 0 && columns_number > 0)
    {
-       buffer << get_row(0).vector_to_string(separator);
+       buffer << get_header().vector_to_string(separator);
 
-       for(size_t i = 1; i < rows_number; i++)
+       for(size_t i = 0; i < rows_number; i++)
        {
            buffer << "\n"
                   << get_row(i).vector_to_string(separator);
@@ -14082,7 +15210,7 @@ Matrix<size_t> Matrix<T>::to_size_t_matrix() const
 
    for(size_t i = 0; i < this_size; i++)
    {
-       size_t_matrix[i] =(size_t)(*this)[i];
+       size_t_matrix[i] = static_cast<size_t>((*this)[i]);
    }
 
    return(size_t_matrix);
@@ -14098,7 +15226,7 @@ Matrix<double> Matrix<T>::to_double_matrix() const
 
    for(size_t i = 0; i < this_size; i++)
    {
-       new_matrix[i] =(double)(*this)[i];
+       new_matrix[i] = static_cast<double>((*this)[i]);
    }
 
    return(new_matrix);
@@ -14106,7 +15234,32 @@ Matrix<double> Matrix<T>::to_double_matrix() const
 
 
 template <class T>
-Matrix<double> Matrix<T>::string_to_double() const
+Matrix<double> Matrix<T>::bool_to_double(const double& exception_value) const
+{
+   Matrix<double> new_matrix(rows_number, columns_number);
+
+   const size_t this_size = this->size();
+
+   for(size_t i = 0; i < this_size; i++)
+   {
+       try
+       {
+           new_matrix[i] = (*this)[i] ? 1.0 : 0.0;
+       }
+       catch(const logic_error&)
+       {
+          new_matrix[i] = exception_value;
+       }
+   }
+
+   new_matrix.set_header(header);
+
+   return(new_matrix);
+}
+
+
+template <class T>
+Matrix<double> Matrix<T>::string_to_double(const double& exception_value) const
 {
    Matrix<double> new_matrix(rows_number, columns_number);
 
@@ -14120,7 +15273,7 @@ Matrix<double> Matrix<T>::string_to_double() const
        }
        catch(const logic_error&)
        {
-          new_matrix[i] = -99.9;
+          new_matrix[i] = exception_value;
        }
    }
 
@@ -14131,7 +15284,7 @@ Matrix<double> Matrix<T>::string_to_double() const
 
 
 template <class T>
-Matrix<size_t> Matrix<T>::string_to_size_t() const
+Matrix<size_t> Matrix<T>::string_to_size_t(const size_t& exception_value) const
 {
    Matrix<size_t> new_matrix(rows_number, columns_number);
 
@@ -14141,11 +15294,11 @@ Matrix<size_t> Matrix<T>::string_to_size_t() const
    {
        try
        {
-           new_matrix[i] =(size_t)stoi((*this)[i]);
+           new_matrix[i] = static_cast<size_t>(stoi((*this)[i]));
        }
        catch(const logic_error&)
        {
-          new_matrix[i] = -99.9;
+          new_matrix[i] = exception_value;
        }
    }
 
@@ -14178,6 +15331,7 @@ Matrix<string> Matrix<T>::to_string_matrix(const size_t& precision) const
    return(string_matrix);
 }
 
+
 template <class T>
 SparseMatrix<T> Matrix<T>::to_sparse_matrix() const
 {
@@ -14199,7 +15353,7 @@ SparseMatrix<T> Matrix<T>::to_sparse_matrix() const
             {
                 rows_indices[index] = i;
                 columns_indices[index] = j;
-                matrix_values[index] =(*this)(i,j);
+                matrix_values[index] = (*this)(i,j);
 
                 index++;
             }
@@ -14210,6 +15364,7 @@ SparseMatrix<T> Matrix<T>::to_sparse_matrix() const
 
     return sparse_matrix;
 }
+
 
 /// Returns a vector representation of this matrix.
 /// The size of the new vector is equal to the number of elements of this matrix.
@@ -14231,14 +15386,9 @@ vector<T> Matrix<T>::to_std_vector() const
 template <class T>
 Vector<T> Matrix<T>::to_vector() const
 {
-    Vector<T> vector(rows_number*columns_number);
+    const Vector<T> vector((*this).begin(),(*this).end());
 
-    for(size_t i = 0; i < rows_number*columns_number; i++)
-    {
-        vector[i] =(*this)[i];
-    }
-
-   return(vector);
+    return(vector);
 }
 
 
@@ -14249,7 +15399,7 @@ Vector<T> Matrix<T>::rows_to_vector(const char& separator) const
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        vector[i] =(*this).get_row(i).vector_to_string(separator);
+        vector[i] = (*this).get_row(i).vector_to_string(separator);
     }
 
    return(vector);
@@ -14320,12 +15470,12 @@ Matrix<T> Matrix<T>::impute_missing_values_time_series_value(const size_t& time_
 {
     const Vector<T> time = get_column(time_index);
 
-    const int first_time = (int)get_first(time_index);
-    const int last_time = (int)get_last(time_index);
+    const int first_time = static_cast<int>(get_first(time_index));
+    const int last_time = static_cast<int>(get_last(time_index));
 
     const int elapsed_time = last_time - first_time;
 
-    if(elapsed_time%(int)period != 0)
+    if(elapsed_time%static_cast<int>(period) != 0)
     {
         ostringstream buffer;
 
@@ -14395,14 +15545,30 @@ Matrix<T> Matrix<T>::impute_missing_values_time_series_previous(const size_t& ti
 template <class T>
 time_t Matrix<T>::to_time_t(const size_t& day, const size_t& month, const size_t& year)
 {
-    struct tm time = {0};
-    time.tm_mday =(int)day;
-    time.tm_mon =(int)month - 1;
-    time.tm_year =(int)year - 1900;
+    struct tm time = {};
+    time.tm_mday = static_cast<int>(day);
+    time.tm_mon = static_cast<int>(month) - 1;
+    time.tm_year = static_cast<int>(year) - 1900;
 
     time.tm_hour = 1;
     time.tm_min = 0;
     time.tm_sec = 0;
+
+    return mktime(&time);
+}
+
+
+template <class T>
+time_t Matrix<T>::to_time_t(const size_t& day, const size_t& month, const size_t& year, const size_t& hour, const size_t& minute, const size_t& second)
+{
+    struct tm time = {};
+    time.tm_mday = static_cast<int>(day);
+    time.tm_mon = static_cast<int>(month) - 1;
+    time.tm_year = static_cast<int>(year) - 1900;
+
+    time.tm_hour = static_cast<int>(hour);
+    time.tm_min = static_cast<int>(minute);
+    time.tm_sec = static_cast<int>(second);
 
     return mktime(&time);
 }
@@ -14497,16 +15663,634 @@ ostream& operator << (ostream& os, const Matrix< Matrix<T> >& m)
       for(size_t j = 0; j < columns_number; j++)
       {
          os << "submatrix_" << i << "_" << j << "\n"
-            << m(i,j);
+            << m(i,j) << endl;
       }
    }
 
    return(os);
 }
-} // end namespace
+
+
+template<class T>
+Matrix<T> sine(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        y[i] = sin(x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> cosine(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        y[i] = cos(x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> hyperbolic_tangent(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        y[i] = tanh(x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> hyperbolic_tangent_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        const double hyperbolic_tangent = tanh(x[i]);
+
+        y[i] = 1.0 - hyperbolic_tangent*hyperbolic_tangent;
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> linear(const Matrix<T>& x)
+{
+    return x;
+}
+
+
+template<class T>
+Matrix<T> linear_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number(), 1);
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> linear_second_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number(), 0);
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> hyperbolic_tangent_second_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        const double hyperbolic_tangent = tanh(x[i]);
+
+        y[i] = -2*hyperbolic_tangent*(1 - hyperbolic_tangent*hyperbolic_tangent);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> logistic(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        y[i] = 1.0/(1.0 + exp(-x[i]));
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> logistic_derivatives(const Matrix<T>& x)
+{
+     Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        const double exponential = exp(-x[i]);
+
+        y[i] = exponential/((1.0 + exponential)*(1.0 + exponential));
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> logistic_second_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+   for(size_t i = 0; i < x.size(); i++)
+    {
+        const double exponential = exp(-x[i]);
+
+        y[i] = (exponential*exponential - exponential)/((1.0 + exponential)*(1.0 + exponential)*(1.0 + exponential));
+    }
+
+    return y;
+}
+/// @todo
+
+template<class T>
+Matrix<T> threshold(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+     for(size_t i = 0; i < x.size(); i++)
+     {
+         if(x[i] < 0)
+         {
+             y[i] = 0.0;
+         }
+         else
+         {
+             y[i] = 1.0;
+         }
+     }
+
+     return y;
+}
+
+
+template<class T>
+Matrix<T> threshold_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+     for(size_t i = 0; i < x.size(); i++)
+     {
+         if(x[i] == 0)
+         {
+             ostringstream buffer;
+
+             buffer << "OpenNN Exception: Matrix Template.\n"
+                    << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                    << "Derivate does not exist for x equal to 0.\n";
+
+             throw logic_error(buffer.str());
+         }
+         else
+         {
+             y[i] = 0.0;
+         }
+     }
+
+     return y;
+}
+
+
+template<class T>
+Matrix<T> threshold_second_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+     for(size_t i = 0; i < x.size(); i++)
+     {
+         if(x[i] == 0)
+         {
+             ostringstream buffer;
+
+             buffer << "OpenNN Exception: Matrix Template.\n"
+                    << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                    << "Derivate does not exist for x equal to 0.\n";
+
+             throw logic_error(buffer.str());
+         }
+         else
+         {
+             y[i] = 0.0;
+         }
+     }
+
+     return y;
+}
+
+
+/// @todo
+
+template<class T>
+Matrix<T> symmetric_threshold(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+     for(size_t i = 0; i < x.size(); i++)
+    {
+        if(x[i] < 0)
+        {
+            y[i] = -1.0;
+        }
+        else
+        {
+            y[i] = 1.0;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> symmetric_threshold_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        if(x[i] == 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Matrix Template.\n"
+                   << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                   << "Derivate does not exist for x equal to 0.\n";
+
+            throw logic_error(buffer.str());
+        }
+        else
+        {
+            y[i] = 0.0;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> symmetric_threshold_second_derivatives(const Matrix<T>& x)
+{
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < x.size(); i++)
+    {
+        if(x[i] == 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Matrix Template.\n"
+                   << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                   << "Derivate does not exist for x equal to 0.\n";
+
+            throw logic_error(buffer.str());
+        }
+        else
+        {
+            y[i] = 0.0;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> rectified_linear(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = 0.0 : y[i] = x[i];
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> rectified_linear_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> derivatives(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? derivatives[i] = 0.0 : derivatives[i] = 1.0;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Matrix<T> rectified_linear_second_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> second_derivatives(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? second_derivatives[i] = 0.0 : second_derivatives[i] = 0.0;
+    }
+
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Matrix<T> scaled_exponential_linear(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    double lambda =1.0507;
+    double alpha =1.67326;
+
+
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = lambda * alpha * (exp(x[i]) - 1) : y[i] = lambda * x[i];
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> scaled_exponential_linear_derivate(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    double lambda =1.0507;
+    double alpha =1.67326;
+
+
+    Matrix<T> derivatives(x.get_rows_number(), x.get_columns_number());
+
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? derivatives[i] = lambda * alpha * exp(x[i]) : derivatives[i] = lambda;
+    }
+
+    return derivatives;
+}
+
+template<class T>
+Matrix<T> scaled_exponential_linear_second_derivate(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    double lambda =1.0507;
+    double alpha =1.67326;
+
+
+    Matrix<T> second_derivate(x.get_rows_number(), x.get_columns_number());
+
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? second_derivate[i] = lambda * alpha * exp(x[i]) : second_derivate[i] = 0.0;
+    }
+
+    return second_derivate;
+}
+
+template<class T>
+Matrix<T> soft_plus(const Matrix<T>& x)
+{
+     const size_t n = x.size();
+
+      Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+     for(size_t i = 0; i < n; i++)
+     {
+         y[i] = log(1 + exp(x[i]));
+     }
+
+     return y;
+}
+
+template<class T>
+Matrix<T> soft_plus_derivatives(const Matrix<T>& x)
+{
+     const size_t n = x.size();
+
+     Matrix<T> derivatives(x.get_rows_number(), x.get_columns_number());
+
+     for(size_t i = 0; i < n; i++)
+     {
+         derivatives[i] = 1/(1 + exp(-x[i]));
+     }
+
+     return derivatives;
+}
+
+template<class T>
+Matrix<T> soft_plus_second_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> second_derivatives(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+       second_derivatives[n] = exp(-x[i]) / pow((1 + exp(-x[i])), 2);
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Matrix<T> soft_sign(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+       x[i] < 0.0 ? y[i] = x[i] / (1 - x[i]) : y[i] = x[i] / (1 + x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> soft_sign_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> derivatives(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+       x[i] < 0.0 ? derivatives[i] = 1 / pow((1 - x[i]), 2) : derivatives[i] = 1 / pow((1 + x[i]), 2);
+
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Matrix<T> soft_sign_second_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> second_derivatives(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+       x[i] < 0.0 ? second_derivatives[i] = -(2 * x[i]) / pow((1 - x[i]), 3) : second_derivatives[i] = -(2 * x[i]) / pow((1 + x[i]), 3);
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Matrix<T> hard_sigmoid(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+        if(x[i] < -2.5)
+        {
+           y[n] = 0;
+        }
+        else if(x[i] > 2.5)
+        {
+            y[n] = 1;
+        }
+        else
+        {
+            y[n] = 0.2 * x[i] + 0.5;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Matrix<T> hard_sigmoid_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+   Matrix<T> derivatives(x.get_rows_number(), x.get_columns_number());
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < -2.5 || x[i] > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 2.5;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Matrix<T> hard_sigmoid_second_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> second_derivatives(x.get_rows_number(), x.get_columns_number(), 0.0);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? second_derivatives[i] = 0.0 : second_derivatives[i] = 0.0;
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Matrix<T> exponential_linear(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> y(x.get_rows_number(), x.get_columns_number(), 0.0);
+
+    const double alpha = 1.0;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = alpha * (exp(x[i])- 1) : y[i] = x[i];
+    }
+
+    return y;
+}
+
+
+
+template<class T>
+Matrix<T> exponential_linear_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> derivatives(x.get_rows_number(), x.get_columns_number(), 0.0);
+
+    const double alpha = 1.0;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? derivatives[i] = alpha * exp(x[i]) : derivatives[i] = 1.0;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Matrix<T> exponential_linear_second_derivatives(const Matrix<T>& x)
+{
+    const size_t n = x.size();
+
+    Matrix<T> second_derivatives(x.get_rows_number(), x.get_columns_number(), 0.0);
+
+    const double alpha = 1.0;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? second_derivatives[i] = alpha * exp(x[i]) : second_derivatives[i] = 0.0;
+    }
+
+    return second_derivatives;
+}
+
+}
+
+// end namespace
 
 #endif
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.

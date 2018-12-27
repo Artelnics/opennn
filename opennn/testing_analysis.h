@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T E S T I N G   A N A L Y S I S   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -28,7 +27,6 @@
 #include "matrix.h"
 
 #include "data_set.h"
-#include "mathematical_model.h"
 
 #include "neural_network.h"
 
@@ -52,10 +50,6 @@ public:
 
    explicit TestingAnalysis(NeuralNetwork*);
 
-   // MATHEMATICAL MODEL CONSTRUCTOR
-
-   explicit TestingAnalysis(MathematicalModel*);
-
    // DATA SET CONSTRUCTOR
 
    explicit TestingAnalysis(DataSet*);
@@ -63,14 +57,6 @@ public:
    // NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
    explicit TestingAnalysis(NeuralNetwork*, DataSet*);
-
-   // NEURAL NETWORK AND MATHEMATICAL MODEL CONSTRUCTOR
-
-   explicit TestingAnalysis(NeuralNetwork*, MathematicalModel*);
-
-   // NEURAL NETWORK, DATA SET AND MATHEMATICAL MODEL CONSTRUCTOR
-
-   explicit TestingAnalysis(NeuralNetwork*, DataSet*, MathematicalModel*);
 
    // XML CONSTRUCTOR
 
@@ -183,7 +169,6 @@ public:
 
    NeuralNetwork* get_neural_network_pointer() const;
    DataSet* get_data_set_pointer() const;
-   MathematicalModel* get_mathematical_model_pointer() const;
 
    const bool& get_display() const;
 
@@ -191,7 +176,6 @@ public:
 
    void set_neural_network_pointer(NeuralNetwork*);
    void set_data_set_pointer(DataSet*);
-   void set_mathematical_model_pointer(MathematicalModel*);
 
    void set_display(const bool&);
 
@@ -203,8 +187,8 @@ public:
 
    // Target and output data methods
 
-   Vector< Matrix<double> > calculate_target_output_data() const;
-   Vector< Matrix<double> > calculate_forecasting_target_output_data() const;
+   Vector< Matrix<double> > calculate_target_outputs() const;
+   Vector< Matrix<double> > calculate_forecasting_target_outputs() const;
 
    // Error data methods
 
@@ -260,6 +244,7 @@ public:
    void print_linear_regression_correlations() const;
 
    Vector<LinearRegressionAnalysis> perform_linear_regression_analysis() const;
+   void perform_linear_regression_analysis_void() const;
    LinearRegressionAnalysis perform_forecasting_linear_regression_analysis() const;
 
    // Binary classifcation methods
@@ -307,20 +292,20 @@ public:
 
    Matrix<double> perform_calibration_plot_analysis() const;
 
-   Matrix<double> calculate_calibration_plot(const Matrix<double>& , const Matrix<double>&) const;
+   Matrix<double> calculate_calibration_plot(const Matrix<double>&, const Matrix<double>&) const;
 
    // Output histogram
 
-   Vector < Histogram <double> > calculate_output_histogram(const Matrix<double>& , const size_t& = 10) const;
+   Vector < Histogram <double> > calculate_output_histogram(const Matrix<double>&, const size_t& = 10) const;
 
    // Binary classification rates
 
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
-   Vector<size_t> calculate_true_positive_instances(const Matrix<double>& , const Matrix<double>&, const Vector<size_t>&, const double&) const;
-   Vector<size_t> calculate_false_positive_instances(const Matrix<double>& , const Matrix<double>&, const Vector<size_t>&, const double& ) const;
-   Vector<size_t> calculate_false_negative_instances(const Matrix<double>& , const Matrix<double>&, const Vector<size_t>&, const double& ) const;
-   Vector<size_t> calculate_true_negative_instances(const Matrix<double>& , const Matrix<double>&, const Vector<size_t>&, const double& ) const;
+   Vector<size_t> calculate_true_positive_instances(const Matrix<double>&, const Matrix<double>&, const Vector<size_t>&, const double&) const;
+   Vector<size_t> calculate_false_positive_instances(const Matrix<double>&, const Matrix<double>&, const Vector<size_t>&, const double& ) const;
+   Vector<size_t> calculate_false_negative_instances(const Matrix<double>&, const Matrix<double>&, const Vector<size_t>&, const double& ) const;
+   Vector<size_t> calculate_true_negative_instances(const Matrix<double>&, const Matrix<double>&, const Vector<size_t>&, const double& ) const;
 
    // Multiple classification rates
 
@@ -365,10 +350,6 @@ private:
    /// Pointer to a data set object.
 
    DataSet* data_set_pointer;
-
-   /// Pointer to a mathematical model object.
-
-   MathematicalModel* mathematical_model_pointer;
 
    /// Display messages to screen.
    

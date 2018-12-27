@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   N U M E R I C A L   D I F F E R E N T I A T I O N   T E S T   C L A S S   H E A D E R                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -47,23 +47,23 @@ public:
 
    // Derivative methods
 
-   void test_calculate_forward_differences_derivative();
-   void test_calculate_central_differences_derivative();
-   void test_calculate_derivative();
+   void test_calculate_forward_differences_derivatives();
+   void test_calculate_central_differences_derivatives();
+   void test_calculate_derivatives();
 
-//   void test_calculate_forward_differences_derivative();
-//   void test_calculate_central_differences_derivative();
-//   void test_calculate_derivative();
+//   void test_calculate_forward_differences_derivatives();
+//   void test_calculate_central_differences_derivatives();
+//   void test_calculate_derivatives();
 
    // Second derivative methods
 
-   void test_calculate_forward_differences_second_derivative();
-   void test_calculate_central_differences_second_derivative();
-   void test_calculate_second_derivative();
+   void test_calculate_forward_differences_second_derivatives();
+   void test_calculate_central_differences_second_derivatives();
+   void test_calculate_second_derivatives();
 
-//   void test_calculate_forward_differences_second_derivative();
-//   void test_calculate_central_differences_second_derivative();
-//   void test_calculate_second_derivative();
+//   void test_calculate_forward_differences_second_derivatives();
+//   void test_calculate_central_differences_second_derivatives();
+//   void test_calculate_second_derivatives();
 
    // Gradient methods
 

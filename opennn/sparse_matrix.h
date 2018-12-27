@@ -56,21 +56,21 @@ public:
 
     // ASSIGNMENT OPERATORS
 
-    inline SparseMatrix<T>& operator =(const SparseMatrix<T>&);
+    inline SparseMatrix<T>& operator = (const SparseMatrix<T>&);
 
     // REFERENCE OPERATORS
 
     inline const T operator()(const size_t&, const size_t&) const;
 
-    bool operator ==(const SparseMatrix<T>&) const;
+    bool operator == (const SparseMatrix<T>&) const;
 
-    bool operator ==(const Matrix<T>&) const;
+    bool operator == (const Matrix<T>&) const;
 
-    bool operator ==(const T&) const;
+    bool operator == (const T&) const;
 
-    bool operator !=(const SparseMatrix<T>&) const;
+    bool operator != (const SparseMatrix<T>&) const;
 
-    bool operator !=(const Matrix<T>&) const;
+    bool operator != (const Matrix<T>&) const;
 
     bool operator >(const SparseMatrix<T>&) const;
 
@@ -84,17 +84,17 @@ public:
 
     bool operator <(const T&) const;
 
-    bool operator >=(const SparseMatrix<T>&) const;
+    bool operator >= (const SparseMatrix<T>&) const;
 
-    bool operator >=(const Matrix<T>&) const;
+    bool operator >= (const Matrix<T>&) const;
 
-    bool operator >=(const T&) const;
+    bool operator >= (const T&) const;
 
-    bool operator <=(const SparseMatrix<T>&) const;
+    bool operator <= (const SparseMatrix<T>&) const;
 
-    bool operator <=(const Matrix<T>&) const;
+    bool operator <= (const Matrix<T>&) const;
 
-    bool operator <=(const T&) const;
+    bool operator <= (const T&) const;
 
     // METHODS
 
@@ -147,11 +147,11 @@ public:
 
     Vector<size_t> get_row_indices_equal_to(const Vector<size_t>&, const T&) const;
 
-    SparseMatrix<T> arrange_sub_sparse_matrix(const Vector<size_t>&, const Vector<size_t>&) const;
+    SparseMatrix<T> get_sub_sparse_matrix(const Vector<size_t>&, const Vector<size_t>&) const;
 
-    SparseMatrix<T> arrange_sub_sparse_matrix_rows(const Vector<size_t>&) const;
+    SparseMatrix<T> get_sub_sparse_matrix_rows(const Vector<size_t>&) const;
 
-    SparseMatrix<T> arrange_sub_sparse_matrix_columns(const Vector<size_t>&) const;
+    SparseMatrix<T> get_sub_sparse_matrix_columns(const Vector<size_t>&) const;
 
     Vector<T> get_row(const size_t&) const;
 
@@ -191,7 +191,7 @@ public:
 
     void append_row(const Vector<T>&);
 
-    void append_column(const Vector<T>&) ;
+    void append_column(const Vector<T>&);
 
     SparseMatrix<T> insert_row(const size_t&, const Vector<T>&) const;
 
@@ -398,12 +398,12 @@ public:
 
     double calculate_distance(const size_t&, const size_t&) const;
 
-    SparseMatrix<T> operator +(const T&) const;
+    SparseMatrix<T> operator + (const T&) const;
 
-    SparseMatrix<T> operator +(const Vector<T>&) const;
+    SparseMatrix<T> operator + (const Vector<T>&) const;
 
-    SparseMatrix<T> operator +(const SparseMatrix<T>&) const;
-    SparseMatrix<T> operator +(const Matrix<T>&) const;
+    SparseMatrix<T> operator + (const SparseMatrix<T>&) const;
+    SparseMatrix<T> operator + (const Matrix<T>&) const;
 
     SparseMatrix<T> operator -(const T&) const;
 
@@ -426,33 +426,33 @@ public:
     SparseMatrix<T> operator /(const SparseMatrix<T>&) const;
     SparseMatrix<T> operator /(const Matrix<T>&) const;
 
-    void operator +=(const T&);
+    void operator += (const T&);
 
-    void operator +=(const Vector<T>&);
+    void operator += (const Vector<T>&);
 
-    void operator +=(const SparseMatrix<T>&);
-    void operator +=(const Matrix<T>&);
+    void operator += (const SparseMatrix<T>&);
+    void operator += (const Matrix<T>&);
 
-    void operator -=(const T&);
+    void operator -= (const T&);
 
-    void operator -=(const Vector<T>&);
+    void operator -= (const Vector<T>&);
 
-    void operator -=(const SparseMatrix<T>&);
-    void operator -=(const Matrix<T>&);
+    void operator -= (const SparseMatrix<T>&);
+    void operator -= (const Matrix<T>&);
 
-    void operator *=(const T&);
+    void operator *= (const T&);
 
-    void operator *=(const Vector<T>&);
+    void operator *= (const Vector<T>&);
 
-    void operator *=(const SparseMatrix<T>&);
-    void operator *=(const Matrix<T>&);
+    void operator *= (const SparseMatrix<T>&);
+    void operator *= (const Matrix<T>&);
 
-    void operator /=(const T&);
+    void operator /= (const T&);
 
-    void operator /=(const Vector<T>&);
+    void operator /= (const Vector<T>&);
 
-    void operator /=(const SparseMatrix<T>&);
-    void operator /=(const Matrix<T>&);
+    void operator /= (const SparseMatrix<T>&);
+    void operator /= (const Matrix<T>&);
 
     Vector<double> dot(const Vector<double>&) const;
 
@@ -489,7 +489,7 @@ public:
 
     void convert_association();
 
-    KMeansResults<T> calculate_k_means(const size_t&) const ;
+    KMeansResults<T> calculate_k_means(const size_t&) const;
 
     // Correlation methods
 
@@ -650,7 +650,7 @@ SparseMatrix<T>::~SparseMatrix()
 /// @param other_sparse_matrix SparseMatrix to be assigned.
 
 template <class T>
-SparseMatrix<T>& SparseMatrix<T>::operator =(const SparseMatrix<T>& other_sparse_matrix)
+SparseMatrix<T>& SparseMatrix<T>::operator = (const SparseMatrix<T>& other_sparse_matrix)
 {
     if(other_sparse_matrix.rows_number != rows_number || other_sparse_matrix.columns_number != columns_number)
     {
@@ -691,7 +691,7 @@ inline const T SparseMatrix<T>::operator()(const size_t& row, const size_t& colu
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "operator()(const size_t&, const size_t&).\n"
-               << "Row index(" << row << ") must be less than number of rows(" << rows_number << ").\n";
+               << "Row index (" << row << ") must be less than number of rows (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -701,7 +701,7 @@ inline const T SparseMatrix<T>::operator()(const size_t& row, const size_t& colu
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "operator()(const size_t&, const size_t&).\n"
-               << "Column index(" << column << ") must be less than number of columns(" << columns_number << ").\n";
+               << "Column index (" << column << ") must be less than number of columns (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -728,14 +728,14 @@ inline const T SparseMatrix<T>::operator()(const size_t& row, const size_t& colu
     return(value);
 }
 
-// bool operator ==(const SparseMatrix<T>&) const
+// bool operator == (const SparseMatrix<T>&) const
 
 /// Equivalent relational operator between this other_sparse_matrix and other other_sparse_matrix.
 /// It produces true if all the elements of the two matrices are equal, and false otherwise.
 /// @param other_sparse_matrix Sparse matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator ==(const SparseMatrix<T>& other_sparse_matrix) const
+bool SparseMatrix<T>::operator == (const SparseMatrix<T>& other_sparse_matrix) const
 {
     const size_t other_rows_number = other_sparse_matrix.get_rows_number();
     const size_t other_columns_number = other_sparse_matrix.get_columns_number();
@@ -773,13 +773,13 @@ bool SparseMatrix<T>::operator ==(const SparseMatrix<T>& other_sparse_matrix) co
     return(true);
 }
 
-// bool operator ==(const T&)
+// bool operator == (const T&)
 
 /// Equivalent relational operator between this sparse matrix and a dense matrix.
 /// @param other_matrix Dense matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator ==(const Matrix<T>& other_matrix) const
+bool SparseMatrix<T>::operator == (const Matrix<T>& other_matrix) const
 {
     const size_t other_rows_number = other_matrix.get_rows_number();
     const size_t other_columns_number = other_matrix.get_columns_number();
@@ -798,7 +798,7 @@ bool SparseMatrix<T>::operator ==(const Matrix<T>& other_matrix) const
 
         for(size_t j = 0; j < other_columns_number; j++)
         {
-            if(other_matrix(i,j) !=(*this)(i,j))
+            if(other_matrix(i,j) != (*this)(i,j))
             {
                 return false;
             }
@@ -809,7 +809,7 @@ bool SparseMatrix<T>::operator ==(const Matrix<T>& other_matrix) const
 }
 
 template <class T>
-bool SparseMatrix<T>::operator ==(const T& value) const
+bool SparseMatrix<T>::operator == (const T& value) const
 {
     if(value == T())
     {
@@ -825,14 +825,14 @@ bool SparseMatrix<T>::operator ==(const T& value) const
     }
 }
 
-// bool operator !=(const SparseMatrix<T>&)
+// bool operator != (const SparseMatrix<T>&)
 
 /// Not equivalent relational operator between this sparse matrix and other sparse matrix.
 /// It produces true if the two matrices have any not equal element, and false otherwise.
 /// @param other_sparse_matrix Sparse matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator !=(const SparseMatrix<T>& other_sparse_matrix) const
+bool SparseMatrix<T>::operator != (const SparseMatrix<T>& other_sparse_matrix) const
 {
     const size_t other_rows_number = other_sparse_matrix.get_rows_number();
     const size_t other_columns_number = other_sparse_matrix.get_columns_number();
@@ -871,13 +871,13 @@ bool SparseMatrix<T>::operator !=(const SparseMatrix<T>& other_sparse_matrix) co
 }
 
 
-// bool operator !=(const Matrix<T>&) const
+// bool operator != (const Matrix<T>&) const
 
 /// Not equivalent relational operator between this sparse matrix and a dense matrix.
 /// @param other_matrix Dense matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator !=(const Matrix<T>& other_matrix) const
+bool SparseMatrix<T>::operator != (const Matrix<T>& other_matrix) const
 {
     const size_t other_rows_number = other_matrix.get_rows_number();
     const size_t other_columns_number = other_matrix.get_columns_number();
@@ -896,7 +896,7 @@ bool SparseMatrix<T>::operator !=(const Matrix<T>& other_matrix) const
 
         for(size_t j = 0; j < other_columns_number; j++)
         {
-            if(other_matrix(i,j) !=(*this)(i,j))
+            if(other_matrix(i,j) != (*this)(i,j))
             {
                 return true;
             }
@@ -1154,7 +1154,7 @@ bool SparseMatrix<T>::operator <(const T& value) const
     }
 }
 
-// bool operator >=(const SparseMatrix<T>&) const
+// bool operator >= (const SparseMatrix<T>&) const
 
 /// Greater than or equal to relational operator between this sparse matrix and other sparse matrix.
 /// It produces true if all the elements of this sparse matrix are greater than or equal to the corresponding elements of the
@@ -1162,7 +1162,7 @@ bool SparseMatrix<T>::operator <(const T& value) const
 /// @param other_sparse_matrix Sparse matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator >=(const SparseMatrix<T>& other_sparse_matrix) const
+bool SparseMatrix<T>::operator >= (const SparseMatrix<T>& other_sparse_matrix) const
 {
     // Control sentence(if debug)
 
@@ -1176,7 +1176,7 @@ bool SparseMatrix<T>::operator >=(const SparseMatrix<T>& other_sparse_matrix) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator >=(const SparseMatrix<T>&) const.\n"
+               << "bool operator >= (const SparseMatrix<T>&) const.\n"
                << "Both numbers of rows must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1186,7 +1186,7 @@ bool SparseMatrix<T>::operator >=(const SparseMatrix<T>& other_sparse_matrix) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator >=(const SparseMatrix<T>&) const.\n"
+               << "bool operator >= (const SparseMatrix<T>&) const.\n"
                << "Both numbers of columns must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1209,13 +1209,13 @@ bool SparseMatrix<T>::operator >=(const SparseMatrix<T>& other_sparse_matrix) co
 }
 
 
-// bool operator >=(const Matrix<T>&) const
+// bool operator >= (const Matrix<T>&) const
 
 /// Greater than or equal to than relational operator between this sparse matrix and a dense matrix.
 /// @param other_matrix Dense matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator >=(const Matrix<T>& other_matrix) const
+bool SparseMatrix<T>::operator >= (const Matrix<T>& other_matrix) const
 {
     // Control sentence(if debug)
 
@@ -1229,7 +1229,7 @@ bool SparseMatrix<T>::operator >=(const Matrix<T>& other_matrix) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator >=(const Matrix<T>&) const.\n"
+               << "bool operator >= (const Matrix<T>&) const.\n"
                << "Both numbers of rows must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1239,7 +1239,7 @@ bool SparseMatrix<T>::operator >=(const Matrix<T>& other_matrix) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator >=(const Matrix<T>&) const.\n"
+               << "bool operator >= (const Matrix<T>&) const.\n"
                << "Both numbers of columns must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1262,7 +1262,7 @@ bool SparseMatrix<T>::operator >=(const Matrix<T>& other_matrix) const
 }
 
 template <class T>
-bool SparseMatrix<T>::operator >=(const T& value) const
+bool SparseMatrix<T>::operator >= (const T& value) const
 {
     if(value > T() && is_dense())
     {
@@ -1278,7 +1278,7 @@ bool SparseMatrix<T>::operator >=(const T& value) const
     }
 }
 
-// bool operator <=(const SparseMatrix<T>&) const
+// bool operator <= (const SparseMatrix<T>&) const
 
 /// Less than or equal to relational operator between this sparse matrix and other sparse matrix.
 /// It produces true if all the elements of this sparse matrix are less than or equal to the corresponding elements of the
@@ -1286,7 +1286,7 @@ bool SparseMatrix<T>::operator >=(const T& value) const
 /// @param other_sparse_matrix Sparse matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator <=(const SparseMatrix<T>& other_sparse_matrix) const
+bool SparseMatrix<T>::operator <= (const SparseMatrix<T>& other_sparse_matrix) const
 {
     // Control sentence(if debug)
 
@@ -1300,7 +1300,7 @@ bool SparseMatrix<T>::operator <=(const SparseMatrix<T>& other_sparse_matrix) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator <=(const SparseMatrix<T>&) const.\n"
+               << "bool operator <= (const SparseMatrix<T>&) const.\n"
                << "Both numbers of rows must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1310,7 +1310,7 @@ bool SparseMatrix<T>::operator <=(const SparseMatrix<T>& other_sparse_matrix) co
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator <=(const SparseMatrix<T>&) const.\n"
+               << "bool operator <= (const SparseMatrix<T>&) const.\n"
                << "Both numbers of columns must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1333,13 +1333,13 @@ bool SparseMatrix<T>::operator <=(const SparseMatrix<T>& other_sparse_matrix) co
 }
 
 
-// bool operator <=(const Matrix<T>&) const
+// bool operator <= (const Matrix<T>&) const
 
 /// Less than or equal to than relational operator between this sparse matrix and a dense matrix.
 /// @param other_matrix Dense matrix to be compared with.
 
 template <class T>
-bool SparseMatrix<T>::operator <=(const Matrix<T>& other_matrix) const
+bool SparseMatrix<T>::operator <= (const Matrix<T>& other_matrix) const
 {
     // Control sentence(if debug)
 
@@ -1353,7 +1353,7 @@ bool SparseMatrix<T>::operator <=(const Matrix<T>& other_matrix) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator <=(const Matrix<T>&) const.\n"
+               << "bool operator <= (const Matrix<T>&) const.\n"
                << "Both numbers of rows must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1363,7 +1363,7 @@ bool SparseMatrix<T>::operator <=(const Matrix<T>& other_matrix) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "bool operator <=(const Matrix<T>&) const.\n"
+               << "bool operator <= (const Matrix<T>&) const.\n"
                << "Both numbers of columns must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -1386,7 +1386,7 @@ bool SparseMatrix<T>::operator <=(const Matrix<T>& other_matrix) const
 }
 
 template <class T>
-bool SparseMatrix<T>::operator <=(const T& value) const
+bool SparseMatrix<T>::operator <= (const T& value) const
 {
     if(value >= T())
     {
@@ -1632,7 +1632,7 @@ void SparseMatrix<T>::set_element(const size_t& row_index, const size_t& column_
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "set_element(const size_t&, const size_t&, const T&).\n"
-               << "Row index(" << row_index << ") must be less than number of rows(" << rows_number << ").\n";
+               << "Row index (" << row_index << ") must be less than number of rows (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1642,7 +1642,7 @@ void SparseMatrix<T>::set_element(const size_t& row_index, const size_t& column_
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "set_element(const size_t&, const size_t&, const T&).\n"
-               << "Column index(" << column_index << ") must be less than number of columns(" << columns_number << ").\n";
+               << "Column index (" << column_index << ") must be less than number of columns (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1672,9 +1672,9 @@ void SparseMatrix<T>::set_element(const size_t& row_index, const size_t& column_
     }
     else if(intersection.size() != 0 && value == T())
     {
-        rows_indices = rows_indices.remove_element(intersection[0]);
-        columns_indices = columns_indices.remove_element(intersection[0]);
-        matrix_values = matrix_values.remove_element(intersection[0]);
+        rows_indices = rows_indices.delete_index(intersection[0]);
+        columns_indices = columns_indices.delete_index(intersection[0]);
+        matrix_values = matrix_values.delete_index(intersection[0]);
     }
 }
 
@@ -1983,7 +1983,7 @@ Vector<size_t> SparseMatrix<T>::get_row_indices_equal_to(const Vector<size_t>& c
 /// @param column_indices Indices of sparse matrix columns.
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix(const Vector<size_t>& row_indices, const Vector<size_t>& column_indices) const
+SparseMatrix<T> SparseMatrix<T>::get_sub_sparse_matrix(const Vector<size_t>& row_indices, const Vector<size_t>& column_indices) const
 {
     const size_t row_indices_size = row_indices.size();
     const size_t column_indices_size = column_indices.size();
@@ -2001,7 +2001,7 @@ SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix(const Vector<size_t>&
         {
             column_index = column_indices[j];
 
-            const T current_value =(*this)(row_index,column_index);
+            const T current_value = (*this)(row_index,column_index);
 
             if(current_value != T())
             {
@@ -2017,7 +2017,7 @@ SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix(const Vector<size_t>&
 /// @param row_indices Indices of sparse matrix rows.
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix_rows(const Vector<size_t>& row_indices) const
+SparseMatrix<T> SparseMatrix<T>::get_sub_sparse_matrix_rows(const Vector<size_t>& row_indices) const
 {
     const size_t row_indices_size = row_indices.size();
 
@@ -2031,7 +2031,7 @@ SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix_rows(const Vector<siz
 
         for(size_t j = 0; j < columns_number; j++)
         {
-            const T current_value =(*this)(row_index,j);
+            const T current_value = (*this)(row_index,j);
 
             if(current_value != T())
             {
@@ -2048,7 +2048,7 @@ SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix_rows(const Vector<siz
 /// @param column_indices Indices of sparse matrix columns.
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix_columns(const Vector<size_t>& column_indices) const
+SparseMatrix<T> SparseMatrix<T>::get_sub_sparse_matrix_columns(const Vector<size_t>& column_indices) const
 {
     const size_t column_indices_size = column_indices.size();
 
@@ -2063,7 +2063,7 @@ SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix_columns(const Vector<
             ostringstream buffer;
 
             buffer << "OpenNN Exception: SparseMatrix Template.\n"
-                   << "SparseMatrix<T> arrange_sub_sparse_matrix_columns(const Vector<size_t>&) const method.\n"
+                   << "SparseMatrix<T> get_sub_sparse_matrix_columns(const Vector<size_t>&) const method.\n"
                    << "Column index(" << i << ") must be less than number of columns(" << columns_number << ").\n";
 
             throw logic_error(buffer.str());
@@ -2082,7 +2082,7 @@ SparseMatrix<T> SparseMatrix<T>::arrange_sub_sparse_matrix_columns(const Vector<
         {
             column_index = column_indices[j];
 
-            const T current_value =(*this)(i,column_index);
+            const T current_value = (*this)(i,column_index);
 
             if(current_value != T())
             {
@@ -2112,7 +2112,7 @@ Vector<T> SparseMatrix<T>::get_row(const size_t& i) const
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "Vector<T> get_row(const size_t&) const method.\n"
-               << "Row index(" << i << ") must be less than number of rows(" << rows_number << ").\n";
+               << "Row index (" << i << ") must be less than number of rows (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -2184,7 +2184,7 @@ Vector<T> SparseMatrix<T>::get_row(const size_t& row_index, const Vector<size_t>
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "Vector<T> get_row(const size_t&, const Vector<size_t>&) const method.\n"
-               << "Row index(" << row_index << ") must be less than number of rows(" << rows_number << ").\n";
+               << "Row index (" << row_index << ") must be less than number of rows (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -2197,7 +2197,7 @@ Vector<T> SparseMatrix<T>::get_row(const size_t& row_index, const Vector<size_t>
 
     for(size_t i = 0; i < size; i++)
     {
-        row[i] =(*this)(row_index,column_indices[i]);
+        row[i] = (*this)(row_index,column_indices[i]);
     }
 
     return(row);
@@ -2551,7 +2551,7 @@ void SparseMatrix<T>::set_diagonal(const Vector<T>& new_diagonal)
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "set_diagonal(const Vector<T>&) const.\n"
-               << "Size of diagonal(" << size << ") is not equal to size of SparseMatrix(" << rows_number << ").\n";
+               << "Size of diagonal(" << size << ") is not equal to size of Sparsematrix (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -3134,7 +3134,7 @@ SparseMatrix<T> SparseMatrix<T>::delete_rows_with_value(const T& value) const
         }
     }
 
-    return arrange_sub_sparse_matrix_rows(valid_indices);
+    return get_sub_sparse_matrix_rows(valid_indices);
 }
 
 template <class T>
@@ -3142,7 +3142,7 @@ SparseMatrix<T> SparseMatrix<T>::delete_first_rows(const size_t& number) const
 {
     const Vector<size_t> indices(number, 1, rows_number-1);
 
-    return arrange_sub_sparse_matrix_rows(indices);
+    return get_sub_sparse_matrix_rows(indices);
 }
 
 template <class T>
@@ -3150,7 +3150,7 @@ SparseMatrix<T> SparseMatrix<T>::get_first_rows(const size_t& number) const
 {
     const Vector<size_t> indices(0, 1, number-1);
 
-    return arrange_sub_sparse_matrix_rows(indices);
+    return get_sub_sparse_matrix_rows(indices);
 }
 
 template <class T>
@@ -3158,7 +3158,7 @@ SparseMatrix<T> SparseMatrix<T>::delete_last_rows(const size_t& number) const
 {
     const Vector<size_t> indices(0, 1, rows_number-number-1);
 
-    return arrange_sub_sparse_matrix_rows(indices);
+    return get_sub_sparse_matrix_rows(indices);
 }
 
 template <class T>
@@ -3166,7 +3166,7 @@ SparseMatrix<T> SparseMatrix<T>::get_last_rows(const size_t& number) const
 {
     const Vector<size_t> indices(rows_number-number, 1, rows_number-1);
 
-    return arrange_sub_sparse_matrix_rows(indices);
+    return get_sub_sparse_matrix_rows(indices);
 }
 
 template <class T>
@@ -3319,7 +3319,7 @@ SparseMatrix<T> SparseMatrix<T>::assemble_rows(const SparseMatrix<T>& other_spar
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> assemble_rows(const SparseMatrix<T>&) const method.\n"
-               << "Number of columns of other SparseMatrix(" << other_columns_number << ") must be equal to number of columns of this SparseMatrix(" << columns_number << ").\n";
+               << "Number of columns of other Sparsematrix (" << other_columns_number << ") must be equal to number of columns of this Sparsematrix (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -3363,7 +3363,7 @@ Matrix<T> SparseMatrix<T>::assemble_rows(const Matrix<T>& other_matrix) const
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "Matrix<T> assemble_rows(const Matrix<T>&) const method.\n"
-               << "Number of columns of other Matrix(" << other_columns_number << ") must be equal to number of columns of this SparseMatrix(" << columns_number << ").\n";
+               << "Number of columns of other matrix (" << other_columns_number << ") must be equal to number of columns of this Sparsematrix (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -3409,7 +3409,7 @@ SparseMatrix<T> SparseMatrix<T>::assemble_columns(const SparseMatrix<T>& other_s
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> assemble_columns(const SparseMatrix<T>&) const method.\n"
-               << "Number of rows of other SparseMatrix(" << other_rows_number << ") must be equal to number of rows of this SparseMatrix(" << rows_number << ").\n";
+               << "Number of rows of other Sparsematrix (" << other_rows_number << ") must be equal to number of rows of this Sparsematrix (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -3453,7 +3453,7 @@ Matrix<T> SparseMatrix<T>::assemble_columns(const Matrix<T>& other_matrix) const
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "Matrix<T> assemble_columns(const Matrix<T>&) const method.\n"
-               << "Number of rows of other Matrix(" << other_rows_number << ") must be equal to number of rows of this SparseMatrix(" << rows_number << ").\n";
+               << "Number of rows of other matrix (" << other_rows_number << ") must be equal to number of rows of this Sparsematrix (" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -3745,7 +3745,7 @@ Vector<int> SparseMatrix<T>::calculate_rows_sum_int() const
     {
         const size_t current_row_index = rows_indices[i];
 
-        rows_sum[current_row_index] +=(int)matrix_values[i];
+        rows_sum[current_row_index] += (int)matrix_values[i];
     }
 
     return rows_sum;
@@ -3872,7 +3872,7 @@ double SparseMatrix<T>::calculate_trace() const
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        trace +=(*this)(i,i);
+        trace += (*this)(i,i);
     }
 
     return(trace);
@@ -3904,7 +3904,7 @@ Vector<double> SparseMatrix<T>::calculate_mean() const
 
     mean = calculate_columns_sum();
 
-    mean /=(double)rows_number;
+    mean /= (double)rows_number;
 
     return(mean);
 }
@@ -3953,7 +3953,7 @@ double SparseMatrix<T>::calculate_mean(const size_t& column_index) const
         mean += matrix_values[current_column_nonzero_indices[i]];
     }
 
-    mean /=(double)rows_number;
+    mean /= (double)rows_number;
 
     return(mean);
 }
@@ -4075,7 +4075,7 @@ Vector<double> SparseMatrix<T>::calculate_mean(const Vector<size_t>& means_row_i
             }
         }
 
-        mean[j] /=(double)row_indices_size;
+        mean[j] /= (double)row_indices_size;
     }
 
     return(mean);
@@ -4177,14 +4177,14 @@ Vector<double> SparseMatrix<T>::calculate_mean_missing_values(const Vector<size_
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(int i = 0; i <(int)column_indices_size; i++)
+    for(int i = 0; i < (int)column_indices_size; i++)
     {
         used_rows[i] = means_row_indices.get_difference(missing_indices[i]);
     }
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(int j = 0; j <(int)column_indices_size; j++)
+    for(int j = 0; j < (int)column_indices_size; j++)
     {
         const size_t column_index = means_column_indices[j];
 
@@ -4194,12 +4194,12 @@ Vector<double> SparseMatrix<T>::calculate_mean_missing_values(const Vector<size_
         {
             const size_t row_index = used_rows[j][i];
 
-            mean[j] +=(*this)(row_index,column_index);
+            mean[j] += (*this)(row_index,column_index);
         }
 
         if(current_rows_number != 0)
         {
-            mean[j] /=(double)current_rows_number;
+            mean[j] /= (double)current_rows_number;
         }
     }
 
@@ -4326,7 +4326,7 @@ Vector<double> SparseMatrix<T>::calculate_median() const
 
         if(rows_number % 2 == 0)
         {
-            median[j] =(sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
+            median[j] = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
         }
         else
         {
@@ -4378,7 +4378,7 @@ double SparseMatrix<T>::calculate_median(const size_t& column_index) const
 
     if(rows_number % 2 == 0)
     {
-        median =(sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
+        median = (sorted_column[rows_number*2/4] + sorted_column[rows_number*2/4+1])/2;
     }
     else
     {
@@ -4409,7 +4409,7 @@ Vector<double> SparseMatrix<T>::calculate_median(const Vector<size_t>& median_co
 
         if(rows_number % 2 == 0)
         {
-            median[j] =(sorted_column[rows_number * 2 / 4] + sorted_column[rows_number * 2 / 4 + 1])/2;
+            median[j] = (sorted_column[rows_number * 2 / 4] + sorted_column[rows_number * 2 / 4 + 1])/2;
         }
         else
         {
@@ -4515,7 +4515,7 @@ Vector<double> SparseMatrix<T>::calculate_median(const Vector<size_t>& median_ro
 
         if(row_indices_size % 2 == 0)
         {
-            median[j] =(sorted_column[row_indices_size*2/4] + sorted_column[row_indices_size*2/4 + 1])/2;
+            median[j] = (sorted_column[row_indices_size*2/4] + sorted_column[row_indices_size*2/4 + 1])/2;
         }
         else
         {
@@ -4623,14 +4623,14 @@ Vector<double> SparseMatrix<T>::calculate_median_missing_values(const Vector<siz
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(int i = 0; i <(int)column_indices_size; i++)
+    for(int i = 0; i < (int)column_indices_size; i++)
     {
         used_rows[i] = median_row_indices.get_difference(missing_indices[i]);
     }
 
 #pragma omp parallel for schedule(dynamic)
 
-    for(int j = 0; j <(int)column_indices_size; j++)
+    for(int j = 0; j < (int)column_indices_size; j++)
     {
         const size_t column_index = median_column_indices[j];
 
@@ -4644,7 +4644,7 @@ Vector<double> SparseMatrix<T>::calculate_median_missing_values(const Vector<siz
 
         if(current_rows_number % 2 == 0)
         {
-            median[j] =(sorted_column[current_rows_number*2/4] + sorted_column[current_rows_number*2/4+1])/2;
+            median[j] = (sorted_column[current_rows_number*2/4] + sorted_column[current_rows_number*2/4+1])/2;
         }
         else
         {
@@ -4718,8 +4718,8 @@ Vector<T> SparseMatrix<T>::calculate_means_binary_column() const
 
     if(count != 0)
     {
-        means[0] =(T)means[0]/(T)count;
-        means[1] =(T)means[1]/(T)count;
+        means[0] = (T)means[0]/(T)count;
+        means[1] = (T)means[1]/(T)count;
     }
     else
     {
@@ -4758,7 +4758,7 @@ Vector<T> SparseMatrix<T>::calculate_means_binary_columns() const
 
         if(count != 0)
         {
-            means[i] =(T)sum/(T)count;
+            means[i] = (T)sum/(T)count;
         }
         else
         {
@@ -4811,8 +4811,8 @@ Vector<T> SparseMatrix<T>::calculate_means_binary_column_missing_values(const Ve
 
     if(count != 0)
     {
-        means[0] =(T)means[0]/(T)count;
-        means[1] =(T)means[1]/(T)count;
+        means[0] = (T)means[0]/(T)count;
+        means[1] = (T)means[1]/(T)count;
     }
     else
     {
@@ -4851,7 +4851,7 @@ Vector<T> SparseMatrix<T>::calculate_means_binary_columns_missing_values(const V
 
         if(count != 0)
         {
-            means[i] =(T)sum/(T)count;
+            means[i] = (T)sum/(T)count;
         }
         else
         {
@@ -4865,8 +4865,8 @@ Vector<T> SparseMatrix<T>::calculate_means_binary_columns_missing_values(const V
 template <class T>
 Vector< Vector<T> > SparseMatrix<T>::calculate_minimum_maximum() const
 {
-    Vector<T> minimum(columns_number,(T)1.0e99);
-    Vector<T> maximum(columns_number,(T)-1.0e99);
+    Vector<T> minimum(columns_number,(T)numeric_limits<double>::max());
+    Vector<T> maximum(columns_number,(T)-numeric_limits<double>::max());
 
     for(size_t j = 0; j < columns_number; j++)
     {
@@ -4909,8 +4909,8 @@ Vector< Vector<T> > SparseMatrix<T>::calculate_minimum_maximum(const Vector<size
 
     Vector< Vector<T> > minimum_maximum(2);
 
-    Vector<T> minimum(column_indices_size,(T)1.0e99);
-    Vector<T> maximum(column_indices_size,(T)-1.0e99);
+    Vector<T> minimum(column_indices_size,(T)numeric_limits<double>::max());
+    Vector<T> maximum(column_indices_size,(T)-numeric_limits<double>::max());
 
     for(size_t j = 0; j < column_indices_size; j++)
     {
@@ -4936,8 +4936,8 @@ Vector< Vector<T> > SparseMatrix<T>::calculate_minimum_maximum(const Vector<size
     const size_t row_indices_size = calculate_row_indices.size();
     const size_t column_indices_size = calculate_column_indices.size();
 
-    Vector<T> minimum(column_indices_size,(T) 1.0e99);
-    Vector<T> maximum(column_indices_size,(T)-1.0e99);
+    Vector<T> minimum(column_indices_size,(T) numeric_limits<double>::max());
+    Vector<T> maximum(column_indices_size,(T)-numeric_limits<double>::max());
 
     size_t row_index;
     size_t column_index;
@@ -4993,7 +4993,7 @@ Vector< Statistics<T> > SparseMatrix<T>::calculate_statistics() const
 
 #pragma omp parallel for private(column)
 
-    for(int i = 0; i <(int)columns_number; i++)
+    for(int i = 0; i < (int)columns_number; i++)
     {
         column = get_column(i);
 
@@ -5103,7 +5103,7 @@ Vector< Statistics<T> > SparseMatrix<T>::calculate_columns_statistics_missing_va
 
 #pragma omp parallel for private(index, column) schedule(dynamic)
 
-    for(int i = 0; i <(int)column_indices_size; i++)
+    for(int i = 0; i < (int)column_indices_size; i++)
     {
         index = calculate_column_indices[i];
 
@@ -5435,7 +5435,7 @@ void SparseMatrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> 
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5445,7 +5445,7 @@ void SparseMatrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> 
 
             for(size_t i = 0; i < rows_number; i++)
             {
-                current_column[i] =(current_column[i] - statistics[j].mean)/statistics[j].standard_deviation;
+                current_column[i] = (current_column[i] - statistics[j].mean)/statistics[j].standard_deviation;
             }
 
             set_column(j, current_column);
@@ -5493,7 +5493,7 @@ void SparseMatrix<T>::scale_rows_mean_standard_deviation(const Vector< Statistic
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5505,7 +5505,7 @@ void SparseMatrix<T>::scale_rows_mean_standard_deviation(const Vector< Statistic
             {
                 row_index = scale_row_indices[i];
 
-                current_column[row_index] =(current_column[row_index] - statistics[j].mean)/statistics[j].standard_deviation;
+                current_column[row_index] = (current_column[row_index] - statistics[j].mean)/statistics[j].standard_deviation;
             }
 
             set_column(j, current_column);
@@ -5543,7 +5543,7 @@ void SparseMatrix<T>::scale_columns_mean_standard_deviation(const Vector< Statis
 
     for(size_t j = 0; j < columns_indices_size; j++)
     {
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5555,9 +5555,9 @@ void SparseMatrix<T>::scale_columns_mean_standard_deviation(const Vector< Statis
 
 #pragma omp parallel for
 
-            for(int i = 0; i <(int)rows_number; i++)
+            for(int i = 0; i < static_cast<int>(rows_number); i++)
             {
-                current_column[i] =(current_column[i] - statistics[j].mean)/statistics[j].standard_deviation;
+                current_column[i] = (current_column[i] - statistics[j].mean)/statistics[j].standard_deviation;
             }
 
             set_column(column_index, current_column);
@@ -5589,7 +5589,7 @@ void SparseMatrix<T>::scale_minimum_maximum(const Vector< Statistics<T> >& stati
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5647,7 +5647,7 @@ void SparseMatrix<T>::scale_rows_minimum_maximum(const Vector< Statistics<T> >& 
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5697,7 +5697,7 @@ void SparseMatrix<T>::scale_columns_minimum_maximum(const Vector< Statistics<T> 
 
     for(size_t j = 0; j < columns_indices_size; j++)
     {
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5709,9 +5709,9 @@ void SparseMatrix<T>::scale_columns_minimum_maximum(const Vector< Statistics<T> 
 
 #pragma omp parallel for
 
-            for(int i = 0; i <(int)rows_number; i++)
+            for(int i = 0; i < static_cast<int>(rows_number); i++)
             {
-                current_column[i] =(current_column[i] - statistics[j].mean)/statistics[j].standard_deviation;
+                current_column[i] = (current_column[i] - statistics[j].mean)/statistics[j].standard_deviation;
             }
 
             set_column(column_index, current_column);
@@ -5743,7 +5743,7 @@ void SparseMatrix<T>::scale_logarithmic(const Vector< Statistics<T> >& statistic
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5753,7 +5753,7 @@ void SparseMatrix<T>::scale_logarithmic(const Vector< Statistics<T> >& statistic
 
             for(size_t i = 0; i < rows_number; i++)
             {
-                current_column[i] = log(1.0+(2.0*(current_column[i] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
+                current_column[i] = log(1.0+ (2.0*(current_column[i] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
             }
 
             set_column(j, current_column);
@@ -5801,7 +5801,7 @@ void SparseMatrix<T>::scale_rows_logarithmic(const Vector< Statistics<T> >& stat
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5813,7 +5813,7 @@ void SparseMatrix<T>::scale_rows_logarithmic(const Vector< Statistics<T> >& stat
             {
                 row_index = scale_row_indices[i];
 
-                current_column[row_index] = log(1.0+(2.0*(current_column[row_index] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
+                current_column[row_index] = log(1.0+ (2.0*(current_column[row_index] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
             }
 
             set_column(j, current_column);
@@ -5853,7 +5853,7 @@ void SparseMatrix<T>::scale_columns_logarithmic(const Vector< Statistics<T> >& s
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5863,9 +5863,9 @@ void SparseMatrix<T>::scale_columns_logarithmic(const Vector< Statistics<T> >& s
 
 #pragma omp parallel for
 
-            for(int i = 0; i <(int)rows_number; i++)
+            for(int i = 0; i < static_cast<int>(rows_number); i++)
             {
-                current_column[i] = log(1.0+(2.0*(current_column[i] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
+                current_column[i] = log(1.0+ (2.0*(current_column[i] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum)));
             }
 
             set_column(column_index, current_column);
@@ -5895,7 +5895,7 @@ void SparseMatrix<T>::unscale_mean_standard_deviation(const Vector< Statistics<T
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5943,7 +5943,7 @@ void SparseMatrix<T>::unscale_rows_mean_standard_deviation(const Vector< Statist
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -5995,7 +5995,7 @@ void SparseMatrix<T>::unscale_columns_mean_standard_deviation(const Vector< Stat
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].standard_deviation < 1e-99)
+        if(statistics[j].standard_deviation < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6005,7 +6005,7 @@ void SparseMatrix<T>::unscale_columns_mean_standard_deviation(const Vector< Stat
 
 #pragma omp parallel for
 
-            for(int i = 0; i <(int)rows_number; i++)
+            for(int i = 0; i < static_cast<int>(rows_number); i++)
             {
                 current_column[i] = current_column[i]*statistics[j].standard_deviation + statistics[j].mean;
             }
@@ -6037,7 +6037,7 @@ void SparseMatrix<T>::unscale_minimum_maximum(const Vector< Statistics<T> >& sta
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6085,7 +6085,7 @@ void SparseMatrix<T>::unscale_rows_minimum_maximum(const Vector< Statistics<T> >
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6137,7 +6137,7 @@ void SparseMatrix<T>::unscale_columns_minimum_maximum(const Vector< Statistics<T
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6147,7 +6147,7 @@ void SparseMatrix<T>::unscale_columns_minimum_maximum(const Vector< Statistics<T
 
 #pragma omp parallel for
 
-            for(int i = 0; i <(int)rows_number; i++)
+            for(int i = 0; i < static_cast<int>(rows_number); i++)
             {
                 current_column[i] = 0.5*(current_column[i] + 1.0)*(statistics[j].maximum-statistics[j].minimum) + statistics[j].minimum;
             }
@@ -6179,7 +6179,7 @@ void SparseMatrix<T>::unscale_logarithmic(const Vector< Statistics<T> >& statist
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6227,7 +6227,7 @@ void SparseMatrix<T>::unscale_rows_logarithmic(const Vector< Statistics<T> >& st
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6279,7 +6279,7 @@ void SparseMatrix<T>::unscale_columns_logarithmic(const Vector< Statistics<T> >&
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].maximum - statistics[j].minimum < 1e-99)
+        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
         {
             // Do nothing
         }
@@ -6289,7 +6289,7 @@ void SparseMatrix<T>::unscale_columns_logarithmic(const Vector< Statistics<T> >&
 
 #pragma omp parallel for
 
-            for(int i = 0; i <(int)rows_number; i++)
+            for(int i = 0; i < static_cast<int>(rows_number); i++)
             {
                 current_column[i] = 0.5*(exp(current_column[i]))*(statistics[j].maximum-statistics[j].minimum) + statistics[j].minimum;
             }
@@ -6687,7 +6687,7 @@ T SparseMatrix<T>::calculate_determinant() const
 
     if(rows_number == 1)
     {
-        determinant =(*this)(0,0);
+        determinant = (*this)(0,0);
     }
     else if(rows_number == 2)
     {
@@ -6727,7 +6727,7 @@ T SparseMatrix<T>::calculate_determinant() const
             }
 
             sub_sparse_matrix.set_values(sub_rows_indices, sub_columns_indices, sub_matrix_values);
-            //sign =(size_t)(pow(-1.0, row_index+2.0));
+            //sign = (size_t)(pow(-1.0, row_index+2.0));
 
             sign = static_cast<int>((((column_index + 2) % 2) == 0) ? 1 : -1 );
 
@@ -6737,6 +6737,7 @@ T SparseMatrix<T>::calculate_determinant() const
 
     return(determinant);
 }
+
 
 template <class T>
 SparseMatrix<T> SparseMatrix<T>::calculate_cofactor() const
@@ -6780,10 +6781,10 @@ SparseMatrix<T> SparseMatrix<T>::calculate_cofactor() const
     {
         for(size_t j = 0; j < columns_number; j++)
         {
-            const Vector<size_t> this_row_indices = sequential_row_indices.remove_element(i);
-            const Vector<size_t> this_column_indices = sequential_column_indices.remove_element(j);
+            const Vector<size_t> this_row_indices = sequential_row_indices.delete_index(i);
+            const Vector<size_t> this_column_indices = sequential_column_indices.delete_index(j);
 
-            c = this->arrange_sub_sparse_matrix(this_row_indices, this_column_indices);
+            c = this->get_sub_sparse_matrix(this_row_indices, this_column_indices);
 
             const double determinant = c.calculate_determinant();
 
@@ -6907,8 +6908,11 @@ SparseMatrix<T> SparseMatrix<T>::calculate_LU_inverse() const /// @todo
     return(inverse);
 }
 
+
+/// @todo
+
 template <class T>
-Vector<T> SparseMatrix<T>::solve_LDLT(const Vector<double>& b) const /// @todo
+Vector<T> SparseMatrix<T>::solve_LDLT(const Vector<double>&) const
 {
     // Control sentence(if debug)
 
@@ -6938,15 +6942,14 @@ Vector<T> SparseMatrix<T>::solve_LDLT(const Vector<double>& b) const /// @todo
 
 #endif
 
-    Vector<T> solution(rows_number);
-
-    //    const Eigen::Map<Eigen::SparseMatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
-    const Eigen::Map<Eigen::VectorXd> b_eigen((double*)b.data(),rows_number);
-    Eigen::Map<Eigen::VectorXd> solution_eigen(solution.data(), rows_number);
+    //Vector<T> solution(rows_number);
+    //const Eigen::Map<Eigen::SparseMatrixXd> this_eigen((double*)this->data(), rows_number, columns_number);
+    //const Eigen::Map<Eigen::VectorXd> b_eigen((double*)b.data(),rows_number);
+    //Eigen::Map<Eigen::VectorXd> solution_eigen(solution.data(), rows_number);
 
     //    solution_eigen = this_eigen.ldlt().solve(b_eigen);
 
-    return(solution);
+    return Vector<T>();
 }
 
 template <class T>
@@ -6976,7 +6979,7 @@ double SparseMatrix<T>::calculate_distance(const size_t& first_index, const size
 }
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::operator +(const T& scalar) const
+SparseMatrix<T> SparseMatrix<T>::operator + (const T& scalar) const
 {
     SparseMatrix<T> sum(rows_number, columns_number);
 
@@ -6991,7 +6994,7 @@ SparseMatrix<T> SparseMatrix<T>::operator +(const T& scalar) const
 }
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::operator +(const Vector<T>& vector) const
+SparseMatrix<T> SparseMatrix<T>::operator + (const Vector<T>& vector) const
 {
     // Control sentence(if debug)
 
@@ -7004,7 +7007,7 @@ SparseMatrix<T> SparseMatrix<T>::operator +(const Vector<T>& vector) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "SparseMatrix<T> operator +(const Vector<T>&) const.\n"
+               << "SparseMatrix<T> operator + (const Vector<T>&) const.\n"
                << "Size of vector must be equal to number of rows.\n";
 
         throw logic_error(buffer.str());
@@ -7025,7 +7028,7 @@ SparseMatrix<T> SparseMatrix<T>::operator +(const Vector<T>& vector) const
 }
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::operator +(const SparseMatrix<T>& other_sparse_matrix) const
+SparseMatrix<T> SparseMatrix<T>::operator + (const SparseMatrix<T>& other_sparse_matrix) const
 {
     // Control sentence(if debug)
 
@@ -7039,8 +7042,8 @@ SparseMatrix<T> SparseMatrix<T>::operator +(const SparseMatrix<T>& other_sparse_
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "SparseMatrix<T> operator +(const SparseMatrix<T>&) const.\n"
-               << "Sizes of other sparse matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix(" << rows_number << "," << columns_number << ").\n";
+               << "SparseMatrix<T> operator + (const SparseMatrix<T>&) const.\n"
+               << "Sizes of other sparse matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7060,7 +7063,7 @@ SparseMatrix<T> SparseMatrix<T>::operator +(const SparseMatrix<T>& other_sparse_
 }
 
 template <class T>
-SparseMatrix<T> SparseMatrix<T>::operator +(const Matrix<T>& other_matrix) const
+SparseMatrix<T> SparseMatrix<T>::operator + (const Matrix<T>& other_matrix) const
 {
     // Control sentence(if debug)
 
@@ -7074,8 +7077,8 @@ SparseMatrix<T> SparseMatrix<T>::operator +(const Matrix<T>& other_matrix) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "SparseMatrix<T> operator +(const Matrix<T>&) const.\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "SparseMatrix<T> operator + (const Matrix<T>&) const.\n"
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7159,7 +7162,7 @@ SparseMatrix<T> SparseMatrix<T>::operator -(const SparseMatrix<T>& other_sparse_
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> operator -(const SparseMatrix<T>&) const.\n"
-               << "Sizes of other sparse matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix(" << rows_number << "," << columns_number << ").\n";
+               << "Sizes of other sparse matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7194,7 +7197,7 @@ SparseMatrix<T> SparseMatrix<T>::operator -(const Matrix<T>& other_matrix) const
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> operator -(const Matrix<T>&) const.\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7285,7 +7288,7 @@ SparseMatrix<T> SparseMatrix<T>::operator *(const SparseMatrix<T>& other_sparse_
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> operator *(const SparseMatrix<T>&) const method.\n"
-               << "Sizes of other sparse matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this sparse matrix(" << rows_number << "," << columns_number << ").\n";
+               << "Sizes of other sparse matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this sparse matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7320,7 +7323,7 @@ SparseMatrix<T> SparseMatrix<T>::operator *(const Matrix<T>& other_matrix) const
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> operator *(const Matrix<T>&) const method.\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7403,7 +7406,7 @@ SparseMatrix<T> SparseMatrix<T>::operator /(const SparseMatrix<T>& other_sparse_
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> operator /(const SparseMatrix<T>&) const method.\n"
-               << "Sizes of other SparseMatrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this SparseMatrix(" << rows_number << "," << columns_number << ").\n";
+               << "Sizes of other Sparsematrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this Sparsematrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7438,7 +7441,7 @@ SparseMatrix<T> SparseMatrix<T>::operator /(const Matrix<T>& other_matrix) const
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> operator /(const Matrix<T>&) const method.\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7458,7 +7461,7 @@ SparseMatrix<T> SparseMatrix<T>::operator /(const Matrix<T>& other_matrix) const
 }
 
 template <class T>
-void SparseMatrix<T>::operator +=(const T& scalar)
+void SparseMatrix<T>::operator += (const T& scalar)
 {
     for(size_t i = 0; i < columns_number; i++)
     {
@@ -7469,7 +7472,7 @@ void SparseMatrix<T>::operator +=(const T& scalar)
 }
 
 template <class T>
-void SparseMatrix<T>::operator +=(const Vector<T>& vector)
+void SparseMatrix<T>::operator += (const Vector<T>& vector)
 {
     // Control sentence(if debug)
 
@@ -7482,7 +7485,7 @@ void SparseMatrix<T>::operator +=(const Vector<T>& vector)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator +=(const Vector<T>&).\n"
+               << "void operator += (const Vector<T>&).\n"
                << "Size of vector must be equal to number of rows.\n";
 
         throw logic_error(buffer.str());
@@ -7499,7 +7502,7 @@ void SparseMatrix<T>::operator +=(const Vector<T>& vector)
 }
 
 template <class T>
-void SparseMatrix<T>::operator +=(const SparseMatrix<T>& other_sparse_matrix)
+void SparseMatrix<T>::operator += (const SparseMatrix<T>& other_sparse_matrix)
 {
     // Control sentence(if debug)
 
@@ -7513,8 +7516,8 @@ void SparseMatrix<T>::operator +=(const SparseMatrix<T>& other_sparse_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator +=(const SparseMatrix<T>&).\n"
-               << "Sizes of other sparse matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator += (const SparseMatrix<T>&).\n"
+               << "Sizes of other sparse matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7530,7 +7533,7 @@ void SparseMatrix<T>::operator +=(const SparseMatrix<T>& other_sparse_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator +=(const Matrix<T>& other_matrix)
+void SparseMatrix<T>::operator += (const Matrix<T>& other_matrix)
 {
     // Control sentence(if debug)
 
@@ -7544,8 +7547,8 @@ void SparseMatrix<T>::operator +=(const Matrix<T>& other_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator +=(const Matrix<T>&).\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator += (const Matrix<T>&).\n"
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7561,7 +7564,7 @@ void SparseMatrix<T>::operator +=(const Matrix<T>& other_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator -=(const T& scalar)
+void SparseMatrix<T>::operator -= (const T& scalar)
 {
     for(size_t i = 0; rows_number; i++)
     {
@@ -7572,7 +7575,7 @@ void SparseMatrix<T>::operator -=(const T& scalar)
 }
 
 template <class T>
-void SparseMatrix<T>::operator -=(const Vector<T>& vector)
+void SparseMatrix<T>::operator -= (const Vector<T>& vector)
 {
     // Control sentence(if debug)
 
@@ -7585,7 +7588,7 @@ void SparseMatrix<T>::operator -=(const Vector<T>& vector)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator -=(const Vector<T>&).\n"
+               << "void operator -= (const Vector<T>&).\n"
                << "Size of vector must be equal to number of rows.\n";
 
         throw logic_error(buffer.str());
@@ -7602,7 +7605,7 @@ void SparseMatrix<T>::operator -=(const Vector<T>& vector)
 }
 
 template <class T>
-void SparseMatrix<T>::operator -=(const SparseMatrix<T>& other_sparse_matrix)
+void SparseMatrix<T>::operator -= (const SparseMatrix<T>& other_sparse_matrix)
 {
     // Control sentence(if debug)
 
@@ -7616,8 +7619,8 @@ void SparseMatrix<T>::operator -=(const SparseMatrix<T>& other_sparse_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator -=(const SparseMatrix<T>&).\n"
-               << "Sizes of other sparse matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator -= (const SparseMatrix<T>&).\n"
+               << "Sizes of other sparse matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this sparse matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7633,7 +7636,7 @@ void SparseMatrix<T>::operator -=(const SparseMatrix<T>& other_sparse_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator -=(const Matrix<T>& other_matrix)
+void SparseMatrix<T>::operator -= (const Matrix<T>& other_matrix)
 {
     // Control sentence(if debug)
 
@@ -7647,8 +7650,8 @@ void SparseMatrix<T>::operator -=(const Matrix<T>& other_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator -=(const Matrix<T>&).\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator -= (const Matrix<T>&).\n"
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be the same than sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7664,7 +7667,7 @@ void SparseMatrix<T>::operator -=(const Matrix<T>& other_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator *=(const T& scalar)
+void SparseMatrix<T>::operator *= (const T& scalar)
 {
     if(scalar == T())
     {
@@ -7681,7 +7684,7 @@ void SparseMatrix<T>::operator *=(const T& scalar)
 }
 
 template <class T>
-void SparseMatrix<T>::operator *=(const Vector<T>& vector)
+void SparseMatrix<T>::operator *= (const Vector<T>& vector)
 {
     // Control sentence(if debug)
 
@@ -7694,7 +7697,7 @@ void SparseMatrix<T>::operator *=(const Vector<T>& vector)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator *=(const Vector<T>&) method.\n"
+               << "void operator *= (const Vector<T>&) method.\n"
                << "Vector size(" << size << ")  must be equal to number of SparseMatrix rows(" << rows_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -7711,7 +7714,7 @@ void SparseMatrix<T>::operator *=(const Vector<T>& vector)
 }
 
 template <class T>
-void SparseMatrix<T>::operator *=(const SparseMatrix<T>& other_sparse_matrix)
+void SparseMatrix<T>::operator *= (const SparseMatrix<T>& other_sparse_matrix)
 {
     // Control sentence(if debug)
 
@@ -7725,8 +7728,8 @@ void SparseMatrix<T>::operator *=(const SparseMatrix<T>& other_sparse_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator *=(const SparseMatrix<T>&) method.\n"
-               << "Sizes of other sparse matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this sparse matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator *= (const SparseMatrix<T>&) method.\n"
+               << "Sizes of other sparse matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this sparse matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7742,7 +7745,7 @@ void SparseMatrix<T>::operator *=(const SparseMatrix<T>& other_sparse_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator *=(const Matrix<T>& other_matrix)
+void SparseMatrix<T>::operator *= (const Matrix<T>& other_matrix)
 {
     // Control sentence(if debug)
 
@@ -7756,8 +7759,8 @@ void SparseMatrix<T>::operator *=(const Matrix<T>& other_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator *=(const Matrix<T>&) method.\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator *= (const Matrix<T>&) method.\n"
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7773,7 +7776,7 @@ void SparseMatrix<T>::operator *=(const Matrix<T>& other_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator /=(const T& scalar)
+void SparseMatrix<T>::operator /= (const T& scalar)
 {
     Vector<T> cocient(matrix_values);
 
@@ -7784,7 +7787,7 @@ void SparseMatrix<T>::operator /=(const T& scalar)
 }
 
 template <class T>
-void SparseMatrix<T>::operator /=(const Vector<T>& vector)
+void SparseMatrix<T>::operator /= (const Vector<T>& vector)
 {
     // Control sentence(if debug)
 
@@ -7797,7 +7800,7 @@ void SparseMatrix<T>::operator /=(const Vector<T>& vector)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator /=(const Vector<T>&) method.\n"
+               << "void operator /= (const Vector<T>&) method.\n"
                << "Vector size(" << size << ")  must be equal to number of SparseMatrix columns(" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -7814,7 +7817,7 @@ void SparseMatrix<T>::operator /=(const Vector<T>& vector)
 }
 
 template <class T>
-void SparseMatrix<T>::operator /=(const SparseMatrix<T>& other_sparse_matrix)
+void SparseMatrix<T>::operator /= (const SparseMatrix<T>& other_sparse_matrix)
 {
     // Control sentence(if debug)
 
@@ -7828,8 +7831,8 @@ void SparseMatrix<T>::operator /=(const SparseMatrix<T>& other_sparse_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator /=(const SparseMatrix<T>&) method.\n"
-               << "Sizes of other SparseMatrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this SparseMatrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator /= (const SparseMatrix<T>&) method.\n"
+               << "Sizes of other Sparsematrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this Sparsematrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7845,7 +7848,7 @@ void SparseMatrix<T>::operator /=(const SparseMatrix<T>& other_sparse_matrix)
 }
 
 template <class T>
-void SparseMatrix<T>::operator /=(const Matrix<T>& other_matrix)
+void SparseMatrix<T>::operator /= (const Matrix<T>& other_matrix)
 {
     // Control sentence(if debug)
 
@@ -7859,8 +7862,8 @@ void SparseMatrix<T>::operator /=(const Matrix<T>& other_matrix)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
-               << "void operator /=(const Matrix<T>&) method.\n"
-               << "Sizes of other matrix(" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix(" << rows_number << "," << columns_number << ").\n";
+               << "void operator /= (const Matrix<T>&) method.\n"
+               << "Sizes of other matrix (" << other_rows_number << "," << other_columns_number << ") must be equal to sizes of this matrix (" << rows_number << "," << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7916,11 +7919,12 @@ template <class T>
 SparseMatrix<double> SparseMatrix<T>::dot(const SparseMatrix<double>& other_sparse_matrix) const /// @todo
 {
     const size_t other_columns_number = other_sparse_matrix.get_columns_number();
-    const size_t other_rows_number = other_sparse_matrix.get_rows_number();
 
     // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
+
+    const size_t other_rows_number = other_sparse_matrix.get_rows_number();
 
     if(other_rows_number != columns_number)
     {
@@ -7928,7 +7932,7 @@ SparseMatrix<double> SparseMatrix<T>::dot(const SparseMatrix<double>& other_spar
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> dot(const SparseMatrix<T>&) const method.\n"
-               << "The number of rows of the other sparse matrix(" << other_rows_number << ") must be equal to the number of columns of this sparse matrix(" << columns_number << ").\n";
+               << "The number of rows of the other sparse matrix (" << other_rows_number << ") must be equal to the number of columns of this sparse matrix (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -7950,11 +7954,12 @@ template <class T>
 Matrix<T> SparseMatrix<T>::dot(const Matrix<T>& other_matrix) const /// @todo
 {
     const size_t other_columns_number = other_matrix.get_columns_number();
-    const size_t other_rows_number = other_matrix.get_rows_number();
 
     // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
+
+    const size_t other_rows_number = other_matrix.get_rows_number();
 
     if(other_rows_number != columns_number)
     {
@@ -7962,7 +7967,7 @@ Matrix<T> SparseMatrix<T>::dot(const Matrix<T>& other_matrix) const /// @todo
 
         buffer << "OpenNN Exception: SparseMatrix Template.\n"
                << "SparseMatrix<T> dot(const SparseMatrix<T>&) const method.\n"
-               << "The number of rows of the other sparse matrix(" << other_rows_number << ") must be equal to the number of columns of this sparse matrix(" << columns_number << ").\n";
+               << "The number of rows of the other sparse matrix (" << other_rows_number << ") must be equal to the number of columns of this sparse matrix (" << columns_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -8017,7 +8022,7 @@ Matrix<T> SparseMatrix<T>::calculate_eigenvalues() const /// @todo
 
 #ifdef __OPENNN_DEBUG__
 
-    if((*this).get_columns_number() !=(*this).get_rows_number())
+    if((*this).get_columns_number() != (*this).get_rows_number())
     {
         ostringstream buffer;
 
@@ -8078,7 +8083,7 @@ Matrix<T> SparseMatrix<T>::calculate_eigenvectors() const /// @todo
 
 #ifdef __OPENNN_DEBUG__
 
-    if((*this).get_columns_number() !=(*this).get_rows_number())
+    if((*this).get_columns_number() != (*this).get_rows_number())
     {
         ostringstream buffer;
 
@@ -8461,7 +8466,7 @@ void SparseMatrix<T>::convert_association()
 }
 
 template <class T>
-KMeansResults<T> SparseMatrix<T>::calculate_k_means(const size_t& k) const
+KMeansResults<T> SparseMatrix<T>::calculate_k_means(const size_t&) const
 {
     KMeansResults<double> k_means_results;
 /*
@@ -8633,7 +8638,7 @@ double SparseMatrix<T>::calculate_multiple_linear_correlation(const Vector<T>& o
 
     const Vector<double> multiple_linear_regression_parameters = calculate_multiple_linear_regression_parameters(other);
 
-    const Vector<double> other_approximation =(*this).dot(multiple_linear_regression_parameters);
+    const Vector<double> other_approximation = (*this).dot(multiple_linear_regression_parameters);
 
     return other.calculate_linear_correlation(other_approximation);
 }
@@ -8694,7 +8699,7 @@ void SparseMatrix<T>::load(const string& file_name)
 
         const vector<string> results(it, end);
 
-        const size_t new_columns_number =(size_t)results.size();
+        const size_t new_columns_number = (size_t)results.size();
 
         size_t new_rows_number = 1;
 
@@ -8804,7 +8809,7 @@ Vector<string> SparseMatrix<T>::load_product_strings(const string& file_name, co
 
         products = products.get_unique_elements();
 
-        const size_t new_columns_number =(size_t)products.size();
+        const size_t new_columns_number = (size_t)products.size();
 
         set(new_rows_number, new_columns_number);
 
@@ -9091,7 +9096,7 @@ void SparseMatrix<T>::parse(const string& str)
 
         const vector<string> results(it, end);
 
-        const size_t new_columns_number =(size_t)results.size();
+        const size_t new_columns_number = (size_t)results.size();
 
         size_t new_rows_number = 1;
 
@@ -9156,7 +9161,7 @@ SparseMatrix<size_t> SparseMatrix<T>::to_size_t_SparseMatrix() const
 
     for(size_t i = 0; i < nonzero_elements_number; i++)
     {
-        new_matrix_values[i] =(size_t)matrix_values[i];
+        new_matrix_values[i] = (size_t)matrix_values[i];
     }
 
     size_t_sparse_matrix.set_values(rows_indices, columns_indices, new_matrix_values);
@@ -9175,7 +9180,7 @@ SparseMatrix<double> SparseMatrix<T>::to_double_SparseMatrix() const
 
     for(size_t i = 0; i < nonzero_elements_number; i++)
     {
-        new_matrix_values[i] =(double)matrix_values[i];
+        new_matrix_values[i] = (double)matrix_values[i];
     }
 
     double_sparse_matrix.set_values(rows_indices, columns_indices, new_matrix_values);
