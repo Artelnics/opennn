@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8.10)
 
 # Project's name
 
-set(PROJECT_NAME breast_cancer)
+set(PROJECT_NAME blank)
 project(${PROJECT_NAME})
 
 if (WIN32)

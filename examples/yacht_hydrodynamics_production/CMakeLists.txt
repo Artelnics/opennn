@@ -4,20 +4,19 @@ cmake_minimum_required(VERSION 2.8.10)
 
 # Project's name
 
-project(yacht_hydrodynamics_production)
+set(PROJECT_NAME yacht_hydrodynamics_production)
+project(${PROJECT_NAME})
 
 if (WIN32)
-    set (PROJECT_LINK_LIBS libopennn.a)
+    set (PROJECT_LINK_LIBS opennn)
 endif (WIN32)
 
 if (UNIX)
-    set (PROJECT_LINK_LIBS libopennn.a)
+    set (PROJECT_LINK_LIBS opennn)
 endif (UNIX)
-
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
-add_executable(yacht_hydrodynamics_production main.cpp)
+add_executable(${PROJECT_NAME} main.cpp)
 
-target_link_libraries(yacht_hydrodynamics_production ${PROJECT_LINK_LIBS})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS})

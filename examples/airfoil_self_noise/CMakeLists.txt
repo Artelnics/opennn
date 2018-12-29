@@ -4,20 +4,19 @@ cmake_minimum_required(VERSION 2.8.10)
 
 # Project's name
 
-project(airfoil_self_noise)
+set(PROJECT_NAME airfoil_self_noise)
+project(${PROJECT_NAME})
 
 if (WIN32)
-    set (PROJECT_LINK_LIBS libopennn.a)
+    set (PROJECT_LINK_LIBS opennn)
 endif (WIN32)
 
 if (UNIX)
-    set (PROJECT_LINK_LIBS libopennn.a)
+    set (PROJECT_LINK_LIBS opennn)
 endif (UNIX)
-
-link_directories(${CMAKE_SOURCE_DIR}/opennn)
 
 include_directories(${CMAKE_SOURCE_DIR}/opennn)
 
-add_executable(airfoil_self_noise main.cpp)
+add_executable(${PROJECT_NAME} main.cpp)
 
-target_link_libraries(airfoil_self_noise ${PROJECT_LINK_LIBS})
+target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBS})
