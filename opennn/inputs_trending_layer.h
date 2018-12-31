@@ -129,7 +129,7 @@ public:
 
    void initialize_random();
 
-   Matrix<double> calculate_outputs(const Matrix<double>&, double = 0.0) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&, const double& = 0.0) const;
    Matrix<double> calculate_derivatives(const Matrix<double>&) const;
    Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
 

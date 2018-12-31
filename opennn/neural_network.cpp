@@ -2566,6 +2566,7 @@ Matrix<double> NeuralNetwork::calculate_directional_inputs(const size_t& directi
 /// Returns the Jacobian Matrix of the neural network for a set of inputs, corresponding to the
 /// point in inputs space at which the Jacobian Matrix is to be found. It uses a forward-propagation method.
 /// @param inputs Set of inputs to the neural network.
+/// @todo
 
 Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) const
 {
@@ -2714,6 +2715,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
 /// point in inputs space at which the Jacobian Matrix is to be found. It uses a forward-propagation method.
 /// @param inputs Set of inputs to the neural network.
 /// @param time Instant of time.
+/// @todo
 
 Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, const double& time) const
 {
@@ -2892,7 +2894,6 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
 
     return(Jacobian);
 */
-
     return Matrix<double>();
 }
 
@@ -6858,7 +6859,7 @@ void NeuralNetwork::save_data(const string& file_name) const
     }
 
 #endif
-/*
+
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
     const size_t variables_number = inputs_number + outputs_number;
@@ -6887,7 +6888,7 @@ void NeuralNetwork::save_data(const string& file_name) const
 
     for(size_t i = 0; i < points_number; i++)
     {
-        outputs = calculate_outputs(inputs);
+        outputs = calculate_outputs(inputs.to_column_matrix());
 
         row = inputs.assemble(outputs);
 
@@ -6897,7 +6898,6 @@ void NeuralNetwork::save_data(const string& file_name) const
     }
 
     data.save(file_name);
-*/
 }
 
 }

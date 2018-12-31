@@ -43,7 +43,6 @@ void printDeviceVector(const double* vector, int n)
     }
 
     printf("\n");
-    printf("%g\n", sum);
 }
 
 void createHandle(cublasHandle_t* handle)
@@ -279,7 +278,17 @@ void bfgsInverseHessian(
     cudaMemcpy(inverse_Hessian_host, old_inverse_Hessian, n*n*sizeof(double), cudaMemcpyDeviceToHost);
 }
 
-__global__ void tanh_kernel (const double * src, double* dst, int len)
+
+__global__ void logistic_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        dst[i] = 1.0 / (1.0 + exp (-src[i]));
+    }
+}
+
+__global__ void hyperbolic_tangent_kernel (const double * src, double* dst, int len)
 {
     int stride = gridDim.x * blockDim.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
@@ -288,12 +297,35 @@ __global__ void tanh_kernel (const double * src, double* dst, int len)
     }
 }
 
-__global__ void sigmoid_kernel (const double * src, double* dst, int len)
+__global__ void threshold_kernel (const double * src, double* dst, int len)
 {
     int stride = gridDim.x * blockDim.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
     for (int i = tid; i < len; i += stride) {
-        dst[i] = 1.0 / (1.0 + exp (-src[i]));
+        if(src[i] < 0)
+        {
+            dst[i] = 0.0;
+        }
+        else
+        {
+            dst[i] = 1.0;
+        }
+    }
+}
+
+__global__ void symmetric_threshold_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        if(src[i] < 0)
+        {
+            dst[i] = -1.0;
+        }
+        else
+        {
+            dst[i] = 1.0;
+        }
     }
 }
 
@@ -306,6 +338,75 @@ __global__ void linear_kernel (const double * src, double* dst, int len)
     }
 }
 
+__global__ void rectified_linear_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = 0.0 : dst[i] = src[i];
+    }
+}
+
+__global__ void scaled_exponential_linear_kernel (const double * src, double* dst, int len)
+{
+    const double lambda =1.0507;
+    const double alpha =1.67326;
+
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = lambda * alpha * (exp(src[i]) - 1) : dst[i] = lambda * src[i];
+    }
+}
+
+__global__ void soft_plus_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        dst[i] = log(1 + exp(src[i]));
+    }
+}
+
+__global__ void soft_sign_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = src[i] / (1 - src[i]) : dst[i] = src[i] / (1 + src[i]);
+    }
+}
+
+__global__ void hard_logistic_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        if(src[i] < -2.5)
+        {
+           dst[i] = 0;
+        }
+        else if(src[i] > 2.5)
+        {
+            dst[i] = 1;
+        }
+        else
+        {
+            dst[i] = 0.2 * src[i] + 0.5;
+        }
+    }
+}
+
+__global__ void exponential_linear_kernel (const double * src, double* dst, int len)
+{
+    const double alpha = 1.0;
+
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = alpha * (exp(src[i])- 1) : dst[i] = src[i];
+    }
+}
 
 void calculateActivation(double* vector_src, double* vector_dst, const int lenght, const std::string activation)
 {
@@ -315,27 +416,65 @@ void calculateActivation(double* vector_src, double* vector_dst, const int lengh
     if (threadBlocks > 65520) threadBlocks = 65520;
     dim3 dimGrid(threadBlocks);
 
-    if(activation == "tanh")
+    if(activation == "Logistic")
     {
-        tanh_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+        logistic_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
-    else if(activation == "sigmoid")
+    else if(activation == "HyperbolicTangent")
     {
-        sigmoid_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+       hyperbolic_tangent_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
-    else if(activation == "linear")
+    else if(activation == "Threshold")
+    {
+        threshold_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "SymmetricThreshold")
+    {
+        symmetric_threshold_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "Linear")
     {
         linear_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
-    else
+    else if(activation == "RectifiedLinear")
     {
-        // error
+        rectified_linear_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "ScaledExponentialLinear")
+    {
+        scaled_exponential_linear_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "SoftPlus")
+    {
+        soft_plus_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "SoftSign")
+    {
+        soft_sign_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "Hardlogistic")
+    {
+        hard_logistic_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "ExponentialLinear")
+    {
+        exponential_linear_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
 
     cudaDeviceSynchronize();
 }
 
-__global__ void tanh_derivative_kernel (const double * src, double* dst, int len)
+__global__ void logistic_derivative_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        const double exponential = exp(-src[i]);
+        dst[i] = exponential/((1.0 + exponential)*(1.0 + exponential));
+    }
+}
+
+__global__ void hyperbolic_tangent_derivative_kernel (const double * src, double* dst, int len)
 {
     int stride = gridDim.x * blockDim.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
@@ -345,13 +484,35 @@ __global__ void tanh_derivative_kernel (const double * src, double* dst, int len
     }
 }
 
-__global__ void sigmoid_derivative_kernel (const double * src, double* dst, int len)
+__global__ void threshold_derivative_kernel (const double * src, double* dst, int len)
 {
     int stride = gridDim.x * blockDim.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
     for (int i = tid; i < len; i += stride) {
-        const double exponential = exp(-src[i]);
-        dst[i] = exponential/((1.0 + exponential)*(1.0 + exponential));
+        if(src[i] == 0)
+        {
+            // TODO: error
+        }
+        else
+        {
+            dst[i] = 0.0;
+        }
+    }
+}
+
+__global__ void symmetric_threshold_derivative_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        if(src[i] == 0)
+        {
+            // TODO: error
+        }
+        else
+        {
+            dst[i] = 0.0;
+        }
     }
 }
 
@@ -364,6 +525,65 @@ __global__ void linear_derivative_kernel (const double * src, double* dst, int l
     }
 }
 
+__global__ void rectified_linear_derivative_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = 0.0 : dst[i] = 1.0;
+    }
+}
+
+__global__ void scaled_exponential_linear_derivative_kernel (const double * src, double* dst, int len)
+{
+    const double lambda =1.0507;
+    const double alpha =1.67326;
+
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = lambda * alpha * exp(src[i]) : dst[i] = lambda;
+    }
+}
+
+__global__ void soft_plus_derivative_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        dst[i] = 1/(1 + exp(-src[i]));
+    }
+}
+
+__global__ void soft_sign_derivative_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = 1 / pow((1 - src[i]), 2) : dst[i] = 1 / pow((1 + src[i]), 2);
+    }
+}
+
+__global__ void hard_logistic_derivative_kernel (const double * src, double* dst, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < -2.5 || src[i] > 2.5 ? dst[i] = 0.0 : dst[i] = 0.2;
+    }
+}
+
+__global__ void exponential_linear_derivative_kernel (const double * src, double* dst, int len)
+{
+    const double alpha = 1.0;
+
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        src[i] < 0.0 ? dst[i] = alpha * exp(src[i]) : dst[i] = 1.0;
+    }
+}
+
 void calculateActivationDerivative(const double* vector_src, double* vector_dst, const int lenght, const std::string activation)
 {
     /* Compute execution configuration */
@@ -372,21 +592,49 @@ void calculateActivationDerivative(const double* vector_src, double* vector_dst,
     if (threadBlocks > 65520) threadBlocks = 65520;
     dim3 dimGrid(threadBlocks);
 
-    if(activation == "tanh")
+    if(activation == "Logistic")
     {
-        tanh_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+        logistic_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
-    else if(activation == "sigmoid")
+    else if(activation == "HyperbolicTangent")
     {
-        sigmoid_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+       hyperbolic_tangent_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
-    else if(activation == "linear")
+    else if(activation == "Threshold")
+    {
+        threshold_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "SymmetricThreshold")
+    {
+        symmetric_threshold_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "Linear")
     {
         linear_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
-    else
+    else if(activation == "RectifiedLinear")
     {
-        // error
+        rectified_linear_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "ScaledExponentialLinear")
+    {
+        scaled_exponential_linear_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "SoftPlus")
+    {
+        soft_plus_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "SoftSign")
+    {
+        soft_sign_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "Hardlogistic")
+    {
+        hard_logistic_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
+    }
+    else if(activation == "ExponentialLinear")
+    {
+        exponential_linear_derivative_kernel<<<dimGrid,dimBlock>>>(vector_src, vector_dst, lenght);
     }
 
     cudaDeviceSynchronize();
@@ -401,7 +649,66 @@ __global__ void mean_squared_error_derivative_kernel (const double * outputs, co
     }
 }
 
-void calculateOutputDerivative(const double* outputs, const double* targets, double* output_gradient, const int lenght, const std::string loss_method)
+__global__ void sum_squared_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        output_gradient[i] = (outputs[i] - targets[i])*2.0;
+    }
+}
+
+__global__ void cross_entropy_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        output_gradient[i] = (targets[i]/outputs[i])*(-1.0) + (targets[i]*(-1.0) + 1.0)/(outputs[i]*(-1.0) + 1.0);
+    }
+}
+
+__global__ void minkowski_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len,
+                                                   const double minkowski_parameter)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        // TODO
+    }
+}
+
+__global__ void normalized_squared_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len,
+                                                            const double normalization_coefficient)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        output_gradient[i] = (outputs[i] - targets[i])*2.0/normalization_coefficient;
+    }
+}
+
+__global__ void root_mean_squared_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len,
+                                                           const double error)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        // TODO
+    }
+}
+
+__global__ void weighted_squared_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len,
+                                                          const double positives_weight, const double negatives_weight, const double normalization_coefficient)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        output_gradient[i] = (outputs[i]-targets[i])*(targets[i]*(negatives_weight/positives_weight-negatives_weight) + negatives_weight)*2.0/normalization_coefficient;
+    }
+}
+
+void calculateOutputDerivative(const double* outputs, const double* targets, double* output_gradient, const int lenght,
+                               const std::string loss_method, const std::vector<double> loss_parameters)
 {
     /* Compute execution configuration */
     dim3 dimBlock(256);
@@ -409,14 +716,38 @@ void calculateOutputDerivative(const double* outputs, const double* targets, dou
     if (threadBlocks > 65520) threadBlocks = 65520;
     dim3 dimGrid(threadBlocks);
 
-    if(loss_method == "mean_squared_error" ||
-       loss_method == "sum_squared_error")
+    if(loss_method == "MEAN_SQUARED_ERROR")
     {
         mean_squared_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght);
     }
+    else if(loss_method == "SUM_SQUARED_ERROR")
+    {
+        sum_squared_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght);
+    }
+    else if(loss_method == "CROSS_ENTROPY_ERROR")
+    {
+        cross_entropy_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght);
+    }
+    else if(loss_method == "MINKOWSKI_ERROR")
+    {
+        // TODO
+    }
+    else if(loss_method == "NORMALIZED_SQUARED_ERROR")
+    {
+        normalized_squared_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght, loss_parameters[0]);
+    }
+    else if(loss_method == "ROOT_MEAN_SQUARED_ERROR")
+    {
+        // TODO
+    }
+    else if(loss_method == "WEIGHTED_SQUARED_ERROR")
+    {
+        weighted_squared_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght,
+                                                                       loss_parameters[0], loss_parameters[1], loss_parameters[2]);
+    }
     else
     {
-        // error
+        // TODO: error
     }
 
     cudaDeviceSynchronize();
@@ -491,6 +822,7 @@ void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vecto
 
 //    cublasXtDgemm(handleXt, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
 //                  weights_d[0], input_columns, &beta, layer_outputs, input_rows);
+//    cudaDeviceSynchronize();
 
     calculateActivation(layer_outputs, layer_outputs, input_rows*weights_columns_numbers[0], layers_activations[0]);
 
@@ -515,6 +847,7 @@ void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vecto
 
 //        cublasXtDgemm(handleXt, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
 //                      weights_d[i], weights_columns_numbers[i-1], &beta, layer_outputs, input_rows);
+//        cudaDeviceSynchronize();
 
         calculateActivation(layer_outputs, layer_outputs, input_rows*weights_columns_numbers[i], layers_activations[i]);
 
@@ -529,6 +862,8 @@ void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vecto
 
     cudaFree(ones_vector);
     cudaFree(layer_outputs);
+
+    cublasDestroy(handle);
 }
 
 void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
@@ -632,6 +967,8 @@ void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weight
         cudaFree(layers_activations_d[i]);
         cudaFree(layers_activation_derivatives_d[i]);
     }
+
+    cublasDestroy(handle);
 }
 
 void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
@@ -639,7 +976,8 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
                                 const double* input_data_h, const size_t input_rows, const size_t input_columns,
                                 const double* target_data_h, const size_t target_rows, const size_t target_columns,
                                 std::vector<double*> error_gradient_data,
-                                const std::vector<std::string> layers_activations, const std::string loss_method)
+                                const std::vector<std::string> layers_activations, const std::string loss_method,
+                                const std::vector<double> loss_parameters)
 {
     const size_t layers_number = weights_d.size();
 
@@ -692,6 +1030,9 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
 
         cudaMalloc(&error_gradient_d[2*i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
         cudaMalloc(&error_gradient_d[2*i+1], bias_rows_numbers[i]*sizeof(double));
+
+        cudaMemset(error_gradient_d[2*i], 0, weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        cudaMemset(error_gradient_d[2*i+1], 0, bias_rows_numbers[i]*sizeof(double));
     }
 
     // CALCULATE FIRST ORDER FORWARD PROPAGATION
@@ -740,7 +1081,7 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
 
     // CALCULATE OUTPUT DERIVATIVE
 
-    calculateOutputDerivative(layers_activations_d[layers_number-1], target_data_d, output_gradient, target_rows*target_columns, loss_method);
+    calculateOutputDerivative(layers_activations_d[layers_number-1], target_data_d, output_gradient, target_rows*target_columns, loss_method, loss_parameters);
 
     // CALCULATE LAYERS DELTA
 
@@ -768,9 +1109,7 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
 
     for(size_t j = 0; j < weights_columns_numbers[0]; j++)
     {
-        double sum;
-        cublasDdot(handle, input_rows, layers_delta_d[0] + j*input_rows, 1, ones_vector, 1, &sum);// error_gradient_d[1]+j);
-        cudaMemcpy(error_gradient_d[1]+j, &sum, sizeof(double), cudaMemcpyHostToDevice);
+        cublasDdot(handle, input_rows, layers_delta_d[0] + j*input_rows, 1, ones_vector, 1, error_gradient_data[1]+j);
     }
 
     for(size_t i = 1; i < layers_number; i++)
@@ -780,10 +1119,25 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
 
         for(size_t j = 0; j < weights_columns_numbers[i]; j++)
         {
-            double sum;
-            cublasDdot(handle, input_rows, layers_delta_d[i] + j*input_rows, 1, ones_vector, 1, &sum);
-            cudaMemcpy(error_gradient_d[2*i+1]+j, &sum, sizeof(double), cudaMemcpyHostToDevice);
+            cublasDdot(handle, input_rows, layers_delta_d[i] + j*input_rows, 1, ones_vector, 1, error_gradient_data[2*i+1]+j);
         }
+    }
+
+    // LOSS OPERATIONS
+
+    if(loss_method == "MINKOWSKI_ERROR")
+    {
+        loss_parameters[0]; // Minkowski parameter
+    }
+    else if(loss_method == "NORMALIZED_SQUARED_ERROR")
+    {
+        loss_parameters[0]; // Normalization coefficient
+    }
+    else if(loss_method == "WEIGHTED_SQUARED_ERROR")
+    {
+        loss_parameters[0]; // Positives weights
+        loss_parameters[1]; // Negatives weights
+        loss_parameters[2]; // Normalization coefficient
     }
 
     // Copy to host memory
@@ -791,7 +1145,6 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
     for(size_t i = 0; i < layers_number; i++)
     {
         cudaMemcpy(error_gradient_data[2*i], error_gradient_d[2*i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpy(error_gradient_data[2*i+1], error_gradient_d[2*i+1], bias_rows_numbers[i]*sizeof(double), cudaMemcpyDeviceToHost);
     }
 
     // Free GPU memory
@@ -811,4 +1164,43 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
         cudaFree(error_gradient_d[2*i]);
         cudaFree(error_gradient_d[2*i+1]);
     }
+
+    cublasDestroy(handle);
+}
+
+void updateParametersCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                          std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                          const double* gradient_h, const size_t parameters_number)
+{
+    const size_t layers_number = weights_d.size();
+
+    double alpha = 1;
+
+    double* gradient_d;
+
+    cublasHandle_t handle;
+
+    createHandle(&handle);
+
+    cudaMalloc(&gradient_d, parameters_number*sizeof(double));
+    cudaMemcpy(gradient_d, gradient_h, parameters_number*sizeof(double), cudaMemcpyHostToDevice);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        cublasDaxpy(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha,
+                    gradient_d + index, 1, weights_d[i], 1);
+
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        cublasDaxpy(handle, bias_rows_numbers[i], &alpha,
+                    gradient_d + index, 1, biases_d[i], 1);
+
+        index += bias_rows_numbers[i];
+    }
+
+    cudaFree(gradient_d);
+
+    cublasDestroy(handle);
 }

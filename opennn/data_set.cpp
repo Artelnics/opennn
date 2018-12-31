@@ -935,7 +935,7 @@ Matrix<double> DataSet::get_testing_targets() const
 /// Returns a column with the testing instances and the time variable.
 /// The number of rows is the number of testing instances.
 
-Vector<double> DataSet::get_testing_time_column() const
+Vector<double> DataSet::get_testing_time() const
 {
    const Vector<size_t> testing_indices = instances.get_testing_indices();
 
@@ -3360,6 +3360,20 @@ Matrix<double> DataSet::calculate_input_target_correlations() const
    }
 
    return correlations;
+}
+
+std::vector<std::vector<double>> DataSet::std_input_target_correlations() const
+{
+    const size_t target_number = variables.get_targets_number();
+
+    std::vector<std::vector<double>> correlations(target_number);
+
+    for(size_t i = 0; i < target_number; i++)
+    {
+        correlations[i] = calculate_input_target_correlations().get_column(i).to_std_vector();
+    }
+
+    return(correlations);
 }
 
 

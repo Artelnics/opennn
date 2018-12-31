@@ -730,10 +730,9 @@ void InputsTrendingLayer::initialize_random()
 
 /// Calculates the outputs from the inputs trending layer for a set of inputs to that layer.
 
-Matrix<double> InputsTrendingLayer::calculate_outputs(const Matrix<double>& inputs, double time) const
+Matrix<double> InputsTrendingLayer::calculate_outputs(const Matrix<double>& inputs, const double& time) const
 {
-/*
-    const size_t inputs_trending_neurons_number = get_inputs_trending_neurons_number();
+    const size_t inputs_number = get_inputs_trending_neurons_number();
 
     // Control sentence(if debug)
 
@@ -754,7 +753,9 @@ Matrix<double> InputsTrendingLayer::calculate_outputs(const Matrix<double>& inpu
 
  #endif
 
-    Vector<double> outputs(inputs_trending_neurons_number);
+    const size_t points_number = inputs.get_rows_number();
+
+    Matrix<double> outputs(points_number, inputs_number);
 
    if(inputs_trending_method == NoTrending)
    {
@@ -762,10 +763,13 @@ Matrix<double> InputsTrendingLayer::calculate_outputs(const Matrix<double>& inpu
    }
    else if(inputs_trending_method == Linear)
    {
-       for(size_t i = 0; i < inputs_trending_neurons_number; i++)
-       {
-          outputs[i] = inputs[i] -(inputs_trends[i].intercept + inputs_trends[i].slope * time);
-       }
+        for(size_t i  = 0; i < points_number; i++)
+        {
+            for(size_t j = 0; j < inputs_number; j++)
+            {
+               outputs(i,j) = inputs(i,j) -(inputs_trends[j].intercept + inputs_trends[j].slope * time);
+            }
+        }
 
        return(outputs);
    }
@@ -779,9 +783,6 @@ Matrix<double> InputsTrendingLayer::calculate_outputs(const Matrix<double>& inpu
 
        throw logic_error(buffer.str());
     }
-*/
-
-    return Matrix<double>();
 }
 
 

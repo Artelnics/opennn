@@ -101,6 +101,12 @@ RootMeanSquaredError::~RootMeanSquaredError()
 
 double RootMeanSquaredError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
    // Control sentence
 
    #ifdef __OPENNN_DEBUG__
@@ -160,6 +166,12 @@ double RootMeanSquaredError::calculate_error(const Matrix<double>& outputs, cons
 
 Vector<double> RootMeanSquaredError::calculate_output_gradient(const Vector<size_t>& instances_indices, const Vector<double>& output, const Vector<double>& target) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     /*
     const size_t instances_number = instances_indices.size();
 
@@ -269,6 +281,12 @@ Vector<double> RootMeanSquaredError::calculate_error_gradient(const Vector<size_
 
 Vector<double> RootMeanSquaredError::calculate_error_gradient(const double& total_training_instances_number, const double& loss) const
 {
+   #ifdef __OPENNN_DEBUG__
+
+   check();
+
+   #endif
+
     // Control sentence
 
        #ifdef __OPENNN_DEBUG__

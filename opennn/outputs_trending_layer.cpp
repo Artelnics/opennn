@@ -731,8 +731,8 @@ void OutputsTrendingLayer::initialize_random()
 
 Matrix<double> OutputsTrendingLayer::calculate_outputs(const Matrix<double>& inputs, const double& time) const
 {
-/*
-    const size_t outputs_trending_neurons_number = get_outputs_trending_neurons_number();
+    const size_t points_number = inputs.get_rows_number();
+    const size_t outputs_number = get_outputs_trending_neurons_number();
 
     // Control sentence(if debug)
 
@@ -753,7 +753,7 @@ Matrix<double> OutputsTrendingLayer::calculate_outputs(const Matrix<double>& inp
 
  #endif
 
-    Vector<double> outputs(outputs_trending_neurons_number);
+    Matrix<double> outputs(points_number, outputs_number);
 
    if(outputs_trending_method == NoTrending)
    {
@@ -761,11 +761,13 @@ Matrix<double> OutputsTrendingLayer::calculate_outputs(const Matrix<double>& inp
    }
    else if(outputs_trending_method == Linear)
    {
-       for(size_t i = 0; i < outputs_trending_neurons_number; i++)
+       for(size_t i = 0; i < points_number; i++)
        {
-           outputs[i] = inputs[i] + outputs_trends[i].intercept + outputs_trends[i].slope * time;
-       }
-
+           for(size_t j = 0; j < outputs_number; j++)
+           {
+               outputs[j] = inputs[j] + outputs_trends[j].intercept + outputs_trends[j].slope * time;
+           }
+        }
        return(outputs);
    }
    else
@@ -778,43 +780,28 @@ Matrix<double> OutputsTrendingLayer::calculate_outputs(const Matrix<double>& inp
 
        throw logic_error(buffer.str());
     }
-*/
-    return Matrix<double>();
 }
 
 
 /// Returns the derivatives of the outputs with respect to the inputs.
 
-Matrix<double> OutputsTrendingLayer::calculate_derivatives(const Matrix<double>&) const
+Matrix<double> OutputsTrendingLayer::calculate_derivatives(const Matrix<double>& inputs) const
 {
-/*
-   const size_t outputs_trending_neurons_number = get_outputs_trending_neurons_number();
+    const size_t points_number = inputs.get_rows_number();
+    const size_t outputs_number = get_outputs_trending_neurons_number();
 
-   Vector<double> derivatives(outputs_trending_neurons_number);
-
-   for(size_t i = 0; i < outputs_trending_neurons_number; i++)
-   {
-         derivatives[i] = 1.0;
-   }
-
-   return(derivatives);
-*/
-    return Matrix<double>();
+   return Matrix<double>(points_number, outputs_number, 1.0);
 }
 
 
 /// Returns the second derivatives of the outputs with respect to the inputs.
 
-Matrix<double> OutputsTrendingLayer::calculate_second_derivatives(const Matrix<double>&) const
+Matrix<double> OutputsTrendingLayer::calculate_second_derivatives(const Matrix<double>& inputs) const
 {
-/*
-   const size_t outputs_trending_neurons_number = get_outputs_trending_neurons_number();
+    const size_t points_number = inputs.get_rows_number();
+    const size_t outputs_number = get_outputs_trending_neurons_number();
 
-   Vector<double> second_derivatives(outputs_trending_neurons_number, 0.0);
-
-   return(second_derivative);
-*/
-    return Matrix<double>();
+   return Matrix<double>(points_number, outputs_number, 0.0);
 }
 
 

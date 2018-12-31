@@ -110,31 +110,23 @@ public:
 
    double calculate_training_error(const Vector<double>&) const;
 
-   double calculate_batch_error(const Vector<size_t> &) const
-   {
-       return 0;
-   }
+   double calculate_batch_error(const Vector<size_t> &) const;
 
    Vector<double> calculate_training_error_gradient() const;
 
-   double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
-
-   double calculate_error(const Vector<double>&) const;
-
-   double calculate_error(const double&) const;
-   double calculate_error(const Vector<double>&, const double&) const;
-
-   double calculate_selection_error(const double&) const;
+//   double calculate_error(const double&) const;
+//   double calculate_error(const Vector<double>&, const double&) const;
+//   double calculate_selection_error(const double&) const;
 
    Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&, const double&) const;
-
+   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 
    // Error terms methods
 
-   Vector<double> calculate_error_terms() const;
-//   Vector<double> calculate_error_terms(const Vector<double>&) const;
+   Vector<double> calculate_error_terms(const Vector<double>&) const;
+   Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;
 
-   Matrix<double> calculate_error_terms_Jacobian() const;
+   LossIndex::SecondOrderErrorTerms calculate_terms_second_order_loss() const;
 
    string write_error_term_type() const;
 

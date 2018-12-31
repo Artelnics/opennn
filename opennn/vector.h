@@ -12244,10 +12244,8 @@ Vector<T> rectified_linear(const Vector<T>& x)
 
     for(size_t i = 0; i < n; i++)
     {
-        cout << "x[i]: " << x[i] << endl;
         x[i] < 0.0 ? y[i] = 0.0 : y[i] = x[i];
-        cout << "y[i]: " << y[i] << endl;
-        system("pause");
+
     }
 
     return y;
@@ -12471,7 +12469,7 @@ Vector<T> hard_sigmoid_derivatives(const Vector<T>& x)
 
     for(size_t i = 0; i < n; i++)
     {
-        x[i] < -2.5 || x[i] > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 2.5;
+        x[i] < -2.5 || x[i] > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
     }
 
     return derivatives;

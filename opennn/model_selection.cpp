@@ -3033,9 +3033,10 @@ Vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const size
 }
 
 
+/// @todo Check this method.
+
 Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation()
 {
-
     DataSet* data_set_pointer = training_strategy_pointer->get_loss_index_pointer()->get_data_set_pointer();
     NeuralNetwork* neural_network_pointer = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer();
     LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
@@ -3062,7 +3063,7 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation()
        throw logic_error(buffer.str());
     }
 #endif
-/*
+
     Instances* instances_pointer = data_set_pointer->get_instances_pointer();
 
     const Vector<size_t> training_indices = instances_pointer->get_training_indices();
@@ -3099,10 +3100,10 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation()
 
         training_strategy_pointer->perform_training();
 
-        const double outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance)[0];
+        const double outputs = neural_network_pointer->calculate_outputs(current_inputs_selection_instance.to_column_matrix())(0,0);
 
-        double current_error = abs(targets-outputs);
-        double current_loss = loss_index_pointer->calculate_training_loss();
+        const double current_error = abs(targets-outputs);
+        const double current_loss = loss_index_pointer->calculate_training_loss();
 
         if(i == 0 || current_error < minimum_error)
         {
@@ -3134,8 +3135,8 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation()
     neural_network_pointer->set_parameters(minimum_error_parameters);
 
     return neural_network_ensemble;
-*/
-    return Vector<NeuralNetwork>();
+
+//    return Vector<NeuralNetwork>();
 
 }
 }

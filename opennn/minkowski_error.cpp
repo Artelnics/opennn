@@ -151,6 +151,12 @@ void MinkowskiError::set_Minkowski_parameter(const double& new_Minkowski_paramet
 
 double MinkowskiError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Control sentence
 
     #ifdef __OPENNN_DEBUG__
@@ -166,9 +172,16 @@ double MinkowskiError::calculate_error(const Matrix<double>& outputs, const Matr
 /// Returns which would be the Minkowski error of for an hypothetical vector of parameters.
 /// It does not set that vector of parameters to the neural network.
 /// @param parameters Vector of potential parameters for the neural network associated to the Minkowski error.
+/// @todo
 
 double MinkowskiError::calculate_error(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
    // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__
@@ -195,7 +208,7 @@ double MinkowskiError::calculate_error(const Vector<double>& parameters) const
    }
 
    #endif
-/*
+
    // Neural network stuff
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -214,7 +227,7 @@ double MinkowskiError::calculate_error(const Vector<double>& parameters) const
    const Vector<size_t> targets_indices = variables.get_targets_indices();
 
    double Minkowski_error = 0.0;
-
+/*
    #pragma omp parallel for reduction(+ : Minkowski_error)
 
    for(int i = 0; i < static_cast<int>(training_instances_number); i++)
@@ -237,10 +250,8 @@ double MinkowskiError::calculate_error(const Vector<double>& parameters) const
 
       Minkowski_error += (outputs-targets).calculate_Lp_norm(Minkowski_parameter);
    }
-
-   return(Minkowski_error/static_cast<double>(training_instances_number));
 */
-   return 0.0;
+   return Minkowski_error/static_cast<double>(training_instances_number);
 }
 
 
@@ -249,6 +260,12 @@ double MinkowskiError::calculate_error(const Vector<double>& parameters) const
 
 Vector<double> MinkowskiError::calculate_output_gradient(const Vector<size_t>& instances_indices, const Vector<double>& output, const Vector<double>& target) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     const size_t instances_number = instances_indices.size();
 
     return (output-target).calculate_Lp_norm_gradient(Minkowski_parameter)/static_cast<double>(instances_number);

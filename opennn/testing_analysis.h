@@ -242,6 +242,7 @@ public:
    Vector< LinearRegressionParameters<double> > calculate_forecasting_linear_regression_parameters() const;
 
    void print_linear_regression_correlations() const;
+   std::vector<double> get_linear_regression_correlations_std() const;
 
    Vector<LinearRegressionAnalysis> perform_linear_regression_analysis() const;
    void perform_linear_regression_analysis_void() const;

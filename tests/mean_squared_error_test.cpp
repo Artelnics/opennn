@@ -275,15 +275,13 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   double training_instances_number = static_cast<double>(ds.get_instances_pointer()->get_training_instances_number());
-
    const Matrix<double> inputs = ds.get_training_inputs();
    const Matrix<double> targets = ds.get_training_targets();
    const Matrix<double> outputs = nn.calculate_outputs(inputs);
 
    error = mse.calculate_training_error();
 
-   error_terms = mse.calculate_error_terms(outputs, targets);//static_cast<double>(ds.get_instances_pointer()->get_training_instances_number());
+   error_terms = mse.calculate_error_terms(outputs, targets);
 
    assert_true(fabs((error_terms.dot(error_terms)) - error) < 1.0e-3, LOG);
 }
@@ -507,7 +505,7 @@ void MeanSquaredErrorTest::test_calculate_Hessian()
         nn.randomize_parameters_normal();
         parameters = nn.get_parameters();
 
-        LossIndex::TermsSecondOrderLoss results = mse.calculate_terms_second_order_loss();
+        LossIndex::SecondOrderErrorTerms results = mse.calculate_terms_second_order_loss();
 
         Hessian = results.Hessian_approximation;
         nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);

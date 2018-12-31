@@ -142,6 +142,8 @@ public:
 
    void initialize_biases(const double&); 
    void initialize_synaptic_weights(const double&);
+   void initialize_synaptic_weights_Glorot(const double&,const double&);
+
 
    void initialize_parameters(const double&);
 
@@ -165,10 +167,6 @@ public:
 
    Matrix<double> calculate_combinations(const Matrix<double>&, const Vector<double>&) const;
 
-   Vector< Matrix<double> > calculate_combinations_parameters_Jacobian(const Matrix<double>&) const;
-
-   Vector< Matrix<double> > calculate_combinations_parameters_Hessian() const;
-
    Matrix<double> calculate_combinations(const Matrix<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    // Perceptron layer activations
@@ -186,6 +184,7 @@ public:
    // Expression methods
 
    string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_activation_function_expression() const;
 
    string object_to_string() const;
 

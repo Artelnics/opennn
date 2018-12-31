@@ -758,6 +758,8 @@ Matrix<double> UnscalingLayer::calculate_outputs(const Matrix<double>& inputs) c
             return(inputs);
         }
     }
+
+    return Matrix<double>();
 }  
 
 
@@ -812,6 +814,8 @@ Matrix<double> UnscalingLayer::calculate_derivatives(const Matrix<double>& input
     }
 
     }// end switch
+
+    return Matrix<double>();
 }
 
 
@@ -1585,7 +1589,7 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// Serializes the unscaling layer object into a PMML document.
 /// @param element XML element to append the unscaling layer object.
 /// @param outputs_names Names of the outputs variables.
-
+/// @todo
 void UnscalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<string>& outputs_names) const
 {
 /*
@@ -1661,6 +1665,7 @@ void UnscalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<string>
 /// Serializes the unscaling layer object into a PMML document.
 /// @param file_stream XML file where the unscaling layer object will be serialized.
 /// @param outputs_names Names of the outputs variables.
+/// @todo
 
 void UnscalingLayer::write_PMML(tinyxml2::XMLPrinter& file_stream, const Vector<string>& outputs_names) const
 {
@@ -1983,7 +1988,7 @@ string UnscalingLayer::write_minimum_maximum_expression(const Vector<string>& in
 
     buffer.str("");
 
-    buffer << "(" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    buffer << outputs_name.vector_to_string(',') << " = " << expressions.vector_to_string(',') << ";\n";
 
     return(buffer.str());
 }

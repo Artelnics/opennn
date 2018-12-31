@@ -384,7 +384,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
    Matrix<double> numerical_Jacobian_terms;
 
    // Test
-
+/*
    nn.set(1, 1);
 
    nn.initialize_parameters(0.0);
@@ -393,7 +393,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 
    ds.generate_data_binary_classification(3, 1);
 
-   terms_Jacobian = wse.calculate_error_terms_Jacobian();
+//   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
    assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
    assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
@@ -408,7 +408,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
    wse.set(&nn, &ds);
    ds.generate_data_binary_classification(3, 3);
 
-   terms_Jacobian = wse.calculate_error_terms_Jacobian();
+//   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
    assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
    assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
@@ -461,7 +461,7 @@ void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_error_terms, parameters);
 
    assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
-
+*/
    // Test
 
 //   nn.set(2, 2, 2);

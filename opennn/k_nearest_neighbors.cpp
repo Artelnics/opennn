@@ -238,29 +238,25 @@ Vector<double> KNearestNeighbors::calculate_distances_weights(const Vector<doubl
 /// The format is a matrix, where each row contains the output for a single input.
 /// @param inputs Matrix of inputs to the KNN.
 
-Matrix<double> KNearestNeighbors::calculate_outputs(const Matrix<double>& inputs) const
+Matrix<double> KNearestNeighbors::calculate_outputs(const Matrix<double>& input_data) const
 {
-    /*
-    const size_t instances_number = inputs.get_rows_number();
+    const size_t instances_number = input_data.get_rows_number();
     const size_t targets_number = data_set_pointer->get_variables().get_targets_number();
 
-    Matrix<double> outputs(instances_number, targets_number, 0.0);
+    Matrix<double> output_data(instances_number, targets_number, 0.0);
 
     #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(instances_number); i++)
     {
-        const Vector<double> inputs = inputs.get_row(static_cast<size_t>(i));
+        const Vector<double> inputs = input_data.get_row(static_cast<size_t>(i));
 
         const Vector<double> outputs = calculate_outputs(inputs);
 
-        outputs.set_row(static_cast<size_t>(i), outputs);
+        output_data.set_row(static_cast<size_t>(i), outputs);
     }
 
-    return outputs;
-    */
-
-    return Matrix<double>();
+    return output_data;
 }
 
 

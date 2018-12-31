@@ -98,19 +98,15 @@ public:
 
    double calculate_training_error(const Vector<double>&) const;
 
-   Vector<double> calculate_training_error_gradient() const;
+   double calculate_batch_error(const Vector<size_t> &) const;
 
-   double calculate_batch_error(const Vector<size_t> &) const
-   {
-       return 0;
-   }
+   Vector<double> calculate_training_error_gradient() const;
 
    double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
 
    double calculate_error(const Vector<size_t>&, const Vector<double>&) const;
 
-   Matrix<double> calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const;
-
+   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 
    // Error terms methods
 
@@ -123,7 +119,7 @@ public:
 
    Vector<size_t> calculate_maximal_errors(const size_t& = 10) const;
 
-   LossIndex::TermsSecondOrderLoss calculate_terms_second_order_loss() const;
+   LossIndex::SecondOrderErrorTerms calculate_terms_second_order_loss() const;
 
    string write_error_term_type() const;
 

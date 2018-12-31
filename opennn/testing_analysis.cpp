@@ -320,7 +320,7 @@ Vector< Matrix<double> > TestingAnalysis::calculate_forecasting_target_outputs()
 
    const Matrix<double> targets = data_set_pointer->get_testing_targets();
 
-   const Vector<double> time = data_set_pointer->get_testing_time_column();
+   const Vector<double> time = data_set_pointer->get_testing_time();
 
    // Neural network stuff
 
@@ -438,6 +438,24 @@ void TestingAnalysis::print_linear_regression_correlations() const
     }
 }
 
+std::vector<double> TestingAnalysis::get_linear_regression_correlations_std() const
+{
+    const Vector< LinearRegressionParameters<double> > linear_regression_parameters = calculate_linear_regression_parameters();
+
+    const Vector<string> targets_name = data_set_pointer->get_variables().get_targets_name();
+
+    const size_t targets_number = linear_regression_parameters.size();
+
+    std::vector<double> std_correlations(targets_number);
+
+    for(size_t i = 0; i < targets_number; i++)
+    {
+        std_correlations[i] = linear_regression_parameters[i].correlation;
+    }
+
+    return(std_correlations);
+}
+
 
 
 // Vector< LinearRegressionParameters<double> > calculate_forecasting_linear_regression_parameters() const method
@@ -490,7 +508,7 @@ Vector< LinearRegressionParameters<double> > TestingAnalysis::calculate_forecast
 
    const Matrix<double> inputs = data_set_pointer->get_testing_inputs();
    const Matrix<double> targets = data_set_pointer->get_testing_targets();
-   const Vector<double> time = data_set_pointer->get_testing_time_column();
+   const Vector<double> time = data_set_pointer->get_testing_time();
    const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs, time);
 
    Vector<double> target_variable(testing_instances_number);
@@ -784,7 +802,7 @@ Vector< Matrix<double> > TestingAnalysis::calculate_forecasting_error_data() con
 
    const Matrix<double> targets = data_set_pointer->get_testing_targets();
 
-   const Vector<double> time = data_set_pointer->get_testing_time_column();
+   const Vector<double> time = data_set_pointer->get_testing_time();
 
    // Neural network stuff
 
@@ -870,23 +888,7 @@ Vector< Statistics<double> > TestingAnalysis::calculate_absolute_errors_statisti
 Vector< Statistics<double> > TestingAnalysis::calculate_absolute_errors_statistics(const Matrix<double>& targets,
                                                                                    const Matrix<double>& outputs) const
 {
-    /*
-    const size_t outputs_number = data_set_pointer->get_variables().get_targets_number();
-
-    Vector< Statistics<double> > statistics(outputs_number);
-
-    for(size_t i = 0; i < outputs_number; i++)
-    {
-        const Vector<double> targets = targets.get_column(i);
-        const Vector<double> outputs = outputs.get_column(i);
-
-        statistics[i] = (outputs - targets).calculate_absolute_value().calculate_statistics();
-    }
-
-    return statistics;
-    */
-
-    return Vector< Statistics<double> >();
+    return (outputs - targets).calculate_absolute_value().calculate_statistics();
 }
 
 
@@ -912,22 +914,7 @@ Vector< Statistics<double> > TestingAnalysis::calculate_percentage_errors_statis
 Vector< Statistics<double> > TestingAnalysis::calculate_percentage_errors_statistics(const Matrix<double>& targets,
                                                                                      const Matrix<double>& outputs) const
 {
-/*
-    const size_t outputs_number = data_set_pointer->get_variables().get_targets_number();
-
-    Vector< Statistics<double> > statistics(outputs_number);
-
-    for(size_t i = 0; i < outputs_number; i++)
-    {
-        const Vector<double> targets = targets.get_column(i);
-        const Vector<double> outputs = outputs.get_column(i);
-
-        statistics[i] = (((outputs - targets).calculate_absolute_value())*100.0/targets).calculate_statistics();
-    }
-
-    return statistics;
-*/
-    return Vector< Statistics<double> >();
+    return ((outputs - targets).calculate_absolute_value()*100.0/targets).calculate_statistics();
 }
 
 
@@ -1608,7 +1595,7 @@ Vector<double> TestingAnalysis::calculate_forecasting_testing_errors() const
 
     const Matrix<double> targets = data_set_pointer->get_testing_targets();
 
-    const Vector<double> time = data_set_pointer->get_testing_time_column();
+    const Vector<double> time = data_set_pointer->get_testing_time();
 
     // Neural network stuff
 
@@ -1794,12 +1781,12 @@ double TestingAnalysis::calculate_testing_normalized_squared_error(const Matrix<
     return sum_squared_error/normalization_coefficient;
 }
 
-// double calculate_testing_cross_entropy_error(const Matrix<double>&, const Matrix<double>&) const method
 
 /// Returns the cross-entropy error between the targets and the outputs of the neural network.
 /// It can only be computed for classification problems.
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
+/// @todo
 
 double TestingAnalysis::calculate_testing_cross_entropy_error(const Matrix<double>& targets, const Matrix<double>& outputs) const
 {
@@ -3750,12 +3737,12 @@ Vector< Vector<double> > TestingAnalysis::calculate_forecasting_error_autocorrel
     }
 
     #endif
-/*
+
     const Matrix<double> inputs = data_set_pointer->get_testing_inputs();
     const Matrix<double> targets = data_set_pointer->get_testing_targets();
-    const Vector<double> time = data_set_pointer->get_testing_time_column();
+    //const Vector<double> time = data_set_pointer->get_testing_time();
 
-    const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs, time);
+    const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs);
 
     const size_t targets_number = targets.get_columns_number();
 
@@ -3769,9 +3756,6 @@ Vector< Vector<double> > TestingAnalysis::calculate_forecasting_error_autocorrel
     }
 
     return error_autocorrelations;
-*/
-
-    return Vector< Vector<double> >();
 }
 
 
@@ -3929,12 +3913,12 @@ Vector< Vector<double> > TestingAnalysis::calculate_forecasting_input_error_cros
     }
 
     #endif
-/*
+
     const Matrix<double> inputs = data_set_pointer->get_testing_inputs();
     const Matrix<double> targets = data_set_pointer->get_testing_targets();
-    const Vector<double> time = data_set_pointer->get_testing_time_column();
+    const Vector<double> time = data_set_pointer->get_testing_time();
 
-    const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs, time);
+    const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs, time[0]);
 
     const size_t targets_number = targets.get_columns_number();
 
@@ -3953,9 +3937,9 @@ Vector< Vector<double> > TestingAnalysis::calculate_forecasting_input_error_cros
     }
 
     return(input_error_cross_correlation);
-*/
 
-    return Vector< Vector<double> >();
+
+//    return Vector< Vector<double> >();
 }
 
 
@@ -4022,7 +4006,7 @@ Vector< Vector<double> > TestingAnalysis::calculate_forecasting_time_series() co
 
     const Matrix<double> inputs = data_set_pointer->get_testing_inputs();
     const Matrix<double> targets = data_set_pointer->get_testing_targets();
-    const Vector<double> time = data_set_pointer->get_testing_time_column();
+    const Vector<double> time = data_set_pointer->get_testing_time();
 
     const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs, time);
 

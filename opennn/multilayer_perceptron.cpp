@@ -1677,6 +1677,7 @@ void MultilayerPerceptron::initialize_biases(const double& value)
 }
 
 
+
 /// Initializes the synaptic weights of all the perceptrons in the multilayer perceptron with a given value. 
 /// @param value Synaptic weights initialization value. 
 
@@ -1688,6 +1689,22 @@ void MultilayerPerceptron::initialize_synaptic_weights(const double& value)
     for(size_t i = 0; i < layers_number; i++)
     {
         layers[i].initialize_synaptic_weights(value);
+    }
+}
+
+
+void MultilayerPerceptron::initialize_synaptic_weights_Glorot()
+{
+    const size_t layers_number = get_layers_number();
+
+    const double fan_in = static_cast<double>(layers[0].get_synaptic_weights().size());
+    const double fan_out = static_cast<double>(layers[layers_number-1].get_synaptic_weights().size());
+
+    const double limit = sqrt(6.0/(fan_in + fan_out));
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        layers[i].initialize_synaptic_weights_Glorot(-limit,limit);
     }
 }
 
@@ -1953,6 +1970,14 @@ Matrix<double> MultilayerPerceptron::calculate_outputs(const Matrix<double>& inp
     }
 
     return outputs;
+}
+
+
+MultilayerPerceptron::Pointers MultilayerPerceptron::host_to_device() const
+{
+    Pointers pointers;
+
+    return pointers;
 }
 
 
@@ -2947,14 +2972,21 @@ string MultilayerPerceptron::write_expression(const Vector<string>& inputs_name,
             }
         }
 
+//        cout << "Layers outputs name: " << layers_outputs_name << endl;
+//        cout << "Inputs name: " << inputs_name << endl << endl;
+
+
         buffer << layers[0].write_expression(inputs_name, layers_outputs_name[0]);
+//        cout << "Perceptrons Number: " << layers[0].get_perceptrons_number() << endl;
 
         for(size_t i = 1; i < layers_number-1; i++)
         {
             buffer << layers[i].write_expression(layers_outputs_name[i-1], layers_outputs_name[i]);
+//            cout << "Perceptrons Number: " << layers[i].get_perceptrons_number() << endl;
         }
 
         buffer << layers[layers_number-1].write_expression(layers_outputs_name[layers_number-2], outputs_name);
+//        cout << "Perceptrons Number: " << layers[layers_number-1].get_perceptrons_number() << endl;
     }
 
     return(buffer.str());

@@ -1415,19 +1415,19 @@ string ScalingLayer::write_expression(const Vector<string>& inputs_name, const V
     {
         if(scaling_methods[i] == NoScaling)
         {
-            buffer << outputs_name[i] << "=" << inputs_name[i] << ";\n";
+            buffer << outputs_name[i] << " = " << inputs_name[i] << ";\n";
         }
         else if(scaling_methods[i] == MinimumMaximum)
         {
-            buffer << outputs_name[i] << "=2*(" << inputs_name[i] << "-" << statistics[i].minimum << ")/(" << statistics[i].maximum << "-" << statistics[i].minimum << ")-1;\n";
+            buffer << outputs_name[i] << " = 2*(" << inputs_name[i] << "-" << statistics[i].minimum << ")/(" << statistics[i].maximum << "-" << statistics[i].minimum << ")-1;\n";
         }
         else if(scaling_methods[i] == MeanStandardDeviation)
         {
-            buffer << outputs_name[i] << "= (" << inputs_name[i] << "-" << statistics[i].mean << ")/" << statistics[i].standard_deviation << ";\n";
+            buffer << outputs_name[i] << " = (" << inputs_name[i] << "-" << statistics[i].mean << ")/" << statistics[i].standard_deviation << ";\n";
         }
         else if(scaling_methods[i] == StandardDeviation)
         {
-            buffer << outputs_name[i] << "=" << inputs_name[i] << "/" << statistics[i].standard_deviation << ";\n";
+            buffer << outputs_name[i] << " = " << inputs_name[i] << "/" << statistics[i].standard_deviation << ";\n";
         }
         else
         {
@@ -1919,6 +1919,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// Serializes the scaling layer object into a PMML document.
 /// @param element XML element to append the scaling layer object.
 /// @param inputs_names Names of the inputs variables.
+/// @todo
 
 void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<string>& inputs_names) const
 {
@@ -1996,6 +1997,7 @@ void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<string>& 
 /// Serializes the scaling layer object into a PMML document.
 /// @param file_stream XML file where the scaling layer object will be serialized.
 /// @param inputs_names Names of the inputs variables.
+/// @todo
 
 void ScalingLayer::write_PMML(tinyxml2::XMLPrinter& file_stream, const Vector<string>& inputs_names) const
 {

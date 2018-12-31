@@ -81,18 +81,37 @@ public:
 
    enum RegularizationMethod{L1, L2, None};
 
-   struct TermsSecondOrderLoss
+   struct FirstOrderError
    {
        /// Default constructor.
 
-       TermsSecondOrderLoss(const size_t& parameters_number)
+       FirstOrderError(const size_t& parameters_number)
+       {
+           error = 0.0;
+           gradient.set(parameters_number, 0.0);
+       }
+
+       virtual ~FirstOrderError()
+       {
+       }
+
+       double error;
+       Vector<double> gradient;
+   };
+
+
+   struct SecondOrderErrorTerms
+   {
+       /// Default constructor.
+
+       SecondOrderErrorTerms(const size_t& parameters_number)
        {
            loss = 0.0;
            gradient.set(parameters_number, 0.0);
            Hessian_approximation.set(parameters_number, parameters_number, 0.0);
        }
 
-       virtual ~TermsSecondOrderLoss()
+       virtual ~SecondOrderErrorTerms()
        {
        }
 
@@ -192,14 +211,21 @@ public:
    virtual double calculate_selection_error() const = 0;
    virtual double calculate_training_error(const Vector<double>&) const = 0;
    virtual double calculate_batch_error(const Vector<size_t>&) const = 0;
+
+   virtual double calculate_batch_error_cuda(const MultilayerPerceptron::Pointers&) const {return 0.0;}
+
    virtual Vector<double> calculate_training_error_gradient() const = 0;
+
    virtual Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const {return Vector<double>();}
+
+   virtual Vector<double> calculate_batch_error_gradient_cuda(const MultilayerPerceptron::Pointers&) const {return Vector<double>();}
 
    virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const  {return Vector<double>();}
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const  {return Matrix<double>();}
 
+   virtual FirstOrderError calculate_batch_first_order_error(const Vector<size_t>&) const {return FirstOrderError(0);}
 
-   virtual TermsSecondOrderLoss calculate_terms_second_order_loss() const {return TermsSecondOrderLoss(0);}
+   virtual SecondOrderErrorTerms calculate_terms_second_order_loss() const {return SecondOrderErrorTerms(0);}
 
    // Regularization methods
 
