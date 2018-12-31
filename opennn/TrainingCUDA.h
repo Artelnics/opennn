@@ -3,103 +3,108 @@
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
 /*                                                                                                              */
-/*   C R O S S   E N T R O P Y   E R R O R   C L A S S   H E A D E R                                            */
+/*   T R A I N I N G   C U D A    C L A S S   H E A D E R                                                       */
 /*                                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
 /*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
-#ifndef __CROSSENTROPYERROR_H__
-#define __CROSSENTROPYERROR_H__
+#ifndef __TRAININGCUDA_H__
+#define __TRAININGCUDA_H__
 
 // System includes
 
+#include <string>
+#include <sstream>
 #include <iostream>
 #include <fstream>
-#include <math.h>
+#include <algorithm>
+#include <functional>
+#include <limits>
+#include <cmath>
+#include <ctime>
+
+//#ifdef __OPENNN_CUDA__
+//#include <cublas_v2.h>
+//#endif
 
 // OpenNN includes
 
-#include "loss_index.h"
+#include "vector.h"
+
 #include "data_set.h"
+#include "multilayer_perceptron.h"
 
 // TinyXml includes
 
 #include "tinyxml2.h"
 
-
 namespace OpenNN
 {
 
-/// This class represents the cross entropy error term. 
-/// This functional is used in classification problems.
+///
+/// This concrete class represents a quasi-Newton training algorithm for a loss index of a neural network.
+///
 
-class CrossEntropyError : public LossIndex
+class TrainingCUDA
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+    // DEFAULT CONSTRUCTOR
 
-   explicit CrossEntropyError();
+    explicit TrainingCUDA();
 
-   // NEURAL NETWORK CONSTRUCTOR
+    // LOSS INDEX CONSTRUCTOR
 
-   explicit CrossEntropyError(NeuralNetwork*);
+    explicit TrainingCUDA(DataSet*);
 
-   // DATA SET CONSTRUCTOR
+    // DESTRUCTOR
 
-   explicit CrossEntropyError(DataSet*);
+    virtual ~TrainingCUDA();
 
-   // GENERAL CONSTRUCTOR
+    // Getters
 
-   explicit CrossEntropyError(NeuralNetwork*, DataSet*);
+    Matrix<double> get_weights_host(const size_t&) const;
+    Vector<double> get_biases_host(const size_t&) const;
 
-   // XML CONSTRUCTOR
+    Vector<double> get_parameters_host() const;
 
-   explicit CrossEntropyError(const tinyxml2::XMLDocument&);
+    // Setters
 
-   // COPY CONSTRUCTOR
+    void set_neural_network_architecture(const Vector<size_t>&);
 
-   CrossEntropyError(const CrossEntropyError&);
+    // CUDA initialization methods
 
-   // DESTRUCTOR
+    void initialize_CUDA(void);
 
-   virtual ~CrossEntropyError();
+    void randomize_parameters(void);
 
-   // ASSIGNMENT OPERATOR
+    // Operation methods
 
-   CrossEntropyError& operator = (const CrossEntropyError&);
+    Matrix<double> calculate_outputs(const Matrix<double>&);
 
-   // EQUAL TO OPERATOR
+    MultilayerPerceptron::FirstOrderForwardPropagation calculate_first_order_forward_propagation(const Matrix<double>&);
 
-   bool operator == (const CrossEntropyError&) const;
+    Vector<double> calculate_batch_error_gradient(const Vector<size_t>&);
 
-   // METHODS
+    void update_parameters(const Vector<double>&);
 
-   // Error methods
+private: 
 
-   double calculate_training_error() const;
+    bool CUDA_initialized = false;
 
-   double calculate_selection_error() const;
+    DataSet* data_set_pointer;
 
-   double calculate_training_error(const Vector<double>&) const;
+    Vector<size_t> neural_network_architecture;
 
-   double calculate_batch_error(const Vector<size_t> &) const;
+    Vector<string> layer_activations;
 
-   Vector<double> calculate_training_error_gradient() const;
+    Vector<double*> weights_gpu;
+    Vector<double*> biases_gpu;
 
-   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
-
-   string write_error_term_type() const;
-
-   // Serialization methods
-
-   tinyxml2::XMLDocument* to_XML() const;   
-   void from_XML(const tinyxml2::XMLDocument&);
-
-   void write_XML(tinyxml2::XMLPrinter&) const;
+    string loss_method;
 };
 
 }

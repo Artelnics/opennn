@@ -97,6 +97,12 @@ SumSquaredError::~SumSquaredError()
 
 double SumSquaredError::calculate_training_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -128,6 +134,12 @@ double SumSquaredError::calculate_training_error() const
 
 double SumSquaredError::calculate_selection_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -160,6 +172,12 @@ double SumSquaredError::calculate_selection_error() const
 
 double SumSquaredError::calculate_training_error(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -192,6 +210,12 @@ double SumSquaredError::calculate_training_error(const Vector<double>& parameter
 
 Vector<double> SumSquaredError::calculate_training_error_gradient() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Neural network
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -240,6 +264,12 @@ Vector<double> SumSquaredError::calculate_training_error_gradient() const
 
 Vector<double> SumSquaredError::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Neural network
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -325,6 +355,12 @@ double SumSquaredError::calculate_error(const Vector<size_t>& instances_indices,
 
 Matrix<double> SumSquaredError::calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     return (outputs-targets)*2.0;
 }
 
@@ -334,6 +370,12 @@ Matrix<double> SumSquaredError::calculate_output_gradient(const Matrix<double>& 
 
 Vector<double> SumSquaredError::calculate_error_terms(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Control sentence
 
     #ifdef __OPENNN_DEBUG__
@@ -348,6 +390,12 @@ Vector<double> SumSquaredError::calculate_error_terms(const Matrix<double>& outp
 
 Vector<double> SumSquaredError::calculate_error_terms(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     const Matrix<double> inputs = data_set_pointer->get_training_inputs();
@@ -424,8 +472,14 @@ Vector<double> SumSquaredError::calculate_squared_errors() const
 }
 
 
-LossIndex::TermsSecondOrderLoss SumSquaredError::calculate_terms_second_order_loss() const
+LossIndex::SecondOrderErrorTerms SumSquaredError::calculate_terms_second_order_loss() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -440,7 +494,7 @@ LossIndex::TermsSecondOrderLoss SumSquaredError::calculate_terms_second_order_lo
 
     const size_t batches_number = training_batches.size();
 
-    TermsSecondOrderLoss terms_second_order_loss(parameters_number);
+    SecondOrderErrorTerms terms_second_order_loss(parameters_number);
 
     #pragma omp parallel for
 

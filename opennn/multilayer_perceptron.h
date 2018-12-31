@@ -129,9 +129,6 @@ public:
 
                weight_position += perceptrons_number;
                bias_position += perceptrons_number;
-
-//               synaptic_weights[i] = parameters.get_subvector(position, position + layer_parameters_number - perceptrons_number-1).to_matrix(inputs_number, perceptrons_number);7
-//               biases[i] = parameters.get_subvector(position + layer_parameters_number - perceptrons_number, position + layer_parameters_number-1);
            }
        }
 
@@ -147,6 +144,24 @@ public:
 
        Vector< Vector<double> > biases;
        Vector< Matrix<double> > synaptic_weights;
+   };
+
+
+   struct Pointers
+   {
+       Pointers()
+       {
+       }
+
+       virtual ~Pointers()
+       {
+       }
+
+       double** biases_pointers;
+       double** weights_pointers;
+
+       int layers_number;
+       int* architecture;
    };
 
 
@@ -417,6 +432,7 @@ public:
 
    void initialize_biases(const double&); 
    void initialize_synaptic_weights(const double&);
+   void initialize_synaptic_weights_Glorot();
    void initialize_parameters(const double&);
 
    void randomize_parameters_uniform();
@@ -488,6 +504,8 @@ public:
    Matrix<double> calculate_outputs(const Matrix<double>&,  const Vector<double>&) const;
 
    // Serialization methods
+
+   Pointers host_to_device() const;
 
    tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);

@@ -555,6 +555,7 @@ void PerceptronLayer::grow_perceptrons(const size_t&)
 
 /// This method removes a given input from the layer of perceptrons.
 /// @param index Index of input to be pruned.
+/// @todo
 
 void PerceptronLayer::prune_input(const size_t& index)
 {
@@ -581,6 +582,7 @@ void PerceptronLayer::prune_input(const size_t& index)
 
 /// This method removes a given perceptron from the layer.
 /// @param index Index of perceptron to be pruned.
+/// @todo
 
 void PerceptronLayer::prune_perceptron(const size_t& index)
 {
@@ -635,6 +637,11 @@ void PerceptronLayer::initialize_biases(const double& value)
 void PerceptronLayer::initialize_synaptic_weights(const double& value) 
 {
     synaptic_weights.initialize(value);
+}
+
+void PerceptronLayer::initialize_synaptic_weights_Glorot(const double& minimum,const double& maximum)
+{
+    synaptic_weights.randomize_uniform(minimum,maximum);
 }
 
 
@@ -760,7 +767,6 @@ void PerceptronLayer::randomize_parameters_normal(const Vector< Vector<double> >
    set_parameters(parameters);
 }
 
-
 /// Calculates the norm of a layer parameters vector. 
 
 double PerceptronLayer::calculate_parameters_norm() const
@@ -781,76 +787,6 @@ Matrix<double> PerceptronLayer::calculate_combinations(const Matrix<double>& inp
     const Vector<double> new_biases = get_biases(parameters);
 
     return calculate_combinations(inputs, new_biases, new_synaptic_weights);
-}
-
-
-Vector< Matrix<double> > PerceptronLayer::calculate_combinations_parameters_Jacobian(const Matrix<double>& inputs) const
-{
-/*
-   const size_t rows_number = inputs.get_rows_number();
-
-   const size_t perceptrons_number = get_perceptrons_number();
-   const size_t parameters_number = get_parameters_number();
-   const size_t inputs_number = get_inputs_number();
-
-   Vector< Matrix<double> > combinations_parameters_Jacobian(rows_number);
-
-   for(size_t row = 0; row < rows_number; row++)
-   {
-       const Vector<double> inputs = inputs.get_row(row);
-
-       combinations_parameters_Jacobian[row].set(perceptrons_number, parameters_number, 0.0);
-
-       size_t column_index = 0;
-
-       // Synaptic weights
-
-       for(size_t i = 0; i < perceptrons_number; i++)
-       {
-           for(size_t j = 0; j < inputs_number; j++)
-           {
-               combinations_parameters_Jacobian[row](i,column_index) = inputs[j];
-
-               column_index++;
-           }
-       }
-
-       // Biases
-
-       for(size_t i = 0; i < perceptrons_number; i++)
-       {
-           combinations_parameters_Jacobian[row](i,column_index) = 1.0;
-
-           column_index++;
-       }
-   }
-
-   return combinations_parameters_Jacobian;
-*/
-   return Vector< Matrix<double> >();
-}
-
-
-
-/// Returns the second partial derivatives of the combination of a layer
-/// with respect to the parameters in that layer, for a given set of inputs.
-/// All that partial derivatives are getd in the so called Hessian form,
-/// represented as a vector of matrices, of the layer combination function.
-
-Vector< Matrix<double> > PerceptronLayer::calculate_combinations_parameters_Hessian() const
-{
-   const size_t perceptrons_number = get_perceptrons_number();
-
-   Vector< Matrix<double> > combination_parameters_Hessian(perceptrons_number);
-
-   const size_t parameters_number = get_parameters_number();
-
-   for(size_t i = 0; i < perceptrons_number; i++)
-   {
-      combination_parameters_Hessian[i].set(parameters_number, parameters_number, 0.0);
-   }
-
-   return(combination_parameters_Hessian);
 }
 
 
@@ -1070,7 +1006,7 @@ Matrix<double> PerceptronLayer::calculate_outputs(const Matrix<double>& inputs) 
 
        case PerceptronLayer::Logistic:
        {
-            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return 1.0/(1.0 + exp(-value));});
+            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return 1.0 / (1.0 + exp(-value));});
        }
        break;
 
@@ -1213,6 +1149,7 @@ Matrix<double> PerceptronLayer::calculate_outputs(const Matrix<double>& inputs, 
       {
            transform(outputs.begin(), outputs.end(), outputs.begin(), [](const double &value){return value < 0.0 ?  1.0 * (exp(value)- 1) : value;});
       }
+      break;
 
       case PerceptronLayer::HardSigmoid:
       {
@@ -1268,6 +1205,20 @@ string PerceptronLayer::write_expression(const Vector<string>& inputs_name, cons
 
    ostringstream buffer;
 
+//   cout << "Synaptic Weights: " << synaptic_weights << endl;
+//   cout << "Biases: " << biases << endl;
+//   cout << "Activation Function: " << activation_function << ", " << write_activation_function_expression() << endl << endl;
+
+   for(size_t j = 0; j < outputs_name.size(); j++)
+   {
+       buffer << outputs_name[j] << " = " << write_activation_function_expression() << "(" << biases[j] << "+";
+       for(size_t i = 0; i < inputs_name.size() - 1; i++)
+       {
+           buffer << "(" << inputs_name[i] << "*" << synaptic_weights.get_column(j)[i] << ")+";
+       }
+       buffer << "(" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights.get_column(j)[inputs_name.size() - 1] << "));\n";
+   }
+
 //   for(size_t i = 0; i < perceptrons_number; i++)
 //   {
 //      buffer << perceptrons[i].write_expression(inputs_name, outputs_name[i]);
@@ -1291,6 +1242,26 @@ string PerceptronLayer::object_to_string() const
     buffer << "Synaptic_weights:\n" << synaptic_weights;
 
     return buffer.str();
+}
+
+string PerceptronLayer::write_activation_function_expression() const
+{
+//    const string function = write_activation_function();
+    switch(activation_function)
+    {
+        case HyperbolicTangent:
+        {
+            return "tanh";
+        }
+        case Linear:
+        {
+            return "";
+        }
+        default:
+        {
+            return write_activation_function();
+        }
+    }
 }
 
 

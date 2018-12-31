@@ -290,7 +290,7 @@ void StochasticGradientDescent::set_default()
    error_gradient_norm = 1.0e9;
    error_training_rate = 1.0e9;
 
-   initial_learning_rate = 0.01;
+   initial_learning_rate = 0.001;
    initial_decay = 0.0;
    momentum = 0.0;
 
@@ -1191,11 +1191,13 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
    time(&beginning_time);
    double elapsed_time = 0.0;
 
-   results_pointer->resize_training_history(maximum_iterations_number+1);
+   results_pointer->resize_training_history(maximum_iterations_number + 1);
 
    Vector<size_t> batch_history;
 
    size_t current_iteration = 0;
+   size_t learning_rate_iteration = 1;
+
 
    // Main loop
 
@@ -1212,9 +1214,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
        for(size_t iteration = 0; iteration < batches_number; iteration++)
-       {
-//           current_iteration++;
-
+       {           
            //Loss
 
             loss[iteration] = loss_index_pointer->calculate_batch_error(training_batches[iteration]);
@@ -1227,7 +1227,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
             if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
 
-            initial_decay > 0.0 ? learning_rate =  initial_learning_rate * (1.0 / (1.0 + (current_iteration + iteration)*initial_decay)) : initial_learning_rate ;
+            initial_decay > 0.0 ? learning_rate =  initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
             parameters = neural_network_pointer->get_parameters();
 
@@ -1245,8 +1245,307 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
                 neural_network_pointer->set_parameters(parameters +  parameters_increment);
             }
+
+            learning_rate_iteration++;
        }
-       current_iteration += batches_number -1 ;
+
+       // Loss
+
+       tensorflow_error = loss.calculate_sum()/batches_number;
+
+       training_error = loss_index_pointer->calculate_training_error();
+
+       if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+
+       if(epoch == 0)
+       {
+          minimum_selection_error = selection_error;
+          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+       }
+       else if(epoch != 0 && selection_error > old_selection_error)
+       {
+          selection_failures++;
+       }
+       else if(selection_error <= minimum_selection_error)
+       {
+          minimum_selection_error = selection_error;
+          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+       }
+
+       // Elapsed time
+
+       time(&current_time);
+       elapsed_time = difftime(current_time, beginning_time);
+
+       // Training history neural network
+
+       if(reserve_parameters_history) results_pointer->parameters_history[epoch] = parameters;
+
+       if(reserve_parameters_norm_history) results_pointer->parameters_norm_history[epoch] = parameters_norm;
+
+       // Training history loss index
+
+       if(reserve_loss_history) results_pointer->loss_history[epoch] = training_error;
+
+       if(reserve_gradient_norm_history) results_pointer->gradient_norm_history[epoch] = gradient_norm;
+
+       if(reserve_selection_error_history) results_pointer->selection_error_history[epoch] = selection_error;
+
+       // Training history training algorithm
+
+       if(reserve_elapsed_time_history) results_pointer->elapsed_time_history[epoch] = elapsed_time;
+
+       // Stopping Criteria
+
+        if(selection_failures >= maximum_selection_failures && apply_early_stopping)
+        {
+           if(display)
+           {
+              cout << "Epoch " << epoch << ", iteration " << epoch << ": Maximum selection failures reached.\n"
+                   << "Selection failures: " << selection_failures << endl;
+           }
+
+           stop_training = true;
+
+           results_pointer->stopping_condition = MaximumSelectionLossIncreases;
+        }
+
+        else if(epoch == maximum_epochs_number)
+        {
+           if(display)
+           {
+              cout << "Epoch " << epoch << ": Maximum number of iterations reached.\n";
+           }
+
+           stop_training = true;
+
+           results_pointer->stopping_condition = MaximumIterationsNumber;
+        }
+
+        else if(elapsed_time >= maximum_time)
+        {
+           if(display)
+           {
+              cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+           }
+
+           stop_training = true;
+
+           results_pointer->stopping_condition = MaximumTime;
+        }
+
+        if(epoch != 0 && epoch % save_period == 0)
+        {
+              neural_network_pointer->save(neural_network_file_name);
+        }
+
+        if(stop_training)
+        {
+           if(display)
+           {
+              cout << "Parameters norm: " << parameters_norm << "\n"
+                        << "Training loss: " << training_error << "\n"
+                        << "Training loss Tensorflow: " << tensorflow_error << "\n"
+                        << "Batch size: " << training_batch_size << "\n"
+                        << "Gradient norm: " << gradient_norm << "\n"
+                        << loss_index_pointer->write_information()
+                        << "Learning rate: " << learning_rate << "\n"
+                        << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+                        << "Selection error: " << selection_error << endl;
+           }
+
+           results_pointer->resize_training_history(1+epoch);
+
+           results_pointer->final_parameters = parameters;
+
+           results_pointer->final_parameters_norm = parameters_norm;
+
+           results_pointer->final_loss = training_error;
+
+           results_pointer->final_selection_error = selection_error;
+
+           results_pointer->final_gradient_norm = gradient_norm;
+
+           results_pointer->final_training_direction = training_direction;
+
+           results_pointer->elapsed_time = elapsed_time;
+
+           results_pointer->iterations_number = epoch;
+
+           break;
+        }
+        else if(display && epoch % display_period == 0)
+        {
+           cout << "Epoch " << epoch << ";\n"
+                << "Parameters norm: " << parameters_norm << "\n"
+                << "Training loss: " << training_error << "\n"
+                << "Training loss Tensorflow: " << tensorflow_error << "\n"
+                << "Batch size: " << training_batch_size << "\n"
+                << "Gradient norm: " << gradient_norm << "\n"
+                << loss_index_pointer->write_information()
+                << "Learning rate: " << learning_rate<< "\n"
+                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+                << "Selection error: " << selection_error << endl;
+        }
+
+          // Update stuff
+
+          old_training_error = training_error;
+          old_selection_error = selection_error;
+
+          current_iteration++;
+
+       if(stop_training) break;
+   }
+
+   if(return_minimum_selection_error_neural_network)
+   {
+       parameters = minimum_selection_error_parameters;
+       parameters_norm = parameters.calculate_L2_norm();
+
+       neural_network_pointer->set_parameters(parameters);
+
+       selection_error = minimum_selection_error;
+   }
+
+   results_pointer->final_parameters = parameters;
+   results_pointer->final_parameters_norm = parameters_norm;
+
+   results_pointer->final_loss = training_error;
+   results_pointer->final_selection_error = selection_error;
+
+   results_pointer->final_gradient_norm = gradient_norm;
+
+   results_pointer->elapsed_time = elapsed_time;
+
+   return(results_pointer);
+}
+
+
+StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientDescent::perform_training_cuda()
+{
+    StochasticGradientDescentResults* results_pointer = new StochasticGradientDescentResults(this);
+
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   check();
+
+   #endif
+
+   // Start training
+
+   if(display) cout << "Training with stochastic gradient descent...\n";
+
+   // Data set stuff
+
+   DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+   const Instances& instances = data_set_pointer->get_instances();
+
+   const size_t selection_instances_number = instances.get_selection_instances_number();
+
+   // Neural network stuff
+
+   NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+   MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+   Vector<double> parameters(parameters_number);
+   Vector<double> parameters_increment(parameters_number);
+   Vector<double> last_increment(parameters_number,0.0);
+
+   double parameters_norm = 0.0;
+
+   const MultilayerPerceptron::Pointers multilayer_perceptron_pointers_device = multilayer_perceptron_pointer->host_to_device();
+
+   // Loss index stuff
+
+   double training_error = 0.0;
+   double tensorflow_error = 0.0;
+   double old_training_error = 0.0;
+
+   double selection_error = 0.0;
+   double old_selection_error = 0.0;
+
+   Vector<double> loss(instances.get_training_batches(training_batch_size).size());
+
+   Vector<double> gradient(parameters_number);
+   double gradient_norm = 0.0;
+
+   // Training algorithm stuff
+
+   double learning_rate = initial_learning_rate;
+
+   size_t selection_failures = 0;
+
+   Vector<double> training_direction(parameters_number);
+
+   Vector<double> minimum_selection_error_parameters(parameters_number);
+   double minimum_selection_error = numeric_limits<double>::max();
+
+   bool stop_training = false;
+
+   time_t beginning_time, current_time;
+   time(&beginning_time);
+   double elapsed_time = 0.0;
+
+   results_pointer->resize_training_history(maximum_iterations_number + 1);
+
+   size_t current_iteration = 0;
+
+   // Main loop
+
+   for(size_t epoch = 0; epoch < epochs_number; epoch++)
+   {
+       const Vector< Vector<size_t> > training_batches = instances.get_training_batches(training_batch_size);
+
+       const size_t batches_number = training_batches.size();
+
+       parameters = neural_network_pointer->get_parameters();
+
+       parameters_norm = parameters.calculate_L2_norm();
+
+       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+
+       for(size_t iteration = 0; iteration < batches_number; iteration++)
+       {
+           current_iteration++;
+
+           //Loss
+
+            loss_index_pointer->calculate_batch_error_cuda(multilayer_perceptron_pointers_device);
+
+           // Gradient
+
+            gradient = loss_index_pointer->calculate_batch_error_gradient_cuda(multilayer_perceptron_pointers_device);
+
+            gradient_norm = gradient.calculate_L2_norm();
+
+            if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
+
+            initial_decay > 0.0 ? learning_rate =  initial_learning_rate * (1.0 / (1.0 + current_iteration*initial_decay)) : initial_learning_rate ;
+
+            parameters = neural_network_pointer->get_parameters();
+
+            parameters_increment =  gradient*(-learning_rate);
+
+            if(momentum > 0.0)
+            {
+                parameters_increment += last_increment*momentum;
+
+                last_increment = parameters_increment;
+
+                neural_network_pointer->set_parameters(parameters +  parameters_increment);
+            }
+            else
+            {
+                neural_network_pointer->set_parameters(parameters +  parameters_increment);
+            }
+       }
 
        // Loss
 

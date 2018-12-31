@@ -157,71 +157,10 @@ void CrossEntropyErrorTest::test_calculate_selection_error()
    ds.get_instances_pointer()->set_selection();
    ds.initialize_data(0.0);
    
-   selection_error = cee.calculate_error({0});
+   selection_error = cee.calculate_training_error({0});
 
    assert_true(selection_error > 0.0, LOG);
 }
-
-
-// @todo
-
-void CrossEntropyErrorTest::test_calculate_minimum_error()
-{
-//    message += "test_calculate_minimum_loss\n";
-
-//    NeuralNetwork nn;
-//    DataSet ds;
-
-//    CrossEntropyError cee(&nn, &ds);
-
-//    double minimum_loss;
-//    double loss;
-
-//    // Test
-
-//    nn.set(1, 1);
-//    nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-//    nn.randomize_parameters_normal();
-
-//    ds.set(20,1,1);
-//    ds.randomize_data_uniform(0,1);
-
-//    loss = cee.calculate_error();
-//    minimum_loss = cee.calculate_minimum_loss();
-
-//    assert_true(minimum_loss <= loss, LOG);
-//    assert_true(minimum_loss > 0, LOG);
-}
-
-
-void CrossEntropyErrorTest::test_calculate_minimum_selection_error()
-{
-    message += "test_calculate_minimum_selection_error\n";
-
-    NeuralNetwork nn;
-    DataSet ds;
-
-    CrossEntropyError cee(&nn, &ds);
-
-    double minimum_selection_error;
-    double selection_error;
-
-    // Test
-
-    nn.set(1, 1);
-    nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(PerceptronLayer::Logistic);
-
-    ds.set(20,1,1);
-    ds.get_instances_pointer()->set_selection();
-    ds.randomize_data_uniform(0,1);
-
-    selection_error = cee.calculate_selection_error();
-    minimum_selection_error = cee.calculate_minimum_selection_error();
-
-    assert_true(minimum_selection_error <= selection_error, LOG);
-    assert_true(minimum_selection_error > 0, LOG);
-}
-
 
 // @todo
 
@@ -402,8 +341,6 @@ void CrossEntropyErrorTest::run_test_case()
    test_calculate_error();
    test_calculate_selection_error();
 
-   test_calculate_minimum_error();
-
    test_calculate_gradient();
    test_calculate_Hessian();
 
@@ -411,7 +348,6 @@ void CrossEntropyErrorTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
 }
 
 

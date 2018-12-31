@@ -668,6 +668,7 @@ public:
 
     double calculate_sum_squared_error(const Matrix<double>&) const;
     Vector<double> calculate_error_rows(const Matrix<double>&) const;
+    Vector<double> calculate_weighted_error_rows(const Matrix<double>&, const double&, const double&) const;
     Vector<double> calculate_sum_squared_error_rows(const Matrix<double>&) const;
 
     double calculate_cross_entropy_error(const Matrix<double>&) const;
@@ -10662,6 +10663,32 @@ Vector<double> Matrix<T>::calculate_error_rows(const Matrix<double>& other_matri
 }
 
 
+template <class T>
+Vector<double> Matrix<T>::calculate_weighted_error_rows(const Matrix<double>& other_matrix, const double& weight1, const double& weight2) const
+{
+    Vector<double> weighted_error_rows(rows_number, 0.0);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j =0; j < columns_number; j++)
+        {
+            if(other_matrix(i,j) == 1.0)
+            {
+                weighted_error_rows[i] += weight1*((*this)(i,j) - other_matrix(i,j))*((*this)(i,j) - other_matrix(i,j));
+            }
+            else
+            {
+                weighted_error_rows[i] += weight2*((*this)(i,j) - other_matrix(i,j))*((*this)(i,j) - other_matrix(i,j));
+            }
+        }
+
+        weighted_error_rows[i] = sqrt(weighted_error_rows[i]);
+    }
+
+    return weighted_error_rows;
+}
+
+
 /// Returns the sum squared error between rows of this matrix and the elements of another matrix.
 /// @param other_matrix Other matrix.
 
@@ -16184,15 +16211,15 @@ Matrix<T> hard_sigmoid(const Matrix<T>& x)
     {
         if(x[i] < -2.5)
         {
-           y[n] = 0;
+           y[i] = 0;
         }
         else if(x[i] > 2.5)
         {
-            y[n] = 1;
+            y[i] = 1;
         }
         else
         {
-            y[n] = 0.2 * x[i] + 0.5;
+            y[i] = 0.2 * x[i] + 0.5;
         }
     }
 
@@ -16209,7 +16236,7 @@ Matrix<T> hard_sigmoid_derivatives(const Matrix<T>& x)
 
     for(size_t i = 0; i < n; i++)
     {
-        x[i] < -2.5 || x[i] > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 2.5;
+        x[i] < -2.5 || x[i] > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
     }
 
     return derivatives;

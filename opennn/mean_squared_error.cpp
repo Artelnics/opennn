@@ -111,6 +111,12 @@ MeanSquaredError::~MeanSquaredError()
 
 double MeanSquaredError::calculate_training_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -145,6 +151,12 @@ double MeanSquaredError::calculate_training_error() const
 
 double MeanSquaredError::calculate_selection_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -179,6 +191,12 @@ double MeanSquaredError::calculate_selection_error() const
 
 double MeanSquaredError::calculate_training_error(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -213,6 +231,12 @@ double MeanSquaredError::calculate_training_error(const Vector<double>& paramete
 
 double MeanSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Data set
 
     const size_t instances_number = batch_indices.size();
@@ -239,6 +263,12 @@ double MeanSquaredError::calculate_batch_error(const Vector<size_t>& batch_indic
 
 Vector<double> MeanSquaredError::calculate_training_error_gradient() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Neural network
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -289,6 +319,12 @@ Vector<double> MeanSquaredError::calculate_training_error_gradient() const
 
 Vector<double> MeanSquaredError::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Data set
 
     const size_t instances_number = batch_indices.size();
@@ -320,6 +356,12 @@ Vector<double> MeanSquaredError::calculate_batch_error_gradient(const Vector<siz
 
 Matrix<double> MeanSquaredError::calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {   
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     return (outputs-targets)*2.0;
 }
 
@@ -343,6 +385,12 @@ Vector<double> MeanSquaredError::calculate_error_terms(const Matrix<double>& out
 
 Vector<double> MeanSquaredError::calculate_error_terms(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     const Matrix<double> inputs = data_set_pointer->get_training_inputs();
@@ -357,8 +405,14 @@ Vector<double> MeanSquaredError::calculate_error_terms(const Vector<double>& par
 }
 
 
-LossIndex::TermsSecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss() const
+LossIndex::SecondOrderErrorTerms MeanSquaredError::calculate_terms_second_order_loss() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -375,7 +429,7 @@ LossIndex::TermsSecondOrderLoss MeanSquaredError::calculate_terms_second_order_l
 
     const size_t batches_number = training_batches.size();
 
-    TermsSecondOrderLoss terms_second_order_loss(parameters_number);
+    SecondOrderErrorTerms terms_second_order_loss(parameters_number);
 
     #pragma omp parallel for
 

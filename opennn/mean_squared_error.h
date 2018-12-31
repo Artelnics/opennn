@@ -93,6 +93,8 @@ public:
 
    Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const;
 
+   FirstOrderError calculate_batch_first_order_error(const Vector<size_t>&) const {return FirstOrderError(0);}
+
    // Error terms methods
 
    Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;
@@ -102,7 +104,7 @@ public:
 
    Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 
-   LossIndex::TermsSecondOrderLoss calculate_terms_second_order_loss() const;
+   LossIndex::SecondOrderErrorTerms calculate_terms_second_order_loss() const;
 
    // Serialization methods
 

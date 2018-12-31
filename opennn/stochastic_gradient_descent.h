@@ -285,6 +285,7 @@ public:
    Vector<double> calculate_training_direction(const Vector<double>&) const;
 
    StochasticGradientDescentResults* perform_training();
+   StochasticGradientDescentResults* perform_training_cuda();
 
    void perform_training_void();
 

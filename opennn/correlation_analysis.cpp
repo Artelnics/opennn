@@ -391,7 +391,7 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     }
 
 #endif
-/*
+
     Matrix<double> data(x.size(),2);
 
     data.set_column(0, x);
@@ -450,7 +450,7 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     for(size_t i = 0; i <x.size(); i++)
     {
         value[0] = x[i];
-        output[i] = neural_network.calculate_outputs(value)[0];
+        output[i] = neural_network.calculate_outputs(value.to_column_matrix())[0];
     }
 
     if(calculate_linear_correlation(x,output) < 0)
@@ -461,9 +461,8 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     {
         return calculate_linear_correlation(y,output);
     }
-*/
 
-    return 0.0;
+//    return 0.0;
 }
 
 

@@ -38,7 +38,6 @@ public:
 
    virtual ~CrossEntropyErrorTest();
 
-
    // METHODS
 
    // Get methods
@@ -49,9 +48,6 @@ public:
 
    void test_calculate_error();
    void test_calculate_selection_error();
-
-   void test_calculate_minimum_error();
-   void test_calculate_minimum_selection_error();
 
    void test_calculate_gradient();
 

@@ -150,6 +150,12 @@ bool CrossEntropyError::operator == (const CrossEntropyError& other_cross_entrop
 
 double CrossEntropyError::calculate_training_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -182,6 +188,12 @@ double CrossEntropyError::calculate_training_error() const
 
 double CrossEntropyError::calculate_selection_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -212,456 +224,142 @@ double CrossEntropyError::calculate_selection_error() const
 }
 
 
-double CrossEntropyError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
+double CrossEntropyError::calculate_training_error(const Vector<double>& parameters) const
 {
-   #ifdef __OPENNN_DEBUG__
+#ifdef __OPENNN_DEBUG__
 
-   check();
+check();
 
-   #endif
+#endif
 
-//   double cross_entropy_error = 0.0;
-
-//    #pragma omp parallel for reduction(+ : cross_entropy_error)
-
-//   for(int i = 0; i < static_cast<int>(instances_number); i++)
-//   {
-//       // Cross entropy error
-
-//      for(size_t j = 0; j < outputs_number; j++)
-//      {
-//          if(outputs[j] == 0.0)
-//          {
-//              outputs[j] = 1.0e-6;
-//          }
-//          else if(outputs[j] == 1.0)
-//          {
-//              outputs[j] = 1.0 - 1.0e-6;
-//          }
-
-//          if(targets[j] == 0.0)
-//          {
-//              cross_entropy_error -= log(1.0 - outputs[j]);
-//          }
-//          else if(targets[j] == 1.0)
-//          {
-//              cross_entropy_error -= log(outputs[j]);
-//          }
-//      }
-//   }
-
-//   return(cross_entropy_error/static_cast<double>(instances_number));
-
-
-   return 0.0;
-}
-
-
-/// Returns which would be the cross-entropy loss of a neural network for an hypothetical vector of parameters.
-/// It does not set that vector of parameters to the neural network.
-/// @param parameters Vector of potential parameters for the neural network associated to the error term.
-
-double CrossEntropyError::calculate_error(const Vector<double>& parameters) const
-{
-/*
-    // Neural network stuff
-
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    // Cross-entropy error stuff
-
-    #ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    const size_t size = parameters.size();
-
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
-
-    if(size != parameters_number)
-    {
-       buffer << "OpenNN Exception: CrossEntropyError class." << endl
-              << "double calculate_error(const Vector<double>&) const method." << endl
-              << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ")." << endl;
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    // Neural network stuff
+    // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    // Data set
 
-    // Data set stuff
+    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
-    const Instances& instances = data_set_pointer->get_instances();
+    const size_t batches_number = training_batches.size();
 
-    const Vector<size_t> training_indices = instances.get_training_indices();
+    double training_error = 0.0;
 
-    const size_t training_instances_number = training_indices.size();
+    #pragma omp parallel for reduction(+ : training_error)
 
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.get_inputs_indices();
-    const Vector<size_t> targets_indices = variables.get_targets_indices();
-
-    // Cross-entropy error stuff
-
-    double cross_entropy_error = 0.0;
-
-    #pragma omp parallel for reduction(+ : cross_entropy_error)
-
-    for(int i = 0; i < static_cast<int>(training_instances_number); i++)
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const size_t training_index = training_indices[static_cast<size_t>(i)];
+        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
+        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
 
-       // Input vector
+        Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
 
-       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+        const double batch_error = outputs.calculate_cross_entropy_error(targets);
 
-       // Output vector
-
-       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
-
-       // Target vector
-
-       Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-       // Cross-entropy error
-
-       for(size_t j = 0; j < outputs_number; j++)
-       {
-           if(outputs[j] == 0.0)
-           {
-               outputs[j] = 1.0e-6;
-           }
-           else if(fabs(outputs[j] - 1) < numeric_limits<double>::epsilon())
-           {
-               outputs[j] = 1.0 - 1.0e-6;
-           }
-
-           if(targets[j] == 0.0)
-           {
-               cross_entropy_error -= log(1.0 - outputs[j]);
-           }
-           else if(targets[j] == 1.0)
-           {
-               cross_entropy_error -= log(outputs[j]);
-           }
-//           cross_entropy_error -= (targets[j]*log(outputs[j]) + (1.0 - targets[j])*log(1.0 - outputs[j]));
-       }
+        training_error += batch_error;
     }
 
-    return(cross_entropy_error/static_cast<double>(training_instances_number));
-*/
-
-    return 0.0;
+    return training_error;
 }
 
 
-/// Returns the minimum achieveable cross entropy for the training data. 
-/// It occurs when all the targets are equal to the outputs for the training data.
-
-double CrossEntropyError::calculate_minimum_error() const
+double CrossEntropyError::calculate_batch_error(const Vector<size_t>& batch_indices) const
 {
-    // Neural network stuff
+#ifdef __OPENNN_DEBUG__
 
-    #ifdef __OPENNN_DEBUG__
+check();
 
-    check();
+#endif
 
-    #endif
-/*
-    // Neural network stuff
+    // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    // Data set
 
-    // Data set stuff
+    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
 
-    const Instances& instances = data_set_pointer->get_instances();
+    Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
 
-    const Vector<size_t> training_indices = instances.get_training_indices();
+    const double batch_error = outputs.calculate_cross_entropy_error(targets);
 
-    const size_t training_instances_number = training_indices.size();
-
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.get_inputs_indices();
-    const Vector<size_t> targets_indices = variables.get_targets_indices();
-
-    // Cross-entropy error stuff
-
-    double minimum_cross_entropy_error = 0.0;
-
-    #pragma omp parallel for reduction(+ : minimum_cross_entropy_error)
-
-    for(int i = 0; i < static_cast<int>(training_instances_number); i++)
-    {
-        const size_t training_index = training_indices[static_cast<size_t>(i)];
-
-        // Input vector
-
-       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-       // Output vector
-
-       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
-
-       // Target vector
-
-       Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-       // Cross-entropy error
-
-       for(size_t j = 0; j < outputs_number; j++)
-       {
-           if(outputs[j] == 0.0)
-           {
-               outputs[j] = 1.0e-6;
-           }
-           else if(fabs(outputs[j] - 1) < numeric_limits<double>::epsilon())
-           {
-               outputs[j] = 0.99999;
-           }
-
-           if(targets[j] == 0.0)
-           {
-               targets[j] = 1.0e-6;
-           }
-           else if(targets[j] == 1.0)
-           {
-               targets[j] = 0.999999;
-           }
-
-           minimum_cross_entropy_error -= (targets[j]*log(outputs[j]/targets[j]) + (1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
-       }
-    }
-
-    return(minimum_cross_entropy_error/static_cast<double>(training_instances_number));
-*/
-    return 0.0;
-}
-
-
-/// Returns the minimum achieveable cross entropy for the selection data. 
-/// It occurs when all the targets are equal to the outputs for the selection data.
-
-double CrossEntropyError::calculate_minimum_selection_error() const
-{
-    // Control sentence
-
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-/*
-    // Neural network stuff
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    // Data set stuff
-
-    const Instances& instances = data_set_pointer->get_instances();
-
-    const size_t selection_instances_number = instances.get_selection_instances_number();
-
-    const Vector<size_t> selection_indices = instances.get_selection_indices();
-
-    const Variables& variables = data_set_pointer->get_variables();
-
-    const Vector<size_t> inputs_indices = variables.get_inputs_indices();
-    const Vector<size_t> targets_indices = variables.get_targets_indices();
-
-    // Loss index
-
-    double minimum_selection_error = 0.0;
-
-    #pragma omp parallel for reduction(- : minimum_selection_error)
-
-    for(int i = 0; i < static_cast<int>(selection_instances_number); i++)
-    {
-        const size_t selection_index = selection_indices[static_cast<size_t>(i)];
-
-       // Input vector
-
-       const Vector<double> inputs = data_set_pointer->get_instance(selection_index, inputs_indices);
-
-       // Output vector
-
-       Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
-
-       // Target vector
-
-       Vector<double> targets = data_set_pointer->get_instance(selection_index, targets_indices);
-
-       // Cross entropy error
-
-       for(size_t j = 0; j < outputs_number; j++)
-       {
-           if(outputs[j] == 0.0)
-           {
-               outputs[j] = 1.0e-6;
-           }
-           else if(outputs[j] == 1.0)
-           {
-               outputs[j] = 0.999999;
-           }
-
-           if(targets[j] == 0.0)
-           {
-               targets[j] = 1.0e-6;
-           }
-           else if(targets[j] == 1.0)
-           {
-               targets[j] = 0.999999;
-           }
-
-           minimum_selection_error -= (targets[j]*log(outputs[j]/targets[j]) + (1.0 - targets[j])*log((1.0 - outputs[j])/(1.0 - targets[j])));
-       }
-    }
-
-    return(minimum_selection_error/static_cast<double>(selection_instances_number));
-*/
-    return 0.0;
-}
-
-
-/// Returns the cross-entropy error function output gradient of a multilayer perceptron on a data set.
-/// It uses the error back-propagation method.
-/// @param output Vector of outputs of the neural network.
-/// @param target Vector of targets of the data set.
-
-Vector<double> CrossEntropyError::calculate_output_gradient(const Vector<double>& output, const Vector<double>& target) const
-{
-    const size_t outputs_number = output.size();
-
-    const size_t training_instances_number = data_set_pointer->get_instances().get_training_instances_number();
-
-    Vector<double> output_gradient(outputs_number, 0.0);
-
-    for(size_t j = 0; j < outputs_number; j++)
-    {
-        if(output[j] == 0.0)
-        {
-            output_gradient[j] = (-target[j]/1.e-6 + (1.0 - target[j])/(1.0 - 1.e-6));
-        }
-        else if(output[j] == 1.0)
-        {
-            output_gradient[j] = (-target[j]/0.999999 + (1.0 - target[j])/(1.0 - 0.999999));
-        }
-        else
-        {
-           output_gradient[j] = (-target[j]/output[j] + (1.0 - target[j])/(1.0 - output[j]));
-        }
-    }
-
-    return(output_gradient/static_cast<double>(training_instances_number));
+    return batch_error;
 }
 
 
 /// Returns the cross entropy error function gradient of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
 
-Vector<double> CrossEntropyError::calculate_gradient() const
+Vector<double> CrossEntropyError::calculate_training_error_gradient() const
 {
-   // Control sentence(if debug)
+#ifdef __OPENNN_DEBUG__
 
-   #ifdef __OPENNN_DEBUG__
+check();
 
-   check();
+#endif
 
-   #endif
-/*
-   // Neural network stuff
+    // Neural network
 
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
 
-   const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
 
-   const size_t neural_parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+    // Data set
 
-   Vector< Vector< Vector<double> > > first_order_forward_propagation(2);
+    const size_t training_instances_number = data_set_pointer->get_instances().get_training_instances_number();
 
-   // Data set stuff
+    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
-   const Instances& instances = data_set_pointer->get_instances();
+    const size_t batches_number = training_batches.size();
 
-   const Vector<size_t> training_indices = instances.get_training_indices();
+    // Loss index
 
-   const size_t training_instances_number = training_indices.size();
+    Vector<double> training_error_gradient(parameters_number, 0.0);
 
-   const Variables& variables = data_set_pointer->get_variables();
+    #pragma omp parallel for
 
-   const Vector<size_t> inputs_indices = variables.get_inputs_indices();
-   const Vector<size_t> targets_indices = variables.get_targets_indices();
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    {
+        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
+        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
 
-   // Sum squared error stuff
+        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
-   Vector<double> output_gradient(outputs_number);
+        const Matrix<double> output_gradient
+                = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
 
-   Vector< Matrix<double> > layers_combination_parameters_Jacobian;
+        const Vector< Matrix<double> > layers_delta
+                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
 
-   Vector< Vector<double> > layers_inputs(layers_number);
-   Vector< Vector<double> > layers_delta;
+        const Vector<double> batch_gradient
+                = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
 
-   Vector<double> point_gradient(neural_parameters_number, 0.0);
+        #pragma omp critical
 
-   Vector<double> gradient(neural_parameters_number, 0.0);
+        training_error_gradient += batch_gradient;
+    }
 
-   #pragma omp parallel for private(first_order_forward_propagation, layers_inputs, layers_combination_parameters_Jacobian,\
-    output_gradient, layers_delta, point_gradient)
+    return training_error_gradient / static_cast<double>(training_instances_number);
+}
 
-   for(int i = 0; i < static_cast<int>(training_instances_number); i++)
-   {
-       const size_t training_index = training_indices[static_cast<size_t>(i)];
 
-       // Data set
+/// Returns the cross-entropy error function output gradient of a multilayer perceptron on a data set.
+/// It uses the error back-propagation method.
+/// @param outputs Matrix of outputs of the neural network.
+/// @param targets Matrix of targets of the data set.
 
-       const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+Matrix<double> CrossEntropyError::calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const
+{
+#ifdef __OPENNN_DEBUG__
 
-       const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
+check();
 
-       // Multilayer perceptron
+#endif
 
-       first_order_forward_propagation = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-       const Vector< Vector<double> >& layers_activation = first_order_forward_propagation[0];
-       const Vector< Vector<double> >& layers_activation_derivative = first_order_forward_propagation[1];
-
-       layers_inputs = multilayer_perceptron_pointer->get_layers_input(inputs, layers_activation);
-
-       layers_combination_parameters_Jacobian = multilayer_perceptron_pointer->calculate_layers_combination_parameters_Jacobian(layers_inputs);
-
-       // Loss index
-
-           output_gradient = calculate_output_gradient_unnormalized(layers_activation[layers_number-1], targets)/static_cast<double>(training_instances_number);
-
-           layers_delta = calculate_layers_delta(layers_activation_derivative, output_gradient);
-
-       point_gradient = calculate_point_gradient(layers_combination_parameters_Jacobian, layers_delta);
-
-       #pragma omp critical
-       gradient += point_gradient;
-   }
-
-   return(gradient);
-*/
-
-    return Vector<double>();
+    return (targets/outputs)*(-1.0) + (targets*(-1.0) + 1.0)/(outputs*(-1.0) + 1.0);
 }
 
 

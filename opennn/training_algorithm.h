@@ -195,7 +195,7 @@ protected:
    size_t training_batch_size = 100;
    size_t selection_batch_size = 100;
 
-   size_t epochs_number = 1000;
+   size_t epochs_number = 10000;
 
    // UTILITIES
 

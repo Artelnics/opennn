@@ -808,6 +808,16 @@ Vector<double> LossIndex::calculate_layer_error_gradient(const Matrix<double>& l
     // Synaptic weights
 
     layer_error_gradient.tuck_in(0, layer_inputs.calculate_transpose().dot(layer_deltas).to_vector());
+
+    // Biases
+
+    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
+    {
+        layer_error_gradient[synaptic_weights_number+perceptron] = layer_deltas.calculate_column_sum(perceptron);
+    }
+
+    return layer_error_gradient;
+
 //    size_t parameter = 0;
 
 //    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
@@ -819,15 +829,6 @@ Vector<double> LossIndex::calculate_layer_error_gradient(const Matrix<double>& l
 //            parameter++;
 //        }
 //     }
-
-    // Biases
-
-    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
-    {
-        layer_error_gradient[synaptic_weights_number+perceptron] = layer_deltas.calculate_column_sum(perceptron);
-    }
-
-    return layer_error_gradient;
 
 //    const size_t instances_number = layer_inputs.get_rows_number();
 
@@ -853,7 +854,6 @@ Vector<double> LossIndex::calculate_layer_error_gradient(const Matrix<double>& l
 //    }
 
 //    return layer_error_gradient;
-
 }
 
 

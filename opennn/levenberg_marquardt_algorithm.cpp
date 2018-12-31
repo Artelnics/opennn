@@ -1224,7 +1224,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       // Loss index 
 
-      LossIndex::TermsSecondOrderLoss terms_second_order_loss = loss_index_pointer->calculate_terms_second_order_loss();
+      LossIndex::SecondOrderErrorTerms terms_second_order_loss = loss_index_pointer->calculate_terms_second_order_loss();
 
       training_loss = terms_second_order_loss.loss;
 

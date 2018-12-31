@@ -208,7 +208,7 @@ public:
    Matrix<double> get_selection_targets() const;
    Matrix<double> get_testing_inputs() const;
    Matrix<double> get_testing_targets() const;
-   Vector<double> get_testing_time_column() const;
+   Vector<double> get_testing_time() const;
 
    DataSet get_training_data_set() const;
    DataSet get_testing_data_set() const;
@@ -355,6 +355,7 @@ public:
    // Correlation methods
 
    Matrix<double> calculate_input_target_correlations() const;
+   std::vector<std::vector<double>> std_input_target_correlations() const;
 
    Vector<double> calculate_total_input_correlations() const;
 

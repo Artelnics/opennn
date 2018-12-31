@@ -232,12 +232,24 @@ void NormalizedSquaredError::set_default()
 
 double NormalizedSquaredError::calculate_normalization_coefficient(const Matrix<double>& targets, const Vector<double>& targets_mean) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
    return(targets.calculate_sum_squared_error(targets_mean));
 }
 
 
 double NormalizedSquaredError::calculate_training_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -270,6 +282,12 @@ double NormalizedSquaredError::calculate_training_error() const
 
 double NormalizedSquaredError::calculate_selection_error() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -302,6 +320,12 @@ double NormalizedSquaredError::calculate_selection_error() const
 
 double NormalizedSquaredError::calculate_training_error(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -332,8 +356,39 @@ double NormalizedSquaredError::calculate_training_error(const Vector<double>& pa
 }
 
 
+double NormalizedSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Multilayer perceptron
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    // Data set
+
+    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+
+    const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+
+    const double batch_error = outputs.calculate_sum_squared_error(targets);
+
+    return batch_error / normalization_coefficient;
+}
+
+
 Vector<double> NormalizedSquaredError::calculate_training_error_gradient() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Neural network
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -382,6 +437,12 @@ Vector<double> NormalizedSquaredError::calculate_training_error_gradient() const
 
 double NormalizedSquaredError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
    // Control sentence
 
    #ifdef __OPENNN_DEBUG__
@@ -412,6 +473,12 @@ double NormalizedSquaredError::calculate_error(const Matrix<double>& outputs, co
 
 double NormalizedSquaredError::calculate_error(const Vector<size_t>& instances_indices, const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
    // Control sentence(if debug)
 
    #ifdef __OPENNN_DEBUG__ 
@@ -468,6 +535,12 @@ double NormalizedSquaredError::calculate_error(const Vector<size_t>& instances_i
 
 Matrix<double> NormalizedSquaredError::calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     return (outputs-targets)*2.0/normalization_coefficient;
 }
 
@@ -477,6 +550,12 @@ Matrix<double> NormalizedSquaredError::calculate_output_gradient(const Matrix<do
 
 Vector<double> NormalizedSquaredError::calculate_error_terms(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
    // Control sentence
 
    #ifdef __OPENNN_DEBUG__
@@ -491,6 +570,12 @@ Vector<double> NormalizedSquaredError::calculate_error_terms(const Matrix<double
 
 Vector<double> NormalizedSquaredError::calculate_error_terms(const Vector<double>& parameters) const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     const Matrix<double> inputs = data_set_pointer->get_training_inputs();
@@ -599,8 +684,14 @@ Vector<size_t> NormalizedSquaredError::calculate_maximal_errors(const size_t& ma
 
 
 
-LossIndex::TermsSecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_loss() const
+LossIndex::SecondOrderErrorTerms NormalizedSquaredError::calculate_terms_second_order_loss() const
 {
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
     // Multilayer perceptron
 
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
@@ -615,7 +706,7 @@ LossIndex::TermsSecondOrderLoss NormalizedSquaredError::calculate_terms_second_o
 
     const size_t batches_number = training_batches.size();
 
-    TermsSecondOrderLoss terms_second_order_loss(parameters_number);
+    SecondOrderErrorTerms terms_second_order_loss(parameters_number);
 
     #pragma omp parallel for
 

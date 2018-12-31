@@ -110,7 +110,7 @@ public:
 
    Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 
-   LossIndex::TermsSecondOrderLoss calculate_terms_second_order_loss() const;
+   LossIndex::SecondOrderErrorTerms calculate_terms_second_order_loss() const;
 
 private:
 
