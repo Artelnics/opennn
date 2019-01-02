@@ -1,7 +1,7 @@
 # Path to cuda toolkit install
 
 windows{
-CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v9.2
+CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v10.0
 }else:mac{
 CUDA_DIR = /Developer/NVIDIA/CUDA-7.5
 }else:unix{
@@ -24,6 +24,9 @@ windows: LIBS += -L$$CUDA_DIR/lib/x64/ -lcudart
 
 windows:CONFIG(release, debug|release): LIBS += -L$$CUDA_DIR/lib/x64/ -lcublas
 else:windows:CONFIG(debug, debug|release): LIBS += -L$$CUDA_DIR/lib/x64/ -lcublas
+
+windows:CONFIG(release, debug|release): LIBS += -L$$CUDA_DIR/lib/x64/ -lcurand
+else:windows:CONFIG(debug, debug|release): LIBS += -L$$CUDA_DIR/lib/x64/ -lcurand
 
 macx: LIBS += -L$$CUDA_DIR/lib/ -lcudart
 

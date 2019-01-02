@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S   H E A D E R                                      */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 

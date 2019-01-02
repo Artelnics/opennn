@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   C R O S S   E N T R O P Y   E R R O R   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -22,7 +21,7 @@
 
 // OpenNN includes
 
-#include "error_term.h"
+#include "loss_index.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -36,7 +35,7 @@ namespace OpenNN
 /// This class represents the cross entropy error term. 
 /// This functional is used in classification problems.
 
-class CrossEntropyError : public ErrorTerm
+class CrossEntropyError : public LossIndex
 {
 
 public:
@@ -71,44 +70,27 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   CrossEntropyError& operator =(const CrossEntropyError&);
+   CrossEntropyError& operator = (const CrossEntropyError&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const CrossEntropyError&) const;
+   bool operator == (const CrossEntropyError&) const;
 
    // METHODS
 
-   // Checking methods
+   // Error methods
 
-   void check() const;
-
-   // loss methods
-
-   double calculate_error() const;
-   double calculate_error(const Vector<double>&) const;
-
-   double calculate_minimum_loss() const;
+   double calculate_training_error() const;
 
    double calculate_selection_error() const;
-   double calculate_minimum_selection_error() const;
 
-   double calculate_error_unnormalized() const;
-   double calculate_error_unnormalized(const Vector<double>&) const;
+   double calculate_training_error(const Vector<double>&) const;
 
-   double calculate_minimum_loss_unnormalized() const;
+   double calculate_batch_error(const Vector<size_t> &) const;
 
-   double calculate_selection_error_unnormalized() const;
-   double calculate_minimum_selection_error_unnormalized() const;
+   Vector<double> calculate_training_error_gradient() const;
 
-   Vector<double> calculate_output_gradient(const Vector<double> &, const Vector<double> &) const;
-   Matrix<double> calculate_output_Hessian(const Vector<double> &, const Vector<double> &) const;
-
-   Vector<double> calculate_gradient() const;
-
-   Vector<double> calculate_output_gradient_unnormalized(const Vector<double> &, const Vector<double> &) const;
-
-   Vector<double> calculate_gradient_unnormalized() const;
+   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 
    string write_error_term_type() const;
 
@@ -118,8 +100,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(   );
-
 };
 
 }

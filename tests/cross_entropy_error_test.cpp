@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S                                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -34,9 +33,9 @@ CrossEntropyErrorTest::~CrossEntropyErrorTest()
 // METHODS
 
 
-// @todo
+/// @todo
 
-void CrossEntropyErrorTest::test_calculate_loss()
+void CrossEntropyErrorTest::test_calculate_error()
 {
 //   message += "test_calculate_loss\n";
 
@@ -60,7 +59,7 @@ void CrossEntropyErrorTest::test_calculate_loss()
 //   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
 
 //   nn.initialize_parameters(0.0);
-//   parameters = nn.arrange_parameters();
+//   parameters = nn.get_parameters();
    
 //   ds.set(1,1,1);
 //   ds.initialize_data(0.0);
@@ -79,7 +78,7 @@ void CrossEntropyErrorTest::test_calculate_loss()
 
 //   nn.randomize_parameters_normal();
 
-//   parameters = nn.arrange_parameters();
+//   parameters = nn.get_parameters();
 
 //   ds.set(1, 1, 1);
 //   ds.randomize_data_normal();
@@ -96,7 +95,7 @@ void CrossEntropyErrorTest::test_calculate_loss()
 
 //   nn.randomize_parameters_normal();
 
-//   parameters = nn.arrange_parameters();
+//   parameters = nn.get_parameters();
 
 //   ds.set(1, 1, 1);
 //   ds.randomize_data_normal();
@@ -137,92 +136,31 @@ void CrossEntropyErrorTest::test_calculate_loss()
 }
 
 
-void CrossEntropyErrorTest::test_calculate_selection_loss()   
+void CrossEntropyErrorTest::test_calculate_selection_error()
 {
-   message += "test_calculate_selection_loss\n";
+   message += "test_calculate_selection_error\n";
 
    NeuralNetwork nn;
    DataSet ds;
    
    CrossEntropyError cee(&nn, &ds);
 
-   double selection_objective;
+   double selection_error;
 
    // Test
 
    nn.set(1, 1);
-   nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
+   nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(PerceptronLayer::Logistic);
    nn.initialize_parameters(0.0);
    
    ds.set(1,1,1);
    ds.get_instances_pointer()->set_selection();
    ds.initialize_data(0.0);
    
-   selection_objective = cee.calculate_selection_error();
+   selection_error = cee.calculate_training_error({0});
 
-   assert_true(selection_objective > 0.0, LOG);
+   assert_true(selection_error > 0.0, LOG);
 }
-
-
-// @todo
-
-void CrossEntropyErrorTest::test_calculate_minimum_loss()
-{
-//    message += "test_calculate_minimum_loss\n";
-
-//    NeuralNetwork nn;
-//    DataSet ds;
-
-//    CrossEntropyError cee(&nn, &ds);
-
-//    double minimum_loss;
-//    double loss;
-
-//    // Test
-
-//    nn.set(1, 1);
-//    nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-//    nn.randomize_parameters_normal();
-
-//    ds.set(20,1,1);
-//    ds.randomize_data_uniform(0,1);
-
-//    loss = cee.calculate_error();
-//    minimum_loss = cee.calculate_minimum_loss();
-
-//    assert_true(minimum_loss <= loss, LOG);
-//    assert_true(minimum_loss > 0, LOG);
-}
-
-
-void CrossEntropyErrorTest::test_calculate_minimum_selection_loss()
-{
-    message += "test_calculate_minimum_selection_loss\n";
-
-    NeuralNetwork nn;
-    DataSet ds;
-
-    CrossEntropyError cee(&nn, &ds);
-
-    double minimum_selection_loss;
-    double selection_loss;
-
-    // Test
-
-    nn.set(1, 1);
-    nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-
-    ds.set(20,1,1);
-    ds.get_instances_pointer()->set_selection();
-    ds.randomize_data_uniform(0,1);
-
-    selection_loss = cee.calculate_selection_error();
-    minimum_selection_loss = cee.calculate_minimum_selection_error();
-
-    assert_true(minimum_selection_loss <= selection_loss, LOG);
-    assert_true(minimum_selection_loss > 0, LOG);
-}
-
 
 // @todo
 
@@ -256,7 +194,7 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 
 //   gradient = cee.calculate_gradient();
 
-//   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
 
 //   // Test
 
@@ -270,7 +208,7 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 
 //   gradient = cee.calculate_gradient();
 
-//   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
 
 //   // Test
 
@@ -289,7 +227,7 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 
 //   gradient = cee.calculate_gradient();
 
-//   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
 
 //   // Test
 
@@ -303,7 +241,7 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 
 //   gradient = cee.calculate_gradient();
 
-//   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
 
 
 //   // Test
@@ -318,7 +256,7 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 
 //   gradient = cee.calculate_gradient();
 
-//   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
 
 
 //   // Test
@@ -337,14 +275,14 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 
 //   gradient = cee.calculate_gradient();
 
-//   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
 
 //   // Test
 
 //   nn.set(1, 1);
 
 //   nn.initialize_parameters(1.0);
-//   parameters = nn.arrange_parameters();
+//   parameters = nn.get_parameters();
 
 //   ds.set(2,1,1);
 //   ds.initialize_data(0.5);
@@ -362,7 +300,7 @@ void CrossEntropyErrorTest::test_calculate_gradient()
 //   nn.set(1, 1);
 
 //   nn.randomize_parameters_normal();
-//   parameters = nn.arrange_parameters();
+//   parameters = nn.get_parameters();
 
 //   ds.set(2,1,1);
 //   ds.randomize_data_uniform(0.0, 1.0);
@@ -398,12 +336,10 @@ void CrossEntropyErrorTest::run_test_case()
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
-   test_calculate_loss();
-   test_calculate_selection_loss();
-
-   test_calculate_minimum_loss();
+   test_calculate_error();
+   test_calculate_selection_error();
 
    test_calculate_gradient();
    test_calculate_Hessian();
@@ -412,7 +348,6 @@ void CrossEntropyErrorTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
 }
 
 

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   G R A D I E N T   D E S C E N T   C L A S S                                                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -18,10 +17,8 @@
 namespace OpenNN
 {
 
-// DEFAULT CONSTRUCTOR
-
 /// Default constructor. 
-/// It creates a gradient descent training algorithm not associated to any loss functional object.
+/// It creates a gradient descent training algorithm not associated to any loss index object.
 /// It also initializes the class members to their default values.
 
 GradientDescent::GradientDescent() 
@@ -31,12 +28,10 @@ GradientDescent::GradientDescent()
 }
 
 
-// PERFORMANCE FUNCTIONAL CONSTRUCTOR 
-
 /// Loss index constructor. 
-/// It creates a gradient descent training algorithm associated to a loss functional.
+/// It creates a gradient descent training algorithm associated to a loss index.
 /// It also initializes the class members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss functional object.
+/// @param new_loss_index_pointer Pointer to a loss index object.
 
 GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
 : TrainingAlgorithm(new_loss_index_pointer)
@@ -50,7 +45,7 @@ GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a gradient descent training algorithm not associated to any loss functional object.
+/// It creates a gradient descent training algorithm not associated to any loss index object.
 /// It also loads the class members from a XML document.
 /// @param document TinyXML document with the members of a gradient descent object.
 
@@ -73,7 +68,6 @@ GradientDescent::~GradientDescent()
 
 // METHODS
 
-// const TrainingRateAlgorithm& get_training_rate_algorithm() const method
 
 /// Returns a constant reference to the training rate algorithm object inside the gradient descent object. 
 
@@ -83,8 +77,6 @@ const TrainingRateAlgorithm& GradientDescent::get_training_rate_algorithm() cons
 }
 
 
-// TrainingRateAlgorithm* get_training_rate_algorithm_pointer() method
-
 /// Returns a pointer to the training rate algorithm object inside the gradient descent object. 
 
 TrainingRateAlgorithm* GradientDescent::get_training_rate_algorithm_pointer()
@@ -92,8 +84,6 @@ TrainingRateAlgorithm* GradientDescent::get_training_rate_algorithm_pointer()
    return(&training_rate_algorithm);
 }
 
-
-// const double& get_warning_parameters_norm() const method
 
 /// Returns the minimum value for the norm of the parameters vector at wich a warning message is 
 /// written to the screen. 
@@ -104,8 +94,6 @@ const double& GradientDescent::get_warning_parameters_norm() const
 }
 
 
-// const double& get_warning_gradient_norm() const method
-
 /// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
 /// to the screen. 
 
@@ -114,8 +102,6 @@ const double& GradientDescent::get_warning_gradient_norm() const
    return(warning_gradient_norm);       
 }
 
-
-// const double& get_warning_training_rate() const method
 
 /// Returns the training rate value at wich a warning message is written to the screen during line 
 /// minimization.
@@ -126,8 +112,6 @@ const double& GradientDescent::get_warning_training_rate() const
 }
 
 
-// const double& get_error_parameters_norm() const method
-
 /// Returns the value for the norm of the parameters vector at wich an error message is 
 /// written to the screen and the program exits. 
 
@@ -136,8 +120,6 @@ const double& GradientDescent::get_error_parameters_norm() const
    return(error_parameters_norm);
 }
 
-
-// const double& get_error_gradient_norm() const method
 
 /// Returns the value for the norm of the gradient vector at wich an error message is written
 /// to the screen and the program exits. 
@@ -148,8 +130,6 @@ const double& GradientDescent::get_error_gradient_norm() const
 }
 
 
-// const double& get_error_training_rate() const method
-
 /// Returns the training rate value at wich the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
 
@@ -159,8 +139,6 @@ const double& GradientDescent::get_error_training_rate() const
 }
 
 
-// const double& get_minimum_parameters_increment_norm() const method
-
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training. 
 
 const double& GradientDescent::get_minimum_parameters_increment_norm() const
@@ -169,17 +147,13 @@ const double& GradientDescent::get_minimum_parameters_increment_norm() const
 }
 
 
-// const double& get_minimum_loss_increase() const method
-
 /// Returns the minimum loss improvement during training.  
 
 const double& GradientDescent::get_minimum_loss_increase() const
 {
-   return(minimum_loss_increase);
+   return(minimum_loss_decrease);
 }
 
-
-// const double& get_loss_goal() const method
 
 /// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
@@ -190,9 +164,7 @@ const double& GradientDescent::get_loss_goal() const
 }
 
 
-// const double& get_gradient_norm_goal() const method
-
-/// Returns the goal value for the norm of the objective function gradient.
+/// Returns the goal value for the norm of the error function gradient.
 /// This is used as a stopping criterion when training a multilayer perceptron
 
 const double& GradientDescent::get_gradient_norm_goal() const
@@ -201,17 +173,13 @@ const double& GradientDescent::get_gradient_norm_goal() const
 }
 
 
-// const size_t& get_maximum_selection_loss_decreases() const method
-
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& GradientDescent::get_maximum_selection_loss_decreases() const
+const size_t& GradientDescent::get_maximum_selection_error_decreases() const
 {
-   return(maximum_selection_loss_decreases);
+   return(maximum_selection_error_decreases);
 }
 
-
-// const size_t& get_maximum_iterations_number() const method
 
 /// Returns the maximum number of iterations for training.
 
@@ -221,8 +189,6 @@ const size_t& GradientDescent::get_maximum_iterations_number() const
 }
 
 
-// const double& get_maximum_time() const method
-
 /// Returns the maximum training time.  
 
 const double& GradientDescent::get_maximum_time() const
@@ -230,7 +196,6 @@ const double& GradientDescent::get_maximum_time() const
    return(maximum_time);
 }
 
-// const bool& get_return_minimum_selection_error_neural_network() const method
 
 /// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
 
@@ -239,7 +204,6 @@ const bool& GradientDescent::get_return_minimum_selection_error_neural_network()
     return(return_minimum_selection_error_neural_network);
 }
 
-// const bool& get_apply_early_stopping() const method
 
 /// Returns true if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
 
@@ -248,7 +212,6 @@ const bool& GradientDescent::get_apply_early_stopping() const
     return(apply_early_stopping);
 }
 
-// const bool& get_reserve_parameters_history() const method
 
 /// Returns true if the parameters history matrix is to be reserved, and false otherwise.
 
@@ -258,8 +221,6 @@ const bool& GradientDescent::get_reserve_parameters_history() const
 }
 
 
-// const bool& get_reserve_parameters_norm_history() const method 
-
 /// Returns true if the parameters norm history vector is to be reserved, and false otherwise.
 
 const bool& GradientDescent::get_reserve_parameters_norm_history() const
@@ -267,8 +228,6 @@ const bool& GradientDescent::get_reserve_parameters_norm_history() const
    return(reserve_parameters_norm_history);     
 }
 
-
-// const bool& get_reserve_loss_history() const method
 
 /// Returns true if the loss history vector is to be reserved, and false otherwise.
 
@@ -278,8 +237,6 @@ const bool& GradientDescent::get_reserve_loss_history() const
 }
 
 
-// const bool& get_reserve_gradient_history() const method
-
 /// Returns true if the gradient history vector of vectors is to be reserved, and false otherwise.
 
 const bool& GradientDescent::get_reserve_gradient_history() const
@@ -287,8 +244,6 @@ const bool& GradientDescent::get_reserve_gradient_history() const
    return(reserve_gradient_history);     
 }
 
-
-// const bool& get_reserve_gradient_norm_history() const method
 
 /// Returns true if the gradient norm history vector is to be reserved, and false otherwise.
 
@@ -298,8 +253,6 @@ const bool& GradientDescent::get_reserve_gradient_norm_history() const
 }
 
 
-// const bool& get_reserve_training_direction_history() const method
-
 /// Returns true if the training direction history matrix is to be reserved, and false otherwise.
 
 const bool& GradientDescent::get_reserve_training_direction_history() const
@@ -307,8 +260,6 @@ const bool& GradientDescent::get_reserve_training_direction_history() const
    return(reserve_training_direction_history);     
 }
 
-
-// const bool& get_reserve_training_rate_history() const method
 
 /// Returns true if the training rate history vector is to be reserved, and false otherwise.
 
@@ -318,8 +269,6 @@ const bool& GradientDescent::get_reserve_training_rate_history() const
 }
 
 
-// const bool& get_reserve_elapsed_time_history() const method
-
 /// Returns true if the elapsed time history vector is to be reserved, and false otherwise.
 
 const bool& GradientDescent::get_reserve_elapsed_time_history() const
@@ -328,32 +277,26 @@ const bool& GradientDescent::get_reserve_elapsed_time_history() const
 }
 
 
-// const bool& get_reserve_selection_loss_history() const method
-
 /// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& GradientDescent::get_reserve_selection_loss_history() const
+const bool& GradientDescent::get_reserve_selection_error_history() const
 {
-   return(reserve_selection_loss_history);
+   return(reserve_selection_error_history);
 }
 
-
-// void set_training_rate_algorithm(const TrainingRateAlgorithm&) method
 
 /// Sets a new training rate algorithm object into the gradient descent object.
 /// @param new_training_rate_algorithm Object of the class TrainingRateAlgorithm
 
-void GradientDescent::set_training_rate_algorithm(const TrainingRateAlgorithm& new_training_rate_algorithm)
-{
-   training_rate_algorithm = new_training_rate_algorithm;
-}
+//void GradientDescent::set_training_rate_algorithm(const TrainingRateAlgorithm& new_training_rate_algorithm)
+//{
+//   training_rate_algorithm = new_training_rate_algorithm;
+//}
 
 
-// void set_loss_index_pointer(LossIndex*) method
-
-/// Sets a pointer to a loss functional object to be associated to the gradient descent object.
-/// It also sets that loss functional to the training rate algorithm.
-/// @param new_loss_index_pointer Pointer to a loss functional object.
+/// Sets a pointer to a loss index object to be associated to the gradient descent object.
+/// It also sets that loss index to the training rate algorithm.
+/// @param new_loss_index_pointer Pointer to a loss index object.
 
 void GradientDescent::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
@@ -362,8 +305,6 @@ void GradientDescent::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
    training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
-
-// void set_default() method
 
 void GradientDescent::set_default()
 {
@@ -381,10 +322,10 @@ void GradientDescent::set_default()
 
    minimum_parameters_increment_norm = 0.0;
 
-   minimum_loss_increase = 0.0;
-   loss_goal = -1.0e99;
+   minimum_loss_decrease = 0.0;
+   loss_goal = -numeric_limits<double>::max();
    gradient_norm_goal = 0.0;
-   maximum_selection_loss_decreases = 1000000;
+   maximum_selection_error_decreases = 1000000;
 
    maximum_iterations_number = 1000;
    maximum_time = 1000.0;
@@ -400,7 +341,7 @@ void GradientDescent::set_default()
    reserve_loss_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
-   reserve_selection_loss_history = false;
+   reserve_selection_error_history = false;
 
    reserve_training_direction_history = false;
    reserve_training_rate_history = false;
@@ -413,13 +354,11 @@ void GradientDescent::set_default()
 }
 
 
-// void set_reserve_all_training_history(bool) method
-
 /// Makes the training history of all variables to reseved or not in memory:
 /// <ul>
 /// <li> Parameters.
 /// <li> Parameters norm.
-/// <li> Performance.
+/// <li> Loss.
 /// <li> Gradient. 
 /// <li> Gradient norm. 
 /// <li> Selection loss.
@@ -442,7 +381,7 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
 
-   reserve_selection_loss_history = new_reserve_all_training_history;
+   reserve_selection_error_history = new_reserve_all_training_history;
 
    // Training algorithm
 
@@ -452,8 +391,6 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
    reserve_elapsed_time_history = new_reserve_all_training_history;
 }
 
-
-// void set_warning_parameters_norm(const double&) method
 
 /// Sets a new value for the parameters vector norm at which a warning message is written to the 
 /// screen. 
@@ -484,8 +421,6 @@ void GradientDescent::set_warning_parameters_norm(const double& new_warning_para
 }
 
 
-// void set_warning_gradient_norm(const double&) method
-
 /// Sets a new value for the gradient vector norm at which 
 /// a warning message is written to the screen. 
 /// @param new_warning_gradient_norm Warning norm of gradient vector value. 
@@ -515,8 +450,6 @@ void GradientDescent::set_warning_gradient_norm(const double& new_warning_gradie
 }
 
 
-// void set_warning_training_rate(const double&) method
-
 /// Sets a new training rate value at wich a warning message is written to the screen during line 
 /// minimization.
 /// @param new_warning_training_rate Warning training rate value.
@@ -543,8 +476,6 @@ void GradientDescent::set_warning_training_rate(const double& new_warning_traini
    warning_training_rate = new_warning_training_rate;
 }
 
-
-// void set_error_parameters_norm(const double&) method
 
 /// Sets a new value for the parameters vector norm at which an error message is written to the 
 /// screen and the program exits. 
@@ -575,8 +506,6 @@ void GradientDescent::set_error_parameters_norm(const double& new_error_paramete
 }
 
 
-// void set_error_gradient_norm(const double&) method
-
 /// Sets a new value for the gradient vector norm at which an error message is written to the screen 
 /// and the program exits. 
 /// @param new_error_gradient_norm Error norm of gradient vector value. 
@@ -605,8 +534,6 @@ void GradientDescent::set_error_gradient_norm(const double& new_error_gradient_n
    error_gradient_norm = new_error_gradient_norm;
 }
 
-
-// void set_error_training_rate(const double&) method
 
 /// Sets a new training rate value at wich a the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
@@ -637,7 +564,33 @@ void GradientDescent::set_error_training_rate(const double& new_error_training_r
 }
 
 
-// void set_minimum_parameters_increment_norm(const double&) method
+/// Set the a new maximum for the epochs number.
+/// @param new_maximum_epochs number New maximum epochs number.
+
+void GradientDescent::set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
+{
+   // Control sentence(if debug)
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(new_maximum_epochs_number < 0.0)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: GradientDescent class.\n"
+             << "void set_maximum_epochs_number(const double&) method.\n"
+             << "Maximum epochs number must be equal or greater than 0.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   // Set maximum_epochs number
+
+   maximum_epochs_number = new_maximum_epochs_number;
+}
+
 
 /// Sets a new value for the minimum parameters increment norm stopping criterion. 
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training. 
@@ -667,12 +620,10 @@ void GradientDescent::set_minimum_parameters_increment_norm(const double& new_mi
 }
 
 
-// void set_minimum_loss_increase(const double&) method
-
 /// Sets a new minimum loss improvement during training.  
 /// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
-void GradientDescent::set_minimum_loss_increase(const double& new_minimum_loss_increase)
+void GradientDescent::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
 {
    // Control sentence(if debug)
 
@@ -683,7 +634,7 @@ void GradientDescent::set_minimum_loss_increase(const double& new_minimum_loss_i
       ostringstream buffer;
 
       buffer << "OpenNN Exception: GradientDescent class.\n"
-             << "void set_minimum_loss_increase(const double&) method.\n"
+             << "void set_minimum_loss_decrease(const double&) method.\n"
              << "Minimum loss improvement must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -693,11 +644,9 @@ void GradientDescent::set_minimum_loss_increase(const double& new_minimum_loss_i
 
    // Set minimum loss improvement
 
-   minimum_loss_increase = new_minimum_loss_increase;
+   minimum_loss_decrease = new_minimum_loss_increase;
 }
 
-
-// void set_loss_goal(const double&) method
 
 /// Sets a new goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
@@ -709,11 +658,9 @@ void GradientDescent::set_loss_goal(const double& new_loss_goal)
 }
 
 
-// void set_gradient_norm_goal(const double&) method
-
-/// Sets a new the goal value for the norm of the objective function gradient. 
+/// Sets a new the goal value for the norm of the error function gradient. 
 /// This is used as a stopping criterion when training a multilayer perceptron
-/// @param new_gradient_norm_goal Goal value for the norm of the objective function gradient.
+/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
 
 void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goal)
 {
@@ -740,18 +687,14 @@ void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goa
 }
 
 
-// void set_maximum_selection_loss_decreases(const size_t&) method
-
 /// Sets a new maximum number of selection failures. 
-/// @param new_maximum_selection_loss_decreases Maximum number of iterations in which the selection evalutation decreases.
+/// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void GradientDescent::set_maximum_selection_loss_decreases(const size_t& new_maximum_selection_loss_decreases)
+void GradientDescent::set_maximum_selection_error_increases(const size_t& new_maximum_selection_error_decreases)
 {
-   maximum_selection_loss_decreases = new_maximum_selection_loss_decreases;
+   maximum_selection_error_decreases = new_maximum_selection_error_decreases;
 }
 
-
-// void set_maximum_iterations_number(size_t) method
 
 /// Sets a maximum number of iterations for training.
 /// @param new_maximum_iterations_number Maximum number of iterations for training.
@@ -761,8 +704,6 @@ void GradientDescent::set_maximum_iterations_number(const size_t& new_maximum_it
    maximum_iterations_number = new_maximum_iterations_number;
 }
 
-
-// void set_maximum_time(const double&) method
 
 /// Sets a new maximum training time.  
 /// @param new_maximum_time Maximum training time.
@@ -791,7 +732,6 @@ void GradientDescent::set_maximum_time(const double& new_maximum_time)
    maximum_time = new_maximum_time;
 }
 
-// void set_return_minimum_selection_error_neural_network(const bool&) method
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
 /// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
@@ -801,7 +741,6 @@ void GradientDescent::set_return_minimum_selection_error_neural_network(const bo
    return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
 }
 
-// void set_apply_early_stopping(const bool&) method
 
 /// Makes the selection loss decrease stopping criteria has to be taken in account or not.
 /// @param new_apply_early_stopping True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
@@ -811,7 +750,6 @@ void GradientDescent::set_apply_early_stopping(const bool& new_apply_early_stopp
     apply_early_stopping = new_apply_early_stopping;
 }
 
-// void set_reserve_parameters_history(bool) method
 
 /// Makes the parameters history vector of vectors to be reseved or not in memory.
 /// @param new_reserve_parameters_history True if the parameters history vector of vectors is to be reserved, false otherwise.
@@ -822,8 +760,6 @@ void GradientDescent::set_reserve_parameters_history(const bool& new_reserve_par
 }
 
 
-// void set_reserve_parameters_norm_history(bool) method
-
 /// Makes the parameters norm history vector to be reseved or not in memory.
 /// @param new_reserve_parameters_norm_history True if the parameters norm history vector is to be reserved, false otherwise.
 
@@ -832,8 +768,6 @@ void GradientDescent::set_reserve_parameters_norm_history(const bool& new_reserv
    reserve_parameters_norm_history = new_reserve_parameters_norm_history;     
 }
 
-
-// void set_reserve_loss_history(bool) method
 
 /// Makes the loss history vector to be reseved or not in memory.
 /// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
@@ -844,8 +778,6 @@ void GradientDescent::set_reserve_loss_history(const bool& new_reserve_loss_hist
 }
 
 
-// void set_reserve_gradient_history(bool) method
-
 /// Makes the gradient history vector of vectors to be reseved or not in memory.
 /// @param new_reserve_gradient_history True if the gradient history matrix is to be reserved, false otherwise.
 
@@ -854,8 +786,6 @@ void GradientDescent::set_reserve_gradient_history(const bool& new_reserve_gradi
    reserve_gradient_history = new_reserve_gradient_history;    
 }
 
-
-// void set_reserve_gradient_norm_history(bool) method
 
 /// Makes the gradient norm history vector to be reseved or not in memory.
 /// @param new_reserve_gradient_norm_history True if the gradient norm history matrix is to be reserved, false 
@@ -867,8 +797,6 @@ void GradientDescent::set_reserve_gradient_norm_history(const bool& new_reserve_
 }
 
 
-// void set_reserve_training_direction_history(bool) method
-
 /// Makes the training direction history vector of vectors to be reseved or not in memory.
 /// @param new_reserve_training_direction_history True if the training direction history matrix is to be reserved, 
 /// false otherwise.
@@ -878,8 +806,6 @@ void GradientDescent::set_reserve_training_direction_history(const bool& new_res
    reserve_training_direction_history = new_reserve_training_direction_history;          
 }
 
-
-// void set_reserve_training_rate_history(bool) method
 
 /// Makes the training rate history vector to be reseved or not in memory.
 /// @param new_reserve_training_rate_history True if the training rate history vector is to be reserved, false 
@@ -891,8 +817,6 @@ void GradientDescent::set_reserve_training_rate_history(const bool& new_reserve_
 }
 
 
-// void set_reserve_elapsed_time_history(bool) method
-
 /// Makes the elapsed time over the iterations to be reseved or not in memory. This is a vector.
 /// @param new_reserve_elapsed_time_history True if the elapsed time history vector is to be reserved, false 
 /// otherwise.
@@ -903,19 +827,15 @@ void GradientDescent::set_reserve_elapsed_time_history(const bool& new_reserve_e
 }
 
 
-// void set_reserve_selection_loss_history(bool) method
-
 /// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_loss_history True if the selection loss history is to be reserved, false otherwise.
+/// @param new_reserve_selection_error_history True if the selection loss history is to be reserved, false otherwise.
 
-void GradientDescent::set_reserve_selection_loss_history(const bool& new_reserve_selection_loss_history)  
+void GradientDescent::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)  
 {
-   reserve_selection_loss_history = new_reserve_selection_loss_history;
+   reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
-
-// void set_display_period(size_t) method
 
 /// Sets a new number of iterations between the training showing progress.
 /// @param new_display_period
@@ -944,8 +864,6 @@ void GradientDescent::set_display_period(const size_t& new_display_period)
 }
 
 
-// Vector<double> calculate_training_direction(const Vector<double>&) const method
-
 /// Returns the gradient descent training direction,
 /// which is the negative of the normalized gradient.
 /// @param gradient Performance function gradient.
@@ -962,14 +880,14 @@ Vector<double> GradientDescent::calculate_training_direction(const Vector<double
     {
        buffer << "OpenNN Exception: GradientDescent class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&) const method.\n"
-              << "Loss index pointer is NULL.\n";
+              << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
     }
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const size_t parameters_number = neural_network_pointer->count_parameters_number();
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
     const size_t gradient_size = gradient.size();
 
@@ -987,8 +905,6 @@ Vector<double> GradientDescent::calculate_training_direction(const Vector<double
    return(gradient.calculate_normalized()*(-1.0));
 }
 
-
-// string GradientDescentResults::object_to_string() const method
 
 string GradientDescent::GradientDescentResults::object_to_string() const
 {
@@ -1013,20 +929,20 @@ string GradientDescent::GradientDescentResults::object_to_string() const
               << parameters_norm_history << "\n"; 
    }
 
-   // Performance history   
+   // Loss history   
 
    if(!loss_history.empty())
    {
-       buffer << "% Performance history:\n"
+       buffer << "% Loss history:\n"
               << loss_history << "\n"; 
    }
 
    // Selection loss history
 
-   if(!selection_loss_history.empty())
+   if(!selection_error_history.empty())
    {
        buffer << "% Selection loss history:\n"
-              << selection_loss_history << "\n"; 
+              << selection_error_history << "\n";
    }
 
    // Gradient history 
@@ -1087,9 +1003,7 @@ string GradientDescent::GradientDescentResults::object_to_string() const
 }
 
 
-// Matrix<string> write_final_results(const size_t& precision) const method
-
-Matrix<string> GradientDescent::GradientDescentResults::write_final_results(const size_t& precision) const
+Matrix<string> GradientDescent::GradientDescentResults::write_final_results(const int& precision) const
 {
    ostringstream buffer;
 
@@ -1114,20 +1028,20 @@ Matrix<string> GradientDescent::GradientDescentResults::write_final_results(cons
 
    values.push_back(buffer.str());
 
-   // Final selection loss
+   // Final selection error
 
-   const LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
+/*   const LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
 
    if(loss_index_pointer->has_selection())
    {
        names.push_back("Final selection error");
 
        buffer.str("");
-       buffer << setprecision(precision) << final_selection_loss;
+       buffer << setprecision(precision) << final_selection_error;
 
        values.push_back(buffer.str());
     }
-
+*/
    // Final gradient norm
 
    names.push_back("Final gradient norm");
@@ -1182,8 +1096,6 @@ Matrix<string> GradientDescent::GradientDescentResults::write_final_results(cons
 }
 
 
-// void GradientDescentResults::resize_training_history(const size_t&) method
-
 /// Resizes the training history variables which are to be reserved by the training algorithm.
 /// @param new_size Size of training history variables. 
 
@@ -1193,13 +1105,13 @@ void GradientDescent::GradientDescentResults::resize_training_history(const size
 
     #ifdef __OPENNN_DEBUG__
 
-    if(gradient_descent_pointer == NULL)
+    if(gradient_descent_pointer == nullptr)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: GradientDescentResults structure.\n"
               << "void resize_training_history(const size_t&) method.\n"
-              << "Gradient descent pointer is NULL.\n";
+              << "Gradient descent pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
     }
@@ -1221,9 +1133,9 @@ void GradientDescent::GradientDescentResults::resize_training_history(const size
         loss_history.resize(new_size);
     }
 
-    if(gradient_descent_pointer->get_reserve_selection_loss_history())
+    if(gradient_descent_pointer->get_reserve_selection_error_history())
     {
-        selection_loss_history.resize(new_size);
+        selection_error_history.resize(new_size);
     }
 
     if(gradient_descent_pointer->get_reserve_gradient_history())
@@ -1253,9 +1165,7 @@ void GradientDescent::GradientDescentResults::resize_training_history(const size
 }
 
 
-// GradientDescentResults* perform_training() method
-
-/// Trains a neural network with an associated loss functional,
+/// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
 /// It returns a results structure with the history and the final values of the reserved variables.
@@ -1274,36 +1184,44 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training()
 
    // Start training 
 
-   if(display)
-   {
-      cout << "Training with gradient descent...\n";
-   }
+   if(display) cout << "Training with gradient descent...\n";
+
+   // Data set stuff
+
+   DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+   const Instances& instances = data_set_pointer->get_instances();
+
+   const Vector<size_t> training_indices = instances.get_training_indices();
+   const Vector<size_t> selection_indices = instances.get_selection_indices();
+
+   const size_t training_instances_number = training_indices.size();
+
+   const size_t selection_instances_number = instances.get_selection_instances_number();
 
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->count_parameters_number();
+   const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
    Vector<double> parameters(parameters_number);
-   double parameters_norm;
+   double parameters_norm = 0.0;
 
    Vector<double> parameters_increment(parameters_number);
-   double parameters_increment_norm;
+   double parameters_increment_norm = 0.0;
 
    // Loss index stuff
 
-   double selection_loss = 0.0; 
-   double old_selection_loss = 0.0;
+   double selection_error = 0.0;
+   double old_selection_error = 0.0;
       
-   double loss = 0.0;
-   double old_loss = 0.0;
-   double loss_increase = 0.0;
+   double training_loss = 0.0;
+   double old_training_loss = 0.0;
+   double training_loss_decrease = -numeric_limits<double>::max();
 
    Vector<double> gradient(parameters_number);
-   double gradient_norm;
-
-   LossIndex::FirstOrderloss first_order_loss;
+   double gradient_norm = 0.0;
 
    // Training algorithm stuff 
 
@@ -1320,329 +1238,399 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training()
    Vector<double> directional_point(2, 0.0);
 
    Vector<double> minimum_selection_error_parameters(parameters_number);
-   double minimum_selection_error;
+   double minimum_selection_error = numeric_limits<double>::max();
 
    bool stop_training = false;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   double elapsed_time;
+   double elapsed_time = 0.0;
 
    results_pointer->resize_training_history(maximum_iterations_number+1);
-   
+
+   size_t current_batch_size = training_initial_batch_size;
+
+   Vector<size_t> batch_history;
+
+    size_t current_iteration = 0;
+
    // Main loop
 
-   for(size_t iteration = 0; iteration <= maximum_iterations_number; iteration++)
+   for(size_t epoch = 0; epoch < epochs_number; epoch++)
    {
-      // Neural network stuff
-
-      parameters = neural_network_pointer->arrange_parameters();
-
-      parameters_norm = parameters.calculate_norm();
-
-      if(display && parameters_norm >= warning_parameters_norm)
-      {
-         cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";          
-      }
-
-      // Loss index stuff
-
-      if(iteration == 0)
-      {      
-         loss = loss_index_pointer->calculate_loss();
-         loss_increase = 1.0e99;
-      }
-      else
-      {
-         loss = directional_point[1];
-         loss_increase = old_loss - loss; 
-      }
-
-      gradient = loss_index_pointer->calculate_gradient();
-
-      gradient_norm = gradient.calculate_norm();
-
-      if(display && gradient_norm >= warning_gradient_norm)
-      {
-         cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";          
-      }
-
-      selection_loss = loss_index_pointer->calculate_selection_loss();
-
-      if(iteration == 0)
-      {
-          minimum_selection_error = selection_loss;
-
-          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
-      }
-      else if(iteration != 0 && selection_loss > old_selection_loss)
-      {
-         selection_failures++;
-      }
-      else if(selection_loss <= minimum_selection_error)
-      {
-          minimum_selection_error = selection_loss;
-
-          minimum_selection_error_parameters = neural_network_pointer->arrange_parameters();
-      }
-
-      // Training algorithm 
-
-      training_direction = calculate_training_direction(gradient);
-                        
-      if(iteration == 0)
-      {
-         initial_training_rate = first_training_rate;//training_rate_algorithm.get_first_training_rate();
-      }
-      else
-      {
-         initial_training_rate = old_training_rate;
-      }    
-
-      directional_point = training_rate_algorithm.calculate_directional_point(loss, training_direction, initial_training_rate);
-
-      training_rate = directional_point[0];
-
-      parameters_increment = training_direction*training_rate;
-      parameters_increment_norm = parameters_increment.calculate_norm();
-      
-      // Elapsed time
-
-      time(&current_time);
-      elapsed_time = difftime(current_time, beginning_time);
-
-      // Training history neural network
-
-      if(reserve_parameters_history)
-      {
-         results_pointer->parameters_history[iteration] = parameters;
-      }
-
-      if(reserve_parameters_norm_history)
-      {
-         results_pointer->parameters_norm_history[iteration] = parameters_norm;
-      }
-
-      // Training history loss functional
-
-      if(reserve_loss_history)
-      {
-         results_pointer->loss_history[iteration] = loss;
-      }
-
-      if(reserve_gradient_history)
-      {
-         results_pointer->gradient_history[iteration] = gradient;
-      }
-
-      if(reserve_gradient_norm_history)
-      {
-         results_pointer->gradient_norm_history[iteration] = gradient_norm;
-      }
-
-      if(reserve_selection_loss_history)
-      {
-         results_pointer->selection_loss_history[iteration] = selection_loss;
-      }
-
-      // Training history training algorithm
-
-      if(reserve_training_direction_history)
-      {
-         results_pointer->training_direction_history[iteration] = training_direction;
-      }
-
-      if(reserve_training_rate_history)
-      {
-         results_pointer->training_rate_history[iteration] = training_rate;
-      }
-
-      if(reserve_elapsed_time_history)
-      {
-         results_pointer->elapsed_time_history[iteration] = elapsed_time;
-      }
-
-      // Stopping Criteria
-
-      if(parameters_increment_norm <= minimum_parameters_increment_norm)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Minimum parameters increment norm reached.\n";
-            cout << "Parameters increment norm: " << parameters_increment_norm << endl;
-         }
-
-         stop_training = true;
-
-         results_pointer->stopping_condition = MinimumParametersIncrementNorm;
-      }
-
-      else if(iteration != 0 && loss_increase <= minimum_loss_increase)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Minimum loss increase reached.\n"
-                      << "Performance increase: " << loss_increase << endl;
-         }
-
-         stop_training = true;
-
-         results_pointer->stopping_condition = MinimumPerformanceIncrease;
-      }
+      Vector<size_t> random_indices(0, 1, training_instances_number);
+      random_shuffle(random_indices.begin(), random_indices.end());
 
-      else if(loss <= loss_goal)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Loss goal reached.\n";
-         }
+      const size_t epoch_iterations_number = training_instances_number/current_batch_size;
 
-         stop_training = true;
+//      cout << "Epoch " << epoch << ": " << endl;
+//      cout << "Epoch iterations number: " << epoch_iterations_number << endl;
 
-         results_pointer->stopping_condition = PerformanceGoal;
-      }
+       for(size_t iteration = 0; iteration < epoch_iterations_number; iteration++)
+       {
+          // Data set stuff
 
-      else if(selection_failures >= maximum_selection_loss_decreases && apply_early_stopping)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Maximum selection failures reached.\n"
-                      << "Selection failures: " << selection_failures << endl;
-         }
-
-         stop_training = true;
-
-         results_pointer->stopping_condition = MaximumSelectionPerformanceDecreases;
-      }
-
-      else if(gradient_norm <= gradient_norm_goal)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Gradient norm goal reached.\n";
-         }
+           //const Vector<size_t> training_batch_indices = training_indices.get_subvector_random(1000);
 
-         stop_training = true;
+//const Vector<size_t> training_batch_indices = training_indices.get_subvector_random(current_batch_size);
 
-         results_pointer->stopping_condition = GradientNormGoal;
-      }
+           const size_t first_index = (iteration)*current_batch_size;
 
-      else if(iteration == maximum_iterations_number)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Maximum number of iterations reached.\n";
-         }
+           size_t last_index = (iteration+1)*(current_batch_size-1);
 
-         stop_training = true;
+           if(iteration == epoch_iterations_number)
+           {
+               last_index = training_instances_number;
+           }
 
-         results_pointer->stopping_condition = MaximumIterationsNumber;
-      }
+           const Vector<size_t> training_batch_indices = training_indices.get_subvector(random_indices.get_subvector(first_index,last_index));
+           const Vector<size_t> selection_batch_indices = selection_indices/*.get_subvector_random(selection_batch_size)*/;
 
-      else if(elapsed_time >= maximum_time)
-      {
-         if(display)
-         {
-            cout << "Iteration " << iteration << ": Maximum training time reached.\n";
-         }
+          // Neural network stuff
 
-         stop_training = true;
+          parameters = neural_network_pointer->get_parameters();
 
-         results_pointer->stopping_condition = MaximumTime;
-      }
+          parameters_norm = parameters.calculate_L2_norm();
 
-      if(iteration != 0 && iteration % save_period == 0)
-      {
-            neural_network_pointer->save(neural_network_file_name);
-      }
+          if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-      if(stop_training)
-      {
-         if(display)
-		 {
-            cout << "Parameters norm: " << parameters_norm << "\n"
-                      << "Training loss: " << loss << "\n"
-                      << "Gradient norm: " << gradient_norm << "\n"
-                      << loss_index_pointer->write_information()
-                      << "Training rate: " << training_rate << "\n"
-                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl; 
+          // Loss index stuff
 
-            if(selection_loss != 0)
-            {
-               cout << "Selection loss: " << selection_loss << endl;
-            }
-		 }
-    
-         results_pointer->resize_training_history(1+iteration);
+//          training_loss = loss_index_pointer->calculate_training_loss(training_batch_indices);
 
-         results_pointer->final_parameters = parameters;
+          if(/*iteration*/current_iteration == 0)
+          {
+    //         training_loss = loss_index_pointer->calculate_loss(training_batch_indices);
+          }
+          else
+          {
+    //         training_loss = directional_point[1];
+             training_loss_decrease = training_loss - old_training_loss;
+          }
 
-         results_pointer->final_parameters_norm = parameters_norm;
+//          if(training_loss_decrease > 0.0)
+//          {
+//              current_batch_size = training_factor_batch_size*current_batch_size;
 
-         results_pointer->final_loss = loss;
+//              if(current_batch_size > training_maximum_batch_size)
+//              {
+//                  current_batch_size = training_maximum_batch_size;
+//              }
+//          }
 
-         results_pointer->final_selection_loss = selection_loss;
+          if(current_batch_size < training_maximum_batch_size)
+          {
+              batch_history.push_back(current_batch_size);
+          }
 
-         results_pointer->final_gradient = gradient;
+          gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-         results_pointer->final_gradient_norm = gradient_norm;
+          if(gradient == 0.0) throw logic_error("Gradient is zero");
 
-         results_pointer->final_training_direction = training_direction;
+          gradient_norm = gradient.calculate_L2_norm();
 
-         results_pointer->final_training_rate = training_rate;
+          if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
 
-         results_pointer->elapsed_time = elapsed_time;
+          if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
 
-         results_pointer->iterations_number = iteration;
+          if(/*iteration*/current_iteration == 0)
+          {
+              minimum_selection_error = selection_error;
+              minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          }
+          else if(/*iteration*/current_iteration != 0 && selection_error > old_selection_error)
+          {
+             selection_failures++;
+          }
+          else if(selection_error <= minimum_selection_error)
+          {
+              minimum_selection_error = selection_error;
+              minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          }
 
-         break;
-      }
-      else if(display && iteration % display_period == 0)
-      {
-         cout << "Iteration " << iteration << ";\n"
-                   << "Parameters norm: " << parameters_norm << "\n"
-                   << "Training loss: " << loss << "\n"
-                   << "Gradient norm: " << gradient_norm << "\n"
-                   << loss_index_pointer->write_information()
-                   << "Training rate: " << training_rate << "\n"
-                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+          // Training algorithm
 
-         if(selection_loss != 0)
-         {
-            cout << "Selection loss: " << selection_loss << endl;
-         }
-      }
+          training_direction = calculate_training_direction(gradient);
 
-      // Set new parameters
+          if(training_direction == 0.0) throw logic_error("Training direction is zero");
 
-      parameters += parameters_increment;
+          const double training_slope = (gradient/gradient_norm).dot(training_direction);
 
-      neural_network_pointer->set_parameters(parameters);
+          // Check for a descent direction
 
-      // Update stuff
+          if(training_slope >= 0.0) throw logic_error("Training slope is equal or greater than zero");
 
-      old_loss = loss;
-      old_selection_loss = selection_loss;
-   
-      old_training_rate = training_rate;
-   } 
+          if(/*iteration*/current_iteration == 0)
+          {
+             initial_training_rate = first_training_rate;
+          }
+          else
+          {
+             initial_training_rate = old_training_rate;
+          }
+
+          directional_point = training_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
+
+          training_rate = directional_point[0];
+
+          if(training_rate == 0.0)
+          {
+              cout << "Training rate is zero" << endl;
+
+              training_rate = 1.0e-2;
+              //throw logic_error("Training rate is zero");
+          }
+
+    //      cout << directional_point << endl;
+
+          parameters_increment = training_direction*training_rate;
+          parameters_increment_norm = parameters_increment.calculate_L2_norm();
+
+          // Elapsed time
+
+          time(&current_time);
+          elapsed_time = difftime(current_time, beginning_time);
+
+          // Training history neural network
+
+          if(reserve_parameters_history)
+          {
+             results_pointer->parameters_history[/*iteration*/current_iteration] = parameters;
+          }
+
+          if(reserve_parameters_norm_history)
+          {
+             results_pointer->parameters_norm_history[/*iteration*/current_iteration] = parameters_norm;
+          }
+
+          // Training history loss index
+
+          if(reserve_loss_history)
+          {
+             results_pointer->loss_history[/*iteration*/current_iteration] = training_loss;
+          }
+
+          if(reserve_gradient_history)
+          {
+             results_pointer->gradient_history[/*iteration*/current_iteration] = gradient;
+          }
+
+          if(reserve_gradient_norm_history)
+          {
+             results_pointer->gradient_norm_history[/*iteration*/current_iteration] = gradient_norm;
+          }
+
+          if(reserve_selection_error_history)
+          {
+             results_pointer->selection_error_history[/*iteration*/current_iteration] = selection_error;
+          }
+
+          // Training history training algorithm
+
+          if(reserve_training_direction_history)
+          {
+             results_pointer->training_direction_history[/*iteration*/current_iteration] = training_direction;
+          }
+
+          if(reserve_training_rate_history)
+          {
+             results_pointer->training_rate_history[/*iteration*/current_iteration] = training_rate;
+          }
+
+          if(reserve_elapsed_time_history)
+          {
+             results_pointer->elapsed_time_history[/*iteration*/current_iteration] = elapsed_time;
+          }
+
+          // Stopping Criteria
+
+//          if(parameters_increment_norm <= minimum_parameters_increment_norm)
+//          {
+//    //         if(display)
+//    //         {
+//    //            cout << "Iteration " << iteration << ": Minimum parameters increment norm reached.\n";
+//    //            cout << "Parameters increment norm: " << parameters_increment_norm << endl;
+//    //         }
+
+//             //stop_training = true;
+
+//             //results_pointer->stopping_condition = MinimumParametersIncrementNorm;
+//          }
+
+          else if(/*iteration*/current_iteration != 0 && training_loss_decrease <= minimum_loss_decrease)
+          {
+             if(display)
+             {
+                cout << "Iteration " << iteration << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                     << "Loss increase: " << training_loss_decrease << endl;
+             }
+
+             stop_training = true;
+
+             results_pointer->stopping_condition = MinimumLossDecrease;
+          }
+
+          /*else*/ if(training_loss <= loss_goal)
+          {
+             if(display)
+             {
+                cout << "Epoch " << epoch << ", iteration " << /*iteration*/current_iteration << ": Loss goal reached.\n";
+             }
+
+             stop_training = true;
+
+             results_pointer->stopping_condition = LossGoal;
+          }
+
+          else if(selection_failures >= maximum_selection_error_decreases && apply_early_stopping)
+          {
+             if(display)
+             {
+                cout << "Epoch " << epoch << ", iteration " << /*iteration*/current_iteration << ": Maximum selection failures reached.\n"
+                     << "Selection failures: " << selection_failures << endl;
+             }
+
+             stop_training = true;
+
+             results_pointer->stopping_condition = MaximumSelectionLossIncreases;
+          }
+
+          else if(gradient_norm <= gradient_norm_goal)
+          {
+             if(display)
+             {
+                cout << "Epoch " << epoch << ", iteration " << /*iteration*/current_iteration << ": Gradient norm goal reached.\n";
+             }
+
+             stop_training = true;
+
+             results_pointer->stopping_condition = GradientNormGoal;
+          }
+
+          else if(/*iteration*/current_iteration == maximum_iterations_number)
+          {
+             if(display)
+             {
+                cout << "Epoch " << epoch << ", iteration " << /*iteration*/current_iteration << ": Maximum number of iterations reached.\n";
+             }
+
+             stop_training = true;
+
+             results_pointer->stopping_condition = MaximumIterationsNumber;
+          }
+
+          else if(elapsed_time >= maximum_time)
+          {
+             if(display)
+             {
+                cout << "Epoch " << epoch << ", iteration " << /*iteration*/current_iteration << ": Maximum training time reached.\n";
+             }
+
+             stop_training = true;
+
+             results_pointer->stopping_condition = MaximumTime;
+          }
+
+          if(/*iteration*/current_iteration != 0 && /*iteration*/current_iteration % save_period == 0)
+          {
+                neural_network_pointer->save(neural_network_file_name);
+          }
+
+          if(stop_training)
+          {
+             if(display)
+             {
+                cout << "Parameters norm: " << parameters_norm << "\n"
+                          << "Training loss: " << training_loss << "\n"
+                          << "Batch size: " << current_batch_size << "\n"
+                          << "Gradient norm: " << gradient_norm << "\n"
+                          << loss_index_pointer->write_information()
+                          << "Training rate: " << training_rate << "\n"
+                          << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+
+                if(!selection_batch_indices.empty() != 0)
+                {
+                   cout << "Selection error: " << selection_error << endl;
+                }
+             }
+
+             results_pointer->resize_training_history(1+iteration);
+
+             results_pointer->final_parameters = parameters;
+
+             results_pointer->final_parameters_norm = parameters_norm;
+
+             results_pointer->final_loss = training_loss;
+
+             results_pointer->final_selection_error = selection_error;
+
+             results_pointer->final_gradient = gradient;
+
+             results_pointer->final_gradient_norm = gradient_norm;
+
+             results_pointer->final_training_direction = training_direction;
+
+             results_pointer->final_training_rate = training_rate;
+
+             results_pointer->elapsed_time = elapsed_time;
+
+             results_pointer->iterations_number = /*iteration*/current_iteration;
+
+             break;
+          }
+          else if(display && /*iteration*/current_iteration % display_period == 0)
+          {
+             cout << "Epoch " << epoch << ";\n"
+                  << "Iteration " << current_iteration << ";\n"
+                  << "Parameters norm: " << parameters_norm << "\n"
+                  << "Training loss: " << training_loss << "\n"
+                  << "Batch size: " << current_batch_size << "\n"
+                  << "Gradient norm: " << gradient_norm << "\n"
+                  << loss_index_pointer->write_information()
+                  << "Training rate: " << training_rate << "\n"
+                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+
+             if(!selection_batch_indices.empty() != 0)
+             {
+                cout << "Selection error: " << selection_error << endl;
+             }
+          }
+
+          // Set new parameters
+
+          parameters += parameters_increment;
+
+          neural_network_pointer->set_parameters(parameters);
+
+          // Update stuff
+
+          old_training_loss = training_loss;
+          old_selection_error = selection_error;
+
+          old_training_rate = training_rate;
+
+          current_iteration++;
+       }
+
+       if(stop_training) {break;}
+   }
 
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.calculate_norm();
+       parameters_norm = parameters.calculate_L2_norm();
 
        neural_network_pointer->set_parameters(parameters);
 
-       loss = loss_index_pointer->calculate_loss();
-       selection_loss = minimum_selection_error;
+       //training_loss = loss_index_pointer->calculate_loss(training_indices);
+       selection_error = minimum_selection_error;
    }
 
    results_pointer->final_parameters = parameters;
    results_pointer->final_parameters_norm = parameters_norm;
 
-   results_pointer->final_loss = loss;
-   results_pointer->final_selection_loss = selection_loss;
+   results_pointer->final_loss = training_loss;
+   results_pointer->final_selection_error = selection_error;
 
    results_pointer->final_gradient = gradient;
    results_pointer->final_gradient_norm = gradient_norm;
@@ -1653,15 +1641,18 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training()
 }
 
 
-// string write_training_algorithm_type() const method
+void GradientDescent::perform_training_void()
+{
+    GradientDescentResults* results = perform_training();
+
+    delete results;
+}
 
 string GradientDescent::write_training_algorithm_type() const
 {
    return("GRADIENT_DESCENT");
 }
 
-
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -1680,12 +1671,12 @@ Matrix<string> GradientDescent::to_string_matrix() const
 
    values.push_back(training_rate_method);
 
-   // Training rate tolerance
+   // Loss tolerance
 
-   labels.push_back("Training rate tolerance");
+   labels.push_back("Loss tolerance");
 
    buffer.str("");
-   buffer << training_rate_algorithm.get_training_rate_tolerance();
+   buffer << training_rate_algorithm.get_loss_tolerance();
 
    values.push_back(buffer.str());
 
@@ -1698,12 +1689,12 @@ Matrix<string> GradientDescent::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Minimum loss increase
+   // Minimum loss decrease
 
-   labels.push_back("Minimum loss increase");
+   labels.push_back("Minimum loss decrease");
 
    buffer.str("");
-   buffer << minimum_loss_increase;
+   buffer << minimum_loss_decrease;
 
    values.push_back(buffer.str());
 
@@ -1730,7 +1721,7 @@ Matrix<string> GradientDescent::to_string_matrix() const
    labels.push_back("Maximum selection loss increases");
 
    buffer.str("");
-   buffer << maximum_selection_loss_decreases;
+   buffer << maximum_selection_error_decreases;
 
    values.push_back(buffer.str());
 
@@ -1792,7 +1783,7 @@ Matrix<string> GradientDescent::to_string_matrix() const
 
    buffer.str("");
 
-   if(reserve_selection_loss_history)
+   if(reserve_selection_error_history)
    {
        buffer << "true";
    }
@@ -1857,8 +1848,6 @@ Matrix<string> GradientDescent::to_string_matrix() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Serializes the training parameters, the stopping criteria and other user stuff 
 /// concerning the gradient descent object.
 
@@ -1874,8 +1863,8 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Training rate algorithm
    {
@@ -1990,20 +1979,20 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Minimum loss increase 
+   // Minimum loss decrease
 
-   element = document->NewElement("MinimumPerformanceIncrease");
+   element = document->NewElement("MinimumLossDecrease");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << minimum_loss_increase;
+   buffer << minimum_loss_decrease;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
    // Performance goal 
 
-   element = document->NewElement("PerformanceGoal");
+   element = document->NewElement("LossGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2029,7 +2018,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << maximum_selection_loss_decreases;
+   buffer << maximum_selection_error_decreases;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2095,7 +2084,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_loss_history;
+   buffer << reserve_selection_error_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -2161,7 +2150,7 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
-//   buffer << reserve_selection_loss_history;
+//   buffer << reserve_selection_error_history;
 
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
@@ -2211,8 +2200,6 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -2261,12 +2248,12 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Minimum loss increase
+    // Minimum loss decrease
 
-    file_stream.OpenElement("MinimumPerformanceIncrease");
+    file_stream.OpenElement("MinimumLossDecrease");
 
     buffer.str("");
-    buffer << minimum_loss_increase;
+    buffer << minimum_loss_decrease;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2274,7 +2261,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Performance goal
 
-    file_stream.OpenElement("PerformanceGoal");
+    file_stream.OpenElement("LossGoal");
 
     buffer.str("");
     buffer << loss_goal;
@@ -2299,7 +2286,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumSelectionLossDecreases");
 
     buffer.str("");
-    buffer << maximum_selection_loss_decreases;
+    buffer << maximum_selection_error_decreases;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2354,7 +2341,7 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_loss_history;
+    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2376,8 +2363,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("GradientDescent");
@@ -2388,7 +2373,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Gradient descent element is NULL.\n";
+               << "Gradient descent element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -2424,7 +2409,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2443,7 +2428,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2462,7 +2447,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2481,7 +2466,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2500,7 +2485,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2519,7 +2504,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2538,7 +2523,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         }
         catch(const logic_error& e)
         {
-           cout << e.what() << endl;
+           cerr << e.what() << endl;
         }
     }
 
@@ -2556,7 +2541,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         }
         catch(const logic_error& e)
         {
-            cout << e.what() << endl;
+            cerr << e.what() << endl;
         }
     }
 
@@ -2574,14 +2559,14 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
 
-   // Minimum loss increase 
+   // Minimum loss decrease
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumPerformanceIncrease");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
 
        if(element)
        {
@@ -2589,18 +2574,18 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
           try
           {
-             set_minimum_loss_increase(new_minimum_loss_increase);
+             set_minimum_loss_decrease(new_minimum_loss_increase);
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
 
    // Performance goal 
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("PerformanceGoal");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
 
        if(element)
        {
@@ -2612,7 +2597,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2631,7 +2616,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2642,15 +2627,15 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_selection_loss_decreases = atoi(element->GetText());
+          const size_t new_maximum_selection_error_decreases = static_cast<size_t>(atoi(element->GetText()));
 
           try
           {
-             set_maximum_selection_loss_decreases(new_maximum_selection_loss_decreases);
+             set_maximum_selection_error_increases(new_maximum_selection_error_decreases);
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2661,7 +2646,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_iterations_number = atoi(element->GetText());
+          const size_t new_maximum_iterations_number = static_cast<size_t>(atoi(element->GetText()));
 
           try
           {
@@ -2669,7 +2654,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2688,7 +2673,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2707,7 +2692,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2726,7 +2711,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2745,7 +2730,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2756,15 +2741,15 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_reserve_selection_loss_history = element->GetText();
+           const string new_reserve_selection_error_history = element->GetText();
 
            try
            {
-              set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
+              set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -2783,7 +2768,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2802,7 +2787,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2821,7 +2806,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2840,7 +2825,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2859,7 +2844,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2870,15 +2855,15 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const string new_reserve_selection_loss_history = element->GetText();
+          const string new_reserve_selection_error_history = element->GetText();
 
           try
           {
-             set_reserve_selection_loss_history(new_reserve_selection_loss_history != "0");
+             set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2889,7 +2874,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_display_period = atoi(element->GetText());
+          const size_t new_display_period = static_cast<size_t>(atoi(element->GetText()));
 
           try
           {
@@ -2897,7 +2882,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -2908,7 +2893,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_save_period = atoi(element->GetText());
+           const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -2916,7 +2901,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -2935,7 +2920,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -2954,7 +2939,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }

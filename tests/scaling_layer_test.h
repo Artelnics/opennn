@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   S C A L I N G   L A Y E R   T E S T   C L A S S   H E A D E R                                              */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -58,16 +58,16 @@ public:
 
    // Statistics
 
-   void test_arrange_means();
+   void test_get_means();
    void test_get_mean();
 
-   void test_arrange_standard_deviations();
+   void test_get_standard_deviations();
    void test_get_standard_deviation();
 
-   void test_arrange_minimums();
+   void test_get_minimums();
    void test_get_minimum();
 
-   void test_arrange_maximums();
+   void test_get_maximums();
    void test_get_maximum();
 
    void test_get_statistics();
@@ -155,16 +155,16 @@ public:
    // Scaling 
 
    void test_calculate_outputs();
-   void test_calculate_derivative();
-   void test_calculate_second_derivative();
+   void test_calculate_derivatives();
+   void test_calculate_second_derivatives();
 
    void test_calculate_minimum_maximum_output();
-   void test_calculate_minimum_maximum_derivative();
-   void test_calculate_minimum_maximum_second_derivative();
+   void test_calculate_minimum_maximum_derivatives();
+   void test_calculate_minimum_maximum_second_derivatives();
 
    void test_calculate_mean_standard_deviation_output();
-   void test_calculate_mean_standard_deviation_derivative();
-   void test_calculate_mean_standard_deviation_second_derivative();
+   void test_calculate_mean_standard_deviation_derivatives();
+   void test_calculate_mean_standard_deviation_second_derivatives();
 
    // XML expression methods
 

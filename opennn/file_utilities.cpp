@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   F I L E   U T I L I T I E S    C L A S S                                                                   */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -85,7 +84,7 @@ size_t FileUtilities::count_lines_number() const
 }
 
 
-Vector<string> FileUtilities::arrange_output_file_names(const size_t& files_number) const
+Vector<string> FileUtilities::get_output_file_names(const size_t& files_number) const
 {
    Vector<string> names(files_number);
 
@@ -124,7 +123,7 @@ Vector<string> FileUtilities::split_file(const size_t& output_files_number) cons
 
     const size_t lines_number = count_lines_number();
 
-    const Vector<string> output_file_names = arrange_output_file_names(output_files_number);
+    const Vector<string> output_file_names = get_output_file_names(output_files_number);
 
     Vector<ofstream> output_files(output_files_number);
 
@@ -138,17 +137,17 @@ Vector<string> FileUtilities::split_file(const size_t& output_files_number) cons
 
     const size_t minimum = 0;
 
-    const double length = lines_number /(double)output_files_number;
+    const double length = lines_number /static_cast<double>(output_files_number);
 
-    minimums[0] =(size_t)minimum;
-    maximums[0] =(size_t)(minimum + length);
+    minimums[0] = static_cast<size_t>(minimum);
+    maximums[0] = static_cast<size_t>(minimum + length);
 
     // Calculate bins center
 
     for(size_t i = 1; i < output_files_number; i++)
     {
-      minimums[i] = minimums[i - 1] +(size_t)length;
-      maximums[i] = maximums[i - 1] +(size_t)length;
+      minimums[i] = minimums[i - 1] + static_cast<size_t>(length);
+      maximums[i] = maximums[i - 1] + static_cast<size_t>(length);
     }
 
     string line;
@@ -281,7 +280,7 @@ void FileUtilities::sample_file(const size_t& sample_lines_number) const
 
     size_t line_number = 0;
 
-    const Vector<size_t> sample_lines(0,(double)(lines_number/sample_lines_number), lines_number);
+    const Vector<size_t> sample_lines(0,static_cast<double>(lines_number/sample_lines_number), lines_number);
 
     while(input_file.good())
     {

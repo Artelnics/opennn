@@ -6,7 +6,7 @@
 /*   I N C R E M E N T A L   O R D E R   T E S T   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -86,13 +86,13 @@ void IncrementalOrderTest::test_perform_order_selection()
 
     DataSet ds;
 
-    LossIndex pf(&nn, &ds);
+    SumSquaredError sse(&nn, &ds);
 
-    TrainingStrategy ts(&pf);
+    TrainingStrategy ts(&sse);
 
     IncrementalOrder io(&ts);
 
-    IncrementalOrder::IncrementalOrderResults* results;
+    IncrementalOrder::IncrementalOrderResults* results = nullptr;
 
     // Test
 
@@ -131,20 +131,20 @@ void IncrementalOrderTest::test_perform_order_selection()
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+    ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
-    ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+    ts.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
     ts.set_display(false);
 
     io.set_trials_number(1);
     io.set_maximum_order(7);
-    io.set_selection_loss_goal(1.0e-3);
+    io.set_selection_error_goal(1.0e-3);
     io.set_display(false);
 
     results = io.perform_order_selection();
 
-    assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
+    assert_true(nn.get_multilayer_perceptron_pointer()->get_layers_perceptrons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition ==
                 OrderSelectionAlgorithm::SelectionLossGoal, LOG);
 
@@ -185,26 +185,23 @@ void IncrementalOrderTest::test_perform_order_selection()
     nn.set(1,3,1);
     nn.initialize_parameters(0.0);
 
-    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+    ts.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
 
-    ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+    ts.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
     ts.set_display(false);
 
     io.set_trials_number(1);
     io.set_maximum_order(7);
-    io.set_selection_loss_goal(0.0);
+    io.set_selection_error_goal(0.0);
     io.set_maximum_selection_failures(1);
     io.set_display(false);
 
-
     results = io.perform_order_selection();
 
-    assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
+    assert_true(nn.get_multilayer_perceptron_pointer()->get_layers_perceptrons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition ==
                 OrderSelectionAlgorithm::MaximumSelectionFailures, LOG);
-
-
 
 }
 
@@ -217,7 +214,7 @@ void IncrementalOrderTest::test_to_XML()
     IncrementalOrder io;
 
     tinyxml2::XMLDocument* document = io.to_XML();
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 

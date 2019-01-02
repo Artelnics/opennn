@@ -75,8 +75,6 @@ IncrementalOrder::~IncrementalOrder()
 // METHODS
 
 
-// const size_t& get_step() const method
-
 /// Returns the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm.
 
 const size_t& IncrementalOrder::get_step() const
@@ -84,7 +82,6 @@ const size_t& IncrementalOrder::get_step() const
     return(step);
 }
 
-// const size_t& get_maximum_selection_failures() const method
 
 /// Returns the maximum number of selection failures in the model order selection algorithm.
 
@@ -93,7 +90,6 @@ const size_t& IncrementalOrder::get_maximum_selection_failures() const
     return(maximum_selection_failures);
 }
 
-// void set_default() method
 
 /// Sets the members of the model selection object to their default values:
 
@@ -104,7 +100,6 @@ void IncrementalOrder::set_default()
     maximum_selection_failures = 10;
 }
 
-// void set_step(const size_t&) method
 
 /// Sets the number of the hidden perceptrons pointed in each iteration of the Incremental algorithm in the model order selection process.
 /// @param new_step number of hidden perceptrons pointed.
@@ -139,7 +134,6 @@ void IncrementalOrder::set_step(const size_t& new_step)
     step = new_step;
 }
 
-// void set_maximum_selection_failures(const size_t&) method
 
 /// Sets the maximum selection failures for the Incremental order selection algorithm.
 /// @param new_maximum_loss_failures Maximum number of selection failures in the Incremental order selection algorithm.
@@ -164,7 +158,6 @@ void IncrementalOrder::set_maximum_selection_failures(const size_t& new_maximum_
     maximum_selection_failures = new_maximum_loss_failures;
 }
 
-// IncrementalOrderResults* perform_order_selection() method
 
 /// Perform the order selection with the Incremental method.
 
@@ -176,15 +169,15 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     Vector<double> loss(2);
-    double prev_selection_loss = 1.0e99;
+    double prev_selection_error = numeric_limits<double>::max();
 
-    size_t optimal_order;
+    size_t optimal_order = 0;
     Vector<double> optimum_parameters;
-    double optimum_training_loss;
-    double optimum_selection_loss;
+    double optimum_training_loss = 0.0;
+    double optimum_selection_error = 0.0;
 
     Vector<double> parameters_history_row;
-    double current_training_loss, current_selection_loss;
+    double current_training_loss, current_selection_error;
 
     size_t order = minimum_order;
     size_t iterations = 0;
@@ -193,7 +186,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     bool end = false;
 
     time_t beginning_time, current_time;
-    double elapsed_time;
+    double elapsed_time = 0.0;
 
     if(display)
     {
@@ -207,7 +200,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     {
         loss = perform_model_evaluation(order);
         current_training_loss = loss[0];
-        current_selection_loss = loss[1];
+        current_selection_error = loss[1];
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
@@ -219,9 +212,9 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
             results->loss_data.push_back(current_training_loss);
         }
 
-        if(reserve_selection_loss_data)
+        if(reserve_selection_error_data)
         {
-            results->selection_loss_data.push_back(current_selection_loss);
+            results->selection_error_data.push_back(current_selection_error);
         }
 
         if(reserve_parameters_data)
@@ -231,21 +224,21 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
         }
 
         if(iterations == 0
-        ||(optimum_selection_loss > current_selection_loss
-        && fabs(optimum_selection_loss - current_selection_loss) > tolerance))
+        ||(optimum_selection_error > current_selection_error
+        && fabs(optimum_selection_error - current_selection_error) > tolerance))
         {
             optimal_order = order;
             optimum_training_loss = current_training_loss;
-            optimum_selection_loss = current_selection_loss;
+            optimum_selection_error = current_selection_error;
             optimum_parameters = get_parameters_order(optimal_order);
 
         }
-        else if(prev_selection_loss < current_selection_loss)
+        else if(prev_selection_error < current_selection_error)
         {
             selection_failures++;
         }
 
-        prev_selection_loss = current_selection_loss;
+        prev_selection_error = current_selection_error;
         iterations++;
 
         // Stopping criteria
@@ -261,7 +254,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
 
             results->stopping_condition = IncrementalOrder::MaximumTime;            
         }
-        else if(loss[1] <= selection_loss_goal)
+        else if(loss[1] <= selection_error_goal)
         {
             end = true;
 
@@ -312,7 +305,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
             cout << "Iteration: " << iterations << endl
                       << "Hidden neurons number: " << order << endl
                       << "Training loss: " << loss[0] << endl
-                      << "Selection loss: " << loss[1] << endl
+                      << "Selection error: " << loss[1] << endl
                       << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
@@ -327,7 +320,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     {
         cout << endl
                   << "Optimal order: " << optimal_order <<  endl
-                  << "Optimum selection loss: " << optimum_selection_loss << endl
+                  << "Optimum selection loss: " << optimum_selection_error << endl
                   << "Corresponding training loss: " << optimum_training_loss << endl;
     }
 
@@ -358,7 +351,7 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     }
 
     results->optimal_order = optimal_order;
-    results->final_selection_loss = optimum_selection_loss;
+    results->final_selection_error = optimum_selection_error;
     results->final_loss = perform_model_evaluation(optimal_order)[0];
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
@@ -366,7 +359,6 @@ IncrementalOrder::IncrementalOrderResults* IncrementalOrder::perform_order_selec
     return(results);
 }
 
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -427,7 +419,7 @@ Matrix<string> IncrementalOrder::to_string_matrix() const
    labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_loss_goal;
+   buffer << selection_error_goal;
 
    values.push_back(buffer.str());
 
@@ -481,7 +473,7 @@ Matrix<string> IncrementalOrder::to_string_matrix() const
 
    buffer.str("");
 
-   if(reserve_selection_loss_data)
+   if(reserve_selection_error_data)
    {
        buffer << "true";
    }
@@ -504,8 +496,6 @@ Matrix<string> IncrementalOrder::to_string_matrix() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Prints to the screen the incremental order parameters, the stopping criteria
 /// and other user stuff concerning the incremental order object.
 
@@ -521,8 +511,8 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Minimum order
    {
@@ -635,7 +625,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << selection_loss_goal;
+   buffer << selection_error_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -695,7 +685,7 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_loss_data;
+   buffer << reserve_selection_error_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -704,8 +694,6 @@ tinyxml2::XMLDocument* IncrementalOrder::to_XML() const
    return(document);
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the incremental order object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -776,7 +764,7 @@ void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_loss_goal;
+    buffer << selection_error_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -820,7 +808,7 @@ void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_loss_data;
+    buffer << reserve_selection_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -830,8 +818,6 @@ void IncrementalOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
     //file_stream.CloseElement();
 }
 
-
-// void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this incremental order object.
 /// @param document TinyXML document containing the member data.
@@ -846,7 +832,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: IncrementalOrder class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "IncrementalOrder element is NULL.\n";
+               << "IncrementalOrder element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -857,7 +843,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_minimum_order = atoi(element->GetText());
+           const size_t new_minimum_order = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -865,7 +851,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -876,7 +862,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_maximum_order = atoi(element->GetText());
+           const size_t new_maximum_order = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -884,7 +870,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -895,7 +881,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_trials_number = atoi(element->GetText());
+           const size_t new_trials_number = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -903,7 +889,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -922,7 +908,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -933,7 +919,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_step = atoi(element->GetText());
+           const size_t new_step = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -941,7 +927,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -960,7 +946,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -979,7 +965,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -990,15 +976,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_reserve_selection_loss_data = element->GetText();
+           const string new_reserve_selection_error_data = element->GetText();
 
            try
            {
-              set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
+              set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1017,7 +1003,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1036,7 +1022,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1047,15 +1033,15 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_selection_loss_goal = atof(element->GetText());
+           const double new_selection_error_goal = atof(element->GetText());
 
            try
            {
-              set_selection_loss_goal(new_selection_loss_goal);
+              set_selection_error_goal(new_selection_error_goal);
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1066,7 +1052,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_maximum_iterations_number = atoi(element->GetText());
+           const size_t new_maximum_iterations_number = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -1074,7 +1060,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1093,7 +1079,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1112,7 +1098,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1123,7 +1109,7 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_maximum_selection_failures = atoi(element->GetText());
+           const size_t new_maximum_selection_failures = static_cast<size_t>(atoi(element->GetText()));
 
            try
            {
@@ -1131,13 +1117,12 @@ void IncrementalOrder::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
 }
 
-// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the incremental order object.
 /// @param file_name Name of incremental order XML-type file.
@@ -1151,8 +1136,6 @@ void IncrementalOrder::save(const string& file_name) const
    delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a incremental order object from a XML-type file.
 /// @param file_name Name of incremental order XML-type file.

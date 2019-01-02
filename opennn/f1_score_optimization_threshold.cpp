@@ -74,7 +74,6 @@ F1ScoreOptimizationThreshold::~F1ScoreOptimizationThreshold()
 
 // METHODS
 
-// const double& get_minimum_threshold() const method
 
 /// Returns the minimum threshold of the algorithm.
 
@@ -83,7 +82,6 @@ const double& F1ScoreOptimizationThreshold::get_minimum_threshold() const
     return(minimum_threshold);
 }
 
-// const double& get_maximum_threshold() const method
 
 /// Returns the maximum threshold of the algorithm.
 
@@ -92,7 +90,6 @@ const double& F1ScoreOptimizationThreshold::get_maximum_threshold() const
     return(maximum_threshold);
 }
 
-// const double& get_step() const method
 
 /// Returns the step for the sucesive iterations of the algorithm.
 
@@ -101,7 +98,6 @@ const double& F1ScoreOptimizationThreshold::get_step() const
     return(step);
 }
 
-// void set_default() method
 
 /// Sets the members of the f1 score optimization object to their default values.
 
@@ -114,7 +110,6 @@ void F1ScoreOptimizationThreshold::set_default()
     step = 0.001;
 }
 
-// void set_minimum_threshold(const double&) method
 
 /// Sets the minimum value of the threshold selection algotihm.
 /// @param new_minimum_threshold Minimum threshold for the algorithm.
@@ -139,7 +134,6 @@ void F1ScoreOptimizationThreshold::set_minimum_threshold(const double& new_minim
     minimum_threshold = new_minimum_threshold;
 }
 
-// void set_maximum_threshold(const double&) method
 
 /// Sets the maximum value of the threshold selection algotihm.
 /// @param new_maximum_threshold Maximum threshold for the algorithm.
@@ -164,7 +158,6 @@ void F1ScoreOptimizationThreshold::set_maximum_threshold(const double& new_maxim
     maximum_threshold = new_maximum_threshold;
 }
 
-// void set_step(const double&) method
 
 /// Sets the step between two iterations of the threshold selection algotihm.
 /// @param new_step Difference of threshold between two consecutive iterations.
@@ -189,7 +182,6 @@ void F1ScoreOptimizationThreshold::set_step(const double& new_step)
     step = new_step;
 }
 
-// F1ScoreOptimizationThresholdResults* perform_order_selection() method
 
 /// Perform the decision threshold selection optimizing the F1 score.
 
@@ -215,7 +207,7 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
 
     double current_f1_score;
 
-    double optimum_threshold;
+    double optimum_threshold = 0.0;
 
     Vector<double> optimal_binary_classification_test(15,1);
 
@@ -245,7 +237,7 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
         }
 
         if(current_f1_score > optimum_f1_score ||
-           (current_f1_score == optimum_f1_score && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
+           (fabs(current_f1_score - optimum_f1_score) < numeric_limits<double>::epsilon() && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
         {
             optimum_f1_score = current_f1_score;
             optimum_threshold = current_threshold;
@@ -265,7 +257,7 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
         }
-        else if(current_threshold == maximum_threshold)
+        else if(fabs(current_threshold - maximum_threshold) < numeric_limits<double>::epsilon())
         {
             end = true;
 
@@ -309,7 +301,6 @@ F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* F1ScoreOptimi
     return(results);
 }
 
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -359,8 +350,6 @@ Matrix<string> F1ScoreOptimizationThreshold::to_string_matrix() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Prints to the screen the f1 score optimization parameters, the stopping criteria
 /// and other user stuff concerning the f1 score optmization object.
 
@@ -376,8 +365,8 @@ tinyxml2::XMLDocument* F1ScoreOptimizationThreshold::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Minimum threshold
    {
@@ -464,8 +453,6 @@ tinyxml2::XMLDocument* F1ScoreOptimizationThreshold::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the bounding layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -525,8 +512,6 @@ void F1ScoreOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file_stream) 
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this f1 score optmization object.
 /// @param document TinyXML document containing the member data.
 
@@ -540,7 +525,7 @@ void F1ScoreOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& documen
 
         buffer << "OpenNN Exception: F1ScoreOptimizationThreshold class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "F1ScoreOptimizationThreshold element is NULL.\n";
+               << "F1ScoreOptimizationThreshold element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -559,7 +544,7 @@ void F1ScoreOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& documen
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -578,7 +563,7 @@ void F1ScoreOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& documen
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -597,7 +582,7 @@ void F1ScoreOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& documen
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -616,7 +601,7 @@ void F1ScoreOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& documen
             }
             catch(const logic_error& e)
             {
-               cout << e.what() << endl;
+               cerr << e.what() << endl;
             }
         }
     }
@@ -635,13 +620,12 @@ void F1ScoreOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& documen
 //           }
 //           catch(const logic_error& e)
 //           {
-//              cout << e.what() << endl;
+//              cerr << e.what() << endl;
 //           }
 //        }
 //    }
 }
 
-// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the f1 score optimization object.
 /// @param file_name Name of f1 score optimization XML-type file.
@@ -655,8 +639,6 @@ void F1ScoreOptimizationThreshold::save(const string& file_name) const
    delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a f1 score optimization object from a XML-type file.
 /// @param file_name Name of f1 score optimization XML-type file.

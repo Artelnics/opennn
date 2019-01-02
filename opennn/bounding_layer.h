@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   B O U N D I N G   L A Y E R   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -66,11 +65,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   BoundingLayer& operator =(const BoundingLayer&);
+   BoundingLayer& operator = (const BoundingLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const BoundingLayer&) const;
+   bool operator == (const BoundingLayer&) const;
 
    // ENUMERATIONS
 
@@ -130,12 +129,12 @@ public:
 
    // Lower and upper bounds
 
-   Vector<double> calculate_outputs(const Vector<double>&) const;
-   Vector<double> calculate_derivative(const Vector<double>&) const;
-   Vector<double> calculate_second_derivative(const Vector<double>&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&) const;
+   Matrix<double> calculate_derivatives(const Matrix<double>&) const;
+   Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
 
-   Matrix<double> arrange_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > arrange_Hessian_form(const Vector<double>&) const;
+   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    // Expression methods
 

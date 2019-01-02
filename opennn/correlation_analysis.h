@@ -128,9 +128,9 @@ public:
 
     static Matrix<double> calculate_correlations(const Matrix<double>&);
 
-    static Vector<double> calculate_correlations(const Matrix<double>& , const size_t&);
+    static Vector<double> calculate_correlations(const Matrix<double>&, const size_t&);
 
-    static Matrix<double> calculate_correlations(const Matrix<double>& , const Vector<size_t>&);
+    static Matrix<double> calculate_correlations(const Matrix<double>&, const Vector<size_t>&);
 
     // Multiple correlation methods
 
@@ -143,6 +143,10 @@ public:
     static double calculate_logistic_function(const Vector<double>&, const Vector<double> &);
 
     static Vector<double> calculate_logistic_error_gradient(const Vector<double>&, const Vector<double>&, const Vector<double>&);
+
+    // Remove methods
+
+    static Matrix<double> remove_correlations(const Matrix<double>&, const size_t&, const double&);
 
 };
 

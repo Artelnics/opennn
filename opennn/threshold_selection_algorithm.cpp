@@ -22,7 +22,7 @@ namespace OpenNN {
 /// Default constructor.
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm()
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     set_default();
 }
@@ -46,7 +46,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(TrainingStrategy* new_t
 /*/// @param file_name Name of XML order selection file.*/
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const string&)
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     //load(file_name);
 }
@@ -58,7 +58,7 @@ ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const string&)
 /*/// @param threshold_selection_document Pointer to a TinyXML document containing the threshold selection algorithm data.*/
 
 ThresholdSelectionAlgorithm::ThresholdSelectionAlgorithm(const tinyxml2::XMLDocument& )
-    : training_strategy_pointer(NULL)
+    : training_strategy_pointer(nullptr)
 {
     //from_XML(order_selection_document);
 }
@@ -89,7 +89,7 @@ TrainingStrategy* ThresholdSelectionAlgorithm::get_training_strategy_pointer() c
 
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "DataSet* get_training_strategy_pointer() const method.\n"
-               << "Training strategy pointer is NULL.\n";
+               << "Training strategy pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -229,7 +229,7 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
        buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
               << "Matrix<size_t> calculate_confusion(const double&) const method.\n"
-              << "Pointer to multilayer perceptron in neural network is NULL.\n";
+              << "Pointer to multilayer perceptron in neural network is nullptr.\n";
 
        throw logic_error(buffer.str());
     }
@@ -243,7 +243,7 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
     const Variables& variables = data_set_pointer->get_variables();
 
-    if(inputs_number != variables.count_inputs_number())
+    if(inputs_number != variables.get_inputs_number())
     {
         ostringstream buffer;
 
@@ -254,7 +254,7 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
        throw logic_error(buffer.str());
     }
 
-    if(outputs_number != variables.count_targets_number())
+    if(outputs_number != variables.get_targets_number())
     {
         ostringstream buffer;
 
@@ -277,12 +277,12 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
     }
     #endif
 
-     const Matrix<double> input_data = data_set_pointer->arrange_selection_input_data();
-     const Matrix<double> target_data = data_set_pointer->arrange_selection_target_data();
+     const Matrix<double> inputs = data_set_pointer->get_selection_inputs();
+     const Matrix<double> targets = data_set_pointer->get_selection_targets();
 
-     const Matrix<double> output_data = neural_network_pointer->calculate_output_data(input_data);
+     const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-     const size_t rows_number = target_data.get_rows_number();
+     const size_t rows_number = targets.get_rows_number();
 
      Matrix<size_t> confusion(2, 2);
 
@@ -293,38 +293,38 @@ Matrix<size_t> ThresholdSelectionAlgorithm::calculate_confusion(const double& de
 
      for(size_t i = 0; i < rows_number; i++)
      {
-         if(decision_threshold == 0.0 && target_data(i,0) == 0.0 )
+         if(decision_threshold == 0.0 && targets(i,0) == 0.0 )
          {
              false_positive++;
 
          }
-         else if(decision_threshold == 0.0 && target_data(i,0) == 1.0)
+         else if(decision_threshold == 0.0 && targets(i,0) == 1.0)
          {
              true_positive++;
 
          }
-         else if(target_data(i,0) >= decision_threshold && output_data(i,0) >= decision_threshold)
+         else if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
          {
              // True positive
 
              true_positive++;
 
          }
-         else if(target_data(i,0) >= decision_threshold && output_data(i,0) < decision_threshold)
+         else if(targets(i,0) >= decision_threshold && outputs(i,0) < decision_threshold)
          {
              // False negative
 
              false_negative++;
 
          }
-         else if(target_data(i,0) < decision_threshold && output_data(i,0) >= decision_threshold)
+         else if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
          {
              // False positive
 
              false_positive++;
 
          }
-         else if(target_data(i,0) < decision_threshold && output_data(i,0) < decision_threshold)
+         else if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
          {
              // True negative
 
@@ -402,7 +402,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        classification_accuracy =(double)(true_positive + true_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
+        classification_accuracy = (double)(true_positive + true_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
     }
 
     // Error rate
@@ -415,7 +415,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        error_rate =(double)(false_positive + false_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
+        error_rate = (double)(false_positive + false_negative)/(double)(true_positive + true_negative + false_positive + false_negative);
     }
 
     // Sensitivity
@@ -428,7 +428,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        sensitivity =(double)true_positive/(double)(true_positive + false_negative);
+        sensitivity = (double)true_positive/(double)(true_positive + false_negative);
     }
 
     // Specificity
@@ -441,7 +441,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        specificity =(double)true_negative/(double)(true_negative + false_positive);
+        specificity = (double)true_negative/(double)(true_negative + false_positive);
     }
 
     // Precision
@@ -454,7 +454,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-       precision =(double) true_positive /(double)(true_positive + false_positive);
+       precision = (double) true_positive /(double)(true_positive + false_positive);
     }
 
     // Positive likelihood
@@ -501,7 +501,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        F1_score =(double) 2*true_positive/(double)(2*true_positive + false_positive + false_negative);
+        F1_score = (double) 2*true_positive/(double)(2*true_positive + false_positive + false_negative);
     }
 
     // False positive rate
@@ -514,7 +514,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        false_positive_rate =(double) false_positive/(double)(false_positive + true_negative);
+        false_positive_rate = (double) false_positive/(double)(false_positive + true_negative);
     }
 
     // False discovery rate
@@ -527,7 +527,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        false_discovery_rate =(double) false_positive /(double)(false_positive + true_positive);
+        false_discovery_rate = (double) false_positive /(double)(false_positive + true_positive);
     }
 
     // False negative rate
@@ -540,7 +540,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        false_negative_rate =(double) false_negative /(double)(false_negative + true_positive);
+        false_negative_rate = (double) false_negative /(double)(false_negative + true_positive);
     }
 
     // Negative predictive value
@@ -553,7 +553,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        negative_predictive_value =(double) true_negative/(double)(true_negative + false_negative);
+        negative_predictive_value = (double) true_negative/(double)(true_negative + false_negative);
     }
 
     //Matthews correlation coefficient
@@ -566,7 +566,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        Matthews_correlation_coefficient =(double)(true_positive * true_negative - false_positive * false_negative) /(double) sqrt((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative));
+        Matthews_correlation_coefficient = (double)(true_positive * true_negative - false_positive * false_negative) /(double) sqrt((true_positive + false_positive) *(true_positive + false_negative) *(true_negative + false_positive) *(true_negative + false_negative));
     }
 
     //Informedness
@@ -583,7 +583,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
     }
     else
     {
-        markedness = precision +(double) true_negative/(double)(true_negative + false_positive) - 1;
+        markedness = precision + (double) true_negative/(double)(true_negative + false_positive) - 1;
     }
 
     //Arrange vector
@@ -611,7 +611,7 @@ Vector<double> ThresholdSelectionAlgorithm::calculate_binary_classification_test
 
 // void check() const method
 
-/// Checks that the different pointers needed for performing the threshold selection are not NULL.
+/// Checks that the different pointers needed for performing the threshold selection are not nullptr.
 
 void ThresholdSelectionAlgorithm::check() const
 {
@@ -623,7 +623,7 @@ void ThresholdSelectionAlgorithm::check() const
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to training strategy is NULL.\n";
+               << "Pointer to training strategy is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -636,7 +636,7 @@ void ThresholdSelectionAlgorithm::check() const
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to loss functional is NULL.\n";
+               << "Pointer to loss index is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -649,7 +649,7 @@ void ThresholdSelectionAlgorithm::check() const
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to neural network is NULL.\n";
+               << "Pointer to neural network is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -660,7 +660,7 @@ void ThresholdSelectionAlgorithm::check() const
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to probabilistic layer is NULL.\n";
+               << "Pointer to probabilistic layer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -673,14 +673,14 @@ void ThresholdSelectionAlgorithm::check() const
     {
         buffer << "OpenNN Exception: ThresholdSelectionAlgorithm class.\n"
                << "void check() const method.\n"
-               << "Pointer to data set is NULL.\n";
+               << "Pointer to data set is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
     const Instances& instances = data_set_pointer->get_instances();
 
-    const size_t selection_instances_number = instances.count_selection_instances_number();
+    const size_t selection_instances_number = instances.get_selection_instances_number();
 
     if(selection_instances_number == 0)
     {

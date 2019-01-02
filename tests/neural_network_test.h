@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   N E U R A L   N E T W O R K   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -60,16 +60,13 @@ public:
    void test_get_unscaling_layer_pointer();   
    void test_get_bounding_layer_pointer();
    void test_get_probabilistic_layer_pointer();
-   void test_get_conditions_layer_pointer();
-
-   void test_get_independent_parameters_pointer();
 
    // Display warning 
 
   // Parameters methods
 
-   void test_count_parameters_number();
-   void test_arrange_parameters();   
+   void test_get_parameters_number();
+   void test_get_parameters();   
 
    // Display messages
 
@@ -91,10 +88,6 @@ public:
    // Variables statistics
 
    void test_set_variables_statistics();
-
-   // Independent parameters
-
-   void test_set_independent_parameters();
 
    // Parameters
 
@@ -127,7 +120,6 @@ public:
    // Output 
 
    void test_calculate_outputs();
-   void test_calculate_output_data();
 
    void test_calculate_Jacobian();
    void test_calculate_Jacobian_data();

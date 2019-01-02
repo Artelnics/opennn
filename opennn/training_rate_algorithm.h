@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T R A I N I N G   R A T E   A L G O R I T H M   C L A S S   H E A D E R                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -92,7 +91,7 @@ public:
        /// It returns true if both triplets have the same points A, U and B, and false otherwise.
        /// @ param other_triplet Triplet to be compared with.
 
-       inline bool operator ==(const Triplet& other_triplet) const
+       inline bool operator == (const Triplet& other_triplet) const
        {
           if(A == other_triplet.A
           && U == other_triplet.U
@@ -104,6 +103,22 @@ public:
           {
              return(false);
           }
+       }
+
+       inline double get_length() const
+       {
+           return(B[0] - A[0]);
+       }
+
+       inline Vector<double> calculate_minimum() const
+       {
+           const Vector<double> losses({A[1], U[1], B[1]});
+
+           const size_t minimal_index = losses.calculate_minimal_index();
+
+           if(minimal_index == 0) return A;
+           else if(minimal_index == 1) return U;
+           else return B;
        }
 
        /// Returns true if the length of the interval(A,B) is zero,
@@ -142,9 +157,9 @@ public:
        {
            ostringstream buffer;
 
-           buffer << "A =(" << A[0] << "," << A[1] << ")\n"
-                  << "U =(" << U[0] << "," << U[1] << ")\n"
-                  << "B =(" << B[0] << "," << B[1] << ")" << endl;
+           buffer << "A = (" << A[0] << "," << A[1] << ")\n"
+                  << "U = (" << U[0] << "," << U[1] << ")\n"
+                  << "B = (" << B[0] << "," << B[1] << ")" << endl;
 
            return(buffer.str());
        }
@@ -154,6 +169,7 @@ public:
        inline void print() const
        {
            cout << object_to_string();
+           cout << "Lenght: " << get_length() << endl;
        }
 
        /// Checks that the points A, U and B define a minimum.
@@ -214,8 +230,7 @@ public:
 
    // Training parameters
 
-   const double& get_bracketing_factor() const;   
-   const double& get_training_rate_tolerance() const;
+   const double& get_loss_tolerance() const;
 
    const double& get_warning_training_rate() const;
 
@@ -239,8 +254,7 @@ public:
 
    // Training parameters
 
-   void set_bracketing_factor(const double&);   
-   void set_training_rate_tolerance(const double&);
+   void set_loss_tolerance(const double&);
 
    void set_warning_training_rate(const double&);
 
@@ -250,7 +264,7 @@ public:
 
    void set_display(const bool&);
 
-   virtual void set_default();
+   void set_default();
 
    // Training rate method
 
@@ -271,16 +285,14 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(   );
 
 protected:
 
    // FIELDS
 
-   /// Pointer to an external loss functional object.
+   /// Pointer to an external loss index object.
 
    LossIndex* loss_index_pointer;
-
 
    // TRAINING OPERATORS
 
@@ -288,13 +300,9 @@ protected:
 
    TrainingRateMethod training_rate_method;
 
-   /// Increase factor when bracketing a minimum.
-
-   double bracketing_factor;
-
    /// Maximum interval length for the training rate.
 
-   double training_rate_tolerance;
+   double loss_tolerance;
 
    /// Big training rate value at which the algorithm displays a warning. 
 
@@ -309,6 +317,10 @@ protected:
    /// Display messages to screen.
 
    bool display;
+
+
+   const double golden_ratio = 1.618;
+
 };
 
 }

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S                                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -38,11 +37,11 @@ void TrainingStrategyTest::test_constructor()
 {
    message += "test_constructor\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
 
    // Test
 
-   TrainingStrategy ts1(&pf);
+   TrainingStrategy ts1(&sse);
 
    assert_true(ts1.has_loss_index() == true, LOG);
 
@@ -68,13 +67,13 @@ void TrainingStrategyTest::test_get_loss_index_pointer()
 {
    message += "test_get_loss_index_pointer\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
    
-   TrainingStrategy ts(&pf);
+   TrainingStrategy ts(&sse);
 
    LossIndex* pfp = ts.get_loss_index_pointer();
 
-   assert_true(pfp != NULL, LOG);
+   assert_true(pfp != nullptr, LOG);
 }
 
 
@@ -125,8 +124,8 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding()
     Vector<size_t> architecture;
     NeuralNetwork nn;
 
-    LossIndex pf(&nn, &ds);
-    TrainingStrategy ts(&pf);
+    SumSquaredError sse(&nn, &ds);
+    TrainingStrategy ts(&sse);
 
     // Test
 
@@ -161,7 +160,7 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding()
 
     qnm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
     qnm.set_loss_goal(0.0);
-    qnm.set_minimum_loss_increase(0.0);
+    qnm.set_minimum_loss_decrease(0.0);
     qnm.set_gradient_norm_goal(0.0);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
@@ -176,14 +175,14 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding()
 
     qnm.set_minimum_parameters_increment_norm(0.0);
     qnm.set_loss_goal(loss_goal);
-    qnm.set_minimum_loss_increase(0.0);
+    qnm.set_minimum_loss_decrease(0.0);
     qnm.set_gradient_norm_goal(0.0);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
 
     qnm.perform_training();
 
-    loss = pf.calculate_loss();
+    loss = sse.calculate_loss();
 
     assert_true(loss < loss_goal, LOG);
 
@@ -195,7 +194,7 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding()
 
     qnm.set_minimum_parameters_increment_norm(0.0);
     qnm.set_loss_goal(0.0);
-    qnm.set_minimum_loss_increase(minimum_loss_increase);
+    qnm.set_minimum_loss_decrease(minimum_loss_increase);
     qnm.set_gradient_norm_goal(0.0);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
@@ -210,14 +209,14 @@ void TrainingStrategyTest::test_initialize_layers_autoencoding()
 
     qnm.set_minimum_parameters_increment_norm(0.0);
     qnm.set_loss_goal(0.0);
-    qnm.set_minimum_loss_increase(0.0);
+    qnm.set_minimum_loss_decrease(0.0);
     qnm.set_gradient_norm_goal(gradient_norm_goal);
     qnm.set_maximum_iterations_number(10);
     qnm.set_maximum_time(1000.0);
 
     qnm.perform_training();
 
-    double gradient_norm = pf.calculate_gradient().calculate_norm();
+    double gradient_norm = sse.calculate_gradient().calculate_norm();
     assert_true(gradient_norm < gradient_norm_goal, LOG);
 */
 }
@@ -229,8 +228,8 @@ void TrainingStrategyTest::test_perform_training()
 
     NeuralNetwork nn;
     DataSet ds;
-    LossIndex pf(&nn, &ds);
-    TrainingStrategy ts(&pf);
+    SumSquaredError sse(&nn, &ds);
+    TrainingStrategy ts(&sse);
 
     // Test
 
@@ -250,13 +249,12 @@ void TrainingStrategyTest::test_to_XML()
 
    // Test
 
-   ts.set_initialization_type(TrainingStrategy::RANDOM_SEARCH);
-   ts.set_main_type(TrainingStrategy::GRADIENT_DESCENT);
+   ts.set_training_method(TrainingStrategy::GRADIENT_DESCENT);
 //   ts.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
 
    tinyxml2::XMLDocument* document = ts.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    delete document;
 
@@ -270,8 +268,7 @@ void TrainingStrategyTest::test_from_XML()
    TrainingStrategy ts1;
    TrainingStrategy ts2;
 
-   ts1.set_initialization_type(TrainingStrategy::RANDOM_SEARCH);
-   ts1.set_main_type(TrainingStrategy::GRADIENT_DESCENT);
+   ts1.set_training_method(TrainingStrategy::GRADIENT_DESCENT);
 //   ts1.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
 
    tinyxml2::XMLDocument* document = ts1.to_XML();
@@ -280,9 +277,7 @@ void TrainingStrategyTest::test_from_XML()
 
    delete document;
 
-    assert_true(ts2.get_initialization_type() == TrainingStrategy::RANDOM_SEARCH, LOG);
-    assert_true(ts2.get_main_type() == TrainingStrategy::GRADIENT_DESCENT, LOG);
-    assert_true(ts2.get_refinement_type() == TrainingStrategy::NEWTON_METHOD, LOG);
+    assert_true(ts2.get_training_method() == TrainingStrategy::GRADIENT_DESCENT, LOG);
 }
 
 
@@ -300,9 +295,7 @@ void TrainingStrategyTest::test_save()
 
    TrainingStrategy ts;
 
-   ts.set_initialization_type(TrainingStrategy::RANDOM_SEARCH);
-   ts.set_main_type(TrainingStrategy::GRADIENT_DESCENT);
-//   ts.set_refinement_type(TrainingStrategy::NEWTON_METHOD);
+   ts.set_training_method(TrainingStrategy::GRADIENT_DESCENT);
 
    ts.save(file_name);
 
