@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   V A R I A B L E S   C L A S S                                                                              */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -108,7 +108,7 @@ Variables::~Variables()
 /// It assigns to the current object the members of an existing variables object.
 /// @param other_variables Variables object to be assigned.
 
-Variables& Variables::operator=(const Variables& other_variables)
+Variables& Variables::operator= (const Variables& other_variables)
 {
    if(this != &other_variables) 
    {
@@ -127,14 +127,14 @@ Variables& Variables::operator=(const Variables& other_variables)
 
 // EQUAL TO OPERATOR
 
-// bool operator ==(const Variables&) const method
+// bool operator == (const Variables&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_variables Variables object to be compared with.
 
-bool Variables::operator ==(const Variables& other_variables) const
+bool Variables::operator == (const Variables& other_variables) const
 {
    if(/*items == other_variables.items
    &&*/ display == other_variables.display)
@@ -243,11 +243,11 @@ size_t Variables::count_unused_variables_number() const
 }
 
 
-// size_t count_inputs_number() const method
+// size_t get_inputs_number() const method
 
 /// Returns the number of input variables of the data set.
 
-size_t Variables::count_inputs_number() const
+size_t Variables::get_inputs_number() const
 {
    const size_t variables_number = get_variables_number();
 
@@ -265,11 +265,11 @@ size_t Variables::count_inputs_number() const
 }
 
 
-// size_t count_targets_number() const method
+// size_t get_targets_number() const method
 
 /// Returns the number of target variables of the data set.
 
-size_t Variables::count_targets_number() const
+size_t Variables::get_targets_number() const
 {
    const size_t variables_number = get_variables_number();
 
@@ -323,12 +323,12 @@ Vector<size_t> Variables::count_uses() const
 }
 
 
-// Vector<Use> arrange_uses() const method
+// Vector<Use> get_uses() const method
 
 /// Returns a vector containing the use of each variable.
 /// The size of the vector is equal to the number of variables.
 
-Vector<Variables::Use> Variables::arrange_uses() const
+Vector<Variables::Use> Variables::get_uses() const
 {
     const size_t variables_number = get_variables_number();
 
@@ -622,14 +622,14 @@ bool Variables::is_used(const size_t& index) const
 
 
 
-// Matrix<string> arrange_information() const method
+// Matrix<string> get_information() const method
 
 /// Returns all the available information about the variables as a matrix of strings.
 /// The number of rows is the number of variables.
 /// The number of columns is four.
 /// Each row contains the information of a single variable(name, units, description and use).
 
-Matrix<string> Variables::arrange_information() const
+Matrix<string> Variables::get_information() const
 {
     const size_t variables_number = get_variables_number();
 
@@ -647,11 +647,11 @@ Matrix<string> Variables::arrange_information() const
 }
 
 
-// Vector<size_t> arrange_used_indices() const method
+// Vector<size_t> get_used_indices() const method
 
 /// Returns the indices of the used variables(those which are not set unused).
 
-Vector<size_t> Variables::arrange_used_indices() const
+Vector<size_t> Variables::get_used_indices() const
 {
     const size_t variables_number = get_variables_number();
 
@@ -676,14 +676,14 @@ Vector<size_t> Variables::arrange_used_indices() const
 }
 
 
-// Vector<size_t> arrange_inputs_indices() const method
+// Vector<size_t> get_inputs_indices() const method
 
 /// Returns the indices of the input variables.
 
-Vector<size_t> Variables::arrange_inputs_indices() const
+Vector<size_t> Variables::get_inputs_indices() const
 {
    const size_t variables_number = get_variables_number();
-   const size_t inputs_number = count_inputs_number();
+   const size_t inputs_number = get_inputs_number();
 
    Vector<size_t> inputs_indices(inputs_number);
 
@@ -702,14 +702,14 @@ Vector<size_t> Variables::arrange_inputs_indices() const
 }
 
 
-// Vector<size_t> arrange_targets_indices() const method
+// Vector<size_t> get_targets_indices() const method
 
 /// Returns the indices of the target variables.
 
-Vector<size_t> Variables::arrange_targets_indices() const
+Vector<size_t> Variables::get_targets_indices() const
 {
    const size_t variables_number = get_variables_number();
-   const size_t targets_number = count_targets_number();
+   const size_t targets_number = get_targets_number();
 
    Vector<size_t> targets_indices(targets_number);
 
@@ -747,18 +747,18 @@ size_t Variables::get_time_index() const
        ostringstream buffer;
 
        buffer << "OpenNN Exception Variables class.\n"
-              << "size_t arrange_time_variable_index() const method.\n"
+              << "size_t get_time_variable_index() const method.\n"
               << "There is no time variable.\n";
 
        throw logic_error(buffer.str());
 }
 
 
-// Vector<size_t> arrange_unused_indices() const method
+// Vector<size_t> get_unused_indices() const method
 
 /// Returns the indices of the unused variables.
 
-Vector<size_t> Variables::arrange_unused_indices() const
+Vector<size_t> Variables::get_unused_indices() const
 {
    const size_t variables_number = get_variables_number();
    const size_t unused_number = count_unused_variables_number();
@@ -780,14 +780,14 @@ Vector<size_t> Variables::arrange_unused_indices() const
 }
 
 
-// Vector<int> arrange_inputs_indices_int() const method
+// Vector<int> get_inputs_indices_int() const method
 
 /// Returns the indices of the input variables.
 
-Vector<int> Variables::arrange_inputs_indices_int() const
+Vector<int> Variables::get_inputs_indices_int() const
 {
    const size_t variables_number = get_variables_number();
-   const size_t inputs_number = count_inputs_number();
+   const size_t inputs_number = get_inputs_number();
 
    Vector<int> inputs_indices(inputs_number);
 
@@ -797,7 +797,7 @@ Vector<int> Variables::arrange_inputs_indices_int() const
    {
       if(items[i].use == Input)
       {
-         inputs_indices[index] =(int)i;
+         inputs_indices[index] = (int)i;
          index++;
       }
    }
@@ -806,14 +806,14 @@ Vector<int> Variables::arrange_inputs_indices_int() const
 }
 
 
-// Vector<int> arrange_targets_indices_int() const method
+// Vector<int> get_targets_indices_int() const method
 
 /// Returns the indices of the target variables.
 
-Vector<int> Variables::arrange_targets_indices_int() const
+Vector<int> Variables::get_targets_indices_int() const
 {
    const size_t variables_number = get_variables_number();
-   const size_t targets_number = count_targets_number();
+   const size_t targets_number = get_targets_number();
 
    Vector<int> targets_indices(targets_number);
 
@@ -823,7 +823,7 @@ Vector<int> Variables::arrange_targets_indices_int() const
    {
       if(items[i].use == Target)
       {
-         targets_indices[index] =(int)i;
+         targets_indices[index] = (int)i;
          index++;
       }
    }
@@ -831,11 +831,11 @@ Vector<int> Variables::arrange_targets_indices_int() const
    return(targets_indices);
 }
 
-// int arrange_time_variable_index_int() const method
+// int get_time_variable_index_int() const method
 
 /// Returns the indez of the time variable.
 
-int Variables::arrange_time_variable_index_int() const
+int Variables::get_time_variable_index_int() const
 {
     int time_variable_index;
 
@@ -845,7 +845,7 @@ int Variables::arrange_time_variable_index_int() const
     {
         if(items[i].use == Time)
         {
-            time_variable_index =(int)i;
+            time_variable_index = (int)i;
 
             return(time_variable_index);
         }
@@ -854,18 +854,18 @@ int Variables::arrange_time_variable_index_int() const
        ostringstream buffer;
 
        buffer << "OpenNN Exception Variables class.\n"
-              << "size_t arrange_time_variable_index() const method.\n"
+              << "size_t get_time_variable_index() const method.\n"
               << "There is no time variable.\n";
 
        throw logic_error(buffer.str());
 }
 
 
-// Vector<string> arrange_names() const method
+// Vector<string> get_names() const method
 
 /// Returns the names of all the variables in the data set.
 
-Vector<string> Variables::arrange_names() const
+Vector<string> Variables::get_names() const
 {
    const size_t variables_number = get_variables_number();
 
@@ -880,11 +880,11 @@ Vector<string> Variables::arrange_names() const
 }
 
 
-// Vector<string> arrange_used_names() const method
+// Vector<string> get_used_names() const method
 
 /// Returns the names of the used variables in the data set.
 
-Vector<string> Variables::arrange_used_names() const
+Vector<string> Variables::get_used_names() const
 {
    const size_t variables_number = get_variables_number();
 
@@ -908,15 +908,15 @@ Vector<string> Variables::arrange_used_names() const
 }
 
 
-// Vector<string> arrange_used_units() const method
+// Vector<string> get_used_units() const method
 
 /// Returns the units of the used variables in the data set.
 
-Vector<string> Variables::arrange_used_units() const
+Vector<string> Variables::get_used_units() const
 {
    const size_t variables_number = get_variables_number();
 
-   const Vector<size_t> used_variables_indices = arrange_used_indices();
+   const Vector<size_t> used_variables_indices = get_used_indices();
 
    const size_t used_variables_number = count_used_variables_number();
 
@@ -986,15 +986,13 @@ bool Variables::has_names() const
 }
 
 
-// Vector<string> arrange_inputs_name() const method
-
 /// Returns the names of the input variables in the data set.
 
-Vector<string> Variables::arrange_inputs_name() const
+Vector<string> Variables::get_inputs_name() const
 {
-   const size_t inputs_number = count_inputs_number();
+   const size_t inputs_number = get_inputs_number();
 
-   const Vector<size_t> inputs_indices = arrange_inputs_indices();
+   const Vector<size_t> inputs_indices = get_inputs_indices();
 
    Vector<string> inputs_name(inputs_number);
 
@@ -1011,15 +1009,19 @@ Vector<string> Variables::arrange_inputs_name() const
 }
 
 
-// Vector<string> arrange_targets_name() const method
+vector<string> Variables::get_inputs_name_std() const
+{
+    return get_inputs_name().to_std_vector();
+}
+
 
 /// Returns the names of the target variables in the data set.
 
-Vector<string> Variables::arrange_targets_name() const
+Vector<string> Variables::get_targets_name() const
 {
-   const size_t targets_number = count_targets_number();
+   const size_t targets_number = get_targets_number();
 
-   const Vector<size_t> targets_indices = arrange_targets_indices();
+   const Vector<size_t> targets_indices = get_targets_indices();
 
    Vector<string> targets_name(targets_number);
 
@@ -1036,11 +1038,15 @@ Vector<string> Variables::arrange_targets_name() const
 }
 
 
-// string arrange_time_name() const method
+vector<string> Variables::get_targets_name_std() const
+{
+    return get_targets_name().to_std_vector();
+}
+
 
 /// Returns the name of the time variable in the data set.
 
-string Variables::arrange_time_name() const
+string Variables::get_time_name() const
 {
     const size_t index = get_time_index();
 
@@ -1048,11 +1054,9 @@ string Variables::arrange_time_name() const
 }
 
 
-// Vector<string> arrange_units() const method
-
 /// Returns the units of all the variables in the data set. 
 
-Vector<string> Variables::arrange_units() const
+Vector<string> Variables::get_units() const
 {
     const size_t variables_number = get_variables_number();
 
@@ -1066,8 +1070,6 @@ Vector<string> Variables::arrange_units() const
    return(units);
 }
 
-
-// const string& get_units(const size_t&) const method
 
 /// Returns the units of a single variable in the data set. 
 /// @param i Index of variable. 
@@ -1097,15 +1099,13 @@ const string& Variables::get_unit(const size_t& i) const
 }
 
 
-// Vector<string> arrange_inputs_units() const method
-
 /// Returns the units of the input variables in the data set. 
 
-Vector<string> Variables::arrange_inputs_units() const
+Vector<string> Variables::get_inputs_units() const
 {
-   const Vector<size_t> inputs_indices = arrange_inputs_indices();
+   const Vector<size_t> inputs_indices = get_inputs_indices();
 
-   const size_t inputs_number = count_inputs_number();
+   const size_t inputs_number = get_inputs_number();
 
    Vector<string> inputs_units(inputs_number);
 
@@ -1122,15 +1122,13 @@ Vector<string> Variables::arrange_inputs_units() const
 }
 
 
-// Vector<string> arrange_targets_units() const method
-
 /// Returns the units of the target variables in the data set. 
 
-Vector<string> Variables::arrange_targets_units() const
+Vector<string> Variables::get_targets_units() const
 {
-   const Vector<size_t> targets_indices = arrange_targets_indices();
+   const Vector<size_t> targets_indices = get_targets_indices();
 
-   const size_t targets_number = count_targets_number();
+   const size_t targets_number = get_targets_number();
 
    Vector<string> targets_units(targets_number);
 
@@ -1147,11 +1145,9 @@ Vector<string> Variables::arrange_targets_units() const
 }
 
 
-// string arrange_time_unit() const method
-
 /// Returns the unit of the time variable in the data set.
 
-string Variables::arrange_time_unit() const
+string Variables::get_time_unit() const
 {
     const size_t index = get_time_index();
 
@@ -1159,11 +1155,9 @@ string Variables::arrange_time_unit() const
 }
 
 
-// Vector<string> arrange_descriptions() const method
-
 /// Returns the description of all the variables in the data set. 
 
-Vector<string> Variables::arrange_descriptions() const
+Vector<string> Variables::get_descriptions() const
 {
     const size_t variables_number = get_variables_number();
 
@@ -1177,8 +1171,6 @@ Vector<string> Variables::arrange_descriptions() const
    return(descriptions);
 }
 
-
-// const string& get_description(const size_t&) const method
 
 /// Returns the description of a single variable in the data set. 
 /// @param i Index of variable.
@@ -1208,15 +1200,13 @@ const string& Variables::get_description(const size_t& i) const
 }
 
 
-// Vector<string> arrange_inputs_description() const method
-
 /// Returns the description of the input variables in the data set. 
 
-Vector<string> Variables::arrange_inputs_description() const
+Vector<string> Variables::get_inputs_description() const
 {
-   const size_t inputs_number = count_inputs_number();
+   const size_t inputs_number = get_inputs_number();
 
-   const Vector<size_t> inputs_indices = arrange_inputs_indices();
+   const Vector<size_t> inputs_indices = get_inputs_indices();
 
    Vector<string> inputs_description(inputs_number);
 
@@ -1233,15 +1223,13 @@ Vector<string> Variables::arrange_inputs_description() const
 }
 
 
-// Vector<string> arrange_targets_descriptions() const method
-
 /// Returns the description of the target variables in the data set. 
 
-Vector<string> Variables::arrange_targets_description() const
+Vector<string> Variables::get_targets_description() const
 {
-   const Vector<size_t> targets_indices = arrange_targets_indices();
+   const Vector<size_t> targets_indices = get_targets_indices();
 
-   const size_t targets_number = count_targets_number();
+   const size_t targets_number = get_targets_number();
 
    Vector<string> target_descriptions(targets_number);
 
@@ -1258,11 +1246,9 @@ Vector<string> Variables::arrange_targets_description() const
 }
 
 
-// string arrange_time_description() const method
-
 /// Returns the description of the time variable in the data set.
 
-string Variables::arrange_time_description() const
+string Variables::get_time_description() const
 {
     const size_t index = get_time_index();
 
@@ -1270,16 +1256,14 @@ string Variables::arrange_time_description() const
 }
 
 
-// Matrix<string> arrange_inputs_information() const method
-
 /// Returns a single matrix with the names, units and descriptions of all the input variables.
 /// The number of rows is the number of inputs, and the number of columns is 3.
 
-Matrix<string> Variables::arrange_inputs_information() const
+Matrix<string> Variables::get_inputs_information() const
 {
-    const size_t inputs_number = count_inputs_number();
+    const size_t inputs_number = get_inputs_number();
 
-    const Vector<size_t> inputs_indices = arrange_inputs_indices();
+    const Vector<size_t> inputs_indices = get_inputs_indices();
 
     size_t input_index;
 
@@ -1297,17 +1281,37 @@ Matrix<string> Variables::arrange_inputs_information() const
     return(inputs_information);
 }
 
+vector< vector<string> >Variables::get_inputs_information_vector_of_vector() const
+{
+    const size_t inputs_number = get_inputs_number();
 
-// Matrix<string> arrange_targets_information() const method
+    const Vector<size_t> inputs_indices = get_inputs_indices();
+
+    size_t input_index;
+
+    vector< vector<string> > inputs_information(inputs_number, vector<string> (3));
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        input_index = inputs_indices[i];
+
+        inputs_information[i][0] = items[input_index].name;
+        inputs_information[i][1] = items[input_index].units;
+        inputs_information[i][2] = items[input_index].description;
+    }
+
+    return(inputs_information);
+}
+
 
 /// Returns a single matrix with the names, units and descriptions of all the target variables.
 /// The number of rows is the number of targets, and the number of columns is 3.
 
-Matrix<string> Variables::arrange_targets_information() const
+Matrix<string> Variables::get_targets_information() const
 {
-    const size_t targets_number = count_targets_number();
+    const size_t targets_number = get_targets_number();
 
-    const Vector<size_t> targets_indices = arrange_targets_indices();
+    const Vector<size_t> targets_indices = get_targets_indices();
 
     size_t target_index;
 
@@ -1325,12 +1329,33 @@ Matrix<string> Variables::arrange_targets_information() const
     return(targets_information);
 }
 
+vector< vector<string> > Variables::get_targets_information_vector_of_vector() const
+{
+    const size_t targets_number = get_targets_number();
 
-// Vector<string> arrange_time_information() const method
+    const Vector<size_t> targets_indices = get_targets_indices();
+
+    size_t target_index;
+
+    vector< vector<string> > targets_information(targets_number, vector<string> (3));
+
+    for(size_t i = 0; i < targets_number; i++)
+    {
+        target_index = targets_indices[i];
+
+        targets_information[i][0] = items[target_index].name;
+        targets_information[i][1] = items[target_index].units;
+        targets_information[i][2] = items[target_index].description;
+    }
+
+    return(targets_information);
+}
+
+// Vector<string> get_time_information() const method
 
 /// Returns a vector with the name, unit and description of the time variable.
 
-Vector<string> Variables::arrange_time_information() const
+Vector<string> Variables::get_time_information() const
 {
     const size_t index = get_time_index();
 
@@ -1595,7 +1620,7 @@ void Variables::set_use(const size_t& i, const string& new_use)
 
 void Variables::set_use(const string& name, const Use& new_use)
 {
-    const Vector<string> names = arrange_names();
+    const Vector<string> names = get_names();
 
     if(!names.contains(name))
     {
@@ -1618,7 +1643,7 @@ void Variables::set_use_substring(const string& substring, const Variables::Use&
 {
     const size_t variables_number = get_variables_number();
 
-    const Vector<string> names = arrange_names();
+    const Vector<string> names = get_names();
 
     for(size_t i = 0; i < variables_number; i++)
     {
@@ -1694,7 +1719,7 @@ void Variables::unuse_ahead_variables()
 {
     const size_t variables_number = get_variables_number();
 
-    const Vector<string> names = arrange_names();
+    const Vector<string> names = get_names();
 
     for(size_t i = 0; i < variables_number; i++)
     {
@@ -1710,7 +1735,7 @@ void Variables::unuse_substring_variables(const string& substring)
 {
     const size_t variables_number = get_variables_number();
 
-    const Vector<string> names = arrange_names();
+    const Vector<string> names = get_names();
 
     for(size_t i = 0; i < variables_number; i++)
     {
@@ -1778,49 +1803,6 @@ void Variables::set_unuse_indices(const Vector<size_t>& unused_indices)
     {
         set_use(unused_indices[i], Unused);
     }
-}
-
-
-// void set_input_indices(const Vector<int>&) method
-
-/// Sets the variables of the given indices as inputs.
-/// @param input_indices Indices of the variables to set as intputs.
-
-void Variables::set_input_indices(const Vector<int>& input_indices)
-{
-    const size_t indices_size = input_indices.size();
-
-    for(size_t i = 0; i < indices_size; i++)
-    {
-        set_use(input_indices[i], Input);
-    }
-}
-
-
-// void set_target_indices(const Vector<int>&) method
-
-/// Sets the variables of the given indices as targets.
-/// @param target_indices Indices of the variables to set as targets.
-
-void Variables::set_target_indices(const Vector<int>& target_indices)
-{
-    const size_t targets_size = target_indices.size();
-
-    for(size_t i = 0; i < targets_size; i++)
-    {
-        set_use(target_indices[i], Target);
-    }
-}
-
-
-// void set_time_index(const int&) method
-
-/// Sets the variable of the given index as time.
-/// @param time_index Index of the variable to set as time.
-
-void Variables::set_time_index(const int& time_index)
-{
-    set_use(time_index, Time);
 }
 
 
@@ -2063,7 +2045,7 @@ void Variables::set_description(const size_t& i, const string& new_description)
 }
 
 
-// void set_names(const Vector<string>& , const Vector< Vector<string> >&) method
+// void set_names(const Vector<string>&, const Vector< Vector<string> >&) method
 
 /// Sets the names of the variables from a vector of vectors of names.
 /// This method is used when loading a data file with nominal values.
@@ -2079,7 +2061,7 @@ void Variables::set_names(const Vector<string>& columns_name, const Vector< Vect
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Variables class.\n"
-              << "void set_names(const Vector<string>& , const Vector< Vector<string> >&) method.\n"
+              << "void set_names(const Vector<string>&, const Vector< Vector<string> >&) method.\n"
               << "Size of columns name(" << columns_name.size() << ") must be equal to size of nominal labels " << nominal_labels.size() << ".\n";
 
        throw logic_error(buffer.str());
@@ -2181,7 +2163,7 @@ void Variables::set_display(const bool& new_display)
 
 size_t Variables::get_variable_index(const string& name) const
 {
-    const Vector<string> names = arrange_names();
+    const Vector<string> names = get_names();
 
     const size_t index = names.get_first_index(name);
 
@@ -2276,9 +2258,9 @@ void Variables::convert_time_series(const size_t& lags_number, const size_t& ste
 
     Item time_item;
 
-    time_item.name = arrange_time_name();
-    time_item.units = arrange_time_unit();
-    time_item.description = arrange_time_description();
+    time_item.name = get_time_name();
+    time_item.units = get_time_unit();
+    time_item.description = get_time_description();
 
     remove_variable(time_index);
 
@@ -2401,8 +2383,8 @@ string Variables::object_to_string() const
    ostringstream buffer;
 
    const size_t variables_number = get_variables_number();
-   const size_t inputs_number = count_inputs_number();
-   const size_t targets_number = count_targets_number();
+   const size_t inputs_number = get_inputs_number();
+   const size_t targets_number = get_targets_number();
 
    buffer << "Variables object\n"
           << "Variables number: " << variables_number << "\n"
@@ -2445,8 +2427,8 @@ tinyxml2::XMLDocument* Variables::to_XML() const
 
    document->InsertFirstChild(variables_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    const size_t variables_number = get_variables_number();
 
@@ -2614,7 +2596,7 @@ void Variables::from_XML(const tinyxml2::XMLDocument& document)
    {
       buffer << "OpenNN Exception: Variables class.\n"
              << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-             << "Pointer to variables element is NULL.\n";
+             << "Pointer to variables element is nullptr.\n";
 
       throw logic_error(buffer.str());
    }
@@ -2627,7 +2609,7 @@ void Variables::from_XML(const tinyxml2::XMLDocument& document)
    {
       buffer << "OpenNN Exception: Variables class.\n"
              << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-             << "Pointer to variables number is NULL.\n";
+             << "Pointer to variables number is nullptr.\n";
 
       throw logic_error(buffer.str());
    }
@@ -2644,7 +2626,7 @@ void Variables::from_XML(const tinyxml2::XMLDocument& document)
 //   {
 //       buffer << "OpenNN Exception: Variables class.\n"
 //              << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-//              << "Pointer to nominal varaibles is NULL.\n";
+//              << "Pointer to nominal varaibles is nullptr.\n";
 //   }
 
 //   const string nominal_variables_text = nominal_variables_element->GetText();
@@ -2665,7 +2647,7 @@ void Variables::from_XML(const tinyxml2::XMLDocument& document)
       {
           buffer << "OpenNN Exception: Variables class.\n"
                  << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                 << "Item " << i+1 << " is NULL.\n";
+                 << "Item " << i+1 << " is nullptr.\n";
 
           throw logic_error(buffer.str());
       }
@@ -2725,7 +2707,7 @@ void Variables::from_XML(const tinyxml2::XMLDocument& document)
      {
         buffer << "OpenNN Exception: Variables class.\n"
                << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-               << "Pointer to use element is NULL.\n";
+               << "Pointer to use element is nullptr.\n";
 
         throw logic_error(buffer.str());
      }

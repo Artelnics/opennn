@@ -6,7 +6,7 @@
 /*   G E N E T I C   A L G O R I T H M   T E S T   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -80,9 +80,9 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     NeuralNetwork nn(3,2,1);
 
-    LossIndex pf(&nn,&ds);
+    SumSquaredError sse(&nn,&ds);
 
-    TrainingStrategy ts(&pf);
+    TrainingStrategy ts(&sse);
 
     GeneticAlgorithm ga(&ts);
 
@@ -109,9 +109,9 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 
     NeuralNetwork nn(3,2,1);
 
-    LossIndex pf(&nn,&ds);
+    SumSquaredError sse(&nn,&ds);
 
-    TrainingStrategy ts(&pf);
+    TrainingStrategy ts(&sse);
 
     GeneticAlgorithm ga(&ts);
 
@@ -148,8 +148,6 @@ void GeneticAlgorithmTest::test_calculate_fitness()
 }
 
 
-// Selection methods
-
 void GeneticAlgorithmTest::test_perform_selection()
 {
     message += "test_perform_selection\n";
@@ -158,9 +156,9 @@ void GeneticAlgorithmTest::test_perform_selection()
 
     NeuralNetwork nn(3,2,1);
 
-    LossIndex pf(&nn,&ds);
+    SumSquaredError sse(&nn,&ds);
 
-    TrainingStrategy ts(&pf);
+    TrainingStrategy ts(&sse);
 
     GeneticAlgorithm ga(&ts);
 
@@ -214,9 +212,9 @@ void GeneticAlgorithmTest::test_perform_crossover()
 
     NeuralNetwork nn(2,2,1);
 
-    LossIndex pf(&nn,&ds);
+    SumSquaredError sse(&nn,&ds);
 
-    TrainingStrategy ts(&pf);
+    TrainingStrategy ts(&sse);
 
     GeneticAlgorithm ga(&ts);
 
@@ -298,9 +296,9 @@ void GeneticAlgorithmTest::test_perform_mutation()
 
     NeuralNetwork nn(1,2,1);
 
-    LossIndex pf(&nn,&ds);
+    SumSquaredError sse(&nn,&ds);
 
-    TrainingStrategy ts(&pf);
+    TrainingStrategy ts(&sse);
 
     GeneticAlgorithm ga(&ts);
 
@@ -362,9 +360,9 @@ void GeneticAlgorithmTest::test_perform_order_selection()
 
 //    NeuralNetwork nn;
 
-//    LossIndex pf(&nn,&ds);
+//    SumSquaredError sse(&nn,&ds);
 
-//    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&sse);
 
 //    GeneticAlgorithm ga(&ts);
 
@@ -393,11 +391,11 @@ void GeneticAlgorithmTest::test_perform_order_selection()
 
 //    ga.set_population_size(10);
 
-//    ga.set_selection_loss_goal(1);
+//    ga.set_selection_error_goal(1);
 
 //    ga_results = ga.perform_inputs_selection();
 
-//    assert_true(ga_results->final_selection_loss < 1, LOG);
+//    assert_true(ga_results->final_selection_error < 1, LOG);
 //    assert_true(ga_results->stopping_condition == InputsSelectionAlgorithm::SelectionLossGoal, LOG);
 
 //    ga.delete_selection_history();
@@ -434,7 +432,7 @@ void GeneticAlgorithmTest::test_perform_order_selection()
 
 //    ga.set_population_size(10);
 
-//    ga.set_selection_loss_goal(0.0);
+//    ga.set_selection_error_goal(0.0);
 //    ga.set_maximum_iterations_number(1);
 
 //    ga_results = ga.perform_inputs_selection();
@@ -457,7 +455,7 @@ void GeneticAlgorithmTest::test_to_XML()
     GeneticAlgorithm ga;
 
     tinyxml2::XMLDocument* document = ga.to_XML();
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 }

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -62,11 +61,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   ProbabilisticLayer& operator =(const ProbabilisticLayer&);
+   ProbabilisticLayer& operator = (const ProbabilisticLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const ProbabilisticLayer&) const;
+   bool operator == (const ProbabilisticLayer&) const;
 
    // ENUMERATIONS
 
@@ -116,29 +115,29 @@ public:
 
    // Probabilistic post-processing
 
-   Vector<double> calculate_outputs(const Vector<double>&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
-   Vector<double> calculate_binary_output(const Vector<double>&) const;
+   Matrix<double> calculate_binary_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_binary_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_binary_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_binary_Hessian(const Vector<double>&) const;
 
-   Vector<double> calculate_probability_output(const Vector<double>&) const;
+   Matrix<double> calculate_probability_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_probability_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_probability_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_probability_Hessian(const Vector<double>&) const;
 
-   Vector<double> calculate_competitive_output(const Vector<double>&) const;
+   Matrix<double> calculate_competitive_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_competitive_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_competitive_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_competitive_Hessian(const Vector<double>&) const;
 
-   Vector<double> calculate_softmax_output(const Vector<double>&) const;
+   Matrix<double> calculate_softmax_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_softmax_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_softmax_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_softmax_Hessian(const Vector<double>&) const;
 
-   Vector<double> calculate_no_probabilistic_output(const Vector<double>&) const;
+   Matrix<double> calculate_no_probabilistic_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_no_probabilistic_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_no_probabilistic_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_no_probabilistic_Hessian(const Vector<double>&) const;
 
    // Expression methods
 

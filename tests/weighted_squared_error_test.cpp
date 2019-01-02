@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   W E I G H T E D   S Q U A R E D   E R R O R   T E S T   C L A S S                                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -82,7 +82,7 @@ void WeightedSquaredErrorTest::test_calculate_loss()
    ds.initialize_data(0.0);
 
    WeightedSquaredError wse(&nn, &ds);
-
+/*
    assert_true(wse.calculate_error() == 0.0, LOG);
 
    // Test
@@ -90,7 +90,7 @@ void WeightedSquaredErrorTest::test_calculate_loss()
    nn.set(1, 1);
    nn.randomize_parameters_normal();
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(2, 1, 1);
    ds.generate_data_binary_classification(2, 1);
@@ -106,7 +106,7 @@ void WeightedSquaredErrorTest::test_calculate_loss()
 
    wse.set_weights();
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    assert_true(wse.calculate_error() == wse.calculate_error(parameters), LOG);
 
@@ -135,14 +135,14 @@ void WeightedSquaredErrorTest::test_calculate_loss()
    wse.set_weights();
 
    assert_true(wse.get_positives_weight() != wse.get_negatives_weight(), LOG);
-
+*/
 }
 
 
 void WeightedSquaredErrorTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
-
+/*
    NumericalDifferentiation nd;
 
    NeuralNetwork nn;
@@ -172,7 +172,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    gradient = wse.calculate_gradient();
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
@@ -189,7 +189,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    gradient = wse.calculate_gradient();
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
@@ -210,7 +210,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    gradient = wse.calculate_gradient();
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
@@ -227,7 +227,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    gradient = wse.calculate_gradient();
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
@@ -243,14 +243,14 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    gradient = wse.calculate_gradient();
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
 
    nn.set(1, 1);
    nn.initialize_parameters(1.0);
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(2, 1, 1);
    ds.initialize_data(1.0);
@@ -264,7 +264,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
    ds.initialize_data(1.0);
 
    nn.randomize_parameters_normal();
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    wse.set_weights();
 
@@ -276,7 +276,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    nn.set(2, 1);
    nn.initialize_parameters(1.0);
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(3, 2, 1);
    ds.generate_data_binary_classification(3, 2);
@@ -287,12 +287,13 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
    numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_error, parameters);
 
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+*/
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_selection_loss()
+void WeightedSquaredErrorTest::test_calculate_selection_error()
 {
-   message += "test_calculate_selection_loss\n";
+   message += "test_calculate_selection_error\n";
 
    NeuralNetwork nn(1, 1, 1);
 
@@ -305,17 +306,18 @@ void WeightedSquaredErrorTest::test_calculate_selection_loss()
    ds.initialize_data(0.0);
 
    WeightedSquaredError wse(&nn, &ds);
+/*
+   double selection_error = wse.calculate_selection_error();
 
-   double selection_loss = wse.calculate_selection_error();
-
-   assert_true(selection_loss == 0.0, LOG);
+   assert_true(selection_error == 0.0, LOG);
+*/
 }
 
 
-void WeightedSquaredErrorTest::test_calculate_terms()
+void WeightedSquaredErrorTest::test_calculate_error_terms()
 {
-   message += "test_calculate_terms\n";
-
+   message += "test_calculate_error_terms\n";
+/*
    NeuralNetwork nn;
    Vector<size_t> hidden_layers_size;
    Vector<double> parameters;
@@ -324,9 +326,9 @@ void WeightedSquaredErrorTest::test_calculate_terms()
    
    WeightedSquaredError wse(&nn, &ds);
 
-   double objective;
+   double error;
 
-   Vector<double> evaluation_terms;
+   Vector<double> error_terms;
 
    // Test
 
@@ -336,11 +338,11 @@ void WeightedSquaredErrorTest::test_calculate_terms()
    ds.set(3, 2, 2);
    ds.generate_data_binary_classification(3, 2);
 
-   objective = wse.calculate_error();
+   error = wse.calculate_all_instances_error();
 
-   evaluation_terms = wse.calculate_terms();
+   error_terms = wse.calculate_error_terms();
 
-   assert_true(fabs((evaluation_terms*evaluation_terms).calculate_sum() - objective) < 1.0e-3, LOG);
+   assert_true(fabs((error_terms*error_terms).calculate_sum() - error) < 1.0e-3, LOG);
 
    // Test
 
@@ -350,19 +352,20 @@ void WeightedSquaredErrorTest::test_calculate_terms()
    ds.set(9, 3, 1);
    ds.generate_data_binary_classification(9, 3);
 
-   objective = wse.calculate_error();
+   error = wse.calculate_all_instances_error();
 
-   evaluation_terms = wse.calculate_terms();
+   error_terms = wse.calculate_error_terms();
 
-   assert_true(fabs((evaluation_terms*evaluation_terms).calculate_sum() - objective) < 1.0e-3, LOG);
+   assert_true(fabs((error_terms*error_terms).calculate_sum() - error) < 1.0e-3, LOG);
+*/
 }
 
 
 // @todo Last test
 
-void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
+void WeightedSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {
-   message += "test_calculate_terms_Jacobian\n";
+   message += "test_calculate_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
@@ -374,14 +377,14 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
 
    WeightedSquaredError wse(&nn, &ds);
 
-   Vector<double> objective_gradient;
+   Vector<double> error_gradient;
 
-   Vector<double> evaluation_terms;
+   Vector<double> error_terms;
    Matrix<double> terms_Jacobian;
    Matrix<double> numerical_Jacobian_terms;
 
    // Test
-
+/*
    nn.set(1, 1);
 
    nn.initialize_parameters(0.0);
@@ -390,10 +393,10 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
 
    ds.generate_data_binary_classification(3, 1);
 
-   terms_Jacobian = wse.calculate_terms_Jacobian();
+//   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().count_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.count_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
@@ -405,10 +408,10 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
    wse.set(&nn, &ds);
    ds.generate_data_binary_classification(3, 3);
 
-   terms_Jacobian = wse.calculate_terms_Jacobian();
+//   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().count_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.count_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
@@ -425,23 +428,23 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
    wse.set(&nn, &ds);
    ds.generate_data_binary_classification(3, 2);
 
-   terms_Jacobian = wse.calculate_terms_Jacobian();
+   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().count_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.count_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
 //   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
 
    nn.set(1, 1, 1);
    nn.randomize_parameters_normal();
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(3, 1, 1);
    ds.generate_data_binary_classification(3, 1);
 
-   terms_Jacobian = wse.calculate_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_terms, parameters);   
+   terms_Jacobian = wse.calculate_error_terms_Jacobian();
+//   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_error_terms, parameters);
 
    assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -449,16 +452,16 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
 
    nn.set(2, 2, 1);
    nn.randomize_parameters_normal();
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(2, 2, 1);
    ds.generate_data_binary_classification(2, 2);
 
-   terms_Jacobian = wse.calculate_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_terms, parameters);
+   terms_Jacobian = wse.calculate_error_terms_Jacobian();
+//   numerical_Jacobian_terms = nd.calculate_Jacobian(wse, &WeightedSquaredError::calculate_error_terms, parameters);
 
    assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
-
+*/
    // Test
 
 //   nn.set(2, 2, 2);
@@ -467,15 +470,15 @@ void WeightedSquaredErrorTest::test_calculate_terms_Jacobian()
 //   ds.set(2, 2, 2);
 //   ds.generate_data_binary_classification(4, 2);
    
-//   objective_gradient = wse.calculate_gradient();
+//   error_gradient = wse.calculate_gradient();
 
-//   evaluation_terms = wse.calculate_terms();
-//   terms_Jacobian = wse.calculate_terms_Jacobian();
+//   error_terms = wse.calculate_error_terms();
+//   terms_Jacobian = wse.calculate_error_terms_Jacobian();
 
-//   cout << (terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 << endl;
-//   cout << objective_gradient << endl;
+//   cout << (terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 << endl;
+//   cout << error_gradient << endl;
 
-//   assert_true(((terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 - objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true(((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
 
@@ -510,21 +513,21 @@ void WeightedSquaredErrorTest::run_test_case()
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
    test_calculate_loss();
 
-   test_calculate_selection_loss();
+   test_calculate_selection_error();
 
    test_calculate_gradient();
 
-   // Objective terms methods
+   // Error terms methods
 
-//   test_calculate_terms();
+//   test_calculate_error_terms();
 
-//   test_calculate_terms_Jacobian();
+//   test_calculate_error_terms_Jacobian();
 
-   // Objective Hessian methods
+   // Loss Hessian methods
 
 //   test_calculate_Hessian();
 

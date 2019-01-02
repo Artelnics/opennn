@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   R O O T   M E A N   S Q U A R E D   E R R O R   C L A S S   H E A D E R                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -25,7 +24,7 @@
 
 // OpenNN includes
 
-#include "error_term.h"
+#include "loss_index.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -39,7 +38,7 @@ namespace OpenNN
 /// The root mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
 /// This functional is used in data modeling problems.
 
-class RootMeanSquaredError : public ErrorTerm
+class RootMeanSquaredError : public LossIndex
 {
 
 public:
@@ -73,26 +72,36 @@ public:
 
    // METHODS
 
-   // Get methods
-
-   // Set methods
-
-   // Checking methods
-
-   void check() const;
-
    // Error term loss methods
 
-   double calculate_error() const;
-   double calculate_error(const Vector<double>&) const;
-   double calculate_selection_error() const;
+   double calculate_training_error() const
+   {
+       return 0;
+   }
 
-   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
+   double calculate_selection_error() const
+   {
+       return 0;
+   }
 
-   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
+   double calculate_training_error(const Vector<double>&) const
+   {
+       return 0;
+   }
 
-   Vector<double> calculate_gradient() const;
-   Vector<double> calculate_gradient(const double&, const double&) const;
+   Vector<double> calculate_training_error_gradient() const
+   {
+       return Vector<double>();
+   }
+
+   double calculate_batch_error(const Vector<size_t> &) const
+   {
+       return 0;
+   }
+
+
+
+   double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
 
    string write_error_term_type() const;
 
@@ -103,7 +112,10 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(   );
+
+private:
+
+   Vector<double> calculate_output_gradient(const Vector<size_t>&, const Vector<double>&, const Vector<double>&) const;
 
 };
 

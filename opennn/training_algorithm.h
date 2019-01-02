@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T R A I N I N G   A L G O R I T H M   C L A S S   H E A D E R                                              */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -61,18 +60,18 @@ public:
 
     // ASSIGNMENT OPERATOR
 
-    virtual TrainingAlgorithm& operator =(const TrainingAlgorithm&);
+    virtual TrainingAlgorithm& operator = (const TrainingAlgorithm&);
 
     // EQUAL TO OPERATOR
 
-    virtual bool operator ==(const TrainingAlgorithm&) const;
+    virtual bool operator == (const TrainingAlgorithm&) const;
 
     // ENUMERATIONS
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MinimumParametersIncrementNorm, MinimumPerformanceIncrease, PerformanceGoal, GradientNormGoal,
-                           MaximumSelectionPerformanceDecreases, MaximumIterationsNumber, MaximumTime};
+    enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
+                           MaximumSelectionLossIncreases, MaximumIterationsNumber, MaximumTime};
 
    // STRUCTURES
 
@@ -142,6 +141,12 @@ public:
    void set();
   /// ownership not passed
    void set(LossIndex*);
+
+   void set_training_batch_size(const size_t&);
+   void set_selection_batch_size(const size_t&);
+
+//   void set_epochs_number(const size_t&);
+
    virtual void set_default();
 
   /// ownership not passed
@@ -158,7 +163,7 @@ public:
 
    virtual void check() const;
 
-   /// Trains a neural network which has a loss functional associated. 
+   /// Trains a neural network which has a loss index associated. 
 
   /// ownership passed - use delete to destroy
    virtual TrainingAlgorithmResults* perform_training() = 0;
@@ -188,9 +193,14 @@ protected:
 
    // FIELDS
 
-   /// Pointer to a loss functional for a multilayer perceptron object.
+   /// Pointer to a loss index for a multilayer perceptron object.
 
    LossIndex* loss_index_pointer;
+
+   size_t training_batch_size = 100;
+   size_t selection_batch_size = 100;
+
+   size_t epochs_number = 10000;
 
    // UTILITIES
 
@@ -209,6 +219,7 @@ protected:
    /// Display messages to screen.
 
    bool display;
+
 };
 
 }

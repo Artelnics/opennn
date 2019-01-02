@@ -96,9 +96,9 @@ const size_t& SelectivePruning::get_maximum_selection_failures() const
 
 void SelectivePruning::set_default()
 {
-    size_t inputs_number ;
+    size_t inputs_number;
 
-    if(training_strategy_pointer == NULL
+    if(training_strategy_pointer == nullptr
             || !training_strategy_pointer->has_loss_index())
     {
         maximum_selection_failures = 3;
@@ -106,7 +106,7 @@ void SelectivePruning::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
-        maximum_selection_failures =(size_t)max(3.,inputs_number/5.);
+        maximum_selection_failures = (size_t)max(3.,inputs_number/5.);
     }
 
     minimum_inputs_number = 1;
@@ -185,9 +185,12 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    const Vector<size_t> training_indices = data_set_pointer->get_instances().get_training_indices();
+    const Vector<size_t> selection_indices = data_set_pointer->get_instances().get_selection_indices();
+
     Variables* variables = data_set_pointer->get_variables_pointer();
 
-    const size_t inputs_number = variables->count_inputs_number();
+    const size_t inputs_number = variables->get_inputs_number();
 
     Vector< Statistics<double> > original_statistics;
     Vector<ScalingLayer::ScalingMethod> original_scaling_methods;
@@ -204,7 +207,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
     size_t current_inputs_number = inputs_number;
 
-    Vector<Variables::Use> current_uses = variables->arrange_uses();
+    Vector<Variables::Use> current_uses = variables->get_uses();
     const Vector<Variables::Use> original_uses = current_uses;
 
     Vector<double> current_parameters;
@@ -217,7 +220,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
     Vector<double> final(2);
     Vector<double> history_row;
 
-    double current_training_loss, current_selection_loss;
+    double current_training_loss, current_selection_error;
     size_t best_ratio_index;
     double best_error;
 
@@ -239,7 +242,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
     final = perform_model_evaluation(current_inputs);
 
     current_training_loss = final[0];
-    current_selection_loss = final[1];
+    current_selection_error = final[1];
 
     results->inputs_data.push_back(current_inputs);
 
@@ -248,14 +251,14 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
         results->loss_data.push_back(current_training_loss);
     }
 
-    if(reserve_selection_loss_data)
+    if(reserve_selection_error_data)
     {
-        results->selection_loss_data.push_back(current_selection_loss);
+        results->selection_error_data.push_back(current_selection_error);
     }
 
     if(reserve_parameters_data)
     {
-        history_row = neural_network_pointer->arrange_parameters();
+        history_row = neural_network_pointer->get_parameters();
         results->parameters_data.push_back(history_row);
     }
 
@@ -263,10 +266,10 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
     {
         cout << "Initial values: " << endl;
 
-        cout << "Current inputs: " << variables->arrange_inputs_name().vector_to_string() << endl;
+        cout << "Current inputs: " << variables->get_inputs_name().vector_to_string() << endl;
         cout << "Number of inputs: " << current_inputs.count_equal_to(true) << endl;
         cout << "Training loss: " << current_training_loss << endl;
-        cout << "Selection loss: " << current_selection_loss << endl;
+        cout << "Selection error: " << current_selection_error << endl;
 
         cout << endl;
     }
@@ -277,7 +280,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
     {
         current_inputs_number = current_inputs.count_equal_to(true);
 
-        current_parameters = neural_network_pointer->arrange_parameters();
+        current_parameters = neural_network_pointer->get_parameters();
 
         index = 0;
 
@@ -308,7 +311,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
         index = best_ratio_index;
 
-        if(error_ratios[best_ratio_index] < current_selection_loss)
+        if(error_ratios[best_ratio_index] < current_selection_error)
         {
             original_index = get_input_index(original_uses, best_ratio_index);
 
@@ -329,8 +332,8 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
             neural_network_pointer->prune_input(index);
         }
 
-        current_training_loss = loss_index_pointer->calculate_loss();
-        current_selection_loss = loss_index_pointer->calculate_selection_error();
+        current_training_loss = loss_index_pointer->calculate_training_loss();
+        current_selection_error = loss_index_pointer->calculate_selection_error();
         error_ratios[best_ratio_index] = 1e20;
 
         time(&current_time);
@@ -345,9 +348,9 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
             results->loss_data.push_back(current_training_loss);
         }
 
-        if(reserve_selection_loss_data)
+        if(reserve_selection_error_data)
         {
-            results->selection_loss_data.push_back(current_selection_loss);
+            results->selection_error_data.push_back(current_selection_error);
         }
 
         if(reserve_parameters_data)
@@ -369,7 +372,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
         }
-        else if(final[1] < selection_loss_goal)
+        else if(final[1] < selection_error_goal)
         {
             end = true;
 
@@ -402,7 +405,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
             results->stopping_condition = InputsSelectionAlgorithm::MinimumInputs;
         }
-        else if(current_inputs.count_equal_to(true) == 1 || best_error >= current_selection_loss)
+        else if(current_inputs.count_equal_to(true) == 1 || best_error >= current_selection_error)
         {
             end = true;
 
@@ -419,12 +422,12 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
             cout << "Iteration: " << iterations << endl;
 
             if(current_inputs_number > current_inputs.count_equal_to(true))
-                cout << "Remove input: " << variables->arrange_names()[original_index] << endl;
+                cout << "Remove input: " << variables->get_names()[original_index] << endl;
 
-            cout << "Current inputs: " << variables->arrange_inputs_name().vector_to_string() << endl;
+            cout << "Current inputs: " << variables->get_inputs_name().vector_to_string() << endl;
             cout << "Number of inputs: " << current_inputs.count_equal_to(true) << endl;
             cout << "Training loss: " << current_training_loss << endl;
-            cout << "Selection loss: " << current_selection_loss << endl;
+            cout << "Selection error: " << current_selection_error << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
@@ -433,9 +436,9 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
     optimal_inputs = current_inputs;
 
-    optimal_parameters = neural_network_pointer->arrange_parameters();
+    optimal_parameters = neural_network_pointer->get_parameters();
 
-    optimum_loss_error = loss_index_pointer->calculate_loss();
+    optimum_loss_error = loss_index_pointer->calculate_training_loss();
     optimum_selection_error = loss_index_pointer->calculate_selection_error();
 
     if(reserve_minimal_parameters)
@@ -444,7 +447,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
     }
 
     results->optimal_inputs = optimal_inputs;
-    results->final_selection_loss = current_selection_loss;
+    results->final_selection_error = current_selection_error;
     results->final_loss = current_training_loss;
     results->iterations_number = iterations;
     results->elapsed_time = elapsed_time;
@@ -487,7 +490,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
     if(display)
     {
-        cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->arrange_names().vector_to_string() << endl
+        cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->get_names().vector_to_string() << endl
                   << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl
                   << "Optimum training loss: " << optimum_loss_error << endl
                   << "Optimum selection loss: " << optimum_selection_error << endl
@@ -532,7 +535,7 @@ Matrix<string> SelectivePruning::to_string_matrix() const
    labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_loss_goal;
+   buffer << selection_error_goal;
 
    values.push_back(buffer.str());
 
@@ -604,7 +607,7 @@ Matrix<string> SelectivePruning::to_string_matrix() const
    labels.push_back("Plot selection loss history");
 
    buffer.str("");
-   buffer << reserve_selection_loss_data;
+   buffer << reserve_selection_error_data;
 
    values.push_back(buffer.str());
 
@@ -636,8 +639,8 @@ tinyxml2::XMLDocument* SelectivePruning::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Regression
 //   {
@@ -681,7 +684,7 @@ tinyxml2::XMLDocument* SelectivePruning::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << selection_loss_goal;
+   buffer << selection_error_goal;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -777,7 +780,7 @@ tinyxml2::XMLDocument* SelectivePruning::to_XML() const
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_selection_loss_data;
+   buffer << reserve_selection_error_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -846,7 +849,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: SelectivePruning class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "SelectivePruning element is NULL.\n";
+               << "SelectivePruning element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -865,7 +868,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-               cout << e.what() << endl;
+               cerr << e.what() << endl;
             }
         }
     }
@@ -884,7 +887,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -903,7 +906,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -922,7 +925,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -941,7 +944,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -952,15 +955,15 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const string new_reserve_selection_loss_data = element->GetText();
+           const string new_reserve_selection_error_data = element->GetText();
 
            try
            {
-              set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
+              set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -979,7 +982,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -998,7 +1001,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1009,15 +1012,15 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const double new_selection_loss_goal = atof(element->GetText());
+           const double new_selection_error_goal = atof(element->GetText());
 
            try
            {
-              set_selection_loss_goal(new_selection_loss_goal);
+              set_selection_error_goal(new_selection_error_goal);
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1036,7 +1039,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1055,7 +1058,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1074,7 +1077,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1093,7 +1096,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1112,7 +1115,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1131,7 +1134,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -1150,7 +1153,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }

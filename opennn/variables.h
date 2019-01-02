@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   V A R I A B L E S   C L A S S   H E A D E R                                                                */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -77,11 +77,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   Variables& operator =(const Variables&);
+   Variables& operator = (const Variables&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const Variables&) const;
+   bool operator == (const Variables&) const;
 
    // ENUMERATIONS
 
@@ -131,14 +131,14 @@ public:
 
    size_t count_used_variables_number() const;
    size_t count_unused_variables_number() const;
-   size_t count_inputs_number() const;
-   size_t count_targets_number() const;
+   size_t get_inputs_number() const;
+   size_t get_targets_number() const;
 
    Vector<size_t> count_uses() const;
 
    // Variables methods
 
-   Vector<Use> arrange_uses() const;
+   Vector<Use> get_uses() const;
    Vector<string> write_uses() const;
 
    const Use& get_use(const size_t&) const;
@@ -151,29 +151,29 @@ public:
 
    bool is_used(const size_t&) const;
 
-   Vector<size_t> arrange_used_indices() const;
-   Vector<size_t> arrange_inputs_indices() const;
-   Vector<size_t> arrange_targets_indices() const;
+   Vector<size_t> get_used_indices() const;
+   Vector<size_t> get_inputs_indices() const;
+   Vector<size_t> get_targets_indices() const;
    size_t get_time_index() const;
-   Vector<size_t> arrange_unused_indices() const;  
+   Vector<size_t> get_unused_indices() const;  
 
-   Vector<int> arrange_inputs_indices_int() const;
-   Vector<int> arrange_targets_indices_int() const;
-   int arrange_time_variable_index_int() const;
+   Vector<int> get_inputs_indices_int() const;
+   Vector<int> get_targets_indices_int() const;
+   int get_time_variable_index_int() const;
 
    // Information methods
 
-   Vector<string> arrange_names() const;
-   Vector<string> arrange_used_names() const;
-   Vector<string> arrange_used_units() const;
+   Vector<string> get_names() const;
+   Vector<string> get_used_names() const;
+   Vector<string> get_used_units() const;
    const string& get_name(const size_t&) const;
 
    bool has_names() const;
 
-   Vector<string> arrange_units() const;
+   Vector<string> get_units() const;
    const string& get_unit(const size_t&) const;
 
-   Vector<string> arrange_descriptions() const;
+   Vector<string> get_descriptions() const;
    const string& get_description(const size_t&) const;
 
    const bool& get_display() const;
@@ -218,10 +218,6 @@ public:
    void set_time_index(const size_t&);
    void set_unuse_indices(const Vector<size_t>&);
 
-   void set_input_indices(const Vector<int>&);
-   void set_target_indices(const Vector<int>&);
-   void set_time_index(const int&);
-
    void set_default_uses();
 
    // Information methods
@@ -239,23 +235,29 @@ public:
 
    void set_display(const bool&);
 
-   Matrix<string> arrange_information() const;
+   Matrix<string> get_information() const;
 
-   Vector<string> arrange_inputs_units() const;
-   Vector<string> arrange_targets_units() const;
-   string arrange_time_unit() const;
+   Vector<string> get_inputs_units() const;
+   Vector<string> get_targets_units() const;
+   string get_time_unit() const;
 
-   Vector<string> arrange_inputs_name() const;
-   Vector<string> arrange_targets_name() const;
-   string arrange_time_name() const;
+   Vector<string> get_inputs_name() const;
+   vector<string> get_inputs_name_std() const;
 
-   Vector<string> arrange_inputs_description() const;
-   Vector<string> arrange_targets_description() const;
-   string arrange_time_description() const;
+   Vector<string> get_targets_name() const;
+   vector<string> get_targets_name_std() const;
+   string get_time_name() const;
 
-   Matrix<string> arrange_inputs_information() const;
-   Matrix<string> arrange_targets_information() const;
-   Vector<string> arrange_time_information() const;
+   Vector<string> get_inputs_description() const;
+   Vector<string> get_targets_description() const;
+   string get_time_description() const;
+
+   Matrix<string> get_inputs_information() const;
+   vector< vector<string> > get_inputs_information_vector_of_vector() const;
+
+   Matrix<string> get_targets_information() const;
+   vector< vector<string> > get_targets_information_vector_of_vector() const;
+   Vector<string> get_time_information() const;
 
    size_t get_variable_index(const string&) const;
 

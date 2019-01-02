@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   R A N D O M   S E A R C H   C L A S S   H E A D E R                                                        */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -39,7 +39,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents a random search training algorithm for a loss functional of a neural network.
+/// This concrete class represents a random search training algorithm for a loss index of a neural network.
 ///
 
 class RandomSearch : public TrainingAlgorithm
@@ -52,8 +52,9 @@ public:
    explicit RandomSearch(); 
 
 
-   // PERFORMANCE FUNCTIONAL CONSTRUCTOR
+    // LOSS INDEX CONSTRUCTOR
   /// ownership not passed
+
    explicit RandomSearch(LossIndex*); 
 
 
@@ -78,7 +79,7 @@ public:
 
        RandomSearchResults()
        {
-           random_search_pointer = NULL;
+           random_search_pointer = nullptr;
        }
 
        /// Random search constructor.
@@ -116,7 +117,7 @@ public:
 
       /// History of the selection loss over the training iterations.
 
-      Vector<double> selection_loss_history;
+      Vector<double> selection_error_history;
 
       /// History of the random search training direction over the training iterations. 
 
@@ -148,9 +149,9 @@ public:
 
       double final_loss;
 
-      /// Final selection loss.
+      /// Final selection error.
 
-      double final_selection_loss;
+      double final_selection_error;
 
       /// Final random search training direction. 
 
@@ -174,7 +175,7 @@ public:
 
       string object_to_string() const;
 
-      Matrix<string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const int& precision = 3) const;
   };
 
 
@@ -201,14 +202,14 @@ public:
    // Stopping criteria
 
    const double& get_loss_goal() const;
-   const size_t& get_maximum_selection_loss_decreases() const;
+   const size_t& get_maximum_selection_error_decreases() const;
 
    const size_t& get_maximum_iterations_number() const;
    const double& get_maximum_time() const;
 
    // Reserve training history
 
-   const bool& get_reserve_selection_loss_history() const;
+   const bool& get_reserve_selection_error_history() const;
 
    const bool& get_reserve_training_direction_history() const;
    const bool& get_reserve_training_rate_history() const;
@@ -238,14 +239,14 @@ public:
    // Stopping criteria
 
    void set_loss_goal(const double&);
-   void set_maximum_selection_loss_decreases(const size_t&);
+   void set_maximum_selection_error_increases(const size_t&);
 
    void set_maximum_iterations_number(const size_t&);
    void set_maximum_time(const double&);
 
    // Reserve training history
 
-   void set_reserve_selection_loss_history(const bool&);
+   void set_reserve_selection_error_history(const bool&);
 
    void set_reserve_training_direction_history(const bool&);
    void set_reserve_training_direction_norm_history(const bool&);
@@ -325,7 +326,7 @@ private:
    /// Maximum number of iterations at which the selection loss increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_loss_decreases;
+   size_t maximum_selection_error_decreases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 
@@ -352,7 +353,7 @@ private:
 
    /// True if the selection loss history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_loss_history;
+   bool reserve_selection_error_history;
 
    /// True if the training direction history matrix is to be reserved, false otherwise.
    

@@ -100,18 +100,18 @@ class NumericalIntegration
    {
       // Integration step
 
-      const double h =(b-a)/(n-1.0);
+      const double h = (b-a)/(n-1.0);
 
       // Sum
 
-      double sum =(t.*f)(a)/2.0;
+      double sum = (t.*f)(a)/2.0;
 
       for(size_t i = 1; i < n-1; i++)
       {
-         sum +=(t.*f)(a + i*h);
+         sum += (t.*f)(a + i*h);
       }
 
-      sum +=(t.*f)(b)/2.0;
+      sum += (t.*f)(b)/2.0;
 
       // Trapezoidal rule
 
@@ -135,18 +135,18 @@ class NumericalIntegration
    {
       // Integration step
 
-      const double h =(b-a)/(n-1.0);
+      const double h = (b-a)/(n-1.0);
 
       // Sum
 
-      Vector<double> sum =(t.*f)(a)/2.0;
+      Vector<double> sum = (t.*f)(a)/2.0;
 
       for(size_t i = 1; i < n-1; i++)
       {
-         sum +=(t.*f)(a + i*h);
+         sum += (t.*f)(a + i*h);
       }
 
-      sum +=(t.*f)(b)/2.0;
+      sum += (t.*f)(b)/2.0;
 
       // Trapezoidal rule
 
@@ -168,9 +168,9 @@ class NumericalIntegration
    template<class T> 
    static double calculate_Simpson_integral(const T& t, double(T::*f)(const double&) const , const double& a, const double& b, const size_t& n)
    {
-      const double h =(b-a)/(n-1.0);
+      const double h = (b-a)/(n-1.0);
 
-      double sum =(t.*f)(a)/3.0;
+      double sum = (t.*f)(a)/3.0;
 
       for(size_t i = 1; i < n-1; i++)
       {
@@ -184,7 +184,7 @@ class NumericalIntegration
          }
       }
 
-      sum +=(t.*f)(b)/3.0;
+      sum += (t.*f)(b)/3.0;
 
       return(h*sum);
    }
@@ -204,23 +204,23 @@ class NumericalIntegration
    template<class T> 
    static Vector<double> calculate_Simpson_integral(const T& t, Vector<double>(T::*f)(const double&) const , const double& a, const double& b, const size_t& n)
    {
-      const double h =(b-a)/(n-1.0);
+      const double h = (b-a)/(n-1.0);
 
-      Vector<double> sum =(t.*f)(a)/3.0;
+      Vector<double> sum = (t.*f)(a)/3.0;
 
       for(size_t i = 1; i < n-1; i++)
       {
          if(i%2 != 0) // odd
          {
-            sum +=(t.*f)(a + i*h)*4.0/3.0;
+            sum += (t.*f)(a + i*h)*4.0/3.0;
          }
          else // even
          {
-            sum +=(t.*f)(a + i*h)*2.0/3.0;       
+            sum += (t.*f)(a + i*h)*2.0/3.0;       
          }
       }
 
-      sum +=(t.*f)(b)/3.0;
+      sum += (t.*f)(b)/3.0;
 
       // Simpson's rule
 

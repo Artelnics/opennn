@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -21,21 +20,21 @@ using namespace OpenNN;
 // GENERAL CONSTRUCTOR
 
 
-NormalizedSquaredErrorTest::NormalizedSquaredErrorTest() : UnitTesting() 
+NormalizedSquaredErrorTest::NormalizedSquaredErrorTest(void) : UnitTesting() 
 {
 }
 
 
 // DESTRUCTOR
 
-NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest()
+NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest(void)
 {
 }
 
 
 // METHODS
 
-void NormalizedSquaredErrorTest::test_constructor()
+void NormalizedSquaredErrorTest::test_constructor(void)
 {
    message += "test_constructor\n";
 
@@ -65,16 +64,16 @@ void NormalizedSquaredErrorTest::test_constructor()
 }
 
 
-void NormalizedSquaredErrorTest::test_destructor()
+void NormalizedSquaredErrorTest::test_destructor(void)
 {
    message += "test_destructor\n";
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_error()
+void NormalizedSquaredErrorTest::test_calculate_error(void)
 {
    message += "test_calculate_error\n";
-
+/*
    Vector<double> parameters;
 
    NeuralNetwork nn(1,1);
@@ -83,7 +82,12 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 
    MultilayerPerceptron* mlpp = nn.get_multilayer_perceptron_pointer();
 
-   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Linear);
+   size_t instances_number;
+   size_t inputs_number;
+   size_t outputs_number;
+   size_t hidden_neurons;
+
+   mlpp->get_layer_pointer(0)->set_activation_function(PerceptronLayer::Linear);
 
    mlpp->initialize_biases(0.0);
    mlpp->initialize_synaptic_weights(1.0);
@@ -98,238 +102,248 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 
    NormalizedSquaredError nse(&nn, &ds);
 
-   assert_true(nse.calculate_error() == 0.0, LOG);
+   assert_true(nse.calculate_all_instances_error() == 0.0, LOG);
 
    // Test
 
-   nn.set(1, 2);
+   instances_number = 7;
+   inputs_number = 8;
+   outputs_number = 5;
+   hidden_neurons = 3;
+
+   nn.set(inputs_number, hidden_neurons, outputs_number);
    nn.randomize_parameters_normal();
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
-   ds.set(2, 1, 2);
+   ds.set(instances_number, inputs_number, outputs_number);
    ds.randomize_data_normal();
 
-   assert_true(nse.calculate_error() == nse.calculate_error(parameters), LOG);
+   nse.set_normalization_coefficient();
+
+   assert_true(fabs(nse.calculate_all_instances_error() - nse.calculate_all_instances_error(parameters)) < std::numeric_limits<double>::min(), LOG);
+*/
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_selection_error()
+void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 {
-   message += "test_calculate_selection_error\n";
+   message += "test_calculate_error_gradient\n";
+
+   NumericalDifferentiation nd;
 
    NeuralNetwork nn;
 
+   Vector<double> parameters;
+
    DataSet ds;
+   Matrix<double> data;
 
    NormalizedSquaredError nse(&nn, &ds);
 
-   double selection_loss;
+   Vector<double> error_gradient;
+   Vector<double> numerical_error_gradient;
+
+   size_t instances_number = 10;
+   size_t inputs_number = 10;
+   size_t outputs_number = 9;
+   size_t hidden_neurons = 5;
+
+   Vector<size_t> indices;
+
+   // Test 
+
+   nn.set(1,1,1);
+
+   nn.initialize_parameters(0.0);
+
+   ds.set(2, 1, 1);
+
+   data.set(2, 2);
+
+   data(0,0) = -1.0;
+   data(0,1) = -1.0;
+   data(1,0) = 1.0;
+   data(1,1) = 1.0;
+
+   ds.set_data(data);
+
+   error_gradient = nse.calculate_training_error_gradient();
+
+   assert_true(error_gradient.size() == nn.get_parameters_number(), LOG);
+   assert_true(error_gradient == 0.0, LOG);
 
    // Test
 
-   nn.set(2,2,2);
+   instances_number = 10;
+   inputs_number = 7;
+   outputs_number = 7;
+   hidden_neurons = 5;
 
-   ds.set(2,2,2);
+   nn.set(inputs_number, hidden_neurons, outputs_number);
+   nn.randomize_parameters_normal();
 
-   ds.get_instances_pointer()->set_selection();
+   parameters = nn.get_parameters();
 
+   ds.set(instances_number, inputs_number, outputs_number);
    ds.randomize_data_normal();
 
-   selection_loss = nse.calculate_selection_error();
+   nse.set_normalization_coefficient();
 
-   assert_true(selection_loss != 0.0, LOG);
+   indices.set(0, 1, instances_number-1);
 
+   error_gradient = nse.calculate_training_error_gradient();
+cout << "error gradient: " << error_gradient << endl;
+system("pause");
+   numerical_error_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, indices, parameters);
+
+   assert_true((error_gradient - numerical_error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+
+   // Test
+
+   instances_number = 10;
+   inputs_number = 7;
+   outputs_number = 7;
+   hidden_neurons = 5;
+
+   nn.set(inputs_number, hidden_neurons, outputs_number);
+   nn.randomize_parameters_normal();
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, PerceptronLayer::Logistic);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, PerceptronLayer::Logistic);
+
+   parameters = nn.get_parameters();
+
+   ds.set(instances_number, inputs_number, outputs_number);
+   ds.randomize_data_normal();
+
+   nse.set_normalization_coefficient();
+
+   indices.set(0,1,instances_number-1);
+
+   error_gradient = nse.calculate_training_error_gradient();
+   numerical_error_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, indices, parameters);
+
+   assert_true((error_gradient - numerical_error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
 
-// @todo
-
-void NormalizedSquaredErrorTest::test_calculate_gradient()
-{
-//   message += "test_calculate_gradient\n";
-
-//   NumericalDifferentiation nd;
-
-//   NeuralNetwork nn;
-
-//   Vector<double> network_parameters;
-
-//   DataSet ds;
-//   Matrix<double> data;
-
-//   NormalizedSquaredError nse(&nn, &ds);
-
-//   Vector<double> objective_gradient;
-//   Vector<double> numerical_objective_gradient;
-
-//   // Test
-
-//   nn.set(1,1,1);
-
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(2, 1, 1);
-
-//   data.set(2, 2);
-//   data(0,0) = -1.0;
-//   data(0,1) = -1.0;
-//   data(1,0) = 1.0;
-//   data(1,1) = 1.0;
-
-//   ds.set_data(data);
-
-//   objective_gradient = nse.calculate_gradient();
-
-//   assert_true(objective_gradient.size() == nn.count_parameters_number(), LOG);
-//   assert_true(objective_gradient == 0.0, LOG);
-
-//   // Test
-
-//   nn.set(5, 4, 2);
-//   nn.randomize_parameters_normal();
-
-//   network_parameters = nn.arrange_parameters();
-
-//   ds.set(3, 5, 2);
-//   ds.randomize_data_normal();
-
-//   objective_gradient = nse.calculate_gradient();
-//   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, network_parameters);
-
-//   assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-
-//   // Test
-
-//   nn.set(5, 4, 2);
-//   nn.randomize_parameters_normal();
-
-//   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
-//   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
-
-//   network_parameters = nn.arrange_parameters();
-
-//   ds.set(3, 5, 2);
-//   ds.randomize_data_normal();
-
-//   objective_gradient = nse.calculate_gradient();
-//   numerical_objective_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, network_parameters);
-
-//   assert_true((objective_gradient - numerical_objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-}
-
-
-void NormalizedSquaredErrorTest::test_calculate_Hessian()
+void NormalizedSquaredErrorTest::test_calculate_Hessian(void)
 {
    message += "test_calculate_Hessian\n";
 }
 
 
-// @todo
-
-void NormalizedSquaredErrorTest::test_calculate_terms()
+void NormalizedSquaredErrorTest::test_calculate_terms(void)
 {
-//   message += "test_calculate_terms\n";
+   message += "test_calculate_terms\n";
+/*
+   NeuralNetwork nn;
+   Vector<size_t> multilayer_perceptron_architecture;
+   Vector<double> network_parameters;
 
-//   NeuralNetwork nn;
-//   Vector<size_t> multilayer_perceptron_architecture;
-//   Vector<double> network_parameters;
+   DataSet ds;
 
-//   DataSet ds;
+   NormalizedSquaredError nse(&nn, &ds);
 
-//   NormalizedSquaredError nse(&nn, &ds);
+   double error;
 
-//   double objective;
+   Vector<double> evaluation_terms;
 
-//   Vector<double> evaluation_terms;
+   size_t instances_number;
+   size_t inputs_number;
+   size_t outputs_number;
 
-//   // Test
+   // Test
 
-//   nn.set(2, 2);
-//   nn.randomize_parameters_normal();
+   instances_number = 7;
+   inputs_number = 6;
+   outputs_number = 7;
 
-//   ds.set(3, 2, 2);
-//   ds.randomize_data_normal();
+   nn.set(inputs_number, outputs_number);
+   nn.randomize_parameters_normal();
 
-//   objective = nse.calculate_error();
+   ds.set(instances_number, inputs_number, outputs_number);
+   ds.randomize_data_normal();
 
-//   evaluation_terms = nse.calculate_terms();
+   nse.set_normalization_coefficient();
 
-//   assert_true(fabs((evaluation_terms*evaluation_terms).calculate_sum() - objective) < 1.0e-3, LOG);
+   error = nse.calculate_all_instances_error();
 
+   evaluation_terms = nse.calculate_error_terms();
+
+//   assert_true(fabs((evaluation_terms*evaluation_terms).calculate_sum() - error) < 1.0e-3, LOG);
+*/
 }
 
 
-// @todo
-
-void NormalizedSquaredErrorTest::test_calculate_terms_Jacobian()
+void NormalizedSquaredErrorTest::test_calculate_terms_Jacobian(void)
 {
-//   message += "test_calculate_terms_Jacobian\n";
+   message += "test_calculate_terms_Jacobian\n";
 
-//   NumericalDifferentiation nd;
+   NumericalDifferentiation nd;
 
-//   NeuralNetwork nn;
-//   Vector<int> hidden_layers_size;
-//   Vector<double> network_parameters;
+   NeuralNetwork nn;
+   Vector<int> hidden_layers_size;
+   Vector<double> network_parameters;
 
-//   DataSet ds;
+   DataSet ds;
 
-//   NormalizedSquaredError nse(&nn, &ds);
+   NormalizedSquaredError nse(&nn, &ds);
 
-//   Vector<double> objective_gradient;
+   Vector<double> error_gradient;
 
-//   Vector<double> evaluation_terms;
-//   Matrix<double> terms_Jacobian;
-//   Matrix<double> numerical_Jacobian_terms;
+   Vector<double> evaluation_terms;
+   Matrix<double> terms_Jacobian;
+   Matrix<double> numerical_Jacobian_terms;
 
-//   // Test
+   // Test
+/*
+   nn.set(1, 1);
+   nn.randomize_parameters_normal();
+   network_parameters = nn.get_parameters();
 
-//   nn.set(1, 1);
-//   nn.randomize_parameters_normal();
-//   network_parameters = nn.arrange_parameters();
+   ds.set(2, 1, 1);
+   ds.randomize_data_normal();
 
-//   ds.set(2, 1, 1);
-//   ds.randomize_data_normal();
+   terms_Jacobian = nse.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_error_terms, network_parameters);
 
-//   terms_Jacobian = nse.calculate_terms_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_terms, network_parameters);
+   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
 
-//   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
+   // Test
 
-//   // Test
+   nn.set(2, 2, 2);
+   nn.randomize_parameters_normal();
+   network_parameters = nn.get_parameters();
 
-//   nn.set(2, 2, 2);
-//   nn.randomize_parameters_normal();
-//   network_parameters = nn.arrange_parameters();
+   ds.set(2, 2, 2);
+   ds.randomize_data_normal();
 
-//   ds.set(2, 2, 2);
-//   ds.randomize_data_normal();
+   terms_Jacobian = nse.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_error_terms, network_parameters);
 
-//   terms_Jacobian = nse.calculate_terms_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_terms, network_parameters);
+   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
 
-//   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
+   // Test
 
-//   // Test
+   nn.set(2,2,2);
+   nn.randomize_parameters_normal();
 
-//   nn.set(2,2,2);
-//   nn.randomize_parameters_normal();
-
-//   ds.set(2,2,2);
-//   ds.randomize_data_normal();
+   ds.set(2,2,2);
+   ds.randomize_data_normal();
    
-//   objective_gradient = nse.calculate_gradient();
+   error_gradient = nse.calculate_error_gradient();
 
-//   evaluation_terms = nse.calculate_terms();
-//   terms_Jacobian = nse.calculate_terms_Jacobian();
+   evaluation_terms = nse.calculate_error_terms();
+   terms_Jacobian = nse.calculate_error_terms_Jacobian();
 
-//   assert_true(((terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 - objective_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-
-
+   assert_true(((terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 - error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+*/
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_squared_errors()
+void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
 {
     message += "test_calculate_squared_errors\n";
 
@@ -355,7 +369,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_maximal_errors()
+void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
 {
     message += "test_calculate_maximal_errors\n";
 
@@ -385,24 +399,24 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors()
 }
 
 
-void NormalizedSquaredErrorTest::test_to_XML()
+void NormalizedSquaredErrorTest::test_to_XML(void)
 {
    message += "test_to_XML\n";
 }
 
 
-void NormalizedSquaredErrorTest::test_from_XML()
+void NormalizedSquaredErrorTest::test_from_XML(void)
 {
    message += "test_from_XML\n";
 }
 
 
-void NormalizedSquaredErrorTest::run_test_case()
+void NormalizedSquaredErrorTest::run_test_case(void)
 {
    message += "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
 
@@ -410,16 +424,15 @@ void NormalizedSquaredErrorTest::run_test_case()
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
    test_calculate_error();
-   test_calculate_selection_error();
-
-   test_calculate_gradient();
-
+*/
+   test_calculate_error_gradient();
+/*
    test_calculate_Hessian();
 
-   // Objective terms methods
+   // Error terms methods
 
    test_calculate_terms();
 
@@ -435,13 +448,13 @@ void NormalizedSquaredErrorTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
+*/
    message += "End of normalized squared error test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lenser General Public

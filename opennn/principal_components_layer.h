@@ -84,8 +84,6 @@ public:
 
    // Inputs principal components function
 
-//    Vector<double> calculate_ouputs(const Vector<double>&) const;
-
    // Display messages
 
    const bool& get_display() const;
@@ -120,7 +118,7 @@ public:
 
    // Inputs principal components function
 
-   Vector<double> calculate_outputs(const Vector<double>&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&) const;
 
    // Expression methods
@@ -154,7 +152,7 @@ protected:
 
    Vector<double> means;
 
-   /// Contains all the principal components arranged in rows and sorted
+   /// Contains all the principal components getd in rows and sorted
    /// according to their relative explained variance.
 
    Matrix<double> principal_components;

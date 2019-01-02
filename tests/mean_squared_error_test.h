@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M E A N   S Q U A R E D   E R R O R    T E S T   C L A S S   H E A D E R                                   */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -52,20 +52,19 @@ public:
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
-   void test_calculate_loss();   
-   void test_calculate_selection_loss();
+   void test_calculate_error();
 
-   void test_calculate_gradient();
+   void test_calculate_error_gradient();
 
    void test_calculate_Hessian();
 
-   // Objective terms methods 
+   // Error terms methods 
 
-   void test_calculate_terms();
+   void test_calculate_error_terms();
 
-   void test_calculate_terms_Jacobian();
+   void test_calculate_error_terms_Jacobian();
 
    // Serialization methods
 
@@ -83,7 +82,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

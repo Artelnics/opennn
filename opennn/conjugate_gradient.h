@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   C O N J U G A T E   G R A D I E N T   C L A S S   H E A D E R                                              */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -41,7 +40,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents a conjugate gradient training algorithm for a loss functional of a neural network. 
+/// This concrete class represents a conjugate gradient training algorithm for a loss index of a neural network. 
 ///
 
 class ConjugateGradient : public TrainingAlgorithm
@@ -87,7 +86,7 @@ public:
 
        ConjugateGradientResults()
        {
-           conjugate_gradient_pointer = NULL;
+           conjugate_gradient_pointer = nullptr;
        }
 
        /// Conjugate gradient constructor.
@@ -124,7 +123,7 @@ public:
 
       /// History of the selection loss over the training iterations.
 
-      Vector<double> selection_loss_history;
+      Vector<double> selection_error_history;
 
       /// History of the loss function gradient over the training iterations. 
 
@@ -160,9 +159,9 @@ public:
 
       double final_loss;
 
-      /// Final selection loss.
+      /// Final selection error.
 
-      double final_selection_loss;
+      double final_selection_error;
 
       /// Final loss function gradient. 
 
@@ -191,7 +190,7 @@ public:
       void resize_training_history(const size_t&);
       string object_to_string() const;
 
-      Matrix<string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const int& precision = 3) const;
    };
 
 
@@ -223,10 +222,10 @@ public:
 
    const double& get_minimum_loss_increase() const;
    const double& get_loss_goal() const;
-   const size_t& get_maximum_selection_loss_decreases() const;
+   const size_t& get_maximum_selection_error_increases() const;
    const double& get_gradient_norm_goal() const;
 
-   const size_t& get_maximum_iterations_number() const;
+   const size_t& get_maximum_epochs_number() const;
    const double& get_maximum_time() const;
 
    const bool& get_return_minimum_selection_error_neural_network() const;
@@ -238,7 +237,7 @@ public:
    const bool& get_reserve_parameters_norm_history() const;
 
    const bool& get_reserve_loss_history() const;
-   const bool& get_reserve_selection_loss_history() const;
+   const bool& get_reserve_selection_error_history() const;
    const bool& get_reserve_gradient_history() const;
    const bool& get_reserve_gradient_norm_history() const;
 
@@ -272,11 +271,11 @@ public:
    void set_minimum_parameters_increment_norm(const double&);
 
    void set_loss_goal(const double&);
-   void set_minimum_loss_increase(const double&);
-   void set_maximum_selection_loss_decreases(const size_t&);
+   void set_minimum_loss_decrease(const double&);
+   void set_maximum_selection_error_increases(const size_t&);
    void set_gradient_norm_goal(const double&);
 
-   void set_maximum_iterations_number(const size_t&);
+   void set_maximum_epochs_number(const size_t&);
    void set_maximum_time(const double&);
 
    void set_return_minimum_selection_error_neural_network(const bool&);
@@ -288,7 +287,7 @@ public:
    void set_reserve_parameters_norm_history(const bool&);
 
    void set_reserve_loss_history(const bool&);
-   void set_reserve_selection_loss_history(const bool&);
+   void set_reserve_selection_error_history(const bool&);
    void set_reserve_gradient_history(const bool&);
    void set_reserve_gradient_norm_history(const bool&);
 
@@ -319,6 +318,8 @@ public:
 
   /// ownership passed on return
    ConjugateGradientResults* perform_training();
+
+   void perform_training_void();
 
    string write_training_algorithm_type() const;
 
@@ -376,24 +377,24 @@ private:
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   double minimum_loss_increase;
+   double minimum_loss_decrease;
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
    double loss_goal;
 
-   /// Goal value for the norm of the objective function gradient. It is used as a stopping criterion.
+   /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 
    double gradient_norm_goal;
 
    /// Maximum number of iterations at which the selection loss increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_loss_decreases;
+   size_t maximum_selection_error_decreases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 
-   size_t maximum_iterations_number;
+   size_t maximum_epochs_number;
 
    /// Maximum training time. It is used as a stopping criterion.
 
@@ -443,7 +444,7 @@ private:
 
    /// True if the selection loss history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_loss_history;
+   bool reserve_selection_error_history;
 
 
 };

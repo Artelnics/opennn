@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   I N S T A N C E S   C L A S S   H E A D E R                                                                */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -72,11 +72,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   Instances& operator =(const Instances&);
+   Instances& operator = (const Instances&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const Instances&) const;
+   bool operator == (const Instances&) const;
 
    // ENUMERATIONS
 
@@ -140,7 +140,7 @@ public:
 
    // Instances methods
 
-   Vector<Use> arrange_uses() const;
+   Vector<Use> get_uses() const;
    Vector<string> write_uses() const;
    Vector<string> write_abbreviated_uses() const;
 
@@ -150,22 +150,26 @@ public:
    bool is_used(const size_t&) const;
    bool is_unused(const size_t&) const;
 
-   size_t count_training_instances_number() const;
-   size_t count_selection_instances_number() const;
-   size_t count_testing_instances_number() const;
-   size_t count_unused_instances_number() const;
-   size_t count_used_instances_number() const;
+   size_t get_training_instances_number() const;
+   size_t get_selection_instances_number() const;
+   size_t get_testing_instances_number() const;
+   size_t get_unused_instances_number() const;
+   size_t get_used_instances_number() const;
 
    Vector<size_t> count_uses() const;
 
-   Vector<size_t> arrange_used_indices()  const;
-   Vector<size_t> arrange_unused_indices() const;
-   Vector<size_t> arrange_training_indices() const;
-   Vector<size_t> arrange_selection_indices() const;
-   Vector<size_t> arrange_testing_indices() const;
+   Vector<size_t> get_used_indices()  const;
+   Vector<size_t> get_unused_indices() const;
+   Vector<size_t> get_training_indices() const;
+   Vector<size_t> get_selection_indices() const;
+   Vector<size_t> get_testing_indices() const;
 
-   Vector<int> arrange_training_indices_int() const;
-   Vector<int> arrange_selection_indices_int() const;
+   Vector< Vector<size_t> > get_training_batches(const size_t&) const;
+   Vector< Vector<size_t> > get_selection_batches(const size_t&) const;
+   Vector< Vector<size_t> > get_testing_batches(const size_t&) const;
+
+   Vector<int> get_training_indices_int() const;
+   Vector<int> get_selection_indices_int() const;
 
    const bool& get_display() const;
 

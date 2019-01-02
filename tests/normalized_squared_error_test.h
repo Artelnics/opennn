@@ -5,12 +5,10 @@
 /*                                                                                                              */
 /*   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
-
 
 #ifndef __NORMALIZEDSQUAREDERRORTEST_H__
 #define __NORMALIZEDSQUAREDERRORTEST_H__
@@ -20,7 +18,6 @@
 #include "unit_testing.h"
 
 using namespace OpenNN;
-
 
 class NormalizedSquaredErrorTest : public UnitTesting 
 {
@@ -33,20 +30,20 @@ public:
 
    // GENERAL CONSTRUCTOR
 
-   explicit NormalizedSquaredErrorTest();
+   explicit NormalizedSquaredErrorTest(void);
 
 
    // DESTRUCTOR
 
-   virtual ~NormalizedSquaredErrorTest();
+   virtual ~NormalizedSquaredErrorTest(void);
 
 
    // METHODS
 
    // Constructor and destructor methods
 
-   void test_constructor();
-   void test_destructor();
+   void test_constructor(void);
+   void test_destructor(void);
 
    // Get methods
 
@@ -54,38 +51,36 @@ public:
  
    // Normalization coefficient
 
-   void test_calculate_training_normalization_coefficient();   
-   void test_calculate_selection_normalization_coefficient();   
+   void test_calculate_training_normalization_coefficient(void);   
+   void test_calculate_selection_normalization_coefficient(void);   
 
-   // Objective methods
+   // Error methods
 
-   void test_calculate_error();
-   void test_calculate_selection_error();
+   void test_calculate_error(void);
 
-   void test_calculate_gradient();
-   void test_calculate_Hessian();
+   void test_calculate_error_gradient(void);
+   void test_calculate_Hessian(void);
 
-   // Objective terms methods
+   // Error terms methods
 
-   void test_calculate_terms();
+   void test_calculate_terms(void);
 
-   void test_calculate_terms_Jacobian();
+   void test_calculate_terms_Jacobian(void);
 
    // Squared errors methods
 
-   void test_calculate_squared_errors();
+   void test_calculate_squared_errors(void);
 
-   void test_calculate_maximal_errors();
-
+   void test_calculate_maximal_errors(void);
 
    // Serialization methods
 
-   void test_to_XML();
-   void test_from_XML();
+   void test_to_XML(void);
+   void test_from_XML(void);
 
    // Unit testing methods
 
-   void run_test_case();
+   void run_test_case(void);
 };
 
 
@@ -93,7 +88,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
