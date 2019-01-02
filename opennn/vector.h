@@ -35,6 +35,7 @@
 #include <limits>
 #include <climits>
 #include <ctime>
+#include <time.h>
 
 #ifdef __OPENNN_MPI__
 #include <mpi.h>
@@ -114,23 +115,26 @@ public:
 
   Vector(const initializer_list<T>&);
 
+  Vector(const Vector< Vector<T> >&);
+
+
   // DESTRUCTOR
 
   virtual ~Vector();
 
   // OPERATORS
 
-  bool operator==(const T &) const;
+  bool operator== (const T &) const;
 
-  bool operator!=(const T &) const;
+  bool operator!= (const T &) const;
 
   bool operator>(const T &) const;
 
   bool operator<(const T &) const;
 
-  bool operator>=(const T &) const;
+  bool operator>= (const T &) const;
 
-  bool operator<=(const T &) const;
+  bool operator<= (const T &) const;
 
   // METHODS
 
@@ -241,6 +245,7 @@ public:
   // Count methods
 
   size_t count_equal_to(const T&) const;
+  double count_equal_to(const T&, const Vector<double>&) const;
   size_t count_equal_to(const Vector<T>&) const;
 
   size_t count_not_equal_to(const T&) const;
@@ -283,9 +288,9 @@ public:
 
   Vector<T> merge(const Vector<T>&, const char&) const;
 
-  Vector<T> arrange_binary_vector(const Vector<T>&) const;
-  Matrix<T> arrange_binary_matrix(const char& separator = ' ') const;
-  Matrix<T> arrange_unique_binary_matrix(const char&, const Vector<T>&) const;
+//  Vector<double> get_binary_vector(const Vector<T>&) const;
+//  Matrix<T> get_binary_matrix(const char& separator = ' ') const;
+//  Matrix<T> get_unique_binary_matrix(const char&, const Vector<T>&) const;
 
   Vector<T> filter_equal_to(const T&) const;
   Vector<T> filter_not_equal_to(const T&) const;
@@ -320,8 +325,7 @@ public:
 
   Vector<size_t> calculate_total_frequencies(const Vector< Histogram<T> > &) const;
 
-  Vector<size_t> calculate_total_frequencies_missing_values(
-      const Vector<size_t> &, const Vector< Histogram<T> > &) const;
+  Vector<size_t> calculate_total_frequencies_missing_values(const Vector<size_t> &, const Vector< Histogram<T> > &) const;
 
   Vector<double> perform_Box_Cox_transformation(const double& = 1) const;
 
@@ -406,6 +410,10 @@ public:
 
   T calculate_sum() const;
 
+  Vector<T> calculate_sum_gradient() const;
+
+  Matrix<T> calculate_sum_Hessian() const;
+
   T calculate_partial_sum(const Vector<size_t> &) const;
 
   T calculate_sum_missing_values(const Vector<size_t> &) const;
@@ -480,21 +488,33 @@ public:
 
   // Norm methods
 
-  double calculate_norm() const;
+  double calculate_L1_norm() const;
 
-  Vector<T> calculate_norm_gradient() const;
+  Vector<T> calculate_sign() const;
 
-  Matrix<T> calculate_norm_Hessian() const;
+  Vector<T> calculate_L1_norm_gradient() const;
 
-  double calculate_p_norm(const double &) const;
+  Matrix<T> calculate_L1_norm_Hessian() const;
 
-  Vector<double> calculate_p_norm_gradient(const double &) const;
+  double calculate_L2_norm() const;
+
+  Vector<T> calculate_L2_norm_gradient() const;
+
+  Matrix<T> calculate_L2_norm_Hessian() const;
+
+  double calculate_Lp_norm(const double &) const;
+
+  Vector<double> calculate_Lp_norm_gradient(const double &) const;
 
   Vector<T> calculate_normalized() const;
 
   //double calculate_distance(const Vector<double> &) const;
 
-  double calculate_distance(const Vector<T> &) const;
+  double calculate_euclidean_distance(const Vector<T> &) const;
+  double calculate_euclidean_weighted_distance(const Vector<T>&, const Vector<double>&) const;
+
+  double calculate_manhattan_distance(const Vector<T> &) const;
+  double calculate_manhattan_weighted_distance(const Vector<T>&, const Vector<double>&) const;
 
   double calculate_sum_squared_error(const Vector<double> &) const;
   double calculate_sum_squared_error(const Matrix<T> &, const size_t &,
@@ -502,7 +522,6 @@ public:
 
   double calculate_Minkowski_error(const Vector<double> &,
                                    const double &) const;
-
 
   LinearRegressionParameters<T> calculate_linear_regression_parameters(const Vector<T> &) const;
 
@@ -542,6 +561,9 @@ public:
   Vector<size_t> sort_ascending_indices() const;
   Vector<T> sort_ascending_values() const;
 
+  Vector<size_t> calculate_lower_indices(const size_t&) const;
+  Vector<T> calculate_lower_values(const size_t&) const;
+
   Vector<size_t> sort_descending_indices() const;
   Vector<T> sort_descending_values() const;
 
@@ -557,11 +579,11 @@ public:
 
   // Mathematical operators
 
-  inline Vector<T> operator=(const initializer_list<T> &) const;
+  inline Vector<T> operator= (const initializer_list<T> &) const;
 
-  inline Vector<T> operator+(const T &) const;
+  inline Vector<T> operator+ (const T &) const;
 
-  inline Vector<T> operator+(const Vector<T> &) const;
+  inline Vector<T> operator+ (const Vector<T> &) const;
 
   inline Vector<T> operator-(const T &) const;
 
@@ -583,25 +605,23 @@ public:
 
   Vector<T> operator/(const Vector<T> &) const;
 
-  void operator+=(const T &);
+  void operator+= (const T &);
 
-  void operator+=(const Vector<T> &);
+  void operator+= (const Vector<T> &);
 
-  void operator-=(const T &);
+  void operator-= (const T &);
 
-  void operator-=(const Vector<T> &);
+  void operator-= (const Vector<T> &);
 
-  void operator*=(const T &);
+  void operator*= (const T &);
 
-  void operator*=(const Vector<T> &);
+  void operator*= (const Vector<T> &);
 
-  void operator/=(const T &);
+  void operator/= (const T &);
 
-  void operator/=(const Vector<T> &);
+  void operator/= (const Vector<T> &);
 
   // Filtering methods
-
-//  void filter(const T&, const T&);
 
   Vector<T> filter_positive() const;
   Vector<T> filter_negative() const;
@@ -638,9 +658,12 @@ public:
   void scale_standard_deviation(const Vector<T> &);
 
   Vector<T> calculate_scaled_minimum_maximum() const;
+  Vector<T> calculate_scaled_minimum_maximum_0_1() const;
 
   Vector<T> calculate_scaled_minimum_maximum(const Vector<T> &,
                                              const Vector<T> &) const;
+
+  Vector<T> calculate_scaled_mean_standard_deviation() const;
 
   Vector<T> calculate_scaled_mean_standard_deviation(const Vector<T> &,
                                                      const Vector<T> &) const;
@@ -659,6 +682,10 @@ public:
 
   void unscale_mean_standard_deviation(const Vector<T> &, const Vector<T> &);
 
+  Vector<T> calculate_reverse_scaling(void) const;
+
+  Vector<T> calculate_scaling_between(const T &, const T &, const T &, const T &) const;
+
   // Arranging methods
 
   Matrix<T> to_diagonal_matrix() const;
@@ -668,6 +695,8 @@ public:
   Vector<T> get_subvector(const Vector<size_t> &) const;
 
   Vector<T> get_subvector(const Vector<bool> &) const;
+
+  Vector<T> get_subvector_random(const size_t&) const;
 
   Vector<T> get_first(const size_t &) const;
 
@@ -682,6 +711,7 @@ public:
 
   Matrix<T> get_power_matrix(const size_t&) const;
 
+
   // File operations
 
   void load(const string &);
@@ -689,8 +719,6 @@ public:
   void save(const string &, const char& = ' ') const;
 
   void tuck_in(const size_t &, const Vector<T> &);
-
-  Vector<T> take_out(const size_t &, const size_t &) const;
 
   Vector<T> insert_element(const size_t &, const T &) const;
   Vector<T> replace_element(const size_t &, const Vector<T> &) const;
@@ -700,11 +728,12 @@ public:
 
   Vector<string> split_element(const size_t &, const char&) const;
 
-  Vector<T> remove_element(const size_t &) const;
+  Vector<T> delete_index(const size_t &) const;
 
   Vector<T> delete_indices(const Vector<size_t> &) const;
 
-  Vector<T> remove_value(const T &) const;
+  Vector<T> delete_value(const T &) const;
+  Vector<T> delete_values(const Vector<T> &) const;
 
   Vector<T> assemble(const Vector<T> &) const;
   static Vector<T> assemble(const Vector< Vector<T> > &);
@@ -713,9 +742,11 @@ public:
   Vector<T> get_union(const Vector<T> &) const;
   Vector<T> get_intersection(const Vector<T> &) const;
 
+  Vector<T> get_unique_items(const char& separator = ' ') const;
   Vector<T> get_unique_elements() const;
   Vector<T> get_unique_elements_unsorted() const;
-  Vector<size_t> get_unique_elements_indices() const;
+  Vector<size_t> get_unique_elements_first_indices() const;
+  Vector< Vector<size_t> > get_unique_elements_indices() const;
   Vector<size_t> count_unique() const;
 
   void print_unique() const;
@@ -723,6 +754,7 @@ public:
   Vector<T> calculate_top(const size_t&) const;
 
   Matrix<T> calculate_top_matrix(const size_t&) const;
+  Matrix<T> calculate_top_matrix_over(const size_t&, const size_t&) const;
 
   void print_top(const size_t&) const;
 
@@ -736,10 +768,10 @@ public:
 
   Vector<string> to_string_vector() const;
 
-  Vector<double> string_to_double() const;
-  Vector<int> string_to_int() const;
-  Vector<size_t> string_to_size_t() const;
-  Vector<time_t> string_to_time_t() const;
+  Vector<double> string_to_double(const double& exception_value = 999) const;
+  Vector<int> string_to_int(const int& exception_value = 999) const;
+  Vector<size_t> string_to_size_t(const size_t& exception_value = 999) const;
+  Vector<time_t> string_to_time_t(const time_t& exception_value = 999) const;
 
   Vector<time_t> www_mmm_ddd_yyyy_hh_mm_ss_to_time() const;
   Vector<time_t> yyyy_mm_to_time(const char& = '/') const;
@@ -753,6 +785,9 @@ public:
   Vector<T> yyyy_mm_dd_to_yearday(const char& = '/') const;
 
   Vector<struct tm> time_stamp_to_time_structure() const;
+
+  Vector< Vector<T> >split(const size_t&) const;
+
 
   Matrix<T> to_row_matrix() const;
 
@@ -775,7 +810,6 @@ public:
 
   double calculate_logistic_function(const Vector<double>&, const Vector<T>&) const;
   Vector<double> calculate_logistic_error_gradient(const Vector<double>&, const Vector<T>&) const;
-
 };
 
 
@@ -843,6 +877,33 @@ template <class T>
 Vector<T>::Vector(const initializer_list<T> &list) : vector<T>(list) {}
 
 
+template <class T>
+Vector<T>::Vector(const Vector< Vector<T> >& vectors)
+{
+    const size_t vectors_size = vectors.size();
+
+    size_t new_size = 0;
+
+    for(size_t i = 0; i < vectors_size; i++)
+    {
+        new_size += vectors[i].size();
+    }
+
+    set(new_size);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < vectors_size; i++)
+    {
+        for(size_t j = 0; j < vectors[i].size(); j++)
+        {
+            (*this)[index] = vectors[i][j];
+            index++;
+        }
+    }
+}
+
+
 /// Destructor.
 
 template <class T> Vector<T>::~Vector() {
@@ -854,7 +915,7 @@ template <class T> Vector<T>::~Vector() {
 /// value, and false otherwise.
 /// @param value Type value to be compared with.
 
-template <class T> bool Vector<T>::operator==(const T &value) const {
+template <class T> bool Vector<T>::operator== (const T &value) const {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
@@ -866,14 +927,13 @@ template <class T> bool Vector<T>::operator==(const T &value) const {
   return(true);
 }
 
-// bool operator !=(const T&) const
 
 /// Not equivalent relational operator between this vector and a Type value.
 /// It produces true if some element of this vector is not equal to the Type
 /// value, and false otherwise.
 /// @param value Type value to be compared with.
 
-template <class T> bool Vector<T>::operator!=(const T &value) const {
+template <class T> bool Vector<T>::operator!= (const T &value) const {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
@@ -885,7 +945,6 @@ template <class T> bool Vector<T>::operator!=(const T &value) const {
   return(false);
 }
 
-// bool operator >(const T&) const
 
 /// Greater than relational operator between this vector and a Type value.
 /// It produces true if all the elements of this vector are greater than the
@@ -904,7 +963,6 @@ template <class T> bool Vector<T>::operator>(const T &value) const {
   return(true);
 }
 
-// bool operator <(const T&) const
 
 /// Less than relational operator between this vector and a Type value.
 /// It produces true if all the elements of this vector are less than the Type
@@ -923,7 +981,6 @@ template <class T> bool Vector<T>::operator<(const T &value) const {
   return(true);
 }
 
-// bool operator >=(const T&) const
 
 /// Greater than or equal to than relational operator between this vector and a
 /// Type value.
@@ -931,7 +988,8 @@ template <class T> bool Vector<T>::operator<(const T &value) const {
 /// equal to the Type value, and false otherwise.
 /// @param value Type value to be compared with.
 
-template <class T> bool Vector<T>::operator>=(const T &value) const {
+template <class T> bool Vector<T>::operator>= (const T &value) const
+{
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
@@ -943,7 +1001,6 @@ template <class T> bool Vector<T>::operator>=(const T &value) const {
   return(true);
 }
 
-// bool operator <=(const T&) const
 
 /// Less than or equal to than relational operator between this vector and a
 /// Type value.
@@ -951,7 +1008,7 @@ template <class T> bool Vector<T>::operator>=(const T &value) const {
 /// to the Type value, and false otherwise.
 /// @param value Type value to be compared with.
 
-template <class T> bool Vector<T>::operator<=(const T &value) const {
+template <class T> bool Vector<T>::operator<= (const T &value) const {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
@@ -965,13 +1022,10 @@ template <class T> bool Vector<T>::operator<=(const T &value) const {
 
 // METHODS
 
-// void set() method
-
 /// Sets the size of a vector to zero.
 
 template <class T> void Vector<T>::set() { this->resize(0); }
 
-// void set(const size_t&) method
 
 /// Sets a new size to the vector. It does not initialize the data.
 /// @param new_size Size for the vector.
@@ -980,7 +1034,6 @@ template <class T> void Vector<T>::set(const size_t &new_size) {
   this->resize(new_size);
 }
 
-// void set(const size_t&, const T&) method
 
 /// Sets a new size to the vector and initializes all its elements with a given
 /// value.
@@ -994,7 +1047,6 @@ void Vector<T>::set(const size_t &new_size, const T &new_value) {
   initialize(new_value);
 }
 
-// void set(const string&) method
 
 /// Sets all the members of a vector object by loading them from a data file.
 /// The format is specified in the OpenNN manual.
@@ -1004,7 +1056,6 @@ template <class T> void Vector<T>::set(const string &file_name) {
   load(file_name);
 }
 
-// void set(const T&, const double&, const T&) method
 
 /// Makes this vector to have elements starting from a given value, continuing
 /// with a step value and finishing with a given value.
@@ -1021,17 +1072,16 @@ void Vector<T>::set(const T &first, const double &step, const T &last) {
   } else if(first < last && step < 0) {
     this->resize(0);
   } else {
-    const size_t new_size = 1 +(size_t)((last - first) / step + 0.5);
+    const size_t new_size = 1 + static_cast<size_t>((last - first) / step + 0.5);
 
     this->resize(new_size);
 
     for(size_t i = 0; i < new_size; i++) {
-     (*this)[i] = first +(T)(i * step);
+     (*this)[i] = first + static_cast<T>(i * step);
     }
   }
 }
 
-// void set(const Vector&) method
 
 /// Sets the members of this object with the values of another vector.
 /// @param other_vector Object to set this vector.
@@ -1057,7 +1107,7 @@ template <class T> void Vector<T>::set_MPI(const MPI_Datatype mpi_datatype) {
 
     if(rank == 0)
     {
-        vector_size =(int)this->size();
+        vector_size = static_cast<int>(this)->size();
     }
 
     if(rank > 0)
@@ -1142,17 +1192,14 @@ void Vector<T>::initialize_first(const size_t& first, const T &value)
 }
 
 
-// void initialize_sequential() method
-
 /// Initializes all the elements of the vector in a sequential order.
 
 template <class T> void Vector<T>::initialize_sequential() {
   for(size_t i = 0; i < this->size(); i++) {
-   (*this)[i] =(T)i;
+   (*this)[i] = static_cast<T>(i);
   }
 }
 
-// void randomize_uniform(const double&, const double&) method
 
 /// Assigns a random value comprised between a minimum value and a maximum value
 /// to each element in
@@ -1182,7 +1229,7 @@ void Vector<T>::randomize_uniform(const double &minimum,
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(T)calculate_random_uniform(minimum, maximum);
+   (*this)[i] = static_cast<T>(calculate_random_uniform(minimum, maximum));
   }
 }
 
@@ -1235,7 +1282,6 @@ void Vector<T>::randomize_uniform(const Vector<double> &minimums,
   }
 }
 
-// void randomize_normal(const double&, const double&) method
 
 /// Assigns random values to each element in the vector.
 /// These are taken from a normal distribution with single mean and standard
@@ -1269,7 +1315,6 @@ void Vector<T>::randomize_normal(const double &mean,
   }
 }
 
-// void randomize_normal(const Vector<double>, const Vector<double>) method
 
 /// Assigns random values to each element in the vector.
 /// These are taken from normal distributions with given means and standard
@@ -1319,6 +1364,7 @@ void Vector<T>::randomize_normal(const Vector<double> &mean,
   }
 }
 
+
 template <class T>
 void Vector<T>::randomize_binary(const double& negatives_ratio, const double& positives_ratio)
 {
@@ -1333,7 +1379,7 @@ void Vector<T>::randomize_binary(const double& negatives_ratio, const double& po
 
     // Get number of instances for training, selection and testing
 
-    const size_t positives_number =(size_t)(positives_ratio*this_size/total_ratio);
+    const size_t positives_number = static_cast<size_t>(positives_ratio*this_size/total_ratio);
     const size_t negatives_number = this_size - positives_number;
 
     Vector<size_t> indices(0, 1, this_size-1);
@@ -1395,7 +1441,6 @@ void Vector<T>::map(Vector<T>& other_vector, const T& this_value, const T& other
 }
 
 
-
 template <class T>
 void Vector<T>::map(Vector<T>& other_vector_1, Vector<T>& other_vector_2, const T& this_value, const T& other_value_1, const T& other_value_2)
 {
@@ -1431,11 +1476,11 @@ void Vector<T>::trim()
     {
         //prefixing spaces
 
-       (*this)[i] =(*this)[i].erase(0,(*this)[i].find_first_not_of(' '));
+       (*this)[i] = (*this)[i].erase(0,(*this)[i].find_first_not_of(' '));
 
         //surfixing spaces
 
-       (*this)[i] =(*this)[i].erase((*this)[i].find_last_not_of(' ') + 1);
+       (*this)[i] = (*this)[i].erase((*this)[i].find_last_not_of(' ') + 1);
     }
 }
 
@@ -1477,8 +1522,6 @@ bool Vector<T>::contains_greater_than(const T &value) const {
 }
 
 
-// bool contains(const Vector<T>&) const method
-
 /// Returns true if the vector contains a certain value from a given set, and
 /// false otherwise.
 
@@ -1503,6 +1546,7 @@ template <class T> bool Vector<T>::contains(const Vector<T> &values) const {
   return(false);
 }
 
+
 template <class T>
 bool Vector<T>::has_same_elements(const Vector<T>& other_vector) const
 {
@@ -1524,7 +1568,6 @@ bool Vector<T>::has_same_elements(const Vector<T>& other_vector) const
     return true;
 }
 
-// bool is_in(const T&, const T&) const method
 
 /// Returns true if the value of all the elements fall in some given range,
 /// and false otherwise.
@@ -1544,7 +1587,6 @@ bool Vector<T>::is_in(const T &minimum, const T &maximum) const {
   return(true);
 }
 
-// bool is_constant(const double&) const method
 
 /// Returns true if all the elements have the same value within a defined
 /// tolerance ,
@@ -1583,7 +1625,7 @@ bool Vector<T>::is_constant_string() const {
 
   for(size_t i = 1; i < this_size; i++)
   {
-      if((*this)[i] !=(*this)[0])
+      if((*this)[i] != (*this)[0])
       {
           return(false);
       }
@@ -1614,7 +1656,7 @@ template <class T> bool Vector<T>::is_decrescent() const
 {
   for(size_t i = 0; i < this->size() - 1; i++)
   {
-    if((*this)[i] <(*this)[i + 1]) return(false);
+    if((*this)[i] <= (*this)[i + 1]) return(false);
   }
 
   return(true);
@@ -1673,8 +1715,6 @@ bool Vector<T>::check_period(const double& period) const
 }
 
 
-// bool is_binary() const method
-
 /// Returns true if all the elements in the vector have binary values, and false otherwise.
 
 template <class T> bool Vector<T>::is_binary() const
@@ -1700,7 +1740,6 @@ template <class T> bool Vector<T>::is_binary() const
     return true;
 }
 
-// bool is_binary_0_1() const method
 
 /// Returns true if all the elements in the vector are 0 or 1, and false otherwise.
 
@@ -1719,7 +1758,6 @@ template <class T> bool Vector<T>::is_binary_0_1() const
     return true;
 }
 
-// bool is_binary(const Vector<size_t>&) const method
 
 /// Returns true if all the elements in the vector have binary values, and false otherwise.
 /// @param missing_indices Indices of the instances with missing values.
@@ -1751,7 +1789,7 @@ template <class T> bool Vector<T>::is_integer() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        if(floor((*this)[i]) !=(*this)[i])
+        if(floor((*this)[i]) != (*this)[i])
         {
             return false;
         }
@@ -1760,8 +1798,6 @@ template <class T> bool Vector<T>::is_integer() const
     return true;
 }
 
-
-// bool is_integer(const Vector<size_t>&) const method
 
 /// Returns true if all the elements in the vector are integers, and false otherwise.
 /// @param missing_indices Indices of the instances with missing values.
@@ -1774,7 +1810,7 @@ template <class T> bool Vector<T>::is_integer(const Vector<size_t>& missing_indi
     {
         if(!missing_indices.contains(i))
         {
-            if(floor((*this)[i]) !=(*this)[i])
+            if(floor((*this)[i]) != (*this)[i])
             {
                 return false;
             }
@@ -1784,9 +1820,6 @@ template <class T> bool Vector<T>::is_integer(const Vector<size_t>& missing_indi
     return true;
 }
 
-
-
-// bool Lilliefors_normality_test(const double&) const method
 
 /// Returns true if the elements in the vector have a normal distribution with a given critical value.
 /// @param critical_value Critical value to be used in the test.
@@ -1798,9 +1831,6 @@ template <class T> bool Vector<T>::perform_Lilliefors_normality_test(const doubl
 
     const double mean = this->calculate_mean();
     const double standard_deviation = this->calculate_standard_deviation();
-
-//    const double fn =(0.83 + n)/sqrt(n) - 0.01;
-//    const double Dna = critical_value/fn;
 
     Vector<T> sorted_vector(*this);
 
@@ -1829,7 +1859,7 @@ template <class T> bool Vector<T>::perform_Lilliefors_normality_test(const doubl
             {
                 if((*this)[i] >= sorted_vector[j] &&(*this)[i] < sorted_vector[j+1])
                 {
-                    Snx =(double)(j+1)/(double)n;
+                    Snx = static_cast<double>(j+1)/static_cast<double>(n);
                 }
             }
         }
@@ -1848,6 +1878,7 @@ template <class T> bool Vector<T>::perform_Lilliefors_normality_test(const doubl
     {
         return false;
     }
+
 #else
     return false;
 #endif
@@ -1892,7 +1923,7 @@ template <class T> Vector<bool> Vector<T>::perform_Lilliefors_normality_test(con
             {
                 if((*this)[i] >= sorted_vector[j] &&(*this)[i] < sorted_vector[j+1])
                 {
-                    Snx =(double)(j+1)/(double)n;
+                    Snx = static_cast<double>(j+1) / static_cast<double>(n);
                 }
             }
         }
@@ -1924,8 +1955,6 @@ template <class T> Vector<bool> Vector<T>::perform_Lilliefors_normality_test(con
 #endif
 }
 
-
-// double calculate_normal_distribution_distance() const
 
 /// Calculates the distance between the empirical distribution of the vector and the
 /// normal distribution.
@@ -1964,7 +1993,7 @@ template <class T> double Vector<T>::calculate_normal_distribution_distance() co
             }
         }
 
-        empirical_distribution =(double)counter/(double)n;
+        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
 
         normal_distribution_distance += abs(normal_distribution - empirical_distribution);
     }
@@ -1972,8 +2001,6 @@ template <class T> double Vector<T>::calculate_normal_distribution_distance() co
     return normal_distribution_distance;
 }
 
-
-// double calculate_half_normal_distribution_distance() const
 
 /// Calculates the distance between the empirical distribution of the vector and the
 /// half normal distribution.
@@ -2011,7 +2038,7 @@ template <class T> double Vector<T>::calculate_half_normal_distribution_distance
             }
         }
 
-        empirical_distribution =(double)counter/(double)n;
+        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
 
         half_normal_distribution_distance += abs(half_normal_distribution - empirical_distribution);
     }
@@ -2019,8 +2046,6 @@ template <class T> double Vector<T>::calculate_half_normal_distribution_distance
     return half_normal_distribution_distance;
 }
 
-
-// double calculate_half_normal_distribution_distance() const
 
 /// Calculates the distance between the empirical distribution of the vector and the
 /// uniform distribution.
@@ -2044,7 +2069,7 @@ template <class T> double Vector<T>::calculate_uniform_distribution_distance() c
 
     for(size_t i = 0; i < n; i++)
     {
-        uniform_distribution =(sorted_vector[i]-minimum)/(maximum-minimum);
+        uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
         counter = 0;
 
         for(size_t j = 0; j < n; j++)
@@ -2059,7 +2084,7 @@ template <class T> double Vector<T>::calculate_uniform_distribution_distance() c
             }
         }
 
-        empirical_distribution =(double)counter/(double)n;
+        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
 
         uniform_distribution_distance += abs(uniform_distribution - empirical_distribution);
     }
@@ -2108,11 +2133,10 @@ template <class T> Vector<bool> Vector<T>::perform_normality_analysis() const
 }
 
 
-// double calculate_normality_parameter() const
-
 /// @todo
 
-template <class T> double Vector<T>::calculate_normality_parameter() const
+template <class T>
+double Vector<T>::calculate_normality_parameter() const
 {
     const double maximum = this->calculate_maximum();
     const double minimum = this->calculate_minimum();
@@ -2152,7 +2176,7 @@ template <class T> double Vector<T>::calculate_normality_parameter() const
             }
         }
 
-        empirical_distribution =(double)counter/(double)n;
+        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
 
         if(i == 0)
         {
@@ -2169,7 +2193,7 @@ template <class T> double Vector<T>::calculate_normality_parameter() const
         }
     }
 
-    const double uniform_area =(maximum-minimum)/2.0;
+    const double uniform_area = (maximum-minimum)/2.0;
 
     return uniform_area;
 }
@@ -2217,11 +2241,11 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis() co
 
     #pragma omp parallel for schedule(dynamic)
 
-    for(int i = 0; i <(int)n; i++)
+    for(int i = 0; i < static_cast<int>(n); i++)
     {
         const double normal_distribution = 0.5 * erfc((mean - sorted_vector[i])/(standard_deviation*sqrt(2)));
         const double half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2)));
-        const double uniform_distribution =(sorted_vector[i]-minimum)/(maximum-minimum);
+        const double uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
 
         double empirical_distribution;
 
@@ -2237,9 +2261,9 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis() co
         }
         else
         {
-            counter = i + 1;
+            counter = static_cast<size_t>(i + 1);
 
-            for(size_t j = i+1; j < n; j++)
+            for(int j = i+1; j < n; j++)
             {
                 if(sorted_vector[j] <= sorted_vector[i])
                 {
@@ -2251,7 +2275,7 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis() co
                 }
             }
 
-            empirical_distribution =(double)counter/(double)n;
+            empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
         }
 
         #pragma omp critical
@@ -2265,8 +2289,6 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis() co
     return distances.calculate_minimal_index();
 }
 
-
-// size_t perform_distribution_distance_analysis_missing_values(const Vector<size_t>&) const
 
 /// Calculates the distance between the empirical distribution of the vector and
 /// the normal, half-normal and uniform cumulative distribution. It returns 0, 1
@@ -2298,7 +2320,7 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis_miss
     const double minimum = sorted_vector[0];
     const double maximum = sorted_vector[n-1];
 
-    if(minimum == maximum || standard_deviation < 1.0e-09)
+    if(fabs(minimum - maximum) < numeric_limits<double>::epsilon() || standard_deviation < 1.0e-09)
     {
         return 2;
     }
@@ -2311,7 +2333,7 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis_miss
     {
         normal_distribution = 0.5 * erfc((mean - sorted_vector[i])/(standard_deviation*sqrt(2)));
         half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2)));
-        uniform_distribution =(sorted_vector[i]-minimum)/(maximum-minimum);
+        uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
         counter = 0;
 
         for(size_t j = 0; j < n; j++)
@@ -2326,7 +2348,7 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis_miss
             }
         }
 
-        empirical_distribution =(double)counter/(double)n;
+        empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
 
         #pragma omp critical
         {
@@ -2340,17 +2362,16 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis_miss
 }
 
 
-
 template <class T>
 int Vector<T>::get_lower_index(const size_t& index, const T& value) const
 {
     if(index != 0)
     {
-        for(int i =(int)index-1; i > -1; i--)
+        for(int i = static_cast<int>(index)-1; i > -1; i--)
         {
             if((*this)[i] != value)
             {
-                return(i);
+                return static_cast<int>(i);
             }
         }
     }
@@ -2366,14 +2387,15 @@ int Vector<T>::get_upper_index(const size_t& index, const T& value) const
 
     if(index != this_size-1)
     {
-        for(int i =(int)index+1; i < this_size; i++)
+        for(int i = static_cast<int>(index)+1; i < static_cast<int>(this_size); i++)
         {
             if((*this)[i] != value)
             {
-                return(i);
+                return static_cast<int>(i);
             }
         }
     }
+
     return(-1);
 }
 
@@ -2387,7 +2409,7 @@ Vector<T> Vector<T>::get_reverse() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        reverse[i] =(*this)[this_size - 1 - i];
+        reverse[i] = (*this)[this_size - 1 - i];
     }
 
     return reverse;
@@ -2414,7 +2436,7 @@ Vector<T> Vector<T>::impute_time_series_missing_values_mean(const T& value) cons
 
             if(lower_index != -1 && upper_index != -1)
             {
-                new_vector[i] =(new_vector[upper_index] + new_vector[lower_index])/2.0;
+                new_vector[i] = (new_vector[upper_index] + new_vector[lower_index])/2.0;
             }
             else if(lower_index != -1 && upper_index == -1)
             {
@@ -2448,7 +2470,7 @@ void Vector<T>::replace_substring(const string& find_what, const string& replace
     {
         size_t position = 0;
 
-        while((position =(*this)[i].find(find_what, position)) != string::npos)
+        while((position = (*this)[i].find(find_what, position)) != string::npos)
         {
             (*this)[i].replace(position, find_what.length(), replace_with);
 
@@ -2465,6 +2487,23 @@ template <class T>
 size_t Vector<T>::count_equal_to(const T &value) const
 {
   return count(this->begin(), this->end(), value);
+}
+
+
+template <class T>
+double Vector<T>::count_equal_to(const T &value, const Vector<double>& weights) const
+{
+    double count = 0.0;
+
+    for (size_t i = 0; i < this->size(); i++)
+    {
+        if ((*this)[i] == value)
+        {
+            count += weights[i];
+        }
+    }
+
+    return count;
 }
 
 
@@ -2485,7 +2524,7 @@ size_t Vector<T>::count_equal_to(const Vector<T> &values) const
 
 #pragma omp parallel for private(bounds) reduction(+ : count)
 
-    for(int i = 0; i < values_size; i++)
+    for(int i = 0; i < static_cast<int>(values_size); i++)
     {
         bounds = equal_range(this_copy.begin(), this_copy.end(), values[i]);
 
@@ -2571,99 +2610,99 @@ size_t Vector<T>::count_negative() const
 }
 
 
-template <class T>
-Vector<T> Vector<T>::arrange_binary_vector(const Vector<T>& unique_items) const
-{
-    const size_t unique_items_number = unique_items.size();
+//template <class T>
+//Vector<double> Vector<T>::get_binary_vector(const Vector<T>& unique_items) const
+//{
+//    const size_t unique_items_number = unique_items.size();
 
-    Vector<T> binary_vector(unique_items_number);
+//    Vector<double> binary_vector(unique_items_number);
 
-    for(size_t i = 0; i < unique_items_number; i++)
-    {
-        if(this->contains(unique_items[i]))
-        {
-            binary_vector[i] = "1";
-        }
-        else
-        {
-            binary_vector[i] = "0";
-        }
-    }
+//    for(size_t i = 0; i < unique_items_number; i++)
+//    {
+//        if(this->contains(unique_items[i]))
+//        {
+//            binary_vector[i] = 1.0;
+//        }
+//        else
+//        {
+//            binary_vector[i] = 0.0;
+//        }
+//    }
 
-    return(binary_vector);
-}
+//    return(binary_vector);
+//}
 
 
-template <class T>
-Matrix<T> Vector<T>::arrange_binary_matrix(const char& separator) const
-{
-    const size_t this_size = this->size();
+//template <class T>
+//Matrix<T> Vector<T>::get_binary_matrix(const char& separator) const
+//{
 
-    const Vector<T> unique_mixes = get_unique_elements();
+//    const size_t this_size = this->size();
 
-    Vector< Vector<T> > items(unique_mixes.size());
+//    const Vector<T> unique_mixes = get_unique_elements();
 
-    Vector<T> unique_items;
+//    Vector< Vector<T> > items(unique_mixes.size());
 
-    for(int i = 0; i < unique_mixes.size(); i++)
-    {
-        items[i] = unique_mixes.split_element(i, separator);
+//    Vector<T> unique_items;
 
-        unique_items = unique_items.assemble(items[i]).get_unique_elements();
-    }
+//    for(int i = 0; i < unique_mixes.size(); i++)
+//    {
+//        items[i] = unique_mixes.split_element(i, separator);
 
-    const size_t unique_items_number = unique_items.size();
+//        unique_items = unique_items.assemble(items[i]).get_unique_elements();
+//    }
 
-    Matrix<T> binary_matrix(this_size, unique_items_number);
+//    const size_t unique_items_number = unique_items.size();
 
-    Vector<string> elements;
+//    Matrix<T> binary_matrix(this_size, unique_items_number, 0.0);
 
-    Vector<T> binary_items(unique_items_number);
+//    Vector<string> elements;
 
-    for(size_t i = 0; i < this_size; i++)
-    {
-        elements = split_element(i, separator);
+//    Vector<double> binary_items(unique_items_number);
 
-        binary_items = elements.arrange_binary_vector(unique_items);
+//    for(size_t i = 0; i < this_size; i++)
+//    {
+//        elements = split_element(i, separator);
 
-        binary_matrix.set_row(i, binary_items);
-    }
+//        binary_items = elements.get_binary_vector(unique_items);
 
-    binary_matrix.set_header(unique_items.to_string_vector());
+//        binary_matrix.set_row(i, binary_items.to_string_vector());
+//    }
 
-    return(binary_matrix);
-}
+//    binary_matrix.set_header(unique_items);
 
-/// Returns a binary matrix indicating the elements of the columns.
+//    return(binary_matrix);
+//}
 
-template <class T>
-Matrix<T> Vector<T>::arrange_unique_binary_matrix(const char& separator, const Vector<T>& columns_elements) const
-{
-    const size_t this_size = this->size();
 
-    Vector<T> unique_items = columns_elements;
+///// Returns a binary matrix indicating the elements of the columns.
 
-    const size_t unique_items_number = unique_items.size();
+//template <class T>
+//Matrix<T> Vector<T>::get_unique_binary_matrix(const char& separator, const Vector<T>& unique_items) const
+//{
+//    const size_t this_size = this->size();
 
-    Matrix<T> binary_matrix(this_size, unique_items_number);
+//    const size_t unique_items_number = unique_items.size();
 
-    Vector<string> elements;
+//    Matrix<T> binary_matrix(this_size, unique_items_number,0.0);
 
-    Vector<T> binary_items(unique_items_number);
+//    binary_matrix.set_header(unique_items.to_string_vector());
 
-    for(size_t i = 0; i < this_size; i++)
-    {
-        elements = split_element(i, separator);
+//    Vector<string> elements;
 
-        binary_items = elements.arrange_binary_vector(unique_items);
+//    Vector<double> binary_items(unique_items_number);
 
-        binary_matrix.set_row(i, binary_items);
-    }
+//    for(size_t i = 0; i < this_size; i++)
+//    {
+//        elements = split_element(i, separator);
 
-    binary_matrix.set_header(unique_items.to_string_vector());
+//        binary_items = elements.get_binary_vector(unique_items);
 
-    return(binary_matrix);
-}
+//        binary_matrix.set_row(i, binary_items.to_string_vector());
+//    }
+
+//    return(binary_matrix);
+//}
 
 
 template <class T>
@@ -2681,7 +2720,7 @@ Vector<T> Vector<T>::filter_equal_to(const T& value) const
     {
         if((*this)[i] == value)
         {
-            new_vector[count] =(*this)[i];
+            new_vector[count] = (*this)[i];
             index++;
         }
     }
@@ -2708,7 +2747,7 @@ Vector<T> Vector<T>::filter_not_equal_to(const T& value) const
     {
         if((*this)[i] != value)
         {
-            new_vector[index] =(*this)[i];
+            new_vector[index] = (*this)[i];
             index++;
         }
     }
@@ -2731,9 +2770,6 @@ Vector<T> Vector<T>::filter_not_equal_to(const Vector<T>& values) const
 {
     const Vector<size_t> indices = calculate_not_equal_to_indices(values);
 
-//    if(indices.empty()) return Vector<T>(*this);
-//    else
-
     return get_subvector(indices);
 }
 
@@ -2754,7 +2790,7 @@ Vector<T> Vector<T>::get_positive_elements() const
     {
         if((*this)[i] >= 0)
         {
-            new_vector[count] =(*this)[i];
+            new_vector[count] = (*this)[i];
             count++;
         }
     }
@@ -3006,7 +3042,6 @@ Vector<size_t> Vector<T>::get_indices_equal_to(const T &value) const {
 }
 
 
-
 /// Returns the indices of the elements which are less than a given value.
 /// @param value Value.
 
@@ -3122,7 +3157,7 @@ template <class T> size_t Vector<T>::count_greater_equal_to(const T &value) cons
 template <class T>
 size_t Vector<T>::count_less_equal_to(const T &value) const {
 
-    const size_t count = count_if(this->begin(), this->end(), [value](size_t elem){ return elem <= value; });
+    const size_t count = count_if(this->begin(), this->end(), [value](T elem){ return elem <= value; });
 
     return(count);
 }
@@ -3165,7 +3200,7 @@ size_t Vector<T>::count_date_occurrences(const size_t& year) const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time =(*this)[i];
+        time = (*this)[i];
 
         date_info = gmtime(&time);
 
@@ -3194,7 +3229,7 @@ Matrix<T> Vector<T>::count_daily_series_occurrences() const
 
     const size_t day_seconds = 60*60*24;
 
-    const size_t days_number =(size_t)difftime(end_date, start_date)/day_seconds;
+    const size_t days_number = static_cast<size_t>(difftime(end_date, start_date))/day_seconds;
 
     Matrix<T> count(days_number, 4, 0);
 
@@ -3211,9 +3246,9 @@ Matrix<T> Vector<T>::count_daily_series_occurrences() const
 
         date_info = gmtime(&date);
 
-        day = date_info->tm_mday;
-        month = date_info->tm_mon+1;
-        year = date_info->tm_year+1900;
+        day = static_cast<size_t>(date_info->tm_mday);
+        month = static_cast<size_t>(date_info->tm_mon+1);
+        year = static_cast<size_t>(date_info->tm_year+1900);
 
         count(i, 0) = day;
         count(i, 1) = month;
@@ -3226,9 +3261,9 @@ Matrix<T> Vector<T>::count_daily_series_occurrences() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        date =(*this)[i];
+        date = (*this)[i];
 
-        row_index =(size_t)difftime(date, start_date)/day_seconds;
+        row_index = static_cast<size_t>(difftime(date, start_date))/day_seconds;
 
         count(row_index, 3)++;
     }
@@ -3251,7 +3286,7 @@ Matrix<T> Vector<T>::count_weekly_series_occurrences() const
 
     const size_t week_seconds = 60*60*24*7;
 
-    const size_t weeks_number =(size_t)difftime(end_date, start_date)/week_seconds;
+    const size_t weeks_number = static_cast<size_t>(difftime(end_date, start_date))/week_seconds;
 
     Matrix<T> count(weeks_number, 3, 0);
 
@@ -3271,14 +3306,14 @@ Matrix<T> Vector<T>::count_weekly_series_occurrences() const
 
         if(strftime(buffer, sizeof buffer, "%W", date_info) != 0)
         {
-            week = atoi(buffer);
+            week = static_cast<size_t>(atoi(buffer));
         }
         else
         {
             cout << "Unkown week number" << endl;
         }
 
-        year = date_info->tm_year+1900;
+        year = static_cast<size_t>(date_info->tm_year+1900);
 
         count(i, 0) = week;
         count(i, 1) = year;
@@ -3290,9 +3325,9 @@ Matrix<T> Vector<T>::count_weekly_series_occurrences() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        date =(*this)[i];
+        date = (*this)[i];
 
-        row_index =(size_t)difftime(date, start_date)/week_seconds;
+        row_index = static_cast<size_t>(difftime(date, start_date))/week_seconds;
 
         count(row_index, 2)++;
     }
@@ -3326,7 +3361,7 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences() const
     const int end_month = date_info->tm_mon+1;
     const int end_year = date_info->tm_year+1900;
 
-    const size_t months_number =(end_year-start_year)*12 + end_month - start_month + 1;
+    const size_t months_number = static_cast<size_t>((end_year-start_year)*12 + end_month - start_month + 1);
 
     Matrix<T> count(months_number, 4, 0);
 
@@ -3338,9 +3373,9 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences() const
     {
         // Month
 
-        month = start_month + i;
+        month = static_cast<size_t>(start_month) + i;
 
-        division =(month-1)/12;
+        division = (month-1)/12;
 
         if(month > 12)
         {
@@ -3351,7 +3386,7 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences() const
 
         // Year
 
-        year = start_year +(i+start_month-1)/12;
+        year = static_cast<size_t>(start_year) + (i + static_cast<size_t>(start_month) - 1)/12;
 
         count(i, 1) = year;
     }
@@ -3362,14 +3397,14 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time =(*this)[i];
+        time = (*this)[i];
 
         date_info = gmtime(&time);
 
-        month = date_info->tm_mon+1;
-        year = date_info->tm_year+1900;
+        month = static_cast<size_t>(date_info->tm_mon+1);
+        year = static_cast<size_t>(date_info->tm_year+1900);
 
-        row_index =(year-start_year)*12 + month - start_month;
+        row_index = (year-static_cast<size_t>(start_year))*12 + month - static_cast<size_t>(start_month);
 
         count(row_index, 2)++;
     }
@@ -3404,13 +3439,13 @@ Matrix<T> Vector<T>::count_yearly_series_occurrences() const
 
     const int end_year = date_info->tm_year+1900;
 
-    const size_t years_number = end_year-start_year+1;
+    const size_t years_number = static_cast<size_t>(end_year-start_year+1);
 
     Matrix<T> yearly_orders(years_number, 2);
 
     for(size_t i = 0; i < years_number; i++)
     {
-        const size_t year = start_year + i;
+        const size_t year = static_cast<size_t>(start_year) + i;
 
         const size_t orders_number = count_date_occurrences(year);
 
@@ -3439,7 +3474,7 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences(const size_t& start_month,
 
     struct tm* date_info;
 
-    const size_t months_number =(end_year-start_year)*12 + end_month - start_month + 1;
+    const size_t months_number = (end_year-start_year)*12 + end_month - start_month + 1;
 
     Matrix<T> count(months_number, 3, 0);
 
@@ -3453,7 +3488,7 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences(const size_t& start_month,
 
         month = start_month + i;
 
-        division =(month-1)/12;
+        division = (month-1)/12;
 
         if(month > 12)
         {
@@ -3464,7 +3499,7 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences(const size_t& start_month,
 
         // Year
 
-        year = start_year +(i+start_month-1)/12;
+        year = start_year + (i+start_month-1)/12;
 
         count(i, 1) = year;
     }
@@ -3475,14 +3510,14 @@ Matrix<T> Vector<T>::count_monthly_series_occurrences(const size_t& start_month,
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time =(*this)[i];
+        time = (*this)[i];
 
         date_info = gmtime(&time);
 
-        month = date_info->tm_mon+1;
-        year = date_info->tm_year+1900;
+        month = static_cast<size_t>(date_info->tm_mon+1);
+        year = static_cast<size_t>(date_info->tm_year+1900);
 
-        row_index =(year-start_year)*12 + month - start_month;
+        row_index = (year-start_year)*12 + month - start_month;
 
         count(row_index, 2)++;
     }
@@ -3512,7 +3547,7 @@ Matrix<T> Vector<T>::count_monthly_occurrences() const
 
     const size_t months_number = 12;
 
-    const size_t years_number = end_year - start_year + 1;
+    const size_t years_number = static_cast<size_t>(end_year - start_year + 1);
 
     Matrix<T> count(months_number, years_number+1, 0);
 
@@ -3520,15 +3555,15 @@ Matrix<T> Vector<T>::count_monthly_occurrences() const
     {
         size_t month = i + 1;
 
-        count(i, 0) =(double)month;
+        count(i, 0) = static_cast<double>(month);
 
         for(size_t j = 0; j < years_number; j++)
         {
-            size_t year = start_year + j;
+            size_t year = static_cast<size_t>(start_year) + j;
 
             const size_t orders_number = count_date_occurrences(month, year);
 
-            count(i,j+1) =(double)orders_number;
+            count(i,j+1) = static_cast<double>(orders_number);
         }
     }
 
@@ -3552,7 +3587,7 @@ size_t Vector<T>::count_month_occurrences(const size_t& month) const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time =(*this)[i];
+        time = (*this)[i];
 
         date_info = gmtime(&time);
 
@@ -3583,7 +3618,7 @@ size_t Vector<T>::count_date_occurrences(const size_t& month, const size_t& year
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time =(*this)[i];
+        time = (*this)[i];
 
         date_info = gmtime(&time);
 
@@ -3632,7 +3667,7 @@ Vector<T> Vector<T>::merge(const Vector<T>& other_vector, const char& separator)
 
     for(size_t i = 0; i < this_size; i++)
     {
-        merged[i] =(*this)[i] + separator + other_vector[i];
+        merged[i] = (*this)[i] + separator + other_vector[i];
     }
 
     return(merged);
@@ -3656,13 +3691,14 @@ Vector<T> Vector<T>::filter_minimum_maximum(const T &minimum, const T &maximum) 
 
   for(size_t i = 0; i < this_size; i++) {
     if((*this)[i] >= minimum && (*this)[i] <= maximum) {
-      new_vector[count] =(*this)[i];
+      new_vector[count] = (*this)[i];
       count++;
     }
   }
 
   return(new_vector);
 }
+
 
 /// Returns the vector indices of the elemnts that contains the given value.
 /// @param find_what String to find in the vector.
@@ -3746,6 +3782,7 @@ Vector<size_t> Vector<T>::calculate_less_equal_to_indices(const T &value) const
   return(less_than_indices);
 }
 
+
 template <class T>
 Vector<size_t> Vector<T>::calculate_greater_equal_to_indices(const T &value) const {
 
@@ -3819,13 +3856,13 @@ template <class T> Vector<double> Vector<T>::perform_Box_Cox_transformation(cons
 
     for(size_t i = 0; i < size; i++)
     {
-        if(lambda == 0)
+        if(fabs(lambda - 0) < numeric_limits<double>::epsilon())
         {
-            vector_tranformation[i] = log((double)(*this)[i]);
+            vector_tranformation[i] = log(static_cast<double>((*this)[i]));
         }
         else
         {
-            vector_tranformation[i] =(pow((double)(*this)[i], lambda) - 1)/lambda;
+            vector_tranformation[i] = (pow(static_cast<double>((*this)[i]), lambda) - 1)/lambda;
         }
     }
 
@@ -3844,7 +3881,7 @@ template <class T> Vector<double> Vector<T>::calculate_percentage(const size_t& 
 
     for(size_t i = 0; i < this_size; i++)
     {
-        percentage_vector[i] =(double)(*this)[i]/(double)total_sum*100.0;
+        percentage_vector[i] = static_cast<double>((*this)[i])/static_cast<double>(total_sum*100.0);
     }
 
     return percentage_vector;
@@ -3862,7 +3899,7 @@ double Vector<T>::calculate_error(const Vector<T>& other_vector) const
     {
         if(other_vector[i] != 0)
         {
-            error[i] =(double)abs(((*this)[i] - other_vector[i]));
+            error[i] = static_cast<double>(abs((*this)[i] - other_vector[i]));
         }
     }
 
@@ -3874,8 +3911,6 @@ double Vector<T>::calculate_error(const Vector<T>& other_vector) const
 }
 
 
-// T calculate_minimum() const method
-
 /// Returns the smallest element in the vector.
 
 template <class T> T Vector<T>::calculate_minimum() const {
@@ -3885,21 +3920,8 @@ template <class T> T Vector<T>::calculate_minimum() const {
   typename vector<T>::iterator result = min_element(copy.begin(), copy.end());
 
   return(*result);
-
-//  const size_t this_size = this->size();
-
-//  T minimum = numeric_limits<T>::max();
-
-//  for(size_t i = 0; i < this_size; i++) {
-//    if((*this)[i] < minimum) {
-//      minimum =(*this)[i];
-//    }
-//  }
-
-//  return(minimum);
 }
 
-// T calculate_maximum() const method
 
 /// Returns the largest element in the vector.
 
@@ -3910,29 +3932,6 @@ template <class T> T Vector<T>::calculate_maximum() const {
     typename vector<T>::iterator result = max_element(copy.begin(), copy.end());
 
     return(*result);
-
-//  const size_t this_size = this->size();
-
-//  T maximum;
-
-//  if(numeric_limits<T>::is_signed)
-//  {
-//    maximum = -numeric_limits<T>::max();
-//  }
-//  else
-//  {
-//    maximum = 0;
-//  }
-
-//  for(size_t i = 0; i < this_size; i++)
-//  {
-//    if((*this)[i] > maximum)
-//    {
-//      maximum =(*this)[i];
-//    }
-//  }
-
-//  return(maximum);
 }
 
 
@@ -3963,14 +3962,13 @@ T Vector<T>::calculate_minimum_missing_values(
     if((*this)[i] < minimum &&
         !missing_indices.contains(i))
     {
-      minimum =(*this)[i];
+      minimum = (*this)[i];
     }
   }
 
   return(minimum);
 }
 
-// T calculate_maximum_missing_values(const Vector<size_t>&) const method
 
 /// Returns the largest element in the vector.
 
@@ -3989,7 +3987,7 @@ T Vector<T>::calculate_maximum_missing_values(
 
   for(size_t i = 0; i < this_size; i++) {
     if((*this)[i] > maximum && !missing_indices.contains(i)) {
-      maximum =(*this)[i];
+      maximum = (*this)[i];
     }
   }
 
@@ -4018,11 +4016,11 @@ Vector<T> Vector<T>::calculate_minimum_maximum_missing_values(
   for(size_t i = 0; i < this_size; i++) {
     if(!missing_indices.contains(i)) {
       if((*this)[i] < minimum) {
-        minimum =(*this)[i];
+        minimum = (*this)[i];
       }
 
       if((*this)[i] > maximum) {
-        maximum =(*this)[i];
+        maximum = (*this)[i];
       }
     }
   }
@@ -4089,7 +4087,7 @@ Vector<T> Vector<T>::calculate_explained_variance() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        explained_variance[i] =((*this)[i]/this_sum)*100.0;
+        explained_variance[i] = ((*this)[i]/this_sum)*100.0;
 
         if(explained_variance[i] - 0.0 < 1.0e-16)
         {
@@ -4114,8 +4112,6 @@ Vector<T> Vector<T>::calculate_explained_variance() const
     return explained_variance;
 }
 
-
-// Histogram<T> calculate_histogram(const size_t&) const method
 
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
@@ -4153,11 +4149,11 @@ Histogram<T> Vector<T>::calculate_histogram(const size_t &bins_number) const {
   const T minimum = minimum_maximum[0];
   const T maximum = minimum_maximum[1];
 
-  const double length =(maximum - minimum) /(double)bins_number;
+  const double length = (maximum - minimum) /static_cast<double>(bins_number);
 
   minimums[0] = minimum;
   maximums[0] = minimum + length;
-  centers[0] =(maximums[0] + minimums[0]) / 2.0;
+  centers[0] = (maximums[0] + minimums[0]) / 2.0;
 
   // Calculate bins center
 
@@ -4166,7 +4162,7 @@ Histogram<T> Vector<T>::calculate_histogram(const size_t &bins_number) const {
     minimums[i] = minimums[i - 1] + length;
     maximums[i] = maximums[i - 1] + length;
 
-    centers[i] =(maximums[i] + minimums[i]) / 2.0;
+    centers[i] = (maximums[i] + minimums[i]) / 2.0;
   }
 
   // Calculate bins frequency
@@ -4194,8 +4190,6 @@ Histogram<T> Vector<T>::calculate_histogram(const size_t &bins_number) const {
   return(histogram);
 }
 
-
-// Histogram<T> calculate_histogram_binary() const method
 
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
@@ -4243,8 +4237,6 @@ Histogram<T> Vector<T>::calculate_histogram_binary() const {
   return(histogram);
 }
 
-
-// Histogram<T> calculate_histogram_integers(const size_t&) const method
 
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
@@ -4297,8 +4289,6 @@ Histogram<T> Vector<T>::calculate_histogram_integers(const size_t& bins_number) 
 }
 
 
-// Histogram<T> calculate_histogram_missing_values(cons Vectro<size_t>&, const size_t&) const method
-
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
 /// It returns a vector of two vectors.
@@ -4338,11 +4328,11 @@ Histogram<T> Vector<T>::calculate_histogram_missing_values(
   const T minimum = minimum_maximum[0];
   const T maximum = minimum_maximum[1];
 
-  const double length =(maximum - minimum) /(double)bins_number;
+  const double length = (maximum - minimum) /static_cast<double>(bins_number);
 
   minimums[0] = minimum;
   maximums[0] = minimum + length;
-  centers[0] =(maximums[0] + minimums[0]) / 2.0;
+  centers[0] = (maximums[0] + minimums[0]) / 2.0;
 
   // Calculate bins center
 
@@ -4350,18 +4340,18 @@ Histogram<T> Vector<T>::calculate_histogram_missing_values(
     minimums[i] = minimums[i - 1] + length;
     maximums[i] = maximums[i - 1] + length;
 
-    centers[i] =(maximums[i] + minimums[i]) / 2.0;
+    centers[i] = (maximums[i] + minimums[i]) / 2.0;
   }
 
   // Calculate bins frequency
 
   const size_t this_size = this->size();
 
-  for(int i = 0; i <(int)this_size; i++) {
-    if(!missing_indices.contains(i)) {
-      for(int j = 0; j <(int)bins_number - 1; j++) {
+  for(int i = 0; i < static_cast<int>(this_size); i++) {
+    if(!missing_indices.contains(static_cast<size_t>(i))) {
+      for(int j = 0; j < static_cast<int>(bins_number) - 1; j++) {
         if((*this)[i] >= minimums[j] &&(*this)[i] < maximums[j]) {
-          frequencies[j]++;
+          frequencies[static_cast<size_t>(j)]++;
         }
       }
 
@@ -4380,8 +4370,6 @@ Histogram<T> Vector<T>::calculate_histogram_missing_values(
   return(histogram);
 }
 
-
-// Histogram<T> calculate_histogram_binary() const method
 
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
@@ -4432,8 +4420,6 @@ Histogram<T> Vector<T>::calculate_histogram_binary_missing_values(const Vector<s
   return(histogram);
 }
 
-
-// Histogram<T> calculate_histogram_integers() const method
 
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
@@ -4523,23 +4509,8 @@ template <class T> size_t Vector<T>::calculate_minimal_index() const
     typename vector<T>::iterator result = min_element(copy.begin(), copy.end());
 
     return(distance(copy.begin(), result));
-
-//  const size_t this_size = this->size();
-
-//  T minimum =(*this)[0];
-//  size_t minimal_index = 0;
-
-//  for(size_t i = 1; i < this_size; i++) {
-//    if((*this)[i] < minimum) {
-//      minimum =(*this)[i];
-//      minimal_index = i;
-//    }
-//  }
-
-//  return(minimal_index);
 }
 
-// size_t calculate_maximal_index() const method
 
 /// Returns the index of the largest element in the vector.
 
@@ -4549,20 +4520,6 @@ template <class T> size_t Vector<T>::calculate_maximal_index() const {
     typename vector<T>::iterator result = max_element(copy.begin(), copy.end());
 
     return( distance(copy.begin(), result));
-
-//  const size_t this_size = this->size();
-
-//  T maximum =(*this)[0];
-//  size_t maximal_index = 0;
-
-//  for(size_t i = 1; i < this_size; i++) {
-//    if((*this)[i] > maximum) {
-//      maximum =(*this)[i];
-//      maximal_index = i;
-//    }
-//  }
-
-//  return(maximal_index);
 }
 
 
@@ -4578,17 +4535,22 @@ Vector<T>::calculate_minimal_indices(const size_t &number) const {
 
   Vector<size_t> minimal_indices(number);
 
-  #pragma omp parallel for
-  for(int i = 0; i < this_size; i++) {
-    for(size_t j = 0; j < number; j++) {
-      if(rank[i] == j) {
-        minimal_indices[j] = i;
+//  #pragma omp parallel for
+
+  for(int i = 0; i < static_cast<int>(this_size); i++)
+  {
+    for(size_t j = 0; j < number; j++)
+    {
+      if(rank[static_cast<size_t>(i)] == j)
+      {
+        minimal_indices[j] = static_cast<size_t>(i);
       }
     }
   }
 
   return(minimal_indices);
 }
+
 
 ///// Returns the indices of the smallest elements in the vector.
 ///// Used for big vectors.
@@ -4604,23 +4566,23 @@ Vector<T>::calculate_k_minimal_indices(const size_t &number) const{
 
     #pragma omp parallel for
 
-    for(int i=0; i< this_size; i++)
+    for(int i = 0; i < this_size; i++)
     {
         double current_value = this->data()[i];
         size_t max_value_index = minimal_values.calculate_maximal_index();
 
         if(i<number)
         {
-            minimal_indices[i] = i;
-            minimal_values[i] = current_value;
+            minimal_indices[static_cast<size_t>(i)] = static_cast<size_t>(i);
+            minimal_values[static_cast<size_t>(i)] = current_value;
         }
         else
         {
             for(int j=0; j<number; j++)
             {
-                if(current_value < minimal_values[j])
+                if(current_value < minimal_values[static_cast<size_t>(j)])
                 {
-                    minimal_indices[max_value_index] = i;
+                    minimal_indices[max_value_index] = static_cast<size_t>(i);
                     minimal_values[max_value_index] = current_value;
                     break;
                 }
@@ -4631,9 +4593,9 @@ Vector<T>::calculate_k_minimal_indices(const size_t &number) const{
     const Vector<size_t> sorted_indices = minimal_values.calculate_minimal_indices(number);
     Vector<size_t> sorted_minimal_indices(number);
 
-    for(int i=0; i<number; i++)
+    for(int i = 0; i <number; i++)
     {
-        sorted_minimal_indices[i] = minimal_indices[sorted_indices[i]];
+        sorted_minimal_indices[static_cast<size_t>(i)] = minimal_indices[sorted_indices[static_cast<size_t>(i)]];
     }
 
     return(sorted_minimal_indices);
@@ -4671,19 +4633,19 @@ template <class T>
 Vector<size_t> Vector<T>::calculate_minimal_maximal_index() const {
   const size_t this_size = this->size();
 
-  T minimum =(*this)[0];
-  T maximum =(*this)[0];
+  T minimum = (*this)[0];
+  T maximum = (*this)[0];
 
   size_t minimal_index = 0;
   size_t maximal_index = 0;
 
   for(size_t i = 1; i < this_size; i++) {
     if((*this)[i] < minimum) {
-      minimum =(*this)[i];
+      minimum = (*this)[i];
       minimal_index = i;
     }
     if((*this)[i] > maximum) {
-      maximum =(*this)[i];
+      maximum = (*this)[i];
       maximal_index = i;
     }
   }
@@ -4717,7 +4679,8 @@ template <class T> Vector<T> Vector<T>::calculate_pow(const T &exponent) const {
 /// whose elements are one the bigest element of this vector, and zero for the
 /// other elements.
 
-template <class T> Vector<T> Vector<T>::calculate_competitive() const {
+template <class T>
+Vector<T> Vector<T>::calculate_competitive() const {
   const size_t this_size = this->size();
 
   Vector<T> competitive(this_size, 0);
@@ -4751,7 +4714,6 @@ template <class T> Vector<T> Vector<T>::calculate_softmax() const {
   return(softmax);
 }
 
-// Matrix<T> calculate_softmax_Jacobian() const method
 
 /// Returns the softmax Jacobian of this vector.
 
@@ -4763,9 +4725,9 @@ template <class T> Matrix<T> Vector<T>::calculate_softmax_Jacobian() const {
   for(size_t i = 0; i < this_size; i++) {
     for(size_t j = 0; j < this_size; j++) {
       if(i == j) {
-        softmax_Jacobian(i, i) =(*this)[i] *(1.0 -(*this)[i]);
+        softmax_Jacobian(i, i) = (*this)[i] *(1.0 -(*this)[i]);
       } else {
-        softmax_Jacobian(i, i) =(*this)[i] *(*this)[j];
+        softmax_Jacobian(i, i) = (*this)[i] *(*this)[j];
       }
     }
   }
@@ -4803,17 +4765,16 @@ template <class T> Vector<T> Vector<T>::calculate_cumulative() const {
   Vector<T> cumulative(this_size);
 
   if(this_size > 0) {
-    cumulative[0] =(*this)[0];
+    cumulative[0] = (*this)[0];
 
     for(size_t i = 1; i < this_size; i++) {
-      cumulative[i] = cumulative[i - 1] +(*this)[i];
+      cumulative[i] = cumulative[i - 1] + (*this)[i];
     }
   }
 
   return(cumulative);
 }
 
-// size_t calculate_cumulative_index(const T&) const method
 
 /// This method applies only to cumulative vectors.
 /// It returns the index of the first element which is greater than a given
@@ -4838,7 +4799,7 @@ size_t Vector<T>::calculate_cumulative_index(const T &value) const {
     throw logic_error(buffer.str());
   }
 
-  T cumulative_value =(*this)[this_size - 1];
+  T cumulative_value = (*this)[this_size - 1];
 
   if(value > cumulative_value) {
     ostringstream buffer;
@@ -4865,12 +4826,12 @@ size_t Vector<T>::calculate_cumulative_index(const T &value) const {
 
 #endif
 
-  if(value <=(*this)[0]) {
+  if(value <= (*this)[0]) {
     return(0);
   }
 
   for(size_t i = 1; i < this_size; i++) {
-    if(value >(*this)[i - 1] && value <=(*this)[i]) {
+    if(value >(*this)[i - 1] && value <= (*this)[i]) {
       return(i);
     }
   }
@@ -4878,20 +4839,18 @@ size_t Vector<T>::calculate_cumulative_index(const T &value) const {
   return(this_size - 1);
 }
 
-// size_t calculate_closest_index(const T&) const method
 
 /// Returns the index of the closest element in the vector to a given value.
 
 template <class T>
 size_t Vector<T>::calculate_closest_index(const T &value) const {
-  const Vector<T> difference =(*this - value).calculate_absolute_value();
+  const Vector<T> difference = (*this - value).calculate_absolute_value();
 
   const size_t closest_index = difference.calculate_minimal_index();
 
   return(closest_index);
 }
 
-// T calculate_sum() const method
 
 /// Returns the sum of the elements in the vector.
 
@@ -4901,13 +4860,12 @@ template <class T> T Vector<T>::calculate_sum() const {
   T sum = 0;
 
   for(size_t i = 0; i < this_size; i++) {
-    sum +=(*this)[i];
+    sum += (*this)[i];
   }
 
   return(sum);
 }
 
-// T calculate_partial_sum(const Vector<size_t>&) const method
 
 /// Returns the sum of the elements with the given indices.
 /// @param indices Indices of the elementes to sum.
@@ -4920,14 +4878,13 @@ T Vector<T>::calculate_partial_sum(const Vector<size_t> &indices) const {
 
   for(size_t i = 0; i < this_size; i++) {
     if(indices.contains(i)) {
-      sum +=(*this)[i];
+      sum += (*this)[i];
     }
   }
 
   return(sum);
 }
 
-// T calculate_sum_missing_values(const Vector<size_t>&) const method
 
 /// Returns the sum of the elements in the vector.
 
@@ -4940,14 +4897,13 @@ T Vector<T>::calculate_sum_missing_values(
 
   for(size_t i = 0; i < this_size; i++) {
     if(!missing_indices.contains(i)) {
-      sum +=(*this)[i];
+      sum += (*this)[i];
     }
   }
 
   return(sum);
 }
 
-// T calculate_product() const method
 
 /// Returns the product of the elements in the vector.
 
@@ -4957,7 +4913,7 @@ template <class T> T Vector<T>::calculate_product() const {
   T product = 1;
 
   for(size_t i = 0; i < this_size; i++) {
-    product *=(*this)[i];
+    product *= (*this)[i];
   }
 
   return(product);
@@ -4971,13 +4927,13 @@ Vector<T> Vector<T>::calculate_moving_average_cyclic(const T& parameter) const
 
     Vector<T> moving_average(this_size);
 
-    moving_average[0] =((*this)[0]+(parameter*((*this)[1]+(*this)[this_size-1])))/(1+(2*parameter));
+    moving_average[0] = ((*this)[0]+ (parameter*((*this)[1]+ (*this)[this_size-1])))/(1+ (2*parameter));
 
-    moving_average[this_size-1] =((*this)[this_size-1]+(parameter*((*this)[this_size-2]+(*this)[0])))/(1+(2*parameter));
+    moving_average[this_size-1] = ((*this)[this_size-1]+ (parameter*((*this)[this_size-2]+ (*this)[0])))/(1+ (2*parameter));
 
     for(size_t i = 1; i < this->size()-1; i++)
     {
-        moving_average[i] =((*this)[i]+(parameter*((*this)[i-1]+(*this)[i+1])))/(1.0+2.0*parameter);
+        moving_average[i] = ((*this)[i]+ (parameter*((*this)[i-1]+ (*this)[i+1])))/(1.0+2.0*parameter);
     }
 
     return(moving_average);
@@ -4991,13 +4947,13 @@ Vector<T> Vector<T>::calculate_moving_average(const T& parameter) const
 
     Vector<T> moving_average(this_size);
 
-    moving_average[0] =((*this)[0]+(parameter*(*this)[1]))/(1.0+parameter);
+    moving_average[0] = ((*this)[0]+ (parameter*(*this)[1]))/(1.0+parameter);
 
-    moving_average[this_size-1] =((*this)[this_size-1]+(parameter*(*this)[this_size-2]))/(1.0+parameter);
+    moving_average[this_size-1] = ((*this)[this_size-1]+ (parameter*(*this)[this_size-2]))/(1.0+parameter);
 
     for(size_t i = 1; i < this_size-1; i++)
     {
-        moving_average[i] =((*this)[i]+(parameter*((*this)[i-1]+(*this)[i+1])))/(1.0+2.0*parameter);
+        moving_average[i] = ((*this)[i]+ (parameter*((*this)[i-1]+ (*this)[i+1])))/(1.0+2.0*parameter);
     }
 
     return(moving_average);
@@ -5032,8 +4988,8 @@ Vector<double> Vector<T>::calculate_simple_moving_average(const size_t& period) 
 
     for(int i = 0; i < this_size; i++)
     {
-        const size_t begin = i < period ? 0 : i - period + 1;
-        const size_t end = i;
+        const size_t begin = i < period ? 0 : static_cast<size_t>(i) - period + 1;
+        const size_t end = static_cast<size_t>(i);
 
         simple_moving_average[i] = calculate_mean(begin, end);
     }
@@ -5049,13 +5005,13 @@ Vector<double> Vector<T>::calculate_exponential_moving_average(const size_t& per
 
     Vector<double> exponential_moving_average(size);
 
-    exponential_moving_average[0] =(*this)[0];
+    exponential_moving_average[0] = (*this)[0];
 
     const double multiplier = 2.0 / double(period + 1.0);
 
     for(size_t i = 1; i < size; i++)
     {
-        exponential_moving_average[i] =(*this)[i] * multiplier + exponential_moving_average[i-1] *(1.0 - multiplier);
+        exponential_moving_average[i] = (*this)[i] * multiplier + exponential_moving_average[i-1] *(1.0 - multiplier);
     }
 
     return exponential_moving_average;
@@ -5082,7 +5038,7 @@ Vector<double> Vector<T>::calculate_exponential_moving_average_with_initial_aver
 
     for(size_t i = 0; i < period; i++)
     {
-        initial_average +=(*this)[i];
+        initial_average += (*this)[i];
     }
 
     initial_average /= period;
@@ -5093,14 +5049,12 @@ Vector<double> Vector<T>::calculate_exponential_moving_average_with_initial_aver
 
     for(size_t i = 1; i < size; i++)
     {
-        exponential_moving_average[i] =(*this)[i] * multiplier + exponential_moving_average[i-1] *(1 - multiplier);
+        exponential_moving_average[i] = (*this)[i] * multiplier + exponential_moving_average[i-1] *(1 - multiplier);
     }
 
     return(exponential_moving_average);
 }
 
-
-// double calculate_mean() const method
 
 /// Returns the mean of the elements in the vector.
 
@@ -5126,7 +5080,7 @@ template <class T> double Vector<T>::calculate_mean() const
 
   const T sum = calculate_sum();
 
-  const double mean = sum /(double)this_size;
+  const double mean = sum /static_cast<double>(this_size);
 
   return(mean);
 }
@@ -5161,10 +5115,10 @@ double Vector<T>::calculate_mean(const size_t& begin, const size_t& end) const
 
   for(size_t i = begin; i <= end; i++)
   {
-      sum +=(*this)[i];
+      sum += (*this)[i];
   }
 
-  return(sum /(double)(end-begin+1));
+  return(sum /static_cast<double>(end-begin+1));
 }
 
 
@@ -5175,7 +5129,7 @@ double Vector<T>::calculate_linear_trend() const
 {
     const size_t this_size = this->size();
 
-    const Vector<double> independent_variable(0.0,1.0,(double)(this_size-1));
+    const Vector<double> independent_variable(0.0,1.0,static_cast<double>(this_size-1));
 
     const LinearRegressionParameters<T> linear_regression_parameters = calculate_linear_regression_parameters(independent_variable);
 
@@ -5201,7 +5155,7 @@ double Vector<T>::calculate_linear_trend(const size_t& start, const size_t& end)
 template <class T>
 double Vector<T>::calculate_percentage_of_variation() const
 {
-    const double percentage_of_variation =((*this).get_last()-(*this).get_first())*100.0/(*this).get_first();
+    const double percentage_of_variation = ((*this).get_last()-(*this).get_first())*100.0/(*this).get_first();
 
     return percentage_of_variation;
 }
@@ -5237,16 +5191,16 @@ Vector<double> Vector<T>::calculate_percentage_of_variation(const size_t& period
 
     for(int i = 0; i < this_size; i++)
     {
-        const size_t begin = i < period ? 0 : i - period + 1;
-        const size_t end = i;
+        const size_t begin = i < period ? 0 : static_cast<size_t>(i) - period + 1;
+        const size_t end = static_cast<size_t>(i);
 
         if((*this)[begin] != 0.0)
         {
-            percentage_of_variation[i] =((*this)[end] -(*this)[begin]) * 100.0 /(*this)[begin];
+            percentage_of_variation[i] = ((*this)[end] -(*this)[begin]) * 100.0 /(*this)[begin];
         }
         else
         {
-            percentage_of_variation[i] = percentage_of_variation[i-1];
+            percentage_of_variation[static_cast<size_t>(i)] = percentage_of_variation[static_cast<size_t>(i-1)];
         }
     }
 
@@ -5324,7 +5278,7 @@ template <class T> T Vector<T>::calculate_mode_missing_values(const Vector<size_
   {
       if(!missing_indices.contains(i))
       {
-          new_vector[count] =(*this)[i];
+          new_vector[count] = (*this)[i];
           count++;
       }
   }
@@ -5364,11 +5318,11 @@ template <class T> double Vector<T>::calculate_variance() const {
 
   for(size_t i = 0; i < this_size; i++)
   {
-    sum +=(*this)[i];
-    squared_sum +=(*this)[i] *(*this)[i];
+    sum += (*this)[i];
+    squared_sum += (*this)[i] *(*this)[i];
   }
 
-  const double numerator = squared_sum -(sum * sum) /(double)this_size;
+  const double numerator = squared_sum -(sum * sum) /static_cast<double>(this_size);
   const double denominator = this_size - 1.0;
 
   if(denominator == 0.0)
@@ -5381,8 +5335,6 @@ template <class T> double Vector<T>::calculate_variance() const {
   }
 }
 
-
-// double calculate_covariance(const Vector<double>&) const method
 
 /// Returns the covariance of this vector and other vector
 
@@ -5432,18 +5384,16 @@ double Vector<T>::calculate_covariance(const Vector<double>& other_vector) const
      const double other_mean = other_vector.calculate_mean();
 
      double numerator = 0.0;
-     double denominator =(double)(this_size-1);
+     double denominator = static_cast<double>(this_size-1);
 
      for(size_t i = 0; i < this_size; i++)
      {
-         numerator +=((*this)[i]-this_mean)*(other_vector[i]-other_mean);
+         numerator += ((*this)[i]-this_mean)*(other_vector[i]-other_mean);
      }
 
      return(numerator/denominator);
 }
 
-
-// double calculate_standard_deviation() const method
 
 /// Returns the standard deviation of the elements in the vector.
 
@@ -5491,7 +5441,7 @@ Vector<double> Vector<T>::calculate_standard_deviation(const size_t& period) con
 
       for(size_t j = begin; j < end+1; j++)
       {
-          sum +=((*this)[j] - mean) *((*this)[j] - mean);
+          sum += ((*this)[j] - mean) *((*this)[j] - mean);
       }
 
       standard_deviation[i] = sqrt(sum / double(period));
@@ -5542,10 +5492,10 @@ template <class T> double Vector<T>::calculate_asymmetry() const
 
   for(size_t i = 0; i < this_size; i++)
   {
-    sum +=((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean);
+    sum += ((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean);
   }
 
-  const double numerator = sum /(double)this_size;
+  const double numerator = sum /static_cast<double>(this_size);
   const double denominator = standard_deviation * standard_deviation * standard_deviation;
 
   return(numerator / denominator);
@@ -5585,10 +5535,10 @@ template <class T> double Vector<T>::calculate_kurtosis() const {
 
   for(size_t i = 0; i < this_size; i++)
   {
-    sum +=((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean);
+    sum += ((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean);
   }
 
-  const double numerator = sum/(double)this_size;
+  const double numerator = sum/static_cast<double>(this_size);
   const double denominator = standard_deviation*standard_deviation*standard_deviation*standard_deviation;
 
   return((numerator/denominator)-3.0);
@@ -5623,7 +5573,6 @@ Vector<double> Vector<T>::calculate_mean_standard_deviation() const {
   return {mean, standard_deviation};
 }
 
-// double calculate_median() const
 
 /// Returns the median of the elements in the vector
 
@@ -5637,11 +5586,11 @@ template <class T> double Vector<T>::calculate_median() const {
   size_t median_index;
 
   if(this_size % 2 == 0) {
-    median_index =(size_t)(this_size / 2);
+    median_index = static_cast<size_t>(this_size / 2);
 
     return((sorted_vector[median_index-1] + sorted_vector[median_index]) / 2.0);
   } else {
-    median_index =(size_t)(this_size / 2);
+    median_index = static_cast<size_t>(this_size / 2);
 
     return(sorted_vector[median_index]);
   }
@@ -5666,30 +5615,24 @@ template <class T> Vector<double> Vector<T>::calculate_quartiles() const {
   }
   else if(this_size == 2)
   {
-      quartiles[0] =(sorted_vector[0]+sorted_vector[1])/4;
-      quartiles[1] =(sorted_vector[0]+sorted_vector[1])/2;
-      quartiles[2] =(sorted_vector[0]+sorted_vector[1])*3/4;
+      quartiles[0] = (sorted_vector[0]+sorted_vector[1])/4;
+      quartiles[1] = (sorted_vector[0]+sorted_vector[1])/2;
+      quartiles[2] = (sorted_vector[0]+sorted_vector[1])*3/4;
   }
   else if(this_size == 3)
   {
-      quartiles[0] =(sorted_vector[0]+sorted_vector[1])/2;
+      quartiles[0] = (sorted_vector[0]+sorted_vector[1])/2;
       quartiles[1] = sorted_vector[1];
-      quartiles[2] =(sorted_vector[2]+sorted_vector[1])/2;
+      quartiles[2] = (sorted_vector[2]+sorted_vector[1])/2;
   }
   else if(this_size % 2 == 0)
   {
-//    quartiles[0] =(sorted_vector[this_size / 4] + sorted_vector[this_size / 4 + 1]) / 2;
-//    quartiles[1] =(sorted_vector[this_size * 2 / 4] + sorted_vector[this_size * 2 / 4 + 1]) / 2;
-//    quartiles[2] =(sorted_vector[this_size * 3 / 4] + sorted_vector[this_size * 3 / 4 + 1]) / 2;
     quartiles[0] = sorted_vector.get_first(this_size/2).calculate_median();
     quartiles[1] = sorted_vector.calculate_median();
     quartiles[2] = sorted_vector.get_last(this_size/2).calculate_median();
   }
   else
   {
-//    quartiles[0] = sorted_vector[this_size / 4];
-//    quartiles[1] = sorted_vector[this_size * 2 / 4];
-//    quartiles[2] = sorted_vector[this_size * 3 / 4];
     quartiles[0] = sorted_vector[int(this_size/4)];
     quartiles[1] = sorted_vector[int(this_size/2)];
     quartiles[2] = sorted_vector[int(this_size*3/4)];
@@ -5710,15 +5653,15 @@ Vector<double> Vector<T>::calculate_percentiles() const
 
   if(this_size % 2 == 0)
   {
-    percentiles[0] =(sorted_vector[this_size / 10] + sorted_vector[this_size / 10 + 1]) / 2;
-    percentiles[1] =(sorted_vector[this_size * 2 / 10] + sorted_vector[this_size * 2 / 10 + 1]) / 2;
-    percentiles[2] =(sorted_vector[this_size * 3 / 10] + sorted_vector[this_size * 3 / 10 + 1]) / 2;
-    percentiles[3] =(sorted_vector[this_size * 4 / 10] + sorted_vector[this_size * 4 / 10 + 1]) / 2;
-    percentiles[4] =(sorted_vector[this_size * 5 / 10] + sorted_vector[this_size * 5 / 10 + 1]) / 2;
-    percentiles[5] =(sorted_vector[this_size * 6 / 10] + sorted_vector[this_size * 6 / 10 + 1]) / 2;
-    percentiles[6] =(sorted_vector[this_size * 7 / 10] + sorted_vector[this_size * 7 / 10 + 1]) / 2;
-    percentiles[7] =(sorted_vector[this_size * 8 / 10] + sorted_vector[this_size * 8 / 10 + 1]) / 2;
-    percentiles[8] =(sorted_vector[this_size * 9 / 10] + sorted_vector[this_size * 9 / 10 + 1]) / 2;
+    percentiles[0] = (sorted_vector[this_size / 10] + sorted_vector[this_size / 10 + 1]) / 2;
+    percentiles[1] = (sorted_vector[this_size * 2 / 10] + sorted_vector[this_size * 2 / 10 + 1]) / 2;
+    percentiles[2] = (sorted_vector[this_size * 3 / 10] + sorted_vector[this_size * 3 / 10 + 1]) / 2;
+    percentiles[3] = (sorted_vector[this_size * 4 / 10] + sorted_vector[this_size * 4 / 10 + 1]) / 2;
+    percentiles[4] = (sorted_vector[this_size * 5 / 10] + sorted_vector[this_size * 5 / 10 + 1]) / 2;
+    percentiles[5] = (sorted_vector[this_size * 6 / 10] + sorted_vector[this_size * 6 / 10 + 1]) / 2;
+    percentiles[6] = (sorted_vector[this_size * 7 / 10] + sorted_vector[this_size * 7 / 10 + 1]) / 2;
+    percentiles[7] = (sorted_vector[this_size * 8 / 10] + sorted_vector[this_size * 8 / 10 + 1]) / 2;
+    percentiles[8] = (sorted_vector[this_size * 9 / 10] + sorted_vector[this_size * 9 / 10 + 1]) / 2;
     percentiles[9] = calculate_maximum();
   }
   else
@@ -5762,9 +5705,9 @@ Vector<double> Vector<T>::calculate_quartiles_missing_values(const Vector<size_t
 
     if(actual_size % 2 == 0)
     {
-      quartiles[0] =(sorted_vector[actual_size / 4] + sorted_vector[actual_size / 4 + 1]) / 2.0;
-      quartiles[1] =(sorted_vector[actual_size * 2 / 4] + sorted_vector[actual_size * 2 / 4 + 1]) / 2.0;
-      quartiles[2] =(sorted_vector[actual_size * 3 / 4] + sorted_vector[actual_size * 3 / 4 + 1]) / 2.0;
+      quartiles[0] = (sorted_vector[actual_size / 4] + sorted_vector[actual_size / 4 + 1]) / 2.0;
+      quartiles[1] = (sorted_vector[actual_size * 2 / 4] + sorted_vector[actual_size * 2 / 4 + 1]) / 2.0;
+      quartiles[2] = (sorted_vector[actual_size * 3 / 4] + sorted_vector[actual_size * 3 / 4 + 1]) / 2.0;
     }
     else
     {
@@ -5776,7 +5719,6 @@ Vector<double> Vector<T>::calculate_quartiles_missing_values(const Vector<size_t
     return(quartiles);
 }
 
-// double calculate_mean_missing_values(const Vector<size_t>&) const method
 
 /// Returns the mean of the elements in the vector.
 
@@ -5807,17 +5749,16 @@ double Vector<T>::calculate_mean_missing_values(const Vector<size_t> &missing_in
 
   for(size_t i = 0; i < this_size; i++) {
     if(!missing_indices.contains(i)) {
-      sum +=(*this)[i];
+      sum += (*this)[i];
       count++;
     }
   }
 
-  const double mean = sum /(double)count;
+  const double mean = sum /static_cast<double>(count);
 
   return(mean);
 }
 
-// double calculate_variance_missing_values(const Vector<size_t>&) method
 
 /// Returns the variance of the elements in the vector.
 
@@ -5850,8 +5791,8 @@ double Vector<T>::calculate_variance_missing_values(
 
   for(size_t i = 0; i < this_size; i++) {
     if(!missing_indices.contains(i)) {
-      sum +=(*this)[i];
-      squared_sum +=(*this)[i] *(*this)[i];
+      sum += (*this)[i];
+      squared_sum += (*this)[i] *(*this)[i];
 
       count++;
     }
@@ -5861,13 +5802,12 @@ double Vector<T>::calculate_variance_missing_values(
     return(0.0);
   }
 
-  const double numerator = squared_sum -(sum * sum) /(double)count;
+  const double numerator = squared_sum -(sum * sum) /static_cast<double>(count);
   const double denominator = this_size - 1.0;
 
   return(numerator / denominator);
 }
 
-// double calculate_weighted_mean(const Vector<double>&) const method
 
 /// Returns the weighted mean of the vector.
 /// @param weights Weights of the elements of the vector in the mean.
@@ -5920,8 +5860,6 @@ double Vector<T>::calculate_weighted_mean(const Vector<double> & weights) const
     return(mean);
 }
 
-// double calculate_standard_deviation_missing_values(const Vector<size_t>&)
-// method
 
 /// Returns the standard deviation of the elements in the vector.
 
@@ -5950,8 +5888,6 @@ double Vector<T>::calculate_standard_deviation_missing_values(
   return(sqrt(calculate_variance_missing_values(missing_indices)));
 }
 
-
-// double calculate_asymmetry_missing_values(Vector<size_t>&) const method
 
 /// Returns the asymmetry of the elements in the vector.
 
@@ -5991,18 +5927,17 @@ double Vector<T>::calculate_asymmetry_missing_values(
   {
     if(!missing_indices.contains(i))
     {
-      sum +=((*this)[i] - mean) *((*this)[i] - mean) *((*this)[i] - mean);
+      sum += ((*this)[i] - mean) *((*this)[i] - mean) *((*this)[i] - mean);
     }
   }
 
-  const double numerator = sum /(double)this_size;
+  const double numerator = sum /static_cast<double>(this_size);
   const double denominator =
       standard_deviation * standard_deviation * standard_deviation;
 
   return(numerator / denominator);
 }
 
-// double calculate_kurtosis_missing_values(Vector<size_t>&) const method
 
 /// Returns the kurtosis of the elements in the vector.
 
@@ -6043,17 +5978,16 @@ double Vector<T>::calculate_kurtosis_missing_values(
   {
     if(!missing_indices.contains(i))
     {
-      sum +=((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean);
+      sum += ((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean)*((*this)[i] - mean);
     }
   }
 
-  const double numerator = sum /(double)this_size;
+  const double numerator = sum /static_cast<double>(this_size);
   const double denominator = standard_deviation*standard_deviation*standard_deviation*standard_deviation;
 
   return((numerator/denominator)-3.0);
 }
 
-// Statistics<T> calculate_statistics() const method
 
 /// Returns the minimum, maximum, mean and standard deviation of the elements in
 /// the vector.
@@ -6099,21 +6033,21 @@ template <class T> Statistics<T> Vector<T>::calculate_statistics() const {
   {
       if((*this)[i] < minimum)
       {
-          minimum =(*this)[i];
+          minimum = (*this)[i];
       }
 
       if((*this)[i] > maximum)
       {
-          maximum =(*this)[i];
+          maximum = (*this)[i];
       }
 
-      sum +=(*this)[i];
-      squared_sum +=(*this)[i] *(*this)[i];
+      sum += (*this)[i];
+      squared_sum += (*this)[i] *(*this)[i];
 
       count++;
   }
 
-  const double mean = sum/(double)count;
+  const double mean = sum/static_cast<double>(count);
 
   double standard_deviation;
 
@@ -6185,21 +6119,21 @@ Statistics<T> Vector<T>::calculate_statistics_missing_values(
       {
           if((*this)[i] < minimum)
           {
-            minimum =(*this)[i];
+            minimum = (*this)[i];
           }
 
           if((*this)[i] > maximum) {
-            maximum =(*this)[i];
+            maximum = (*this)[i];
           }
 
-          sum +=(*this)[i];
-          squared_sum +=(*this)[i] *(*this)[i];
+          sum += (*this)[i];
+          squared_sum += (*this)[i] *(*this)[i];
 
           count++;
       }
   }
 
-  const double mean = sum/(double)count;
+  const double mean = sum/static_cast<double>(count);
 
   double standard_deviation;
 
@@ -6332,6 +6266,7 @@ Vector<double> Vector<T>::calculate_box_plot_missing_values(const Vector<size_t>
     return(box_plots);
 }
 
+
 template <class T>
 size_t Vector<T>::calculate_sample_index_proportional_probability() const
 {
@@ -6362,11 +6297,74 @@ size_t Vector<T>::calculate_sample_index_proportional_probability() const
     return selected_index;
 }
 
-// double calculate_norm() const method
+
 
 /// Returns the vector norm.
 
-template <class T> double Vector<T>::calculate_norm() const {
+template <class T>
+double Vector<T>::calculate_L1_norm() const {
+  // Control sentence(if debug)
+
+  return calculate_absolute_value().calculate_sum();
+}
+
+
+/// Returns the gradient of the vector norm.
+
+template <class T> Vector<T> Vector<T>::calculate_sign() const {
+  const size_t this_size = this->size();
+
+  // Control sentence(if debug)
+
+  Vector<T> sign_vector(this_size);
+
+  for (size_t i = 0; i < this_size; i++)
+  {
+    if ((*this)[i] < 0)
+    {
+        sign_vector[i] = -1.0;
+    }
+    else if((*this)[i] > 0)
+    {
+        sign_vector[i] = 1.0;
+    }
+    else
+    {
+        throw logic_error("Error: Parameter " + to_string(i) + " is equal to zero: Non-derivative function");
+    }
+  }
+
+  return(sign_vector);
+}
+
+
+/// Returns the gradient of the vector norm.
+
+template <class T> Vector<T> Vector<T>::calculate_L1_norm_gradient() const {
+
+  // Control sentence(if debug)
+
+  return(calculate_sign());
+}
+
+
+/// Returns the Hessian of the vector norm.
+
+template <class T> Matrix<T> Vector<T>::calculate_L1_norm_Hessian() const {
+  const size_t this_size = this->size();
+
+  // Control sentence(if debug)
+
+  Matrix<T> Hessian(this_size, this_size, 0);
+
+  return(Hessian);
+}
+
+
+/// Returns the vector norm.
+
+template <class T>
+double Vector<T>::calculate_L2_norm() const {
   const size_t this_size = this->size();
 
   // Control sentence(if debug)
@@ -6374,63 +6372,58 @@ template <class T> double Vector<T>::calculate_norm() const {
   double norm = 0.0;
 
   for(size_t i = 0; i < this_size; i++) {
-    norm +=(*this)[i] *(*this)[i];
+    norm += (*this)[i] *(*this)[i];
   }
 
-  norm = sqrt(norm);
-
-  return(norm);
+    return sqrt(norm);
 }
 
 
 /// Returns the gradient of the vector norm.
 
-template <class T> Vector<T> Vector<T>::calculate_norm_gradient() const {
+template <class T> Vector<T> Vector<T>::calculate_L2_norm_gradient() const {
   const size_t this_size = this->size();
 
   // Control sentence(if debug)
 
   Vector<T> gradient(this_size);
 
-  const double norm = calculate_norm();
+  const double norm = calculate_L2_norm();
 
   if(norm == 0.0) {
     gradient.initialize(0.0);
   } else {
-    gradient =(*this) / norm;
+    gradient = (*this) / norm;
   }
 
   return(gradient);
 }
 
-// Matrix<T> calculate_norm_Hessian() const method
 
 /// Returns the Hessian of the vector norm.
 
-template <class T> Matrix<T> Vector<T>::calculate_norm_Hessian() const {
+template <class T> Matrix<T> Vector<T>::calculate_L2_norm_Hessian() const {
   const size_t this_size = this->size();
 
   // Control sentence(if debug)
 
   Matrix<T> Hessian(this_size, this_size);
 
-  const double norm = calculate_norm();
+  const double norm = calculate_L2_norm();
 
   if(norm == 0.0) {
     Hessian.initialize(0.0);
   } else {
-    //       Hessian =(*this).direct(*this)/pow(norm, 3);
-    Hessian =(*this).direct(*this) /(norm * norm * norm);
+    Hessian = (*this).direct(*this)/(norm * norm * norm);
   }
 
   return(Hessian);
 }
 
-// double calculate_p_norm(const double&) const method
 
 /// Returns the vector p-norm.
 
-template <class T> double Vector<T>::calculate_p_norm(const double &p) const {
+template <class T> double Vector<T>::calculate_Lp_norm(const double &p) const {
 // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
@@ -6466,7 +6459,7 @@ template <class T> double Vector<T>::calculate_p_norm(const double &p) const {
 /// Returns the gradient of the vector norm.
 
 template <class T>
-Vector<double> Vector<T>::calculate_p_norm_gradient(const double &p) const {
+Vector<double> Vector<T>::calculate_Lp_norm_gradient(const double &p) const {
 // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
@@ -6486,11 +6479,9 @@ Vector<double> Vector<T>::calculate_p_norm_gradient(const double &p) const {
 
   const size_t this_size = this->size();
 
-  // Control sentence(if debug)
-
   Vector<double> gradient(this_size);
 
-  const double p_norm = calculate_p_norm(p);
+  const double p_norm = calculate_Lp_norm(p);
 
   if(p_norm == 0.0) {
     gradient.initialize(0.0);
@@ -6499,41 +6490,37 @@ Vector<double> Vector<T>::calculate_p_norm_gradient(const double &p) const {
       gradient[i] =
          (*this)[i] * pow(fabs((*this)[i]), p - 2.0) / pow(p_norm, p - 1.0);
     }
-
-    //       gradient =(*this)*(*this).calculate_pow(p-2.0)/pow(p_norm, p-1.0);
   }
 
   return(gradient);
 }
 
-// double calculate_normalized() const method
 
 /// Returns this vector divided by its norm.
 
 template <class T> Vector<T> Vector<T>::calculate_normalized() const {
-  const size_t this_size =(*this).size();
+  const size_t this_size = this->size();
 
   Vector<T> normalized(this_size);
 
-  const double norm = calculate_norm();
+  const double norm = calculate_L2_norm();
 
   if(norm == 0.0) {
     normalized.initialize(0.0);
   } else {
-    normalized =(*this) / norm;
+    normalized = (*this) / norm;
   }
 
   return(normalized);
 }
 
-// double calculate_distance(const Vector<double>&) const method
 
 /// Returns the distance between the elements of this vector and the elements of
 /// another vector.
 /// @param other_vector Other vector.
 
 template <class T>
-double Vector<T>::calculate_distance(const Vector<T> &other_vector) const {
+double Vector<T>::calculate_euclidean_distance(const Vector<T> &other_vector) const {
 
     const size_t this_size = this->size();
 #ifdef __OPENNN_DEBUG__
@@ -6544,7 +6531,42 @@ double Vector<T>::calculate_distance(const Vector<T> &other_vector) const {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "double calculate_distance(const Vector<T>&) const "
+           << "double calculate_euclidean_distance(const Vector<T>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    double distance = 0.0;
+    double error;
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        error = (*this)[i] - other_vector[i];
+
+        distance += error * error;
+    }
+
+    return(sqrt(distance));
+}
+
+
+template <class T>
+double Vector<T>::calculate_euclidean_weighted_distance(const Vector<T>& other_vector, const Vector<double>& weights) const {
+
+    const size_t this_size = this->size();
+#ifdef __OPENNN_DEBUG__
+
+  const size_t other_size = other_vector.size();
+
+  if(other_size != this_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Vector Template.\n"
+           << "double calculate_euclidean_weighted_distance(const Vector<T>&) const "
               "method.\n"
            << "Size must be equal to this size.\n";
 
@@ -6557,24 +6579,92 @@ double Vector<T>::calculate_distance(const Vector<T> &other_vector) const {
     double error;
 
     for(size_t i = 0; i < this_size; i++) {
-        error =(*this)[i] - other_vector[i];
+        error = (*this)[i] - other_vector[i];
 
-        distance += error * error;
+        distance += error * error * weights[i];
     }
 
     return(sqrt(distance));
 }
 
 
-// double calculate_sum_squared_error(const Vector<double>&) const method
+template <class T>
+double Vector<T>::calculate_manhattan_distance(const Vector<T> &other_vector) const {
+
+    const size_t this_size = this->size();
+#ifdef __OPENNN_DEBUG__
+
+  const size_t other_size = other_vector.size();
+
+  if(other_size != this_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Vector Template.\n"
+           << "double calculate_manhattan_distance(const Vector<T>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    double distance = 0.0;
+    double error;
+
+    for(size_t i = 0; i < this_size; i++) {
+        error = abs((*this)[i] - other_vector[i]);
+
+        distance += error;
+    }
+
+    return(distance);
+}
+
+
+template <class T>
+double Vector<T>::calculate_manhattan_weighted_distance(const Vector<T>& other_vector, const Vector<double>& weights) const {
+
+    const size_t this_size = this->size();
+#ifdef __OPENNN_DEBUG__
+
+  const size_t other_size = other_vector.size();
+
+  if(other_size != this_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Vector Template.\n"
+           << "double calculate_manhattan_weighted_distance(const Vector<T>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    double distance = 0.0;
+    double error;
+
+    for(size_t i = 0; i < this_size; i++) {
+        error = abs((*this)[i] - other_vector[i]);
+
+        distance += error * weights[i];
+
+//        cout << distance << endl;
+    }
+
+    return(distance);
+}
+
 
 /// Returns the sum squared error between the elements of this vector and the
 /// elements of another vector.
 /// @param other_vector Other vector.
 
 template <class T>
-double Vector<T>::calculate_sum_squared_error(
-    const Vector<double> &other_vector) const {
+double Vector<T>::calculate_sum_squared_error(const Vector<double> &other_vector) const
+{
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -6599,8 +6689,9 @@ double Vector<T>::calculate_sum_squared_error(
   double sum_squared_error = 0.0;
   double error;
 
-  for(size_t i = 0; i < this_size; i++) {
-    error =(*this)[i] - other_vector[i];
+  for(size_t i = 0; i < this_size; i++)
+  {
+    error = (*this)[i] - other_vector[i];
 
     sum_squared_error += error * error;
   }
@@ -6608,11 +6699,10 @@ double Vector<T>::calculate_sum_squared_error(
   return(sum_squared_error);
 }
 
-// double calculate_sum_squared_error(const Matrix<T>&, const size_t&, const Vector<size_t>&) const method
 
 /// Returns the sum squared error between the elements of this vector and the
 /// elements of a row of a matrix.
-/// @param matrix Matrix to compute the error .
+/// @param matrix Matrix to compute the error.
 /// @param row_index Index of the row of the matrix.
 /// @param column_indices Indices of the columns of the matrix to evaluate.
 
@@ -6647,7 +6737,7 @@ double Vector<T>::calculate_sum_squared_error(
   const size_t size = column_indices.size();
 
   for(size_t i = 0; i < size; i++) {
-    error =(*this)[i] - matrix(row_index, column_indices[i]);
+    error = (*this)[i] - matrix(row_index, column_indices[i]);
 
     sum_squared_error += error * error;
   }
@@ -6655,7 +6745,6 @@ double Vector<T>::calculate_sum_squared_error(
   return(sum_squared_error);
 }
 
-// double calculate_Minkowski_error(const Vector<double>&) const method
 
 /// Returns the Minkowski squared error between the elements of this vector and
 /// the elements of another vector.
@@ -6760,10 +6849,10 @@ LinearRegressionParameters<T> Vector<T>::calculate_linear_regression_parameters(
 
   for(size_t i = 0; i < n; i++) {
     s_x += x[i];
-    s_y +=(*this)[i];
+    s_y += (*this)[i];
 
     s_xx += x[i] * x[i];
-    s_yy +=(*this)[i] *(*this)[i];
+    s_yy += (*this)[i] *(*this)[i];
 
     s_xy += x[i] *(*this)[i];
   }
@@ -6799,8 +6888,6 @@ LinearRegressionParameters<T> Vector<T>::calculate_linear_regression_parameters(
 }
 
 
-// void calculate_absolute_value() const method
-
 /// Returns a vector with the absolute values of the current vector.
 
 template <class T> Vector<T> Vector<T>::calculate_absolute_value() const {
@@ -6810,7 +6897,7 @@ template <class T> Vector<T> Vector<T>::calculate_absolute_value() const {
 
   for(size_t i = 0; i < this_size; i++) {
     if((*this)[i] > 0) {
-      absolute_value[i] =(*this)[i];
+      absolute_value[i] = (*this)[i];
     } else {
       absolute_value[i] = -(*this)[i];
     }
@@ -6819,7 +6906,6 @@ template <class T> Vector<T> Vector<T>::calculate_absolute_value() const {
   return(absolute_value);
 }
 
-// void apply_absolute_value() method
 
 /// Sets the elements of the vector to their absolute values.
 
@@ -6847,7 +6933,7 @@ Vector<T> Vector<T>::calculate_lower_bounded(const T &lower_bound) const {
     if((*this)[i] < lower_bound) {
       bounded_vector[i] = lower_bound;
     } else {
-      bounded_vector[i] =(*this)[i];
+      bounded_vector[i] = (*this)[i];
     }
   }
 
@@ -6890,7 +6976,7 @@ Vector<T>::calculate_lower_bounded(const Vector<T> &lower_bound) const {
     if((*this)[i] < lower_bound[i]) {
       bounded_vector[i] = lower_bound[i];
     } else {
-      bounded_vector[i] =(*this)[i];
+      bounded_vector[i] = (*this)[i];
     }
   }
 
@@ -6912,7 +6998,7 @@ Vector<T> Vector<T>::calculate_upper_bounded(const T &upper_bound) const {
     if((*this)[i] > upper_bound) {
       bounded_vector[i] = upper_bound;
     } else {
-      bounded_vector[i] =(*this)[i];
+      bounded_vector[i] = (*this)[i];
     }
   }
 
@@ -6956,7 +7042,7 @@ Vector<T>::calculate_upper_bounded(const Vector<T> &upper_bound) const {
     if((*this)[i] > upper_bound[i]) {
       bounded_vector[i] = upper_bound[i];
     } else {
-      bounded_vector[i] =(*this)[i];
+      bounded_vector[i] = (*this)[i];
     }
   }
 
@@ -6971,8 +7057,8 @@ Vector<T>::calculate_upper_bounded(const Vector<T> &upper_bound) const {
 /// @param upper_bound Upper bound value.
 
 template <class T>
-Vector<T> Vector<T>::calculate_lower_upper_bounded(const T &lower_bound,
-                                                   const T &upper_bound) const {
+Vector<T> Vector<T>::calculate_lower_upper_bounded(const T &lower_bound, const T &upper_bound) const
+{
   const size_t this_size = this->size();
 
   Vector<T> bounded_vector(this_size);
@@ -6983,7 +7069,7 @@ Vector<T> Vector<T>::calculate_lower_upper_bounded(const T &lower_bound,
     } else if((*this)[i] > upper_bound) {
       bounded_vector[i] = upper_bound;
     } else {
-      bounded_vector[i] =(*this)[i];
+      bounded_vector[i] = (*this)[i];
     }
   }
 
@@ -7033,14 +7119,13 @@ Vector<T>::calculate_lower_upper_bounded(const Vector<T> &lower_bound,
     } else if((*this)[i] > upper_bound[i]) {
       bounded_vector[i] = upper_bound[i];
     } else {
-      bounded_vector[i] =(*this)[i];
+      bounded_vector[i] = (*this)[i];
     }
   }
 
   return(bounded_vector);
 }
 
-// void apply_lower_bound(const T&) method
 
 /// Sets the elements of the vector to a given value if they fall below that
 /// value.
@@ -7056,7 +7141,6 @@ template <class T> void Vector<T>::apply_lower_bound(const T &lower_bound) {
   }
 }
 
-// void apply_lower_bound(const Vector<T>&) method
 
 /// Sets the elements of the vector to given values if they fall below that
 /// values.
@@ -7073,7 +7157,6 @@ void Vector<T>::apply_lower_bound(const Vector<T> &lower_bound) {
   }
 }
 
-// void apply_upper_bound(const T&) method
 
 /// Sets the elements of the vector to a given value if they fall above that
 /// value.
@@ -7089,7 +7172,6 @@ template <class T> void Vector<T>::apply_upper_bound(const T &upper_bound) {
   }
 }
 
-// void apply_upper_bound(const Vector<T>&) method
 
 /// Sets the elements of the vector to given values if they fall above that
 /// values.
@@ -7106,7 +7188,6 @@ void Vector<T>::apply_upper_bound(const Vector<T> &upper_bound) {
   }
 }
 
-// void apply_lower_upper_bounds(const T&, const T&) method
 
 /// Sets the elements of the vector to a given lower bound value if they fall
 /// below that value,
@@ -7128,7 +7209,6 @@ void Vector<T>::apply_lower_upper_bounds(const T &lower_bound,
   }
 }
 
-// void apply_lower_upper_bounds(const Vector<T>&, const Vector<T>&) method
 
 /// Sets the elements of the vector to given lower bound values if they fall
 /// below that values,
@@ -7188,6 +7268,21 @@ Vector<T> Vector<T>::sort_ascending_values() const
     return sorted;
 }
 
+
+template <class T>
+Vector<size_t> Vector<T>::calculate_lower_indices(const size_t& indices_number) const
+{
+    return sort_ascending_indices().get_subvector(0,indices_number-1);
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_lower_values(const size_t& indices_number) const
+{
+    return sort_ascending_values().get_subvector(0,indices_number-1);
+}
+
+
 /// Returns the vector of the indices of the vector sorted by greater ranks.
 
 template <class T>
@@ -7225,6 +7320,7 @@ Vector<T> Vector<T>::sort_descending_values() const
     return sorted.get_reverse();
 }
 
+
 /// Returns a vector with the rank of the elements of this vector.
 /// The smallest element will have rank 0, and the greatest element will have
 /// size-1.
@@ -7243,22 +7339,22 @@ template <class T> Vector<size_t> Vector<T>::calculate_less_rank() const
   Vector<size_t> previous_rank;
   previous_rank.set(this_size, -1);
 
-  #pragma omp parallel for schedule(dynamic)
+//  #pragma omp parallel for schedule(dynamic)
 
   for(int i = 0; i < this_size; i++)
   {
-    for(size_t j = 0; j < this_size; j++)
+    for(int j = 0; j < this_size; j++)
     {
-      if(previous_rank.contains(j))
+      if(previous_rank.contains(static_cast<size_t>(j)))
       {
         continue;
       }
 
       if((*this)[i] == sorted_vector[j])
       {
-        rank[i] = j;
+        rank[static_cast<size_t>(i)] = static_cast<size_t>(j);
 
-        previous_rank[i] = j;
+        previous_rank[static_cast<size_t>(i)] = static_cast<size_t>(j);
 
         break;
       }
@@ -7284,15 +7380,15 @@ template <class T> Vector<double> Vector<T>::calculate_less_rank_with_ties() con
 
     const size_t n = this->size();
 
-#pragma omp parallel for
+//#pragma omp parallel for
 
-    for(int  i = 0; i < this_unique.size(); i++)
+    for(int  i = 0; i < static_cast<int>(this_unique.size()); i++)
     {
-        if(this_unique_frecuency[i] > 1)
+        if(this_unique_frecuency[static_cast<size_t>(i)] > 1)
         {
-             const double unique = this_unique[i];
+             const double unique = this_unique[static_cast<size_t>(i)];
 
-             Vector<double> indices(this_unique_frecuency[i]);
+             Vector<double> indices(this_unique_frecuency[static_cast<size_t>(i)]);
 
              for(size_t j = 0; j < n; j++)
              {
@@ -7326,38 +7422,37 @@ template <class T> Vector<double> Vector<T>::calculate_less_rank_with_ties() con
 template <class T>
 Vector<size_t> Vector<T>::calculate_greater_rank() const
 {
-  const size_t this_size = this->size();
+    const size_t this_size = this->size();
 
-  Vector<size_t> rank(this_size);
+    Vector<size_t> rank(this_size);
 
-  Vector<T> sorted_vector(*this);
+    Vector<T> sorted_vector(*this);
 
-  sort(sorted_vector.begin(), sorted_vector.end(), greater<T>());
+    sort(sorted_vector.begin(), sorted_vector.end(), greater<T>());
 
-  Vector<size_t> previous_rank;
-  previous_rank.set(this_size, -1);
+    Vector<size_t> previous_rank;
+    previous_rank.set(this_size, -1);
 
-  for(size_t i = 0; i < this_size; i++)
-  {
-    for(size_t j = 0; j < this_size; j++)
+    for(size_t i = 0; i < this_size; i++)
     {
-      if(previous_rank.contains(j))
-      {
-        continue;
-      }
+        for(size_t j = 0; j < this_size; j++)
+        {
+            if(previous_rank.contains(j))
+            {
+                continue;
+            }
+            if((*this)[i] == sorted_vector[j])
+            {
+                rank[i] = j;
 
-      if((*this)[i] == sorted_vector[j])
-      {
-        rank[i] = j;
+                previous_rank[i] = j;
 
-        previous_rank[i] = j;
-
-        break;
-      }
+                break;
+            }
+        }
     }
-  }
 
-  return(rank);
+    return(rank);
 }
 
 
@@ -7366,15 +7461,15 @@ Vector<size_t> Vector<T>::calculate_greater_rank() const
 template <class T>
 Vector<size_t> Vector<T>::calculate_greater_indices() const
 {
-    const size_t this_size =(*this).size();
+    const size_t this_size = this->size();
 
     Vector<size_t> y(this_size);
     size_t n(0);
     generate(y.begin(), y.end(), [&]{ return n++; });
 
-    sort(y.begin(), y.end(), [&](size_t i1, size_t i2) { return(*this)[i1] >(*this)[i2]; } );
+    sort(y.begin(), y.end(), [&](size_t i1, size_t i2) { return(*this)[i1] > (*this)[i2]; } );
 
-  return(y);
+    return(y);
 }
 
 
@@ -7394,7 +7489,7 @@ Vector<T> Vector<T>::sort_rank(const Vector<size_t>& rank) const
 
         buffer << "OpenNN Exception: Vector Template.\n"
                << "Vector<T> sort_rank(const Vector<size_t>&) const.\n"
-               << "Size of vectors is " << this_size << " and " << rank_size
+               << "Sizes of vectors are " << this_size << " and " << rank_size
                << " and they must be the same.\n";
 
         throw logic_error(buffer.str());
@@ -7406,7 +7501,7 @@ Vector<T> Vector<T>::sort_rank(const Vector<size_t>& rank) const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        sorted_vector[i] =(*this)[rank[i]];
+        sorted_vector[i] = (*this)[rank[i]];
     }
 
     return sorted_vector;
@@ -7414,7 +7509,7 @@ Vector<T> Vector<T>::sort_rank(const Vector<size_t>& rank) const
 
 
 template <class T>
-inline Vector<T> Vector<T>::operator=(const initializer_list<T>& list) const {
+inline Vector<T> Vector<T>::operator= (const initializer_list<T>& list) const {
 
   return Vector<T>(list);
 }
@@ -7424,7 +7519,7 @@ inline Vector<T> Vector<T>::operator=(const initializer_list<T>& list) const {
 /// @param scalar Scalar value to be added to this vector.
 
 template <class T>
-inline Vector<T> Vector<T>::operator+(const T &scalar) const {
+inline Vector<T> Vector<T>::operator+ (const T &scalar) const {
   const size_t this_size = this->size();
 
   Vector<T> sum(this_size);
@@ -7440,7 +7535,7 @@ inline Vector<T> Vector<T>::operator+(const T &scalar) const {
 /// @param other_vector Vector to be added to this vector.
 
 template <class T>
-inline Vector<T> Vector<T>::operator+(const Vector<T> &other_vector) const {
+inline Vector<T> Vector<T>::operator+ (const Vector<T> &other_vector) const {
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -7453,8 +7548,8 @@ inline Vector<T> Vector<T>::operator+(const Vector<T> &other_vector) const {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "Vector<T> operator +(const Vector<T>) const.\n"
-           << "Size of vectors is " << this_size << " and " << other_size
+           << "Vector<T> operator + (const Vector<T>) const.\n"
+           << "Sizes of vectors are " << this_size << " and " << other_size
            << " and they must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -7505,7 +7600,7 @@ inline Vector<T> Vector<T>::operator-(const Vector<T> &other_vector) const {
 
     buffer << "OpenNN Exception: Vector Template.\n"
            << "Vector<T> operator -(const Vector<T>&) const.\n"
-           << "Size of vectors is " << this_size << " and " << other_size
+           << "Sizes of vectors are " << this_size << " and " << other_size
            << " and they must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -7536,7 +7631,6 @@ template <class T> Vector<T> Vector<T>::operator*(const T &scalar) const {
   return(product);
 }
 
-// Type operator *(const Vector<T>&) const method
 
 /// Element by element product vector*vector arithmetic operator.
 /// @param other_vector vector to be multiplied to this vector.
@@ -7572,7 +7666,6 @@ inline Vector<T> Vector<T>::operator*(const Vector<T> &other_vector) const {
   return(product);
 }
 
-// Matrix<T> operator *(const Matrix<T>&) const method
 
 /// Element by row product vector*matrix arithmetic operator.
 /// @param matrix matrix to be multiplied to this vector.
@@ -7605,7 +7698,7 @@ Matrix<T> Vector<T>::operator*(const Matrix<T> &matrix) const {
 
   for(size_t i = 0; i < rows_number; i++) {
     for(size_t j = 0; j < columns_number; j++) {
-      product(i, j) =(*this)[i] * matrix(i, j);
+      product(i, j) = (*this)[i] * matrix(i, j);
     }
   }
 
@@ -7627,37 +7720,36 @@ Vector<double> Vector<T>::dot(const Matrix<T> &matrix) const {
 
 #ifdef __OPENNN_DEBUG__
 
-  if(rows_number != this_size) {
+  if(rows_number != this_size)
+  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
            << "Vector<T> dot(const Matrix<T>&) const method.\n"
-           << "Matrix number of rows must be equal to vector size.\n";
+           << "Matrix number of rows (" << rows_number << ") must be equal to vector size (" << this_size << ").\n";
 
     throw logic_error(buffer.str());
   }
 
 #endif
 
-  Vector<double> product(columns_number);
+  Vector<double> product(columns_number, 0.0);
 
-  //   for(size_t j = 0; j < columns_number; j++)
-  //   {
-  //      product[j] = 0;
+   for(size_t j = 0; j < columns_number; j++)
+   {
+      for(size_t i = 0; i < rows_number; i++)
+      {
+         product[j] += (*this)[i]*matrix(i,j);
+      }
+   }
 
-  //      for(size_t i = 0; i < rows_number; i++)
-  //      {
-  //         product[j] +=(*this)[i]*matrix(i,j);
-  //      }
-  //   }
+//  const Eigen::Map<Eigen::VectorXd> vector_eigen((double *)this->data(), this_size);
 
-  const Eigen::Map<Eigen::VectorXd> vector_eigen((double *)this->data(), this_size);
+//  const Eigen::Map<Eigen::MatrixXd> matrix_eigen((double *)matrix.data(), rows_number, columns_number);
 
-  const Eigen::Map<Eigen::MatrixXd> matrix_eigen((double *)matrix.data(), rows_number, columns_number);
+//  Eigen::Map<Eigen::VectorXd> product_eigen(product.data(), columns_number);
 
-  Eigen::Map<Eigen::VectorXd> product_eigen(product.data(), columns_number);
-
-  product_eigen = vector_eigen.transpose() * matrix_eigen;
+//  product_eigen = vector_eigen.transpose() * matrix_eigen;
 
   return(product);
 }
@@ -7697,14 +7789,14 @@ inline double Vector<T>::dot(const Vector<double> &other_vector) const {
 
   double dot_product = 0.0;
 
-  for(size_t i = 0; i < this_size; i++) {
-    dot_product +=(*this)[i] * other_vector[i];
+  for(size_t i = 0; i < this_size; i++)
+  {
+    dot_product += (*this)[i] * other_vector[i];
   }
 
   return(dot_product);
 }
 
-// Matrix<T> direct(const Vector<T>&) const method
 
 /// Outer product vector*vector arithmetic operator.
 /// @param other_vector vector to be multiplied to this vector.
@@ -7735,9 +7827,11 @@ Matrix<T> Vector<T>::direct(const Vector<T> &other_vector) const {
 
 #pragma omp parallel for if(this_size > 1000)
 
-  for(int i = 0; i <(int)this_size; i++) {
-    for(size_t j = 0; j < this_size; j++) {
-      direct(i, j) =(*this)[i] * other_vector[j];
+  for(int i = 0; i < static_cast<int>(this_size); i++)
+  {
+    for(size_t j = 0; j < this_size; j++)
+    {
+      direct(i, j) = (*this)[i] * other_vector[j];
     }
   }
 
@@ -7793,25 +7887,23 @@ Vector<T> Vector<T>::operator/(const Vector<T> &other_vector) const {
   return(cocient);
 }
 
-// void operator +=(const T&)
 
 /// Scalar sum and assignment operator.
 /// @param value Scalar value to be added to this vector.
 
-template <class T> void Vector<T>::operator+=(const T &value) {
+template <class T> void Vector<T>::operator+= (const T &value) {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] + value;
+   (*this)[i] = (*this)[i] + value;
   }
 }
 
-// void operator +=(const Vector<T>&)
 
 /// Vector sum and assignment operator.
 /// @param other_vector Vector to be added to this vector.
 
-template <class T> void Vector<T>::operator+=(const Vector<T> &other_vector) {
+template <class T> void Vector<T>::operator+= (const Vector<T> &other_vector) {
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -7824,7 +7916,7 @@ template <class T> void Vector<T>::operator+=(const Vector<T> &other_vector) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "void operator +=(const Vector<T>&).\n"
+           << "void operator += (const Vector<T>&).\n"
            << "Both vector sizes must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -7833,29 +7925,27 @@ template <class T> void Vector<T>::operator+=(const Vector<T> &other_vector) {
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] + other_vector[i];
+   (*this)[i] = (*this)[i] + other_vector[i];
   }
 }
 
-// void operator -=(const T&)
 
 /// Scalar rest and assignment operator.
 /// @param value Scalar value to be subtracted to this vector.
 
-template <class T> void Vector<T>::operator-=(const T &value) {
+template <class T> void Vector<T>::operator-= (const T &value) {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] - value;
+   (*this)[i] = (*this)[i] - value;
   }
 }
 
-// void operator -=(const Vector<T>&)
 
 /// Vector rest and assignment operator.
 /// @param other_vector Vector to be subtracted to this vector.
 
-template <class T> void Vector<T>::operator-=(const Vector<T> &other_vector) {
+template <class T> void Vector<T>::operator-= (const Vector<T> &other_vector) {
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -7868,7 +7958,7 @@ template <class T> void Vector<T>::operator-=(const Vector<T> &other_vector) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "void operator -=(const Vector<T>&).\n"
+           << "void operator -= (const Vector<T>&).\n"
            << "Both vector sizes must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -7877,29 +7967,27 @@ template <class T> void Vector<T>::operator-=(const Vector<T> &other_vector) {
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] - other_vector[i];
+   (*this)[i] = (*this)[i] - other_vector[i];
   }
 }
 
-// void operator *=(const T&)
 
 /// Scalar product and assignment operator.
 /// @param value Scalar value to be multiplied to this vector.
 
-template <class T> void Vector<T>::operator*=(const T &value) {
+template <class T> void Vector<T>::operator*= (const T &value) {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] * value;
+   (*this)[i] = (*this)[i] * value;
   }
 }
 
-// void operator *=(const Vector<T>&)
 
 /// Vector product and assignment operator.
 /// @param other_vector Vector to be multiplied to this vector.
 
-template <class T> void Vector<T>::operator*=(const Vector<T> &other_vector) {
+template <class T> void Vector<T>::operator*= (const Vector<T> &other_vector) {
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -7912,7 +8000,7 @@ template <class T> void Vector<T>::operator*=(const Vector<T> &other_vector) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "void operator *=(const Vector<T>&).\n"
+           << "void operator *= (const Vector<T>&).\n"
            << "Both vector sizes must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -7921,29 +8009,27 @@ template <class T> void Vector<T>::operator*=(const Vector<T> &other_vector) {
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] * other_vector[i];
+   (*this)[i] = (*this)[i] * other_vector[i];
   }
 }
 
-// void operator /=(const T&)
 
 /// Scalar division and assignment operator.
 /// @param value Scalar value to be divided to this vector.
 
-template <class T> void Vector<T>::operator/=(const T &value) {
+template <class T> void Vector<T>::operator/= (const T &value) {
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] / value;
+   (*this)[i] = (*this)[i] / value;
   }
 }
 
-// void operator /=(const Vector<T>&)
 
 /// Vector division and assignment operator.
 /// @param other_vector Vector to be divided to this vector.
 
-template <class T> void Vector<T>::operator/=(const Vector<T> &other_vector) {
+template <class T> void Vector<T>::operator/= (const Vector<T> &other_vector) {
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -7956,7 +8042,7 @@ template <class T> void Vector<T>::operator/=(const Vector<T> &other_vector) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "void operator /=(const Vector<T>&).\n"
+           << "void operator /= (const Vector<T>&).\n"
            << "Both vector sizes must be the same.\n";
 
     throw logic_error(buffer.str());
@@ -7965,7 +8051,7 @@ template <class T> void Vector<T>::operator/=(const Vector<T> &other_vector) {
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =(*this)[i] / other_vector[i];
+   (*this)[i] = (*this)[i] / other_vector[i];
   }
 }
 
@@ -8003,19 +8089,19 @@ template <class T>
 size_t Vector<T>::count_dates(const size_t& start_day, const size_t& start_month, const size_t& start_year,
                               const size_t& end_day, const size_t& end_month, const size_t& end_year) const
 {
-    struct tm start = {0};
+    struct tm start;
 
-    start.tm_mday =(int)start_day;
-    start.tm_mon =(int)start_month - 1;
-    start.tm_year =(int)start_year - 1900;
+    start.tm_mday = static_cast<int>(start_day);
+    start.tm_mon = static_cast<int>(start_month) - 1;
+    start.tm_year = static_cast<int>(start_year) - 1900;
 
     const time_t start_date = mktime(&start) + 3600*24;
 
-    struct tm end = {0};
+    struct tm end;
 
-    end.tm_mday =(int)end_day;
-    end.tm_mon =(int)end_month - 1;
-    end.tm_year =(int)end_year - 1900;
+    end.tm_mday = static_cast<int>(end_day);
+    end.tm_mon = static_cast<int>(end_month) - 1;
+    end.tm_year = static_cast<int>(end_year) - 1900;
 
     const time_t end_date = mktime(&end) + 3600*24;
 
@@ -8047,17 +8133,17 @@ Vector<size_t> Vector<T>::filter_dates(const size_t& start_day, const size_t& st
 
     Vector<size_t> indices(new_size);
 
-    struct tm start = {0};
-    start.tm_mday =(int)start_day;
-    start.tm_mon =(int)start_month - 1;
-    start.tm_year =(int)start_year - 1900;
+    struct tm start;
+    start.tm_mday = static_cast<int>(start_day);
+    start.tm_mon = static_cast<int>(start_month) - 1;
+    start.tm_year = static_cast<int>(start_year) - 1900;
 
     const time_t start_date = mktime(&start) + 3600*24;
 
-    struct tm end = {0};
-    end.tm_mday =(int)end_day;
-    end.tm_mon =(int)end_month - 1;
-    end.tm_year =(int)end_year - 1900;
+    struct tm end;
+    end.tm_mday = static_cast<int>(end_day);
+    end.tm_mon = static_cast<int>(end_month) - 1;
+    end.tm_year = static_cast<int>(end_year) - 1900;
 
     const time_t end_date = mktime(&end) + 3600*24;
 
@@ -8098,7 +8184,7 @@ Vector<size_t> Vector<T>::calculate_Tukey_outliers(const double& cleaning_parame
 
     box_plot = calculate_box_plot();
 
-    if(box_plot[3] == box_plot[1])
+    if(fabs(box_plot[3] - box_plot[1]) < numeric_limits<double>::epsilon())
     {
         return outliers_indices;
     }
@@ -8215,13 +8301,13 @@ Vector<size_t> Vector<T>::calculate_histogram_outliers(const size_t& bins_number
 
     const Histogram<T> histogram = calculate_histogram(bins_number);
 
-    const size_t total =(*this).size();
+    const size_t total = this->size();
 
     Vector<double> percentages(bins_number);
 
     for(size_t i  = 0; i < bins_number; i++)
     {
-        percentages[i] =(double)histogram.frequencies[i] * 100.0 /(double)total;
+        percentages[i] = static_cast<double>(histogram.frequencies[i] * 100.0) /static_cast<double>(total);
     }
 
     for(size_t i = 0; i < bins_number; i++)
@@ -8296,7 +8382,29 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum() const
 }
 
 
-// void scale_minimum_maximum(const T&, const T&) method
+template <class T>
+Vector<T> Vector<T>::calculate_scaled_minimum_maximum_0_1() const
+{
+    const double minimum = calculate_minimum();
+    const double maximum = calculate_maximum();
+
+    if(maximum-minimum < numeric_limits<double>::min())
+    {
+      return (*this);
+    }
+
+    const size_t this_size = this->size();
+
+    Vector<T> normalized(this_size);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+      normalized[i] = ((*this)[i] - minimum)/(maximum - minimum);
+    }
+
+    return(normalized);
+}
+
 
 /// Normalizes the elements of this vector using the minimum and maximum method.
 /// @param minimum Minimum value for the scaling.
@@ -8304,7 +8412,7 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum() const
 
 template <class T>
 void Vector<T>::scale_minimum_maximum(const T &minimum, const T &maximum) {
-  if(maximum - minimum < 1.0e-99) {
+  if(maximum - minimum < numeric_limits<double>::min()) {
     return;
   }
 
@@ -8315,7 +8423,6 @@ void Vector<T>::scale_minimum_maximum(const T &minimum, const T &maximum) {
   }
 }
 
-// void scale_minimum_maximum(const Statistics<T>&) method
 
 /// Normalizes the elements of this vector using the minimum and maximum method.
 /// @param statistics Statistics structure, which contains the minimum and
@@ -8326,7 +8433,6 @@ void Vector<T>::scale_minimum_maximum(const Statistics<T> &statistics) {
   scale_minimum_maximum(statistics.minimum, statistics.maximum);
 }
 
-// Statistics<T> scale_minimum_maximum() method
 
 /// Normalizes the elements of the vector with the minimum and maximum method.
 /// The minimum and maximum values used are those calculated from the vector.
@@ -8340,7 +8446,6 @@ template <class T> Statistics<T> Vector<T>::scale_minimum_maximum() {
   return(statistics);
 }
 
-// void scale_mean_standard_deviation(const T&, const T&) method
 
 /// Normalizes the elements of this vector using the mean and standard deviation
 /// method.
@@ -8350,18 +8455,17 @@ template <class T> Statistics<T> Vector<T>::scale_minimum_maximum() {
 template <class T>
 void Vector<T>::scale_mean_standard_deviation(const T &mean,
                                               const T &standard_deviation) {
-  if(standard_deviation < 1.0e-99) {
+  if(standard_deviation < numeric_limits<double>::min()) {
     return;
   }
 
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =((*this)[i] - mean) / standard_deviation;
+   (*this)[i] = ((*this)[i] - mean) / standard_deviation;
   }
 }
 
-// void scale_mean_standard_deviation(const Statistics<T>&) method
 
 /// Normalizes the elements of this vector using the mean and standard deviation
 /// method.
@@ -8373,7 +8477,6 @@ void Vector<T>::scale_mean_standard_deviation(const Statistics<T> &statistics) {
   scale_mean_standard_deviation(statistics.mean, statistics.standard_deviation);
 }
 
-// Statistics<T> scale_mean_standard_deviation() method
 
 /// Normalizes the elements of the vector with the mean and standard deviation
 /// method.
@@ -8389,26 +8492,23 @@ Statistics<T> Vector<T>::scale_mean_standard_deviation() {
   return(statistics);
 }
 
-// void scale_standard_deviation(const T&, const T&) method
 
 /// Normalizes the elements of this vector using standard deviationmethod.
 /// @param standard_deviation Standard deviation value for the scaling.
 
 template <class T>
 void Vector<T>::scale_standard_deviation(const T &standard_deviation) {
-  if(standard_deviation < 1.0e-99) {
+  if(standard_deviation < numeric_limits<double>::min()) {
     return;
   }
 
   const size_t this_size = this->size();
 
   for(size_t i = 0; i < this_size; i++) {
-   (*this)[i] =((*this)[i]) / standard_deviation;
+   (*this)[i] = ((*this)[i]) / standard_deviation;
   }
 }
 
-
-// void scale_standard_deviation(const Statistics<T>&) method
 
 /// Normalizes the elements of this vector using standard deviation method.
 /// @param statistics Statistics structure,
@@ -8420,8 +8520,6 @@ void Vector<T>::scale_standard_deviation(const Statistics<T> &statistics) {
   scale_standard_deviation(statistics.standard_deviation);
 }
 
-
-// Statistics<T> scale_standard_deviation() method
 
 /// Normalizes the elements of the vector with the standard deviation method.
 /// The values used are those calculated from the vector.
@@ -8436,8 +8534,6 @@ Statistics<T> Vector<T>::scale_standard_deviation() {
   return(statistics);
 }
 
-
-// void scale_standard_deviation(const Vector<T>&, const Vector<T>&) method
 
 /// Scales the vector elements with given standard deviation values.
 /// It updates the data in the vector.
@@ -8472,7 +8568,7 @@ Vector<T>::scale_standard_deviation(const Vector<T> &standard_deviation) {
 #pragma omp parallel for
 
   for(int i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1e-99) {
+    if(standard_deviation[i] < numeric_limits<double>::min()) {
 //      cout << "OpenNN Warning: Vector class.\n"
 //                << "void scale_mean_standard_deviation(const Vector<T>&, const "
 //                   "Vector<T>&) method.\n"
@@ -8481,7 +8577,7 @@ Vector<T>::scale_standard_deviation(const Vector<T> &standard_deviation) {
 
       // Do nothing
     } else {
-     (*this)[i] =((*this)[i]) / standard_deviation[i];
+     (*this)[i] = ((*this)[i]) / standard_deviation[i];
     }
   }
 }
@@ -8534,7 +8630,7 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum(const Vector<T> &minimum,
   // Rescale data
 
   for(size_t i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < 1e-99) {
+    if(maximum[i] - minimum[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector class.\n"
                 << "Vector<T> calculate_scaled_minimum_maximum(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -8542,7 +8638,7 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum(const Vector<T> &minimum,
                 << " are equal.\n"
                 << "Those elements won't be scaled.\n";
 
-      scaled_minimum_maximum[i] =(*this)[i];
+      scaled_minimum_maximum[i] = (*this)[i];
     } else {
       scaled_minimum_maximum[i] =
           2.0 *((*this)[i] - minimum[i]) /(maximum[i] - minimum[i]) - 1.0;
@@ -8550,6 +8646,30 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum(const Vector<T> &minimum,
   }
 
   return(scaled_minimum_maximum);
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_scaled_mean_standard_deviation() const
+{
+    const double mean = calculate_mean();
+    const double standard_deviation = calculate_standard_deviation();
+
+    if(standard_deviation < numeric_limits<double>::min())
+    {
+      return (*this);
+    }
+
+    const size_t this_size = this->size();
+
+    Vector<T> normalized(this_size);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        normalized[i] = ((*this)[i] - mean)/standard_deviation;
+    }
+
+    return(normalized);
 }
 
 
@@ -8596,14 +8716,14 @@ Vector<T> Vector<T>::calculate_scaled_mean_standard_deviation(
   Vector<T> scaled_mean_standard_deviation(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1e-99) {
+    if(standard_deviation[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_scaled_mean_standard_deviation(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
                 << "Standard deviation of variable " << i << " is zero.\n"
                 << "Those elements won't be scaled.\n";
 
-      scaled_mean_standard_deviation =(*this)[i];
+      scaled_mean_standard_deviation = (*this)[i];
     } else {
       scaled_mean_standard_deviation[i] =
          (*this)[i] * standard_deviation[i] + mean[i];
@@ -8645,14 +8765,14 @@ Vector<T> Vector<T>::calculate_scaled_standard_deviation(const Vector<T> &standa
   Vector<T> scaled_standard_deviation(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1e-99) {
+    if(standard_deviation[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_scaled_mean_standard_deviation(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
                 << "Standard deviation of variable " << i << " is zero.\n"
                 << "Those elements won't be scaled.\n";
 
-      scaled_standard_deviation =(*this)[i];
+      scaled_standard_deviation = (*this)[i];
     } else {
       scaled_standard_deviation[i] =
          (*this)[i] * standard_deviation[i];
@@ -8709,7 +8829,7 @@ Vector<T>::calculate_unscaled_minimum_maximum(const Vector<T> &minimum,
   Vector<T> unscaled_minimum_maximum(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < 1e-99) {
+    if(maximum[i] - minimum[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_unscaled_minimum_maximum(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -8717,7 +8837,7 @@ Vector<T>::calculate_unscaled_minimum_maximum(const Vector<T> &minimum,
                 << " are equal.\n"
                 << "Those elements won't be unscaled.\n";
 
-      unscaled_minimum_maximum[i] =(*this)[i];
+      unscaled_minimum_maximum[i] = (*this)[i];
     } else {
       unscaled_minimum_maximum[i] =
           0.5 *((*this)[i] + 1.0) *(maximum[i] - minimum[i]) + minimum[i];
@@ -8773,14 +8893,14 @@ Vector<T> Vector<T>::calculate_unscaled_mean_standard_deviation(
   Vector<T> unscaled_mean_standard_deviation(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1e-99) {
+    if(standard_deviation[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_unscaled_mean_standard_deviation(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
                 << "Standard deviation of variable " << i << " is zero.\n"
                 << "Those elements won't be scaled.\n";
 
-      unscaled_mean_standard_deviation[i] =(*this)[i];
+      unscaled_mean_standard_deviation[i] = (*this)[i];
     } else {
       unscaled_mean_standard_deviation[i] =
          (*this)[i] * standard_deviation[i] + mean[i];
@@ -8790,7 +8910,6 @@ Vector<T> Vector<T>::calculate_unscaled_mean_standard_deviation(
   return(unscaled_mean_standard_deviation);
 }
 
-// void unscale_minimum_maximum(const Vector<T>&, const Vector<T>&) method
 
 /// Unscales the vector elements with given minimum and maximum values.
 /// It updates the vector elements.
@@ -8835,7 +8954,7 @@ void Vector<T>::unscale_minimum_maximum(const Vector<T> &minimum,
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < 1e-99) {
+    if(maximum[i] - minimum[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "void unscale_minimum_maximum(const Vector<T>&, const "
                    "Vector<T>&) method.\n"
@@ -8851,8 +8970,6 @@ void Vector<T>::unscale_minimum_maximum(const Vector<T> &minimum,
   }
 }
 
-// void unscale_mean_standard_deviation(const Vector<T>&, const Vector<T>&)
-// method
 
 /// Unscales the vector elements with given mean and standard deviation values.
 /// It updates the vector elements.
@@ -8897,7 +9014,7 @@ void Vector<T>::unscale_mean_standard_deviation(
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < 1e-99) {
+    if(standard_deviation[i] < numeric_limits<double>::min()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "void unscale_mean_standard_deviation(const Vector<T>&, "
                    "const Vector<T>&) method.\n"
@@ -8906,9 +9023,43 @@ void Vector<T>::unscale_mean_standard_deviation(
 
       // Do nothing
     } else {
-     (*this)[i] =(*this)[i] * standard_deviation[i] + mean[i];
+     (*this)[i] = (*this)[i] * standard_deviation[i] + mean[i];
     }
   }
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_reverse_scaling(void) const
+{
+    const size_t this_size = this->size();
+
+    Vector<T> reverse_scaling_vector(this_size);
+
+    reverse_scaling_vector[0] = 1;
+
+    for(size_t i = 1; i < this_size; i++)
+    {
+        reverse_scaling_vector[i] = ((*this)[this_size-1]-(*this)[i])/((*this)[this_size-1]-(*this)[0]);
+    }
+
+    return reverse_scaling_vector;
+}
+
+
+template <class T>
+Vector<T> Vector<T>::calculate_scaling_between(const T& min_old, const T& max_old, const T& min_new, const T& max_new) const
+{
+    const size_t this_size = this->size();
+
+    Vector<T> scaled_vector(this_size);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        scaled_vector[i] = min_new + (max_new-min_new) * ((*this)[i]-min_old) / (max_old-min_old);
+    }
+
+    return scaled_vector;
 }
 
 
@@ -8923,11 +9074,6 @@ template <class T> Matrix<T> Vector<T>::to_diagonal_matrix() const
   Matrix<T> matrix(this_size, this_size, 0.0);
 
   matrix.set_diagonal(*this);
-
-//  for(size_t i = 0; i < this_size; i++)
-//  {
-//    matrix(i, i) =(*this)[i];
-//  }
 
   return(matrix);
 }
@@ -8955,11 +9101,12 @@ Vector<T> Vector<T>::get_subvector(const size_t& first_index, const size_t& last
   Vector<T> subvector(last_index-first_index + 1);
 
   for(size_t i = first_index; i < last_index+1; i++) {
-    subvector[i-first_index] =(*this)[i];
+    subvector[i-first_index] = (*this)[i];
   }
 
   return(subvector);
 }
+
 
 /// Returns another vector whose elements are given by some elements of this
 /// vector.
@@ -8995,7 +9142,7 @@ Vector<T> Vector<T>::get_subvector(const Vector<size_t> &indices) const {
   Vector<T> subvector(new_size);
 
   for(size_t i = 0; i < new_size; i++) {
-    subvector[i] =(*this)[indices[i]];
+    subvector[i] = (*this)[indices[i]];
   }
 
   return(subvector);
@@ -9009,6 +9156,20 @@ Vector<T> Vector<T>::get_subvector(const Vector<bool>& selection) const
 
     return(get_subvector(indices));
 }
+
+
+template <class T>
+Vector<T> Vector<T>::get_subvector_random(const size_t& new_size) const
+{
+    if(new_size == this->size()) return Vector<T>(*this);
+
+    Vector<T> new_vector(*this);
+
+    random_shuffle(new_vector.begin(), new_vector.end());
+
+    return new_vector.get_first(new_size);
+}
+
 
 /// Returns a vector with the first n elements of this vector.
 /// @param elements_number Size of the new vector.
@@ -9036,8 +9197,9 @@ Vector<T>::get_first(const size_t &elements_number) const {
 
   Vector<T> subvector(elements_number);
 
-  for(size_t i = 0; i < elements_number; i++) {
-    subvector[i] =(*this)[i];
+  for(size_t i = 0; i < elements_number; i++)
+  {
+    subvector[i] = (*this)[i];
   }
 
   return(subvector);
@@ -9071,7 +9233,7 @@ Vector<T>::get_last(const size_t &elements_number) const
   Vector<T> subvector(elements_number);
 
   for(size_t i = 0; i < elements_number; i++) {
-    subvector[i] =(*this)[i + this_size - elements_number];
+    subvector[i] = (*this)[i + this_size - elements_number];
   }
 
   return(subvector);
@@ -9079,7 +9241,7 @@ Vector<T>::get_last(const size_t &elements_number) const
 
 
 /// Returns a vector with the integers of the vector.
-/// @param maximum_integers Maximum number of integers to arrange.
+/// @param maximum_integers Maximum number of integers to get.
 
 template <class T> Vector<T> Vector<T>::get_integer_elements(const size_t& maximum_integers) const {
 
@@ -9094,7 +9256,7 @@ template <class T> Vector<T> Vector<T>::get_integer_elements(const size_t& maxim
     {
         if(!integers.contains((*this)[i]))
         {
-            integers[index] =(*this)[i];
+            integers[index] = (*this)[i];
             index++;
 
             if(index > integers_number)
@@ -9110,7 +9272,7 @@ template <class T> Vector<T> Vector<T>::get_integer_elements(const size_t& maxim
 
 /// Returns a vector with the integers of the vector.
 /// @param missing_indices Indices of the instances with missing values.
-/// @param maximum_integers Maximum number of integers to arrange.
+/// @param maximum_integers Maximum number of integers to get.
 
 template <class T> Vector<T> Vector<T>::get_integer_elements_missing_values(const Vector<size_t>& missing_indices, const size_t& maximum_integers) const {
 
@@ -9127,7 +9289,7 @@ template <class T> Vector<T> Vector<T>::get_integer_elements_missing_values(cons
         {
             if(!integers.contains((*this)[i]))
             {
-                integers[index] =(*this)[i];
+                integers[index] = (*this)[i];
                 index++;
 
                 if(index > integers_number)
@@ -9149,7 +9311,7 @@ template <class T>
 Matrix<T> Vector<T>::get_power_matrix(const size_t& order) const
 {
     Matrix<T> power_matrix(this->size(),order);
-    for(size_t i=1; i<=order; i++)
+    for(size_t i=1; i <=order; i++)
     {
         for(size_t j=0; j<this->size(); j++)
         {
@@ -9160,9 +9322,6 @@ Matrix<T> Vector<T>::get_power_matrix(const size_t& order) const
     return power_matrix;
 }
 
-
-
-// void load(const string&) method
 
 /// Loads the members of a vector from an data file.
 /// Please be careful with the file format, which is specified in the OpenNN
@@ -9187,7 +9346,7 @@ template <class T> void Vector<T>::load(const string &file_name) {
 
   const vector<string> results(it, end);
 
-  const size_t new_size =(size_t)results.size();
+  const size_t new_size = static_cast<size_t>(results.size());
 
   this->resize(new_size);
 
@@ -9203,7 +9362,6 @@ template <class T> void Vector<T>::load(const string &file_name) {
   file.close();
 }
 
-// void save(const string&) const method
 
 /// Saves to a data file the elements of the vector.
 /// The file format is as follows:
@@ -9243,6 +9401,7 @@ template <class T> void Vector<T>::save(const string &file_name, const char& sep
   file.close();
 }
 
+
 /// Insert another vector starting from a given position.
 /// @param position Insertion position.
 /// @param other_vector Vector to be inserted.
@@ -9261,7 +9420,7 @@ void Vector<T>::tuck_in(const size_t &position, const Vector<T> &other_vector) {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Vector Template.\n"
-           << "void tuck_in(const size_t&, const Vector<T>&) const method.\n"
+           << "void insert(const size_t&, const Vector<T>&) const method.\n"
            << "Cannot tuck in vector.\n";
 
     throw logic_error(buffer.str());
@@ -9275,43 +9434,6 @@ void Vector<T>::tuck_in(const size_t &position, const Vector<T> &other_vector) {
 }
 
 
-/// Extract a vector of a given size from a given position
-/// @param position Extraction position.
-/// @param other_size Size of vector to be extracted.
-
-template <class T>
-Vector<T> Vector<T>::take_out(const size_t &position,
-                              const size_t &other_size) const {
-// Control sentence(if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-  const size_t this_size = this->size();
-
-  if(position + other_size > this_size) {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Vector Template.\n"
-           << "Vector<T> take_out(const size_t&, const size_t&) method.\n"
-           << "Cannot take out vector.\n";
-
-    throw logic_error(buffer.str());
-  }
-
-#endif
-
-  const Vector<T> other_vector((*this).begin() + position,
-                              (*this).begin() + position + other_size);
-
-  //   for(size_t i = 0; i < other_size; i++)
-  //   {
-  //      other_vector[i] =(*this)[position + i];
-  //   }
-
-  return(other_vector);
-}
-
-
 /// Returns a new vector with a new element inserted.
 /// @param index Position of the new element.
 /// @param value Value of the new element.
@@ -9319,11 +9441,12 @@ Vector<T> Vector<T>::take_out(const size_t &position,
 template <class T>
 Vector<T> Vector<T>::insert_element(const size_t &index, const T &value) const
 {
-  const size_t this_size = this->size();
 
 // Control sentence(if debug)
 
 #ifdef __OPENNN_DEBUG__
+
+    const size_t this_size = this->size();
 
   if(index > this_size) {
     ostringstream buffer;
@@ -9380,7 +9503,7 @@ Vector<T> Vector<T>::replace_element(const size_t &index, const Vector<T> &other
 
   for(size_t i = 0; i < index; i++)
   {
-      new_vector[i] =(*this)[i];
+      new_vector[i] = (*this)[i];
   }
 
   for(size_t i = index; i < index+other_size; i++)
@@ -9390,7 +9513,7 @@ Vector<T> Vector<T>::replace_element(const size_t &index, const Vector<T> &other
 
   for(size_t i = index+other_size; i < new_size; i++)
   {
-      new_vector[i] =(*this)[i+1-other_size];
+      new_vector[i] = (*this)[i+1-other_size];
   }
 
   return(new_vector);
@@ -9453,7 +9576,7 @@ Vector<string> Vector<T>::split_element(const size_t &index, const char &delimit
 /// @param index Index of element to be removed.
 
 template <class T>
-Vector<T> Vector<T>::remove_element(const size_t &index) const {
+Vector<T> Vector<T>::delete_index(const size_t &index) const {
   const size_t this_size = this->size();
 
 // Control sentence(if debug)
@@ -9475,10 +9598,12 @@ Vector<T> Vector<T>::remove_element(const size_t &index) const {
   Vector<T> other_vector(this_size - 1);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(i < index) {
-      other_vector[i] =(*this)[i];
-    } else if(i > index) {
-      other_vector[i - 1] =(*this)[i];
+    if(i < index)
+    {
+      other_vector[i] = (*this)[i];
+    }
+    else if(i > index) {
+      other_vector[i - 1] = (*this)[i];
     }
   }
 
@@ -9531,7 +9656,7 @@ Vector<T> Vector<T>::delete_indices(const Vector<size_t> &indices) const
     {
         if(!indices.contains(i))
         {
-            other_vector[index] =(*this)[i];
+            other_vector[index] = (*this)[i];
 
             index++;
         }
@@ -9545,37 +9670,46 @@ Vector<T> Vector<T>::delete_indices(const Vector<size_t> &indices) const
 /// Note that the new vector might have a different size than this vector.
 /// @param value Value of elements to be removed.
 
-template <class T> Vector<T> Vector<T>::remove_value(const T &value) const
+template <class T>
+Vector<T> Vector<T>::delete_value(const T &value) const
 {
   const size_t this_size = this->size();
 
-  size_t value_count = 0;
+  const size_t value_count = count_equal_to(value);
 
-  for(size_t i = 0; i < this_size; i++) {
-    if((*this)[i] == value) {
-      value_count++;
-    }
-  }
+  if(value_count == 0) return Vector<T>(*this);
 
-  if(value_count == 0) {
-    return(*this);
-  } else {
     const size_t other_size = this_size - value_count;
 
     Vector<T> other_vector(other_size);
 
     size_t other_index = 0;
 
-    for(size_t i = 0; i < this_size; i++) {
-      if((*this)[i] != value) {
-        other_vector[other_index] =(*this)[i];
+    for(size_t i = 0; i < this_size; i++)
+    {
+      if((*this)[i] != value)
+      {
+        other_vector[other_index] = (*this)[i];
 
         other_index++;
       }
     }
 
-    return(other_vector);
-  }
+    return other_vector;
+}
+
+
+template <class T>
+Vector<T> Vector<T>::delete_values(const Vector<T> &values) const
+{
+    Vector<T> new_vector(*this);
+
+    for(size_t i = 0; i < values.size(); i++)
+    {
+        new_vector = new_vector.delete_value(values[i]);
+    }
+
+    return(new_vector);
 }
 
 
@@ -9599,7 +9733,7 @@ Vector<T> Vector<T>::assemble(const Vector<T> &other_vector) const  {
     Vector<T> assembly(this_size + other_size);
 
     for(size_t i = 0; i < this_size; i++) {
-      assembly[i] =(*this)[i];
+      assembly[i] = (*this)[i];
     }
 
     for(size_t i = 0; i < other_size; i++) {
@@ -9619,7 +9753,7 @@ Vector<T> Vector<T>::assemble(const Vector< Vector<T> >& vectors)
 {
     const size_t vectors_size = vectors.size();
 
-    size_t new_size;
+    size_t new_size = 0;
 
     for(size_t i = 0; i < vectors_size; i++)
     {
@@ -9725,6 +9859,29 @@ Vector<T> Vector<T>::get_intersection(const Vector<T>& other_vector) const
 }
 
 
+/// Returns a vector with the unique items of the vector.
+/// For instance, if the vector is("a,b", "b,c", "c,d"), the new vector will be(a, b, c, d).
+
+template <class T>
+Vector<T> Vector<T>::get_unique_items(const char& separator) const
+{
+    const Vector<T> unique_mixes = get_unique_elements();
+
+    Vector< Vector<T> > items(unique_mixes.size());
+
+    Vector<T> unique_items;
+
+    for(int i = 0; i < unique_mixes.size(); i++)
+    {
+        items[i] = unique_mixes.split_element(i, separator);
+
+        unique_items = unique_items.assemble(items[i]).get_unique_elements();
+    }
+
+    return unique_items;
+}
+
+
 /// Returns a vector with the unique values of the vector.
 /// For instance, if the vector is(a, b, a), the new vector will be(a, b).
 
@@ -9760,7 +9917,7 @@ Vector<T> Vector<T>::get_unique_elements_unsorted() const
 /// For instance, if the input vector is(a, b, a), the output vector is(0, 1).
 
 template <class T>
-Vector<size_t> Vector<T>::get_unique_elements_indices() const
+Vector<size_t> Vector<T>::get_unique_elements_first_indices() const
 {
     const Vector<T> unique_values = get_unique_elements();
 
@@ -9774,6 +9931,25 @@ Vector<size_t> Vector<T>::get_unique_elements_indices() const
     }
 
     return(unique_indices);
+}
+
+template <class T>
+Vector< Vector<size_t> > Vector<T>::get_unique_elements_indices() const
+{
+    const Vector<T> unique_elements = this->get_unique_elements();
+
+    const int unique_elements_size = static_cast<int>(unique_elements.size());
+
+    Vector< Vector<size_t> > unique_leads_indices(static_cast<size_t>(unique_elements_size));
+
+    #pragma omp parallel for
+
+    for (int i = 0; i < unique_elements_size; i++)
+    {
+        unique_leads_indices[static_cast<size_t>(i)] = this->calculate_equal_to_indices(unique_elements[static_cast<size_t>(i)]);
+    }
+
+    return unique_leads_indices;
 }
 
 
@@ -9791,7 +9967,7 @@ Vector<size_t> Vector<T>::count_unique() const
 
 #pragma omp parallel for
 
-    for(int i = 0; i < unique_size; i++)
+    for(int i = 0; i < static_cast<int>(unique_size); i++)
     {
         unique_count[i] = count_equal_to(unique[i]);
     }
@@ -9814,7 +9990,7 @@ void Vector<T>::print_unique() const
 
     const Vector<size_t> count = count_unique();
 
-    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/(double)this_size);
+    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/static_cast<double>(this_size));
 
     const size_t unique_size = unique.size();
 
@@ -9857,7 +10033,6 @@ Vector<T> Vector<T>::calculate_top(const size_t& rank) const
 }
 
 
-
 template <class T>
 Matrix<T> Vector<T>::calculate_top_matrix(const size_t& rank) const
 {
@@ -9867,7 +10042,40 @@ Matrix<T> Vector<T>::calculate_top_matrix(const size_t& rank) const
 
     const size_t this_size = this->size();
 
-    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/(double)this_size);
+    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/static_cast<double>(this_size));
+
+    const size_t unique_size = unique.size();
+
+    Matrix<T> unique_matrix(unique_size, 3);
+    unique_matrix.set_column(0, unique.to_string_vector());
+    unique_matrix.set_column(1, count.to_string_vector());
+    unique_matrix.set_column(2, percentage.to_string_vector());
+
+    unique_matrix = unique_matrix.sort_descending_strings(1);
+
+    const Vector<size_t> indices(0,1,rank-1);
+
+    if(rank < unique_size)
+    {
+        unique_matrix = unique_matrix.get_submatrix_rows(indices);
+
+        return(unique_matrix);
+    }
+    else
+    {
+        return(unique_matrix);
+    }
+}
+
+
+template <class T>
+Matrix<T> Vector<T>::calculate_top_matrix_over(const size_t& rank, const size_t& new_total) const
+{
+    const Vector<T> unique = get_unique_elements();
+
+    const Vector<size_t> count = count_unique();
+
+    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/static_cast<double>(new_total));
 
     const size_t unique_size = unique.size();
 
@@ -9906,7 +10114,7 @@ void Vector<T>::print_top(const size_t& rank) const
 
     const size_t this_size = this->size();
 
-    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/(double)this_size);
+    const Vector<double> percentage = count_unique().to_double_vector()*(100.0/static_cast<double>(this_size));
 
     const size_t unique_size = unique.size();
 
@@ -9936,7 +10144,7 @@ template <class T> vector<T> Vector<T>::to_std_vector() const {
   vector<T> std_vector(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    std_vector[i] =(*this)[i];
+    std_vector[i] = (*this)[i];
   }
 
   return(std_vector);
@@ -9953,7 +10161,7 @@ template <class T> Vector<double> Vector<T>::to_double_vector() const
 
   for(size_t i = 0; i < this_size; i++)
   {
-      double_vector[i] =(double)(*this)[i];
+      double_vector[i] = static_cast<double>((*this)[i]);
   }
 
   return(double_vector);
@@ -9970,7 +10178,7 @@ Vector<int> Vector<T>::to_int_vector() const {
 
   for(size_t i = 0; i < this_size; i++)
   {
-      int_vector[i] =(int)(*this)[i];
+      int_vector[i] = static_cast<int>((*this)[i]);
    }
 
   return(int_vector);
@@ -9987,7 +10195,7 @@ Vector<size_t> Vector<T>::to_size_t_vector() const {
 
   for(size_t i = 0; i < this_size; i++)
   {
-      size_t_vector[i] =(size_t)(*this)[i];
+      size_t_vector[i] = static_cast<size_t>((*this)[i]);
    }
 
   return(size_t_vector);
@@ -10004,7 +10212,7 @@ Vector<time_t> Vector<T>::to_time_t_vector() const {
 
   for(size_t i = 0; i < this_size; i++)
   {
-      size_t_vector[i] =(time_t)(*this)[i];
+      size_t_vector[i] = static_cast<time_t>((*this)[i]);
    }
 
   return(size_t_vector);
@@ -10069,7 +10277,8 @@ template <class T> Vector<string> Vector<T>::to_string_vector() const {
 
 /// Returns a new vector with the elements of this vector casted to double.
 
-template <class T> Vector<double> Vector<T>::string_to_double() const {
+template <class T> Vector<double> Vector<T>::string_to_double(const double& exception_value) const
+{
   const size_t this_size = this->size();
 
   Vector<double> double_vector(this_size);
@@ -10082,7 +10291,7 @@ template <class T> Vector<double> Vector<T>::string_to_double() const {
       }
       catch(const logic_error&)
       {
-         double_vector[i] = -99.9;
+         double_vector[i] = exception_value;
       }
    }
 
@@ -10092,7 +10301,7 @@ template <class T> Vector<double> Vector<T>::string_to_double() const {
 
 /// Returns a new vector with the elements of this string vector converted to double.
 
-template <class T> Vector<int> Vector<T>::string_to_int() const {
+template <class T> Vector<int> Vector<T>::string_to_int(const int& exception_value) const {
   const size_t this_size = this->size();
 
   Vector<int> int_vector(this_size);
@@ -10105,7 +10314,7 @@ template <class T> Vector<int> Vector<T>::string_to_int() const {
       }
       catch(const logic_error&)
       {
-         int_vector[i] = -999999;
+         int_vector[i] = exception_value;
       }
    }
 
@@ -10115,7 +10324,7 @@ template <class T> Vector<int> Vector<T>::string_to_int() const {
 
 /// Returns a new vector with the elements of this string vector converted to size_t.
 
-template <class T> Vector<size_t> Vector<T>::string_to_size_t() const {
+template <class T> Vector<size_t> Vector<T>::string_to_size_t(const size_t& exception_value) const {
   const size_t this_size = this->size();
 
   Vector<size_t> size_t_vector(this_size);
@@ -10124,11 +10333,11 @@ template <class T> Vector<size_t> Vector<T>::string_to_size_t() const {
   {
       try
       {
-          size_t_vector[i] =(size_t)stoi((*this)[i]);
+          size_t_vector[i] = static_cast<size_t>(stoi((*this)[i]));
       }
       catch(const logic_error&)
       {
-         size_t_vector[i] = 999999;
+         size_t_vector[i] = exception_value;
       }
    }
 
@@ -10138,7 +10347,7 @@ template <class T> Vector<size_t> Vector<T>::string_to_size_t() const {
 
 /// Returns a new vector with the elements of this string vector converted to time_t.
 
-template <class T> Vector<time_t> Vector<T>::string_to_time_t() const {
+template <class T> Vector<time_t> Vector<T>::string_to_time_t(const time_t& exception_value) const {
   const size_t this_size = this->size();
 
   Vector<time_t> time_vector(this_size);
@@ -10147,11 +10356,11 @@ template <class T> Vector<time_t> Vector<T>::string_to_time_t() const {
   {
       try
       {
-          time_vector[i] =(time_t)stoi((*this)[i]);
+          time_vector[i] = static_cast<time_t>(stoi((*this)[i]));
       }
       catch(const logic_error&)
       {
-         time_vector[i] = -1;
+         time_vector[i] = exception_value;
       }
    }
 
@@ -10311,7 +10520,7 @@ Vector<time_t> Vector<T>::yyyy_mm_to_time(const char& delimiter) const
 
           yyyy = stoi(date_elements[0]);
 
-          struct tm time_info = {0};
+          struct tm time_info;
 
           time_info.tm_year = yyyy - 1900;
           time_info.tm_mon = mm - 1;
@@ -10319,7 +10528,7 @@ Vector<time_t> Vector<T>::yyyy_mm_to_time(const char& delimiter) const
 
           time[i] = mktime(&time_info) + 3600*24;
 
-          if(time[i] ==(time_t)-1)
+          if(time[i] == static_cast<time_t>(-1))
           {
               ostringstream buffer;
 
@@ -10385,7 +10594,7 @@ Vector<time_t> Vector<T>::dd_mm_yyyy_to_time(const char& delimiter) const
 
           yyyy = stoi(date_elements[2]);
 
-          struct tm time_info = {0};
+          struct tm time_info;
 
           time_info.tm_year = yyyy - 1900;
           time_info.tm_mon = mm - 1;
@@ -10393,7 +10602,7 @@ Vector<time_t> Vector<T>::dd_mm_yyyy_to_time(const char& delimiter) const
 
           time[i] = mktime(&time_info) + 3600*24;
 
-          if(time[i] ==(time_t)-1)
+          if(time[i] == static_cast<time_t>(-1))
           {
               ostringstream buffer;
 
@@ -10450,15 +10659,15 @@ Vector<time_t> Vector<T>::yyyy_mm_dd_to_time(const char& delimiter) const
 
       const int dd = stoi(date_elements[2]);
 
-      struct tm time_info={0};
+      struct tm time_info;
 
       time_info.tm_year = yyyy - 1900;
       time_info.tm_mon = mm - 1;
       time_info.tm_mday = dd;
 
-      time[i] = mktime(&time_info);
+      time[static_cast<size_t>(i)] = mktime(&time_info);
 
-//      if(time[i] ==(time_t)-1)
+//      if(time[i] == (time_t)-1)
 //      {
 //          buffer << "OpenNN Exception: Vector Template.\n"
 //                 << "Vector<time_t> yyyy_mm_dd_to_time(cont char&) const method.\n"
@@ -10518,7 +10727,7 @@ Matrix<T> Vector<T>::yyyy_mm_dd_to_dd_yyyy(const char& delimiter) const
 
     for(int i = 0; i < this_size; i++)
     {
-        struct tm* date_info = gmtime(&time[i]);
+        struct tm* date_info = gmtime(&time[static_cast<size_t>(i)]);
 
         output(i, 0) = to_string(date_info->tm_yday + 1);
         output(i, 1) = to_string(date_info->tm_year + 1900);
@@ -10569,7 +10778,7 @@ Vector<T> Vector<T>::yyyy_mm_dd_to_weekday(const char& delimiter) const
 
     for(int i = 0; i < this_size; i++)
     {
-        struct tm* date_info = gmtime(&time[i]);
+        struct tm* date_info = gmtime(&time[static_cast<size_t>(i)]);
 
         output[i] = to_string(date_info->tm_wday + 1);
     }
@@ -10596,7 +10805,7 @@ Vector<T> Vector<T>::yyyy_mm_dd_to_yearday(const char& delimiter) const
 
     for(int i = 0; i < this_size; i++)
     {
-        struct tm* date_info = gmtime(&time[i]);
+        struct tm* date_info = gmtime(&time[static_cast<size_t>(i)]);
 
         output[i] = to_string(date_info->tm_yday + 1);
     }
@@ -10617,7 +10826,7 @@ Vector<struct tm> Vector<T>::time_stamp_to_time_structure() const
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time_stamp =(*this)[i];
+        time_stamp = (*this)[i];
 
         time_stucture = *gmtime(&time_stamp);
 
@@ -10628,24 +10837,63 @@ Vector<struct tm> Vector<T>::time_stamp_to_time_structure() const
 }
 
 
-// Matrix<T> to_row_matrix() const method
+template <class T>
+Vector< Vector<T> > Vector<T>::split(const size_t& n) const
+{
+    // determine number of sub-vectors of size n
+
+    const size_t batches_number = (this->size() - 1) / n + 1;
+
+    // create array of vectors to store the sub-vectors
+
+    Vector< Vector<T> > batches(batches_number);
+
+    // each iteration of this loop process next set of n elements
+    // and store it in a vector at k'th index in vec
+
+    for (size_t k = 0; k < batches_number; ++k)
+    {
+        // get range for next set of n elements
+
+        auto start_itr = std::next(this->cbegin(), k*n);
+        auto end_itr = std::next(this->cbegin(), k*n + n);
+
+        // allocate memory for the sub-vector
+        batches[k].resize(n);
+
+        // code to handle the last sub-vector as it might
+        // contain less elements
+
+        if (k*n + n > this->size())
+        {
+            end_itr = this->cend();
+            batches[k].resize(this->size() - k*n);
+        }
+
+        // copy elements from the input range to the sub-vector
+        std::copy(start_itr, end_itr, batches[k].begin());
+    }
+
+    return batches;
+}
+
 
 /// Returns a row matrix with number of rows equal to one
 /// and number of columns equal to the size of this vector.
 
-template <class T> Matrix<T> Vector<T>::to_row_matrix() const {
+template <class T>
+Matrix<T> Vector<T>::to_row_matrix() const {
   const size_t this_size = this->size();
 
   Matrix<T> matrix(1, this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    matrix(0, i) =(*this)[i];
+    matrix(0, i) = (*this)[i];
   }
 
   return(matrix);
 }
 
-// Matrix<T> to_column_matrix() const method
 
 /// Returns a column matrix with number of rows equal to the size of this vector
 /// and number of columns equal to one.
@@ -10656,13 +10904,12 @@ template <class T> Matrix<T> Vector<T>::to_column_matrix() const {
   Matrix<T> matrix(this_size, 1);
 
   for(size_t i = 0; i < this_size; i++) {
-    matrix(i, 0) =(*this)[i];
+    matrix(i, 0) = (*this)[i];
   }
 
   return(matrix);
 }
 
-// void parse(const string&) method
 
 /// This method takes a string representation of a vector and sets this vector
 /// to have size equal to the number of words and values equal to that words.
@@ -10806,6 +11053,7 @@ template <class T> string Vector<T>::to_text(const char& separator) const
   return(buffer.str());
 }
 
+
 template <class T> string Vector<T>::to_text(const string& separator) const
 {
   ostringstream buffer;
@@ -10823,6 +11071,7 @@ template <class T> string Vector<T>::to_text(const string& separator) const
 
   return(buffer.str());
 }
+
 
 /// This method retuns a vector of strings with size equal to the size of this
 /// vector and elements equal to string representations of the elements of this
@@ -10847,7 +11096,6 @@ Vector<T>::write_string_vector(const size_t &precision) const {
   return(string_vector);
 }
 
-// Matrix<T> to_matrix(const size_t&, const size_t&) method
 
 /// Returns a matrix with given numbers of rows and columns and with the
 /// elements of this vector ordered by rows.
@@ -10882,17 +11130,14 @@ Matrix<T> Vector<T>::to_matrix(const size_t &rows_number,
 
   Matrix<T> matrix(rows_number, columns_number);
 
-  size_t index = 0;
-
-  for(size_t i = 0; i < rows_number; i++) {
-    for(size_t j = 0; j < columns_number; j++) {
-      matrix(i, j) =(*this)[index];
-      index++;
-    }
+  for(size_t i = 0; i < this->size(); i++)
+  {
+      matrix[i] = (*this)[i];
   }
 
   return(matrix);
 }
+
 
 template <class T>
 double Vector<T>::calculate_logistic_function(const Vector<double>& coefficients, const Vector<T>& x) const
@@ -10908,6 +11153,7 @@ double Vector<T>::calculate_logistic_function(const Vector<double>& coefficients
 
     return(1.0/(1.0+exp(-exponential)));
 }
+
 
 template <class T>
 Vector<double> Vector<T>::calculate_logistic_error_gradient(const Vector<double>& coefficients, const Vector<T>& other) const
@@ -10951,7 +11197,7 @@ Vector<double> Vector<T>::calculate_logistic_error_gradient(const Vector<double>
     }
     else
     {
-        positives_weight =(double)negatives_number/(double)positives_number;
+        positives_weight = static_cast<double>(negatives_number)/static_cast<double>(positives_number);
     }
 
 #pragma omp parallel for
@@ -10960,7 +11206,7 @@ Vector<double> Vector<T>::calculate_logistic_error_gradient(const Vector<double>
     {
         Vector<double> x(1);
 
-        x[0] =(*this)[i];
+        x[0] = (*this)[i];
 
         double current_logistic_function = calculate_logistic_function(coefficients, x);
 
@@ -10968,9 +11214,9 @@ Vector<double> Vector<T>::calculate_logistic_error_gradient(const Vector<double>
 
         Vector<double> this_error_gradient(3, 0.0);
 
-        this_error_gradient[0] +=(other[i]*positives_weight +(1-other[i])*negatives_weight)*(other[i] - current_logistic_function)*(other[i] - current_logistic_function)/2;
-        this_error_gradient[1] -=(other[i]*positives_weight +(1-other[i])*negatives_weight)*gradient_multiply;
-        this_error_gradient[2] -=(other[i]*positives_weight +(1-other[i])*negatives_weight)*x[0]*gradient_multiply;
+        this_error_gradient[0] += (other[i]*positives_weight + (1-other[i])*negatives_weight)*(other[i] - current_logistic_function)*(other[i] - current_logistic_function)/2;
+        this_error_gradient[1] -= (other[i]*positives_weight + (1-other[i])*negatives_weight)*gradient_multiply;
+        this_error_gradient[2] -= (other[i]*positives_weight + (1-other[i])*negatives_weight)*x[0]*gradient_multiply;
 
 #pragma omp critical
         {
@@ -10978,8 +11224,9 @@ Vector<double> Vector<T>::calculate_logistic_error_gradient(const Vector<double>
         }
     }
 
-    return error_gradient/(double)(negatives_weight*negatives_number);
+    return error_gradient/static_cast<double>(negatives_weight*negatives_number);
 }
+
 
 // Vector input operator
 
@@ -10996,6 +11243,7 @@ template <class T> istream &operator>>(istream &is, Vector<T> &v) {
 
   return(is);
 }
+
 
 // Vector output operator
 
@@ -11050,14 +11298,12 @@ ostream &operator<<(ostream &os, const Vector< Matrix<T> > &v)
 {
   for(size_t i = 0; i < v.size(); i++)
   {
-    os << "submatrix_" << i << "\n" << v[i];
+    os << "submatrix_" << i << "\n" << v[i] << endl;
   }
 
   return(os);
 }
 
-
-// double calculate_random_uniform(const double&, const double&) method
 
 /// Returns a random number chosen from a uniform distribution.
 /// @param minimum Minimum value.
@@ -11066,15 +11312,13 @@ ostream &operator<<(ostream &os, const Vector< Matrix<T> > &v)
 template <class T>
 T calculate_random_uniform(const T &minimum, const T &maximum)
 {
-  const T random =(T)(rand() /(RAND_MAX + 1.0));
+  const T random = static_cast<T>(rand() /(RAND_MAX + 1.0));
 
-  const T random_uniform = minimum +(maximum - minimum) * random;
+  const T random_uniform = minimum + (maximum - minimum) * random;
 
   return(random_uniform);
 }
 
-
-// string number_to_string(const T&) method
 
 template <class T>
 string number_to_string(const T& value)
@@ -11087,8 +11331,6 @@ string number_to_string(const T& value)
 }
 
 
-// double calculate_random_normal(const double&, const double&) method
-
 /// Returns a random number chosen from a normal distribution.
 /// @param mean Mean value of normal distribution.
 /// @param standard_deviation Standard deviation value of normal distribution.
@@ -11100,11 +11342,11 @@ T calculate_random_normal(const T &mean, const T &standard_deviation) {
   T random_uniform_1;
 
   do {
-    random_uniform_1 =(T)rand() /(RAND_MAX + 1.0);
+    random_uniform_1 = static_cast<T>(rand()) /(RAND_MAX + 1.0);
 
   } while(random_uniform_1 == 0.0);
 
-  const T random_uniform_2 =(T)rand() /(RAND_MAX + 1.0);
+  const T random_uniform_2 = static_cast<T>(rand()) /(RAND_MAX + 1.0);
 
   // Box-Muller transformation
 
@@ -11122,13 +11364,13 @@ string write_elapsed_time(const T& elapsed_time)
 {
   string elapsed_time_string;
 
-  const size_t hours =(size_t)(elapsed_time/3600);
+  const size_t hours = static_cast<size_t>(elapsed_time/3600);
 
-  size_t minutes =(size_t)elapsed_time - hours*3600;
+  size_t minutes = static_cast<size_t>(elapsed_time) - hours*3600;
 
-  minutes =(size_t)(minutes/60);
+  minutes = static_cast<size_t>(minutes/60);
 
-  const size_t seconds =(size_t)elapsed_time - hours*3600 - minutes*60;
+  const size_t seconds = static_cast<size_t>(elapsed_time) - hours*3600 - minutes*60;
 
   if(hours != 0)
   {
@@ -11149,6 +11391,7 @@ string write_elapsed_time(const T& elapsed_time)
 
   return elapsed_time_string;
 }
+
 
 template <class T>
 string write_date_from_time_t(const T& date)
@@ -11255,10 +11498,10 @@ template <class T> struct Statistics {
 
 template <class T>
 Statistics<T>::Statistics() {
-  minimum =(T)-1.0;
-  maximum =(T)1.0;
-  mean =(T)0.0;
-  standard_deviation =(T)1.0;
+  minimum = static_cast<T>(-1.0);
+  maximum = static_cast<T>(1.0);
+  mean = static_cast<T>(0.0);
+  standard_deviation = static_cast<T>(1.0);
 }
 
 
@@ -11273,6 +11516,7 @@ Statistics<T>::Statistics(const T &new_minimum, const T &new_maximum,
   standard_deviation = new_standard_deviation;
 }
 
+
 /// Destructor.
 
 template <class T> Statistics<T>::~Statistics() {}
@@ -11284,6 +11528,7 @@ template <class T> void Statistics<T>::set_minimum(const double &new_minimum) {
   minimum = new_minimum;
 }
 
+
 /// Sets a new maximum value in the statistics structure.
 /// @param new_maximum Maximum value.
 
@@ -11291,12 +11536,14 @@ template <class T> void Statistics<T>::set_maximum(const double &new_maximum) {
   maximum = new_maximum;
 }
 
+
 /// Sets a new mean value in the statistics structure.
 /// @param new_mean Mean value.
 
 template <class T> void Statistics<T>::set_mean(const double &new_mean) {
   mean = new_mean;
 }
+
 
 /// Sets a new standard deviation value in the statistics structure.
 /// @param new_standard_deviation Standard deviation value.
@@ -11306,6 +11553,7 @@ void
 Statistics<T>::set_standard_deviation(const double &new_standard_deviation) {
   standard_deviation = new_standard_deviation;
 }
+
 
 /// Returns all the statistical parameters contained in a single vector.
 /// The size of that vector is seven.
@@ -11322,6 +11570,7 @@ template <class T> Vector<T> Statistics<T>::to_vector() const {
   return(statistics_vector);
 }
 
+
 /// Initializes the statistics structure with a random
 /// minimum(between -1 and 1), maximum(between 0 and 1),
 /// mean(between -1 and 1), standard deviation(between 0 and 1).
@@ -11332,6 +11581,7 @@ template <class T> void Statistics<T>::initialize_random() {
   mean = calculate_random_uniform(-1.0, 1.0);
   standard_deviation = calculate_random_uniform(0.0, 1.0);
 }
+
 
 /// Returns true if the minimum value is -1 and the maximum value is +1,
 /// and false otherwise.
@@ -11345,6 +11595,7 @@ template <class T> bool Statistics<T>::has_minimum_minus_one_maximum_one() {
   }
 }
 
+
 /// Returns true if the mean value is 0 and the standard deviation value is 1,
 /// and false otherwise.
 
@@ -11357,6 +11608,7 @@ bool Statistics<T>::has_mean_zero_standard_deviation_one() {
     return(false);
   }
 }
+
 
 /// Saves to a file the minimum, maximum, standard deviation, asymmetry and
 /// kurtosis values
@@ -11390,14 +11642,14 @@ void Statistics<T>::save(const string &file_name) const {
 
 // Statistics output operator
 
+
 /// This method re-writes the output operator << for the Statistics template.
 /// @param os Output stream.
 /// @param v Output vector.
 
 template <class T>
 ostream &operator<<(ostream &os, const Statistics<T> &statistics) {
-  os << "Statistics structure\n"
-     << "  Minimum: " << statistics.minimum << endl
+  os << "  Minimum: " << statistics.minimum << endl
      << "  Maximum: " << statistics.maximum << endl
      << "  Mean: " << statistics.mean << endl
      << "  Standard deviation: " << statistics.standard_deviation << endl;
@@ -11462,11 +11714,14 @@ template <class T> struct Histogram {
   Vector<size_t> frequencies;
 };
 
+
 template <class T> Histogram<T>::Histogram() {}
+
 
 /// Destructor.
 
 template <class T> Histogram<T>::~Histogram() {}
+
 
 /// Bins number constructor.
 /// @param bins_number Number of bins in the histogram.
@@ -11475,6 +11730,7 @@ template <class T> Histogram<T>::Histogram(const size_t &bins_number) {
   centers.resize(bins_number);
   frequencies.resize(bins_number);
 }
+
 
 /// Values constructor.
 /// @param new_centers Center values for the bins.
@@ -11487,11 +11743,13 @@ Histogram<T>::Histogram(const Vector<T> &new_centers,
   frequencies = new_frequencies;
 }
 
+
 /// Returns the number of bins in the histogram.
 
 template <class T> size_t Histogram<T>::get_bins_number() const {
   return(centers.size());
 }
+
 
 /// Returns the number of bins with zero variates.
 
@@ -11499,12 +11757,14 @@ template <class T> size_t Histogram<T>::count_empty_bins() const {
   return(frequencies.count_equal_to(0));
 }
 
+
 /// Returns the number of variates in the less populated bin.
 
 template <class T>
 size_t Histogram<T>::calculate_minimum_frequency() const {
   return(frequencies.calculate_minimum());
 }
+
 
 /// Returns the number of variates in the most populated bin.
 
@@ -11534,6 +11794,7 @@ Vector<T> Histogram<T>::calculate_minimal_centers() const {
   return(centers.get_subvector(minimal_indices));
 }
 
+
 /// Returns a vector with the centers of the most populated bins.
 
 template <class T>
@@ -11550,14 +11811,14 @@ Vector<T> Histogram<T>::calculate_maximal_centers() const {
 /// Returns the number of the bin to which a given value belongs to.
 /// @param value Value for which we want to get the bin.
 
-template <class T> size_t Histogram<T>::calculate_bin(const T &value) const {
+template <class T> size_t Histogram<T>::calculate_bin(const T &value) const
+{
   const size_t bins_number = get_bins_number();
 
   const double minimum_center = centers[0];
   const double maximum_center = centers[bins_number - 1];
 
-  const double length =
-     (double)(maximum_center - minimum_center) /(double)(bins_number - 1.0);
+  const double length = static_cast<double>(maximum_center - minimum_center)/static_cast<double>(bins_number - 1.0);
 
   double minimum_value = centers[0] - length / 2;
   double maximum_value = minimum_value + length;
@@ -11588,7 +11849,6 @@ template <class T> size_t Histogram<T>::calculate_bin(const T &value) const {
   }
 }
 
-// size_t Histogram<T>::calculate_frequency(const T&) const
 
 /// Returns the frequency of the bin to which a given value bolongs to.
 /// @param value Value for which we want to get the frequency.
@@ -11601,6 +11861,7 @@ size_t Histogram<T>::calculate_frequency(const T &value) const {
 
   return(frequency);
 }
+
 
 // Histogram output operator
 
@@ -11616,6 +11877,7 @@ ostream &operator<<(ostream &os, const Histogram<T> &histogram) {
 
   return(os);
 }
+
 
 ///
 /// This template defines the parameters of a linear regression analysis between
@@ -11664,10 +11926,9 @@ operator<<(ostream &os,
   return(os);
 }
 
-///
+
 /// This template defines the parameters of a logistic regression analysis
 /// between two sets x-y.
-///
 
 template <class T> struct LogisticRegressionParameters
 {
@@ -11684,8 +11945,9 @@ template <class T> struct LogisticRegressionParameters
   double correlation;
 };
 
+
 template <class T>
-ostream &operator<<(
+ostream &operator << (
     ostream &os,
     const LogisticRegressionParameters<T> &logistic_regression_parameters) {
   os << "Logistic regression parameters:\n"
@@ -11698,17 +11960,644 @@ ostream &operator<<(
 }
 
 
+template<class T>
+Vector<T> sine(const Vector<T>& x)
+{
+    size_t n = x.size();
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = sin(x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> cosine(const Vector<T>& x)
+{
+    size_t n = x.size();
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = cosine(x[i]);
+    }
+
+    return y;
+}
+
+
 template <class T>
 struct KMeansResults
 {
-//  Matrix<T> means;
-
   Vector< Vector<size_t> > clusters;
-
 };
 
 
+template<class T>
+Vector<T> hyperbolic_tangent(const Vector<T>& x)
+{
+    const size_t n = x.size();
 
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = tanh(x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> hyperbolic_tangent_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        const double hyperbolic_tangent = tanh(x[i]);
+
+        y[i] = 1.0 - hyperbolic_tangent*hyperbolic_tangent;
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> linear(const Vector<T>& x)
+{
+    return x;
+}
+
+
+template<class T>
+Vector<T> linear_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n, 1);
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> linear_second_derivatives(const Vector<T>& x)
+{
+    const Vector<double> y(x.size(),0);
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> hyperbolic_tangent_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        const double hyperbolic_tangent = tanh(x[i]);
+
+        y[i] = -2*hyperbolic_tangent*(1 - hyperbolic_tangent * hyperbolic_tangent);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> logistic(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = 1.0 / (1.0 + exp(-x[i]));
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> logistic_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        const double exponential = exp(-x[i]);
+
+        y[i] = exponential / ((1.0 + exponential)*(1.0 + exponential));
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> logistic_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        const double exponential = exp(-x[i]);
+
+        y[i] = (exponential*exponential - exponential) / ((1.0 + exponential)*(1.0 + exponential)*(1.0 + exponential));
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> threshold(const Vector<T>& x)
+{
+   const size_t n = x.size();
+
+   Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = 0.0 : y[i] = 1.0;
+
+//        if(x[i] < 0)
+//        {
+//            y[i] = 0.0;
+//        }
+//        else
+//        {
+//            y[i] = 1.0;
+//        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> threshold_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+     for(size_t i = 0; i < n; i++)
+     {
+         if(x[i] < 0 || x[i] > 0)
+         {
+             y[i] = 0.0;
+         }
+         else
+         {
+             ostringstream buffer;
+
+             buffer << "OpenNN Exception: Matrix Template.\n"
+                    << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                    << "Derivate does not exist for x equal to 0.\n";
+
+             throw logic_error(buffer.str());
+         }
+     }
+
+     return y;
+}
+
+
+template<class T>
+Vector<T> threshold_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+     for(size_t i = 0; i < n; i++)
+     {
+         if(x[i] < 0 || x[i] > 0)
+         {
+             y[i] = 0.0;
+         }
+         else
+         {
+             ostringstream buffer;
+
+             buffer << "OpenNN Exception: Matrix Template.\n"
+                    << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                    << "Derivate does not exist for x equal to 0.\n";
+
+             throw logic_error(buffer.str());
+         }
+     }
+
+     return y;
+}
+
+
+template<class T>
+Vector<T> symmetric_threshold(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        if(x[i] < 0)
+        {
+            y[i] = -1.0;
+        }
+        else
+        {
+            y[i] = 1.0;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> rectified_linear(const Vector<T>& x)
+{
+    cout << "HERE" << endl;
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = 0.0 : y[i] = x[i];
+
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> rectified_linear_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] <= 0.0 ? derivatives[i] = 0.0 : derivatives[i] = 1.0;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Vector<T> rectified_linear_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    const Vector<T> second_derivatives(n, 0.0);
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Vector<T> scaled_exponential_linear(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    const double lambda = 1.0507;
+    const double alpha = 1.67326;
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = lambda * alpha * (exp(x[i]) - 1) : y[i] = lambda * x[i];
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> scaled_exponential_linear_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    const double lambda =1.0507;
+    const double alpha =1.67326;
+
+    Vector<T> derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? derivatives[i] = lambda * alpha * exp(x[i]) : derivatives[i] = lambda;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Vector<T> scaled_exponential_linear_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    const double lambda = 1.0507;
+    const double alpha = 1.67326;
+
+    Vector<T> second_derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? second_derivatives[i] = lambda * alpha * exp(x[i]) : second_derivatives[i] = 0.0;
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Vector<T> soft_plus(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = log(1 + exp(x[i]));
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> soft_plus_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        derivatives[i] = 1/(1 + exp(-x[i]));
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Vector<T> soft_plus_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> second_derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+       second_derivatives[n] = exp(-x[i]) / pow((1 + exp(-x[i])), 2);
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Vector<T> soft_sign(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+       x[i] < 0.0 ? y[i] = x[i] / (1 - x[i]) : y[i] = x[i] / (1 + x[i]);
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> soft_sign_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+       x[i] < 0.0 ? derivatives[i] = 1 / pow((1 - x[i]), 2) : derivatives[i] = 1 / pow((1 + x[i]), 2);
+
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Vector<T> soft_sign_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> second_derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+       x[i] < 0.0 ? second_derivatives[i] = -(2 * x[i]) / pow((1 - x[i]), 3) : second_derivatives[i] = -(2 * x[i]) / pow((1 + x[i]), 3);
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Vector<T> hard_sigmoid(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        if(x[i] < -2.5)
+        {
+           y[n] = 0;
+        }
+        else if(x[i] > 2.5)
+        {
+            y[n] = 1;
+        }
+        else
+        {
+            y[n] = 0.2 * x[i] + 0.5;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> hard_sigmoid_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> derivatives(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < -2.5 || x[i] > 2.5 ? derivatives[i] = 0.0 : derivatives[i] = 0.2;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Vector<T> hard_sigmoid_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> second_derivatives(n, 0.0);
+
+    return second_derivatives;
+}
+
+
+
+template<class T>
+Vector<T> exponential_linear(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    const double alpha = 1.0;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? y[i] = alpha * (exp(x[i])- 1) : y[i] = x[i];
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> exponential_linear_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> derivatives(n);
+
+    const double alpha = 1.0;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? derivatives[i] = alpha * exp(x[i]) : derivatives[i] = 1.0;
+    }
+
+    return derivatives;
+}
+
+
+template<class T>
+Vector<T> exponential_linear_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> second_derivatives(n);
+
+    const double alpha = 1.0;
+
+    for(size_t i = 0; i < n; i++)
+    {
+        x[i] < 0.0 ? second_derivatives[i] = alpha * exp(x[i]) : second_derivatives[i] = 0.0;
+    }
+
+    return second_derivatives;
+}
+
+
+template<class T>
+Vector<T> symmetric_threshold_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        if(x[i] == 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Matrix Template.\n"
+                   << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                   << "Derivate does not exist for x equal to 0.\n";
+
+            throw logic_error(buffer.str());
+        }
+        else
+        {
+            y[i] = 0.0;
+        }
+    }
+
+    return y;
+}
+
+
+template<class T>
+Vector<T> symmetric_threshold_second_derivatives(const Vector<T>& x)
+{
+    const size_t n = x.size();
+
+    Vector<T> y(n);
+
+    for(size_t i = 0; i < n; i++)
+    {
+        if(x[i] == 0)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: Matrix Template.\n"
+                   << "Matrix<T> threshold_derivatives(const Matrix<T>&).\n"
+                   << "Derivate does not exist for x equal to 0.\n";
+
+            throw logic_error(buffer.str());
+        }
+        else
+        {
+            y[i] = 0.0;
+        }
+    }
+
+    return y;
+}
 
 } // end namespace OpenNN
 

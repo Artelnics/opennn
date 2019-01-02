@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   T E S T I N G   A N A L Y S I S   T E S T   C L A S S   H E A D E R                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -63,7 +63,7 @@ public:
 
    // Target and output data methods
 
-   void test_calculate_target_output_data();
+   void test_calculate_target_outputs();
 
    // Error data methods
 

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   A I R F O I L   S E L F - N O I S E   A P P L I C A T I O N                                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - The artificial intelligence company                                                            */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -32,9 +31,9 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Airfoil Self-Noise Application." << std::endl;
+        cout << "OpenNN. Airfoil Self-Noise Application." << endl;
 
-        srand((unsigned)time(NULL));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
@@ -78,8 +77,8 @@ int main(void)
 
         variables_pointer->set_items(variables_items);
 
-        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        const Matrix<string> inputs_information = variables_pointer->get_inputs_information();
+        const Matrix<string> targets_information = variables_pointer->get_targets_information();
 
         // Instances
 
@@ -92,9 +91,9 @@ int main(void)
 
         // Neural network
 
-        const size_t inputs_number = variables_pointer->count_inputs_number();
+        const size_t inputs_number = variables_pointer->get_inputs_number();
         const size_t hidden_perceptrons_number = 9;
-        const size_t outputs_number = variables_pointer->count_targets_number();
+        const size_t outputs_number = variables_pointer->get_targets_number();
 
         NeuralNetwork neural_network(inputs_number, hidden_perceptrons_number, outputs_number);
 
@@ -122,26 +121,16 @@ int main(void)
 
         unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-        // Loss index
-
-        LossIndex loss_index(&neural_network, &data_set);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
-        loss_index.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         // Training strategy object
 
-        TrainingStrategy training_strategy(&loss_index);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
+        quasi_Newton_method_pointer->set_maximum_epochs_number(1000);
         quasi_Newton_method_pointer->set_display_period(10);
 
-        quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
+        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
 
         quasi_Newton_method_pointer->set_reserve_loss_history(true);
 
@@ -160,8 +149,6 @@ int main(void)
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression("../data/expression.txt");
 
-        loss_index.save("../data/loss_index.xml");
-
         training_strategy.save("../data/training_strategy.xml");
         training_strategy_results.save("../data/training_strategy_results.dat");
 
@@ -169,9 +156,9 @@ int main(void)
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
 
         return(1);
     }
@@ -179,7 +166,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez.
+// Copyright (C) Artificial Intelligence Techniques SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

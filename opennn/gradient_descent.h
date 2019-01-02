@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -38,7 +37,7 @@ namespace OpenNN
 {
 
 /// This concrete class represents the gradient descent training algorithm for
-/// a loss functional of a neural network.
+/// a loss index of a neural network.
 
 class GradientDescent : public TrainingAlgorithm
 {
@@ -49,14 +48,13 @@ public:
 
    explicit GradientDescent(); 
 
-   // PERFORMANCE FUNCTIONAL CONSTRUCTOR
+   // LOSS INDEX CONSTRUCTOR
 
    explicit GradientDescent(LossIndex*);
 
    // XML CONSTRUCTOR
 
    explicit GradientDescent(const tinyxml2::XMLDocument&); 
-
 
    // DESTRUCTOR
 
@@ -74,7 +72,7 @@ public:
 
        GradientDescentResults()
        {
-           gradient_descent_pointer = NULL;
+           gradient_descent_pointer = nullptr;
        }
 
        /// Gradient descent constructor.
@@ -110,7 +108,7 @@ public:
 
       /// History of the selection loss over the training iterations.
 
-      Vector<double> selection_loss_history;
+      Vector<double> selection_error_history;
 
       /// History of the loss function gradient over the training iterations.
 
@@ -146,9 +144,9 @@ public:
 
       double final_loss;
 
-      /// Final selection loss.
+      /// Final selection error.
 
-      double final_selection_loss;
+      double final_selection_error;
 
       /// Final loss function gradient. 
 
@@ -182,7 +180,7 @@ public:
 
       string object_to_string() const;
 
-      Matrix<string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const int& precision = 3) const;
    };
 
    // METHODS
@@ -207,7 +205,7 @@ public:
    const double& get_minimum_loss_increase() const;
    const double& get_loss_goal() const;
    const double& get_gradient_norm_goal() const;
-   const size_t& get_maximum_selection_loss_decreases() const;
+   const size_t& get_maximum_selection_error_decreases() const;
 
    const size_t& get_maximum_iterations_number() const;
    const double& get_maximum_time() const;
@@ -223,7 +221,7 @@ public:
    const bool& get_reserve_loss_history() const;
    const bool& get_reserve_gradient_history() const;
    const bool& get_reserve_gradient_norm_history() const;
-   const bool& get_reserve_selection_loss_history() const;
+   const bool& get_reserve_selection_error_history() const;
 
    const bool& get_reserve_training_direction_history() const;
    const bool& get_reserve_training_rate_history() const;
@@ -251,14 +249,16 @@ public:
    void set_error_gradient_norm(const double&);
    void set_error_training_rate(const double&);
 
+   void set_maximum_epochs_number(const size_t&);
+
    // Stopping criteria
 
    void set_minimum_parameters_increment_norm(const double&);
 
-   void set_minimum_loss_increase(const double&);
+   void set_minimum_loss_decrease(const double&);
    void set_loss_goal(const double&);
    void set_gradient_norm_goal(const double&);
-   void set_maximum_selection_loss_decreases(const size_t&);
+   void set_maximum_selection_error_increases(const size_t&);
 
    void set_maximum_iterations_number(const size_t&);
    void set_maximum_time(const double&);
@@ -274,7 +274,7 @@ public:
    void set_reserve_loss_history(const bool&);
    void set_reserve_gradient_history(const bool&);
    void set_reserve_gradient_norm_history(const bool&);
-   void set_reserve_selection_loss_history(const bool&);
+   void set_reserve_selection_error_history(const bool&);
 
    void set_reserve_training_direction_history(const bool&);
    void set_reserve_training_rate_history(const bool&);
@@ -290,6 +290,8 @@ public:
 
    GradientDescentResults* perform_training();
 
+   void perform_training_void();
+
    string write_training_algorithm_type() const;
 
    // Serialization methods
@@ -300,7 +302,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   // void read_XML(   );
 
 private:
 
@@ -344,24 +345,36 @@ private:
 
    /// Minimum loss improvement between two successive iterations. It is used as a stopping criterion.
 
-   double minimum_loss_increase;
+   double minimum_loss_decrease;
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
    double loss_goal;
 
-   /// Goal value for the norm of the objective function gradient. It is used as a stopping criterion.
+   /// Goal value for the norm of the error function gradient. It is used as a stopping criterion.
 
    double gradient_norm_goal;
 
    /// Maximum number of iterations at which the selection loss increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_loss_decreases;
+   size_t maximum_selection_error_decreases;
 
    /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
 
    size_t maximum_iterations_number;
+
+   /// Initial batch size
+
+   size_t training_initial_batch_size;
+
+   /// Maximum training batch size
+
+   size_t training_maximum_batch_size;
+
+   /// Maximum epochs number
+
+   size_t maximum_epochs_number;
 
    /// Maximum training time. It is used as a stopping criterion.
 
@@ -411,7 +424,7 @@ private:
 
    /// True if the selection loss history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_loss_history;
+   bool reserve_selection_error_history;
 };
 
 }

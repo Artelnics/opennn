@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   I N P U T S   C L A S S   H E A D E R                                                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -66,11 +65,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   Inputs& operator =(const Inputs&);
+   Inputs& operator = (const Inputs&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const Inputs&) const;
+   bool operator == (const Inputs&) const;
 
    ///
    /// This structure contains the information of a single input.
@@ -107,18 +106,18 @@ public:
 
    // Inputs information
 
-   Vector<string> arrange_names() const;
+   Vector<string> get_names() const;
    const string& get_name(const size_t&) const;
 
-   Vector<string> arrange_units() const;
+   Vector<string> get_units() const;
    const string& get_unit(const size_t&) const;
 
-   Vector<string> arrange_descriptions() const;
+   Vector<string> get_descriptions() const;
    const string& get_description(const size_t&) const;
 
    // Variables
 
-   Matrix<string> arrange_information() const;
+   Matrix<string> get_information() const;
 
    // Display messages
 
@@ -151,6 +150,7 @@ public:
    // Variables
 
    void set_information(const Matrix<string>&);
+   void set_information_vector_of_vector(const vector< vector<string> >&);
 
    void set_display(const bool&);
 

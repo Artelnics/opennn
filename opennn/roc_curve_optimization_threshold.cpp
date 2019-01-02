@@ -230,7 +230,7 @@ ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* ROCCurveOpt
         current_confusion = calculate_confusion(current_threshold);
         current_binary_classification_test = calculate_binary_classification_test(current_confusion);
 
-        current_roc_curve_distance =(1-current_binary_classification_test[3])*(1-current_binary_classification_test[3]) +
+        current_roc_curve_distance = (1-current_binary_classification_test[3])*(1-current_binary_classification_test[3]) +
                                     (current_binary_classification_test[2]-1)*(current_binary_classification_test[2]-1);
 
         current_roc_curve_distance = sqrt(current_roc_curve_distance);
@@ -379,8 +379,8 @@ tinyxml2::XMLDocument* ROCCurveOptimizationThreshold::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Minimum threshold
    {
@@ -541,7 +541,7 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
 
         buffer << "OpenNN Exception: ROCCurveOptimizationThreshold class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "ROCCurveOptimizationThreshold element is NULL.\n";
+               << "ROCCurveOptimizationThreshold element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -560,7 +560,7 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -579,7 +579,7 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -598,7 +598,7 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -617,7 +617,7 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
             }
             catch(const logic_error& e)
             {
-               cout << e.what() << endl;
+               cerr << e.what() << endl;
             }
         }
     }
@@ -636,7 +636,7 @@ void ROCCurveOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& docume
 //           }
 //           catch(const logic_error& e)
 //           {
-//              cout << e.what() << endl;
+//              cerr << e.what() << endl;
 //           }
 //        }
 //    }

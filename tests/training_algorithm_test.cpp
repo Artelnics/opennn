@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   T R A I N I N G   A L G O R I T H M   T E S T   C L A S S                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -42,7 +42,7 @@ void TrainingAlgorithmTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
-   LossIndex pf;
+   SumSquaredError sse;
 
    // Test
 
@@ -52,7 +52,7 @@ void TrainingAlgorithmTest::test_constructor()
 
    // Test
 
-   MockTrainingAlgorithm mta2(&pf);
+   MockTrainingAlgorithm mta2(&sse);
 
    assert_true(mta2.has_loss_index() == true, LOG);
 }
@@ -72,11 +72,11 @@ void TrainingAlgorithmTest::test_get_loss_index_pointer()
 {
    message += "test_get_loss_index_pointer\n"; 
 
-   LossIndex pf;
+   SumSquaredError sse;
    
-   MockTrainingAlgorithm mta(&pf);
+   MockTrainingAlgorithm mta(&sse);
 
-   assert_true(mta.get_loss_index_pointer() != NULL, LOG);
+   assert_true(mta.get_loss_index_pointer() != nullptr, LOG);
 }
 
 

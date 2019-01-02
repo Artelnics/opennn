@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   S U M   S Q U A R E D   E R R O R   T E S T   C L A S S                                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -61,7 +60,7 @@ void SumSquaredErrorTest::test_constructor()
    SumSquaredError sse3(&nn3, &ds3);
 
    assert_true(sse3.has_neural_network() == true, LOG);
-   assert_true(sse3.has_data_set() == true, LOG);
+   assert_true(sse3.has_data_set() == true, LOG);  
 }
 
 
@@ -71,20 +70,18 @@ void SumSquaredErrorTest::test_destructor()
 }
 
 
-void SumSquaredErrorTest::test_calculate_loss()   
+void SumSquaredErrorTest::test_calculate_error()
 {
-   message += "test_calculate_loss\n";
-
+   message += "test_calculate_error\n";
+/*
    NeuralNetwork nn;
    Vector<double> parameters;
 
    DataSet ds;
    Matrix<double> data;
-   MissingValues* missing_values_pointer = ds.get_missing_values_pointer();
 
    SumSquaredError sse(&nn, &ds);
-
-   double loss;
+   double error;
 
    // Test
 
@@ -94,63 +91,111 @@ void SumSquaredErrorTest::test_calculate_loss()
    ds.set(1, 1, 1);
    ds.initialize_data(0.0);
 
-   loss = sse.calculate_error();
+   error = 0.0;
+   error = sse.calculate_all_instances_error();
 
-   assert_true(loss == 0.0, LOG);
+   assert_true(error == 0.0, LOG);
 
    // Test
 
-   nn.set(1, 1, 1);
+   nn.set(2, 2);
    nn.initialize_parameters(0.0);
 
-   ds.set(1, 1, 1);
+   ds.set(1, 2, 2);
    ds.initialize_data(1.0);
 
-   loss = sse.calculate_error();
+   error = sse.calculate_all_instances_error();
 
-   assert_true(loss == 1.0, LOG);
+   assert_true(error == 2.0, LOG);
+
+   // Test
+
+   nn.set(2, 2);
+   nn.randomize_parameters_normal();
+
+   parameters = nn.get_parameters();
+
+   ds.set(10, 2, 2);
+   ds.randomize_data_normal();
+
+   assert_true(fabs(sse.calculate_all_instances_error() - sse.calculate_all_instances_error(parameters)) < std::numeric_limits<double>::min(), LOG);
 
    // Test
 
    nn.set(1, 1);
    nn.randomize_parameters_normal();
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(sse.calculate_error() == sse.calculate_error(parameters), LOG);
+   assert_true(fabs(sse.calculate_all_instances_error() - sse.calculate_all_instances_error(parameters*2.0)) > std::numeric_limits<double>::min(), LOG);
 
    // Test
 
    nn.set(1, 1);
    nn.randomize_parameters_normal();
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   assert_true(sse.calculate_error() != sse.calculate_error(parameters*2.0), LOG);
-
-   // Test
-
-   nn.set(1, 1);
-   nn.randomize_parameters_normal();
-
-   parameters = nn.arrange_parameters();
-
-   ds.set(1, 1, 1);
-   ds.randomize_data_normal();
-
-   missing_values_pointer->append(0, 0);
-
-//   assert_true(sse.calculate_loss() == 0.0, LOG);
+   assert_true(sse.calculate_all_instances_error() != 0.0, LOG);
+*/
 }
 
 
-void SumSquaredErrorTest::test_calculate_gradient()
+void SumSquaredErrorTest::test_calculate_layers_delta()
+{
+   message += "test_calculate_layers_delta\n";
+
+   DataSet ds;
+   NeuralNetwork nn;
+   NumericalDifferentiation nd;
+
+   Vector<double> parameters;
+
+   SumSquaredError sse(&nn, &ds);
+
+   // Test
+
+   const size_t inputs_number = 2;
+   const size_t outputs_number = 2;
+   const size_t instances_number = 10;
+   const size_t hidden_neurons = 1;
+
+   nn.set(inputs_number,hidden_neurons,outputs_number);
+   nn.randomize_parameters_normal();
+
+   ds.set(instances_number,inputs_number,outputs_number);
+   ds.randomize_data_normal();
+
+   const Matrix<double> inputs = ds.get_inputs();
+   const Matrix<double> targets = ds.get_targets();
+
+   const Vector<Matrix<double>> layers_combinations = nn.get_multilayer_perceptron_pointer()->calculate_layers_combinations(inputs);
+   const Vector<Matrix<double>> layers_activations_derivatives = nn.get_multilayer_perceptron_pointer()->calculate_layers_activations_derivatives(inputs);
+
+   const Matrix<double> outputs = nn.get_multilayer_perceptron_pointer()->calculate_outputs(inputs);
+   const Matrix<double> output_gradient = sse.calculate_output_gradient(outputs, targets);
+
+   const Vector<Matrix<double>> layers_delta = sse.calculate_layers_delta(layers_activations_derivatives, output_gradient);
+
+//   const Matrix<double> numerical_hidden_layer_delta = nd.calculate_central_differences_gradient_matrix(sse, &SumSquaredError::calculate_points_errors_layer_combinations, 0, layers_combinations[0]);
+//   const Matrix<double> numerical_output_layer_delta = nd.calculate_central_differences_gradient_matrix(sse, &SumSquaredError::calculate_points_errors_layer_combinations, 1, layers_combinations[1]);
+
+//   assert_true((layers_delta[0] - numerical_hidden_layer_delta).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true((layers_delta[1] - numerical_output_layer_delta).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true(layers_delta[0].get_rows_number() == instances_number, LOG);
+//   assert_true(layers_delta[0].get_columns_number() == hidden_neurons, LOG);
+//   assert_true(layers_delta[1].get_rows_number() == instances_number, LOG);
+//   assert_true(layers_delta[1].get_columns_number() == outputs_number, LOG);
+}
+
+
+void SumSquaredErrorTest::test_calculate_error_gradient()
 {
    message += "test_calculate_gradient\n";
 
@@ -159,6 +204,7 @@ void SumSquaredErrorTest::test_calculate_gradient()
    NeuralNetwork nn;
    SumSquaredError sse(&nn, &ds);
 
+   Vector<size_t> indices;
    Vector<size_t> architecture;
 
    Vector<double> parameters;
@@ -166,6 +212,8 @@ void SumSquaredErrorTest::test_calculate_gradient()
    Vector<double> numerical_gradient;
    Vector<double> error;
 
+   nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
+/*
    // Test 
 
    nn.set(1, 1, 1);
@@ -174,9 +222,9 @@ void SumSquaredErrorTest::test_calculate_gradient()
    ds.set(1, 1, 1);
    ds.initialize_data(0.0);
 
-   gradient = sse.calculate_gradient();
+   gradient = sse.calculate_error_gradient({0});
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test 
@@ -184,15 +232,15 @@ void SumSquaredErrorTest::test_calculate_gradient()
    nn.set(3, 4, 2);
    nn.initialize_parameters(0.0);
 
-   ds.set(3, 2, 5);
+   ds.set(4, 3, 2);
    sse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
    gradient.clear();
 
-   gradient = sse.calculate_gradient();
+   gradient = sse.calculate_error_gradient({0, 1, 2, 3});
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
@@ -211,9 +259,9 @@ void SumSquaredErrorTest::test_calculate_gradient()
 
    gradient.clear();
 
-   gradient = sse.calculate_gradient();
+   gradient = sse.calculate_error_gradient({0,1,2,3,4});
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
@@ -228,11 +276,11 @@ void SumSquaredErrorTest::test_calculate_gradient()
 
    gradient.clear();
 
-   gradient = sse.calculate_gradient();
+   gradient = sse.calculate_error_gradient({0});
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
-
+*/
    // Test 
 
    nn.set(3, 4, 2);
@@ -244,83 +292,104 @@ void SumSquaredErrorTest::test_calculate_gradient()
 
    gradient.clear();
 
-   gradient = sse.calculate_gradient();
+   gradient = sse.calculate_training_error_gradient();
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
+   cout << "Gradient size: " << gradient << endl;
+   system("pause");
+
+   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
 
    // Test
 
-   nn.set(2, 3, 4);
-   nn.initialize_parameters(0.0);
+   nn.set(7, 5, 4);
+   //nn.initialize_parameters(0.0);
 
-   ds.set(2, 4, 5);
-   sse.set(&nn, &ds);
-   ds.initialize_data(0.0);
+   parameters = nn.get_parameters();
 
-   gradient.clear();
+   ds.set(9, 7, 4);
+   ds.randomize_data_normal();
 
-   gradient = sse.calculate_gradient();
+   indices.set(0,1,8);
 
-   assert_true(gradient.size() == nn.count_parameters_number(), LOG);
-   assert_true(gradient == 0.0, LOG);
-
-   // Test
-
-   for(unsigned i = 0; i < 100; i++)
-   {
-
-   ds.initialize_data(1.0);
-
-   nn.randomize_parameters_normal();
-   parameters = nn.arrange_parameters();
-
-   gradient.clear();
-
-   gradient = sse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, parameters);
+   gradient = sse.calculate_training_error_gradient();
+   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, indices, parameters);
    error = (gradient - numerical_gradient).calculate_absolute_value();
 
    assert_true(error < 1.0e-3, LOG);
-   }
-
+/*
    // Test
-
-   nn.set(1, 1, 1);
-   nn.initialize_parameters(1.0);
-   parameters = nn.arrange_parameters();
-
-   ds.set(1, 1, 1);
 
    ds.initialize_data(1.0);
 
+   nn.randomize_parameters_normal();
+   parameters = nn.get_parameters();
+
    gradient.clear();
 
-   gradient = sse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, parameters);
-   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+   gradient = sse.calculate_error_gradient({0,1});
+   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, {0,1}, parameters);
+   error = (gradient - numerical_gradient).calculate_absolute_value();
 
+   assert_true(error < 1.0e-3, LOG);
+
+   for(unsigned i = 0; i < 100; i++)
+   {
+       ds.randomize_data_normal();
+
+       nn.randomize_parameters_normal();
+       parameters = nn.get_parameters();
+
+       gradient.clear();
+
+       gradient = sse.calculate_error_gradient({0,1});
+       numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, {0,1}, parameters);
+       error = (gradient - numerical_gradient).calculate_absolute_value();
+
+       assert_true(error < 1.0e-3, LOG);
+   }
+*/
    // Test
 
-   architecture.set(1000, 1);
+   const size_t inputs_number = 6;
+   const size_t outputs_number = 9;
+   const size_t instances_number = 100;
+   const size_t hidden_neurons = 6;
 
-   nn.set(architecture);
+//  for(unsigned i = 0; i < 100; i++)
+//  {
+
+   const Matrix<double> inputs = ds.get_inputs(indices);
+   const Matrix<double> targets = ds.get_targets(indices);
+
+   nn.set(inputs_number, hidden_neurons, outputs_number);
    nn.randomize_parameters_normal();
 
-   ds.set(10, 1, 1);
-   ds.randomize_data_normal();
+   parameters = nn.get_parameters();
 
-   sse.set(&nn, &ds);
+   ds.set(instances_number, inputs_number, outputs_number);
+
+   indices.set(0,1,instances_number-1);
+
+   ds.randomize_data_normal();
 
    gradient.clear();
 
-   gradient = sse.calculate_gradient();
+   gradient = sse.calculate_training_error_gradient();
+
+   numerical_gradient = nd.calculate_gradient(sse, &SumSquaredError::calculate_error, indices, parameters);
+
+   cout << "Error: " << (gradient - numerical_gradient).calculate_absolute_value() << endl;
+
+   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+//  }
+
 }
 
 
 // @todo
 
-void SumSquaredErrorTest::test_calculate_Hessian()
+void SumSquaredErrorTest::test_calculate_error_Hessian()
 {
    message += "test_calculate_Hessian\n";
 
@@ -360,7 +429,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
 
        nn.randomize_parameters_normal();
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian = sse.calculate_Hessian();
        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
@@ -379,7 +448,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
 
        nn.randomize_parameters_normal();
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian = sse.calculate_Hessian();
        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
@@ -398,7 +467,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
 
        nn.randomize_parameters_normal();
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian = sse.calculate_Hessian();
        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
@@ -417,7 +486,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
 
        nn.randomize_parameters_normal();
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian = sse.calculate_Hessian();
        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
@@ -437,7 +506,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
 
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
 
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian.clear();
        numerical_Hessian.clear();
@@ -458,7 +527,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
 
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
 
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian.clear();
        numerical_Hessian.clear();
@@ -482,7 +551,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
 
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
 
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian.clear();
        numerical_Hessian.clear();
@@ -505,7 +574,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
 
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
 
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian.clear();
        numerical_Hessian.clear();
@@ -528,7 +597,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
@@ -547,7 +616,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
 
@@ -568,7 +637,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
    Matrix<double> complete_Hessian = sse.calculate_Hessian();
@@ -613,7 +682,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(2, Perceptron::Linear);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    Hessian = sse.calculate_Hessian();
 
@@ -625,12 +694,12 @@ void SumSquaredErrorTest::test_calculate_Hessian()
 //   Vector<size_t> columns(4,1,5);
 //   Vector<size_t> rows(0,1,1);
 
-//   assert_true((Hessian.arrange_submatrix(rows,columns)-numerical_Hessian.arrange_submatrix(rows,columns)).calculate_absolute_value() < 1.0e-3, LOG);
+//   assert_true((Hessian.get_submatrix(rows,columns)-numerical_Hessian.get_submatrix(rows,columns)).calculate_absolute_value() < 1.0e-3, LOG);
 
    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
 }
 
- /*  // Test activation hyperbolic tangent (single hidden layer)
+ // Test activation hyperbolic tangent (single hidden layer)
 {
    ds.set(1, 2, 2);
    ds.randomize_data_normal();
@@ -640,7 +709,7 @@ void SumSquaredErrorTest::test_calculate_Hessian()
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::HyperbolicTangent);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    Hessian = sse.calculate_single_hidden_layer_Hessian();
 
@@ -650,7 +719,6 @@ void SumSquaredErrorTest::test_calculate_Hessian()
 }
 
    // Test
-/*
 {
        ds.set(1,1,1);
        ds.randomize_data_normal();
@@ -689,32 +757,32 @@ void SumSquaredErrorTest::test_calculate_Hessian()
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(2, Perceptron::Linear);
 
-       parameters = nn.arrange_parameters();
+       parameters = nn.get_parameters();
 
        Hessian = sse.calculate_Hessian();
        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
 
-       assert_true((Hessian.arrange_submatrix(rows1, columns1) - numerical_Hessian.arrange_submatrix(rows1, columns1)).calculate_absolute_value() < 1.0e-3, LOG);
-       assert_true((Hessian.arrange_submatrix(rows2, columns2) - numerical_Hessian.arrange_submatrix(rows2, columns2)).calculate_absolute_value() < 1.0e-3, LOG);
-       assert_true((Hessian.arrange_submatrix(rows3, columns3) - numerical_Hessian.arrange_submatrix(rows3, columns3)).calculate_absolute_value() < 1.0e-3, LOG);
-       assert_true((Hessian.arrange_submatrix(rows4, columns4) - numerical_Hessian.arrange_submatrix(rows4, columns4)).calculate_absolute_value() < 1.0e-3, LOG);
-       assert_true((Hessian.arrange_submatrix(rows5, columns5) - numerical_Hessian.arrange_submatrix(rows5, columns5)).calculate_absolute_value() < 1.0e-3, LOG);
-       assert_true((Hessian.arrange_submatrix(rows6, columns6) - numerical_Hessian.arrange_submatrix(rows6, columns6)).calculate_absolute_value() < 1.0e-3, LOG);}
+       assert_true((Hessian.get_submatrix(rows1, columns1) - numerical_Hessian.get_submatrix(rows1, columns1)).calculate_absolute_value() < 1.0e-3, LOG);
+       assert_true((Hessian.get_submatrix(rows2, columns2) - numerical_Hessian.get_submatrix(rows2, columns2)).calculate_absolute_value() < 1.0e-3, LOG);
+       assert_true((Hessian.get_submatrix(rows3, columns3) - numerical_Hessian.get_submatrix(rows3, columns3)).calculate_absolute_value() < 1.0e-3, LOG);
+       assert_true((Hessian.get_submatrix(rows4, columns4) - numerical_Hessian.get_submatrix(rows4, columns4)).calculate_absolute_value() < 1.0e-3, LOG);
+       assert_true((Hessian.get_submatrix(rows5, columns5) - numerical_Hessian.get_submatrix(rows5, columns5)).calculate_absolute_value() < 1.0e-3, LOG);
+       assert_true((Hessian.get_submatrix(rows6, columns6) - numerical_Hessian.get_submatrix(rows6, columns6)).calculate_absolute_value() < 1.0e-3, LOG);}
 }
 */
 }
 
 
-void SumSquaredErrorTest::test_calculate_terms()
+void SumSquaredErrorTest::test_calculate_error_terms()
 {
-   message += "test_calculate_terms\n";
+   message += "test_calculate_error_terms\n";
 }
 
 
-void SumSquaredErrorTest::test_calculate_terms_Jacobian()
+void SumSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {   
-   message += "test_calculate_terms_Jacobian\n";
-
+   message += "test_calculate_error_terms_Jacobian\n";
+/*
    NumericalDifferentiation nd;
 
    NeuralNetwork nn;
@@ -741,10 +809,10 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian()
 
    ds.initialize_data(0.0);
 
-   terms_Jacobian = sse.calculate_terms_Jacobian();
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
 
    assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.count_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test 
@@ -756,10 +824,10 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian()
    sse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
-   terms_Jacobian = sse.calculate_terms_Jacobian();
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().count_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.count_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
@@ -776,23 +844,23 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian()
    sse.set(&nn, &ds);
    ds.initialize_data(0.0);
 
-   terms_Jacobian = sse.calculate_terms_Jacobian();
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().count_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.count_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
 
    nn.set(1, 1, 1);
    nn.randomize_parameters_normal();
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   terms_Jacobian = sse.calculate_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_terms, parameters);
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
 
    assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -800,13 +868,13 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian()
 
    nn.set(2, 2, 2);
    nn.randomize_parameters_normal();
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    ds.set(2, 2, 2);
    ds.randomize_data_normal();
 
-   terms_Jacobian = sse.calculate_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_terms, parameters);
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
 
    assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
 
@@ -817,44 +885,46 @@ void SumSquaredErrorTest::test_calculate_terms_Jacobian()
 
    ds.set(2, 2, 2);
    ds.randomize_data_normal();
-   
+
    gradient = sse.calculate_gradient();
 
-   terms = sse.calculate_terms();
-   terms_Jacobian = sse.calculate_terms_Jacobian();
+   terms = sse.calculate_error_terms();
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
 
    assert_true(((terms_Jacobian.calculate_transpose()).dot(terms)*2.0 - gradient).calculate_absolute_value() < 1.0e-3, LOG);
+*/
 }
 
-
-void SumSquaredErrorTest::test_calculate_selection_loss()
+void SumSquaredErrorTest::test_calculate_selection_error()
 {
-   message += "test_calculate_selection_loss\n";
+   message += "test_calculate_selection_error\n";
 
-   NeuralNetwork nn;
-   DataSet ds;
-   SumSquaredError sse(&nn, &ds);
+//   NeuralNetwork nn;
+//   DataSet ds;
+//   SumSquaredError sse(&nn, &ds);
 
-   double selection_objective;
+//   double selection_error;
 
-   // Test
+//   // Test
 
-   nn.set();
+//   nn.set();
 
-   nn.construct_multilayer_perceptron();
+//   nn.construct_multilayer_perceptron();
 
-   ds.set();
+//   ds.set();
 
-   selection_objective = sse.calculate_selection_error();
+//   Vector<size_t> indices;
+
+//   selection_error = sse.calculate_indices_error(indices);
    
-   assert_true(selection_objective == 0.0, LOG);
+//   assert_true(selection_error == 0.0, LOG);
 }
 
 
 void SumSquaredErrorTest::test_calculate_squared_errors()
 {
    message += "test_calculate_squared_errors\n";
-
+/*
    NeuralNetwork nn;
 
    DataSet ds;
@@ -863,7 +933,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    Vector<double> squared_errors;
 
-   double objective;
+   double error;
 
    // Test 
 
@@ -892,10 +962,10 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    squared_errors = sse.calculate_squared_errors();
 
-   objective = sse.calculate_error();
+   error = sse.calculate_training_error();
 
-   assert_true(fabs(squared_errors.calculate_sum() - objective) < 1.0e-12, LOG);
-
+   assert_true(fabs(squared_errors.calculate_sum() - error) < 1.0e-12, LOG);
+*/
 }
 
 
@@ -911,7 +981,7 @@ void SumSquaredErrorTest::test_to_XML()
 
     document = sse.to_XML();
 
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 }
@@ -953,20 +1023,21 @@ void SumSquaredErrorTest::run_test_case()
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
-   test_calculate_loss();
-   test_calculate_selection_loss();
+//   test_calculate_error();
 
-   test_calculate_gradient();
+//   test_calculate_layers_delta();
+
+   test_calculate_error_gradient();
 
 //   test_calculate_Hessian();
 
-   // Objective terms methods
+   // Error terms methods
 
-   test_calculate_terms();
+//   test_calculate_error_terms();
 
-//   test_calculate_terms_Jacobian();
+//   test_calculate_error_terms_Jacobian();
 
    // Serialization methods
 

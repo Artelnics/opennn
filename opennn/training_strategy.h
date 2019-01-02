@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T R A I N I N G   S T R A T E G Y   C L A S S   H E A D E R                                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -31,6 +30,14 @@
 
 #include "loss_index.h"
 
+#include "sum_squared_error.h"
+#include "mean_squared_error.h"
+#include "root_mean_squared_error.h"
+#include "normalized_squared_error.h"
+#include "minkowski_error.h"
+#include "cross_entropy_error.h"
+#include "weighted_squared_error.h"
+
 #include "training_algorithm.h"
 
 #include "random_search.h"
@@ -40,8 +47,7 @@
 #include "conjugate_gradient.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
-
-#include "newton_method.h"
+#include "stochastic_gradient_descent.h"
 
 // TinyXml includes
 
@@ -65,13 +71,9 @@ public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit TrainingStrategy();
+    explicit TrainingStrategy();
 
-   // GENERAL CONSTRUCTOR
-
-   explicit TrainingStrategy(LossIndex*);
-
-   explicit TrainingStrategy(LossIndex&);
+    explicit TrainingStrategy(NeuralNetwork*, DataSet*);
 
    // XML CONSTRUCTOR
 
@@ -87,38 +89,29 @@ public:
 
    // ENUMERATIONS
 
-    /// Enumeration of all the available types of training algorithms.
+    /// Enumeration of available error terms in OpenNN.
 
-    enum InitializationType
+    enum LossMethod
     {
-       NO_INITIALIZATION,
-       RANDOM_SEARCH,
-       EVOLUTIONARY_ALGORITHM,
-       USER_INITIALIZATION
+       SUM_SQUARED_ERROR,
+       MEAN_SQUARED_ERROR,
+       ROOT_MEAN_SQUARED_ERROR,
+       NORMALIZED_SQUARED_ERROR,
+       MINKOWSKI_ERROR,
+       WEIGHTED_SQUARED_ERROR,
+       CROSS_ENTROPY_ERROR
     };
 
     /// Enumeration of all the available types of training algorithms.
 
-    enum MainType
+    enum TrainingMethod
     {
-       NO_MAIN,
        GRADIENT_DESCENT,
        CONJUGATE_GRADIENT,
-       NEWTON_METHOD,
        QUASI_NEWTON_METHOD,
        LEVENBERG_MARQUARDT_ALGORITHM,
-       USER_MAIN
+       STOCHASTIC_GRADIENT_DESCENT
     };
-
-    /// Enumeration of all the available types of training algorithms.
-
-    enum RefinementType
-    {
-       NO_REFINEMENT,
-       //NEWTON_METHOD,
-       USER_REFINEMENT
-    };
-
 
    // STRUCTURES 
 
@@ -161,18 +154,13 @@ public:
 
         LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* Levenberg_Marquardt_algorithm_results_pointer;
 
-        /// Pointer to a structure with results from the Newton method training algorithm.
+        /// Pointer to a structure with the results from the StochasticGradientDescent training algoritm.
 
-        NewtonMethod::NewtonMethodResults* Newton_method_results_pointer;
+        StochasticGradientDescent::StochasticGradientDescentResults* stochastic_gradient_descent_results_pointer;
 
   };
 
    // METHODS
-
-   // Checking methods
-
-   void check_loss_index() const;
-   void check_training_algorithms() const;
 
    // Initialization methods
 
@@ -180,6 +168,7 @@ public:
 
    // Get methods
 
+   NeuralNetwork* get_neural_network_pointer() const;
    LossIndex* get_loss_index_pointer() const;
 
    bool has_loss_index() const;
@@ -191,28 +180,31 @@ public:
    ConjugateGradient* get_conjugate_gradient_pointer() const;
    QuasiNewtonMethod* get_quasi_Newton_method_pointer() const;
    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer() const;
+   StochasticGradientDescent* get_stochastic_gradient_descent_pointer() const;
 
-   NewtonMethod* get_Newton_method_pointer() const;
 
-   const InitializationType& get_initialization_type() const;
-   const MainType& get_main_type() const;
-   const RefinementType& get_refinement_type() const;
+   SumSquaredError* get_sum_squared_error_pointer() const;
+   MeanSquaredError* get_mean_squared_error_pointer() const;
+   RootMeanSquaredError* get_root_mean_squared_error_pointer() const;
+   NormalizedSquaredError* get_normalized_squared_error_pointer() const;
+   MinkowskiError* get_Minkowski_error_pointer() const;
+   CrossEntropyError* get_cross_entropy_error_pointer() const;
+   WeightedSquaredError* get_weighted_squared_error_pointer() const;
 
-   string write_initialization_type() const;
-   string write_main_type() const;
-   string write_refinement_type() const;
+   const LossMethod& get_loss_method() const;
+   const TrainingMethod& get_training_method() const;
 
-   string write_initialization_type_text() const;
-   string write_main_type_text() const;
-   string write_refinement_type_text() const;
+   string write_loss_method() const;
+   string write_training_method() const;
+
+   string write_training_method_text() const;
 
    const bool& get_display() const;
 
    // Set methods
 
    void set();
-   void set(LossIndex*);
-   virtual void set_default();
+   void set_default();
 
 #ifdef __OPENNN_MPI__
    void set_MPI(LossIndex*, const TrainingStrategy*);
@@ -220,29 +212,26 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
-   void set_initialization_type(const InitializationType&);
-   void set_main_type(const MainType&);
-   void set_refinement_type(const RefinementType&);
+   void set_loss_method(const LossMethod&);
+   void set_training_method(const TrainingMethod&);
 
-   void set_initialization_type(const string&);
-   void set_main_type(const string&);
-   void set_refinement_type(const string&);
+   void set_loss_method(const string&);
+   void set_training_method(const string&);
 
    void set_display(const bool&);
 
    // Pointer methods
 
-   void destruct_initialization();
-   void destruct_main();
-   void destruct_refinement();
+   void destruct_training_algorithm();
 
    // Training methods
 
-   // This method trains a neural network which has a loss functional associated. 
+   // This method trains a neural network which has a loss index associated.
 
    void initialize_layers_autoencoding();
 
-   Results perform_training();
+   Results perform_training() const;
+   void perform_training_void() const;
 
    // Serialization methods
 
@@ -259,55 +248,83 @@ public:
    void save(const string&) const;
    void load(const string&);
 
-protected:
+private:
 
-   /// Pointer to an external loss functional object.
+   DataSet* data_set_pointer = nullptr;
 
-   LossIndex* loss_index_pointer;
+   NeuralNetwork* neural_network_pointer = nullptr;
 
-   /// Pointer to a random search object to be used for initialization in the training strategy.
+    // Loss index
 
-    RandomSearch* random_search_pointer;
+    /// Pointer to the sum squared error object wich can be used as the error term.
+
+    SumSquaredError* sum_squared_error_pointer = nullptr;
+
+    /// Pointer to the mean squared error object wich can be used as the error term.
+
+    MeanSquaredError* mean_squared_error_pointer = nullptr;
+
+    /// Pointer to the root mean squared error object wich can be used as the error term.
+
+    RootMeanSquaredError* root_mean_squared_error_pointer = nullptr;
+
+    /// Pointer to the normalized squared error object wich can be used as the error term.
+
+    NormalizedSquaredError* normalized_squared_error_pointer = nullptr;
+
+    /// Pointer to the Mikowski error object wich can be used as the error term.
+
+    MinkowskiError* Minkowski_error_pointer = nullptr;
+
+    /// Pointer to the cross entropy error object wich can be used as the error term.
+
+    CrossEntropyError* cross_entropy_error_pointer = nullptr;
+
+    /// Pointer to the weighted squared error object wich can be used as the error term.
+
+    WeightedSquaredError* weighted_squared_error_pointer = nullptr;
+
+    /// Type of loss method.
+
+    LossMethod loss_method;
+
+    // Training algorithm
+
+    /// Pointer to a random search object to be used for initialization in the training strategy.
+
+    RandomSearch* random_search_pointer = nullptr;
 
     /// Pointer to a evolutionary training object to be used for initialization in the training strategy.
 
-    EvolutionaryAlgorithm* evolutionary_algorithm_pointer;
+    EvolutionaryAlgorithm* evolutionary_algorithm_pointer = nullptr;
 
     /// Pointer to a gradient descent object to be used as a main training algorithm.
 
-    GradientDescent* gradient_descent_pointer;
+    GradientDescent* gradient_descent_pointer = nullptr;
 
     /// Pointer to a conjugate gradient object to be used as a main training algorithm.
 
-    ConjugateGradient* conjugate_gradient_pointer;
+    ConjugateGradient* conjugate_gradient_pointer = nullptr;
 
     /// Pointer to a quasi-Newton method object to be used as a main training algorithm.
 
-    QuasiNewtonMethod* quasi_Newton_method_pointer;
+    QuasiNewtonMethod* quasi_Newton_method_pointer = nullptr;
 
     /// Pointer to a Levenberg-Marquardt algorithm object to be used as a main training algorithm.
 
-    LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm_pointer;
+    LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm_pointer = nullptr;
 
-    /// Pointer to a Newton method object to be used for refinement in the training strategy.
+    /// Pointer to a Stochastic gradient descent algorithm object to be used as a main training algorithm.
 
-    NewtonMethod* Newton_method_pointer;
+    StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
 
-   /// Type of initialization training algorithm. 
+    /// Type of main training algorithm.
 
-   InitializationType initialization_type;
+    TrainingMethod training_method;
 
-   /// Type of main training algorithm. 
+    /// Display messages to screen.
 
-   MainType main_type;
-
-   /// Type of refinement training algorithm. 
-
-   RefinementType refinement_type;
-
-   /// Display messages to screen.
-
-   bool display;
+    bool display;
 
 };
 

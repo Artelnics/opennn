@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   S C A L I N G   L A Y E R   T E S T   C L A S S                                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -76,9 +76,9 @@ void ScalingLayerTest::test_set_default()
 }
 
 
-void ScalingLayerTest::test_arrange_means()
+void ScalingLayerTest::test_get_means()
 {
-   message += "test_arrange_means\n";
+   message += "test_get_means\n";
 
    ScalingLayer sl;
 
@@ -88,14 +88,14 @@ void ScalingLayerTest::test_arrange_means()
 
    sl.set();
 
-   assert_true(sl.arrange_means().empty(), LOG);
+   assert_true(sl.get_means().empty(), LOG);
 
    // Test
 
    sl.set(1);
    sl.set_mean(0, 2.0);
 
-   means = sl.arrange_means();
+   means = sl.get_means();
  
    assert_true(means.size() == 1, LOG);
    assert_true(means == 2.0, LOG);
@@ -103,13 +103,13 @@ void ScalingLayerTest::test_arrange_means()
 }
 
 
-void ScalingLayerTest::test_arrange_standard_deviations()
+void ScalingLayerTest::test_get_standard_deviations()
 {
    message += "test_get_standard_deviations\n";
 
    ScalingLayer sl;
 
-   assert_true(sl.arrange_standard_deviations() == 0, LOG);
+   assert_true(sl.get_standard_deviations() == 0, LOG);
 
 }
 
@@ -126,13 +126,13 @@ void ScalingLayerTest::test_get_standard_deviation()
 }
 
 
-void ScalingLayerTest::test_arrange_minimums()
+void ScalingLayerTest::test_get_minimums()
 {
-   message += "test_arrange_minimums\n";
+   message += "test_get_minimums\n";
 }
 
 
-void ScalingLayerTest::test_arrange_maximums()
+void ScalingLayerTest::test_get_maximums()
 {
    message += "test_get_maximums\n";
 }
@@ -278,7 +278,7 @@ void ScalingLayerTest::test_check_range()
 void ScalingLayerTest::test_calculate_outputs()
 {
    message += "test_calculate_outputs\n";
-
+/*
    ScalingLayer sl;
    
    Vector<double> inputs;
@@ -304,17 +304,18 @@ void ScalingLayerTest::test_calculate_outputs()
    inputs.set(1, 0.0);
 
    assert_true(sl.calculate_outputs(inputs) == inputs, LOG);
+*/
 
 }
 
 
-void ScalingLayerTest::test_calculate_derivative()
+void ScalingLayerTest::test_calculate_derivatives()
 {
    message += "test_calculate_derivative\n";
 }
 
 
-void ScalingLayerTest::test_calculate_second_derivative()
+void ScalingLayerTest::test_calculate_second_derivatives()
 {
    message += "test_calculate_second_derivative\n";
 }
@@ -326,13 +327,13 @@ void ScalingLayerTest::test_calculate_minimum_maximum_output()
 }
 
 
-void ScalingLayerTest::test_calculate_minimum_maximum_derivative()
+void ScalingLayerTest::test_calculate_minimum_maximum_derivatives()
 {
    message += "test_calculate_minimum_maximum_derivative\n";
 }
 
 
-void ScalingLayerTest::test_calculate_minimum_maximum_second_derivative()
+void ScalingLayerTest::test_calculate_minimum_maximum_second_derivatives()
 {
    message += "test_calculate_minimum_maximum_second_derivative\n";
 }
@@ -344,13 +345,13 @@ void ScalingLayerTest::test_calculate_mean_standard_deviation_output()
 }
 
 
-void ScalingLayerTest::test_calculate_mean_standard_deviation_derivative()
+void ScalingLayerTest::test_calculate_mean_standard_deviation_derivatives()
 {
    message += "test_calculate_mean_standard_deviation_derivative\n";
 }
 
 
-void ScalingLayerTest::test_calculate_mean_standard_deviation_second_derivative()
+void ScalingLayerTest::test_calculate_mean_standard_deviation_second_derivatives()
 {
    message += "test_calculate_mean_standard_deviation_second_derivative\n";
 }
@@ -418,7 +419,7 @@ void ScalingLayerTest::test_to_XML()
 
    sld = sl.to_XML();
 
-   assert_true(sld != NULL, LOG);
+   assert_true(sld != nullptr, LOG);
 
    delete sld;
 }
@@ -463,16 +464,16 @@ void ScalingLayerTest::run_test_case()
 
    // Input variables statistics
 
-   test_arrange_minimums();
+   test_get_minimums();
    test_get_minimum();
 
-   test_arrange_maximums();
+   test_get_maximums();
    test_get_maximum();
 
-   test_arrange_means();
+   test_get_means();
    test_get_mean();
 
-   test_arrange_standard_deviations();
+   test_get_standard_deviations();
    test_get_standard_deviation();
 
    // Variables scaling and unscaling
@@ -537,8 +538,8 @@ void ScalingLayerTest::run_test_case()
    // Scaling and unscaling
 
    test_calculate_outputs();
-   test_calculate_derivative();
-   test_calculate_second_derivative();
+   test_calculate_derivatives();
+   test_calculate_second_derivatives();
 
    // Expression methods
 

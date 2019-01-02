@@ -6,7 +6,7 @@
 /*   G R O W I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/

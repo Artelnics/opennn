@@ -74,7 +74,6 @@ GrowingInputs::~GrowingInputs()
 
 // METHODS
 
-// const size_t& get_maximum_inputs_number() const method
 
 /// Returns the maximum number of inputs in the growing inputs selection algorithm.
 
@@ -83,7 +82,6 @@ const size_t& GrowingInputs::get_maximum_inputs_number() const
     return(maximum_inputs_number);
 }
 
-// const size_t& get_minimum_inputs_number() const method
 
 /// Returns the minimum number of inputs in the growing inputs selection algorithm.
 
@@ -92,7 +90,6 @@ const size_t& GrowingInputs::get_minimum_inputs_number() const
     return(minimum_inputs_number);
 }
 
-// const size_t& get_maximum_selection_failures() const method
 
 /// Returns the maximum number of selection failures in the growing inputs selection algorithm.
 
@@ -101,15 +98,14 @@ const size_t& GrowingInputs::get_maximum_selection_failures() const
     return(maximum_selection_failures);
 }
 
-// void set_default() method
 
 /// Sets the members of the growing inputs object to their default values.
 
 void GrowingInputs::set_default()
 {
-    size_t inputs_number ;
+    size_t inputs_number;
 
-    if(training_strategy_pointer == NULL || !training_strategy_pointer->has_loss_index())
+    if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_loss_index())
     {
         maximum_selection_failures = 3;
 
@@ -117,8 +113,15 @@ void GrowingInputs::set_default()
     }
     else
     {
+        cout << "else setdefault()"<<endl;
+
+        training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_display();
+
+        cout << "lalala" << endl;
+
         inputs_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
-        maximum_selection_failures =(size_t)max(3.,inputs_number/5.);
+
+        maximum_selection_failures = static_cast<size_t>(max(3.,inputs_number/5.));
 
         maximum_inputs_number = inputs_number;
     }
@@ -126,7 +129,6 @@ void GrowingInputs::set_default()
     minimum_inputs_number = 1;
 }
 
-// void set_maximum_inputs_number(const size_t&) method
 
 /// Sets the maximum inputs number for the growing inputs selection algorithm.
 /// @param new_maximum_inputs_number Maximum inputs number in the growing inputs selection algorithm.
@@ -151,7 +153,6 @@ void GrowingInputs::set_maximum_inputs_number(const size_t& new_maximum_inputs_n
     maximum_inputs_number = new_maximum_inputs_number;
 }
 
-// void set_minimum_inputs_number(const size_t&) method
 
 /// Sets the minimum inputs number for the growing inputs selection algorithm.
 /// @param new_minimum_inputs_number Minimum inputs number in the growing inputs selection algorithm.
@@ -176,7 +177,6 @@ void GrowingInputs::set_minimum_inputs_number(const size_t& new_minimum_inputs_n
     minimum_inputs_number = new_minimum_inputs_number;
 }
 
-// void set_maximum_selection_failures(const size_t&) method
 
 /// Sets the maximum selection failures for the growing inputs selection algorithm.
 /// @param new_maximum_loss_failures Maximum number of selection failures in the growing inputs selection algorithm.
@@ -201,7 +201,6 @@ void GrowingInputs::set_maximum_selection_failures(const size_t& new_maximum_los
     maximum_selection_failures = new_maximum_loss_failures;
 }
 
-// GrowingInputsResults* perform_inputs_selection() method
 
 /// Perform the inputs selection with the growing inputs method.
 
@@ -218,7 +217,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     size_t index;
 
-    size_t original_index;
+    size_t original_index = 0;
 
     // Loss index
 
@@ -234,13 +233,13 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     Variables* variables_pointer = data_set_pointer->get_variables_pointer();
 
-    const size_t inputs_number = variables_pointer->count_inputs_number();
+    const size_t inputs_number = variables_pointer->get_inputs_number();
 
-    const size_t targets_number = variables_pointer->count_targets_number();
+    const size_t targets_number = variables_pointer->get_targets_number();
 
     Vector<bool> inputs_selection(inputs_number, true);
 
-    Vector<Variables::Use> current_uses = variables_pointer->arrange_uses();
+    Vector<Variables::Use> current_uses = variables_pointer->get_uses();
 
     const Vector<Variables::Use> original_uses = current_uses;
 
@@ -253,8 +252,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     Vector<double> final(2);
     Vector<double> history_row;
 
-    double current_training_loss, current_selection_loss;
-    double previous_selection_loss = -1;
+    double current_training_loss, current_selection_error;
+    double previous_selection_error = -1;
 
     bool flag_input = false;
 
@@ -266,7 +265,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     time_t beginning_time, current_time;
 
-    double elapsed_time;
+    double elapsed_time = 0.0;
 
     if(display) cout << "Performing growing inputs selection..." << endl;
 
@@ -300,7 +299,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         if(display)
         {
             cout << "Maximal correlation(" << total_input_correlations[index] << ") is nearly 1. \n"
-                 << "The problem is linear separable with the input " << variables_pointer->arrange_names()[original_index] << ".\n\n" ;
+                 << "The problem is linear separable with the input " << variables_pointer->get_names()[original_index] << ".\n\n";
         }
 
         final = perform_model_evaluation(inputs_selection);
@@ -314,7 +313,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         if(reserve_loss_data) results->loss_data.push_back(optimum_selection_error);
 
-        if(reserve_selection_loss_data) results->selection_loss_data.push_back(optimum_training_error);
+        if(reserve_selection_error_data) results->selection_error_data.push_back(optimum_training_error);
 
         if(reserve_parameters_data) results->parameters_data.push_back(optimal_parameters);
 
@@ -357,7 +356,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
                 if(display)
                 {
-                    cout << "Added input "<< variables_pointer->arrange_names()[original_index] << endl;
+                    cout << "Added input "<< variables_pointer->get_names()[original_index] << endl;
                 }
 
                 if(inputs_selection.count_equal_to(true) >= maximum_inputs_number)
@@ -384,9 +383,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
                         results->loss_data.push_back(optimum_training_error);
                     }
 
-                    if(reserve_selection_loss_data)
+                    if(reserve_selection_error_data)
                     {
-                        results->selection_loss_data.push_back(optimum_selection_error);
+                        results->selection_error_data.push_back(optimum_selection_error);
                     }
 
                     if(reserve_parameters_data)
@@ -450,16 +449,16 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         final = perform_model_evaluation(inputs_selection);
 
         current_training_loss = final[0];
-        current_selection_loss = final[1];
+        current_selection_error = final[1];
 
-        if(fabs(optimum_selection_error - current_selection_loss) < tolerance ||
-                optimum_selection_error > current_selection_loss)
+        if(fabs(optimum_selection_error - current_selection_error) < tolerance ||
+                optimum_selection_error > current_selection_error)
         {
             optimal_inputs = inputs_selection;
             optimum_training_error = current_training_loss;
-            optimum_selection_error = current_selection_loss;
+            optimum_selection_error = current_selection_error;
         }
-        else if(optimum_selection_error < current_selection_loss)
+        else if(optimum_selection_error < current_selection_error)
         {
             selection_failures++;
         }
@@ -467,7 +466,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        previous_selection_loss = current_selection_loss;
+        previous_selection_error = current_selection_error;
         iteration++;
 
         results->inputs_data.push_back(inputs_selection);
@@ -477,9 +476,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             results->loss_data.push_back(current_training_loss);
         }
 
-        if(reserve_selection_loss_data)
+        if(reserve_selection_error_data)
         {
-            results->selection_loss_data.push_back(current_selection_loss);
+            results->selection_error_data.push_back(current_selection_error);
         }
 
         if(reserve_parameters_data)
@@ -499,7 +498,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             results->stopping_condition = InputsSelectionAlgorithm::MaximumTime;
         }
-        else if(final[1] <= selection_loss_goal)
+        else if(final[1] <= selection_error_goal)
         {
             end = true;
 
@@ -544,12 +543,12 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         {
             cout << "Iteration: " << iteration << endl;
 
-            if(!flag_input) cout << "Add input: " << variables_pointer->arrange_names()[original_index] << endl;
+            if(!flag_input) cout << "Add input: " << variables_pointer->get_names()[original_index] << endl;
 
-            cout << "Current inputs: " <<  variables_pointer->arrange_inputs_name().vector_to_string() << endl;
+            cout << "Current inputs: " <<  variables_pointer->get_inputs_name().vector_to_string() << endl;
             cout << "Number of inputs: " << inputs_selection.count_equal_to(true) << endl;
             cout << "Training loss: " << final[0] << endl;
-            cout << "Selection loss: " << final[1] << endl;
+            cout << "Selection error: " << final[1] << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             cout << endl;
@@ -566,7 +565,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     }
 
     results->optimal_inputs = optimal_inputs;
-    results->final_selection_loss = optimum_selection_error;
+    results->final_selection_error = optimum_selection_error;
     results->final_loss = optimum_training_error;
     results->iterations_number = iteration;
     results->elapsed_time = elapsed_time;
@@ -578,7 +577,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     {
         if(neural_network_pointer->has_inputs())
         {
-            cout << "Optimal inputs: " << variables_pointer->arrange_inputs_name().vector_to_string() << endl;
+            cout << "Optimal inputs: " << variables_pointer->get_inputs_name().vector_to_string() << endl;
         }
 
         cout << "Optimal number of inputs: " << inputs_selection.count_equal_to(true) << endl;
@@ -600,8 +599,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     return results;
 }
 
-
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -635,7 +632,7 @@ Matrix<string> GrowingInputs::to_string_matrix() const
    labels.push_back("Selection loss goal");
 
    buffer.str("");
-   buffer << selection_loss_goal;
+   buffer << selection_error_goal;
 
    values.push_back(buffer.str());
 
@@ -716,7 +713,7 @@ Matrix<string> GrowingInputs::to_string_matrix() const
 
    buffer.str("");
 
-   if(reserve_selection_loss_data)
+   if(reserve_selection_error_data)
    {
        buffer << "true";
    }
@@ -738,7 +735,6 @@ Matrix<string> GrowingInputs::to_string_matrix() const
     return(string_matrix);
 }
 
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Prints to the screen the growing inputs parameters, the stopping criteria
 /// and other user stuff concerning the growing inputs object.
@@ -755,8 +751,8 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML() const
 
     document->InsertFirstChild(root_element);
 
-    tinyxml2::XMLElement* element = NULL;
-    tinyxml2::XMLText* text = NULL;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
     // Trials number
     {
@@ -788,7 +784,7 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << selection_loss_goal;
+        buffer << selection_error_goal;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -897,7 +893,7 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_selection_loss_data;
+        buffer << reserve_selection_error_data;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -918,8 +914,6 @@ tinyxml2::XMLDocument* GrowingInputs::to_XML() const
     return(document);
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the growing inputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -957,7 +951,7 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("SelectionLossGoal");
 
     buffer.str("");
-    buffer << selection_loss_goal;
+    buffer << selection_error_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1056,7 +1050,7 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveSelectionLossHistory");
 
     buffer.str("");
-    buffer << reserve_selection_loss_data;
+    buffer << reserve_selection_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1066,8 +1060,6 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     //file_stream.CloseElement();
 }
 
-
-// void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this growing inputs object.
 /// @param document TinyXML document containing the member data.
@@ -1082,7 +1074,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: GrowingInputs class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "GrowingInputs element is NULL.\n";
+               << "GrowingInputs element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1101,7 +1093,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1112,7 +1104,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_trials_number = atoi(element->GetText());
+            const size_t new_trials_number = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -1120,7 +1112,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1139,7 +1131,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1158,7 +1150,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1177,7 +1169,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1188,15 +1180,15 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_selection_loss_data = element->GetText();
+            const string new_reserve_selection_error_data = element->GetText();
 
             try
             {
-                set_reserve_selection_loss_data(new_reserve_selection_loss_data != "0");
+                set_reserve_selection_error_data(new_reserve_selection_error_data != "0");
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1215,7 +1207,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1234,7 +1226,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1245,15 +1237,15 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_selection_loss_goal = atof(element->GetText());
+            const double new_selection_error_goal = atof(element->GetText());
 
             try
             {
-                set_selection_loss_goal(new_selection_loss_goal);
+                set_selection_error_goal(new_selection_error_goal);
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1264,7 +1256,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_maximum_iterations_number = atoi(element->GetText());
+            const size_t new_maximum_iterations_number = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -1272,7 +1264,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1291,7 +1283,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1310,7 +1302,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1329,7 +1321,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1348,7 +1340,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1359,7 +1351,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_minimum_inputs_number = atoi(element->GetText());
+            const size_t new_minimum_inputs_number = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -1367,7 +1359,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1378,7 +1370,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_maximum_inputs_number = atoi(element->GetText());
+            const size_t new_maximum_inputs_number = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -1386,7 +1378,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1397,7 +1389,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const size_t new_maximum_selection_failures = atoi(element->GetText());
+            const size_t new_maximum_selection_failures = static_cast<size_t>(atoi(element->GetText()));
 
             try
             {
@@ -1405,14 +1397,13 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
 
 }
 
-// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the growing inputs object.
 /// @param file_name Name of growing inputs XML-type file.
@@ -1426,8 +1417,6 @@ void GrowingInputs::save(const string& file_name) const
     delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a growing inputs object from a XML-type file.
 /// @param file_name Name of growing inputs XML-type file.
