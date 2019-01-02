@@ -104,10 +104,10 @@ unsigned long long AssociationRules::calculate_combinations_number(const size_t&
         k = n - k;
     }
 
-    for(int i = 0; i <(int)k; ++i)
+    for(int i = 0; i < static_cast<int>(k); ++i)
     {
-        result *=(n - i);
-        result /=(i + 1);
+        result *= (n - static_cast<unsigned long long>(i));
+        result /= (static_cast<unsigned long long>(i) + 1);
     }
 
     return result;
@@ -137,7 +137,7 @@ Matrix<size_t> AssociationRules::calculate_combinations(const Vector<size_t>& it
 
     Vector<bool> v(n);
 
-    fill(v.end() - r, v.end(), true);
+    fill(v.end() - static_cast<unsigned>(r), v.end(), true);
 
     size_t row_index = 0;
     size_t column_index = 0;
@@ -211,9 +211,9 @@ Matrix<double> AssociationRules::calculate_support(const size_t& order_size, con
 
 #pragma omp parallel for firstprivate(sub_matrix) private(current_combination,previous_combination)
 
-    for(int i = 1; i <(int)combinations_number; i++)
+    for(int i = 1; i < static_cast<int>(combinations_number); i++)
     {
-        current_combination = combinations.get_row(i);
+        current_combination = combinations.get_row(static_cast<size_t>(i));
 
         const Vector<size_t> intersection = current_combination.get_intersection(previous_combination);
 
@@ -227,12 +227,12 @@ Matrix<double> AssociationRules::calculate_support(const size_t& order_size, con
             }
         }
 
-        frequencies[i] = sub_matrix.count_rows_equal_to(1);
+        frequencies[static_cast<size_t>(i)] = sub_matrix.count_rows_equal_to(1);
 
         previous_combination = current_combination;
     }
 
-    const Vector<double> supports = frequencies.to_double_vector()*(100.0/(double)orders_number);
+    const Vector<double> supports = frequencies.to_double_vector()*(100.0/static_cast<double>(orders_number));
     const size_t columns_number = order_size + 2;
 
     support_data.set(combinations_number, columns_number);
@@ -281,11 +281,11 @@ Matrix<double> AssociationRules::calculate_confidence(const size_t& left_order_s
 
 #pragma omp parallel for
 
-    for(int i = 0; i <(int)left_support.get_rows_number();i++)
+    for(int i = 0; i < static_cast<int>(left_support.get_rows_number()); i++)
     {
-        const Vector<double> current_left_indices = left_support.get_row(i).get_first(left_order_size);
+        const Vector<double> current_left_indices = left_support.get_row(static_cast<size_t>(i)).get_first(left_order_size);
 
-        for(size_t j = 0; j <(int)right_combinations.get_rows_number(); j++)
+        for(size_t j = 0; j < static_cast<size_t>(right_combinations.get_rows_number()); j++)
         {
             const Vector<size_t> current_right_indices = right_combinations.get_row(j);
 
@@ -310,7 +310,7 @@ Matrix<double> AssociationRules::calculate_confidence(const size_t& left_order_s
 
 #pragma omp parallel for
 
-    for(int i = 0; i <(int)rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         double current_total_support = 0.0;
 
@@ -341,7 +341,7 @@ Matrix<double> AssociationRules::calculate_confidence(const size_t& left_order_s
 
             for(size_t k = 0; k < left_order_size; k++)
             {
-                if(left_indices(i,k) == left_support(j,k))
+                if(fabs(left_indices(i,k) - left_support(j,k)) < std::numeric_limits<double>::min())
                 {
                     found++;
                 }
@@ -349,7 +349,7 @@ Matrix<double> AssociationRules::calculate_confidence(const size_t& left_order_s
 
             if(found == left_order_size)
             {
-                if(left_support(j,left_order_size+1) != 0)
+                if(left_support(j,left_order_size+1) != 0.0)
                 {
                     confidence_data(i,left_order_size+right_order_size) /= left_support(j,left_order_size+1);
                 }
@@ -410,7 +410,7 @@ Matrix<double> AssociationRules::calculate_lift(const size_t& left_order_size, c
 
 #pragma omp parallel for
 
-    for(int i = 0; i < left_support.get_rows_number();i++)
+    for(int i = 0; i < left_support.get_rows_number(); i++)
     {
         const Vector<double> current_left_indices = left_support.get_row(i,left_combination_indices);
 
@@ -437,7 +437,7 @@ Matrix<double> AssociationRules::calculate_lift(const size_t& left_order_size, c
 
 #pragma omp parallel for
 
-    for(int i = 0; i <(int)rows_number; i++)
+    for(int i = 0; i < rows_number; i++)
     {
         double current_total_support = 0.0;
 
@@ -469,7 +469,7 @@ Matrix<double> AssociationRules::calculate_lift(const size_t& left_order_size, c
 
             for(size_t k = 0; k < left_order_size; k++)
             {
-                if(left_indices(i,k) == left_support(j,k))
+                if(fabs(left_indices(i,k) - left_support(j,k)) < std::numeric_limits<double>::min())
                 {
                     found++;
                 }
@@ -477,7 +477,7 @@ Matrix<double> AssociationRules::calculate_lift(const size_t& left_order_size, c
 
             if(found == left_order_size)
             {
-                if(left_support(j,left_order_size+1) != 0)
+                if(left_support(j,left_order_size+1) != 0.0)
                 {
                     lift_data(i,left_order_size+right_order_size) /= left_support(j,left_order_size+1);
                 }
@@ -496,7 +496,7 @@ Matrix<double> AssociationRules::calculate_lift(const size_t& left_order_size, c
 
             for(size_t k = 0; k < right_order_size; k++)
             {
-                if(right_indices(i,k) == right_support(j,k))
+                if(fabs(right_indices(i,k) - right_support(j,k)) < std::numeric_limits<double>::min())
                 {
                     found++;
                 }
@@ -504,7 +504,7 @@ Matrix<double> AssociationRules::calculate_lift(const size_t& left_order_size, c
 
             if(found == right_order_size)
             {
-                if(right_support(j,right_order_size+1) != 0)
+                if(right_support(j,right_order_size+1) != 0.0)
                 {
                     lift_data(i,left_order_size+right_order_size) /= right_support(j,right_order_size+1);
                 }
@@ -556,7 +556,7 @@ Vector< Matrix<double> > AssociationRules::perform_a_priori_algorithm(const size
 #pragma omp parallel for
         for(int i = 0; i < unfrequent_items_size; i++)
         {
-            const Vector<size_t> this_rows_to_remove = sparse_matrix.get_row_indices_equal_to(this_unfrequent_items.get_row((int)i).to_size_t_vector(), 1);
+            const Vector<size_t> this_rows_to_remove = sparse_matrix.get_row_indices_equal_to(this_unfrequent_items.get_row(i).to_size_t_vector(), 1);
 
 #pragma omp critical
             {

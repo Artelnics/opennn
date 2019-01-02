@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   T E S T I N G   A N A L Y S I S   T E S T   C L A S S                                                      */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -37,14 +37,14 @@ void TestingAnalysisTest::test_constructor()
    NeuralNetwork nn2;
    TestingAnalysis ta2(&nn2);
 
-   assert_true(ta2.get_neural_network_pointer() != NULL, LOG);
+   assert_true(ta2.get_neural_network_pointer() != nullptr, LOG);
 
    // Data set constructor
 
    DataSet ds3;
    TestingAnalysis ta3(&ds3);
 
-   assert_true(ta3.get_data_set_pointer() != NULL, LOG);
+   assert_true(ta3.get_data_set_pointer() != nullptr, LOG);
 
    // Neural network and data set constructor
 
@@ -53,8 +53,8 @@ void TestingAnalysisTest::test_constructor()
 
    TestingAnalysis ta4(&nn4, &ds4);
 
-   assert_true(ta4.get_neural_network_pointer() != NULL, LOG);
-   assert_true(ta4.get_data_set_pointer() != NULL, LOG);
+   assert_true(ta4.get_neural_network_pointer() != nullptr, LOG);
+   assert_true(ta4.get_data_set_pointer() != nullptr, LOG);
 }
 
 
@@ -74,7 +74,7 @@ void TestingAnalysisTest::test_get_neural_network_pointer()
 
    ta.set_neural_network_pointer(&nn);
    
-   assert_true(ta.get_neural_network_pointer() != NULL, LOG);
+   assert_true(ta.get_neural_network_pointer() != nullptr, LOG);
 }
 
 
@@ -88,7 +88,7 @@ void TestingAnalysisTest::test_get_data_set_pointer()
 
    ta.set_data_set_pointer(&ds);
    
-   assert_true(ta.get_data_set_pointer() != NULL, LOG);
+   assert_true(ta.get_data_set_pointer() != nullptr, LOG);
 }
 
 
@@ -116,9 +116,9 @@ void TestingAnalysisTest::test_set_display()
 }
 
 
-void TestingAnalysisTest::test_calculate_target_output_data()
+void TestingAnalysisTest::test_calculate_target_outputs()
 {
-   message += "test_calculate_target_output_data\n";
+   message += "test_calculate_target_outputs\n";
 
    NeuralNetwork nn;
    DataSet ds;
@@ -126,7 +126,7 @@ void TestingAnalysisTest::test_calculate_target_output_data()
 
    TestingAnalysis ta(&nn, &ds);
 
-   Vector< Matrix<double> > target_output_data;
+   Vector< Matrix<double> > target_outputs;
 
    // Test
 
@@ -137,13 +137,13 @@ void TestingAnalysisTest::test_calculate_target_output_data()
    ds.initialize_data(0.0);
    ds.get_instances_pointer()->set_testing();
 
-   target_output_data = ta.calculate_target_output_data();
+   target_outputs = ta.calculate_target_outputs();
 
-   assert_true(target_output_data.size() == 1, LOG);
+   assert_true(target_outputs.size() == 1, LOG);
 
-   assert_true(target_output_data[0].get_rows_number() == 1, LOG);
-   assert_true(target_output_data[0].get_columns_number() == 2, LOG);
-   assert_true(target_output_data[0] == 0.0, LOG);
+   assert_true(target_outputs[0].get_rows_number() == 1, LOG);
+   assert_true(target_outputs[0].get_columns_number() == 2, LOG);
+   assert_true(target_outputs[0] == 0.0, LOG);
 
    // Test
 
@@ -156,13 +156,13 @@ void TestingAnalysisTest::test_calculate_target_output_data()
    ds.initialize_data(0.0);
    ds.get_instances_pointer()->set_testing();
 
-   target_output_data = ta.calculate_forecasting_target_output_data();
+   target_outputs = ta.calculate_forecasting_target_outputs();
 
-   assert_true(target_output_data.size() == 1, LOG);
+   assert_true(target_outputs.size() == 1, LOG);
 
-   assert_true(target_output_data[0].get_rows_number() == 1, LOG);
-   assert_true(target_output_data[0].get_columns_number() == 2, LOG);
-   assert_true(target_output_data[0] == 0.0, LOG);
+   assert_true(target_outputs[0].get_rows_number() == 1, LOG);
+   assert_true(target_outputs[0].get_columns_number() == 2, LOG);
+   assert_true(target_outputs[0] == 0.0, LOG);
 }
 
 
@@ -427,28 +427,28 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     Matrix <double> roc_curve;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0,0) = 0.0;
-    target_data(1,0) = 0.0;
-    target_data(2,0) = 1.0;
-    target_data(3,0) = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0,0) = 0.0;
-    output_data(1,0) = 0.0;
-    output_data(2,0) = 1.0;
-    output_data(3,0) = 1.0;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 0.0;
+    outputs(2,0) = 1.0;
+    outputs(3,0) = 1.0;
 
-    roc_curve = ta.calculate_roc_curve(target_data, output_data);
+    roc_curve = ta.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve(0, 0) == 0, LOG);
     assert_true(roc_curve(0, 1) == 0, LOG);
@@ -465,21 +465,21 @@ void TestingAnalysisTest::test_calculate_roc_curve()
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.12;
-    output_data(1, 0) = 0.78;
-    output_data(2, 0) = 0.84;
-    output_data(3, 0) = 0.99;
+    outputs(0, 0) = 0.12;
+    outputs(1, 0) = 0.78;
+    outputs(2, 0) = 0.84;
+    outputs(3, 0) = 0.99;
 
-    roc_curve = ta.calculate_roc_curve(target_data, output_data);
+    roc_curve = ta.calculate_roc_curve(targets, outputs);
 
     assert_true(roc_curve(0, 0) == 0, LOG);
     assert_true(roc_curve(0, 1) == 0, LOG);
@@ -505,88 +505,88 @@ void TestingAnalysisTest::test_calculate_area_under_curve()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     double area_under_curve;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0,0) = 0.0;
-    target_data(1,0) = 0.0;
-    target_data(2,0) = 1.0;
-    target_data(3,0) = 1.0;
+    targets(0,0) = 0.0;
+    targets(1,0) = 0.0;
+    targets(2,0) = 1.0;
+    targets(3,0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0,0) = 0.0;
-    output_data(1,0) = 0.0;
-    output_data(2,0) = 1.0;
-    output_data(3,0) = 1.0;
+    outputs(0,0) = 0.0;
+    outputs(1,0) = 0.0;
+    outputs(2,0) = 1.0;
+    outputs(3,0) = 1.0;
 
-    area_under_curve = ta.calculate_area_under_curve(target_data, output_data);
+    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve == 1, LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 0.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 0.0;
+    outputs(3, 0) = 1.0;
 
-    area_under_curve = ta.calculate_area_under_curve(target_data, output_data);
-
-    assert_true(area_under_curve == 0.5, LOG);
-
-    // Test
-
-    target_data.set(4, 1);
-
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
-
-    output_data.set(4, 1);
-
-    output_data(0, 0) = 0.78;
-    output_data(1, 0) = 0.84;
-    output_data(2, 0) = 0.12;
-    output_data(3, 0) = 0.99;
-
-    area_under_curve = ta.calculate_area_under_curve(target_data, output_data);
+    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve == 0.5, LOG);
 
     // Test
 
-    target_data.set(4,1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 0.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 0.78;
+    outputs(1, 0) = 0.84;
+    outputs(2, 0) = 0.12;
+    outputs(3, 0) = 0.99;
 
-    area_under_curve = ta.calculate_area_under_curve(target_data, output_data);
+    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
+
+    assert_true(area_under_curve == 0.5, LOG);
+
+    // Test
+
+    targets.set(4,1);
+
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
+
+    outputs.set(4, 1);
+
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 0.0;
+    outputs(3, 0) = 0.0;
+
+    area_under_curve = ta.calculate_area_under_curve(targets, outputs);
 
     assert_true(area_under_curve == 0, LOG);
 
@@ -602,70 +602,70 @@ void TestingAnalysisTest::test_calculate_optimal_threshold()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     double optimal_threshold;
 
     // Test
 
-    target_data.set(4,1);
+    targets.set(4,1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 0.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 0.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    optimal_threshold = ta.calculate_optimal_threshold(target_data, output_data);
+    optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold == 1.0, LOG);
 
     // Test
 
-    target_data.set(4,1);
+    targets.set(4,1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 0.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 0.0;
+    outputs(3, 0) = 0.0;
 
-    optimal_threshold = ta.calculate_optimal_threshold(target_data, output_data);
+    optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold == 0.0, LOG);
 
     // Test
 
-    target_data.set(5,1);
+    targets.set(5,1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 1.0;
-    target_data(4, 0) = 0.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 1.0;
+    targets(4, 0) = 0.0;
 
-    output_data.set(5, 1);
+    outputs.set(5, 1);
 
-    output_data(0, 0) = 0.33;
-    output_data(1, 0) = 0.14;
-    output_data(2, 0) = 0.12;
-    output_data(3, 0) = 0.62;
-    output_data(4, 0) = 0.85;
+    outputs(0, 0) = 0.33;
+    outputs(1, 0) = 0.14;
+    outputs(2, 0) = 0.12;
+    outputs(3, 0) = 0.62;
+    outputs(4, 0) = 0.85;
 
-    optimal_threshold = ta.calculate_optimal_threshold(target_data, output_data);
+    optimal_threshold = ta.calculate_optimal_threshold(targets, outputs);
 
     assert_true(optimal_threshold == 0.62, LOG);
 }
@@ -680,28 +680,28 @@ void TestingAnalysisTest::test_calculate_cumulative_gain()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     Matrix <double> cumulative_gain;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.67;
-    output_data(1, 0) = 0.98;
-    output_data(2, 0) = 0.78;
-    output_data(3, 0) = 0.45;
+    outputs(0, 0) = 0.67;
+    outputs(1, 0) = 0.98;
+    outputs(2, 0) = 0.78;
+    outputs(3, 0) = 0.45;
 
-    cumulative_gain = ta.calculate_cumulative_gain(target_data, output_data);
+    cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
 
     assert_true(cumulative_gain.get_columns_number() == 2, LOG);
     assert_true(cumulative_gain.get_rows_number() == 21, LOG);
@@ -721,8 +721,8 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     Matrix <double> cumulative_gain;
 
@@ -730,21 +730,21 @@ void TestingAnalysisTest::test_calculate_lift_chart()
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.67;
-    output_data(1, 0) = 0.87;
-    output_data(2, 0) = 0.99;
-    output_data(3, 0) = 0.88;
+    outputs(0, 0) = 0.67;
+    outputs(1, 0) = 0.87;
+    outputs(2, 0) = 0.99;
+    outputs(3, 0) = 0.88;
 
-    cumulative_gain = ta.calculate_cumulative_gain(target_data, output_data);
+    cumulative_gain = ta.calculate_cumulative_gain(targets, outputs);
 
     lift_chart = ta.calculate_lift_chart(cumulative_gain);
 
@@ -762,40 +762,40 @@ void TestingAnalysisTest::test_calculate_calibration_plot()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     Matrix <double> calibration_plot;
 
     // Test
 
-    target_data.set(10, 1);
+    targets.set(10, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
-    target_data(4, 0) = 1.0;
-    target_data(5, 0) = 1.0;
-    target_data(6, 0) = 1.0;
-    target_data(7, 0) = 0.0;
-    target_data(8, 0) = 1.0;
-    target_data(9, 0) = 0.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
+    targets(4, 0) = 1.0;
+    targets(5, 0) = 1.0;
+    targets(6, 0) = 1.0;
+    targets(7, 0) = 0.0;
+    targets(8, 0) = 1.0;
+    targets(9, 0) = 0.0;
 
-    output_data.set(10, 1);
+    outputs.set(10, 1);
 
-    output_data(0, 0) = 0.09;
-    output_data(1, 0) = 0.19;
-    output_data(2, 0) = 0.29;
-    output_data(3, 0) = 0.39;
-    output_data(4, 0) = 0.49;
-    output_data(5, 0) = 0.59;
-    output_data(6, 0) = 0.58;
-    output_data(7, 0) = 0.79;
-    output_data(8, 0) = 0.89;
-    output_data(9, 0) = 0.99;
+    outputs(0, 0) = 0.09;
+    outputs(1, 0) = 0.19;
+    outputs(2, 0) = 0.29;
+    outputs(3, 0) = 0.39;
+    outputs(4, 0) = 0.49;
+    outputs(5, 0) = 0.59;
+    outputs(6, 0) = 0.58;
+    outputs(7, 0) = 0.79;
+    outputs(8, 0) = 0.89;
+    outputs(9, 0) = 0.99;
 
-    calibration_plot = ta.calculate_calibration_plot(target_data, output_data);
+    calibration_plot = ta.calculate_calibration_plot(targets, outputs);
 
     assert_true(calibration_plot.get_columns_number() == 2, LOG);
     assert_true(calibration_plot.get_rows_number() == 11, LOG);
@@ -811,72 +811,72 @@ void TestingAnalysisTest::test_calculate_true_positive_instances()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix <double> target_data;
-    Matrix <double> output_data;
+    Matrix <double> targets;
+    Matrix <double> outputs;
 
     Vector<size_t> true_positive_instances;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 0.0;
 
     const Vector<size_t> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
-    true_positive_instances = ta.calculate_true_positive_instances(target_data, output_data, testing_indices, threshold);
+    true_positive_instances = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positive_instances.size() == 1, LOG);
     assert_true(true_positive_instances[0] == 1, LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    true_positive_instances = ta.calculate_true_positive_instances(target_data, output_data, testing_indices, threshold);
+    true_positive_instances = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positive_instances.empty(), LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    true_positive_instances = ta.calculate_true_positive_instances(target_data, output_data, testing_indices, threshold);
+    true_positive_instances = ta.calculate_true_positive_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_positive_instances.size() == 4, LOG);
     assert_true(true_positive_instances[0] == 0, LOG);
@@ -895,52 +895,52 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix<double> target_data;
-    Matrix<double> output_data;
+    Matrix<double> targets;
+    Matrix<double> outputs;
 
     Vector<size_t> false_positive_instances;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 0.0;
 
     const Vector<size_t> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
-    false_positive_instances = ta.calculate_false_positive_instances(target_data, output_data,testing_indices, threshold);
+    false_positive_instances = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
 
     assert_true(false_positive_instances.size() == 1, LOG);
     assert_true(false_positive_instances[0] == 2, LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    false_positive_instances = ta.calculate_false_positive_instances(target_data, output_data,testing_indices, threshold);
+    false_positive_instances = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
 
     assert_true(false_positive_instances.size() == 4, LOG);
     assert_true(false_positive_instances[0] == 0, LOG);
@@ -950,21 +950,21 @@ void TestingAnalysisTest::test_calculate_false_positive_instances()
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 0.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 0.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    false_positive_instances = ta.calculate_false_positive_instances(target_data, output_data,testing_indices, threshold);
+    false_positive_instances = ta.calculate_false_positive_instances(targets, outputs,testing_indices, threshold);
 
     assert_true(false_positive_instances.empty(), LOG);
 }
@@ -979,72 +979,72 @@ void TestingAnalysisTest::test_calculate_false_negative_instances()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix<double> target_data;
-    Matrix<double> output_data;
+    Matrix<double> targets;
+    Matrix<double> outputs;
 
     Vector<size_t> false_negative_instances;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 0.0;
 
     const Vector<size_t> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
-    false_negative_instances = ta.calculate_false_negative_instances(target_data, output_data, testing_indices, threshold);
+    false_negative_instances = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negative_instances.size() == 1, LOG);
     assert_true(false_negative_instances[0] == 3, LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 1.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 0.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 1.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 0.0;
+    outputs(3, 0) = 0.0;
 
-    false_negative_instances = ta.calculate_false_negative_instances(target_data, output_data, testing_indices, threshold);
+    false_negative_instances = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negative_instances.empty(), LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 1.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 1.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 1.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 1.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 0.0;
-    output_data(2, 0) = 0.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 0.0;
+    outputs(2, 0) = 0.0;
+    outputs(3, 0) = 0.0;
 
-    false_negative_instances = ta.calculate_false_negative_instances(target_data, output_data, testing_indices, threshold);
+    false_negative_instances = ta.calculate_false_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(false_negative_instances.size() == 4, LOG);
     assert_true(false_negative_instances[0] == 0, LOG);
@@ -1063,31 +1063,31 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix<double> target_data;
-    Matrix<double> output_data;
+    Matrix<double> targets;
+    Matrix<double> outputs;
 
     Vector<size_t> true_negative_instances;
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 0.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 0.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 0.0;
-    output_data(2, 0) = 0.0;
-    output_data(3, 0) = 0.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 0.0;
+    outputs(2, 0) = 0.0;
+    outputs(3, 0) = 0.0;
 
     const Vector<size_t> testing_indices(0, 1, 3);
     const double threshold = 0.5;
 
-    true_negative_instances = ta.calculate_true_negative_instances(target_data, output_data, testing_indices, threshold);
+    true_negative_instances = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negative_instances.size() == 4, LOG);
     assert_true(true_negative_instances[0] == 0, LOG);
@@ -1097,41 +1097,41 @@ void TestingAnalysisTest::test_calculate_true_negative_instances()
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 1.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 1.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    true_negative_instances = ta.calculate_true_negative_instances(target_data, output_data, testing_indices, threshold);
+    true_negative_instances = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negative_instances.empty(), LOG);
 
     // Test
 
-    target_data.set(4, 1);
+    targets.set(4, 1);
 
-    target_data(0, 0) = 0.0;
-    target_data(1, 0) = 0.0;
-    target_data(2, 0) = 1.0;
-    target_data(3, 0) = 0.0;
+    targets(0, 0) = 0.0;
+    targets(1, 0) = 0.0;
+    targets(2, 0) = 1.0;
+    targets(3, 0) = 0.0;
 
-    output_data.set(4, 1);
+    outputs.set(4, 1);
 
-    output_data(0, 0) = 0.0;
-    output_data(1, 0) = 1.0;
-    output_data(2, 0) = 1.0;
-    output_data(3, 0) = 1.0;
+    outputs(0, 0) = 0.0;
+    outputs(1, 0) = 1.0;
+    outputs(2, 0) = 1.0;
+    outputs(3, 0) = 1.0;
 
-    true_negative_instances = ta.calculate_true_negative_instances(target_data, output_data, testing_indices, threshold);
+    true_negative_instances = ta.calculate_true_negative_instances(targets, outputs, testing_indices, threshold);
 
     assert_true(true_negative_instances.size() == 1, LOG);
     assert_true(true_negative_instances[0] == 0, LOG);
@@ -1147,37 +1147,37 @@ void TestingAnalysisTest::test_calculate_multiple_classification_rates()
 
     TestingAnalysis ta(&nn, &ds);
 
-    Matrix<double> target_data;
-    Matrix<double> output_data;
+    Matrix<double> targets;
+    Matrix<double> outputs;
 
     // Test
 
-    target_data.set(9, 3);
-    output_data.set(9, 3);
+    targets.set(9, 3);
+    outputs.set(9, 3);
 
-    target_data(0,0) = 1; target_data(0,1) = 0; target_data(0,2) = 0;
-    target_data(1,0) = 0; target_data(1,1) = 1; target_data(1,2) = 0;
-    target_data(2,0) = 0; target_data(2,1) = 0; target_data(2,2) = 1;
-    target_data(3,0) = 1; target_data(3,1) = 0; target_data(3,2) = 0;
-    target_data(4,0) = 0; target_data(4,1) = 1; target_data(4,2) = 0;
-    target_data(5,0) = 0; target_data(5,1) = 0; target_data(5,2) = 1;
-    target_data(6,0) = 1; target_data(6,1) = 0; target_data(6,2) = 0;
-    target_data(7,0) = 0; target_data(7,1) = 1; target_data(7,2) = 0;
-    target_data(8,0) = 0; target_data(8,1) = 0; target_data(8,2) = 1;
+    targets(0,0) = 1; targets(0,1) = 0; targets(0,2) = 0;
+    targets(1,0) = 0; targets(1,1) = 1; targets(1,2) = 0;
+    targets(2,0) = 0; targets(2,1) = 0; targets(2,2) = 1;
+    targets(3,0) = 1; targets(3,1) = 0; targets(3,2) = 0;
+    targets(4,0) = 0; targets(4,1) = 1; targets(4,2) = 0;
+    targets(5,0) = 0; targets(5,1) = 0; targets(5,2) = 1;
+    targets(6,0) = 1; targets(6,1) = 0; targets(6,2) = 0;
+    targets(7,0) = 0; targets(7,1) = 1; targets(7,2) = 0;
+    targets(8,0) = 0; targets(8,1) = 0; targets(8,2) = 1;
 
-    output_data(0,0) = 1; output_data(0,1) = 0; output_data(0,2) = 0;
-    output_data(1,0) = 0; output_data(1,1) = 1; output_data(1,2) = 0;
-    output_data(2,0) = 0; output_data(2,1) = 0; output_data(2,2) = 1;
-    output_data(3,0) = 0; output_data(3,1) = 1; output_data(3,2) = 0;
-    output_data(4,0) = 1; output_data(4,1) = 0; output_data(4,2) = 0;
-    output_data(5,0) = 0; output_data(5,1) = 1; output_data(5,2) = 0;
-    output_data(6,0) = 0; output_data(6,1) = 0; output_data(6,2) = 1;
-    output_data(7,0) = 0; output_data(7,0) = 0; output_data(7,2) = 1;
-    output_data(8,0) = 1; output_data(8,1) = 0; output_data(8,2) = 0;
+    outputs(0,0) = 1; outputs(0,1) = 0; outputs(0,2) = 0;
+    outputs(1,0) = 0; outputs(1,1) = 1; outputs(1,2) = 0;
+    outputs(2,0) = 0; outputs(2,1) = 0; outputs(2,2) = 1;
+    outputs(3,0) = 0; outputs(3,1) = 1; outputs(3,2) = 0;
+    outputs(4,0) = 1; outputs(4,1) = 0; outputs(4,2) = 0;
+    outputs(5,0) = 0; outputs(5,1) = 1; outputs(5,2) = 0;
+    outputs(6,0) = 0; outputs(6,1) = 0; outputs(6,2) = 1;
+    outputs(7,0) = 0; outputs(7,0) = 0; outputs(7,2) = 1;
+    outputs(8,0) = 1; outputs(8,1) = 0; outputs(8,2) = 0;
 
     const Vector<size_t> testing_indices(0, 1, 8);
 
-    Matrix< Vector<size_t> > multiple_classification_rates = ta.calculate_multiple_classification_rates(target_data, output_data, testing_indices);
+    Matrix< Vector<size_t> > multiple_classification_rates = ta.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     assert_true(multiple_classification_rates(0,0).size() == 1, LOG);
     assert_true(multiple_classification_rates(0,0)[0] == 0, LOG);
@@ -1233,7 +1233,7 @@ void TestingAnalysisTest::run_test_case()
 
    // Target and output data methods
 
-   test_calculate_target_output_data();
+   test_calculate_target_outputs();
 
    // Error data methods
 

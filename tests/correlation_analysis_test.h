@@ -6,7 +6,7 @@
 /*   C O R R E L A T I O N   A N A L Y S I S   T E S T   C L A S S                                              */
 /*                                                                                                              */
 /*   Javier Sanchez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   javiersanchez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/

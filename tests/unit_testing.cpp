@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   U N I T   T E S T I N G   C L A S S                                                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -27,7 +26,7 @@ UnitTesting::UnitTesting()
    tests_passed_count = 0;
    tests_failed_count = 0;
 
-   numerical_differentiation_tests = false;
+   numerical_differentiation_tests = true;
    random_tests_number = 0;
 
    display = true;

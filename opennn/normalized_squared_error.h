@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   N O R M A L I Z E D   S Q U A R E D   E R R O R   C L A S S   H E A D E R                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -26,7 +26,7 @@
 
 // OpenNN includes
 
-#include "error_term.h"
+#include "loss_index.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -41,7 +41,7 @@ namespace OpenNN
 /// If it has a value of unity then the neural network is predicting the data "in the mean",
 /// A value of zero means perfect prediction of data.
 
-class NormalizedSquaredError : public ErrorTerm
+class NormalizedSquaredError : public LossIndex
 {
 
 public:
@@ -81,48 +81,45 @@ public:
     void set_normalization_coefficient();
     void set_normalization_coefficient(const double&);
 
+    void set_selection_normalization_coefficient();
+    void set_selection_normalization_coefficient(const double&);
+
     void set_default();
 
    // Normalization coefficients 
 
    double calculate_normalization_coefficient(const Matrix<double>&, const Vector<double>&) const;
 
-   // Checking methods
+   // Error methods
 
-   void check() const;
+   double calculate_training_error() const;
 
-   // loss methods
-
-   double calculate_error() const;
-   double calculate_error(const Vector<double>&) const;
    double calculate_selection_error() const;
 
-   Vector<double> calculate_error_normalization(const Vector<double>&) const;
-   Vector<double> calculate_error_normalization(const Vector<double>&, const Vector<double>&) const;
-   Vector<double> calculate_selection_error_normalization(const Vector<double>&) const;
+   double calculate_training_error(const Vector<double>&) const;
 
-   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
-   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
+   double calculate_batch_error(const Vector<size_t> &) const;
 
-   Vector<double> calculate_gradient() const;
-//   Matrix<double> calculate_Hessian() const;
+   Vector<double> calculate_training_error_gradient() const;
 
-   Vector<double> calculate_gradient_normalization(const Vector<double>&) const;
+   double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
 
-   // Objective terms methods
+   double calculate_error(const Vector<size_t>&, const Vector<double>&) const;
 
-   Vector<double> calculate_terms() const;
-   Vector<double> calculate_terms(const Vector<double>&) const;
+   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 
-   Matrix<double> calculate_terms_Jacobian() const;
+   // Error terms methods
 
-   ErrorTerm::FirstOrderTerms calculate_first_order_terms() const;
+   Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;
+   Vector<double> calculate_error_terms(const Vector<double>&) const;
 
    // Squared errors methods
 
    Vector<double> calculate_squared_errors() const;
 
    Vector<size_t> calculate_maximal_errors(const size_t& = 10) const;
+
+   LossIndex::SecondOrderErrorTerms calculate_terms_second_order_loss() const;
 
    string write_error_term_type() const;
 
@@ -132,18 +129,18 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   // void read_XML(   );
-
-//   string write_information() const;
-
 
 private:
+
+   // METHODS
+
 
    // MEMBERS
 
    /// Coefficient of normalization for the calculation of the training error.
 
    double normalization_coefficient;
+   double selection_normalization_coefficient;
 };
 
 }

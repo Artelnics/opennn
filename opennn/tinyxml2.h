@@ -183,7 +183,7 @@ private:
     char*   _end;
 
     StrPair( const StrPair& other );	// not supported
-    void operator=( StrPair& other );	// not supported, use TransferTo()
+    void operator= ( StrPair& other );	// not supported, use TransferTo()
 };
 
 
@@ -288,7 +288,7 @@ public:
 
 private:
     DynArray( const DynArray& ); // not supported
-    void operator=( const DynArray& ); // not supported
+    void operator= ( const DynArray& ); // not supported
 
     void EnsureCapacity( int cap ) {
         TIXMLASSERT( cap > 0 );
@@ -426,11 +426,11 @@ public:
 	//		64k:	4000	21000
     // Declared public because some compilers do not accept to use ITEMS_PER_BLOCK
     // in private part if ITEMS_PER_BLOCK is private
-    enum { ITEMS_PER_BLOCK =(4 * 1024) / ITEM_SIZE };
+    enum { ITEMS_PER_BLOCK = (4 * 1024) / ITEM_SIZE };
 
 private:
     MemPoolT( const MemPoolT& ); // not supported
-    void operator=( const MemPoolT& ); // not supported
+    void operator= ( const MemPoolT& ); // not supported
 
     union Item {
         Item*   next;
@@ -548,7 +548,7 @@ public:
 
         while( IsWhiteSpace(*p) ) {
             if(curLineNumPtr && *p == '\n') {
-                ++(*curLineNumPtr);
+                ++ (*curLineNumPtr);
             }
             ++p;
         }
@@ -720,7 +720,7 @@ public:
 
     /** The meaning of 'value' changes for the specific type.
     	@verbatim
-    	Document:	empty(NULL is returned, not an empty string)
+    	Document:	empty(nullptr is returned, not an empty string)
     	Element:	name of the element
     	Comment:	the comment text
     	Unknown:	the tag contents
@@ -797,7 +797,7 @@ public:
     }
 
     /// Get the previous(left) sibling element of this node, with an optionally supplied name.
-    const XMLElement*	PreviousSiblingElement( const char* name = 0 ) const ;
+    const XMLElement*	PreviousSiblingElement( const char* name = 0 ) const;
 
     XMLElement*	PreviousSiblingElement( const char* name = 0 ) {
         return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->PreviousSiblingElement( name ) );
@@ -958,7 +958,7 @@ private:
     const XMLElement* ToElementWithName( const char* name ) const;
 
     XMLNode( const XMLNode& );	// not supported
-    XMLNode& operator=( const XMLNode& );	// not supported
+    XMLNode& operator= ( const XMLNode& );	// not supported
 };
 
 
@@ -1009,7 +1009,7 @@ private:
     bool _isCData;
 
     XMLText( const XMLText& );	// not supported
-    XMLText& operator=( const XMLText& );	// not supported
+    XMLText& operator= ( const XMLText& );	// not supported
 };
 
 
@@ -1038,7 +1038,7 @@ protected:
 
 private:
     XMLComment( const XMLComment& );	// not supported
-    XMLComment& operator=( const XMLComment& );	// not supported
+    XMLComment& operator= ( const XMLComment& );	// not supported
 };
 
 
@@ -1077,7 +1077,7 @@ protected:
 
 private:
     XMLDeclaration( const XMLDeclaration& );	// not supported
-    XMLDeclaration& operator=( const XMLDeclaration& );	// not supported
+    XMLDeclaration& operator= ( const XMLDeclaration& );	// not supported
 };
 
 
@@ -1112,7 +1112,7 @@ protected:
 
 private:
     XMLUnknown( const XMLUnknown& );	// not supported
-    XMLUnknown& operator=( const XMLUnknown& );	// not supported
+    XMLUnknown& operator= ( const XMLUnknown& );	// not supported
 };
 
 
@@ -1159,7 +1159,7 @@ public:
 
     /// Query as an unsigned integer. See IntValue()
     unsigned UnsignedValue() const			{
-        unsigned i=0;
+        unsigned i = 0;
         QueryUnsignedValue( &i );
         return i;
     }
@@ -1220,7 +1220,7 @@ private:
     virtual ~XMLAttribute()	{}
 
     XMLAttribute( const XMLAttribute& );	// not supported
-    void operator=( const XMLAttribute& );	// not supported
+    void operator= ( const XMLAttribute& );	// not supported
     void SetName( const char* name );
 
     char* ParseDeep( char* p, bool processEntities, int* curLineNumPtr );
@@ -1616,7 +1616,7 @@ private:
     XMLElement( XMLDocument* doc );
     virtual ~XMLElement();
     XMLElement( const XMLElement& );	// not supported
-    void operator=( const XMLElement& );	// not supported
+    void operator= ( const XMLElement& );	// not supported
 
     XMLAttribute* FindAttribute( const char* name ) {
         return const_cast<XMLAttribute*>(const_cast<const XMLElement*>(this)->FindAttribute( name ));
@@ -1681,7 +1681,7 @@ public:
     	specified, TinyXML-2 will assume 'xml' points to a
     	null terminated string.
     */
-    XMLError Parse( const char* xml, size_t nBytes=(size_t)(-1) );
+    XMLError Parse( const char* xml, size_t nBytes= (size_t)(-1) );
 
     /**
     	Load an XML file from disk.
@@ -1864,7 +1864,7 @@ public:
 
 private:
     XMLDocument( const XMLDocument& );	// not supported
-    void operator=( const XMLDocument& );	// not supported
+    void operator= ( const XMLDocument& );	// not supported
 
     bool			_writeBOM;
     bool			_processEntities;
@@ -1978,7 +1978,7 @@ public:
     XMLHandle( const XMLHandle& ref ) : _node( ref._node ) {
     }
     /// Assignment
-    XMLHandle& operator=( const XMLHandle& ref )							{
+    XMLHandle& operator= ( const XMLHandle& ref )							{
         _node = ref._node;
         return *this;
     }
@@ -2056,7 +2056,7 @@ public:
     XMLConstHandle( const XMLConstHandle& ref ) : _node( ref._node ) {
     }
 
-    XMLConstHandle& operator=( const XMLConstHandle& ref )							{
+    XMLConstHandle& operator= ( const XMLConstHandle& ref )							{
         _node = ref._node;
         return *this;
     }
@@ -2274,7 +2274,7 @@ private:
 
     // Prohibit cloning, intentionally not implemented
     XMLPrinter( const XMLPrinter& );
-    XMLPrinter& operator=( const XMLPrinter& );
+    XMLPrinter& operator= ( const XMLPrinter& );
 };
 
 

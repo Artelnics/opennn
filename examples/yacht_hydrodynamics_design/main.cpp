@@ -5,8 +5,7 @@
 /*                                                                                                              */
 /*   Y A C H T   R E S I S T A N C E   D E S I G N   A P P L I C A T I O N                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
 /*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */  
 /****************************************************************************************************************/
@@ -32,9 +31,9 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Yacht Resistance Design Application." << std::endl;
+        cout << "OpenNN. Yacht Resistance Design Application." << endl;
 
-        srand((unsigned)time(NULL));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
@@ -56,8 +55,8 @@ int main(void)
         variables_pointer->set_name(5, "froude_number");
         variables_pointer->set_name(6, "residuary_resistance");
 
-        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        const Matrix<string> inputs_information = variables_pointer->get_inputs_information();
+        const Matrix<string> targets_information = variables_pointer->get_targets_information();
 
         // Instances
 
@@ -70,9 +69,9 @@ int main(void)
 
         // Neural network
 
-        const size_t inputs_number = data_set.get_variables().count_inputs_number();
+        const size_t inputs_number = data_set.get_variables().get_inputs_number();
         const size_t hidden_neurons_number = 30;
-        const size_t outputs_number = data_set.get_variables().count_targets_number();
+        const size_t outputs_number = data_set.get_variables().get_targets_number();
 
         NeuralNetwork neural_network(inputs_number, hidden_neurons_number, outputs_number);
 
@@ -100,19 +99,13 @@ int main(void)
 
         unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-        // Loss index
-
-        LossIndex loss_index(&neural_network, &data_set);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         // Training strategy
 
-        TrainingStrategy training_strategy(&loss_index);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
+        quasi_Newton_method_pointer->set_maximum_epochs_number(1000);
 
         quasi_Newton_method_pointer->set_reserve_loss_history(true);
 
@@ -140,9 +133,9 @@ int main(void)
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
 
         return(1);
     }
@@ -150,7 +143,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

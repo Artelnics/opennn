@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   R O O T   M E A N   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -50,11 +49,11 @@ public:
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
    void test_calculate_loss();   
 
-   void test_calculate_selection_loss();
+   void test_calculate_selection_error();
 
    void test_calculate_gradient();
 
