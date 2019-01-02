@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   P R O B A B I L I S T I C   L A Y E R   C L A S S                                                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -69,7 +68,7 @@ ProbabilisticLayer::~ProbabilisticLayer()
 /// It assigns to this object the members of an existing probabilistic layer object.
 /// @param other_probabilistic_layer Probabilistic layer object to be assigned.
 
-ProbabilisticLayer& ProbabilisticLayer::operator =(const ProbabilisticLayer& other_probabilistic_layer)
+ProbabilisticLayer& ProbabilisticLayer::operator = (const ProbabilisticLayer& other_probabilistic_layer)
 {
     if(this != &other_probabilistic_layer)
     {
@@ -88,19 +87,19 @@ ProbabilisticLayer& ProbabilisticLayer::operator =(const ProbabilisticLayer& oth
 
 // EQUAL TO OPERATOR
 
-// bool operator ==(const ProbabilisticLayer&) const method
+// bool operator == (const ProbabilisticLayer&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_probabilistic_layer Probabilistic layer to be compared with.
 
-bool ProbabilisticLayer::operator ==(const ProbabilisticLayer& other_probabilistic_layer) const
+bool ProbabilisticLayer::operator == (const ProbabilisticLayer& other_probabilistic_layer) const
 {
     if(probabilistic_neurons_number == other_probabilistic_layer.probabilistic_neurons_number
-            && probabilistic_method == other_probabilistic_layer.probabilistic_method
-            && decision_threshold == other_probabilistic_layer.decision_threshold
-            && display == other_probabilistic_layer.display)
+    && probabilistic_method == other_probabilistic_layer.probabilistic_method
+    && fabs(decision_threshold - other_probabilistic_layer.decision_threshold) < std::numeric_limits<double>::min()
+    && display == other_probabilistic_layer.display)
     {
         return(true);
     }
@@ -490,18 +489,15 @@ void ProbabilisticLayer::initialize_random()
 
         throw logic_error(buffer.str());
     }
-        break;
     }
 }
 
-
-// Vector<double> calculate_outputs(const Vector<double>&) const method
 
 /// This method processes the input to the probabilistic layer in order to obtain a set of outputs which can be interpreted as probabilities. 
 /// This posprocessing is performed according to the probabilistic method to be used. 
 /// @param inputs Set of inputs to the probabilistic layer.
 
-Vector<double> ProbabilisticLayer::calculate_outputs(const Vector<double>& inputs) const
+Matrix<double> ProbabilisticLayer::calculate_outputs(const Matrix<double>& inputs) const
 {
     // Control sentence(if debug)
 
@@ -524,53 +520,45 @@ Vector<double> ProbabilisticLayer::calculate_outputs(const Vector<double>& input
 
     switch(probabilistic_method)
     {
-    case Binary:
-    {
-        return(calculate_binary_output(inputs));
-    }
-        break;
+        case Binary:
+        {
+            return(calculate_binary_outputs(inputs));
+        }
 
-    case Probability:
-    {
-        return(calculate_probability_output(inputs));
-    }
-        break;
+        case Probability:
+        {
+            return(calculate_probability_outputs(inputs));
+        }
 
-    case Competitive:
-    {
-        return(calculate_competitive_output(inputs));
-    }
-        break;
+        case Competitive:
+        {
+            return(calculate_competitive_outputs(inputs));
+        }
 
-    case Softmax:
-    {
-        return(calculate_softmax_output(inputs));
-    }
-        break;
+        case Softmax:
+        {
+            return(calculate_softmax_outputs(inputs));
+        }
 
-    case NoProbabilistic:
-    {
-        return(calculate_no_probabilistic_output(inputs));
-    }
-        break;
-
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw logic_error(buffer.str());
-    }// end default
-        break;
+        case NoProbabilistic:
+        {
+            return(calculate_no_probabilistic_outputs(inputs));
+        }
 
     }// end switch
+
+    // Default
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+           << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
+           << "Unknown probabilistic method.\n";
+
+    throw logic_error(buffer.str());
+
 }  
 
-
-// Matrix<double> calculate_Jacobian(const Vector<double>&) const method
 
 /// Returns the partial derivatives of the outputs from the probabilistic layer with respect to its inputs,
 /// depending on the probabilistic method to be used.
@@ -600,59 +588,69 @@ Matrix<double> ProbabilisticLayer::calculate_Jacobian(const Vector<double>& inpu
 
     switch(probabilistic_method)
     {
-    case Binary:
-    {
-        return(calculate_binary_Jacobian(inputs));
-    }
-        break;
+        case Binary:
+        {
+            return(calculate_binary_Jacobian(inputs));
+        }
+    //        break;
 
-    case Probability:
-    {
-        return(calculate_probability_Jacobian(inputs));
-    }
-        break;
+        case Probability:
+        {
+            return(calculate_probability_Jacobian(inputs));
+        }
+    //        break;
 
-    case Competitive:
-    {
-        return(calculate_competitive_Jacobian(inputs));
-    }
-        break;
+        case Competitive:
+        {
+            return(calculate_competitive_Jacobian(inputs));
+        }
+    //        break;
 
-    case Softmax:
-    {
-        return(calculate_softmax_Jacobian(inputs));
-    }
-        break;
+        case Softmax:
+        {
+            return(calculate_softmax_Jacobian(inputs));
+        }
+    //        break;
 
-    case NoProbabilistic:
-    {
-        return(calculate_no_probabilistic_Jacobian(inputs));
-    }
-        break;
+        case NoProbabilistic:
+        {
+            return(calculate_no_probabilistic_Jacobian(inputs));
+        }
+    //        break;
 
-    default:
-    {
-        ostringstream buffer;
+//        default:
+//        {
+//            ostringstream buffer;
 
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "Matrix<double> calculate_Jacobian(const Vector<double>&) const method.\n"
-               << "Unknown probabilistic method.\n";
+//            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+//                   << "Matrix<double> calculate_Jacobian(const Vector<double>&) const method.\n"
+//                   << "Unknown probabilistic method.\n";
 
-        throw logic_error(buffer.str());
-    }// end default
-        break;
+//            throw logic_error(buffer.str());
+//        }// end default
+    //        break;
 
     }// end switch
+
+    // Default
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+           << "Matrix<double> calculate_Jacobian(const Vector<double>&) const method.\n"
+           << "Unknown probabilistic method.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
-// Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&) const method
+// Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const method
 
 /// Calculates the Hessian form of the probabilistic layer. 
 /// This is a vector of matrices. 
 /// The elements contain second partial derivatives of the outputs from the layer with resptect to the inputs to it.
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_Hessian_form(const Vector<double>& inputs) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_Hessian(const Vector<double>& inputs) const
 {
     // Control sentence(if debug)
 
@@ -665,7 +663,7 @@ Vector< Matrix<double> > ProbabilisticLayer::calculate_Hessian_form(const Vector
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "Matrix<double> calculate_Hessian_form(const Vector<double>&) const method.\n"
+               << "Matrix<double> calculate_Hessian(const Vector<double>&) const method.\n"
                << "Size must be equal to number of probabilistic neurons.\n";
 
         throw logic_error(buffer.str());
@@ -675,59 +673,49 @@ Vector< Matrix<double> > ProbabilisticLayer::calculate_Hessian_form(const Vector
 
     switch(probabilistic_method)
     {
-    case Binary:
-    {
-        return(calculate_binary_Hessian_form(inputs));
-    }
-        break;
+        case Binary:
+        {
+            return(calculate_binary_Hessian(inputs));
+        }
 
-    case Probability:
-    {
-        return(calculate_probability_Hessian_form(inputs));
-    }
-        break;
+        case Probability:
+        {
+            return(calculate_probability_Hessian(inputs));
+        }
 
-    case Competitive:
-    {
-        return(calculate_competitive_Hessian_form(inputs));
-    }
-        break;
+        case Competitive:
+        {
+            return(calculate_competitive_Hessian(inputs));
+        }
 
-    case Softmax:
-    {
-        return(calculate_softmax_Hessian_form(inputs));
-    }
-        break;
+        case Softmax:
+        {
+            return(calculate_softmax_Hessian(inputs));
+        }
 
-    case NoProbabilistic:
-    {
-        return(calculate_no_probabilistic_Hessian_form(inputs));
-    }
-        break;
-
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "Matrix<double> calculate_Hessian_form(const Vector<double>&) const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw logic_error(buffer.str());
-    }// end default
-        break;
-
+        case NoProbabilistic:
+        {
+            return(calculate_no_probabilistic_Hessian(inputs));
+        }
     }// end switch
+
+    // Default
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+           << "Matrix<double> calculate_Hessian(const Vector<double>&) const method.\n"
+           << "Unknown probabilistic method.\n";
+
+    throw logic_error(buffer.str());
 }
 
-
-// Vector<double> calculate_binary_output(const Vector<double>&) const method
 
 /// Returns the output value from this layer as a binary value(0 or 1).
 /// The size of the probabilistic layer must be 1.
 /// @param inputs Vector of input values. The size here must be also 1.
 
-Vector<double> ProbabilisticLayer::calculate_binary_output(const Vector<double>& inputs) const
+Matrix<double> ProbabilisticLayer::calculate_binary_outputs(const Matrix<double>& inputs) const
 {
     // Control sentence(if debug)
 
@@ -746,22 +734,25 @@ Vector<double> ProbabilisticLayer::calculate_binary_output(const Vector<double>&
 
 #endif
 
-    Vector<double> outputs(1);
+    const size_t points_number = inputs.get_rows_number();
 
-    if(inputs[0] < decision_threshold)
+    Matrix<double> outputs(points_number, 1);
+
+    for(size_t i = 0; i < points_number; i++)
     {
-        outputs[0] = 0.0;
-    }
-    else
-    {
-        outputs[0] = 1.0;
+        if(inputs(i,0) < decision_threshold)
+        {
+            outputs(i,0) = 0.0;
+        }
+        else
+        {
+            outputs(i,0) = 1.0;
+        }
     }
 
     return(outputs);
 }
 
-
-// Matrix<double> calculate_binary_Jacobian(const Vector<double>&) const method
 
 /// This method throws an exception, since the threshold function is not derivable.
 
@@ -777,28 +768,26 @@ Matrix<double> ProbabilisticLayer::calculate_binary_Jacobian(const Vector<double
 }
 
 
-// Vector< Matrix<double> > calculate_binary_Hessian_form(const Vector<double>&) const method
+// Vector< Matrix<double> > calculate_binary_Hessian(const Vector<double>&) const method
 
 /// This method throws an exception, since the threshold function is not derivable.
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_binary_Hessian_form(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_binary_Hessian(const Vector<double>&) const
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Vector< Matrix<double> > calculate_binary_Hessian_form(const Vector<double>&) const method.\n"
+           << "Vector< Matrix<double> > calculate_binary_Hessian(const Vector<double>&) const method.\n"
            << "The binary function is not derivable.\n";
 
     throw logic_error(buffer.str());
 }
 
 
-// Vector<double> calculate_probability_output(const Vector<double>&) const method
-
 /// Check that the input values fall between 0 and 1.
 /// @param inputs Vector of input values to the probabilistic layer.
 
-Vector<double> ProbabilisticLayer::calculate_probability_output(const Vector<double>& inputs) const
+Matrix<double> ProbabilisticLayer::calculate_probability_outputs(const Matrix<double>& inputs) const
 {
     // Control sentence(if debug)
 
@@ -817,26 +806,29 @@ Vector<double> ProbabilisticLayer::calculate_probability_output(const Vector<dou
 
 #endif
 
-    Vector<double> outputs(1);
+    const size_t points_number = inputs.get_rows_number();
 
-    if(inputs[0] > 1)
+    Matrix<double> outputs(points_number, 1);
+
+    for(size_t i = 0; i < points_number; i++)
     {
-        outputs[0] = 1;
-    }
-    else if(inputs[0] < 0)
-    {
-        outputs[0] = 0;
-    }
-    else
-    {
-        outputs[0] = inputs[0];
+        if(inputs(i,0) > 1)
+        {
+            outputs(i,0) = 1;
+        }
+        else if(inputs(i,0) < 0)
+        {
+            outputs(i,0) = 0;
+        }
+        else
+        {
+            outputs(i,0) = inputs(i,0);
+        }
     }
 
-    return(outputs);
+    return(outputs); 
 }
 
-
-// Matrix<double> calculate_probability_Jacobian(const Vector<double>&) const method
 
 /// @todo Check that the input values fall between 0 and 1.
 
@@ -848,32 +840,28 @@ Matrix<double> ProbabilisticLayer::calculate_probability_Jacobian(const Vector<d
 }
 
 
-// Vector< Matrix<double> > calculate_probability_Hessian_form(const Vector<double>&) const method
+// Vector< Matrix<double> > calculate_probability_Hessian(const Vector<double>&) const method
 
 /// @todo Check that the input values fall between 0 and 1.
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_probability_Hessian_form(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_probability_Hessian(const Vector<double>&) const
 {
-    Vector< Matrix<double> > Hessian_form(1);
+    Vector< Matrix<double> > Hessian(1);
 
-    Hessian_form[0].set(1, 1, 0.0);
+    Hessian[0].set(1, 1, 0.0);
 
-    return(Hessian_form);
+    return(Hessian);
 }
 
-
-// Vector<double> calculate_competitive_output(const Vector<double>&) const method
 
 /// Returns the outputs from the layer for given inputs when the probabilistic method is the competitive. 
 /// @param inputs Vector of input values to the probabilistic layer. 
 
-Vector<double> ProbabilisticLayer::calculate_competitive_output(const Vector<double>& inputs) const
+Matrix<double> ProbabilisticLayer::calculate_competitive_outputs(const Matrix<double>& inputs) const
 {
     return(inputs.calculate_competitive());
 }
 
-
-// Matrix<double> calculate_competitive_Jacobian(const Vector<double>&) const method
 
 /// This method throws an exception, since the competitive function is not derivable. 
 
@@ -889,34 +877,31 @@ Matrix<double> ProbabilisticLayer::calculate_competitive_Jacobian(const Vector<d
 }
 
 
-// Vector< Matrix<double> > calculate_competitive_Hessian_form(const Vector<double>&) const method
+// Vector< Matrix<double> > calculate_competitive_Hessian(const Vector<double>&) const method
 
 /// This method throws an exception, since the competitive function is not derivable. 
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_competitive_Hessian_form(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_competitive_Hessian(const Vector<double>&) const
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Vector< Matrix<double> > calculate_competitive_Hessian_form(const Vector<double>&) const method.\n"
+           << "Vector< Matrix<double> > calculate_competitive_Hessian(const Vector<double>&) const method.\n"
            << "The competitive function is not derivable.\n";
 
     throw logic_error(buffer.str());
 }
 
 
-// Vector<double> calculate_softmax_output(const Vector<double>&) const method
-
 /// Returns the outputs of the softmax function for given inputs. 
 /// @param inputs Input values to the probabilistic layer. 
 
-Vector<double> ProbabilisticLayer::calculate_softmax_output(const Vector<double>& inputs) const
+Matrix<double> ProbabilisticLayer::calculate_softmax_outputs(const Matrix<double>& inputs) const
 {
-    return(inputs.calculate_softmax());
+    return(inputs.calculate_softmax_rows());
+
 }
 
-
-// Matrix<double> calculate_softmax_Jacobian(const Vector<double>&) const method
 
 /// Returns the partial derivatives of the softmax outputs with respect to the inputs. 
 /// @param inputs Input values to the probabilistic layer. 
@@ -946,19 +931,19 @@ Matrix<double> ProbabilisticLayer::calculate_softmax_Jacobian(const Vector<doubl
 }
 
 
-// Vector< Matrix<double> > calculate_softmax_Hessian_form(const Vector<double>&) const method
+// Vector< Matrix<double> > calculate_softmax_Hessian(const Vector<double>&) const method
 
 /// Returns the second partial derivatives of the softmax outputs with respect to the inputs,
 /// in the so called Hessian form. 
 /// @todo
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_softmax_Hessian_form(const Vector<double>& inputs) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_softmax_Hessian(const Vector<double>& inputs) const
 {
-    Vector< Matrix<double> > Hessian_form(probabilistic_neurons_number);
+    Vector< Matrix<double> > Hessian(probabilistic_neurons_number);
 
     for(size_t i = 0; i < probabilistic_neurons_number; i++)
     {
-        Hessian_form[i].set(probabilistic_neurons_number, probabilistic_neurons_number);
+        Hessian[i].set(probabilistic_neurons_number, probabilistic_neurons_number);
     }
 
     const Vector<double> outputs = inputs.calculate_softmax();
@@ -971,45 +956,41 @@ Vector< Matrix<double> > ProbabilisticLayer::calculate_softmax_Hessian_form(cons
             {
                 if(j == i && j == k && i == k)
                 {
-                    Hessian_form[i](j, k) = outputs[i]*(1 - outputs[i] - 2*outputs[i]*(1 - outputs[i]));
+                    Hessian[i](j, k) = outputs[i]*(1 - outputs[i] - 2*outputs[i]*(1 - outputs[i]));
                 }
                 else if(j == i && j != k && i != k)
                 {
-                    Hessian_form[i](j, k) = -outputs[i]*outputs[k]*(1 - 2*outputs[i]);
+                    Hessian[i](j, k) = -outputs[i]*outputs[k]*(1 - 2*outputs[i]);
                 }
                 else if(j != i && j == k && i != k)
                 {
-                    Hessian_form[i](j, k) = outputs[i]*outputs[j]*outputs[k] - outputs[i]*outputs[j]*(1 - outputs[j]);
+                    Hessian[i](j, k) = outputs[i]*outputs[j]*outputs[k] - outputs[i]*outputs[j]*(1 - outputs[j]);
                 }
                 else if(j != i && i == k && j != k)
                 {
-                    Hessian_form[i](j, k) = outputs[i]*outputs[j]*outputs[k] - outputs[i]*outputs[j]*(1 - outputs[i]);
+                    Hessian[i](j, k) = outputs[i]*outputs[j]*outputs[k] - outputs[i]*outputs[j]*(1 - outputs[i]);
                 }
                 else if(j != i && i != k && j != k)
                 {
-                    Hessian_form[i](j, k) = 2*outputs[i]*outputs[j]*outputs[k];
+                    Hessian[i](j, k) = 2*outputs[i]*outputs[j]*outputs[k];
                 }
             }
         }
     }
 
-    return(Hessian_form);
+    return(Hessian);
 }
 
-
-// Vector<double> calculate_no_probabilistic_output(const Vector<double>&) const method
 
 /// Returns the outputs of the no probabilistic function for given inputs.
 /// This is just the identity function.
 /// @param inputs Input values to the probabilistic layer.
 
-Vector<double> ProbabilisticLayer::calculate_no_probabilistic_output(const Vector<double>& inputs) const
+Matrix<double> ProbabilisticLayer::calculate_no_probabilistic_outputs(const Matrix<double>& inputs) const
 {
     return(inputs);
 }
 
-
-// Matrix<double> calculate_no_probabilistic_Jacobian(const Vector<double>&) const method
 
 /// Returns the partial derivatives of the no probabilistic outputs with respect to the inputs.
 /// This is just the identity matrix of size the number of probabilistic neurons.
@@ -1024,17 +1005,15 @@ Matrix<double> ProbabilisticLayer::calculate_no_probabilistic_Jacobian(const Vec
 }
 
 
-// Vector< Matrix<double> > calculate_no_probabilistic_Hessian_form(const Vector<double>&) const method
-
 /// Returns the second partial derivatives of the no probabilistic outputs with respect to the inputs,
 /// in the so called Hessian form.
 /// @todo
 
-Vector< Matrix<double> > ProbabilisticLayer::calculate_no_probabilistic_Hessian_form(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_no_probabilistic_Hessian(const Vector<double>&) const
 {
-    Vector< Matrix<double> > Hessian_form;
+    Vector< Matrix<double> > Hessian;
 
-    return(Hessian_form);
+    return(Hessian);
 }
 
 
@@ -1067,8 +1046,8 @@ tinyxml2::XMLDocument* ProbabilisticLayer::to_XML() const
 
     document->InsertFirstChild(root_element);
 
-    tinyxml2::XMLElement* element = NULL;
-    tinyxml2::XMLText* text = NULL;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
     // Probabilistic neurons number
     {
@@ -1180,7 +1159,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Probabilistic layer element is NULL.\n";
+               << "Probabilistic layer element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1197,11 +1176,11 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 try
                 {
-                    set_probabilistic_neurons_number(atoi(text));
+                    set_probabilistic_neurons_number(static_cast<size_t>(atoi(text)));
                 }
                 catch(const logic_error& e)
                 {
-                    cout << e.what() << endl;
+                    cerr << e.what() << endl;
                 }
             }
         }
@@ -1225,7 +1204,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                 }
                 catch(const logic_error& e)
                 {
-                    cout << e.what() << endl;
+                    cerr << e.what() << endl;
                 }
             }
         }
@@ -1247,7 +1226,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
                 }
                 catch(const logic_error& e)
                 {
-                    cout << e.what() << endl;
+                    cerr << e.what() << endl;
                 }
             }
         }
@@ -1267,7 +1246,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
@@ -1350,7 +1329,7 @@ string ProbabilisticLayer::write_no_probabilistic_expression(const Vector<string
 {
     ostringstream buffer;
 
-    buffer << "(" << outputs_names.vector_to_string(',') << ") =(" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << "(" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -1367,48 +1346,59 @@ string ProbabilisticLayer::write_expression(const Vector<string>& inputs_names, 
 {
     switch(probabilistic_method)
     {
-    case Binary:
-    {
-        return(write_binary_expression(inputs_names, outputs_names));
-    }
-        break;
+        case Binary:
+        {
+            return(write_binary_expression(inputs_names, outputs_names));
+        }
+    //        break;
 
-    case Probability:
-    {
-        return(write_probability_expression(inputs_names, outputs_names));
-    }
-        break;
+        case Probability:
+        {
+            return(write_probability_expression(inputs_names, outputs_names));
+        }
+    //        break;
 
-    case Competitive:
-    {
-        return(write_competitive_expression(inputs_names, outputs_names));
-    }
-        break;
+        case Competitive:
+        {
+            return(write_competitive_expression(inputs_names, outputs_names));
+        }
+    //        break;
 
-    case Softmax:
-    {
-        return(write_softmax_expression(inputs_names, outputs_names));
-    }
-        break;
+        case Softmax:
+        {
+            return(write_softmax_expression(inputs_names, outputs_names));
+        }
+    //        break;
 
-    case NoProbabilistic:
-    {
-        return(write_no_probabilistic_expression(inputs_names, outputs_names));
-    }
-        break;
+        case NoProbabilistic:
+        {
+            return(write_no_probabilistic_expression(inputs_names, outputs_names));
+        }
+    //        break;
 
-    default:
-    {
-        ostringstream buffer;
+//        default:
+//        {
+//            ostringstream buffer;
 
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
-               << "Unknown probabilistic method.\n";
+//            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+//                   << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+//                   << "Unknown probabilistic method.\n";
 
-        throw logic_error(buffer.str());
-    }// end default
-        break;
+//            throw logic_error(buffer.str());
+//        }// end default
+//        break;
     }// end switch
+
+    // Default
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+           << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+           << "Unknown probabilistic method.\n";
+
+    throw logic_error(buffer.str());
+
 }
 
 }

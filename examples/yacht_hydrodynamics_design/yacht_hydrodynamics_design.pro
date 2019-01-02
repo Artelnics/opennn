@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   Y A C H T   H Y D R O D Y N A M I C S   D E S I N G   P R O J E C T                           #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artelnics - Making intelligent use of data                                                    #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 

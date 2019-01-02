@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   O U T P U T S   T E S T   C L A S S                                                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -108,13 +108,13 @@ void OutputsTest::test_set_default()
 }
 
 
-void OutputsTest::test_arrange_names()
+void OutputsTest::test_get_names()
 {
-   message += "test_arrange_names\n";
+   message += "test_get_names\n";
 
    Outputs o;
 
-   Vector<string> names = o.arrange_names();
+   Vector<string> names = o.get_names();
 
    assert_true(names.size() == 0, LOG);
 
@@ -134,13 +134,13 @@ void OutputsTest::test_get_name()
 }
 
 
-void OutputsTest::test_arrange_units()
+void OutputsTest::test_get_units()
 {
-   message += "test_arrange_units\n";
+   message += "test_get_units\n";
 
    Outputs o;
 
-   Vector<string> units = o.arrange_units();
+   Vector<string> units = o.get_units();
 
    assert_true(units.size() == 0, LOG);
 }
@@ -158,13 +158,13 @@ void OutputsTest::test_get_unit()
 }
 
 
-void OutputsTest::test_arrange_descriptions()
+void OutputsTest::test_get_descriptions()
 {
-   message += "test_arrange_descriptions\n";
+   message += "test_get_descriptions\n";
 
    Outputs o;
 
-   Vector<string> descriptions = o.arrange_descriptions();
+   Vector<string> descriptions = o.get_descriptions();
 
    assert_true(descriptions.size() == 0, LOG);
 }
@@ -255,7 +255,7 @@ void OutputsTest::test_to_XML()
 
    document = o.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    delete document;
 }
@@ -300,13 +300,13 @@ void OutputsTest::run_test_case()
 
    // Output variables information
 
-   test_arrange_names();
+   test_get_names();
    test_get_name();
 
-   test_arrange_units();
+   test_get_units();
    test_get_unit();
 
-   test_arrange_descriptions();
+   test_get_descriptions();
    test_get_description();
 
    // Display messages

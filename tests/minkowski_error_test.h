@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M I N K O W S K I   E R R O R   T E S T   C L A S S   H E A D E R                                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -56,10 +56,10 @@ public:
 
    void test_set_Minkowski_parameter();
 
-   // Objective methods
+   // Error methods
 
    void test_calculate_loss();   
-   void test_calculate_selection_loss();
+   void test_calculate_selection_error();
 
    void test_calculate_gradient();
 

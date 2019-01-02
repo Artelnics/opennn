@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   D A T A   S E T   C L A S S   H E A D E R                                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -59,13 +58,15 @@ class DataSet
 
 public:
 
-    // DEFAULT CONSTRUCTOR
+   // DEFAULT CONSTRUCTOR
 
-    explicit DataSet();
+   explicit DataSet();
 
-    // DATA CONSTRUCTOR
+   // DATA CONSTRUCTOR
 
-    explicit DataSet(const Matrix<double>&);
+   explicit DataSet(const Eigen::MatrixXd&);
+
+   explicit DataSet(const Matrix<double>&);
 
    // INSTANCES AND VARIABLES CONSTRUCTOR
 
@@ -93,11 +94,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   DataSet& operator =(const DataSet&);
+   DataSet& operator = (const DataSet&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const DataSet&) const;
+   bool operator == (const DataSet&) const;
 
    // ENUMERATIONS
 
@@ -181,28 +182,33 @@ public:
    bool empty() const;
 
    const Matrix<double>& get_data() const;
+   const Eigen::MatrixXd get_data_eigen() const;
+
    const Matrix<double>& get_time_series_data() const;
 
    Matrix<double> get_instances_submatrix_data(const Vector<size_t>&) const;
 
-   Matrix<double> arrange_training_data() const;
-   Matrix<double> arrange_selection_data() const;
-   Matrix<double> arrange_testing_data() const;
+   Matrix<double> get_training_data() const;
+   Matrix<double> get_selection_data() const;
+   Matrix<double> get_testing_data() const;
 
-   Matrix<double> arrange_input_data() const;
-   Matrix<double> arrange_target_data() const;
+   Matrix<double> get_inputs() const;
+   Matrix<double> get_targets() const;
 
-   Matrix<double> arrange_used_data() const;
-   Matrix<double> arrange_used_input_data() const;
-   Matrix<double> arrange_used_target_data() const;
+   Matrix<double> get_inputs(const Vector<size_t>&) const;
+   Matrix<double> get_targets(const Vector<size_t>&) const;
 
-   Matrix<double> arrange_training_input_data() const;
-   Matrix<double> arrange_training_target_data() const;
-   Matrix<double> arrange_selection_input_data() const;
-   Matrix<double> arrange_selection_target_data() const;
-   Matrix<double> arrange_testing_input_data() const;
-   Matrix<double> arrange_testing_target_data() const;
-   Vector<double> arrange_testing_time_column() const;
+   Matrix<double> get_used_data() const;
+   Matrix<double> get_used_inputs() const;
+   Matrix<double> get_used_targets() const;
+
+   Matrix<double> get_training_inputs() const;
+   Matrix<double> get_training_targets() const;
+   Matrix<double> get_selection_inputs() const;
+   Matrix<double> get_selection_targets() const;
+   Matrix<double> get_testing_inputs() const;
+   Matrix<double> get_testing_targets() const;
+   Vector<double> get_testing_time() const;
 
    DataSet get_training_data_set() const;
    DataSet get_testing_data_set() const;
@@ -228,6 +234,7 @@ public:
 
    void set();
    void set(const Matrix<double>&);
+   void set(const Eigen::MatrixXd&);
    void set(const size_t&, const size_t&);
    void set(const size_t&, const size_t&, const size_t&);
    void set(const DataSet&);
@@ -316,6 +323,9 @@ public:
 
    Matrix<double> calculate_data_statistics_matrix() const;
 
+   Eigen::MatrixXd calculate_data_statistics_eigen_matrix() const;
+
+
    Matrix<double> calculate_positives_data_statistics_matrix() const;
    Matrix<double> calculate_negatives_data_statistics_matrix() const;
 
@@ -336,20 +346,20 @@ public:
 
    Statistics<double> calculate_input_statistics(const size_t&) const;
 
-   Vector<double> calculate_training_target_data_mean() const;
-   Vector<double> calculate_selection_target_data_mean() const;
-   Vector<double> calculate_testing_target_data_mean() const;
+   Vector<double> calculate_training_targets_mean() const;
+   Vector<double> calculate_selection_targets_mean() const;
+   Vector<double> calculate_testing_targets_mean() const;
 
    Vector< Vector< Vector<double> > > calculate_means_columns() const;
 
    // Correlation methods
 
    Matrix<double> calculate_input_target_correlations() const;
+   std::vector<std::vector<double>> std_input_target_correlations() const;
 
    Vector<double> calculate_total_input_correlations() const;
 
    // Information methods
-
 
    void print_missing_values_information() const;
 
@@ -369,7 +379,7 @@ public:
 //   Matrix<double> calculate_multiple_logistic_correlations(const Vector<size_t>&) const;
 
    size_t calculate_input_variables_number(const Vector<size_t>&) const;
-   Vector< Vector<size_t> > arrange_inputs_indices(const size_t&, const Vector<size_t>&) const;
+   Vector< Vector<size_t> > get_inputs_indices(const size_t&, const Vector<size_t>&) const;
 
    // Principal components mehtod
 
@@ -379,7 +389,7 @@ public:
    Matrix<double> perform_principal_components_analysis(const Matrix<double>&, const Vector<double>&, const double& = 0.0);
    void transform_principal_components_data(const Matrix<double>&);
 
-   void remove_input_data_mean();
+   void remove_inputs_mean();
 
    // Histrogram methods
 
@@ -411,11 +421,9 @@ public:
 
    Vector< Statistics<double> > scale_data_minimum_maximum();
    Vector< Statistics<double> > scale_data_mean_standard_deviation();
-/*
-   void scale_data(const string&, const Vector< Statistics<double> >&);
 
-   Vector< Statistics<double> > scale_data(const string&);
-*/
+   Vector< Statistics<double> > scale_data_range(const double&, const double&);
+
    // Input variables scaling
 
    void scale_inputs_mean_standard_deviation(const Vector< Statistics<double> >&);
@@ -429,6 +437,9 @@ public:
 
    void scale_inputs_minimum_maximum(const Vector< Statistics<double> >&);
    Vector< Statistics<double> > scale_inputs_minimum_maximum();
+
+   Eigen::MatrixXd scale_inputs_minimum_maximum_eigen();
+   Eigen::MatrixXd scale_targets_minimum_maximum_eigen();
 
    void scale_input_minimum_maximum(const Statistics<double>&, const size_t&);
    Statistics<double> scale_input_minimum_maximum(const size_t&);
@@ -479,8 +490,8 @@ public:
 
    Vector<size_t> balance_approximation_targets_distribution(const double& = 10.0);
 
-   Vector<size_t> arrange_binary_inputs_indices() const;
-   Vector<size_t> arrange_real_inputs_indices() const;
+   Vector<size_t> get_binary_inputs_indices() const;
+   Vector<size_t> get_real_inputs_indices() const;
 
    void sum_binary_inputs();
 
@@ -501,7 +512,6 @@ public:
 
    void unuse_Tukey_outliers(const double& = 1.5);
 
-
    // Time series methods
 
    Matrix<double> calculate_autocorrelations(const size_t& = 10) const;
@@ -520,7 +530,10 @@ public:
 
    // Data generation
 
-   void generate_data_approximation(const size_t&, const size_t&);
+   void generate_constant_data(const size_t&, const size_t&);
+   void generate_random_data(const size_t&, const size_t&);
+   void generate_paraboloid_data(const size_t&, const size_t&);
+   void generate_Rosenbrock_data(const size_t&, const size_t&);
 
    void generate_data_binary_classification(const size_t&, const size_t&);
    void generate_data_multiple_classification(const size_t&, const size_t&);
@@ -553,9 +566,9 @@ public:
    void load_data_binary();
    void load_time_series_data_binary();
 
-   Vector<string> arrange_time_series_names(const Vector<string>&) const;
+   Vector<string> get_time_series_names(const Vector<string>&) const;
 
-   Vector<string> arrange_association_names(const Vector<string>&) const;
+   Vector<string> get_association_names(const Vector<string>&) const;
 
    void convert_time_series();
    void convert_association();
