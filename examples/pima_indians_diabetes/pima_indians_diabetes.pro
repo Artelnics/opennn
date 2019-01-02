@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   P I M A   I N D I A N S   D I A B E T E S   P R O J E C T                                     #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artelnics - Making intelligent use of data                                                    #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 

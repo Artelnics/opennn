@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M A T R I X   T E S T   C L A S S                                                                          */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -250,12 +250,6 @@ void MatrixTest::test_multiplication_operator()
    a.set(1, 1, 1);
    v.set(1, 1);
   
-   b = a*v;
-
-   assert_true(b.get_rows_number() == 1, LOG);
-   assert_true(b.get_columns_number() == 1, LOG);
-   assert_true(b == 1, LOG);  
-
    // Matrix
 
    a.set(1, 1, 2);
@@ -417,7 +411,6 @@ void MatrixTest::test_output_operator()
    m3(0,1).set(1, 1, 1);
    m3(1,0).set(1, 1, 0);
    m3(1,1).set(1, 1, 1);
-
 }
 
 
@@ -430,7 +423,6 @@ void MatrixTest::test_get_rows_number()
    size_t rows_number = m.get_rows_number();
 
    assert_true(rows_number == 2, LOG);
-
 }
 
 
@@ -446,9 +438,9 @@ void MatrixTest::test_get_columns_number()
 }
 
 
-void MatrixTest::test_arrange_row()
+void MatrixTest::test_get_row()
 {
-   message += "test_arrange_row\n";
+   message += "test_get_row\n";
 
    Matrix<int> m(1, 1, 0);
 
@@ -458,9 +450,9 @@ void MatrixTest::test_arrange_row()
 }
 
 
-void MatrixTest::test_arrange_column()
+void MatrixTest::test_get_column()
 {
-   message += "test_arrange_column\n";
+   message += "test_get_column\n";
 
    Matrix<int> m(1, 1, 0);
 
@@ -470,9 +462,9 @@ void MatrixTest::test_arrange_column()
 }
 
 
-void MatrixTest::test_arrange_submatrix()
+void MatrixTest::test_get_submatrix()
 {
-   message += "test_arrange_submatrix\n";
+   message += "test_get_submatrix\n";
 }
 
 
@@ -524,7 +516,6 @@ void MatrixTest::test_set()
    assert_true(m.get_rows_number() == 3, LOG);
    assert_true(m.get_columns_number() == 2, LOG);
    assert_true(m == 1.0, LOG);
-
 }
 
 
@@ -537,7 +528,6 @@ void MatrixTest::test_set_rows_number()
 void MatrixTest::test_set_columns_number()
 {
    message += "test_set_columns_number\n";
-
 }
 
 
@@ -628,13 +618,12 @@ void MatrixTest::test_sum_diagonal()
 
    m.set(2, 2, 1);
 
-   sum = m.sum_diagonal(1);
+   m.sum_diagonal(1);
 
-   diagonal = sum.get_diagonal();
+   diagonal = m.get_diagonal();
 
    assert_true(diagonal.size() == 2, LOG);
    assert_true(diagonal == 2, LOG);
-
 }
 
 
@@ -789,7 +778,6 @@ void MatrixTest::test_sort_less_rows()
 //    assert_true(sorted_m(4, 1) == 0.9, LOG);
 //    assert_true(sorted_m(5, 0) == 0.9, LOG);
 //    assert_true(sorted_m(5, 1) == 7, LOG);
-
 }
 
 
@@ -903,14 +891,12 @@ void MatrixTest::test_set_to_identity()
 void MatrixTest::test_calculate_sum()
 {
     message += "test_calculate_sum\n";
-
 }
 
 
 void MatrixTest::test_calculate_rows_sum()
 {
     message += "test_calculate_rows_sum\n";
-
 }
 
 
@@ -1107,7 +1093,6 @@ void MatrixTest::test_direct()
    assert_true(direct.get_columns_number() == 4, LOG);
    assert_true(direct(0,0) == 0, LOG);
    assert_true(direct(3,3) == 28, LOG);
-
 }
 
 
@@ -1130,6 +1115,7 @@ void MatrixTest::test_calculate_histogram()
    Matrix<double> m;
 
    Vector< Histogram<double> >  histograms;
+   Histogram<double> histogram;
 
    size_t bins_number;
 
@@ -1143,11 +1129,15 @@ void MatrixTest::test_calculate_histogram()
    histograms = m.calculate_histograms(bins_number);
 
    assert_true(histograms.size() == m.get_columns_number(), LOG);
-   assert_true(histograms[0].get_bins_number() == bins_number, LOG);
+
+   if (!m.get_column(0).is_binary())
+   {
+       assert_true(histograms[0].get_bins_number() == bins_number, LOG);
+   }
 
    // Test
 
-   m.set(2, 3);
+   m.set(4, 3);
    m.randomize_normal();
 
    bins_number = 4;
@@ -1155,7 +1145,10 @@ void MatrixTest::test_calculate_histogram()
    histograms = m.calculate_histograms(bins_number);
 
    assert_true(histograms.size() == m.get_columns_number(), LOG);
-   assert_true(histograms[0].get_bins_number() == bins_number, LOG);
+   if (!m.get_column(0).is_binary())
+   {
+       assert_true(histograms[0].get_bins_number() == bins_number, LOG);
+   }
 }
 
 
@@ -1437,8 +1430,8 @@ void MatrixTest::test_is_antisymmetric()
    m(1,1) = 0;
 
    assert_true(m.is_antisymmetric() == true, LOG);
-
 }
+
 
 void MatrixTest::test_calculate_k_means()
 {
@@ -1456,7 +1449,254 @@ void MatrixTest::test_calculate_k_means()
 
 //    assert_true(groups[0][0] == 0, LOG);
 //    assert_true(groups[1].size() == 2, LOG);
+}
 
+
+void MatrixTest::test_threshold()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = threshold(m);
+
+    assert_true(fabs(l(0,0) - 0) < 0.001, LOG);
+    assert_true(fabs(l(0,1) - 1) < 0.001, LOG);
+    assert_true(fabs(l(1,0) - 1) < 0.001, LOG);
+    assert_true(fabs(l(1,1) - 0) < 0.001, LOG);
+}
+
+
+void MatrixTest::test_symmetric_threshold()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = symmetric_threshold(m);
+
+    assert_true(fabs(l(0,0) - -1) < 0.001, LOG);
+    assert_true(fabs(l(0,1) - 1) < 0.001, LOG);
+    assert_true(fabs(l(1,0) - 1) < 0.001, LOG);
+    assert_true(fabs(l(1,1) - -1) < 0.001, LOG);
+}
+
+
+void MatrixTest::test_logistic()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = logistic(m);
+
+    assert_true(fabs(l(0,0) - 0.268941) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0.731059) < 0.000001, LOG);
+    assert_true(fabs(l(1,0) - 0.880797) < 0.000001, LOG);
+    assert_true(fabs(l(1,1) - 0.119203) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_hyperbolic_tangent()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = hyperbolic_tangent(m);
+
+    assert_true(fabs(l(0,0) - -0.761594) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0.761594) < 0.000001, LOG);
+    assert_true(fabs(l(1,0) - 0.964028) < 0.000001, LOG);
+    assert_true(fabs(l(1,1) - -0.964028) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_hyperbolic_tangent_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = hyperbolic_tangent_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0.419974) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0.419974) < 0.000001, LOG);
+    assert_true(fabs(l(1,0) - 0.070651) < 0.000001, LOG);
+    assert_true(fabs(l(1,1) - 0.070651) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_hyperbolic_tangent_second_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = hyperbolic_tangent_second_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0.639700) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - -0.639700) < 0.000001, LOG);
+    assert_true(fabs(l(1,0) - -0.136219) < 0.000001, LOG);
+    assert_true(fabs(l(1,1) - 0.136219) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_logistic_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = logistic_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0.196612) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0.196612) < 0.000001, LOG);
+    assert_true(fabs(l(1,0) - 0.104994) < 0.000001, LOG);
+    assert_true(fabs(l(1,1) - 0.104994) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_logistic_second_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(2,2);
+    l.set(2,2);
+
+    m(0,0) = -1;
+    m(0,1) = 1;
+    m(1,0) = 2;
+    m(1,1) = -2;
+
+    l = logistic_second_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0.090858) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - -0.090858) < 0.000001, LOG);
+    assert_true(fabs(l(1,0) - -0.079963) < 0.000001, LOG);
+    assert_true(fabs(l(1,1) - 0.079963) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_threshold_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(1,2);
+    l.set(1,2);
+
+    m(0,0) = 2;
+    m(0,1) = -2;
+
+    l = threshold_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_threshold_second_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(1,2);
+    l.set(1,2);
+
+    m(0,0) = 2;
+    m(0,1) = -2;
+
+    l = threshold_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_symmetric_threshold_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(1,2);
+    l.set(1,2);
+
+    m(0,0) = 2;
+    m(0,1) = -2;
+
+    l = threshold_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
+}
+
+
+void MatrixTest::test_symmetric_threshold_second_derivatives()
+{
+    Matrix<double> m;
+    Matrix<double> l;
+
+    m.set(1,2);
+    l.set(1,2);
+
+    m(0,0) = 2;
+    m(0,1) = -2;
+
+    l = threshold_derivatives(m);
+
+    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
+    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
 }
 
 
@@ -1479,56 +1719,48 @@ void MatrixTest::test_scale_mean_standard_deviation()
 
    assert_true(statistics[0].has_mean_zero_standard_deviation_one(), LOG);
    assert_true(statistics[1].has_mean_zero_standard_deviation_one(), LOG);
-
 }
 
 
 void MatrixTest::test_scale_rows_mean_standard_deviation()
 {
    message += "test_scale_rows_mean_standard_deviation\n";
-
 }
 
 
 void MatrixTest::test_scale_columns_mean_standard_deviation()
 {
    message += "test_scale_columns_mean_standard_deviation\n";
-
 }
 
 
 void MatrixTest::test_scale_rows_columns_mean_standard_deviation()
 {
    message += "test_scale_rows_columns_mean_standard_deviation\n";
-
 }
 
 
 void MatrixTest::test_scale_minimum_maximum()
 {
    message += "test_scale_minimum_maximum\n";
-
 }
 
 
 void MatrixTest::test_scale_rows_minimum_maximum()
 {
    message += "test_scale_rows_minimum_maximum\n";
-
 }
 
 
 void MatrixTest::test_scale_columns_minimum_maximum()
 {
    message += "test_scale_columns_minimum_maximum\n";
-
 }
 
 
 void MatrixTest::test_scale_rows_columns_minimum_maximum()
 {
    message += "test_scale_rows_columns_minimum_maximum\n";
-
 }
 
 
@@ -1559,28 +1791,24 @@ void MatrixTest::test_unscale_rows_columns_mean_standard_deviation()
 void MatrixTest::test_unscale_minimum_maximum()
 {
    message += "test_unscale_minimum_maximum\n";
-
 }
 
 
 void MatrixTest::test_unscale_rows_minimum_maximum()
 {
    message += "test_unscale_rows_minimum_maximum\n";
-
 }
 
 
 void MatrixTest::test_unscale_columns_minimum_maximum()
 {
    message += "test_unscale_columns_minimum_maximum\n";
-
 }
 
 
 void MatrixTest::test_unscale_rows_columns_minimum_maximum()
 {
    message += "test_unscale_rows_columns_minimum_maximum\n";
-
 }
 
 
@@ -1601,7 +1829,6 @@ void MatrixTest::test_convert_angular_variables_degrees()
 
    assert_true(fabs(m(0,0) - 1.0) < 1.0e-6, LOG);
    assert_true(fabs(m(0,1) - 0.0) < 1.0e-6, LOG);
-
 }
 
 
@@ -1647,8 +1874,6 @@ void MatrixTest::test_to_time_t()
     assert_true(timestamp == 0, LOG);
 
     cout << timestamp << endl;
-
-    system("pause");
 }
 
 
@@ -1670,7 +1895,6 @@ void MatrixTest::test_save()
    Matrix<int> m;
 
    m.save(file_name);
-
 }
 
 
@@ -1842,10 +2066,10 @@ void MatrixTest::run_test_case()
    test_get_rows_number();
    test_get_columns_number();  
 
-   test_arrange_row();
-   test_arrange_column();
+   test_get_row();
+   test_get_column();
 
-   test_arrange_submatrix();
+   test_get_submatrix();
 
    // Set methods
 
@@ -1925,6 +2149,20 @@ void MatrixTest::run_test_case()
    test_is_antisymmetric();
 
    test_calculate_k_means();
+
+   test_threshold();
+   test_symmetric_threshold();
+   test_logistic();
+   test_hyperbolic_tangent();
+
+   test_hyperbolic_tangent_derivatives();
+   test_hyperbolic_tangent_second_derivatives();
+   test_logistic_derivatives();
+   test_logistic_second_derivatives();
+   test_threshold_derivatives();
+   test_threshold_second_derivatives();
+   test_symmetric_threshold_derivatives();
+   test_symmetric_threshold_second_derivatives();
 
    // Scaling methods
  
@@ -2012,7 +2250,7 @@ Matrix<double> MatrixTest::dot(const Matrix<double>& matrix, const Matrix<double
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

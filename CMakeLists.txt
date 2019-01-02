@@ -28,11 +28,18 @@ endif()
 # Uncomment next line to compile without using C++11
 #add_definitions(-D__Cpp11__)
 
-add_subdirectory(tinyxml2)
+option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
+option(OpenNN_BUILD_TESTS    "Build OpenNN tests"    ON)
+
 add_subdirectory(opennn)
 include_directories(opennn)
-add_subdirectory(examples)
-add_subdirectory(blank)
-add_subdirectory(tests)
+
+if(OpenNN_BUILD_TESTS)
+    add_subdirectory(tests)
+endif(OpenNN_BUILD_TESTS)
+
+if(OpenNN_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif(OpenNN_BUILD_EXAMPLES)
 
 include(CPack)

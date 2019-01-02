@@ -6,7 +6,7 @@
 /*   P R U N I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -83,9 +83,9 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    NeuralNetwork nn;
 
-//    LossIndex pf(&nn,&ds);
+//    SumSquaredError sse(&nn,&ds);
 
-//    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&sse);
 
 //    PruningInputs pi(&ts);
 
@@ -167,7 +167,7 @@ void PruningInputsTest::test_to_XML()
     PruningInputs pi;
 
     tinyxml2::XMLDocument* document = pi.to_XML();
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 }

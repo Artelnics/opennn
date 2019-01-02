@@ -3,11 +3,11 @@
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
 /*                                                                                                              */
-/*   P E R F O R M A N C E   F U N C T I O N A L   T E S T   C L A S S                                          */
+/*   L O S S   I N D E X   T E S T   C L A S S                                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -37,12 +37,12 @@ LossIndexTest::~LossIndexTest()
 void LossIndexTest::test_constructor()
 {
    message += "test_constructor\n";
-
+/*
    LossIndex pf1;
 
    assert_true(pf1.has_neural_network() == false, LOG);
    assert_true(pf1.has_data_set() == false, LOG);
-   assert_true(pf1.has_mathematical_model() == false, LOG);
+*/
 }
 
 
@@ -56,13 +56,13 @@ void LossIndexTest::test_get_neural_network_pointer()
 {
    message += "test_get_neural_network_pointer\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
    NeuralNetwork nn;
 
    // Test
 
-   pf.set_neural_network_pointer(&nn);
-   assert_true(pf.get_neural_network_pointer() != NULL,	LOG);
+   sse.set_neural_network_pointer(&nn);
+   assert_true(sse.get_neural_network_pointer() != nullptr,	LOG);
 }
 
 
@@ -106,15 +106,15 @@ void LossIndexTest::test_get_display()
 {
    message += "test_get_display\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
 
    // Test
 
-   pf.set_display(true);
-   assert_true(pf.get_display() == true, LOG);
+   sse.set_display(true);
+   assert_true(sse.get_display() == true, LOG);
 
-   pf.set_display(false);
-   assert_true(pf.get_display() == false, LOG);
+   sse.set_display(false);
+   assert_true(sse.get_display() == false, LOG);
 }
 
 
@@ -122,13 +122,13 @@ void LossIndexTest::test_set_neural_network_pointer()
 {
    message += "test_set_neural_network_pointer\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
    NeuralNetwork nn;
 
    // Test
 
-   pf.set_neural_network_pointer(&nn);
-   assert_true(pf.get_neural_network_pointer() != NULL, LOG);
+   sse.set_neural_network_pointer(&nn);
+   assert_true(sse.get_neural_network_pointer() != nullptr, LOG);
 }
 
 
@@ -142,11 +142,11 @@ void LossIndexTest::test_set_default()
 {
    message += "test_set_default\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
 
    // Test
 
-   pf.set_default();
+   sse.set_default();
 }
 
 
@@ -159,122 +159,104 @@ void LossIndexTest::test_set_display()
 void LossIndexTest::test_calculate_loss()
 {
    message += "test_calculate_loss\n";
-
+/*
    DataSet ds;
+
+   Vector<size_t> instances_indices;
 
    NeuralNetwork nn;
 
    Vector<double> parameters;
 
-   LossIndex pf(&nn);
-
-   double loss;
+   SumSquaredError sse(&nn);
 
    Vector<double> direction;
    double rate;
 
    // Test
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
-   NeuralParametersNorm* neural_parameters_norm = pf.get_neural_parameters_norm_pointer();
-
-   double neural_parameters_norm_weight = neural_parameters_norm->get_neural_parameters_norm_weight();
+   double neural_parameters_norm_weight = sse.get_regularization_weight();
 
    nn.set(1, 1);
 
    nn.initialize_parameters(1.0);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
-   assert_true(fabs(pf.calculate_loss() - neural_parameters_norm_weight*sqrt(2.0)) < 1.0e-3, LOG);
+   assert_true(fabs(sse.calculate_loss() - neural_parameters_norm_weight*sqrt(2.0)) < 1.0e-3, LOG);
 
-   assert_true(fabs(pf.calculate_loss() - pf.calculate_loss(parameters)) < 1.0e-3, LOG);
+   assert_true(fabs(sse.calculate_loss() - sse.calculate_loss(parameters)) < 1.0e-3, LOG);
 
    // Test
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
-   assert_true(pf.calculate_loss() != pf.calculate_loss(parameters*2.0), LOG);
+   assert_true(fabs(sse.calculate_loss() - sse.calculate_loss(parameters*2.0)) < numeric_limits<double>::min(), LOG);
 
    // Test
 
    direction.set(2, -0.5);
    rate = 2.0;
 
-   assert_true(pf.calculate_loss(direction, rate) == 0.0, LOG);
+//   assert_true(sse.calculate_loss(instances_indices, direction, rate) == 0.0, LOG);
 
    // Test
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
    direction.set(2, -1.5);
    rate = 2.3;
 
-   assert_true(pf.calculate_loss(direction, rate) == pf.calculate_loss(parameters + direction*rate), LOG);
+//   assert_true(fabs(sse.calculate_loss(instances_indices, direction, rate) - sse.calculate_loss(instances_indices, parameters + direction*rate)) < numeric_limits<double>::min(), LOG);
 
    // Test
 
    ds.set(1, 1, 1);
    ds.randomize_data_normal();
 
-   pf.set_data_set_pointer(&ds);
-
-   pf.destruct_all_terms();
-   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+   sse.set_data_set_pointer(&ds);
 
    nn.set(1, 1);
 
    nn.initialize_parameters(1.0);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
-   assert_true(fabs(pf.calculate_loss() - pf.calculate_loss(parameters)) < 1.0e-3, LOG);
-
-   // Test
-
-   parameters = nn.arrange_parameters();
-
-   assert_true(pf.calculate_loss() != pf.calculate_loss(parameters*2.0), LOG);
+   assert_true(fabs(sse.calculate_loss() - sse.calculate_loss(parameters)) < 1.0e-3, LOG);
 
    // Test
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
+
+   assert_true(sse.calculate_loss() != sse.calculate_loss(parameters*2.0), LOG);
+
+   // Test
+
+   parameters = nn.get_parameters();
 
    direction.set(2, -1.5);
    rate = 2.3;
 
-   assert_true(pf.calculate_loss(direction, rate) == pf.calculate_loss(parameters + direction*rate), LOG);
-
-   // Test
-
-   nn.initialize_parameters(0.0);
-
-   MockErrorTerm* mptp = new MockErrorTerm(&nn);
-
-   pf.set_user_error_pointer(mptp);
-
-   loss = pf.calculate_loss();
-
-   assert_true(loss == 0.0, LOG);
+//   assert_true(sse.calculate_loss(instances_indices, direction, rate) == sse.calculate_loss(instances_indices, parameters + direction*rate), LOG);
+*/
 }
 
 
 void LossIndexTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
-
+/*
    DataSet ds;
    NeuralNetwork nn;
 
    size_t parameters_number;
    Vector<double> parameters;
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
    Vector<double> gradient;
 
@@ -284,25 +266,98 @@ void LossIndexTest::test_calculate_gradient()
 
    nn.initialize_parameters(0.0);
 
-   parameters = nn.arrange_parameters();
+   parameters = nn.get_parameters();
 
-   gradient = pf.calculate_gradient(parameters);
+   gradient = sse.calculate_gradient(parameters);
 
    assert_true(gradient == 0.0, LOG);
 
    // Test
 
-   parameters_number = nn.count_parameters_number();
+   parameters_number = nn.get_parameters_number();
    nn.initialize_parameters(0.0);
 
    MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_error_pointer(mptp);
+   sse.set_user_error_pointer(mptp);
 
-   gradient = pf.calculate_gradient();
+   gradient = sse.calculate_gradient();
 
    assert_true(gradient.size() == parameters_number, LOG);
    assert_true(gradient == 0.0, LOG);
+*/
+}
+
+
+void LossIndexTest::test_calculate_layers_delta()
+{
+   message += "test_calculate_layers_delta\n";
+/*
+   DataSet ds;
+   NeuralNetwork nn;
+   NumericalDifferentiation nd;
+//   LossIndex li(&nn, &ds);
+
+   size_t parameters_number;
+   Vector<double> parameters;
+
+   SumSquaredError sse(&nn, &ds);
+
+   sse.set_regularization_method(LossIndex::L2);
+
+   Vector<double> gradient;
+
+   // Test
+
+   nn.set(1,1,1);
+   nn.initialize_parameters(1.0);
+
+   ds.set(1,1,1);
+
+   ds.initialize_data(1.0);
+
+   const Matrix<double> inputs = ds.get_inputs();
+   const Matrix<double> targets = ds.get_targets();
+
+   const Vector<size_t> indices(1,0);
+
+   const Vector<Matrix<double>> layers_combination = nn.get_multilayer_perceptron_pointer()->calculate_layers_combinations(inputs);
+   const Matrix<double> outputs = nn.get_multilayer_perceptron_pointer()->calculate_outputs(inputs);
+
+   cout << "layers_combination: " << layers_combination[0] << endl;
+
+   const Matrix<double> output_gradient = (outputs - targets)*2.0;
+
+   const Vector<Matrix<double>> layers_delta =
+           sse.calculate_layers_delta(layers_combination, output_gradient);
+
+//   nd.calculate_gradient(sse, &SumSquaredError::calculate_points_errors_layer_combinations, 0, layers_combination[0]);
+
+   // Test
+
+//   nn.set(1, 1, 1);
+
+//   nn.initialize_parameters(0.0);
+
+//   parameters = nn.get_parameters();
+
+//   gradient = sse.calculate_gradient(parameters);
+
+//   assert_true(gradient == 0.0, LOG);
+
+//   // Test
+//   parameters_number = nn.get_parameters_number();
+//   nn.initialize_parameters(0.0);
+
+//   MockErrorTerm* mptp = new MockErrorTerm(&nn);
+
+//   sse.set_user_error_pointer(mptp);
+
+//   gradient = sse.calculate_gradient();
+
+//   assert_true(gradient.size() == parameters_number, LOG);
+//   assert_true(gradient == 0.0, LOG);
+*/
 }
 
 
@@ -316,16 +371,15 @@ void LossIndexTest::test_calculate_gradient_norm()
 void LossIndexTest::test_calculate_Hessian()
 {
    message += "test_calculate_Hessian\n";
-
+/*
    DataSet ds;
    NeuralNetwork nn;
    size_t parameters_number;
    Vector<double> parameters;
    
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
    Matrix<double> Hessian;
 
@@ -333,10 +387,10 @@ void LossIndexTest::test_calculate_Hessian()
 
    nn.initialize_parameters(0.0);
 
-   parameters_number = nn.count_parameters_number();
-   parameters = nn.arrange_parameters();
+   parameters_number = nn.get_parameters_number();
+   parameters = nn.get_parameters();
 
-   Hessian = pf.calculate_Hessian(parameters);
+   Hessian = sse.calculate_Hessian(parameters);
 
    assert_true(Hessian.get_rows_number() == parameters_number, LOG);
    assert_true(Hessian.get_columns_number() == parameters_number, LOG);
@@ -345,10 +399,10 @@ void LossIndexTest::test_calculate_Hessian()
 
    nn.initialize_parameters(0.0);
 
-   parameters_number = nn.count_parameters_number();
-   parameters = nn.arrange_parameters();
+   parameters_number = nn.get_parameters_number();
+   parameters = nn.get_parameters();
 
-   Hessian = pf.calculate_Hessian(parameters);
+   Hessian = sse.calculate_Hessian(parameters);
 
    assert_true(Hessian.get_rows_number() == parameters_number, LOG);
    assert_true(Hessian.get_columns_number() == parameters_number, LOG);
@@ -357,28 +411,28 @@ void LossIndexTest::test_calculate_Hessian()
 
    nn.initialize_parameters(0.0);
 
-   parameters_number = nn.count_parameters_number();
-   parameters = nn.arrange_parameters();
+   parameters_number = nn.get_parameters_number();
+   parameters = nn.get_parameters();
 
-   Hessian = pf.calculate_Hessian(parameters);
+   Hessian = sse.calculate_Hessian(parameters);
 
    assert_true(Hessian.get_rows_number() == parameters_number, LOG);
    assert_true(Hessian.get_columns_number() == parameters_number, LOG);
 
    // Test
 
-   parameters_number = nn.count_parameters_number();
+   parameters_number = nn.get_parameters_number();
    nn.initialize_parameters(0.0);
-
+/*
    MockErrorTerm* mptp = new MockErrorTerm(&nn);
 
-   pf.set_user_error_pointer(mptp);
+   sse.set_user_error_pointer(mptp);
 
-   Hessian = pf.calculate_Hessian();
+   Hessian = sse.calculate_Hessian();
 
    assert_true(Hessian.get_rows_number() == parameters_number, LOG);
    assert_true(Hessian.get_columns_number() == parameters_number, LOG);
-
+*/
 }
 
 // @todo
@@ -389,11 +443,11 @@ void LossIndexTest::test_calculate_inverse_Hessian()
 
 //   NeuralNetwork nn(1, 1);
 
-//   LossIndex pf(&nn);
+//   SumSquaredError sse(&nn);
 
-//   Matrix<double> Hessian = pf.calculate_Hessian();
+//   Matrix<double> Hessian = sse.calculate_Hessian();
 
-//   assert_true(pf.calculate_inverse_Hessian() == Hessian.calculate_inverse(), LOG);
+//   assert_true(sse.calculate_inverse_Hessian() == Hessian.calculate_inverse(), LOG);
 
 }
 
@@ -406,27 +460,27 @@ void LossIndexTest::test_calculate_vector_dot_Hessian()
 
 //   NeuralNetwork nn(1, 1);
 
-//   size_t parameters_number = nn.count_parameters_number();
+//   size_t parameters_number = nn.get_parameters_number();
 
-//   LossIndex pf(&nn);
+//   SumSquaredError sse(&nn);
 
 //   Vector<double> vector(0.0, 1.0, parameters_number-1.0);
 
-//   Matrix<double> Hessian = pf.calculate_Hessian();
+//   Matrix<double> Hessian = sse.calculate_Hessian();
 
-//   assert_true(pf.calculate_vector_dot_Hessian(vector) == vector.dot(Hessian), LOG);
+//   assert_true(sse.calculate_vector_dot_Hessian(vector) == vector.dot(Hessian), LOG);
 }
 
 
-void LossIndexTest::test_calculate_terms()
+void LossIndexTest::test_calculate_error_terms()
 {
-   message += "test_calculate_terms\n";
-
+   message += "test_calculate_error_terms\n";
+/*
    DataSet ds;
    NeuralNetwork nn;
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+   sse.set_loss_method(LossIndex::SUM_SQUARED_ERROR);
 
    Vector<double> terms;
 
@@ -438,23 +492,23 @@ void LossIndexTest::test_calculate_terms()
    nn.set(1,1);
    nn.initialize_parameters(0.0);
 
-   terms = pf.calculate_terms();
+   terms = sse.calculate_error_terms();
 
    assert_true(terms.size() == 2, LOG);
    assert_true(terms == 0.0, LOG);
-
+*/
 }
 
 
-void LossIndexTest::test_calculate_terms_Jacobian()
+void LossIndexTest::test_calculate_error_terms_Jacobian()
 {
-   message += "test_calculate_terms_Jacobian\n";
-
+   message += "test_calculate_error_terms_Jacobian\n";
+/*
    DataSet ds;
    NeuralNetwork nn;
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+   sse.set_loss_method(LossIndex::SUM_SQUARED_ERROR);
 
    Matrix<double> terms_Jacobian;
 
@@ -467,12 +521,12 @@ void LossIndexTest::test_calculate_terms_Jacobian()
    nn.initialize_parameters(0.0);
 
    //@bug
-   terms_Jacobian = pf.calculate_terms_Jacobian();
+   terms_Jacobian = sse.calculate_error_terms_Jacobian();
 
    assert_true(terms_Jacobian.get_rows_number() == 3, LOG);
    assert_true(terms_Jacobian.get_columns_number() == 2, LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
-
+*/
 }
 
 
@@ -504,75 +558,78 @@ void LossIndexTest::test_calculate_directional_loss()
    Vector<double> direction;
    double rate;
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
    // Test
 
    nn.set(1, 1);
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
    direction.set(2, 1.0e3);
 
    rate = 1.0e3;
 
-   assert_true(pf.calculate_loss(direction, rate) != pf.calculate_loss(), LOG);
+//   assert_true(sse.calculate_loss(Vector<size_t>(), direction, rate) != sse.calculate_loss(), LOG);
 }
 
 
-void LossIndexTest::test_calculate_directional_loss_derivative()
+void LossIndexTest::test_calculate_directional_loss_derivatives()
 {
    message += "test_calculate_directional_loss_derivative\n";
 
    DataSet ds;
+
+   Vector<size_t> instances_indices;
+
    NeuralNetwork nn;
 
    Vector<double> direction;
    double rate;
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
    // Test
 
    nn.set(1, 1);
    nn.initialize_parameters(0.0);
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
    direction.set(2, 0.0);
 
    rate = 0.0;
 
-   assert_true(pf.calculate_loss_derivative(direction, rate) == 0.0, LOG);
+//   assert_true(sse.calculate_directional_loss_derivatives(instances_indices, direction, rate) == 0.0, LOG);
 }
 
 
-void LossIndexTest::test_calculate_directional_loss_second_derivative()
+void LossIndexTest::test_calculate_directional_loss_second_derivatives()
 {
    message += "test_calculate_directional_loss_second_derivative\n";
+
+   Vector<size_t> instances_indices;
 
    NeuralNetwork nn;
 
    Vector<double> direction;
    double rate;
 
-   LossIndex pf(&nn);
+   SumSquaredError sse(&nn);
 
    // Test
 
    nn.set(1, 1);
    nn.initialize_parameters(0.0);
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
    direction.set(2, 0.0);
 
    rate = 0.0;
 
-   assert_true(pf.calculate_loss_second_derivative(direction, rate) == 0.0, LOG);
+//   assert_true(sse.calculate_loss_second_derivatives(direction, rate) == 0.0, LOG);
+
 }
 
 
@@ -580,16 +637,16 @@ void LossIndexTest::test_to_XML()
 {
    message += "test_to_XML\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
 
-   pf.set_error_type(LossIndex::MINKOWSKI_ERROR);
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_regularization_method(LossIndex::L2);
 
-   tinyxml2::XMLDocument* document = pf.to_XML();
+   tinyxml2::XMLDocument* document = sse.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    delete document;
+
 }
 
 
@@ -597,21 +654,19 @@ void LossIndexTest::test_from_XML()
 {
    message += "test_from_XML\n";
 
-   LossIndex pf1;
-   LossIndex pf2;
+//   LossIndex li1;
+//   LossIndex li2;
 
-   pf1.set_error_type(LossIndex::MINKOWSKI_ERROR);
-   pf1.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+//   pf1.set_regularization_method(LossIndex::L2);
 
-   tinyxml2::XMLDocument* document = pf1.to_XML();
+//   tinyxml2::XMLDocument* document = pf1.to_XML();
 
-    pf2.from_XML(*document);
+//    pf2.from_XML(*document);
 
-   delete document;
+//   delete document;
 
-    assert_true(pf2.get_error_type() == LossIndex::MINKOWSKI_ERROR, LOG);
-    assert_true(pf2.get_regularization_type() == LossIndex::NEURAL_PARAMETERS_NORM, LOG);
-
+//    assert_true(pf2.get_error_type() == LossIndex::MINKOWSKI_ERROR, LOG);
+//    assert_true(pf2.get_regularization_type() == LossIndex::L2, LOG);
 }
 
 
@@ -619,24 +674,25 @@ void LossIndexTest::test_print()
 {
    message += "test_print\n";
 
-   LossIndex pf;
+   SumSquaredError sse;
 
-//   pf.print();
+//   sse.print();
 }
 
 
 void LossIndexTest::test_save()
 {
    message += "test_save\n";
-
+/*
    string file_name = "../data/loss_index.xml";
 
-   LossIndex pf;
+   SumSquaredError sse;
 
-   pf.set_error_type(LossIndex::MINKOWSKI_ERROR);
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+   sse.set_loss_method(LossIndex::MINKOWSKI_ERROR);
+   sse.set_regularization_method(LossIndex::L2);
 
-   pf.save(file_name);
+   sse.save(file_name);
+*/
 }
 
 
@@ -646,20 +702,21 @@ void LossIndexTest::test_load()
 
    string file_name = "../data/loss_index.xml";
 
-   LossIndex pf1;
-   LossIndex pf2;
+//   LossIndex pf1;
+//   LossIndex pf2;
 
    // Test
-
-   pf1.set_error_type(LossIndex::MINKOWSKI_ERROR);
-   pf1.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+/*
+   pf1.set_loss_method(LossIndex::MINKOWSKI_ERROR);
+   pf1.set_regularization_method(LossIndex::L2);
 
    pf1.save(file_name);
 
    pf2.load(file_name);
 
    assert_true(pf2.get_error_type() == LossIndex::MINKOWSKI_ERROR, LOG);
-   assert_true(pf2.get_regularization_type() == LossIndex::NEURAL_PARAMETERS_NORM, LOG);
+   assert_true(pf2.get_regularization_type() == LossIndex::L2, LOG);
+*/
 }
 
 
@@ -670,7 +727,7 @@ void LossIndexTest::test_write_information()
    DataSet ds;
    NeuralNetwork nn;
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
    string information;
 
@@ -680,7 +737,7 @@ void LossIndexTest::test_write_information()
    ds.randomize_data_normal();
    nn.set(1, 1);
 
-   information = pf.write_information();
+   information = sse.write_information();
 
    assert_true(information.empty(), LOG);
 }
@@ -688,10 +745,10 @@ void LossIndexTest::test_write_information()
 
 void LossIndexTest::run_test_case()
 {
-   message += "Running loss functional test case...\n";
+   message += "Running loss index test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
 
@@ -723,21 +780,23 @@ void LossIndexTest::run_test_case()
    test_calculate_loss();
 
    test_calculate_gradient();
-
+*/
+   test_calculate_layers_delta();
+/*
    test_calculate_gradient_norm();
 
    test_calculate_Hessian();
 
    test_calculate_directional_loss();
-   test_calculate_directional_loss_derivative();
-   test_calculate_directional_loss_second_derivative();
+   test_calculate_directional_loss_derivatives();
+   test_calculate_directional_loss_second_derivatives();
 
    test_calculate_inverse_Hessian();
 
    test_calculate_vector_dot_Hessian();
 
-   test_calculate_terms();
-   test_calculate_terms_Jacobian();
+   test_calculate_error_terms();
+   test_calculate_error_terms_Jacobian();
 
 //   // Taylor approximation methods
 
@@ -755,8 +814,8 @@ void LossIndexTest::run_test_case()
    test_load();
 
    test_write_information();
-
-   message += "End of loss functional test case.\n";
+*/
+   message += "End of loss index test case.\n";
 }
 
 

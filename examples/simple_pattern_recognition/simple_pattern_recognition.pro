@@ -5,9 +5,8 @@
 #                                                                                                 #
 #   S I M P L E   P A T T E R N   R E C O G N I T I O N   P R O J E C T                           #
 #                                                                                                 #
-#   Roberto Lopez                                                                                 #
-#   Artelnics - Making intelligent use of data                                                    #
-#   robertolopez@artelnics.com                                                                    #
+#   Artificial Intelligence Techniques SL (Artelnics)                                             #
+#   artelnics@artelnics.com                                                                       #
 #                                                                                                 #
 ###################################################################################################
 

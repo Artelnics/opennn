@@ -6,7 +6,7 @@
 /*   O R D E R   S E L E C T I O N   A L G O R I T H M   T E S T   C L A S S                                    */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -73,7 +73,7 @@ void OrderSelectionAlgorithmTest::test_get_training_strategy_pointer()
 
     IncrementalOrder io(&ts);
 
-    assert_true(io.get_training_strategy_pointer() != NULL, LOG);
+    assert_true(io.get_training_strategy_pointer() != nullptr, LOG);
 
 }
 
@@ -113,7 +113,7 @@ void OrderSelectionAlgorithmTest::test_set_training_strategy_pointer()
 
     io.set_training_strategy_pointer(&ts);
 
-    assert_true(io.get_training_strategy_pointer() != NULL, LOG);
+    assert_true(io.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 void OrderSelectionAlgorithmTest::test_set_default()

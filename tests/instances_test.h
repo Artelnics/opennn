@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   I N S T A N C E S   T E S T    C L A S S   H E A D E R                                                     */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -56,14 +55,14 @@ public:
 
    // Instances methods 
 
-   void test_count_training_instances_number();
-   void test_count_selection_instances_number();
-   void test_count_testing_instances_number();
+   void test_get_training_instances_number();
+   void test_get_selection_instances_number();
+   void test_get_testing_instances_number();
 
-   void test_arrange_selection_indices();
-   void test_arrange_training_indices();
-   void test_arrange_testing_indices();
-   void test_arrange_used_indices();
+   void test_get_selection_indices();
+   void test_get_training_indices();
+   void test_get_testing_indices();
+   void test_get_used_indices();
 
    void test_get_display();
 

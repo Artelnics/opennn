@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   N E U R A L   N E T W O R K   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -35,7 +34,6 @@
 
 #include "data_set.h"
 
-#include "perceptron.h"
 #include "perceptron_layer.h"
 #include "multilayer_perceptron.h"
 #include "inputs_trending_layer.h"
@@ -45,8 +43,6 @@
 #include "outputs_trending_layer.h"
 #include "bounding_layer.h"
 #include "probabilistic_layer.h"
-#include "conditions_layer.h"
-#include "independent_parameters.h"
 #include "inputs.h"
 #include "outputs.h"
 
@@ -59,7 +55,7 @@ namespace OpenNN
 
 /// This class represents the concept of neural network in the OpenNN library.
 /// A neural network here is defined as a multilayer perceptron extended with a scaling layer, an unscaling layer, 
-/// a bounding layer, a probabilistic layer, a conditions layer and a set of independent parameters. 
+/// a bounding layer and a probabilistic layer.
 /// This neural network is used to span a function space for the variational problem at hand. 
 
 class NeuralNetwork
@@ -90,22 +86,6 @@ public:
 
    explicit NeuralNetwork(const size_t&, const size_t&, const size_t&);
 
-   // INDEPENDENT PARAMETERS CONSTRUCTOR
-
-   //explicit NeuralNetwork(const IndependentParameters&);
-
-   // INDEPENDENT PARAMETERS NUMBER CONSTRUCTOR
-
-   explicit NeuralNetwork(const size_t&);
-
-   // MULTILAYER PERCEPTRON AND INDEPENDENT PARAMETERS CONSTRUCTOR
-
-   //explicit NeuralNetwork(const MultilayerPerceptron&, const IndependentParameters&);
-
-   // MULTILAYER PERCEPTRON ARCHITECTURE AND INDEPENDENT PARAMETERS NUMBER CONSTRUCTOR
-
-   //explicit NeuralNetwork(const Vector<size_t>&, const size_t&);
-
    // FILE CONSTRUCTOR
 
    explicit NeuralNetwork(const string&);
@@ -124,11 +104,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   NeuralNetwork& operator =(const NeuralNetwork&);
+   NeuralNetwork& operator = (const NeuralNetwork&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const NeuralNetwork&) const;
+   bool operator == (const NeuralNetwork&) const;
 
 
    // GET METHODS
@@ -143,8 +123,6 @@ public:
    bool has_outputs_trending_layer() const;
    bool has_bounding_layer() const;
    bool has_probabilistic_layer() const;
-   bool has_conditions_layer() const;
-   bool has_independent_parameters() const;
 
    MultilayerPerceptron* get_multilayer_perceptron_pointer() const;
    Inputs* get_inputs_pointer() const;
@@ -156,8 +134,6 @@ public:
    OutputsTrendingLayer* get_outputs_trending_layer_pointer() const;
    BoundingLayer* get_bounding_layer_pointer() const;
    ProbabilisticLayer* get_probabilistic_layer_pointer() const;
-   ConditionsLayer* get_conditions_layer_pointer() const;
-   IndependentParameters* get_independent_parameters_pointer() const;
 
    const bool& get_display() const;
 
@@ -191,10 +167,8 @@ public:
    void set_outputs_trending_layer_pointer(OutputsTrendingLayer*);
    void set_bounding_layer_pointer(BoundingLayer*);
    void set_probabilistic_layer_pointer(ProbabilisticLayer*);
-   void set_conditions_layer_pointer(ConditionsLayer*);
    void set_inputs_pointer(Inputs*);
    void set_outputs_pointer(Outputs*);
-   void set_independent_parameters_pointer(IndependentParameters*);
 
    void set_scaling_layer(ScalingLayer&);
 
@@ -220,10 +194,8 @@ public:
    void construct_outputs_trending_layer();
    void construct_bounding_layer();
    void construct_probabilistic_layer();
-   void construct_conditions_layer();
    void construct_inputs();
    void construct_outputs();
-   void construct_independent_parameters();
 
    void destruct_multilayer_perceptron();
    void destruct_inputs_trending_layer();
@@ -232,10 +204,8 @@ public:
    void destruct_outputs_trending_layer();
    void destruct_bounding_layer();
    void destruct_probabilistic_layer();
-   void destruct_conditions_layer();
    void destruct_inputs();
    void destruct_outputs();
-   void destruct_independent_parameters();
 
    void delete_pointers();
 
@@ -252,12 +222,12 @@ public:
    size_t get_inputs_number() const;
    size_t get_outputs_number() const;
 
-   Vector<size_t> arrange_architecture() const;
+   Vector<size_t> get_architecture() const;
 
    // Parameters
 
-   size_t count_parameters_number() const;
-   Vector<double> arrange_parameters() const;      
+   size_t get_parameters_number() const;
+   Vector<double> get_parameters() const;
 
    void set_parameters(const Vector<double>&);
 
@@ -289,22 +259,13 @@ public:
 
    // Output 
 
-   Vector<double> calculate_outputs(const Vector<double>&) const;
-   Vector<double> calculate_outputs(const Vector<double>&, const double&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&, const double&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&, const double&) const;
-   Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
-   Matrix<double> calculate_directional_input_data(const size_t&, const Vector<double>&, const double&, const double&, const size_t& = 101) const;
-
-   Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const;
-   Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&, const double&) const;
-   Matrix<double> calculate_Jacobian(const Vector<double>&, const Vector<double>&) const;
-   Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&, const Vector<double>&) const;
-
-   Matrix<double> calculate_output_data(const Matrix<double>&) const;
-   Matrix<double> calculate_output_data(const Matrix<double>&, const Vector<double>&) const;
-   Matrix<double> calculate_output_data_missing_values(const Matrix<double>&/*, const double& missing_values_flag = -99.9*/) const;
+   Matrix<double> calculate_directional_inputs(const size_t&, const Vector<double>&, const double&, const double&, const size_t& = 101) const;
 
    Vector< Matrix<double> > calculate_Jacobian_data(const Matrix<double>&) const;
 
@@ -352,58 +313,49 @@ public:
 
    void from_PMML(const tinyxml2::XMLDocument&);
 
-
 protected:
 
    // MEMBERS
 
    /// Pointer to a multilayer perceptron object.
 
-   MultilayerPerceptron* multilayer_perceptron_pointer;
+   MultilayerPerceptron* multilayer_perceptron_pointer = nullptr;
 
    /// Pointer to an inputs trending layer object.
 
-   InputsTrendingLayer* inputs_trending_layer_pointer;
+   InputsTrendingLayer* inputs_trending_layer_pointer = nullptr;
 
    /// Pointer to a scaling layer object.
 
-   ScalingLayer* scaling_layer_pointer;
+   ScalingLayer* scaling_layer_pointer = nullptr;
 
    /// Pointer to a principal components layer object.
 
-   PrincipalComponentsLayer* principal_components_layer_pointer;
+   PrincipalComponentsLayer* principal_components_layer_pointer = nullptr;
 
    /// Pointer to an unscaling layer object.
 
-   UnscalingLayer* unscaling_layer_pointer;
+   UnscalingLayer* unscaling_layer_pointer = nullptr;
 
    /// Pointer to an outputs trending layer object.
 
-   OutputsTrendingLayer* outputs_trending_layer_pointer;
+   OutputsTrendingLayer* outputs_trending_layer_pointer = nullptr;
 
    /// Pointer to a bounding layer object.
 
-   BoundingLayer* bounding_layer_pointer;
+   BoundingLayer* bounding_layer_pointer = nullptr;
 
    /// Pointer to a probabilistic layer.
 
-   ProbabilisticLayer* probabilistic_layer_pointer;
-
-   /// Pointer to a conditions object.
-
-   ConditionsLayer* conditions_layer_pointer;
+   ProbabilisticLayer* probabilistic_layer_pointer = nullptr;
 
    /// Pointer to an inputs object.
 
-   Inputs* inputs_pointer;
+   Inputs* inputs_pointer = nullptr;
 
    /// Pointer to an outputs object.
 
-   Outputs* outputs_pointer;
-
-   /// Pointer to an independent parameters object
-
-   IndependentParameters* independent_parameters_pointer;
+   Outputs* outputs_pointer = nullptr;
 
    /// Display messages to screen. 
 
