@@ -11,6 +11,8 @@
 /*                                                                                                              */
 /****************************************************************************************************************/
 
+#pragma once
+
 #ifndef __TEXTANALYTICS_H__
 #define __TEXTANALYTICS_H__
 
@@ -175,6 +177,14 @@ public:
     Matrix<string> top_words_correlations(const Vector< Vector<string> >&, const double&, const Vector<size_t>&) const;
 
     Matrix<double> calculate_data_set(const Vector<string>&, const Vector<string>&, const TextAnalytics::WordBag&) const;
+
+    // Binarize methods
+
+    Vector<double> get_binary_vector(const Vector<string>&, const Vector<string>&) const;
+
+    Matrix<double> get_binary_matrix(const Vector<string>&, const char& separator = ' ') const;
+
+    Matrix<double> get_unique_binary_matrix(const Vector<string>&, const char&, const Vector<string>&) const;
 
 private:
 

@@ -29,14 +29,13 @@ using namespace OpenNN;
 // GENERAL CONSTRUCTOR
 
 Polynomial::Polynomial(NeuralNetwork* new_neural_network_pointer)       
-: PerformanceTerm(new_neural_network_pointer)
 {
 }
 
 
 // DEFAULT CONSTRUCTOR
 
-Polynomial::Polynomial(void) : PerformanceTerm()
+Polynomial::Polynomial(void)
 {
 }
 

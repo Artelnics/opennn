@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   E V O L U T I O N A R Y   A L G O R I T H M   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -34,7 +33,7 @@ namespace OpenNN
 {
 
 ///
-/// This concrete class represents an evolutionary training algorithm for a loss functional of a neural network.
+/// This concrete class represents an evolutionary training algorithm for a loss index of a neural network.
 ///
 
 class EvolutionaryAlgorithm : public TrainingAlgorithm
@@ -90,7 +89,7 @@ public:
 
        EvolutionaryAlgorithmResults()
        {
-           evolutionary_algorithm_pointer = NULL;
+           evolutionary_algorithm_pointer = nullptr;
        }
 
        /// Evolutionary algorithm constructor.
@@ -150,7 +149,7 @@ public:
 
       /// History of the selection loss of the best individual over each generations.
 
-      Vector<double> selection_loss_history;
+      Vector<double> selection_error_history;
 
       /// History of the elapsed time over the generations.
 
@@ -184,7 +183,7 @@ public:
 
       /// Selection loss after training.
 
-      double final_selection_loss;
+      double final_selection_error;
 
       /// Total elapsed time in the training process.
 
@@ -196,7 +195,7 @@ public:
 
       void resize_training_history(const size_t&);
       string object_to_string() const;
-      Matrix<string> write_final_results(const size_t& precision = 3) const;
+      Matrix<string> write_final_results(const int& precision = 3) const;
    };
 
 
@@ -213,14 +212,14 @@ public:
    // Stopping criteria
 
    const double& get_best_loss_goal() const;
-   const size_t& get_maximum_selection_loss_decreases() const;
+   const size_t& get_maximum_selection_error_decreases() const;
 
    const size_t& get_maximum_generations_number() const;
    const double& get_maximum_time() const;
 
    // Reserve training history
 
-   const bool& get_reserve_selection_loss_history() const;
+   const bool& get_reserve_selection_error_history() const;
 
    const bool& get_reserve_elapsed_time_history() const;
 
@@ -330,13 +329,13 @@ public:
    // Stopping criteria
 
    void set_best_loss_goal(const double&);
-   void set_maximum_selection_loss_decreases(const size_t&);
+   void set_maximum_selection_error_increases(const size_t&);
 
    void set_maximum_time(const double&);
 
    // Reserve training history
 
-   void set_reserve_selection_loss_history(const bool&);
+   void set_reserve_selection_error_history(const bool&);
 
    void set_reserve_elapsed_time_history(const bool&);
 
@@ -519,7 +518,7 @@ private:
    /// Number of generations where the selection loss increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_loss_decreases;
+   size_t maximum_selection_error_decreases;
 
    /// Maximum training time. It is used as a stopping criterion.
 
@@ -568,7 +567,7 @@ private:
 
    /// True if the selection loss history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_loss_history;
+   bool reserve_selection_error_history;
 };
 
 }

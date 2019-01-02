@@ -6,7 +6,7 @@
 /*   M O D E L   S E L E C T I O N   T E S T   C L A S S   H E A D E R                                          */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/

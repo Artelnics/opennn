@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   M U L T I L A Y E R   P E R C E P T R O N   T E S T   C L A S S   H E A D E R                              */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -54,14 +53,14 @@ public:
 
    // Multilayer perceptron architecture
 
-   void test_count_inputs_number();
+   void test_get_inputs_number();
 
    void test_get_layers_number();
    void test_count_layers_perceptrons_number();
 
-   void test_count_outputs_number();
+   void test_get_outputs_number();
 
-   void test_count_perceptrons_number();
+   void test_get_perceptrons_number();
    void test_count_cumulative_perceptrons_number();
 
    void test_get_layers();
@@ -69,21 +68,21 @@ public:
 
    // Multilayer Perceptron parameters
 
-   void test_arrange_layers_parameters_number();
+   void test_get_layers_parameters_number();
 
-   void test_count_parameters_number();
+   void test_get_parameters_number();
    void test_get_cumulative_parameters_number();
 
-   void test_arrange_parameters();   
+   void test_get_parameters();   
 
-   void test_arrange_layers_biases();
+   void test_get_layers_biases();
 
-   void test_arrange_layers_synaptic_weights();
+   void test_get_layers_synaptic_weights();
 
    void test_get_layers_parameters();
 
    void test_get_parameter_indices();
-   void test_arrange_parameters_indices();
+   void test_get_parameters_indices();
 
    void test_get_layers_activation_function();
    void test_get_layers_activation_function_name();
@@ -155,12 +154,12 @@ public:
    void test_calculate_outputs();
 
    void test_calculate_Jacobian();
-   void test_calculate_Hessian_form();
+   void test_calculate_Hessian();
 
    void test_calculate_parameters_Jacobian();
-   void test_calculate_parameters_Hessian_form();
+   void test_calculate_parameters_Hessian();
 
-   // PerceptronLayer combination combination
+   // Combination-combination
 
    void test_calculate_layer_combination_combination();
    void test_calculate_layer_combination_combination_Jacobian();
@@ -179,14 +178,14 @@ public:
    void test_calculate_perceptrons_combination_parameters_gradient();
 
    void test_calculate_layers_activation();
-   void test_calculate_layers_activation_derivative();
-   void test_calculate_layers_activation_second_derivative();
+   void test_calculate_layers_activation_derivatives();
+   void test_calculate_layers_activation_second_derivatives();
 
    void test_calculate_first_order_forward_propagation();
    void test_calculate_second_order_forward_propagation();
  
    void test_calculate_layers_Jacobian();
-   void test_calculate_layers_Hessian_form();
+   void test_calculate_layers_Hessian();
 
    void test_calculate_output_layers_delta();
    void test_calculate_output_interlayers_Delta();
@@ -213,7 +212,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

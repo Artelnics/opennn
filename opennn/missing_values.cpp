@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M I S S I N G   V A L U E S   C L A S S                                                                    */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -92,7 +92,7 @@ MissingValues::~MissingValues()
 /// It assigns to the current object the members of an existing missing values object.
 /// @param other_missing_values Missing values object to be assigned.
 
-MissingValues& MissingValues::operator=(const MissingValues& other_missing_values)
+MissingValues& MissingValues::operator= (const MissingValues& other_missing_values)
 {
     if(this != &other_missing_values)
     {
@@ -110,14 +110,13 @@ MissingValues& MissingValues::operator=(const MissingValues& other_missing_value
 
 // EQUAL TO OPERATOR
 
-// bool operator ==(const MissingValues&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_missing_values Missing values object to be compared with.
 
-bool MissingValues::operator ==(const MissingValues& other_missing_values) const
+bool MissingValues::operator == (const MissingValues& other_missing_values) const
 {
     if(items == other_missing_values.items
             && display == other_missing_values.display)
@@ -133,7 +132,6 @@ bool MissingValues::operator ==(const MissingValues& other_missing_values) const
 
 // METHODS
 
-// size_t get_instances_number() const method
 
 /// Returns the number of instances in the data set.
 
@@ -143,8 +141,6 @@ size_t MissingValues::get_instances_number() const
 }
 
 
-// size_t get_variables_number() const method
-
 /// Returns the number of variables in the data set.
 
 size_t MissingValues::get_variables_number() const
@@ -152,8 +148,6 @@ size_t MissingValues::get_variables_number() const
     return(variables_number);
 }
 
-
-// Vector<size_t> get_missing_values_numbers() const method
 
 /// Returns a vector with the number of missing values for each variable in the data set.
 /// The size of the vector is the number of variables.
@@ -177,8 +171,6 @@ Vector<size_t> MissingValues::get_missing_values_numbers() const
 }
 
 
-// const Vector<Item>& get_items() const method
-
 /// Returns a constant reference to the vector of missing value items.
 
 const Vector<MissingValues::Item>& MissingValues::get_items() const
@@ -186,8 +178,6 @@ const Vector<MissingValues::Item>& MissingValues::get_items() const
     return(items);
 }
 
-
-// const Item& get_item(const size_t&) const method
 
 /// Returns a single missing value, with information about the instance and variable indices.
 /// @param index Index of missing value.
@@ -217,8 +207,6 @@ const MissingValues::Item& MissingValues::get_item(const size_t& index) const
 }
 
 
-// ScrubbingMethod get_scrubbing_method() const
-
 /// Returns the method to be used for dealing with the missing values.
 
 MissingValues::ScrubbingMethod MissingValues::get_scrubbing_method() const
@@ -226,8 +214,6 @@ MissingValues::ScrubbingMethod MissingValues::get_scrubbing_method() const
     return(scrubbing_method);
 }
 
-
-// string write_scrubbing_method() const method
 
 /// Returns a string with the name of the method used for scrubbing.
 
@@ -266,8 +252,6 @@ string MissingValues::write_scrubbing_method() const
 }
 
 
-// string write_scrubbing_method_text() const method
-
 /// Returns a string with the name of the method used for scrubbing, as paragaph text.
 
 string MissingValues::write_scrubbing_method_text() const
@@ -305,8 +289,6 @@ string MissingValues::write_scrubbing_method_text() const
 }
 
 
-// const bool& get_display() const method
-
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
 
@@ -315,8 +297,6 @@ const bool& MissingValues::get_display() const
     return(display);
 }
 
-
-// void set() method
 
 /// Sets a missing values object with zero instances, variables and missing values.
 
@@ -330,8 +310,6 @@ void MissingValues::set()
     set_default();
 }
 
-
-// void set(const size_t&, const size_t&) method
 
 /// Sets a new number of missing values in the object.
 /// @param new_instances_number Number of instances in the data set.
@@ -348,8 +326,6 @@ void MissingValues::set(const size_t& new_instances_number, const size_t& new_va
 }
 
 
-// void set(const tinyxml2::XMLDocument&) method
-
 /// Sets the members of this object from a XML document.
 /// @param document Pointer to a TinyXML document containing the member data.
 
@@ -361,8 +337,6 @@ void MissingValues::set(const tinyxml2::XMLDocument& document)
 }
 
 
-// void set_instances_number(const size_t&) method
-
 /// Sets the number of data set instances in this object.
 
 void MissingValues::set_instances_number(const size_t& new_instances_number)
@@ -373,8 +347,6 @@ void MissingValues::set_instances_number(const size_t& new_instances_number)
 }
 
 
-// void set_variables_number(const size_t&) method
-
 /// Sets the number of data set variables in this object.
 
 void MissingValues::set_variables_number(const size_t& new_variables_number)
@@ -384,8 +356,6 @@ void MissingValues::set_variables_number(const size_t& new_variables_number)
     variables_number = new_variables_number;
 }
 
-
-// void set_default() method
 
 /// Sets the default values to this MissingValues object:
 /// <ul>
@@ -401,8 +371,6 @@ void MissingValues::set_default()
 }
 
 
-// void set_display(const bool&) method
-
 /// Sets a new display value. 
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -414,8 +382,6 @@ void MissingValues::set_display(const bool& new_display)
 }
 
 
-// void set_items(const Vector<Item>&) method
-
 /// Sets a new vector of missing value items.
 
 void MissingValues::set_items(const Vector<Item>& new_items)
@@ -423,8 +389,6 @@ void MissingValues::set_items(const Vector<Item>& new_items)
     items = new_items;
 }
 
-
-// void set_item(const size_t&, const size_t&, const size_t&) method
 
 /// Sets the indices
 
@@ -476,8 +440,6 @@ void MissingValues::set_item(const size_t& index, const size_t& instance_index, 
 }
 
 
-// void append(const size_t&, const size_t&) method
-
 /// Appends a new item to the vector of missing values.
 /// @param instance_index Instance with a missing value.
 /// @param variable_index Variable with a missing value.
@@ -516,8 +478,6 @@ void MissingValues::append(const size_t& instance_index, const size_t& variable_
 }
 
 
-// void set_missing_values_number(const size_t&) method
-
 /// Sets a new number of missing values in the data set.
 /// @param new_missing_values_number Number of missing values.
 
@@ -527,8 +487,6 @@ void MissingValues::set_missing_values_number(const size_t& new_missing_values_n
 }
 
 
-// void set_scrubbing_method(const ScrubbingMethod&) method
-
 /// Sets a new method for dealing with the missing values.
 /// @param new_scrubbing_method Scrubbing method.
 
@@ -537,8 +495,6 @@ void MissingValues::set_scrubbing_method(const ScrubbingMethod& new_scrubbing_me
     scrubbing_method = new_scrubbing_method;
 }
 
-
-// void set_scrubbing_method(const string&) method
 
 /// Sets a new method for dealing with the missing values from a string.
 /// @param new_scrubbing_method String with the name of the scrubbing method.
@@ -573,7 +529,6 @@ void MissingValues::set_scrubbing_method(const string& new_scrubbing_method)
     }
 }
 
-// bool has_missing_values() const method
 
 /// Returns true if there are missing values,
 /// and false if the number of missing values is zero.
@@ -590,8 +545,6 @@ bool MissingValues::has_missing_values() const
     }
 }
 
-
-// bool has_missing_values(const size_t&) const method
 
 /// Returns true if a given instance has missing values,
 /// and false otherwise.
@@ -617,8 +570,6 @@ bool MissingValues::has_missing_values(const size_t& instance_index) const
     return(false);
 }
 
-
-// bool has_missing_values(const size_t&, const Vector<size_t>&) const method
 
 /// Returns true if a given instance has missing values for given variables,
 /// and false otherwise.
@@ -649,8 +600,6 @@ bool MissingValues::has_missing_values(const size_t& instance_index, const Vecto
 }
 
 
-// bool is_missing_value(const size_t&, const size_t&) const method
-
 /// Returns true if the value with given instance and variable indices is missing.
 /// @param instance_index Index of instance.
 /// @param variable_index Index of variable.
@@ -676,11 +625,9 @@ bool MissingValues::is_missing_value(const size_t& instance_index, const size_t&
 }
 
 
-// Vector<size_t> arrange_missing_instances() const method
-
 /// Returns a vector with the indices of those instances with missing values.
 
-Vector<size_t> MissingValues::arrange_missing_instances() const
+Vector<size_t> MissingValues::get_missing_instances() const
 {
     const size_t missing_values_number = get_missing_values_number();
 
@@ -695,9 +642,7 @@ Vector<size_t> MissingValues::arrange_missing_instances() const
 }
 
 
-// Vector<size_t> arrange_missing_instances(const size_t&) const method
-
-Vector<size_t> MissingValues::arrange_missing_instances(const size_t& variable_index) const
+Vector<size_t> MissingValues::get_missing_instances(const size_t& variable_index) const
 {
     const size_t missing_values_number = get_missing_values_number();
 
@@ -714,7 +659,8 @@ Vector<size_t> MissingValues::arrange_missing_instances(const size_t& variable_i
     return(missing_instances.calculate_greater_than_indices(0.5));
 }
 
-Vector<size_t> MissingValues::arrange_missing_instances(const Vector<size_t>& variable_indices) const
+
+Vector<size_t> MissingValues::get_missing_instances(const Vector<size_t>& variable_indices) const
 {
     const size_t missing_values_number = get_missing_values_number();
 
@@ -732,17 +678,13 @@ Vector<size_t> MissingValues::arrange_missing_instances(const Vector<size_t>& va
 }
 
 
-// size_t count_missing_instances() const method
-
 /// Returns the number of instances with missing values.
 
 size_t MissingValues::count_missing_instances() const
 {
-    return(arrange_missing_instances().size());
+    return(get_missing_instances().size());
 }
 
-
-// size_t count_missing_instances(const size_t&) const
 
 size_t MissingValues::count_missing_instances(const size_t& variable_index) const
 {
@@ -762,8 +704,6 @@ size_t MissingValues::count_missing_instances(const size_t& variable_index) cons
 }
 
 
-// size_t count_missing_instances(const size_t&) const
-
 size_t MissingValues::count_missing_instances(const size_t& variable_1, const size_t& variable_2) const
 {
     const size_t missing_values_number = get_missing_values_number();
@@ -782,11 +722,9 @@ size_t MissingValues::count_missing_instances(const size_t& variable_1, const si
 }
 
 
-// Vector<size_t> arrange_missing_variables() const method
-
 /// Returns a vector with the indices of those variables with missing values.
 
-Vector<size_t> MissingValues::arrange_missing_variables() const
+Vector<size_t> MissingValues::get_missing_variables() const
 {
     const size_t missing_values_number = get_missing_values_number();
 
@@ -800,8 +738,6 @@ Vector<size_t> MissingValues::arrange_missing_variables() const
     return(missing_variables.calculate_greater_than_indices(0.5));
 }
 
-
-// void convert_time_series(const size_t&) method
 
 /// @todo Complete method.
 
@@ -840,8 +776,6 @@ void MissingValues::convert_time_series(const size_t& lags_number)
 }
 
 
-// void convert_time_series(const Matrix<double>&) method
-
 /// Arranges the new items of a time series data matrix.
 /// @param data Matrix of the converted time series data.
 
@@ -858,7 +792,7 @@ void MissingValues::convert_time_series(const Matrix<double>& data)
     {
         for(size_t j = 0; j < variables_number; j++)
         {
-            if(data(i,j) == -99.9)
+            if(fabs(data(i,j) - -99.9) < numeric_limits<double>::epsilon())
             {
                 new_item.instance_index = i;
                 new_item.variable_index = j;
@@ -871,8 +805,6 @@ void MissingValues::convert_time_series(const Matrix<double>& data)
 }
 
 
-// void convert_association() method
-
 /// @todo Implement this method.
 
 void MissingValues::convert_association()
@@ -884,13 +816,11 @@ void MissingValues::convert_association()
 }
 
 
-// Vector< Vector<size_t> > arrange_missing_indices() const method
-
 /// Returns a vector of vectors with the indices of the missing values for each variable.
 /// The size of the vector is the number of variables.
 /// The size of each subvector is the number of missing values for the corresponding variable.
 
-Vector< Vector<size_t> > MissingValues::arrange_missing_indices() const
+Vector< Vector<size_t> > MissingValues::get_missing_indices() const
 {
     Vector< Vector<size_t> > missing_indices(variables_number);
 
@@ -910,7 +840,8 @@ Vector< Vector<size_t> > MissingValues::arrange_missing_indices() const
     return(missing_indices);
 }
 
-Vector< Vector<size_t> > MissingValues::arrange_missing_indices(const Vector<size_t>& variable_indices) const
+
+Vector< Vector<size_t> > MissingValues::get_missing_indices(const Vector<size_t>& variable_indices) const
 {
     const size_t variables_indices_size = variable_indices.size();
 
@@ -918,19 +849,18 @@ Vector< Vector<size_t> > MissingValues::arrange_missing_indices(const Vector<siz
 
     for(size_t i = 0; i < variables_indices_size; i++)
     {
-        missing_indices[i] = arrange_missing_indices(variable_indices[i]);
+        missing_indices[i] = get_missing_indices(variable_indices[i]);
     }
 
     return(missing_indices);
 }
 
-// Vector<size_t> arrange_missing_indices(const size_t&) const method
 
 /// Returns a vector of vectors with the indices of the missing values for the given variable.
 /// The size of the vector is the number of missing values for the corresponding variable.
 /// @param variable_index Index of the variable whose missing indices will be returned.
 
-Vector<size_t> MissingValues::arrange_missing_indices(const size_t& variable_index) const
+Vector<size_t> MissingValues::get_missing_indices(const size_t& variable_index) const
 {
     Vector<size_t> missing_indices(instances_number, 0);
 
@@ -973,7 +903,6 @@ Vector<size_t> MissingValues::count_variables_missing_indices() const
     return(missing_indices_per_variable);
 }
 
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the MissingValues object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document. 
@@ -991,8 +920,8 @@ tinyxml2::XMLDocument* MissingValues::to_XML() const
 
     document->InsertFirstChild(missing_values_element);
 
-    tinyxml2::XMLElement* element = NULL;
-    tinyxml2::XMLText* text = NULL;
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
 
     const size_t missing_values_number = get_missing_values_number();
 
@@ -1137,8 +1066,6 @@ tinyxml2::XMLDocument* MissingValues::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the missing values object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1249,8 +1176,6 @@ void MissingValues::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this MissingValues object.
 /// @param document XML document containing the member data.
 /// @todo Check that the method i
@@ -1267,7 +1192,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to MissingValues element is NULL.\n";
+               << "Pointer to MissingValues element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1280,12 +1205,12 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to instances number is NULL.\n";
+               << "Pointer to instances number is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    instances_number = atoi(instances_number_element->GetText());
+    instances_number = static_cast<size_t>(atoi(instances_number_element->GetText()));
 
     // Variables number
 
@@ -1295,12 +1220,12 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to variables number is NULL.\n";
+               << "Pointer to variables number is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    variables_number = atoi(variables_number_element->GetText());
+    variables_number = static_cast<size_t>(atoi(variables_number_element->GetText()));
 
     // Scrubbing method
 
@@ -1310,7 +1235,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to scrubbing method element is NULL.\n";
+               << "Pointer to scrubbing method element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1327,12 +1252,12 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to missing values number is NULL.\n";
+               << "Pointer to missing values number is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t new_missing_values_number = atoi(missing_values_number_element->GetText());
+    const size_t new_missing_values_number = static_cast<size_t>(atoi(missing_values_number_element->GetText()));
 
     set_missing_values_number(new_missing_values_number);
 
@@ -1349,7 +1274,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to instances indices element is NULL.\n";
+               << "Pointer to instances indices element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1374,7 +1299,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: MissingValues class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Pointer to variables indices element is NULL.\n";
+               << "Pointer to variables indices element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1414,7 +1339,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: MissingValues class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Item " << i+1 << " is NULL.\n";
+                   << "Item " << i+1 << " is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -1438,7 +1363,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: MissingValues class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Pointer to instance index element is NULL.\n";
+                   << "Pointer to instance index element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -1455,7 +1380,7 @@ void MissingValues::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: MissingValues class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Pointer to variable index element is NULL.\n";
+                   << "Pointer to variable index element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -1495,8 +1420,6 @@ string MissingValues::object_to_string() const
     return(buffer.str());
 }
 
-
-// void print() const method
 
 /// Prints to the screen information about the missing values object.
 

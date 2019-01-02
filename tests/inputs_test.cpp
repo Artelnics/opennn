@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   I N P U T S   T E S T   C L A S S                                                                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -106,13 +106,13 @@ void InputsTest::test_set_default()
 }
 
 
-void InputsTest::test_arrange_names()
+void InputsTest::test_get_names()
 {
-   message += "test_arrange_names\n";
+   message += "test_get_names\n";
 
    Inputs i;
 
-   Vector<string> names = i.arrange_names();
+   Vector<string> names = i.get_names();
 
    assert_true(names.size() == 0, LOG);
 
@@ -131,13 +131,13 @@ void InputsTest::test_get_name()
 }
 
 
-void InputsTest::test_arrange_units()
+void InputsTest::test_get_units()
 {
-   message += "test_arrange_units\n";
+   message += "test_get_units\n";
 
    Inputs i;
 
-   Vector<string> units = i.arrange_units();
+   Vector<string> units = i.get_units();
 
    assert_true(units.size() == 0, LOG);
 
@@ -156,13 +156,13 @@ void InputsTest::test_get_unit()
 }
 
 
-void InputsTest::test_arrange_descriptions()
+void InputsTest::test_get_descriptions()
 {
-   message += "test_arrange_descriptions\n";
+   message += "test_get_descriptions\n";
 
    Inputs i;
 
-   Vector<string> descriptions = i.arrange_descriptions();
+   Vector<string> descriptions = i.get_descriptions();
 
    assert_true(descriptions.size() == 0, LOG);
 }
@@ -238,7 +238,7 @@ void InputsTest::test_to_XML()
 
    document = i.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    delete document;
 }
@@ -283,13 +283,13 @@ void InputsTest::run_test_case()
 
    // Inputs information
 
-   test_arrange_names();
+   test_get_names();
    test_get_name();
 
-   test_arrange_units();
+   test_get_units();
    test_get_unit();
 
-   test_arrange_descriptions();
+   test_get_descriptions();
    test_get_description();
 
    // Display messages

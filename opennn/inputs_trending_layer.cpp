@@ -83,7 +83,7 @@ InputsTrendingLayer::~InputsTrendingLayer()
 /// It assigns to this object the members of an existing inputs trending layer object.
 /// @param other_inputs_trending_layer Inputs trending layer object to be assigned.
 
-InputsTrendingLayer& InputsTrendingLayer::operator =(const InputsTrendingLayer& other_inputs_trending_layer)
+InputsTrendingLayer& InputsTrendingLayer::operator = (const InputsTrendingLayer& other_inputs_trending_layer)
 {
    if(this != &other_inputs_trending_layer)
    {
@@ -96,14 +96,13 @@ InputsTrendingLayer& InputsTrendingLayer::operator =(const InputsTrendingLayer& 
 
 // EQUAL TO OPERATOR
 
-// bool operator ==(const InputsTrendingLayer&) const method
 
 /// Equal to operator.
 /// It compares this object with another object of the same class.
 /// It returns true if the members of the two objects have the same value, and false otherwise.
 /// @param other_inputs_trending_layer Inputs trending layer to be compared with.
 
-bool InputsTrendingLayer::operator ==(const InputsTrendingLayer& other_inputs_trending_layer) const
+bool InputsTrendingLayer::operator == (const InputsTrendingLayer& other_inputs_trending_layer) const
 {
     if(get_inputs_trending_neurons_number() != other_inputs_trending_layer.get_inputs_trending_neurons_number())
     {
@@ -118,9 +117,9 @@ bool InputsTrendingLayer::operator ==(const InputsTrendingLayer& other_inputs_tr
 
         for(size_t i = 0; i < get_inputs_trending_neurons_number(); i++)
         {
-            if(get_intercept(i) != other_inputs_trending_layer.get_intercept(i)
-                    || get_slope(i) != other_inputs_trending_layer.get_slope(i)
-                    || get_correlation(i) != other_inputs_trending_layer.get_correlation(i))
+            if(fabs(get_intercept(i) - other_inputs_trending_layer.get_intercept(i)) > numeric_limits<double>::epsilon()
+                    || fabs(get_slope(i) - other_inputs_trending_layer.get_slope(i)) > numeric_limits<double>::epsilon()
+                    || fabs(get_correlation(i) - other_inputs_trending_layer.get_correlation(i)) > numeric_limits<double>::epsilon())
             {
                 return(false);
             }
@@ -130,8 +129,6 @@ bool InputsTrendingLayer::operator ==(const InputsTrendingLayer& other_inputs_tr
     return(true);
 }
 
-
-// bool is_empty() const method
 
 /// Returns true if the size of the layer is zero, and false otherwise.
 
@@ -148,8 +145,6 @@ bool InputsTrendingLayer::is_empty() const
 }
 
 
-// const InputsTrendingMethod& get_inputs_trending_method() const method
-
 /// Returns the method used for inputs trending layer.
 
 const InputsTrendingLayer::InputsTrendingMethod& InputsTrendingLayer::get_inputs_trending_method() const
@@ -157,8 +152,6 @@ const InputsTrendingLayer::InputsTrendingMethod& InputsTrendingLayer::get_inputs
     return(inputs_trending_method);
 }
 
-
-// string write_inputs_trending_method() const method
 
 /// Returns a string with the name of the method used for inputs trending layer.
 
@@ -186,8 +179,6 @@ string InputsTrendingLayer::write_inputs_trending_method() const
 }
 
 
-// size_t get_inputs_trending_neurons_number() const method
-
 /// Returns the number of inputs trending neurons in the layer.
 
 size_t InputsTrendingLayer::get_inputs_trending_neurons_number() const
@@ -195,8 +186,6 @@ size_t InputsTrendingLayer::get_inputs_trending_neurons_number() const
    return(inputs_trends.size());
 }
 
-
-// const Vector<double>& get_intercepts() const method
 
 /// Returns the intercepts values of all the inputs trending neurons in the layer.
 
@@ -214,8 +203,6 @@ Vector<double> InputsTrendingLayer::get_intercepts() const
    return(intercepts);
 }
 
-
-// double get_intercept(const size_t&) const method
 
 /// Returns the intercept of a single inputs trending neuron.
 /// @param i Index of inputs trending neuron.
@@ -245,8 +232,6 @@ double InputsTrendingLayer::get_intercept(const size_t& i) const
 }
 
 
-// const Vector<double>& get_slopes() const method
-
 /// Returns the slopes values of all the inputs trending neurons in the layer.
 
 Vector<double> InputsTrendingLayer::get_slopes() const
@@ -263,8 +248,6 @@ Vector<double> InputsTrendingLayer::get_slopes() const
    return(slopes);
 }
 
-
-// double get_slope(const size_t&) const method
 
 /// Returns the slope value of a single inputs trending neuron.
 /// @param i Index of inputs trending neuron.
@@ -304,8 +287,6 @@ double InputsTrendingLayer::get_slope(const size_t& i) const
 }
 
 
-// const Vector<double>& get_correlations() const method
-
 /// Returns the correlations values of all the inputs trending neurons in the layer.
 
 Vector<double> InputsTrendingLayer::get_correlations() const
@@ -322,8 +303,6 @@ Vector<double> InputsTrendingLayer::get_correlations() const
    return(correlations);
 }
 
-
-// double get_correlation(const size_t&) const method
 
 /// Returns the correlation value of a single inputs trending neuron.
 /// @param i Index of inputs trending neuron.
@@ -363,8 +342,6 @@ double InputsTrendingLayer::get_correlation(const size_t& i) const
 }
 
 
-// Vector< LinearRegressionParameters<double> > get_inputs_trends() const method
-
 /// Returns the trend value of each inputs trending neuron.
 
 Vector< LinearRegressionParameters<double> > InputsTrendingLayer::get_inputs_trends() const
@@ -372,8 +349,6 @@ Vector< LinearRegressionParameters<double> > InputsTrendingLayer::get_inputs_tre
     return(inputs_trends);
 }
 
-
-// void set() method
 
 /// Sets the number of inputs trending neurons to be zero.
 /// It also sets the rest of members to their default values.
@@ -385,8 +360,6 @@ void InputsTrendingLayer::set()
    set_default();
 }
 
-
-// void set(const size_t&) method
 
 /// Resizes the inputs trending layer.
 /// It also sets the rest of members to their default values.
@@ -400,8 +373,6 @@ void InputsTrendingLayer::set(const size_t& new_inputs_trending_neurons_number)
 }
 
 
-// void set(const tinyxml2::XMLDocument&) method
-
 /// Sets the inputs trending layer members from a XML document.
 /// @param inputs_trending_layer_document Pointer to a TinyXML document containing the member data.
 
@@ -412,8 +383,6 @@ void InputsTrendingLayer::set(const tinyxml2::XMLDocument& inputs_trending_layer
    from_XML(inputs_trending_layer_document);
 }
 
-
-// void set(const InputsTrendingLayer&) method
 
 /// Sets the members of this object to be the members of another object of the same class.
 /// @param other_inputs_trending_layer Object to be copied.
@@ -426,8 +395,6 @@ void InputsTrendingLayer::set(const InputsTrendingLayer& other_inputs_trending_l
 }
 
 
-// void set_inputs_trending_method(const InputsTrendingMethod&) method
-
 /// Sets a new inputs trending method.
 /// @param new_method New inputs trending method.
 
@@ -436,8 +403,6 @@ void InputsTrendingLayer::set_inputs_trending_method(const InputsTrendingMethod&
     inputs_trending_method = new_method;
 }
 
-
-// void set_inputs_trending_method(const string&) method
 
 /// Sets a new inputs trending method.
 /// @param new_method_string New inputs trending method string.
@@ -464,8 +429,6 @@ void InputsTrendingLayer::set_inputs_trending_method(const string& new_method_st
     }
 }
 
-
-// void set_inputs_trends(const Vector< LinearRegressionParameters<double> >&) method
 
 /// Sets the inputs trending layer members to the given values.
 
@@ -501,8 +464,6 @@ void InputsTrendingLayer::set_inputs_trends(const Vector< LinearRegressionParame
 }
 
 
-// void set_intercepts(const Vector<double>&) method
-
 /// Sets new intercepts for all the neurons in the layer.
 /// @param new_intercepts New set of intercepts for the inputs trending neurons.
 
@@ -536,8 +497,6 @@ void InputsTrendingLayer::set_intercepts(const Vector<double>& new_intercepts)
 }
 
 
-// void set_intercept(const size_t&, const double&) method
-
 /// Sets a new intercept for a single inputs trending neuron.
 /// @param index Index of inputs trending neuron.
 /// @param new_intercept New intercept for the neuron with index i.
@@ -568,8 +527,6 @@ void InputsTrendingLayer::set_intercept(const size_t& index, const double& new_i
    inputs_trends[index].intercept = new_intercept;
 }
 
-
-// void set_slopes(const Vector<double>&) method
 
 /// Sets new slopes for all the inputs trending neurons.
 /// @param new?slopes New set of slopes for the layer.
@@ -604,8 +561,6 @@ void InputsTrendingLayer::set_slopes(const Vector<double>& new_slopes)
 }
 
 
-// void set_slope(const size_t&, const double&) method
-
 /// Sets a new slope for a single inputs trending neuron.
 /// @param index Index of inputs trending neuron.
 /// @param new_slope New slope for the inputs trending neuron with that index.
@@ -636,8 +591,6 @@ void InputsTrendingLayer::set_slope(const size_t& index, const double& new_slope
    inputs_trends[index].slope = new_slope;
 }
 
-
-// void set_correlations(const Vector<double>&) method
 
 /// Sets new correlations for all the inputs trending neurons.
 /// @param new_correlations New set of correlations for the layer.
@@ -672,8 +625,6 @@ void InputsTrendingLayer::set_correlations(const Vector<double>& new_correlation
 }
 
 
-// void set_correlation(const size_t&, const double&) method
-
 /// Sets a new correlation for a single inputs trending neuron.
 /// @param index Index of inputs trending neuron.
 /// @param new_correlation New correlation for the inputs trending neuron with that index.
@@ -705,8 +656,6 @@ void InputsTrendingLayer::set_correlation(const size_t& index, const double& new
 }
 
 
-// void set_display(const bool&) method
-
 /// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -718,8 +667,6 @@ void InputsTrendingLayer::set_display(const bool& new_display)
 }
 
 
-// void set_default() method
-
 /// Sets the members to their default values:
 /// <ul>
 /// <li> Display: True.
@@ -730,8 +677,6 @@ void InputsTrendingLayer::set_default()
    display = true;
 }
 
-
-// void prune_input_trending_neuron(const size_t&) method
 
 /// Removes a given inputs trending neuron from the inputs trending layer.
 /// @param index Index of neuron to be pruned.
@@ -757,11 +702,9 @@ void InputsTrendingLayer::prune_input_trending_neuron(const size_t& index)
 
     #endif
 
-    inputs_trends.erase(inputs_trends.begin() + index);
+    inputs_trends.erase(inputs_trends.begin() + static_cast<unsigned>(index));
 }
 
-
-// void initialize_random() method
 
 /// Initializes the linear regression parameters of all the inputs trending neurons with random values.
 
@@ -785,13 +728,11 @@ void InputsTrendingLayer::initialize_random()
 }
 
 
-// Vector<double> calculate_outputs(const Vector<double>&, const double&) const method
-
 /// Calculates the outputs from the inputs trending layer for a set of inputs to that layer.
 
-Vector<double> InputsTrendingLayer::calculate_outputs(const Vector<double>& inputs, double time) const
+Matrix<double> InputsTrendingLayer::calculate_outputs(const Matrix<double>& inputs, const double& time) const
 {
-    const size_t inputs_trending_neurons_number = get_inputs_trending_neurons_number();
+    const size_t inputs_number = get_inputs_trending_neurons_number();
 
     // Control sentence(if debug)
 
@@ -812,7 +753,9 @@ Vector<double> InputsTrendingLayer::calculate_outputs(const Vector<double>& inpu
 
  #endif
 
-    Vector<double> outputs(inputs_trending_neurons_number);
+    const size_t points_number = inputs.get_rows_number();
+
+    Matrix<double> outputs(points_number, inputs_number);
 
    if(inputs_trending_method == NoTrending)
    {
@@ -820,10 +763,13 @@ Vector<double> InputsTrendingLayer::calculate_outputs(const Vector<double>& inpu
    }
    else if(inputs_trending_method == Linear)
    {
-       for(size_t i = 0; i < inputs_trending_neurons_number; i++)
-       {
-          outputs[i] = inputs[i] -(inputs_trends[i].intercept + inputs_trends[i].slope * time);
-       }
+        for(size_t i  = 0; i < points_number; i++)
+        {
+            for(size_t j = 0; j < inputs_number; j++)
+            {
+               outputs(i,j) = inputs(i,j) -(inputs_trends[j].intercept + inputs_trends[j].slope * time);
+            }
+        }
 
        return(outputs);
    }
@@ -837,16 +783,14 @@ Vector<double> InputsTrendingLayer::calculate_outputs(const Vector<double>& inpu
 
        throw logic_error(buffer.str());
     }
-
 }
 
 
-// Vector<double> calculate_derivatives() const method
-
 /// Returns the derivatives of the outputs with respect to the inputs.
 
-Vector<double> InputsTrendingLayer::calculate_derivatives() const
+Matrix<double> InputsTrendingLayer::calculate_derivatives(const Matrix<double>&) const
 {
+/*
    const size_t inputs_trending_neurons_number = get_inputs_trending_neurons_number();
 
    Vector<double> derivatives(inputs_trending_neurons_number);
@@ -857,30 +801,31 @@ Vector<double> InputsTrendingLayer::calculate_derivatives() const
    }
 
    return(derivatives);
+*/
+    return Matrix<double>();
 }
 
-
-// Vector<double> calculate_second_derivatives() const method
 
 /// Returns the second derivatives of the outputs with respect to the inputs.
 
-Vector<double> InputsTrendingLayer::calculate_second_derivatives() const
+Matrix<double> InputsTrendingLayer::calculate_second_derivatives(const Matrix<double>&) const
 {
+/*
    const size_t inputs_trending_neurons_number = get_inputs_trending_neurons_number();
 
-   Vector<double> second_derivative(inputs_trending_neurons_number, 0.0);
+   Vector<double> second_derivatives(inputs_trending_neurons_number, 0.0);
 
    return(second_derivative);
+*/
+    return Matrix<double>();
 }
 
-
-// Matrix<double> arrange_Jacobian(const Vector<double>&) const method
 
 /// Arranges a "Jacobian matrix" from a vector of derivatives.
 /// The Jacobian matrix is composed of the partial derivatives of the layer outputs with respect to the layer inputs.
 /// @param derivatives Vector of outputs-inputs derivatives of each inputs trending neuron.
 
-Matrix<double> InputsTrendingLayer::arrange_Jacobian(const Vector<double>& derivatives) const
+Matrix<double> InputsTrendingLayer::calculate_Jacobian(const Vector<double>& derivatives) const
 {
    const size_t inputs_trending_neurons_number = get_inputs_trending_neurons_number();
 
@@ -895,7 +840,7 @@ Matrix<double> InputsTrendingLayer::arrange_Jacobian(const Vector<double>& deriv
       ostringstream buffer;
 
       buffer << "OpenNN Exception: InputsTrendingLayer class.\n"
-             << "Matrix<double> arrange_Jacobian(const Vector<double>&) method.\n"
+             << "Matrix<double> calculate_Jacobian(const Vector<double>&) method.\n"
              << "Size of derivatives must be equal to number of inputs trending neurons.\n";
 
       throw logic_error(buffer.str());
@@ -910,27 +855,23 @@ Matrix<double> InputsTrendingLayer::arrange_Jacobian(const Vector<double>& deriv
 }
 
 
-// Vector< Matrix<double> > arrange_Hessian_form(const Vector<double>&) const method
-
 /// Arranges a "Hessian form" vector of matrices from a vector of derivatives.
 /// The Hessian form is composed of the second partial derivatives of the layer outputs with respect to the layer inputs.
 
-Vector< Matrix<double> > InputsTrendingLayer::arrange_Hessian_form(const Vector<double>&) const
+Vector< Matrix<double> > InputsTrendingLayer::calculate_Hessian(const Vector<double>&) const
 {
    const size_t inputs_trending_neurons_number = get_inputs_trending_neurons_number();
 
-   Vector< Matrix<double> > trended_Hessian_form(inputs_trending_neurons_number);
+   Vector< Matrix<double> > trended_Hessian(inputs_trending_neurons_number);
 
    for(size_t i = 0; i < inputs_trending_neurons_number; i++)
    {
-      trended_Hessian_form[i].set(inputs_trending_neurons_number, inputs_trending_neurons_number, 0.0);
+      trended_Hessian[i].set(inputs_trending_neurons_number, inputs_trending_neurons_number, 0.0);
    }
 
-   return(trended_Hessian_form);
+   return(trended_Hessian);
 }
 
-
-// string write_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the trend functions.
 
@@ -959,8 +900,6 @@ string InputsTrendingLayer::write_expression(const Vector<string>& inputs_name, 
 }
 
 
-// string object_to_string() const method
-
 /// Returns a string representation of the current inputs trending layer object.
 
 string InputsTrendingLayer::object_to_string() const
@@ -984,8 +923,6 @@ string InputsTrendingLayer::object_to_string() const
    return(buffer.str());
 }
 
-
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the inputs trending layer object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
@@ -1016,7 +953,7 @@ tinyxml2::XMLDocument* InputsTrendingLayer::to_XML() const
     for(size_t i = 0; i < inputs_trending_neurons_number; i++)
     {
         tinyxml2::XMLElement* item_element = document->NewElement("Item");
-        item_element->SetAttribute("Index",(unsigned)i+1);
+        item_element->SetAttribute("Index",static_cast<unsigned>(i)+1);
 
         inputs_trending_layer_element->LinkEndChild(item_element);
 
@@ -1098,8 +1035,6 @@ tinyxml2::XMLDocument* InputsTrendingLayer::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the inputs trending layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1126,7 +1061,7 @@ void InputsTrendingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
    {
        file_stream.OpenElement("Item");
 
-       file_stream.PushAttribute("Index",(unsigned)i+1);
+       file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
 
        // Intercept
 
@@ -1208,8 +1143,6 @@ void InputsTrendingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this inputs trending layer object.
 /// @param document TinyXML document containing the member data.
 
@@ -1223,7 +1156,7 @@ void InputsTrendingLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: InputsTrendingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "InputsTrendingLayer element is NULL.\n";
+               << "InputsTrendingLayer element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1236,12 +1169,12 @@ void InputsTrendingLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: InputsTrendingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "InputsTrendingNeuronsNumber element is NULL.\n";
+               << "InputsTrendingNeuronsNumber element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t inputs_trending_neurons_number = atoi(inputs_trending_neurons_number_element->GetText());
+    const size_t inputs_trending_neurons_number = static_cast<size_t>(atoi(inputs_trending_neurons_number_element->GetText()));
 
     set(inputs_trending_neurons_number);
 
@@ -1258,7 +1191,7 @@ void InputsTrendingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: InputsTrendingLayer class.\n"
                    << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                   << "Item " << i+1 << " is NULL.\n";
+                   << "Item " << i+1 << " is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -1318,7 +1251,7 @@ void InputsTrendingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(use_inputs_trending_layer_element)
         {
-            size_t new_method = atoi(use_inputs_trending_layer_element->GetText());
+            size_t new_method = static_cast<size_t>(atoi(use_inputs_trending_layer_element->GetText()));
 
             if(new_method == 0)
             {

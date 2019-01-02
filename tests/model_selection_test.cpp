@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M O D E L   S E L E C T I O N   T E S T   C L A S S                                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -63,7 +63,7 @@ void ModelSelectionTest::test_get_training_strategy_pointer()
 
     ModelSelection ms(&ts);
 
-    assert_true(ms.get_training_strategy_pointer() != NULL, LOG);
+    assert_true(ms.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 void ModelSelectionTest::test_set_training_strategy_pointer()
@@ -76,7 +76,7 @@ void ModelSelectionTest::test_set_training_strategy_pointer()
 
     ms.set_training_strategy_pointer(&ts);
 
-    assert_true(ms.get_training_strategy_pointer() != NULL, LOG);
+    assert_true(ms.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
@@ -102,7 +102,7 @@ void ModelSelectionTest::test_to_XML()
     ModelSelection ms;
 
     tinyxml2::XMLDocument* document = ms.to_XML();
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 }
@@ -114,7 +114,7 @@ void ModelSelectionTest::test_from_XML()
     ModelSelection ms1;
     ModelSelection ms2;
 
-    ms1.set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
+    ms1.set_order_selection_method(ModelSelection::INCREMENTAL_ORDER);
 
     tinyxml2::XMLDocument* document = ms1.to_XML();
 
@@ -122,7 +122,7 @@ void ModelSelectionTest::test_from_XML()
 
     delete document;
 
-    assert_true(ms2.get_order_selection_type() == ModelSelection::INCREMENTAL_ORDER, LOG);
+    assert_true(ms2.get_order_selection_method() == ModelSelection::INCREMENTAL_ORDER, LOG);
 }
 
 void ModelSelectionTest::test_save()
@@ -144,7 +144,7 @@ void ModelSelectionTest::test_load()
 
     ModelSelection ms;
 
-    ms.set_order_selection_type(ModelSelection::INCREMENTAL_ORDER);
+    ms.set_order_selection_method(ModelSelection::INCREMENTAL_ORDER);
 
     // Test
 

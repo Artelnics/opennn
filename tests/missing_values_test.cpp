@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M I S S I N G   V A L U E S   T E S T   C L A S S                                                          */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -186,7 +186,7 @@ void MissingValuesTest::test_to_XML()
 
    tinyxml2::XMLDocument* document = mv.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    // Test
 

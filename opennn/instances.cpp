@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   I N S T A N C E S   C L A S S                                                                              */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
+
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -85,7 +85,7 @@ Instances::~Instances()
 /// It assigns to the current object the members of an existing instances object.
 /// @param other_instances Instances object to be assigned.
 
-Instances& Instances::operator=(const Instances& other_instances)
+Instances& Instances::operator= (const Instances& other_instances)
 {
    if(this != &other_instances) 
    {
@@ -99,14 +99,13 @@ Instances& Instances::operator=(const Instances& other_instances)
 
 // EQUAL TO OPERATOR
 
-// bool operator ==(const Instances&) const method
 
 /// Equal to operator. 
 /// It compares this object with another object of the same class. 
 /// It returns true if the members of the two objects have the same values, and false otherwise.
 /// @ param other_instances Instances object to be compared with.
 
-bool Instances::operator ==(const Instances& other_instances) const
+bool Instances::operator == (const Instances& other_instances) const
 {
    if(/*items == other_instances.items
    &&*/ display == other_instances.display)
@@ -122,7 +121,6 @@ bool Instances::operator ==(const Instances& other_instances) const
 
 // METHODS
 
-// static ScalingUnscalingMethod get_splitting_method(const string&) method
 
 /// Returns a value of the splitting method enumeration from a string with that method.
 /// @param splitting_method String with the method for splitting the instances.
@@ -150,8 +148,6 @@ Instances::SplittingMethod Instances::get_splitting_method(const string& splitti
 }
 
 
-// bool empty() const method
-
 /// Returns empty if the number of instances is zero, and false otherwise.
 
 bool Instances::empty() const
@@ -167,11 +163,9 @@ bool Instances::empty() const
 }
 
 
-// Vector<Use> arrange_uses() const method
-
 /// Returns the use of every instance(training, selection, testing) in a vector. 
 
-Vector<Instances::Use> Instances::arrange_uses() const
+Vector<Instances::Use> Instances::get_uses() const
 {
    const size_t instances_number = get_instances_number();
 
@@ -186,15 +180,13 @@ Vector<Instances::Use> Instances::arrange_uses() const
 }
 
 
-// Vector<string> write_uses() const method
-
 /// Returns the use of every instance(training, selection, testing) in a string vector. 
 
 Vector<string> Instances::write_uses() const
 {
    const size_t instances_number = get_instances_number();
 
-   const Vector<Use> uses = arrange_uses();
+   const Vector<Use> uses = get_uses();
 
    Vector<string> uses_string(instances_number);
 
@@ -232,15 +224,13 @@ Vector<string> Instances::write_uses() const
 }
 
 
-// Vector<string> write_abbreviated_uses() const method
-
 /// Returns the use of every instance(training, selection, testing) in a string vector.
 
 Vector<string> Instances::write_abbreviated_uses() const
 {
    const size_t instances_number = get_instances_number();
 
-   const Vector<Use> uses = arrange_uses();
+   const Vector<Use> uses = get_uses();
 
    Vector<string> uses_string(instances_number);
 
@@ -278,8 +268,6 @@ Vector<string> Instances::write_abbreviated_uses() const
 }
 
 
-// const Use& get_use(const size_t&) const method
-
 /// Returns the use of a single instance.
 /// @param i Instance index.
 
@@ -288,8 +276,6 @@ const Instances::Use& Instances::get_use(const size_t& i) const
     return(items[i].use);
 }
 
-
-// string write_use(const size_t&) const method
 
 /// Returns a string the use name of a single instance.
 /// @param i Instance index.
@@ -325,8 +311,6 @@ string Instances::write_use(const size_t& i) const
 }
 
 
-// bool is_used(const size_t& i) const method
-
 /// Returns true if a given instance is to be used for training, selection or testing,
 /// and false if it is to be unused.
 
@@ -343,8 +327,6 @@ bool Instances::is_used(const size_t& i) const
 }
 
 
-// bool is_unused(const size_t& i) const method
-
 /// Returns true if a given instance is to be unused and false in other case.
 
 bool Instances::is_unused(const size_t& i) const
@@ -359,12 +341,11 @@ bool Instances::is_unused(const size_t& i) const
     }
 }
 
-// size_t count_unused_instances_number() const method
 
 /// Returns the number of instances in the data set which will neither be used
 /// for training, selection or testing.
 
-size_t Instances::count_unused_instances_number() const
+size_t Instances::get_unused_instances_number() const
 {
     const size_t instances_number = get_instances_number();
 
@@ -382,25 +363,21 @@ size_t Instances::count_unused_instances_number() const
 }
 
 
-// size_t count_used_instances_number() const method
-
 /// Returns the total number of training, selection and testing instances,
 /// i.e. those which are not "Unused".
 
-size_t Instances::count_used_instances_number() const
+size_t Instances::get_used_instances_number() const
 {
     const size_t instances_number = get_instances_number();
-    const size_t unused_instances_number = count_unused_instances_number();
+    const size_t unused_instances_number = get_unused_instances_number();
 
     return(instances_number - unused_instances_number);
 }
 
 
-// size_t count_training_instances_number() const method
-
 /// Returns the number of instances in the data set which will be used for training.
 
-size_t Instances::count_training_instances_number() const
+size_t Instances::get_training_instances_number() const
 {
     const size_t instances_number = get_instances_number();
 
@@ -418,11 +395,9 @@ size_t Instances::count_training_instances_number() const
 }
 
 
-// size_t count_selection_instances_number() const method
-
 /// Returns the number of instances in the data set which will be used for selection.
 
-size_t Instances::count_selection_instances_number() const
+size_t Instances::get_selection_instances_number() const
 {
     const size_t instances_number = get_instances_number();
 
@@ -440,11 +415,9 @@ size_t Instances::count_selection_instances_number() const
 }
 
 
-// size_t count_testing_instances_number() const method
-
 /// Returns the number of instances in the data set which will be used for testing.
 
-size_t Instances::count_testing_instances_number() const
+size_t Instances::get_testing_instances_number() const
 {
     const size_t instances_number = get_instances_number();
 
@@ -461,8 +434,6 @@ size_t Instances::count_testing_instances_number() const
 	return(testing_instances_number);
 }
 
-
-// Vector<size_t> count_uses() const method
 
 /// Returns a vector with the number of training, selection, testing
 /// and unused instances.
@@ -498,15 +469,13 @@ Vector<size_t> Instances::count_uses() const
 }
 
 
-// Vector<size_t> arrange_used_indices() const method
-
 /// Returns the indices of the used instances(those which are not set unused).
 
-Vector<size_t> Instances::arrange_used_indices() const
+Vector<size_t> Instances::get_used_indices() const
 {
     const size_t instances_number = get_instances_number();
 
-    const size_t used_instances_number = instances_number - count_unused_instances_number();
+    const size_t used_instances_number = instances_number - get_unused_instances_number();
 
     Vector<size_t> used_indices(used_instances_number);
 
@@ -525,15 +494,13 @@ Vector<size_t> Instances::arrange_used_indices() const
 }
 
 
-// Vector<size_t> arrange_unused_indices() const method
-
 /// Returns the indices of the instances set unused.
 
-Vector<size_t> Instances::arrange_unused_indices() const
+Vector<size_t> Instances::get_unused_indices() const
 {
     const size_t instances_number = get_instances_number();
 
-    const size_t unused_instances_number = count_unused_instances_number();
+    const size_t unused_instances_number = get_unused_instances_number();
 
     Vector<size_t> unused_indices(unused_instances_number);
 
@@ -543,7 +510,7 @@ Vector<size_t> Instances::arrange_unused_indices() const
     {
         if(items[i].use == Unused)
         {
-            unused_indices[count] =(size_t)i;
+            unused_indices[count] = static_cast<size_t>(i);
             count++;
         }
     }
@@ -552,15 +519,13 @@ Vector<size_t> Instances::arrange_unused_indices() const
 }
 
 
-// Vector<size_t> arrange_training_indices() const method
-
 /// Returns the indices of the instances which will be used for training.
 
-Vector<size_t> Instances::arrange_training_indices() const
+Vector<size_t> Instances::get_training_indices() const
 {
    const size_t instances_number = get_instances_number();
 
-   const size_t training_instances_number = count_training_instances_number();
+   const size_t training_instances_number = get_training_instances_number();
 
    Vector<size_t> training_indices(training_instances_number);
 
@@ -570,7 +535,7 @@ Vector<size_t> Instances::arrange_training_indices() const
    {
       if(items[i].use == Training)
 	  {
-         training_indices[count] =(size_t)i;
+         training_indices[count] = static_cast<size_t>(i);
 		 count++;
 	  }
    }
@@ -579,15 +544,13 @@ Vector<size_t> Instances::arrange_training_indices() const
 }
 
 
-// Vector<int> arrange_selection_indices_int() const method
-
 /// Returns the indices of the instances which will be used for selection.
 
-Vector<size_t> Instances::arrange_selection_indices() const
+Vector<size_t> Instances::get_selection_indices() const
 {
    const size_t instances_number = get_instances_number();
 
-   const size_t selection_instances_number = count_selection_instances_number();
+   const size_t selection_instances_number = get_selection_instances_number();
 
    Vector<size_t> selection_indices(selection_instances_number);
 
@@ -606,15 +569,13 @@ Vector<size_t> Instances::arrange_selection_indices() const
 }
 
 
-// Vector<size_t> arrange_testing_indices() const method
-
 /// Returns the indices of the instances which will be used for testing.
 
-Vector<size_t> Instances::arrange_testing_indices() const
+Vector<size_t> Instances::get_testing_indices() const
 {
    const size_t instances_number = get_instances_number();
 
-   const size_t testing_instances_number = count_testing_instances_number();
+   const size_t testing_instances_number = get_testing_instances_number();
 
    Vector<size_t> testing_indices(testing_instances_number);
 
@@ -632,15 +593,14 @@ Vector<size_t> Instances::arrange_testing_indices() const
    return(testing_indices);
 }
 
-// Vector<int> arrange_training_indices_int() const method
 
 /// Returns the indices of the instances which will be used for training.
 
-Vector<int> Instances::arrange_training_indices_int() const
+Vector<int> Instances::get_training_indices_int() const
 {
    const size_t instances_number = get_instances_number();
 
-   const size_t training_instances_number = count_training_instances_number();
+   const size_t training_instances_number = get_training_instances_number();
 
    Vector<int> training_indices(training_instances_number);
 
@@ -650,7 +610,7 @@ Vector<int> Instances::arrange_training_indices_int() const
    {
       if(items[i].use == Training)
       {
-         training_indices[count] =(int)i;
+         training_indices[count] = static_cast<int>(i);
          count++;
       }
    }
@@ -659,15 +619,13 @@ Vector<int> Instances::arrange_training_indices_int() const
 }
 
 
-// Vector<int> arrange_selection_indices_int() const method
-
 /// Returns the indices of the instances which will be used for selection.
 
-Vector<int> Instances::arrange_selection_indices_int() const
+Vector<int> Instances::get_selection_indices_int() const
 {
    const size_t instances_number = get_instances_number();
 
-   const size_t selection_instances_number = count_selection_instances_number();
+   const size_t selection_instances_number = get_selection_instances_number();
 
    Vector<int> selection_indices(selection_instances_number);
 
@@ -677,7 +635,7 @@ Vector<int> Instances::arrange_selection_indices_int() const
    {
       if(items[i].use == Selection)
       {
-         selection_indices[count] =(int)i;
+         selection_indices[count] = static_cast<int>(i);
          count++;
       }
    }
@@ -685,7 +643,6 @@ Vector<int> Instances::arrange_selection_indices_int() const
    return(selection_indices);
 }
 
-// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
@@ -696,8 +653,6 @@ const bool& Instances::get_display() const
 }
 
 
-// void set() method
-
 /// Sets a instances object with zero instances. 
 
 void Instances::set()
@@ -707,8 +662,6 @@ void Instances::set()
    set_default();
 }
 
-
-// void set(const size_t&) method
 
 /// Sets a new number of instances in the instances object. 
 /// All the instances are set for training. 
@@ -722,8 +675,6 @@ void Instances::set(const size_t& new_instances_number)
 }
 
 
-// void set(const tinyxml2::XMLDocument&) method
-
 /// Sets the instances information members from a XML document.
 /// @param instances_document Pointer to a TinyXML document containing the member data.
 
@@ -735,8 +686,6 @@ void Instances::set(const tinyxml2::XMLDocument& instances_document)
 }
 
 
-// void set_default() method
-
 /// Sets the default values to this instances object:
 /// <ul>
 /// <li>display: true</li>
@@ -747,8 +696,6 @@ void Instances::set_default()
     display = true;
 }
 
-
-// void set_uses(const Vector<Use>&) method
 
 /// Sets new uses to all the instances from a single vector.
 /// @param new_uses Vector of use structures.
@@ -783,8 +730,6 @@ void Instances::set_uses(const Vector<Instances::Use>& new_uses)
    }
 }
 
-
-// void set_uses(const Vector<string>&) method 
 
 /// Sets new uses to all the instances from a single vector of strings.
 /// @param new_uses Vector of use strings.
@@ -844,10 +789,6 @@ void Instances::set_uses(const Vector<string>& new_uses)
 }
 
 
-
-
-// void set_use(const Use&) method
-
 /// Sets the use of a single instance.
 /// @param i Index of instance.
 /// @param new_use Use for that instance.
@@ -857,8 +798,6 @@ void Instances::set_use(const size_t& i, const Use& new_use)
     items[i].use = new_use;
 }
 
-
-// void set_use(const size_t&, const string&) method
 
 /// Sets the use of a single instance from a string.
 /// @param i Index of instance.
@@ -895,22 +834,18 @@ void Instances::set_use(const size_t& i, const string& new_use)
 }
 
 
-// void set_unused(const Vector<size_t>&) method
-
 /// Sets instances with given indices in the data set unused.
 
 void Instances::set_unused(const Vector<size_t> & indices)
 {
-    for(int i = 0; i <(int)indices.size(); i++)
+    for(int i = 0; i < static_cast<int>(indices.size()); i++)
     {
-        const size_t index = indices[i];
+        const size_t index = indices[static_cast<size_t>(i)];
 
         items[index].use = Unused;
     }
 }
 
-
-// void set_training() method
 
 /// Sets all the instances in the data set for training. 
 
@@ -925,8 +860,6 @@ void Instances::set_training()
 }
 
 
-// void set_selection() method
-
 /// Sets all the instances in the data set for selection. 
 
 void Instances::set_selection()
@@ -939,8 +872,6 @@ void Instances::set_selection()
     }
 }
 
-
-// void set_testing() method
 
 /// Sets all the instances in the data set for testing. 
 
@@ -970,7 +901,7 @@ void Instances::set_training(const Vector<size_t>& indices)
 {
     size_t index = 0;
 
-    for(size_t i = 0; i <(int)indices.size(); i++)
+    for(size_t i = 0; i < indices.size(); i++)
     {
         index = indices[i];
 
@@ -978,11 +909,12 @@ void Instances::set_training(const Vector<size_t>& indices)
     }
 }
 
+
 void Instances::set_selection(const Vector<size_t>& indices)
 {
     size_t index = 0;
 
-    for(size_t i = 0; i <(int)indices.size(); i++)
+    for(size_t i = 0; i < indices.size(); i++)
     {
         index = indices[i];
 
@@ -990,11 +922,12 @@ void Instances::set_selection(const Vector<size_t>& indices)
     }
 }
 
+
 void Instances::set_testing(const Vector<size_t>& indices)
 {
     size_t index = 0;
 
-    for(size_t i = 0; i <(int)indices.size(); i++)
+    for(size_t i = 0; i < indices.size(); i++)
     {
         index = indices[i];
 
@@ -1121,7 +1054,6 @@ void Instances::testing_to_selection()
     }
 }
 
-// void set_display(const bool&) method
 
 /// Sets a new display value. 
 /// If it is set to true messages from this class are to be displayed on the screen;
@@ -1134,8 +1066,6 @@ void Instances::set_display(const bool& new_display)
 }
 
 
-// void set_instances_number(const size_t&) method
-
 /// Sets a new number of instances in the data set. 
 /// All instances are also set for training. 
 /// @param new_instances_number Number of instances. 
@@ -1147,8 +1077,6 @@ void Instances::set_instances_number(const size_t& new_instances_number)
    split_instances();
 }
 
-
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the instances object into a XML document of the TinyXML library. 
 /// See the OpenNN manual for more information about the format of this document. 
@@ -1165,8 +1093,8 @@ tinyxml2::XMLDocument* Instances::to_XML() const
 
    document->InsertFirstChild(instances_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    const size_t instances_number = get_instances_number();
 
@@ -1205,7 +1133,7 @@ tinyxml2::XMLDocument* Instances::to_XML() const
        use_element->LinkEndChild(use_text);
 */
 
-       string item_use_string(number_to_string((size_t) get_use(i)));
+       string item_use_string(number_to_string(static_cast<size_t>(get_use(i))));
 
        items_uses.append(item_use_string);
 
@@ -1233,8 +1161,6 @@ tinyxml2::XMLDocument* Instances::to_XML() const
    return(document);
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the instances object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -1264,7 +1190,7 @@ void Instances::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(size_t i = 0; i < instances_number; i++)
     {
-        string item_use_string(number_to_string((size_t) get_use(i)));
+        string item_use_string(number_to_string(static_cast<size_t>(get_use(i))));
 
         items_uses.append(item_use_string);
 
@@ -1285,12 +1211,10 @@ void Instances::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this instances object.
 /// @param instances_document XML document containing the member data.
 
-void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
+void Instances::from_XML(const tinyxml2::XMLDocument& instances_document)
 {
     ostringstream buffer;
 
@@ -1302,7 +1226,7 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
    {
       buffer << "OpenNN Exception: Instances class.\n"
              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-             << "Pointer to instances information element is NULL.\n";
+             << "Pointer to instances information element is nullptr.\n";
 
 	  throw logic_error(buffer.str());   
    }
@@ -1315,12 +1239,12 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
    {
       buffer << "OpenNN Exception: Instances class.\n"
              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-             << "Pointer to instances number is NULL.\n";
+             << "Pointer to instances number is nullptr.\n";
 
       throw logic_error(buffer.str());
    }
 
-   const size_t instances_number = atoi(instances_number_element->GetText());
+   const size_t instances_number = static_cast<size_t>(atoi(instances_number_element->GetText()));
 
    set_instances_number(instances_number);
 
@@ -1328,7 +1252,6 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
    {
        return;
    }
-
 
    // Items uses
 /*
@@ -1345,7 +1268,7 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
       {
           buffer << "OpenNN Exception: Instances class.\n"
                  << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-                 << "Item " << i+1 << " is NULL.\n";
+                 << "Item " << i+1 << " is nullptr.\n";
 
           throw logic_error(buffer.str());
       }
@@ -1369,7 +1292,7 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
      {
         buffer << "OpenNN Exception: Instances class.\n"
                << "void from_XML(const tinyxml2::XMLElement*) method.\n"
-               << "Pointer to use element is NULL.\n";
+               << "Pointer to use element is nullptr.\n";
 
         throw logic_error(buffer.str());
      }
@@ -1394,7 +1317,7 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
 
       buffer << "OpenNN Exception: Instances class.\n"
              << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-             << "Pointer to items uses is NULL.\n";
+             << "Pointer to items uses is nullptr.\n";
 
       throw logic_error(buffer.str());
    }
@@ -1419,13 +1342,10 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
 
    for(size_t i = 0; i < instances_number; i++)
    {
-       set_use(i,(Use)items_uses.at(i));
+       set_use(i, static_cast<Use>(items_uses.at(i)));
    }
-
 }
 
-
-// void split_random_indices(const double&, const double&, const double&) method
 
 /// Creates new training, selection and testing indices at random.
 /// @param training_instances_ratio Ratio of training instances in the data set.
@@ -1435,7 +1355,7 @@ void Instances:: from_XML(const tinyxml2::XMLDocument& instances_document)
 void Instances::split_random_indices
 (const double& training_instances_ratio, const double& selection_instances_ratio, const double& testing_instances_ratio)
 {
-   const size_t used_instances_number = count_used_instances_number();
+   const size_t used_instances_number = get_used_instances_number();
 
    if(used_instances_number == 0)
    {
@@ -1446,8 +1366,8 @@ void Instances::split_random_indices
 
    // Get number of instances for training, selection and testing
 
-   const size_t selection_instances_number =(size_t)(selection_instances_ratio*used_instances_number/total_ratio);
-   const size_t testing_instances_number =(size_t)(testing_instances_ratio*used_instances_number/total_ratio);
+   const size_t selection_instances_number = static_cast<size_t>(selection_instances_ratio*used_instances_number/total_ratio);
+   const size_t testing_instances_number = static_cast<size_t>(testing_instances_ratio*used_instances_number/total_ratio);
    const size_t training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
 
    const size_t sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
@@ -1524,8 +1444,6 @@ void Instances::split_random_indices
 }
 
 
-// void split_sequential_indices(const double&, const double&, const double&) method
-
 /// Creates new training, selection and testing indices with sequential indices.
 /// @param training_instances_ratio Ratio of training instances in the data set.
 /// @param selection_instances_ratio Ratio of selection instances in the data set.
@@ -1533,7 +1451,7 @@ void Instances::split_random_indices
 
 void Instances::split_sequential_indices(const double& training_instances_ratio, const double& selection_instances_ratio, const double& testing_instances_ratio)
 {
-   const size_t used_instances_number = count_used_instances_number();
+   const size_t used_instances_number = get_used_instances_number();
 
    if(used_instances_number == 0)
    {
@@ -1544,8 +1462,8 @@ void Instances::split_sequential_indices(const double& training_instances_ratio,
 
    // Get number of instances for training, selection and testing
 
-   const size_t selection_instances_number =(size_t)(selection_instances_ratio*used_instances_number/total_ratio);
-   const size_t testing_instances_number =(size_t)(testing_instances_ratio*used_instances_number/total_ratio);
+   const size_t selection_instances_number = static_cast<size_t>(selection_instances_ratio*used_instances_number/total_ratio);
+   const size_t testing_instances_number = static_cast<size_t>(testing_instances_ratio*used_instances_number/total_ratio);
    const size_t training_instances_number = used_instances_number - selection_instances_number - testing_instances_number;
 
    const size_t sum_instances_number = training_instances_number + selection_instances_number + testing_instances_number;
@@ -1610,7 +1528,29 @@ void Instances::split_sequential_indices(const double& training_instances_ratio,
 }
 
 
-// void split_instances(const SplittingMethod& splitting_method = Random, const double& training_ratio = 0.6, const double& selection_ratio = 0.2, const double& testing_ratio = 0.2) method
+Vector< Vector<size_t> > Instances::get_training_batches(const size_t& batch_size) const
+{
+    const Vector<size_t> training_indices = get_training_indices();
+
+    return training_indices.split(batch_size);
+}
+
+
+Vector< Vector<size_t> > Instances::get_selection_batches(const size_t& batch_size) const
+{
+    const Vector<size_t> selection_indices = get_selection_indices();
+
+    return selection_indices.split(batch_size);
+}
+
+
+Vector< Vector<size_t> > Instances::get_testing_batches(const size_t& batch_size) const
+{
+    const Vector<size_t> testing_indices = get_testing_indices();
+
+    return testing_indices.split(batch_size);
+}
+
 
 /// Divides the instances into training, selection and testing subsets.
 /// @param splitting_method Instances splitting method(Sequential or Random, Random by default).
@@ -1676,24 +1616,9 @@ void Instances::split_instances(const SplittingMethod& splitting_method, const d
              split_random_indices(training_ratio, selection_ratio, testing_ratio);
         }
         break;
-
-        default:
-        {
-           ostringstream buffer;
-
-           buffer << "Neural Engine Exception: Instances class.\n"
-                  << "void split_instances(const double&, const double&, const double&) method.\n"
-                  << "Unknown splitting method.\n";
-
-           throw logic_error(buffer.str());
-        }
-        break;
     }
-
 }
 
-
-// Vector<double> calculate_uses_percentage() const method
 
 /// Returns the percentages of
 /// unused, training, selection and testing instances, respectively.
@@ -1708,14 +1633,12 @@ Vector<double> Instances::calculate_uses_percentage() const
 
     for(size_t i = 0; i < 4; i++)
     {
-        uses_percentage[i] = 100.0*uses_count[i]/(double)instances_number;
+        uses_percentage[i] = 100.0*uses_count[i]/static_cast<double>(instances_number);
     }
 
     return(uses_percentage);
 }
 
-
-// void convert_time_series(const size_t&) method
 
 /// Converts the instances when the data set is to be used for time series prediction.
 /// This method modifies the number of instances.
@@ -1750,17 +1673,15 @@ string Instances::object_to_string() const
 
    buffer << "Instances object\n"
 	      << "Instances number: " << get_instances_number() << "\n"
-	      << "Training instances number: " << count_training_instances_number() << "\n"
-	      << "Selection instances number: " << count_selection_instances_number() << "\n"
-	      << "Testing instances number: " << count_testing_instances_number() << "\n"
+	      << "Training instances number: " << get_training_instances_number() << "\n"
+	      << "Selection instances number: " << get_selection_instances_number() << "\n"
+	      << "Testing instances number: " << get_testing_instances_number() << "\n"
           << "Uses: " << write_uses() << "\n";
           //<< "Display: " << display << "\n";
 
    return(buffer.str());
 }
 
-
-// void print() const method
 
 /// Prints to the screen information about the instances object.
 

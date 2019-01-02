@@ -111,7 +111,7 @@ public:
 
        /// Selection loss of the different neural networks.
 
-       Vector<double> selection_loss_data;
+       Vector<double> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection loss.
 
@@ -119,7 +119,7 @@ public:
 
        /// Value of minimum selection loss.
 
-       double final_selection_loss;
+       double final_selection_error;
 
        /// Value of loss for the neural network with minimum selection loss.
 
@@ -156,14 +156,14 @@ public:
 
     const bool& get_reserve_parameters_data() const;
     const bool& get_reserve_loss_data() const;
-    const bool& get_reserve_selection_loss_data() const;
+    const bool& get_reserve_selection_error_data() const;
     const bool& get_reserve_minimal_parameters() const;
 
     const PerformanceCalculationMethod& get_loss_calculation_method() const;
 
     const bool& get_display() const;
 
-    const double& get_selection_loss_goal() const;
+    const double& get_selection_error_goal() const;
     const size_t& get_maximum_iterations_number() const;
     const double& get_maximum_time() const;
     const double& get_tolerance() const;
@@ -182,7 +182,7 @@ public:
 
     void set_reserve_parameters_data(const bool&);
     void set_reserve_loss_data(const bool&);
-    void set_reserve_selection_loss_data(const bool&);
+    void set_reserve_selection_error_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
     void set_loss_calculation_method(const PerformanceCalculationMethod&);
@@ -190,7 +190,7 @@ public:
 
     void set_display(const bool&);
 
-    void set_selection_loss_goal(const double&);
+    void set_selection_error_goal(const double&);
     void set_maximum_iterations_number(const size_t&);
     void set_maximum_time(const double&);
     void set_tolerance(const double&);
@@ -234,7 +234,7 @@ protected:
 
     /// Selection loss of all the neural networks trained.
 
-    Vector<double> selection_loss_history;
+    Vector<double> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
@@ -272,7 +272,7 @@ protected:
 
     /// True if the selection loss of all neural networks are to be reserved.
 
-    bool reserve_selection_loss_data;
+    bool reserve_selection_error_data;
 
     /// True if the vector parameters of the neural network presenting minimum selection loss is to be reserved.
 
@@ -286,7 +286,7 @@ protected:
 
     /// Goal value for the selection loss. It is used as a stopping criterion.
 
-    double selection_loss_goal;
+    double selection_error_goal;
 
     /// Maximum number of iterations to perform_order_selection. It is used as a stopping criterion.
 

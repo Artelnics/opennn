@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   P E R C E P T R O N   L A Y E R   T E S T   C L A S S   H E A D E R                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -52,11 +51,11 @@ public:
 
    // Get methods
 
-   // PerceptronLayer arrangement
+   // Inputs and perceptrons
 
    void test_is_empty();
 
-   void test_count_inputs_number();
+   void test_get_inputs_number();
    void test_get_perceptrons_number();
 
    void test_get_perceptrons();
@@ -64,19 +63,18 @@ public:
 
    // Parameters
 
-   void test_arrange_biases();
-   void test_arrange_synaptic_weights();
+   void test_get_biases();
+   void test_get_synaptic_weights();
 
-   void test_count_parameters_number();
-   void test_arrange_parameters();
+   void test_get_parameters_number();
+   void test_get_parameters();
    void test_calculate_parameters_norm();
-
-   void test_count_cumulative_parameters_number();
+   void test_get_perceptrons_parameters();
 
    // Activation functions
 
    void test_get_activation_function();
-   void test_get_activation_function_name();
+   void test_write_activation_function();
    
    // Display messages
 
@@ -96,6 +94,14 @@ public:
    void test_set_biases();
    void test_set_synaptic_weights();
    void test_set_parameters();
+
+   // Inputs
+
+   void test_set_inputs_number();
+
+   //Perceptrons
+
+   void test_set_perceptrons_number();
 
    // Activation functions
 
@@ -126,31 +132,31 @@ public:
    void test_randomize_parameters_uniform();
    void test_randomize_parameters_normal();
 
-   // PerceptronLayer combination
+   // Combination
 
-   void test_calculate_combination();
+   void test_calculate_combinations();
 
-   void test_calculate_combination_Jacobian();
-   void test_calculate_combination_Hessian_form();
+   void test_calculate_combinations_Jacobian();
+   void test_calculate_combinations_Hessian();
 
-   void test_calculate_combination_parameters_Jacobian();
-   void test_calculate_combination_parameters_Hessian_form();
+   void test_calculate_combinations_parameters_Jacobian();
+   void test_calculate_combinations_parameters_Hessian();
 
-   // PerceptronLayer activation 
+   // Activation
 
-   void test_calculate_activation();
-   void test_calculate_activation_derivative();
-   void test_calculate_activation_second_derivative();
+   void test_calculate_activations();
+   void test_calculate_activations_derivatives();
+   void test_calculate_activations_second_derivatives();
 
-   // PerceptronLayer outputs 
+   // Outputs
 
    void test_calculate_outputs();
 
    void test_calculate_Jacobian();   
-   void test_calculate_Hessian_form();
+   void test_calculate_Hessian();
 
    void test_calculate_parameters_Jacobian();
-   void test_calculate_parameters_Hessian_form();
+   void test_calculate_parameters_Hessian();
 
    // Expression methods
 
@@ -174,7 +180,6 @@ public:
 
 
 #endif
-
 
 
 // OpenNN: Open Neural Networks Library.

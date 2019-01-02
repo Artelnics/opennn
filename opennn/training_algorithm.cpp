@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T R A I N I N G   A L G O R I T H M   C L A S S                                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -22,10 +21,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a training algorithm object not associated to any loss functional object.  
+/// It creates a training algorithm object not associated to any loss index object.  
 
 TrainingAlgorithm::TrainingAlgorithm()
- : loss_index_pointer(NULL)
+ : loss_index_pointer(nullptr)
 { 
    set_default();
 }
@@ -34,8 +33,8 @@ TrainingAlgorithm::TrainingAlgorithm()
 // GENERAL CONSTRUCTOR
 
 /// General constructor. 
-/// It creates a training algorithm object associated to a loss functional object.
-/// @param new_loss_index_pointer Pointer to a loss functional object.
+/// It creates a training algorithm object associated to a loss index object.
+/// @param new_loss_index_pointer Pointer to a loss index object.
 
 TrainingAlgorithm::TrainingAlgorithm(LossIndex* new_loss_index_pointer)
  : loss_index_pointer(new_loss_index_pointer)
@@ -47,11 +46,11 @@ TrainingAlgorithm::TrainingAlgorithm(LossIndex* new_loss_index_pointer)
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a training algorithm object not associated to any loss functional object. 
+/// It creates a training algorithm object not associated to any loss index object. 
 /// It also loads the other members from a XML document.
 
 TrainingAlgorithm::TrainingAlgorithm(const tinyxml2::XMLDocument& document)
- : loss_index_pointer(NULL)
+ : loss_index_pointer(nullptr)
 { 
    from_XML(document);
 }
@@ -72,7 +71,7 @@ TrainingAlgorithm::~TrainingAlgorithm()
 /// It assigns to this object the members of an existing training algorithm object.
 /// @param other_training_algorithm Training algorithm object to be assigned.
 
-TrainingAlgorithm& TrainingAlgorithm::operator =(const TrainingAlgorithm& other_training_algorithm)
+TrainingAlgorithm& TrainingAlgorithm::operator = (const TrainingAlgorithm& other_training_algorithm)
 {
    if(this != &other_training_algorithm)
    {
@@ -90,7 +89,7 @@ TrainingAlgorithm& TrainingAlgorithm::operator =(const TrainingAlgorithm& other_
 /// Equal to operator.
 /// @param other_training_algorithm Training algorithm object to be compared with.
 
-bool TrainingAlgorithm::operator ==(const TrainingAlgorithm& other_training_algorithm) const
+bool TrainingAlgorithm::operator == (const TrainingAlgorithm& other_training_algorithm) const
 {
    if(loss_index_pointer == other_training_algorithm.loss_index_pointer
    && display == other_training_algorithm.display)
@@ -108,7 +107,7 @@ bool TrainingAlgorithm::operator ==(const TrainingAlgorithm& other_training_algo
 
 // LossIndex* get_loss_index_pointer() const method
 
-/// Returns a pointer to the loss functional object to which the training algorithm is
+/// Returns a pointer to the loss index object to which the training algorithm is
 /// associated.
 
 LossIndex* TrainingAlgorithm::get_loss_index_pointer() const
@@ -121,7 +120,7 @@ LossIndex* TrainingAlgorithm::get_loss_index_pointer() const
 
         buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
                << "LossIndex* get_loss_index_pointer() const method.\n"
-               << "Loss index pointer is NULL.\n";
+               << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -134,7 +133,7 @@ LossIndex* TrainingAlgorithm::get_loss_index_pointer() const
 
 // bool has_loss_index() const method
 
-/// Returns true if this training algorithm object has an associated loss functional object,
+/// Returns true if this training algorithm object has an associated loss index object,
 /// and false otherwise.
 
 bool TrainingAlgorithm::has_loss_index() const
@@ -193,12 +192,12 @@ const string& TrainingAlgorithm::get_neural_network_file_name() const
 
 // void set() method
 
-/// Sets the loss functional pointer to NULL.
+/// Sets the loss index pointer to nullptr.
 /// It also sets the rest of members to their default values. 
 
 void TrainingAlgorithm::set()
 {
-   loss_index_pointer = NULL;
+   loss_index_pointer = nullptr;
 
    set_default();
 }
@@ -206,9 +205,9 @@ void TrainingAlgorithm::set()
 
 // void set(LossIndex*) method
 
-/// Sets a new loss functional pointer.
+/// Sets a new loss index pointer.
 /// It also sets the rest of members to their default values. 
-/// @param new_loss_index_pointer Pointer to a loss functional object. 
+/// @param new_loss_index_pointer Pointer to a loss index object. 
 
 void TrainingAlgorithm::set(LossIndex* new_loss_index_pointer)
 {
@@ -217,11 +216,20 @@ void TrainingAlgorithm::set(LossIndex* new_loss_index_pointer)
    set_default();
 }
 
+void TrainingAlgorithm::set_training_batch_size(const size_t& new_training_batch_size)
+{
+    training_batch_size = new_training_batch_size;
+}
 
-// void set_loss_index_pointer(LossIndex*) method
 
-/// Sets a pointer to a loss functional object to be associated to the training algorithm.
-/// @param new_loss_index_pointer Pointer to a loss functional object.
+void TrainingAlgorithm::set_selection_batch_size(const size_t& new_selection_batch_size)
+{
+    selection_batch_size = new_selection_batch_size;
+}
+
+
+/// Sets a pointer to a loss index object to be associated to the training algorithm.
+/// @param new_loss_index_pointer Pointer to a loss index object.
 
 void TrainingAlgorithm::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
@@ -341,8 +349,8 @@ string TrainingAlgorithm::write_training_algorithm_type() const
 // void check() const method
 
 /// Performs a default checking for training algorithms.
-/// In particular, it checks that the loss functional pointer associated to the training algorithm is not NULL,
-/// and that the neural network associated to that loss functional is neither NULL.
+/// In particular, it checks that the loss index pointer associated to the training algorithm is not nullptr,
+/// and that the neural network associated to that loss index is neither nullptr.
 /// If that checkings are not hold, an exception is thrown. 
 
 void TrainingAlgorithm::check() const
@@ -353,18 +361,18 @@ void TrainingAlgorithm::check() const
    {
       buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
              << "void check() const method.\n"
-             << "Pointer to loss functional is NULL.\n";
+             << "Pointer to loss index is nullptr.\n";
 
       throw logic_error(buffer.str());	  
    }
 
    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   if(neural_network_pointer == NULL)
+   if(neural_network_pointer == nullptr)
    {
       buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
              << "void check() const method.\n"
-             << "Pointer to neural network is NULL.\n";
+             << "Pointer to neural network is nullptr.\n";
 
       throw logic_error(buffer.str());
    }
@@ -446,7 +454,7 @@ void TrainingAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Training algorithm element is NULL.\n";
+               << "Training algorithm element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -465,7 +473,7 @@ void TrainingAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
         catch(const logic_error& e)
         {
-           cout << e.what() << endl;
+           cerr << e.what() << endl;
         }
      }
   }
@@ -576,21 +584,21 @@ string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_condition() c
     {
         return("Minimum parameters increment norm");
     }
-    case MinimumPerformanceIncrease:
+    case MinimumLossDecrease:
     {
-        return("Minimum loss increase");
+        return("Minimum loss decrease");
     }
-    case PerformanceGoal:
+    case LossGoal:
     {
-        return("Performance goal");
+        return("Loss goal");
     }
     case GradientNormGoal:
     {
         return("Gradient norm goal");
     }
-    case MaximumSelectionPerformanceDecreases:
+    case MaximumSelectionLossIncreases:
     {
-        return("Maximum selection failures");
+        return("Maximum selection loss increases");
     }
     case MaximumIterationsNumber:
     {
@@ -600,20 +608,9 @@ string TrainingAlgorithm::TrainingAlgorithmResults::write_stopping_condition() c
     {
         return("Maximum training time");
     }
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingAlgorithmResults struct.\n"
-               << "string write_stopping_condition() const method.\n"
-               << "Unknown stopping condition type.\n";
-
-        throw logic_error(buffer.str());
-
-        break;
-    }
     }
 
+    return string();
 }
 
 

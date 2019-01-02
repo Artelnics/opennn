@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   P R O B A B I L I S T I C   L A Y E R   T E S T   C L A S S   H E A D E R                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -90,7 +90,7 @@ public:
 
    void test_calculate_outputs();
    void test_calculate_Jacobian();
-   void test_calculate_Hessian_form();
+   void test_calculate_Hessian();
 
    // Expression methods
 
