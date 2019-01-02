@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   V A R I A B L E S   T E S T   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -54,34 +54,34 @@ public:
 
    // Variables methods
 
-   void test_count_inputs_number();
-   void test_count_targets_number();
+   void test_get_inputs_number();
+   void test_get_targets_number();
 
-   void test_arrange_inputs_indices();
-   void test_arrange_targets_indices();
-   void test_arrange_used_indices();
+   void test_get_inputs_indices();
+   void test_get_targets_indices();
+   void test_get_used_indices();
 
    // Information methods 
 
-   void test_arrange_names();
+   void test_get_names();
    void test_get_name();
 
-   void test_arrange_inputs_name();
-   void test_arrange_targets_name();
+   void test_get_inputs_name();
+   void test_get_targets_name();
 
-   void test_arrange_units();
+   void test_get_units();
    void test_get_unit();
 
-   void test_arrange_inputs_units();
-   void test_arrange_targets_units();
+   void test_get_inputs_units();
+   void test_get_targets_units();
 
-   void test_arrange_descriptions();
+   void test_get_descriptions();
    void test_get_description();
 
-   void test_arrange_inputs_description();
-   void test_arrange_target_descriptions();
+   void test_get_inputs_description();
+   void test_get_target_descriptions();
 
-   void test_arrange_information();
+   void test_get_information();
 
    void test_get_display();
 

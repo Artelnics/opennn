@@ -74,7 +74,6 @@ MatthewCorrelationOptimizationThreshold::~MatthewCorrelationOptimizationThreshol
 
 // METHODS
 
-// const double& get_minimum_threshold() const method
 
 /// Returns the minimum threshold of the algorithm.
 
@@ -83,7 +82,6 @@ const double& MatthewCorrelationOptimizationThreshold::get_minimum_threshold() c
     return(minimum_threshold);
 }
 
-// const double& get_maximum_threshold() const method
 
 /// Returns the maximum threshold of the algorithm.
 
@@ -92,7 +90,6 @@ const double& MatthewCorrelationOptimizationThreshold::get_maximum_threshold() c
     return(maximum_threshold);
 }
 
-// const double& get_step() const method
 
 /// Returns the step for the sucesive iterations of the algorithm.
 
@@ -101,7 +98,6 @@ const double& MatthewCorrelationOptimizationThreshold::get_step() const
     return(step);
 }
 
-// void set_default() method
 
 /// Sets the members of the matthew correlation optimization object to their default values.
 
@@ -114,7 +110,6 @@ void MatthewCorrelationOptimizationThreshold::set_default()
     step = 0.001;
 }
 
-// void set_minimum_threshold(const double&) method
 
 /// Sets the minimum value of the threshold selection algotihm.
 /// @param new_minimum_threshold Minimum threshold for the algorithm.
@@ -139,7 +134,6 @@ void MatthewCorrelationOptimizationThreshold::set_minimum_threshold(const double
     minimum_threshold = new_minimum_threshold;
 }
 
-// void set_maximum_threshold(const double&) method
 
 /// Sets the maximum value of the threshold selection algotihm.
 /// @param new_maximum_threshold Maximum threshold for the algorithm.
@@ -164,7 +158,6 @@ void MatthewCorrelationOptimizationThreshold::set_maximum_threshold(const double
     maximum_threshold = new_maximum_threshold;
 }
 
-// void set_step(const double&) method
 
 /// Sets the step between two iterations of the threshold selection algotihm.
 /// @param new_step Difference of threshold between two consecutive iterations.
@@ -189,7 +182,6 @@ void MatthewCorrelationOptimizationThreshold::set_step(const double& new_step)
     step = new_step;
 }
 
-// MatthewCorrelationOptimizationThresholdResults* perform_order_selection() method
 
 /// Perform the decision threshold selection optimizing the Matthew correlation.
 
@@ -215,7 +207,7 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
 
     double current_matthew_correlation;
 
-    double optimum_threshold;
+    double optimum_threshold = 0.0;
 
     Vector<double> optimal_binary_classification_test(15,1);
 
@@ -245,7 +237,7 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
         }
 
         if(current_matthew_correlation > optimum_matthew_correlation ||
-           (current_matthew_correlation == optimum_matthew_correlation && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
+           (fabs(current_matthew_correlation - optimum_matthew_correlation) < numeric_limits<double>::epsilon() && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
         {
             optimum_matthew_correlation = current_matthew_correlation;
             optimum_threshold = current_threshold;
@@ -265,7 +257,7 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
         }
-        else if(current_threshold == maximum_threshold)
+        else if(fabs(current_threshold - maximum_threshold) < numeric_limits<double>::epsilon())
         {
             end = true;
 
@@ -309,7 +301,6 @@ MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThreshold
     return(results);
 }
 
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -359,8 +350,6 @@ Matrix<string> MatthewCorrelationOptimizationThreshold::to_string_matrix() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Prints to the screen the matthew correlation optimization parameters, the stopping criteria
 /// and other user stuff concerning the matthew correlation optimization object.
 
@@ -376,8 +365,8 @@ tinyxml2::XMLDocument* MatthewCorrelationOptimizationThreshold::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Minimum threshold
    {
@@ -464,8 +453,6 @@ tinyxml2::XMLDocument* MatthewCorrelationOptimizationThreshold::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the Matthew's correlation optimization threshold object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -522,7 +509,6 @@ void MatthewCorrelationOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& fi
     //file_stream.CloseElement();
 }
 
-// void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this matthew correlation optimization object.
 /// @param document TinyXML document containing the member data.
@@ -537,7 +523,7 @@ void MatthewCorrelationOptimizationThreshold::from_XML(const tinyxml2::XMLDocume
 
         buffer << "OpenNN Exception: MatthewCorrelationOptimizationThreshold class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "MatthewCorrelationOptimizationThreshold element is NULL.\n";
+               << "MatthewCorrelationOptimizationThreshold element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -556,7 +542,7 @@ void MatthewCorrelationOptimizationThreshold::from_XML(const tinyxml2::XMLDocume
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -575,7 +561,7 @@ void MatthewCorrelationOptimizationThreshold::from_XML(const tinyxml2::XMLDocume
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -594,7 +580,7 @@ void MatthewCorrelationOptimizationThreshold::from_XML(const tinyxml2::XMLDocume
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -613,7 +599,7 @@ void MatthewCorrelationOptimizationThreshold::from_XML(const tinyxml2::XMLDocume
             }
             catch(const logic_error& e)
             {
-               cout << e.what() << endl;
+               cerr << e.what() << endl;
             }
         }
     }
@@ -632,7 +618,7 @@ void MatthewCorrelationOptimizationThreshold::from_XML(const tinyxml2::XMLDocume
 //           }
 //           catch(const logic_error& e)
 //           {
-//              cout << e.what() << endl;
+//              cerr << e.what() << endl;
 //           }
 //        }
 //    }
@@ -652,8 +638,6 @@ void MatthewCorrelationOptimizationThreshold::save(const string& file_name) cons
    delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a matthew correlation optimization object from a XML-type file.
 /// @param file_name Name of matthew correlation optimization XML-type file.

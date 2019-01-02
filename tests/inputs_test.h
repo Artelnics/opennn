@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   I N P U T S   T E S T   C L A S S   H E A D E R                                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -58,13 +58,13 @@ public:
 
    // Input variables information
 
-   void test_arrange_names();
+   void test_get_names();
    void test_get_name();
 
-   void test_arrange_units();
+   void test_get_units();
    void test_get_unit();
 
-   void test_arrange_descriptions();
+   void test_get_descriptions();
    void test_get_description();
 
    // Display messages

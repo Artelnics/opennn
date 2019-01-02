@@ -6,7 +6,7 @@
 /*   G R O W I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -83,9 +83,9 @@ void GrowingInputsTest::test_perform_inputs_selection()
 
 //    NeuralNetwork nn;
 
-//    LossIndex pf(&nn,&ds);
+//    SumSquaredError sse(&nn,&ds);
 
-//    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&sse);
 
 //    GrowingInputs gi(&ts);
 
@@ -168,7 +168,7 @@ void GrowingInputsTest::test_to_XML()
     GrowingInputs gi;
 
     tinyxml2::XMLDocument* document = gi.to_XML();
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 }

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   M I N K O W S K I   E R R O R   C L A S S   H E A D E R                                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -24,7 +23,7 @@
 
 // OpenNN includes
 
-#include "error_term.h"
+#include "loss_index.h"
 #include "data_set.h"
 
 // TinyXml includes
@@ -39,7 +38,7 @@ namespace OpenNN
 /// This error term is used in data modeling problems.
 /// It can be more useful when the data set presents outliers. 
 
-class MinkowskiError : public ErrorTerm
+class MinkowskiError : public LossIndex
 {
 
 public:
@@ -81,18 +80,39 @@ public:
 
    void set_Minkowski_parameter(const double&);
 
-   // Checking methods
-
-   void check() const;
 
    // loss methods
 
-   double calculate_error() const;
-   double calculate_error(const Vector<double>&) const;
-   double calculate_selection_error() const;
+   double calculate_training_error() const
+   {
+       return 0;
+   }
 
-   Vector<double> calculate_output_gradient(const Vector<double>&, const Vector<double>&) const;
-   Matrix<double> calculate_output_Hessian(const Vector<double>&, const Vector<double>&) const;
+   double calculate_selection_error() const
+   {
+       return 0;
+   }
+
+   double calculate_training_error(const Vector<double>&) const
+   {
+       return 0;
+   }
+
+   double calculate_batch_error(const Vector<size_t> &) const
+   {
+       return 0;
+   }
+
+   Vector<double> calculate_training_error_gradient() const
+   {
+       return Vector<double>();
+   }
+
+
+
+   double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
+
+   double calculate_error(const Vector<double>&) const;
 
    string write_error_term_type() const;
 
@@ -102,9 +122,10 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   // void read_XML(   );
 
 private:
+
+   Vector<double> calculate_output_gradient(const Vector<size_t>&, const Vector<double>&, const Vector<double>&) const;
 
    // MEMBERS
 

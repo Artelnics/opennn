@@ -74,7 +74,6 @@ KappaCoefficientOptimizationThreshold::~KappaCoefficientOptimizationThreshold()
 
 // METHODS
 
-// const double& get_minimum_threshold() const method
 
 /// Returns the minimum threshold of the algorithm.
 
@@ -83,7 +82,6 @@ const double& KappaCoefficientOptimizationThreshold::get_minimum_threshold() con
     return(minimum_threshold);
 }
 
-// const double& get_maximum_threshold() const method
 
 /// Returns the maximum threshold of the algorithm.
 
@@ -92,7 +90,6 @@ const double& KappaCoefficientOptimizationThreshold::get_maximum_threshold() con
     return(maximum_threshold);
 }
 
-// const double& get_step() const method
 
 /// Returns the step for the sucesive iterations of the algorithm.
 
@@ -101,7 +98,6 @@ const double& KappaCoefficientOptimizationThreshold::get_step() const
     return(step);
 }
 
-// void set_default() method
 
 /// Sets the members of the kappa coefficient optimization object to their default values:
 
@@ -114,7 +110,6 @@ void KappaCoefficientOptimizationThreshold::set_default()
     step = 0.001;
 }
 
-// void set_minimum_threshold(const double&) method
 
 /// Sets the minimum value of the threshold selection algotihm.
 /// @param new_minimum_threshold Minimum threshold for the algorithm.
@@ -139,7 +134,6 @@ void KappaCoefficientOptimizationThreshold::set_minimum_threshold(const double& 
     minimum_threshold = new_minimum_threshold;
 }
 
-// void set_maximum_threshold(const double&) method
 
 /// Sets the maximum value of the threshold selection algotihm.
 /// @param new_maximum_threshold Maximum threshold for the algorithm.
@@ -164,7 +158,6 @@ void KappaCoefficientOptimizationThreshold::set_maximum_threshold(const double& 
     maximum_threshold = new_maximum_threshold;
 }
 
-// void set_step(const double&) method
 
 /// Sets the step between two iterations of the threshold selection algotihm.
 /// @param new_step Difference of threshold between two consecutive iterations.
@@ -189,7 +182,6 @@ void KappaCoefficientOptimizationThreshold::set_step(const double& new_step)
     step = new_step;
 }
 
-// KappaCoefficientOptimizationThresholdResults* perform_order_selection() method
 
 /// Perform the decision threshold selection optimizing the kappa coefficient.
 
@@ -217,9 +209,9 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
 
     double po, pe, prA, prB;
 
-    const size_t instances_number = loss_index_pointer->get_data_set_pointer()->get_instances_pointer()->count_selection_instances_number();
+    const size_t instances_number = loss_index_pointer->get_data_set_pointer()->get_instances_pointer()->get_selection_instances_number();
 
-    double optimum_threshold;
+    double optimum_threshold = 0.0;
 
     Vector<double> optimal_binary_classification_test(15,1);
 
@@ -234,14 +226,14 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
         current_confusion = calculate_confusion(current_threshold);
         current_binary_classification_test = calculate_binary_classification_test(current_confusion);
 
-        po =(current_confusion(0,0) + current_confusion(1,1))/(double)instances_number;
+        po = (current_confusion(0,0) + current_confusion(1,1))/static_cast<double>(instances_number);
 
-        prA =(current_confusion(0,0) + current_confusion(0,1))/(double)instances_number;
-        prB =(current_confusion(0,0) + current_confusion(1,0))/(double)instances_number;
+        prA = (current_confusion(0,0) + current_confusion(0,1))/static_cast<double>(instances_number);
+        prB = (current_confusion(0,0) + current_confusion(1,0))/static_cast<double>(instances_number);
 
-        pe = prA*prB +(1-prA)*(1-prB);
+        pe = prA*prB + (1-prA)*(1-prB);
 
-        current_kappa_coefficient =(po-pe)/(1-pe);
+        current_kappa_coefficient = (po-pe)/(1-pe);
 
         results->threshold_data.push_back(current_threshold);
 
@@ -256,7 +248,7 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
         }
 
         if(current_kappa_coefficient > optimum_kappa_coefficient ||
-           (current_kappa_coefficient == optimum_kappa_coefficient && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
+           (fabs(current_kappa_coefficient - optimum_kappa_coefficient) < numeric_limits<double>::epsilon() && current_binary_classification_test[1] < optimal_binary_classification_test[1]))
         {
             optimum_kappa_coefficient = current_kappa_coefficient;
             optimum_threshold = current_threshold;
@@ -276,7 +268,7 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
 
             results->stopping_condition = ThresholdSelectionAlgorithm::PerfectConfusionMatrix;
         }
-        else if(current_threshold == maximum_threshold)
+        else if(fabs(current_threshold - maximum_threshold) < numeric_limits<double>::epsilon())
         {
             end = true;
 
@@ -320,7 +312,6 @@ KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResu
     return(results);
 }
 
-// Matrix<string> to_string_matrix() const method
 
 /// Writes as matrix of strings the most representative atributes.
 
@@ -370,8 +361,6 @@ Matrix<string> KappaCoefficientOptimizationThreshold::to_string_matrix() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Prints to the screen the kappa coefficient optimization parameters, the stopping criteria
 /// and other user stuff concerning the kappa coefficient optimization object.
 
@@ -387,8 +376,8 @@ tinyxml2::XMLDocument* KappaCoefficientOptimizationThreshold::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Minimum threshold
    {
@@ -475,8 +464,6 @@ tinyxml2::XMLDocument* KappaCoefficientOptimizationThreshold::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the kappa coefficient optimization threshod object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -534,8 +521,6 @@ void KappaCoefficientOptimizationThreshold::write_XML(tinyxml2::XMLPrinter& file
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this kappa coefficient optimization object.
 /// @param document TinyXML document containing the member data.
 
@@ -549,7 +534,7 @@ void KappaCoefficientOptimizationThreshold::from_XML(const tinyxml2::XMLDocument
 
         buffer << "OpenNN Exception: KappaCoefficientOptimizationThreshold class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "KappaCoefficientOptimizationThreshold element is NULL.\n";
+               << "KappaCoefficientOptimizationThreshold element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -568,7 +553,7 @@ void KappaCoefficientOptimizationThreshold::from_XML(const tinyxml2::XMLDocument
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -587,7 +572,7 @@ void KappaCoefficientOptimizationThreshold::from_XML(const tinyxml2::XMLDocument
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -606,7 +591,7 @@ void KappaCoefficientOptimizationThreshold::from_XML(const tinyxml2::XMLDocument
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -625,7 +610,7 @@ void KappaCoefficientOptimizationThreshold::from_XML(const tinyxml2::XMLDocument
             }
             catch(const logic_error& e)
             {
-               cout << e.what() << endl;
+               cerr << e.what() << endl;
             }
         }
     }
@@ -644,14 +629,13 @@ void KappaCoefficientOptimizationThreshold::from_XML(const tinyxml2::XMLDocument
 //           }
 //           catch(const logic_error& e)
 //           {
-//              cout << e.what() << endl;
+//              cerr << e.what() << endl;
 //           }
 //        }
 //    }
 
 }
 
-// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the kappa coefficient optimization object.
 /// @param file_name Name of kappa coefficient optimization XML-type file.
@@ -665,8 +649,6 @@ void KappaCoefficientOptimizationThreshold::save(const string& file_name) const
    delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a kappa coefficient optimization object from a XML-type file.
 /// @param file_name Name of kappa coefficient optimization XML-type file.

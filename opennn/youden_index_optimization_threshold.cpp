@@ -6,7 +6,7 @@
 /*   Y O U D E N   I N D E X   O P T I M I Z A T I O N   T H R E S H O L D   C L A S S                              */
 /*                                                                                                                  */
 /*   Fernando Gomez                                                                                                 */
-/*   Artificial Intelligence Techniques SL                                                                     */
+/*   Artificial Intelligence Techniques SL                                                                          */
 /*   fernandogomez@artelnics.com                                                                                    */
 /*                                                                                                                  */
 /********************************************************************************************************************/
@@ -376,8 +376,8 @@ tinyxml2::XMLDocument* YoudenIndexOptimizationThreshold::to_XML() const
 
    document->InsertFirstChild(root_element);
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    // Minimum threshold
    {
@@ -538,7 +538,7 @@ void YoudenIndexOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& doc
 
         buffer << "OpenNN Exception: YoudenIndexOptimizationThreshold class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "YoudenIndexOptimizationThreshold element is NULL.\n";
+               << "YoudenIndexOptimizationThreshold element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -557,7 +557,7 @@ void YoudenIndexOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& doc
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -576,7 +576,7 @@ void YoudenIndexOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& doc
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -595,7 +595,7 @@ void YoudenIndexOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& doc
            }
            catch(const logic_error& e)
            {
-              cout << e.what() << endl;
+              cerr << e.what() << endl;
            }
         }
     }
@@ -614,7 +614,7 @@ void YoudenIndexOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& doc
             }
             catch(const logic_error& e)
             {
-               cout << e.what() << endl;
+               cerr << e.what() << endl;
             }
         }
     }
@@ -633,7 +633,7 @@ void YoudenIndexOptimizationThreshold::from_XML(const tinyxml2::XMLDocument& doc
 //           }
 //           catch(const logic_error& e)
 //           {
-//              cout << e.what() << endl;
+//              cerr << e.what() << endl;
 //           }
 //        }
 //    }

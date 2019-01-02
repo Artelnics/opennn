@@ -52,7 +52,7 @@ string TextAnalytics::get_language_string() const
     }
     else
     {
-        return "";
+        return string();
     }
 }
 
@@ -1822,7 +1822,7 @@ void TextAnalytics::clear_stop_words()
 
 bool TextAnalytics::is_number(const string& str) const
 {
-    return strspn( str.c_str(), "-.0123456789" ) == str.size() ;
+    return strspn( str.c_str(), "-.0123456789" ) == str.size();
 }
 
 bool TextAnalytics::contains_number(const string& word) const
@@ -1941,7 +1941,7 @@ Vector<double> TextAnalytics::get_words_presence_percentage(const Vector< Vector
             }
         }
 
-        word_presence_percentage[i] =(double)sum*((double)100.0/tokens.size());
+        word_presence_percentage[i] = static_cast<double>(sum)*((double)100.0/tokens.size());
     }
 
 
@@ -2024,6 +2024,7 @@ Matrix<string> TextAnalytics::calculate_combinated_words_frequency(const Vector<
     return(combinated_words_frequency_matrix);
 }
 
+
 /// Returns the correlations of words that appear a minimum percentage of times
 /// with the targets in descending order.
 /// @param minimum_percentage Minimum percentage of frequency that the word must have.
@@ -2032,15 +2033,12 @@ Matrix<string> TextAnalytics::top_words_correlations(const Vector< Vector<string
                                                      const double& minimum_percentage,
                                                      const Vector<size_t>& targets) const
 {
-    const TextAnalytics text_analytics;
-
-    const TextAnalytics::WordBag top_word_bag = text_analytics.calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
+    const TextAnalytics::WordBag top_word_bag = calculate_word_bag_minimum_percentage(tokens, minimum_percentage);
     const Vector<string> words_name = top_word_bag.words;
 
     if(words_name.size() == 0)
     {
         cout << "There are no words with such high percentage of appearance" << endl;
-        exit(0);
     }
 
     Vector<string> new_documents(tokens.size());
@@ -2050,13 +2048,13 @@ Matrix<string> TextAnalytics::top_words_correlations(const Vector< Vector<string
       new_documents[i] = tokens[i].vector_to_string(';');
     }
 
-    const Matrix<string> top_words_binary_matrix = new_documents.arrange_unique_binary_matrix(';',words_name);
+    const Matrix<double> top_words_binary_matrix;// = new_documents.get_unique_binary_matrix(';', words_name).to_double_matrix();
 
     Vector<double> correlations(top_words_binary_matrix.get_columns_number());
 
     for(size_t i = 0; i < top_words_binary_matrix.get_columns_number(); i++)
     {
-        correlations[i] = CorrelationAnalysis::calculate_linear_correlation(top_words_binary_matrix.get_column(i).string_to_double(), targets.to_double_vector());
+        correlations[i] = CorrelationAnalysis::calculate_linear_correlation(top_words_binary_matrix.get_column(i), targets.to_double_vector());
     }
 
     Matrix<string> top_words_correlations(correlations.size(),2);
@@ -2110,6 +2108,98 @@ Matrix<double> TextAnalytics::calculate_data_set(const Vector<string>& documents
                        .append_column(targets.to_bool_vector().to_double_vector(), "targets");
 
     return data_set;
+}
+
+// BINARIZE METHODS
+
+Vector<double> TextAnalytics::get_binary_vector(const Vector<string>& elements_to_binarize, const Vector<string>& unique_items) const
+{
+    const size_t unique_items_number = unique_items.size();
+
+    Vector<double> binary_vector(unique_items_number);
+
+    for(size_t i = 0; i < unique_items_number; i++)
+    {
+        if(elements_to_binarize.contains(unique_items[i]))
+        {
+            binary_vector[i] = 1.0;
+        }
+        else
+        {
+            binary_vector[i] = 0.0;
+        }
+    }
+
+    return(binary_vector);
+}
+
+
+Matrix<double> TextAnalytics::get_binary_matrix(const Vector<string>& vector_to_binarize, const char& separator) const
+{
+    const size_t this_size = vector_to_binarize.size();
+
+    const Vector<string> unique_mixes = vector_to_binarize.get_unique_elements();
+
+    Vector< Vector<string> > items(unique_mixes.size());
+
+    Vector<string> unique_items;
+
+    for(size_t i = 0; i < unique_mixes.size(); i++)
+    {
+        items[i] = unique_mixes.split_element(i, separator);
+
+        unique_items = unique_items.assemble(items[i]).get_unique_elements();
+    }
+
+    const size_t unique_items_number = unique_items.size();
+
+    Matrix<double> binary_matrix(this_size, unique_items_number, 0.0);
+
+    binary_matrix.set_header(unique_items);
+
+    Vector<string> elements;
+
+    Vector<double> binary_items(unique_items_number);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        elements = vector_to_binarize.split_element(i, separator);
+
+        binary_items = get_binary_vector(elements,unique_items);
+
+        binary_matrix.set_row(i, binary_items);
+    }
+
+    return(binary_matrix);
+}
+
+
+/// Returns a binary matrix indicating the elements of the columns.
+
+Matrix<double> TextAnalytics::get_unique_binary_matrix(const Vector<string>& vector_to_binarize, const char& separator, const Vector<string>& unique_items) const
+{
+    const size_t this_size = vector_to_binarize.size();
+
+    const size_t unique_items_number = unique_items.size();
+
+    Matrix<double> binary_matrix(this_size, unique_items_number,0.0);
+
+    binary_matrix.set_header(unique_items.to_string_vector());
+
+    Vector<string> elements;
+
+    Vector<double> binary_items(unique_items_number);
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        elements = vector_to_binarize.split_element(i, separator);
+
+        binary_items = get_binary_vector(elements,unique_items);
+
+        binary_matrix.set_row(i, binary_items);
+    }
+
+    return(binary_matrix);
 }
 
 }
