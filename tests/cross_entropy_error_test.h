@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S   H E A D E R                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -39,20 +38,16 @@ public:
 
    virtual ~CrossEntropyErrorTest();
 
-
    // METHODS
 
    // Get methods
 
    // Set methods
 
-   // Objective methods
+   // Error methods
 
-   void test_calculate_loss();   
-   void test_calculate_selection_loss();
-
-   void test_calculate_minimum_loss();
-   void test_calculate_minimum_selection_loss();
+   void test_calculate_error();
+   void test_calculate_selection_error();
 
    void test_calculate_gradient();
 

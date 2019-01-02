@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   S C A L I N G   L A Y E R   C L A S S   H E A D E R                                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -66,11 +65,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   ScalingLayer& operator =(const ScalingLayer&);
+   ScalingLayer& operator = (const ScalingLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const ScalingLayer&) const;
+   bool operator == (const ScalingLayer&) const;
 
    // ENUMERATIONS
 
@@ -87,12 +86,12 @@ public:
    Vector< Statistics<double> > get_statistics() const;
    Statistics<double> get_statistics(const size_t&) const;
 
-   Matrix<double> arrange_statistics() const;
+   Matrix<double> get_statistics_matrix() const;
 
-   Vector<double> arrange_minimums() const;
-   Vector<double> arrange_maximums() const;
-   Vector<double> arrange_means() const;
-   Vector<double> arrange_standard_deviations() const;
+   Vector<double> get_minimums() const;
+   Vector<double> get_maximums() const;
+   Vector<double> get_means() const;
+   Vector<double> get_standard_deviations() const;
 
    // Variables scaling and unscaling
 
@@ -120,6 +119,7 @@ public:
    // Statistics
 
    void set_statistics(const Vector< Statistics<double> >&);
+   void set_statistics_eigen(const Eigen::MatrixXd&);
    void set_item_statistics(const size_t&, const Statistics<double>&);
 
    void set_minimum(const size_t&, const double&);
@@ -131,6 +131,7 @@ public:
 
    void set_scaling_methods(const Vector<ScalingMethod>&);
    void set_scaling_methods(const Vector<string>&);
+   void set_scaling_methods(const vector<string>&);
 
    void set_scaling_methods(const ScalingMethod&);
    void set_scaling_methods(const string&);
@@ -155,20 +156,20 @@ public:
 
    void check_range(const Vector<double>&) const;
 
-   Vector<double> calculate_outputs(const Vector<double>&) const;
-   Vector<double> calculate_derivatives(const Vector<double>&) const;
-   Vector<double> calculate_second_derivatives(const Vector<double>&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>&) const;
+   Matrix<double> calculate_derivatives(const Matrix<double>&) const;
+   Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
 
-   Vector<double> calculate_minimum_maximum_outputs(const Vector<double>&) const;
-   Vector<double> calculate_minimum_maximum_derivatives(const Vector<double>&) const;
-   Vector<double> calculate_minimum_maximum_second_derivatives(const Vector<double>&) const;
+   Matrix<double> calculate_minimum_maximum_outputs(const Matrix<double>&) const;
+   Matrix<double> calculate_minimum_maximum_derivatives(const Matrix<double>&) const;
+   Matrix<double> calculate_minimum_maximum_second_derivatives(const Matrix<double>&) const;
 
-   Vector<double> calculate_mean_standard_deviation_outputs(const Vector<double>&) const;
-   Vector<double> calculate_mean_standard_deviation_derivatives(const Vector<double>&) const;
-   Vector<double> calculate_mean_standard_deviation_second_derivatives(const Vector<double>&) const;
+   Matrix<double> calculate_mean_standard_deviation_outputs(const Matrix<double>&) const;
+   Matrix<double> calculate_mean_standard_deviation_derivatives(const Matrix<double>&) const;
+   Matrix<double> calculate_mean_standard_deviation_second_derivatives(const Matrix<double>&) const;
 
-   Matrix<double> arrange_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > arrange_Hessian_form(const Vector<double>&) const;
+   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    // Expression methods
 

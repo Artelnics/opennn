@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   G R A D I E N T   D E S C E N T   T E S T   C L A S S   H E A D E R                                        */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   L O G I C A L   O P E R A T O R S   A P P L I C A T I O N                                                  */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */  
 /****************************************************************************************************************/
 
@@ -29,9 +28,9 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Logical Operations Application." << std::endl;
+        cout << "OpenNN. Logical Operations Application." << endl;
 
-        srand((unsigned)time(NULL));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
@@ -54,8 +53,8 @@ int main(void)
         variables_pointer->set_name(6, "XNOR");
         variables_pointer->set_name(7, "XNOR");
 
-        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        const Matrix<string> inputs_information = variables_pointer->get_inputs_information();
+        const Matrix<string> targets_information = variables_pointer->get_targets_information();
 
         // Neural network
 
@@ -69,15 +68,9 @@ int main(void)
 
         outputs_pointer->set_information(targets_information);
 
-        // Loss index
-
-        LossIndex loss_index(&neural_network, &data_set);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         // Training strategy
 
-        TrainingStrategy training_strategy(&loss_index);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.perform_training();
 
@@ -87,8 +80,6 @@ int main(void)
 
         neural_network.save("../data/neural_network.xml");
 
-        loss_index.save("../data/loss_index.xml");
-
         training_strategy.save("../data/training_strategy.xml");
 
         // Print results to screen
@@ -96,41 +87,41 @@ int main(void)
         Vector<double> inputs(2, 0.0);
         Vector<double> outputs(6, 0.0);
 
-        std::cout << "X Y AND OR NAND NOR XOR XNOR" << std::endl;
+        cout << "X Y AND OR NAND NOR XOR XNOR" << endl;
 
         inputs[0] = 1.0;
         inputs[1] = 1.0;
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
 
-        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         inputs[0] = 1.0;
         inputs[1] = 0.0;
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
 
-        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         inputs[0] = 0.0;
         inputs[1] = 1.0;
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
 
-        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         inputs[0] = 0.0;
         inputs[1] = 0.0;
 
-        outputs = neural_network.calculate_outputs(inputs);
+        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
 
-        std::cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << std::endl;
+        cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
 
         return(1);
     }
@@ -138,7 +129,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

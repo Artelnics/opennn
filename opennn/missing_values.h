@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   M I S S I N G   V A L U E S   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -72,11 +71,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   MissingValues& operator =(const MissingValues&);
+   MissingValues& operator = (const MissingValues&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const MissingValues&) const;
+   bool operator == (const MissingValues&) const;
 
 
    // ENUMERATIONS
@@ -117,7 +116,7 @@ public:
        /// Returns true if this item is equal to another item.
        /// other_item Other item to be compared with.
 
-       bool operator ==(const Item& other_item) const
+       bool operator == (const Item& other_item) const
        {
             if(other_item.instance_index == instance_index && other_item.variable_index == variable_index)
             {
@@ -196,19 +195,19 @@ public:
 
    bool is_missing_value(const size_t&, const size_t&) const;
 
-   Vector<size_t> arrange_missing_instances() const;
-   Vector<size_t> arrange_missing_instances(const size_t&) const;
-   Vector<size_t> arrange_missing_instances(const Vector<size_t>&) const;
+   Vector<size_t> get_missing_instances() const;
+   Vector<size_t> get_missing_instances(const size_t&) const;
+   Vector<size_t> get_missing_instances(const Vector<size_t>&) const;
 
    size_t count_missing_instances() const;
    size_t count_missing_instances(const size_t&) const;
    size_t count_missing_instances(const size_t&, const size_t&) const;
 
-   Vector<size_t> arrange_missing_variables() const;
+   Vector<size_t> get_missing_variables() const;
 
-   Vector< Vector<size_t> > arrange_missing_indices() const;
-   Vector< Vector<size_t> > arrange_missing_indices(const Vector<size_t>&) const;
-   Vector<size_t> arrange_missing_indices(const size_t&) const;
+   Vector< Vector<size_t> > get_missing_indices() const;
+   Vector< Vector<size_t> > get_missing_indices(const Vector<size_t>&) const;
+   Vector<size_t> get_missing_indices(const size_t&) const;
 
    Vector<size_t> count_variables_missing_indices() const;
 

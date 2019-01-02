@@ -6,7 +6,7 @@
 /*   O U T P U T S   T R E N D I N G   L A Y E R   T E S T   C L A S S   H E A D E R                            */
 /*                                                                                                              */
 /*   Patricia Garcia                                                                                            */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   patriciagarcia@artelnics.com                                                                               */
 /*                                                                                                              */
 /****************************************************************************************************************/

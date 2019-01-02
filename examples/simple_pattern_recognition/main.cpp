@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   S I M P L E   P A T T E R N   R E C O G N I T I O N   A P P L I C A T I O N                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -30,7 +29,7 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Simple Pattern Recognition Application." << std::endl;
+        cout << "OpenNN. Simple Pattern Recognition Application." << endl;
 
         // Data set
 
@@ -50,8 +49,8 @@ int main(void)
 
         instances_pointer->set_training();
 
-        Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        Matrix<string> inputs_information = variables_pointer->get_inputs_information();
+        Matrix<string> targets_information = variables_pointer->get_targets_information();
 
         const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
@@ -73,25 +72,19 @@ int main(void)
 
         MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
 
-        multilayer_perceptron_pointer->set_layer_activation_function(1, Perceptron::Logistic);
+        multilayer_perceptron_pointer->set_layer_activation_function(1, PerceptronLayer::Logistic);
 
         Outputs* outputs_pointer = neural_network.get_outputs_pointer();
 
         outputs_pointer->set_information(targets_information);
 
-        // Loss index
-
-        LossIndex loss_index(&neural_network, &data_set);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         // Training strategy
 
-        TrainingStrategy training_strategy(&loss_index);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-4);
+        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-4);
 
         TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 
@@ -112,8 +105,6 @@ int main(void)
         neural_network.save("../data/neural_network.xml");
         neural_network.save_expression("../data/expression.txt");
 
-        loss_index.save("../data/loss_index.xml");
-
         training_strategy.save("../data/training_strategy.xml");
         training_strategy_results.save("../data/training_strategy_results.dat");
 
@@ -122,9 +113,9 @@ int main(void)
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
 
         return(1);
     }
@@ -132,7 +123,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

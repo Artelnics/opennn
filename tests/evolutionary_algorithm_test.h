@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   E V O L U T I O N A R Y   A L G O R I T H M   T E S T   C L A S S   H E A D E R                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 

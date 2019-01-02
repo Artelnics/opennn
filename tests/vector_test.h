@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   V E C T O R   T E S T   C L A S S   H E A D E R                                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -85,6 +85,8 @@ public:
    void test_get_size();
    void test_get_display();
 
+   void test_get_subvector_random();
+
    // Set
 
    void test_set();
@@ -95,7 +97,7 @@ public:
 
    void test_resize();
 
-   void test_tuck_in();
+   void test_insert();
    void test_take_out();
 
    void test_insert_element();
@@ -108,7 +110,7 @@ public:
 
    void test_intersection();
 
-   void test_arrange_unique();
+   void test_get_unique();
 
    // Initialization
 
@@ -201,6 +203,20 @@ public:
 
    void test_calculate_linear_regression_parameters();
 
+   void test_threshold();
+   void test_symmetric_threshold();
+   void test_logistic();
+   void test_hyperbolic_tangent();
+
+   void test_hyperbolic_tangent_derivatives();
+   void test_hyperbolic_tangent_second_derivatives();
+   void test_logistic_derivatives();
+   void test_logistic_second_derivatives();
+   void test_threshold_derivatives();
+   void test_threshold_second_derivatives();
+   void test_symmetric_threshold_derivatives();
+   void test_symmetric_threshold_second_derivatives();
+
    // Scaling and unscaling
 
    void test_scale_minimum_maximum();
@@ -227,9 +243,7 @@ private:
     static Vector<double> dot(const Vector<double>&, const Matrix<double>&);
 
     static double dot(const Vector<double>&, const Vector<double>&);
-
 };
-
 
 #endif
 

@@ -6,7 +6,7 @@
 /*   G O L D E N   S E C T I O N   O R D E R   T E S T   C L A S S   H E A D E R                                */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -89,9 +89,9 @@ void GoldenSectionOrderTest::test_perform_order_selection()
 
 //    DataSet ds;
 
-//    LossIndex pf(&nn, &ds);
+//    SumSquaredError sse(&nn, &ds);
 
-//    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&sse);
 
 //    GoldenSectionOrder gs(&ts);
 
@@ -134,20 +134,20 @@ void GoldenSectionOrderTest::test_perform_order_selection()
 //    nn.set(1,3,1);
 //    nn.initialize_parameters(0.0);
 
-//    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+//    sse.set_loss_method(LossIndex::SUM_SQUARED_ERROR);
 
-//    ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+//    ts.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
 //    ts.set_display(false);
 
 //    gs.set_trials_number(1);
 //    gs.set_maximum_order(7);
-//    gs.set_selection_loss_goal(1.0e-3);
+//    gs.set_selection_error_goal(1.0e-3);
 //    gs.set_display(false);
 
 //    results = gs.perform_order_selection();
 
-//    assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
+//    assert_true(nn.get_multilayer_perceptron_pointer()->get_layers_perceptrons_numbers()[0] == 1, LOG);
 //    assert_true(results->stopping_condition ==
 //                OrderSelectionAlgorithm::SelectionLossGoal, LOG);
 
@@ -188,20 +188,20 @@ void GoldenSectionOrderTest::test_perform_order_selection()
 //    nn.set(1,3,1);
 //    nn.initialize_parameters(0.0);
 
-//    pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
+//    sse.set_loss_method(LossIndex::SUM_SQUARED_ERROR);
 
-//    ts.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+//    ts.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
 //    ts.set_display(false);
 
 //    gs.set_trials_number(1);
 //    gs.set_maximum_order(7);
-//    gs.set_selection_loss_goal(0.0);
+//    gs.set_selection_error_goal(0.0);
 //    gs.set_display(false);
 
 //    results = gs.perform_order_selection();
 
-//    assert_true(nn.get_multilayer_perceptron_pointer()->arrange_layers_perceptrons_numbers()[0] == 1, LOG);
+//    assert_true(nn.get_multilayer_perceptron_pointer()->get_layers_perceptrons_numbers()[0] == 1, LOG);
 
 
 }
@@ -215,7 +215,7 @@ void GoldenSectionOrderTest::test_to_XML()
     GoldenSectionOrder gs;
 
     tinyxml2::XMLDocument* document = gs.to_XML();
-    assert_true(document != NULL, LOG);
+    assert_true(document != nullptr, LOG);
 
     delete document;
 
