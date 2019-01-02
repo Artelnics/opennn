@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   Y A C H T   R E S I S T A N C E   P R O D U C T I O N   A P P L I C A T I O N                              */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */  
 /****************************************************************************************************************/
 
@@ -33,11 +32,11 @@ int main(void)
     try
     {
 
-        std::cout << "OpenNN. Yacht Resistance Production Application." << std::endl;
+        cout << "OpenNN. Yacht Resistance Production Application." << endl;
 
         // Neural network
 
-        const std::string neural_network_file_name = "../data/neural_network.xml";
+        const string neural_network_file_name = "../data/neural_network.xml";
 
         NeuralNetwork neural_network(neural_network_file_name);
 
@@ -48,22 +47,22 @@ int main(void)
         double lenght_beam_ratio;
         double Froude_number;
 
-        std::cout << "Enter longitudinal position of the center of buoyancy (-5-0):" << std::endl;
+        cout << "Enter longitudinal position of the center of buoyancy (-5-0):" << endl;
         std::cin >> longitudinal_position_center_buoyancy;
 
-        std::cout << "Enter prismatic coeficient (0.53-0.6):" << std::endl;
+        cout << "Enter prismatic coeficient (0.53-0.6):" << endl;
         std::cin >> prismatic_coefficient;
 
-        std::cout << "Enter length-displacement ratio (4.34-5.14):" << std::endl;
+        cout << "Enter length-displacement ratio (4.34-5.14):" << endl;
         std::cin >> length_displacement_ratio;
 
-        std::cout << "Enter beam-draught ratio (2.81-5.35):" << std::endl;
+        cout << "Enter beam-draught ratio (2.81-5.35):" << endl;
         std::cin >> beam_draught_ratio;
 
-        std::cout << "Enter length-beam ratio (2.73-3.64):" << std::endl;
+        cout << "Enter length-beam ratio (2.73-3.64):" << endl;
         std::cin >> lenght_beam_ratio;
 
-        std::cout << "Enter Froude number (0.125-0.45):" << std::endl;
+        cout << "Enter Froude number (0.125-0.45):" << endl;
         std::cin >> Froude_number;
 
         Vector<double> inputs(6);
@@ -74,25 +73,25 @@ int main(void)
         inputs[4] = lenght_beam_ratio;
         inputs[5] = Froude_number;
 
-        Vector<double> outputs = neural_network.calculate_outputs(inputs);
+        Vector<double> outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
 
         double residuary_resistance = outputs[0];
 
-        std::cout << "Residuary resistance per unit weight of displacement:\n"
-                  << residuary_resistance << std::endl;
+        cout << "Residuary resistance per unit weight of displacement:\n"
+                  << residuary_resistance << endl;
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        cerr << e.what() << endl;
 
         return(1);
     }
 }  
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

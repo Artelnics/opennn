@@ -140,7 +140,7 @@ private:
 
     /// Activation function of the hidden layers.
 
-    Perceptron::ActivationFunction default_activation_function;
+    PerceptronLayer::ActivationFunction default_activation_function;
 
    /// Number of ants that will be evaluated in the algorithm.
 

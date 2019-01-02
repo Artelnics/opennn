@@ -89,7 +89,7 @@ double CorrelationAnalysis::calculate_linear_correlation(const Vector<double>& x
 
 #ifdef __OPENNN_MPI__
 
-  int n_send =(int)n;
+  int n_send = (int)n;
   int n_mpi;
 
   double s_x_mpi = s_x;
@@ -116,12 +116,13 @@ double CorrelationAnalysis::calculate_linear_correlation(const Vector<double>& x
 
   double linear_correlation;
 
-  if(s_x == 0 && s_y == 0 && s_xx == 0 && s_yy == 0 && s_xy == 0) {
+  if(fabs(s_x - 0) < numeric_limits<double>::epsilon() && fabs(s_y - 0) < numeric_limits<double>::epsilon() && fabs(s_xx - 0) < numeric_limits<double>::epsilon()
+          && fabs(s_yy - 0) < numeric_limits<double>::epsilon() && fabs(s_xy - 0) < numeric_limits<double>::epsilon()) {
     linear_correlation = 1;
   } else {
-    const double numerator =(n * s_xy - s_x * s_y);
+    const double numerator = (n * s_xy - s_x * s_y);
 
-    const double radicand =(n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y);
+    const double radicand = (n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y);
 
     if(radicand <= 0.0) {
       return(1);
@@ -239,15 +240,15 @@ double CorrelationAnalysis::calculate_point_biserial_correlation(const Vector<do
     int number_k1 = 0;
     int number_k0 = 0;
 
-    for(int i=0; i<data_size; i++)
+    for(size_t i = 0; i < data_size; i++)
     {
 
-        if(y[i] == 1)
+        if(fabs(y[i] - 1) < numeric_limits<double>::epsilon())
         {
             values_y1 += x[i];
             number_k1 +=1;
         }
-        else if(y[i] == 0)
+        else if(fabs(y[i] - 0) < numeric_limits<double>::epsilon())
         {
             values_y0 += x[i];
             number_k0 += 1;
@@ -258,7 +259,7 @@ double CorrelationAnalysis::calculate_point_biserial_correlation(const Vector<do
     values_y0 = values_y0 / number_k0;
     rate_1 = double(number_k1)/data_size;
 
-    pb_correlation =(values_y1-values_y0) * sqrt(rate_1*(1-rate_1)) / x_std_dev;
+    pb_correlation = (values_y1-values_y0) * sqrt(rate_1*(1-rate_1)) / x_std_dev;
 
     return pb_correlation;
 }
@@ -309,7 +310,7 @@ double CorrelationAnalysis::calculate_exponential_correlation(const Vector<doubl
     const Vector<double> y_valid = y.delete_indices(negative_indices);
 
     Vector<double> log_y(y_valid.size());
-    for(int i = 0; i < log_y.size(); i++) log_y[i] = log(y_valid[i]);
+    for(int i = 0; i < static_cast<int>(log_y.size()); i++) log_y[static_cast<size_t>(i)] = log(y_valid[static_cast<size_t>(i)]);
 
     return calculate_linear_correlation(x.delete_indices(negative_indices), log_y);
 }
@@ -350,7 +351,7 @@ double CorrelationAnalysis::calculate_logarithmic_correlation(const Vector<doubl
 #endif
 
     Vector<double> exp_y(y.size());
-    for(int i = 0; i < exp_y.size(); i++) exp_y[i] = exp(y[i]);
+    for(int i = 0; i < static_cast<int>(exp_y.size()); i++) exp_y[static_cast<size_t>(i)] = exp(y[static_cast<size_t>(i)]);
 
     return calculate_linear_correlation(x, exp_y);
 }
@@ -369,6 +370,7 @@ double CorrelationAnalysis::calculate_logarithmic_correlation_missing_values(con
 
     return calculate_logarithmic_correlation(x_new, y_new);
 }
+
 
 /// Calculates the logistic correlation coefficient between two vectors.
 /// @param x Vector containing data.
@@ -397,6 +399,8 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     DataSet data_set(data);
 
+    data_set.get_instances_pointer()->set_training();
+
     const Vector<Statistics<double>> inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
     NeuralNetwork neural_network(1,1);
@@ -409,26 +413,33 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
 
-    multilayer_perceptron_pointer->set_layer_activation_function(0, Perceptron::Logistic);
+    multilayer_perceptron_pointer->set_layer_activation_function(0, PerceptronLayer::Logistic);
 
     neural_network.construct_probabilistic_layer();
     ProbabilisticLayer* plp = neural_network.get_probabilistic_layer_pointer();
     plp->set_probabilistic_method(ProbabilisticLayer::Probability);
 
-    LossIndex loss_index(&neural_network, &data_set);
+    TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    loss_index.set_error_type(LossIndex::WEIGHTED_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
 
-    WeightedSquaredError* weighted_squared_error = loss_index.get_weighted_squared_error_pointer();
+    WeightedSquaredError* weighted_squared_error = training_strategy.get_weighted_squared_error_pointer();
 
     weighted_squared_error->set_weights();
+
     weighted_squared_error->set_normalization_coefficient();
 
-    loss_index.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
+    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::L2);
 
-    TrainingStrategy training_strategy(&loss_index);
+    training_strategy.set_training_method(TrainingStrategy::GRADIENT_DESCENT);
+//    training_strategy.get_quasi_Newton_method_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+//    training_strategy.get_quasi_Newton_method_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+//    training_strategy.get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->set_training_rate_method(TrainingRateAlgorithm::Fixed);
 
-    training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.get_gradient_descent_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+    training_strategy.get_gradient_descent_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+    training_strategy.get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->set_training_rate_method(TrainingRateAlgorithm::BrentMethod);
+
     training_strategy.set_display(false);
 
     training_strategy.perform_training();
@@ -436,10 +447,10 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     Vector<double> value(1);
     Vector<double> output(x.size());
 
-    for(int i=0; i<x.size(); i++)
+    for(size_t i = 0; i <x.size(); i++)
     {
         value[0] = x[i];
-        output[i] = neural_network.calculate_outputs(value)[0];
+        output[i] = neural_network.calculate_outputs(value.to_column_matrix())[0];
     }
 
     if(calculate_linear_correlation(x,output) < 0)
@@ -450,6 +461,8 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     {
         return calculate_linear_correlation(y,output);
     }
+
+//    return 0.0;
 }
 
 
@@ -528,7 +541,7 @@ size_t CorrelationAnalysis::calculate_best_correlation_order(const Vector<double
     Vector<size_t> indexes(3,0);
     indexes.initialize_sequential();
 
-    for(int i=0; i<max_order; i++)
+    for(size_t i = 0; i <max_order; i++)
     {
         if(i == 0)
         {
@@ -573,7 +586,7 @@ double CorrelationAnalysis::calculate_multivariate_linear_correlation(const Matr
 
     double R_squared = 0.0;
 
-    for(int i=0; i<inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
     {
         correlations_vector[i] = CorrelationAnalysis::calculate_linear_correlation(x.get_column(i), y);
     }
@@ -582,6 +595,7 @@ double CorrelationAnalysis::calculate_multivariate_linear_correlation(const Matr
 
     return R_squared;
 }
+
 
 /// Returns the multivariate correlation of a set of variables and a vector.
 /// Takes into account possible missing values.
@@ -635,7 +649,7 @@ Vector<double> CorrelationAnalysis::calculate_logistic_regression(const Matrix<d
 
     Matrix<double> x_matrix(vector_size, parameters_number, 1.0);
 
-    for(int i=1; i<parameters_number; i++)
+    for(size_t i=1; i < parameters_number; i++)
     {
             x_matrix.set_column(i,x.get_column(i-1));
     }
@@ -643,14 +657,14 @@ Vector<double> CorrelationAnalysis::calculate_logistic_regression(const Matrix<d
     while(change_rate.calculate_maximum() > tolerance)
     {
         Vector<double> mu_vector(vector_size);
-        for(int i=0; i<vector_size; i++)
+        for(size_t i = 0; i < vector_size; i++)
         {
             double factor = old_parameters.dot(x_matrix.get_row(i));
             mu_vector[i] = 1 /(1+exp(-factor));
         }
 
         Matrix<double> s_matrix(vector_size, vector_size, 0.0);
-        for(int i=0; i<vector_size; i++)
+        for(size_t i = 0; i < vector_size; i++)
         {
             s_matrix(i,i) = mu_vector[i]*(1-mu_vector[i]);
         }
@@ -661,7 +675,7 @@ Vector<double> CorrelationAnalysis::calculate_logistic_regression(const Matrix<d
         new_parameters = x_matrix.calculate_transpose().dot(new_parameters);
         new_parameters = x_matrix.calculate_transpose().dot(s_matrix.dot(x_matrix)).calculate_inverse().dot(new_parameters);
 
-        for(int i=0; i<new_parameters.size(); i++)
+        for(size_t i = 0; i < new_parameters.size(); i++)
         {
             change_rate[i] = abs(new_parameters[i] - old_parameters[i]);
             old_parameters[i] = new_parameters[i];
@@ -700,11 +714,11 @@ Vector<double> CorrelationAnalysis::calculate_autocorrelations(const Vector<doub
   {
     for(size_t j = 0; j < this_size - i; j++)
     {
-      numerator +=((x[j] - mean) *(x[j + i] - mean)) /((double)this_size - i);
+      numerator += ((x[j] - mean) *(x[j + i] - mean)) /static_cast<double>(this_size - i);
     }
     for(size_t j = 0; j < this_size; j++)
     {
-      denominator +=((x[j] - mean) *(x[j] - mean)) /(double)this_size;
+      denominator += ((x[j] - mean) *(x[j] - mean)) /static_cast<double>(this_size);
     }
 
     if(denominator == 0.0)
@@ -763,13 +777,13 @@ Vector<double> CorrelationAnalysis::calculate_cross_correlations(const Vector<do
 
     for(size_t j = 0; j < this_size - i; j++)
     {
-      numerator +=(x[j] - this_mean) *(y[j + i] - y_mean);
+      numerator += (x[j] - this_mean) *(y[j + i] - y_mean);
     }
 
     for(size_t j = 0; j < this_size; j++)
     {
-      this_denominator +=(x[j] - this_mean) *(x[j] - this_mean);
-      y_denominator +=(y[j] - y_mean) *(y[j] - y_mean);
+      this_denominator += (x[j] - this_mean) *(x[j] - this_mean);
+      y_denominator += (y[j] - y_mean) *(y[j] - y_mean);
     }
 
     denominator = sqrt(this_denominator * y_denominator);
@@ -792,6 +806,9 @@ Vector<double> CorrelationAnalysis::calculate_cross_correlations(const Vector<do
 
 double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const Vector<double>& y)
 {
+    if (x.is_constant()) return 0;
+    else if (y.is_constant()) return 0;
+
     Vector<double> new_x = x;
     Vector<double> new_y = y;
     const bool this_binary = x.is_binary();
@@ -803,7 +820,7 @@ double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const
 
         for (size_t i = 0; i < new_x.size(); i++)
         {
-            if (new_x[i] == unique_elements[0])
+            if (fabs(new_x[i] - unique_elements[0]) < numeric_limits<double>::epsilon())
             {
                 new_x[i] = 0;
             }
@@ -820,7 +837,7 @@ double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const
 
         for (size_t i = 0; i < new_y.size(); i++)
         {
-            if (new_y[i] == unique_elements[0])
+            if (fabs(new_y[i] - unique_elements[0]) < numeric_limits<double>::epsilon())
             {
                 new_y[i] = 0;
             }
@@ -873,14 +890,14 @@ Matrix<double> CorrelationAnalysis::calculate_correlations(const Matrix<double>&
 
 #pragma omp parallel for
 
-    for(int i=0; i<columns_number; i++)
+    for(int i = 0; i < static_cast<int>(columns_number); i++)
     {
-        const Vector<double> x = input_matrix.get_column(i);
-        for(int j=i; j<columns_number; j++)
+        const Vector<double> x = input_matrix.get_column(static_cast<size_t>(i));
+        for(size_t j=static_cast<size_t>(i); j<columns_number; j++)
         {
             const Vector<double> y = input_matrix.get_column(j);
-            correlations_matrix(i,j) = calculate_correlation(x,y);
-            correlations_matrix(j,i) = correlations_matrix(i,j);
+            correlations_matrix(static_cast<size_t>(i),j) = calculate_correlation(x,y);
+            correlations_matrix(j,static_cast<size_t>(i)) = correlations_matrix(static_cast<size_t>(i),j);
         }
     }
 
@@ -899,15 +916,16 @@ Vector<double> CorrelationAnalysis::calculate_correlations(const Matrix<double>&
 {
     const size_t columns_number = input_matrix.get_columns_number();
 
-    const Vector<double> x = input_matrix.get_column(index);
+    const Vector<double> y = input_matrix.get_column(index);
 
     Vector<double> correlations(columns_number);
 
-//#pragma omp parallel for
-    for(int i=0; i<columns_number; i++)
+    #pragma omp parallel for
+    for(int i = 0; i < static_cast<int>(columns_number); i++)
     {
-        Vector<double> y = input_matrix.get_column(i);
-        correlations[i] = calculate_correlation(x,y);
+        Vector<double> x = input_matrix.get_column(static_cast<size_t>(i));
+
+        correlations[static_cast<size_t>(i)] = calculate_correlation(x,y);
     }
 
     return correlations;
@@ -926,14 +944,14 @@ Matrix<double> CorrelationAnalysis::calculate_correlations(const Matrix<double>&
     Matrix<double> correlations_matrix(indexes_number, indexes_number, 0);
 
 //#pragma omp parallel for
-    for(int i=0; i<indexes_number; i++)
+    for(int i = 0; i < static_cast<int>(indexes_number); i++)
     {
-        const Vector<double> x =input_matrix.get_column(indexes[i]);
-        for(int j=i; j<indexes_number; j++)
+        const Vector<double> x =input_matrix.get_column(indexes[static_cast<size_t>(i)]);
+        for(size_t j=static_cast<size_t>(i); j<indexes_number; j++)
         {
             const Vector<double> y = input_matrix.get_column(indexes[j]);
-            correlations_matrix(i,j) = calculate_correlation(x,y);
-            correlations_matrix(j,i) = correlations_matrix(i,j);
+            correlations_matrix(static_cast<size_t>(i),j) = calculate_correlation(x,y);
+            correlations_matrix(j,static_cast<size_t>(i)) = correlations_matrix(static_cast<size_t>(i),j);
         }
     }
 
@@ -952,13 +970,13 @@ Matrix<double> CorrelationAnalysis::calculate_multiple_linear_correlations(const
     const Instances& instances = data_set.get_instances();
     const MissingValues& missing_values = data_set.get_missing_values();
 
-    const Vector<size_t> targets_indices = variables.arrange_targets_indices();
-    const size_t targets_number = variables.count_targets_number();
+    const Vector<size_t> targets_indices = variables.get_targets_indices();
+    const size_t targets_number = variables.get_targets_number();
 
-    const Vector<size_t> used_instances_indices = instances.arrange_used_indices();
+    const Vector<size_t> used_instances_indices = instances.get_used_indices();
 
     const size_t inputs_number = data_set.calculate_input_variables_number(nominal_variables);
-    const Vector< Vector<size_t> > new_input_indices = data_set.arrange_inputs_indices(inputs_number, nominal_variables);
+    const Vector< Vector<size_t> > new_input_indices = data_set.get_inputs_indices(inputs_number, nominal_variables);
 
     // Calculate correlations
 
@@ -978,9 +996,9 @@ Matrix<double> CorrelationAnalysis::calculate_multiple_linear_correlations(const
 
             target_index = targets_indices[j];
 
-            Vector<size_t> current_missing_values = missing_values.arrange_missing_instances(input_indices);
+            Vector<size_t> current_missing_values = missing_values.get_missing_instances(input_indices);
 
-            current_missing_values = current_missing_values.get_union(missing_values.arrange_missing_instances(target_index));
+            current_missing_values = current_missing_values.get_union(missing_values.get_missing_instances(target_index));
 
             const Vector<size_t> current_used_indices = used_instances_indices.get_difference(current_missing_values);
 
@@ -1035,11 +1053,11 @@ Vector<double> CorrelationAnalysis::calculate_logistic_error_gradient(const Vect
 
     for(size_t i = 0; i < other_size; i++)
     {
-        if(y[i] == 1)
+        if(fabs(y[i] - 1) < numeric_limits<double>::epsilon())
         {
             positives_number++;
         }
-        else if(y[i] == 0)
+        else if(fabs(y[i] - 0) < numeric_limits<double>::epsilon())
         {
             negatives_number++;
         }
@@ -1063,24 +1081,24 @@ Vector<double> CorrelationAnalysis::calculate_logistic_error_gradient(const Vect
     }
     else
     {
-        positives_weight =(double)negatives_number/(double)positives_number;
+        positives_weight = static_cast<double>(negatives_number)/static_cast<double>(positives_number);
     }
 
 #pragma omp parallel for
 
-    for(int i = 0; i < n; i++)
+    for(int i = 0; i < static_cast<int>(n); i++)
     {
-        Vector<double> x_corr(1, x[i]);
+        Vector<double> x_corr(1, x[static_cast<size_t>(i)]);
 
         const double current_logistic_function = calculate_logistic_function(coefficients, x_corr);
 
-        const double gradient_multiply = exp(-(coefficients[0]+coefficients[1]*x_corr[0]))*(y[i] - current_logistic_function)*current_logistic_function*current_logistic_function;
+        const double gradient_multiply = exp(-(coefficients[0]+coefficients[1]*x_corr[0]))*(y[static_cast<size_t>(i)] - current_logistic_function)*current_logistic_function*current_logistic_function;
 
         Vector<double> this_error_gradient(3, 0.0);
 
-        this_error_gradient[0] +=(y[i]*positives_weight +(1-y[i])*negatives_weight)*(y[i] - current_logistic_function)*(y[i] - current_logistic_function)/2;
-        this_error_gradient[1] -=(y[i]*positives_weight +(1-y[i])*negatives_weight)*gradient_multiply;
-        this_error_gradient[2] -=(y[i]*positives_weight +(1-y[i])*negatives_weight)*x_corr[0]*gradient_multiply;
+        this_error_gradient[0] += (y[static_cast<size_t>(i)]*positives_weight + (1-y[static_cast<size_t>(i)])*negatives_weight)*(y[static_cast<size_t>(i)]- current_logistic_function)*(y[static_cast<size_t>(i)] - current_logistic_function)/2;
+        this_error_gradient[1] -= (y[static_cast<size_t>(i)]*positives_weight + (1-y[static_cast<size_t>(i)])*negatives_weight)*gradient_multiply;
+        this_error_gradient[2] -= (y[static_cast<size_t>(i)]*positives_weight + (1-y[static_cast<size_t>(i)])*negatives_weight)*x_corr[0]*gradient_multiply;
 
 #pragma omp critical
         {
@@ -1088,7 +1106,7 @@ Vector<double> CorrelationAnalysis::calculate_logistic_error_gradient(const Vect
         }
     }
 
-    return error_gradient/(double)(negatives_weight*negatives_number);
+    return error_gradient/static_cast<double>(negatives_weight*negatives_number);
 }
 
 
@@ -1104,6 +1122,28 @@ double CorrelationAnalysis::calculate_logistic_function(const Vector<double>& co
     }
 
     return(1.0/(1.0+exp(-exponential)));
+}
+
+
+Matrix<double> CorrelationAnalysis::remove_correlations(const Matrix<double>& data, const size_t& index, const double& minimum_correlation)
+{
+    double new_minimum_correlation = minimum_correlation;
+
+    const Vector<double> correlations = calculate_correlations(data,index).calculate_absolute_value();
+
+    size_t columns_to_keep_number = correlations.count_greater_equal_to(new_minimum_correlation);
+
+    do
+    {
+        new_minimum_correlation = new_minimum_correlation - 0.05;
+
+        columns_to_keep_number = correlations.count_greater_equal_to(new_minimum_correlation);
+    }
+    while(columns_to_keep_number < 5);
+
+    const Vector<size_t> indices_to_remove = correlations.get_indices_less_than(new_minimum_correlation);
+
+    return data.delete_columns(indices_to_remove);
 }
 
 }

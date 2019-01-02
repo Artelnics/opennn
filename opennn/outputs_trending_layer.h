@@ -65,11 +65,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   OutputsTrendingLayer& operator =(const OutputsTrendingLayer&);
+   OutputsTrendingLayer& operator = (const OutputsTrendingLayer&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const OutputsTrendingLayer&) const;
+   bool operator == (const OutputsTrendingLayer&) const;
 
    // ENUMERATIONS
 
@@ -131,12 +131,12 @@ public:
 
    void initialize_random();
 
-   Vector<double> calculate_outputs(const Vector<double>&, const double& = 0.0) const;
-   Vector<double> calculate_derivatives() const;
-   Vector<double> calculate_second_derivatives() const;
+   Matrix<double> calculate_outputs(const Matrix<double>&, const double& = 0.0) const;
+   Matrix<double> calculate_derivatives(const Matrix<double>&) const;
+   Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
 
-   Matrix<double> arrange_Jacobian(const Vector<double>&) const;
-   Vector< Matrix<double> > arrange_Hessian_form(const Vector<double>&) const;
+   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    // Expression methods
 

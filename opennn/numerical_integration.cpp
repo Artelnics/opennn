@@ -40,7 +40,6 @@ NumericalIntegration::~NumericalIntegration()
 
 // METHODS
 
-// const NumericalIntegrationMethod& get_numerical_integration_method() const method
 
 /// Returns the method used for numerical integration(trapezoid method or Simpson's method).
 
@@ -49,8 +48,6 @@ const NumericalIntegration::NumericalIntegrationMethod& NumericalIntegration::ge
    return(numerical_integration_method);                           
 }
 
-
-// string write_numerical_integration_method() const method
 
 /// Returns a string with the name of the method to be used for numerical integration. 
 
@@ -62,30 +59,16 @@ string NumericalIntegration::write_numerical_integration_method() const
       {
          return("TrapezoidMethod");
 	  }
-	  break;
 
       case SimpsonMethod:
       {
          return("SimpsonMethod");
  	  }
-	  break;
 
-      default:
-      {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: NumericalIntegration class.\n"
-                << "string write_numerical_integration_method() const method.\n"
-                << "Unknown numerical integration method.\n";
- 
-         throw logic_error(buffer.str());
-	  }
-	  break;
+      default: throw logic_error("Error: string NumericalIntegration::write_numerical_integration_method() const");
    }
 }
 
-
-// const bool& get_display() const method
 
 /// Returns the flag used by this class for displaying or not displaying warnings.
 
@@ -94,8 +77,6 @@ const bool& NumericalIntegration::get_display() const
    return(display);
 }
 
-
-// void set(const NumericalIntegration&) method
 
 /// Sets the members of this object to be equal to those of another object. 
 /// @param other_numerical_integration Numerical integration object to be copied. 
@@ -108,8 +89,6 @@ void NumericalIntegration::set(const NumericalIntegration& other_numerical_integ
 }
 
 
-// void set_numerical_integration_method(const NumericalIntegrationMethod&)
-
 /// Sets the method to be used for numerical integration(trapezoid method or Simpson's method).
 /// @param new_numerical_integration_method New numerical integration method.
 
@@ -119,8 +98,6 @@ void NumericalIntegration::set_numerical_integration_method
    numerical_integration_method = new_numerical_integration_method;
 }
 
-
-// void set_numerical_integration_method(const string&) method
 
 /// Sets the method to be used for the numerical integration.
 /// The argument is a string with the name of the numerical integration method. 
@@ -149,8 +126,6 @@ void NumericalIntegration::set_numerical_integration_method(const string& new_nu
 }
 
 
-// void set_display(const bool&) method
-
 /// Sets a new flag for displaying warnings from this class or not. 
 /// @param new_display Display flag. 
 
@@ -159,8 +134,6 @@ void NumericalIntegration::set_display(const bool& new_display)
    display = new_display;
 }
 
-
-// void set_default() method
 
 /// Sets the default values to the numerical integration object:
 /// <ul>
@@ -175,8 +148,6 @@ void NumericalIntegration::set_default()
    display = true;
 }
 
-
-// double calculate_trapezoid_integral(const Vector<double>&, const Vector<double>&) const method
 
 /// This method evaluates the integral of a function given as a set of n pairs of data(x,y) using the composite 
 /// trapezoid rule. 
@@ -203,8 +174,6 @@ double NumericalIntegration::calculate_trapezoid_integral(const Vector<double>& 
    return(trapezoid_integral);
 }
 
-
-// double calculate_Simpson_integral(const Vector<double>&, const Vector<double>&) const method
 
 /// This method evaluates the integral of a function given as a set of n pairs of data(x,y) using the composite 
 /// Simpson's rule.
@@ -236,7 +205,7 @@ double NumericalIntegration::calculate_Simpson_integral(const Vector<double>& x,
   
    if(n%2 != 0)
    { 
-      m=(n-1)/2;
+      m= (n-1)/2;
 
       for(size_t i = 0 ; i < m ; i++ )
       {
@@ -248,16 +217,16 @@ double NumericalIntegration::calculate_Simpson_integral(const Vector<double>& x,
          fb = y[2*i+1]; 
          fc = y[2*i+2];
                    
-         wa =(c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
-         wb =(c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
-         wc =(c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
+         wa = (c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
+         wb = (c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
+         wc = (c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
           
          sum += wa*fa+wb*fb+wc*fc;
       }
    }
    else
    {
-      m=(n-2)/2;
+      m= (n-2)/2;
 
       for(size_t i = 0; i < m; i++ )
       {
@@ -269,9 +238,9 @@ double NumericalIntegration::calculate_Simpson_integral(const Vector<double>& x,
          fb = y[2*i+1]; 
          fc = y[2*i+2];
              
-         wa =(c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
-         wb =(c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
-         wc =(c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
+         wa = (c-a)/((a-b)*(a-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(b+c)+b*c);
+         wb = (c-a)/((b-a)*(b-c))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+c)+a*c);
+         wc = (c-a)/((c-a)*(c-b))*(1.0/3.0*(a*a+c*c+a*c)-0.5*(a+c)*(a+b)+a*b);
          
 	 sum += wa*fa+wb*fb+wc*fc;
       }
@@ -334,8 +303,8 @@ tinyxml2::XMLDocument* NumericalIntegration::to_XML() const
 {
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   tinyxml2::XMLElement* element = NULL;
-   tinyxml2::XMLText* text = NULL;
+   tinyxml2::XMLElement* element = nullptr;
+   tinyxml2::XMLText* text = nullptr;
 
    ostringstream buffer;
 
@@ -418,7 +387,7 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
 
        buffer << "OpenNN Exception: NumericalIntegration class.\n"
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-              << "Numerical integration element is NULL.\n";
+              << "Numerical integration element is nullptr.\n";
 
        throw logic_error(buffer.str());
    }
@@ -437,7 +406,7 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }
@@ -456,7 +425,7 @@ void NumericalIntegration::from_XML(const tinyxml2::XMLDocument& document)
           }
           catch(const logic_error& e)
           {
-             cout << e.what() << endl;
+             cerr << e.what() << endl;
           }
        }
    }

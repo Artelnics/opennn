@@ -61,8 +61,6 @@ PrincipalComponentsLayer::~PrincipalComponentsLayer()
 }
 
 
-// const PrincipalComponentsMethod& get_principal_components_method() const method
-
 /// Returns the method used for principal components layer.
 
 const PrincipalComponentsLayer::PrincipalComponentsMethod& PrincipalComponentsLayer::get_principal_components_method() const
@@ -70,8 +68,6 @@ const PrincipalComponentsLayer::PrincipalComponentsMethod& PrincipalComponentsLa
     return(principal_components_method);
 }
 
-
-// string write_principal_components_method() const method
 
 /// Returns a string with the name of the method used for principal components layer.
 
@@ -97,8 +93,6 @@ string PrincipalComponentsLayer::write_principal_components_method() const
     }
 }
 
-
-// string write_principal_components_method_text() const method
 
 /// Returns a string with the name of the method used for principal components layer,
 /// as paragaph text.
@@ -166,8 +160,6 @@ size_t PrincipalComponentsLayer::get_inputs_number() const
 }
 
 
-// size_t get_principal_components_number() const method
-
 /// Returns the number of principal components.
 
 size_t PrincipalComponentsLayer::get_principal_components_number() const
@@ -176,14 +168,14 @@ size_t PrincipalComponentsLayer::get_principal_components_number() const
 }
 
 
-// Vector<double> calculate_ouptuts(const Vector<double>&) const
-
 /// Performs the principal component analysis to produce a reduced data set.
 /// @param inputs Set of inputs to the principal components layer.
 
-Vector<double> PrincipalComponentsLayer::calculate_outputs(const Vector<double>& inputs) const
+Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>& inputs) const
 {
-    const size_t inputs_number = inputs.size();
+
+    const size_t points_number = inputs.get_rows_number();
+    const size_t inputs_number = inputs.get_columns_number();
 
     // Control sentence(if debug)
 
@@ -194,7 +186,7 @@ Vector<double> PrincipalComponentsLayer::calculate_outputs(const Vector<double>&
     if(principal_components.get_rows_number() != inputs_number)
     {
        buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
-              << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
+              << "Matrix<double> calculate_outputs(Matrix Vector<double>&) const method.\n"
               << "Size of inputs must be equal to the number of rows of the principal components matrix.\n";
 
        throw logic_error(buffer.str());
@@ -208,38 +200,58 @@ Vector<double> PrincipalComponentsLayer::calculate_outputs(const Vector<double>&
     }
     else
     {
+
         const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
         const Vector<size_t> inputs_indices(0, 1.0, inputs_number-1);
 
         const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, inputs_indices);
 
-        // Data adjust
+        const Matrix<double> inputs_adjust = inputs.subtract_rows(means);
 
-        Vector<double> inputs_adjust(inputs_number);
-
-        for(size_t i = 0; i < inputs_number; i++)
+        return inputs_adjust.dot(used_principal_components.calculate_transpose());
+    }
+/*
+        for(size_t i = 0;  i < points_number; i++)
         {
-            inputs_adjust[i] = inputs[i] - means[i];
-        }
 
-        // Outputs
+            const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-        const size_t principal_components_number = used_principal_components.get_rows_number();
+            const Vector<size_t> inputs_indices(0, 1.0, inputs_number-1);
 
-        Vector<double> outputs(principal_components_number);
+            const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, inputs_indices);
 
-        for(size_t i = 0; i < principal_components_number; i++)
-        {
-            outputs[i] = inputs_adjust.dot(used_principal_components.get_row(i));
+            // Data adjust
+
+            const Matrix<double> inputs_adjust = inputs.subtract_rows(means);
+
+//            Vector<double> inputs_adjust(inputs_number);
+
+//            for(size_t j = 0; j < inputs_number; j++)
+//            {
+//                inputs_adjust[j] = inputs[j] - means[j];
+//            }
+
+            // Outputs
+
+            const size_t principal_components_number = used_principal_components.get_rows_number();
+
+            Matrix<double> outputs(points_number, principal_components_number);
+
+            for(size_t j = 0; j < principal_components_number; j++)
+            {
+                outputs(i,j) = inputs_adjust.dot(used_principal_components.get_row(j));
+            }
+
         }
 
         return outputs;
     }
+
+    return Matrix<double>();
+*/
 }
 
-
-// Matrix<double> calculate_Jacobian(const Vector<double>&) const
 
 /// Returns the partial derivatives of the outputs from the principal components layer with respect to its inputs.
 /// @param inputs Inputs to the principal components layer.
@@ -266,50 +278,41 @@ Matrix<double> PrincipalComponentsLayer::calculate_Jacobian(const Vector<double>
 }
 
 
-// string write_expression(const Vector<string>&, const Vector<string>&) const method
-
 /// Returns a string with the expression of the principal components process.
 
 string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
 {
     switch(principal_components_method)
     {
-    case NoPrincipalComponents:
-    {
-        return(write_no_principal_components_expression(inputs_name, outputs_name));
+        case NoPrincipalComponents:
+        {
+            return(write_no_principal_components_expression(inputs_name, outputs_name));
+        }
+
+        case PrincipalComponents:
+        {
+            return(write_principal_components_expression(inputs_name, outputs_name));
+        }
     }
-        break;
 
-    case PrincipalComponents:
-    {
-        return(write_principal_components_expression(inputs_name, outputs_name));
-    }
-        break;
+    // Default
 
-    default:
-    {
-        ostringstream buffer;
+    ostringstream buffer;
 
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "string write_expression() const method.\n"
-               << "Unknown principal components method.\n";
+    buffer << "OpenNN Exception: ScalingLayer class.\n"
+           << "string write_expression() const method.\n"
+           << "Unknown principal components method.\n";
 
-        throw logic_error(buffer.str());
-    }// end default
-        break;
-    }
+    throw logic_error(buffer.str());
 }
 
-
-
-// string write_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the principal components process when none method is used.
 /*/// @param inputs_name Name of inputs to the principal components.
 /// @param outputs_name Name of outputs from the principal components.*/
 
 
-string PrincipalComponentsLayer::write_no_principal_components_expression(const Vector<string>& , const Vector<string>& ) const
+string PrincipalComponentsLayer::write_no_principal_components_expression(const Vector<string>&, const Vector<string>& ) const
 {
     ostringstream buffer;
 
@@ -318,8 +321,6 @@ string PrincipalComponentsLayer::write_no_principal_components_expression(const 
     return(buffer.str());
 }
 
-
-// string write_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the principal components process when principal components anlysis is used.
 /// @param inputs_name Name of inputs to the principal components.
@@ -337,7 +338,7 @@ string PrincipalComponentsLayer::write_principal_components_expression(const Vec
 
     for(size_t i = 0; i < principal_components_number;i ++)
     {
-        buffer << outputs_name[i] << "=(";
+        buffer << outputs_name[i] << "= (";
 
         for(size_t j = 0; j < inputs_number; j++)
         {
@@ -708,7 +709,7 @@ void PrincipalComponentsLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
         {
             file_stream.OpenElement("PrincipalComponent");
 
-            file_stream.PushAttribute("Index",(unsigned)i+1);
+            file_stream.PushAttribute("Index", static_cast<unsigned>(i)+1);
 
             // Principal component
 
@@ -754,7 +755,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Principal components layer element is NULL.\n";
+               << "Principal components layer element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -767,12 +768,12 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Inputs number element is NULL.\n";
+               << "Inputs number element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t inputs_number = atoi(inputs_number_element->GetText());
+    const size_t inputs_number = static_cast<size_t>(atoi(inputs_number_element->GetText()));
 
     set_inputs_number(inputs_number);
 
@@ -784,12 +785,12 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Principal components number element is NULL.\n";
+               << "Principal components number element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-    const size_t principal_components_number = atoi(principal_components_number_element->GetText());
+    const size_t principal_components_number = static_cast<size_t>(atoi(principal_components_number_element->GetText()));
 
     set_principal_components_number(principal_components_number);
 
@@ -812,7 +813,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Means element is NULL.\n";
+                   << "Means element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -831,7 +832,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
                 }
                 catch(const logic_error& e)
                 {
-                    cout << e.what() <<endl;
+                    cerr << e.what() <<endl;
                 }
             }
         }
@@ -844,7 +845,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
                    << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                   << "ExplainedVariance element is NULL.\n";
+                   << "ExplainedVariance element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -863,7 +864,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
                 }
                 catch(const logic_error& e)
                 {
-                    cout << e.what() <<endl;
+                    cerr << e.what() <<endl;
                 }
             }
         }
@@ -885,7 +886,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
             {
                 buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
                        << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-                       << "Principal component number " << i+1 << " is NULL.\n";
+                       << "Principal component number " << i+1 << " is nullptr.\n";
 
                 throw logic_error(buffer.str());
             }
@@ -916,7 +917,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
                 }
                 catch(const logic_error& e)
                 {
-                    cout << e.what() <<endl;
+                    cerr << e.what() <<endl;
                 }
             }
         }
@@ -936,7 +937,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
         catch(const logic_error& e)
         {
-            cout << e.what() << endl;
+            cerr << e.what() << endl;
         }
     }
 }

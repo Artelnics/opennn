@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   N E U R A L   N E T W O R K   C L A S S                                                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -22,22 +21,10 @@ namespace OpenNN
 
 /// Default constructor. 
 /// It creates an empty neural network object.
-/// All pointers in the object are initialized to NULL. 
+/// All pointers in the object are initialized to nullptr. 
 /// The rest of members are initialized to their default values.
 
 NeuralNetwork::NeuralNetwork()
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     set_default();
 }
@@ -47,22 +34,10 @@ NeuralNetwork::NeuralNetwork()
 
 /// Multilayer Perceptron constructor. 
 /// It creates a neural network object from a given multilayer perceptron. 
-/// The rest of pointers are initialized to NULL. 
+/// The rest of pointers are initialized to nullptr. 
 /// This constructor also initializes the rest of class members to their default values.
 
 NeuralNetwork::NeuralNetwork(const MultilayerPerceptron& new_multilayer_perceptron)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     multilayer_perceptron_pointer = new MultilayerPerceptron(new_multilayer_perceptron);
 
@@ -81,24 +56,12 @@ NeuralNetwork::NeuralNetwork(const MultilayerPerceptron& new_multilayer_perceptr
 /// Multilayer perceptron architecture constructor. 
 /// It creates a neural network object with a multilayer perceptron given by its architecture.
 /// This constructor allows an arbitrary deep learning architecture.
-/// The rest of pointers are initialized to NULL.  
+/// The rest of pointers are initialized to nullptr.  
 /// This constructor also initializes the rest of class members to their default values.
 /// @param new_multilayer_perceptron_architecture Vector with the number of inputs and the numbers of perceptrons in each layer. 
 /// The size of this vector must be equal to one plus the number of layers.
 
 NeuralNetwork::NeuralNetwork(const Vector<size_t>& new_multilayer_perceptron_architecture)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     multilayer_perceptron_pointer = new MultilayerPerceptron(new_multilayer_perceptron_architecture);
 
@@ -113,18 +76,6 @@ NeuralNetwork::NeuralNetwork(const Vector<size_t>& new_multilayer_perceptron_arc
 
 
 NeuralNetwork::NeuralNetwork(const vector<size_t>& new_multilayer_perceptron_architecture)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     multilayer_perceptron_pointer = new MultilayerPerceptron(Vector<size_t>(new_multilayer_perceptron_architecture));
 
@@ -148,18 +99,6 @@ NeuralNetwork::NeuralNetwork(const vector<size_t>& new_multilayer_perceptron_arc
 /// @param new_perceptrons_number Number of perceptrons in the layer.
 
 NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_perceptrons_number)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     multilayer_perceptron_pointer = new MultilayerPerceptron(new_inputs_number, new_perceptrons_number);
 
@@ -177,25 +116,13 @@ NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_
 
 /// Two layers constructor. 
 /// It creates a neural network object with a two layers perceptron. 
-/// The rest of pointers of this object are initialized to NULL. 
+/// The rest of pointers of this object are initialized to nullptr. 
 /// The other members are initialized to their default values. 
 /// @param new_inputs_number Number of inputs in the multilayer perceptron
 /// @param new_hidden_perceptrons_number Number of neurons in the hidden layer of the multilayer perceptron
 /// @param new_output_perceptrons_number Number of outputs neurons.
 
 NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_hidden_perceptrons_number, const size_t& new_output_perceptrons_number)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     multilayer_perceptron_pointer = new MultilayerPerceptron(new_inputs_number, new_hidden_perceptrons_number, new_output_perceptrons_number);
 
@@ -209,33 +136,6 @@ NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_
 }
 
 
-// INDEPENDENT PARAMETERS CONSTRUCTOR
-
-/// Independent parameters constructor. 
-/// It creates a neural network with only independent parameters.
-/// The independent parameters are initialized at random. 
-/// @param new_independent_parameters_number Number of independent parameters associated to the multilayer perceptron
-
-NeuralNetwork::NeuralNetwork(const size_t& new_independent_parameters_number)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
-{
-    independent_parameters_pointer = new IndependentParameters(new_independent_parameters_number);
-
-    set_default();
-}
-
-
 // FILE CONSTRUCTOR
 
 /// File constructor. 
@@ -244,18 +144,6 @@ NeuralNetwork::NeuralNetwork(const size_t& new_independent_parameters_number)
 /// @param file_name Name of neural network file.
 
 NeuralNetwork::NeuralNetwork(const string& file_name)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     load(file_name);
 }
@@ -268,18 +156,6 @@ NeuralNetwork::NeuralNetwork(const string& file_name)
 /// @param document TinyXML document containing the neural network data.
 
 NeuralNetwork::NeuralNetwork(const tinyxml2::XMLDocument& document)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     from_XML(document);
 }
@@ -292,18 +168,6 @@ NeuralNetwork::NeuralNetwork(const tinyxml2::XMLDocument& document)
 /// @param other_neural_network Neural network object to be copied.
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
-    : multilayer_perceptron_pointer(NULL)
-    , inputs_trending_layer_pointer(NULL)
-    , scaling_layer_pointer(NULL)
-    , principal_components_layer_pointer(NULL)
-    , unscaling_layer_pointer(NULL)
-    , outputs_trending_layer_pointer(NULL)
-    , bounding_layer_pointer(NULL)
-    , probabilistic_layer_pointer(NULL)
-    , conditions_layer_pointer(NULL)
-    , inputs_pointer(NULL)
-    , outputs_pointer(NULL)
-    , independent_parameters_pointer(NULL)
 {
     set(other_neural_network);
 }
@@ -323,10 +187,8 @@ NeuralNetwork::~NeuralNetwork()
     delete outputs_trending_layer_pointer;
     delete bounding_layer_pointer;
     delete probabilistic_layer_pointer;
-    delete conditions_layer_pointer;
     delete inputs_pointer;
     delete outputs_pointer;
-    delete independent_parameters_pointer;
 }
 
 
@@ -336,7 +198,7 @@ NeuralNetwork::~NeuralNetwork()
 /// It assigns to this object the members of an existing neural network object.
 /// @param other_neural_network Neural network object to be assigned.
 
-NeuralNetwork& NeuralNetwork::operator =(const NeuralNetwork& other_neural_network)
+NeuralNetwork& NeuralNetwork::operator = (const NeuralNetwork& other_neural_network)
 {
     set(other_neural_network);
 
@@ -349,7 +211,7 @@ NeuralNetwork& NeuralNetwork::operator =(const NeuralNetwork& other_neural_netwo
 /// Equal to operator. 
 /// @param other_neural_network Neural network object to be compared with.
 
-bool NeuralNetwork::operator ==(const NeuralNetwork& other_neural_network) const
+bool NeuralNetwork::operator == (const NeuralNetwork& other_neural_network) const
 {
     if(*multilayer_perceptron_pointer == *other_neural_network.multilayer_perceptron_pointer
             && *inputs_trending_layer_pointer == *other_neural_network.inputs_trending_layer_pointer
@@ -359,8 +221,6 @@ bool NeuralNetwork::operator ==(const NeuralNetwork& other_neural_network) const
             && *outputs_trending_layer_pointer == *other_neural_network.outputs_trending_layer_pointer
             && *bounding_layer_pointer == *other_neural_network.bounding_layer_pointer
             && *probabilistic_layer_pointer == *other_neural_network.probabilistic_layer_pointer
-            && *conditions_layer_pointer == *other_neural_network.conditions_layer_pointer
-            && *independent_parameters_pointer == *other_neural_network.independent_parameters_pointer
             && *inputs_pointer == *other_neural_network.inputs_pointer
             && *outputs_pointer == *other_neural_network.outputs_pointer
             &&  display == other_neural_network.display)
@@ -376,7 +236,6 @@ bool NeuralNetwork::operator ==(const NeuralNetwork& other_neural_network) const
 
 // METHODS
 
-// bool has_multilayer_perceptron() const method
 
 /// Returns true if the neural network object has a multilayer perceptron object inside,
 /// and false otherwise.
@@ -394,8 +253,6 @@ bool NeuralNetwork::has_multilayer_perceptron() const
 }
 
 
-// bool has_inputs() const method
-
 /// Returns true if the neural network object has an inputs object inside,
 /// and false otherwise.
 
@@ -411,8 +268,6 @@ bool NeuralNetwork::has_inputs() const
     }
 }
 
-
-// bool has_outputs() const method
 
 /// Returns true if the neural network object has an outputs object inside,
 /// and false otherwise.
@@ -430,8 +285,6 @@ bool NeuralNetwork::has_outputs() const
 }
 
 
-// bool has_inputs_trending_layer() const method
-
 /// Returns true if the neural network object has an inputs trending layer object inside,
 /// and false otherwise.
 
@@ -447,8 +300,6 @@ bool NeuralNetwork::has_inputs_trending_layer() const
     }
 }
 
-
-// bool has_scaling_layer() const method
 
 /// Returns true if the neural network object has a scaling layer object inside,
 /// and false otherwise.
@@ -466,8 +317,6 @@ bool NeuralNetwork::has_scaling_layer() const
 }
 
 
-// bool has_principal_components_layer() const method
-
 /// Returns true if the neural network object has a principal components layer object inside,
 /// and false otherwise.
 
@@ -483,9 +332,6 @@ bool NeuralNetwork::has_principal_components_layer() const
     }
 }
 
-
-
-// bool has_unscaling_layer() const method
 
 /// Returns true if the neural network object has an unscaling layer object inside,
 /// and false otherwise.
@@ -503,8 +349,6 @@ bool NeuralNetwork::has_unscaling_layer() const
 }
 
 
-// bool has_outputs_trending_layer() const method
-
 /// Returns true if the neural network object has an outputs trending layer object inside,
 /// and false otherwise.
 
@@ -520,8 +364,6 @@ bool NeuralNetwork::has_outputs_trending_layer() const
     }
 }
 
-
-// bool has_bounding_layer() const method
 
 /// Returns true if the neural network object has a bounding layer object inside,
 /// and false otherwise.
@@ -539,8 +381,6 @@ bool NeuralNetwork::has_bounding_layer() const
 }
 
 
-// bool has_probabilistic_layer() const method
-
 /// Returns true if the neural network object has a probabilistic layer object inside,
 /// and false otherwise.
 
@@ -557,44 +397,6 @@ bool NeuralNetwork::has_probabilistic_layer() const
 }
 
 
-// bool has_conditions_layer() const method
-
-/// Returns true if the neural network object has a conditions layer object inside,
-/// and false otherwise.
-
-bool NeuralNetwork::has_conditions_layer() const
-{
-    if(conditions_layer_pointer)
-    {
-        return(true);
-    }
-    else
-    {
-        return(false);
-    }
-}
-
-
-// bool has_independent_parameters() const method
-
-/// Returns true if the neural network object has an independent parameters object inside,
-/// and false otherwise.
-
-bool NeuralNetwork::has_independent_parameters() const
-{
-    if(independent_parameters_pointer)
-    {
-        return(true);
-    }
-    else
-    {
-        return(false);
-    }
-}
-
-
-// MultilayerPerceptron* get_multilayer_perceptron_pointer() const method
-
 /// Returns a pointer to the multilayer perceptron composing this neural network.
 
 MultilayerPerceptron* NeuralNetwork::get_multilayer_perceptron_pointer() const
@@ -607,7 +409,7 @@ MultilayerPerceptron* NeuralNetwork::get_multilayer_perceptron_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "MultilayerPerceptron* get_multilayer_perceptron_pointer() const method.\n"
-               << "Multilayer perceptron pointer is NULL.\n";
+               << "Multilayer perceptron pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -617,8 +419,6 @@ MultilayerPerceptron* NeuralNetwork::get_multilayer_perceptron_pointer() const
     return(multilayer_perceptron_pointer);
 }
 
-
-// InputsTrendingLayer* get_inputs_trending_layer_pointer() const method
 
 /// Returns a pointer to the inputs trending layer composing this neural network.
 
@@ -632,7 +432,7 @@ InputsTrendingLayer* NeuralNetwork::get_inputs_trending_layer_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "InputsTrendingLayer* get_inputs_trending_layer_pointer() const method.\n"
-               << "Inputs trending layer pointer is NULL.\n";
+               << "Inputs trending layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -642,8 +442,6 @@ InputsTrendingLayer* NeuralNetwork::get_inputs_trending_layer_pointer() const
     return(inputs_trending_layer_pointer);
 }
 
-
-// ScalingLayer* get_scaling_layer_pointer() const method
 
 /// Returns a pointer to the scaling layer composing this neural network.
 
@@ -657,7 +455,7 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "ScalingLayer* get_scaling_layer_pointer() const method.\n"
-               << "Scaling layer pointer is NULL.\n";
+               << "Scaling layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -667,8 +465,6 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
     return(scaling_layer_pointer);
 }
 
-
-// PrincipalComponentsLayer* get_principal_components_layer_pointer() const method
 
 /// Returns a pointer to the principal components layer composing this neural network.
 
@@ -682,7 +478,7 @@ PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer(
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "PrincipalComponentsLayer* get_principal_components_layer_pointer() const method.\n"
-               << "Principal components layer pointer is NULL.\n";
+               << "Principal components layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -692,8 +488,6 @@ PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer(
     return(principal_components_layer_pointer);
 }
 
-
-// UnscalingLayer* get_unscaling_layer_pointer() const method
 
 /// Returns a pointer to the unscaling layer composing this neural network.
 
@@ -707,7 +501,7 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "UnscalingLayer* get_unscaling_layer_pointer() const method.\n"
-               << "Unscaling layer pointer is NULL.\n";
+               << "Unscaling layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -717,8 +511,6 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
     return(unscaling_layer_pointer);
 }
 
-
-// OutputsTrendingLayer* get_outputs_trending_layer_pointer() const method
 
 /// Returns a pointer to the outputs trending layer composing this neural network.
 
@@ -732,7 +524,7 @@ OutputsTrendingLayer* NeuralNetwork::get_outputs_trending_layer_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "OutputsTrendingLayer* get_outputs_trending_layer_pointer() const method.\n"
-               << "Outputs trending layer pointer is NULL.\n";
+               << "Outputs trending layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -742,8 +534,6 @@ OutputsTrendingLayer* NeuralNetwork::get_outputs_trending_layer_pointer() const
     return(outputs_trending_layer_pointer);
 }
 
-
-// BoundingLayer* get_bounding_layer_pointer() const method
 
 /// Returns a pointer to the bounding layer composing this neural network.
 
@@ -757,7 +547,7 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "BoundingLayer* get_bounding_layer_pointer() const method.\n"
-               << "Bounding layer pointer is NULL.\n";
+               << "Bounding layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -767,8 +557,6 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
     return(bounding_layer_pointer);
 }
 
-
-// ProbabilisticLayer* get_probabilistic_layer_pointer() const method
 
 /// Returns a pointer to the probabilistic layer composing this neural network.
 
@@ -782,7 +570,7 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "ProbabilisticLayer* get_probabilistic_layer_pointer() const method.\n"
-               << "Probabilistic layer pointer is NULL.\n";
+               << "Probabilistic layer pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -792,32 +580,6 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
     return(probabilistic_layer_pointer);
 }
 
-
-// ConditionsLayer* get_conditions_layer() const method
-
-/// Returns a pointer to the conditions layer composing this neural network.
-
-ConditionsLayer* NeuralNetwork::get_conditions_layer_pointer() const
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(!conditions_layer_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "ConditionsLayer* get_conditions_layer_pointer() const method.\n"
-               << "Conditions layer pointer is NULL.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    return(conditions_layer_pointer);
-}
-
-// Inputs* get_inputs_pointer() const method
 
 /// Returns a pointer to the inputs object composing this neural network.
 
@@ -831,7 +593,7 @@ Inputs* NeuralNetwork::get_inputs_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "Inputs* get_inputs_pointer() const method.\n"
-               << "Inputs pointer is NULL.\n";
+               << "Inputs pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -841,8 +603,6 @@ Inputs* NeuralNetwork::get_inputs_pointer() const
     return(inputs_pointer);
 }
 
-
-// Outputs* get_outputs_pointer() const method
 
 /// Returns a pointer to the outputs object composing this neural network.
 
@@ -856,7 +616,7 @@ Outputs* NeuralNetwork::get_outputs_pointer() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "Outputs* get_outputs_pointer() const method.\n"
-               << "Outputs pointer is NULL.\n";
+               << "Outputs pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -867,33 +627,6 @@ Outputs* NeuralNetwork::get_outputs_pointer() const
 }
 
 
-// IndependentParameters* get_independent_parameters_pointer() const method
-
-/// Returns a pointer to the independent parameters object composing this neural network.
-
-IndependentParameters* NeuralNetwork::get_independent_parameters_pointer() const
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(!independent_parameters_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "IndependentParameters* get_independent_parameters_pointer() const method.\n"
-               << "Independent parameters pointer is NULL.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    return(independent_parameters_pointer);
-}
-
-
-// const bool& get_display() const method
-
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages
 /// from this class are not to be displayed on the screen.
 
@@ -902,8 +635,6 @@ const bool& NeuralNetwork::get_display() const
     return(display);
 }
 
-
-// void set() method
 
 /// This method deletes all the pointers in the neural network.
 /// It also sets the rest of members to their default values. 
@@ -915,8 +646,6 @@ void NeuralNetwork::set()
     set_default();
 }
 
-
-// void set(const MultilayerPerceptron&) method
 
 /// This method deletes all the pointers in the neural network and then constructs a copy of an exisiting multilayer perceptron.
 /// It also sets the rest of members to their default values. 
@@ -940,8 +669,6 @@ void NeuralNetwork::set(const MultilayerPerceptron& new_multilayer_perceptron)
 }
 
 
-// void set(const Vector<size_t>&) method
-
 /// Sets a new neural network with a given multilayer perceptron architecture.
 /// It also sets the rest of members to their default values. 
 /// @param new_multilayer_perceptron_architecture Architecture of the multilayer perceptron. 
@@ -964,8 +691,6 @@ void NeuralNetwork::set(const Vector<size_t>& new_multilayer_perceptron_architec
 }
 
 
-// void set(const size_t&, const size_t&) method
-
 /// Sets a new multilayer_perceptron_pointer architecture with one layer and zero independent parameters.
 /// It also sets the rest of members to their default values. 
 /// @param new_inputs_number Number of inputs.
@@ -984,8 +709,6 @@ void NeuralNetwork::set(const size_t& new_inputs_number, const size_t& new_outpu
     set_default();
 }
 
-
-// void set(const size_t&, const size_t&, const size_t&) method
 
 /// Sets a new multilayer_perceptron_pointer architecture with one hidden layer and zero independent parameters.
 /// It also sets the rest of members to their default values. 
@@ -1007,24 +730,6 @@ void NeuralNetwork::set(const size_t& new_inputs_number, const size_t& new_hidde
 }
 
 
-// void set(const size_t&) method
-
-/// Sets a null new multilayer_perceptron_pointer architecture a given number of independent parameters.
-/// It also sets the rest of members to their default values. 
-/// @param new_independent_parameters_number Number of independent_parameters_pointer.
-
-void NeuralNetwork::set(const size_t& new_independent_parameters_number)
-{
-    delete_pointers();
-
-    independent_parameters_pointer = new IndependentParameters(new_independent_parameters_number);
-
-    set_default();
-}
-
-
-// void set(const string&) method
-
 /// Sets the neural network members by loading them from a XML file.
 /// @param file_name Neural network XML file_name.
 
@@ -1035,8 +740,6 @@ void NeuralNetwork::set(const string& file_name)
     load(file_name);
 }
 
-
-// void set(const NeuralNetwork&) method
 
 /// Sets the members of this neural network object with those from other neural network object.
 /// @param other_neural_network Neural network object to be copied. 
@@ -1088,11 +791,6 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
         probabilistic_layer_pointer = new ProbabilisticLayer(*other_neural_network.probabilistic_layer_pointer);
     }
 
-    if(other_neural_network.has_conditions_layer())
-    {
-        conditions_layer_pointer = new ConditionsLayer(*other_neural_network.conditions_layer_pointer);
-    }
-
     if(other_neural_network.has_inputs())
     {
         inputs_pointer = new Inputs(*other_neural_network.inputs_pointer);
@@ -1101,11 +799,6 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
     if(other_neural_network.has_outputs())
     {
         outputs_pointer = new Outputs(*other_neural_network.outputs_pointer);
-    }
-
-    if(other_neural_network.has_independent_parameters())
-    {
-        independent_parameters_pointer = new IndependentParameters(*other_neural_network.independent_parameters_pointer);
     }
 
     // Other
@@ -1139,8 +832,6 @@ void NeuralNetwork::set_inputs(const Vector<bool>& new_uses)
     }
 }
 
-
-// void set_default() method
 
 /// Sets those members which are not pointer to their default values.
 
@@ -1177,23 +868,23 @@ void NeuralNetwork::set_MPI(const NeuralNetwork* neural_network)
 
         const MultilayerPerceptron* original_multilayer_perceptron_pointer = neural_network->get_multilayer_perceptron_pointer();
 
-        layers_number =(int)original_multilayer_perceptron_pointer->get_layers_number();
-        architecture = original_multilayer_perceptron_pointer->arrange_architecture_int();
+        layers_number = (int)original_multilayer_perceptron_pointer->get_layers_number();
+        architecture = original_multilayer_perceptron_pointer->get_architecture_int();
 
-        parameters = original_multilayer_perceptron_pointer->arrange_parameters();
-        parameters_number =(int)parameters.size();
+        parameters = original_multilayer_perceptron_pointer->get_parameters();
+        parameters_number = (int)parameters.size();
 
         const Vector<Perceptron::ActivationFunction> layers_activation_functions = original_multilayer_perceptron_pointer->get_layers_activation_function();
 
-        activation_functions =(int *)malloc(layers_number*sizeof(int));
+        activation_functions = (int *)malloc(layers_number*sizeof(int));
 
         for(int i = 0; i < layers_number; i++)
         {
-            activation_functions[i] =(int)layers_activation_functions[i];
+            activation_functions[i] = (int)layers_activation_functions[i];
         }
 
-        inputs_number =(int)original_multilayer_perceptron_pointer->get_inputs_number();
-        outputs_number =(int)original_multilayer_perceptron_pointer->get_outputs_number();
+        inputs_number = (int)original_multilayer_perceptron_pointer->get_inputs_number();
+        outputs_number = (int)original_multilayer_perceptron_pointer->get_outputs_number();
     }
 
     // Send variables
@@ -1217,9 +908,9 @@ void NeuralNetwork::set_MPI(const NeuralNetwork* neural_network)
 
         MPI_Waitall(2, req, MPI_STATUS_IGNORE);
 
-        MPI_Request* req_activations =(MPI_Request*)malloc(layers_number*sizeof(MPI_Request));
+        MPI_Request* req_activations = (MPI_Request*)malloc(layers_number*sizeof(MPI_Request));
 
-        activation_functions =(int *)malloc(layers_number*sizeof(int));
+        activation_functions = (int *)malloc(layers_number*sizeof(int));
 
         for(int i = 0; i < layers_number; i++)
         {
@@ -1243,7 +934,7 @@ void NeuralNetwork::set_MPI(const NeuralNetwork* neural_network)
 
         MPI_Waitall(4, req, MPI_STATUS_IGNORE);
 
-        MPI_Request* req_activations =(MPI_Request*)malloc(layers_number*sizeof(MPI_Request));
+        MPI_Request* req_activations = (MPI_Request*)malloc(layers_number*sizeof(MPI_Request));
 
         for(int i = 0; i < layers_number; i++)
         {
@@ -1278,8 +969,6 @@ void NeuralNetwork::set_MPI(const NeuralNetwork* neural_network)
 #endif
 
 
-// void set_multilayer_perceptron_pointer(MultilayerPerceptron*) method
-
 /// Sets a new multilayer perceptron within the neural network.
 /// @param new_multilayer_perceptron_pointer Pointer to a multilayer perceptron object. 
 /// Note that the neural network destructror will delete this pointer. 
@@ -1294,8 +983,6 @@ void NeuralNetwork::set_multilayer_perceptron_pointer(MultilayerPerceptron* new_
     }
 }
 
-
-// void set_inputs_trending_layer_pointer(InputsTrendingLayer*) method
 
 /// Sets a new inputs trending layer within the neural network.
 /// @param new_inputs_trending_layer_pointer Pointer to an inputs trending layer object.
@@ -1312,8 +999,6 @@ void NeuralNetwork::set_inputs_trending_layer_pointer(InputsTrendingLayer* new_i
 }
 
 
-// void set_scaling_layer_pointer(ScalingLayer*) method
-
 /// Sets a new scaling layer within the neural network.
 /// @param new_scaling_layer_pointer Pointer to a scaling layer object. 
 /// Note that the neural network destructror will delete this pointer. 
@@ -1328,8 +1013,6 @@ void NeuralNetwork::set_scaling_layer_pointer(ScalingLayer* new_scaling_layer_po
     }
 }
 
-
-// void set_principal_components_layer_pointer(PrincipalComponentsLayer*) method
 
 /// Sets a new principal components layer within the neural network.
 /// @param new_principal_components_layer_pointer Pointer to a principal components layer object.
@@ -1346,8 +1029,6 @@ void NeuralNetwork::set_principal_components_layer_pointer(PrincipalComponentsLa
 }
 
 
-// void set_unscaling_layer_pointer(UnscalingLayer*) method
-
 /// Sets a new unscaling layer within the neural network.
 /// @param new_unscaling_layer_pointer Pointer to an unscaling layer object. 
 /// Note that the neural network destructror will delete this pointer. 
@@ -1362,8 +1043,6 @@ void NeuralNetwork::set_unscaling_layer_pointer(UnscalingLayer* new_unscaling_la
     }
 }
 
-
-// void set_outputs_trending_layer_pointer(OutputsTrendingLayer*) method
 
 /// Sets a new outputs trending layer within the neural network.
 /// @param new_outputs_trending_layer_pointer Pointer to an outputs trending layer object.
@@ -1380,8 +1059,6 @@ void NeuralNetwork::set_outputs_trending_layer_pointer(OutputsTrendingLayer* new
 }
 
 
-// void set_bounding_layer_pointer(BoundingLayer*) method
-
 /// Sets a new bounding layer within the neural network.
 /// @param new_bounding_layer_pointer Pointer to a bounding layer object. 
 /// Note that the neural network destructror will delete this pointer. 
@@ -1396,8 +1073,6 @@ void NeuralNetwork::set_bounding_layer_pointer(BoundingLayer* new_bounding_layer
     }
 }
 
-
-// void set_probabilistic_layer_pointer(ProbabilisticLayer*) method
 
 /// Sets a new probabilistic layer within the neural network.
 /// @param new_probabilistic_layer_pointer Pointer to a probabilistic layer object. 
@@ -1414,25 +1089,6 @@ void NeuralNetwork::set_probabilistic_layer_pointer(ProbabilisticLayer* new_prob
 }
 
 
-// void set_conditions_layer_pointer(ConditionsLayer*) method
-
-/// Sets a new conditions layer within the neural network.
-/// @param new_conditions_layer_pointer Pointer to a conditions layer object. 
-/// Note that the neural network destructror will delete this pointer. 
-
-void NeuralNetwork::set_conditions_layer_pointer(ConditionsLayer* new_conditions_layer_pointer)
-{
-    if(new_conditions_layer_pointer != conditions_layer_pointer)
-    {
-        delete conditions_layer_pointer;
-
-        conditions_layer_pointer = new_conditions_layer_pointer;
-    }
-}
-
-
-// void set_inputs_pointer(Inputs*) method
-
 /// Sets a new inputs object within the neural network.
 /// @param new_inputs_pointer Pointer to an inputs object.
 /// Note that the neural network destructror will delete this pointer. 
@@ -1447,8 +1103,6 @@ void NeuralNetwork::set_inputs_pointer(Inputs* new_inputs_pointer)
     }
 }
 
-
-// void set_outputs_pointer(Outputs*) method
 
 /// Sets a new outputs object within the neural network.
 /// @param new_outputs_pointer Pointer to an outputs object.
@@ -1465,25 +1119,6 @@ void NeuralNetwork::set_outputs_pointer(Outputs* new_outputs_pointer)
 }
 
 
-// void set_independent_parameters_pointer(IndependentParameters*) method
-
-/// Sets new independent parameters within the neural network.
-/// @param new_independent_parameters_pointer Pointer to an independent parameters object. 
-/// Note that the neural network destructror will delete this pointer. 
-
-void NeuralNetwork::set_independent_parameters_pointer(IndependentParameters* new_independent_parameters_pointer)
-{
-    if(new_independent_parameters_pointer != independent_parameters_pointer)
-    {
-        delete independent_parameters_pointer;
-
-        independent_parameters_pointer = new_independent_parameters_pointer;
-    }
-}
-
-
-// void set_scaling_layer(ScalingLayer&) method
-
 /// Sets new scaling layer within the neural network.
 /// @param new_scaling_layer Scaling layer to be asociated to the neural network.
 
@@ -1494,8 +1129,6 @@ void NeuralNetwork::set_scaling_layer(ScalingLayer& new_scaling_layer)
     scaling_layer_pointer = new ScalingLayer(new_scaling_layer);
 }
 
-
-// size_t get_inputs_number() const method
 
 /// Returns the number of inputs to the neural network.
 
@@ -1514,10 +1147,6 @@ size_t NeuralNetwork::get_inputs_number() const
     else if(multilayer_perceptron_pointer)
     {
         inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    }
-    else if(conditions_layer_pointer)
-    {
-        inputs_number = conditions_layer_pointer->get_external_inputs_number();
     }
     else if(unscaling_layer_pointer)
     {
@@ -1544,8 +1173,6 @@ size_t NeuralNetwork::get_inputs_number() const
 }
 
 
-// size_t get_inputs_number() const method
-
 /// Returns the number of outputs to the neural network.
 
 size_t NeuralNetwork::get_outputs_number() const
@@ -1559,10 +1186,6 @@ size_t NeuralNetwork::get_outputs_number() const
     else if(multilayer_perceptron_pointer)
     {
         outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-    }
-    else if(conditions_layer_pointer)
-    {
-        outputs_number = conditions_layer_pointer->get_conditions_neurons_number();
     }
     else if(unscaling_layer_pointer)
     {
@@ -1589,8 +1212,6 @@ size_t NeuralNetwork::get_outputs_number() const
 }
 
 
-// Vector<size_t> arrange_architecture() const
-
 /// Returns a vector with the architecture of the neural network.
 /// The elements of this vector are as follows;
 /// <UL>
@@ -1605,7 +1226,7 @@ size_t NeuralNetwork::get_outputs_number() const
 /// <LI> Number of bounding neurons(if there is a bounding layer).</LI>
 /// </UL>
 
-Vector<size_t> NeuralNetwork::arrange_architecture() const
+Vector<size_t> NeuralNetwork::get_architecture() const
 {
     Vector<size_t> architecture;
 
@@ -1646,14 +1267,7 @@ Vector<size_t> NeuralNetwork::arrange_architecture() const
 
     if(multilayer_perceptron_pointer)
     {
-        architecture = architecture.assemble(multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers());
-    }
-
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        architecture.push_back(conditions_layer_pointer->get_conditions_neurons_number());
+        architecture = architecture.assemble(multilayer_perceptron_pointer->get_layers_perceptrons_numbers());
     }
 
     // Unscaling layer
@@ -1688,73 +1302,40 @@ Vector<size_t> NeuralNetwork::arrange_architecture() const
 }
 
 
-// size_t count_parameters_number() const method
-
 /// Returns the number of parameters in the multilayer perceptron
 /// The number of parameters is the sum of all the multilayer perceptron parameters(biases and synaptic weights) and independent parameters.
 
-size_t NeuralNetwork::count_parameters_number() const
+size_t NeuralNetwork::get_parameters_number() const
 {
     size_t parameters_number = 0;
 
     if(multilayer_perceptron_pointer)
     {
-        parameters_number += multilayer_perceptron_pointer->count_parameters_number();
-    }
-
-    if(independent_parameters_pointer)
-    {
-        parameters_number += independent_parameters_pointer->get_parameters_number();
+        parameters_number += multilayer_perceptron_pointer->get_parameters_number();
     }
 
     return(parameters_number);
 }
 
 
-// Vector<double> arrange_parameters() const method
-
 /// Returns the values of the parameters in the multilayer perceptron as a single vector.
 /// This contains all the multilayer perceptron parameters(biases and synaptic weights) and preprocessed independent parameters.
 
-Vector<double> NeuralNetwork::arrange_parameters() const
+Vector<double> NeuralNetwork::get_parameters() const
 {
     // Only network parameters
 
-    if(multilayer_perceptron_pointer && !independent_parameters_pointer)
+    if(multilayer_perceptron_pointer)
     {
-        return(multilayer_perceptron_pointer->arrange_parameters());
+        return(multilayer_perceptron_pointer->get_parameters());
     }
-
-    // Only independent parameters
-
-    else if(!multilayer_perceptron_pointer && independent_parameters_pointer)
-    {
-        return(independent_parameters_pointer->calculate_scaled_parameters());
-    }
-
-    // Both neural and independent parameters
-
-    else if(multilayer_perceptron_pointer && independent_parameters_pointer)
-    {
-        const Vector<double> network_parameters = multilayer_perceptron_pointer->arrange_parameters();
-
-        const Vector<double> scaled_independent_parameters = independent_parameters_pointer->calculate_scaled_parameters();
-
-        return(network_parameters.assemble(scaled_independent_parameters));
-    }
-
-    // None neural neither independent parameters
-
     else
     {
-        const Vector<double> parameters;
-
-        return(parameters);
+        return Vector<double>();
     }
 }
 
 
-// void set_parameters(const Vector<double>&) method
 
 /// Sets all the parameters(multilayer_perceptron_pointer parameters and independent parameters) from a single vector.
 /// @param new_parameters New set of parameter values. 
@@ -1767,7 +1348,7 @@ void NeuralNetwork::set_parameters(const Vector<double>& new_parameters)
 
     const size_t size = new_parameters.size();
 
-    const size_t parameters_number = count_parameters_number();
+    const size_t parameters_number = get_parameters_number();
 
     if(size != parameters_number)
     {
@@ -1782,33 +1363,10 @@ void NeuralNetwork::set_parameters(const Vector<double>& new_parameters)
 
 #endif
 
-    if(multilayer_perceptron_pointer && !independent_parameters_pointer)
+    if(multilayer_perceptron_pointer)
     {// Only network parameters
 
         multilayer_perceptron_pointer->set_parameters(new_parameters);
-    }
-    else if(!multilayer_perceptron_pointer && independent_parameters_pointer)
-    {// Only independent parameters
-
-        independent_parameters_pointer->unscale_parameters(new_parameters);
-    }
-    else if(multilayer_perceptron_pointer && independent_parameters_pointer)
-    {// Both network and independent parameters
-
-        // Multilayer perceptron parameters
-
-        const size_t neural_parameters_number = multilayer_perceptron_pointer->count_parameters_number();
-        const size_t independent_parameters_number = independent_parameters_pointer->get_parameters_number();
-
-        const Vector<double> network_parameters = new_parameters.take_out(0, neural_parameters_number);
-
-        multilayer_perceptron_pointer->set_parameters(network_parameters);
-
-        // Independent parameters
-
-        const Vector<double> scaled_independent_parameters = new_parameters.take_out(neural_parameters_number, independent_parameters_number);
-
-        independent_parameters_pointer->unscale_parameters(scaled_independent_parameters);
     }
     else
     {// None neural neither independent parameters
@@ -1817,8 +1375,6 @@ void NeuralNetwork::set_parameters(const Vector<double>& new_parameters)
     }
 }
 
-
-// void delete_pointers() method
 
 /// This method deletes all the pointers composing the neural network:
 /// <ul>
@@ -1845,27 +1401,21 @@ void NeuralNetwork::delete_pointers()
     delete outputs_trending_layer_pointer;
     delete bounding_layer_pointer;
     delete probabilistic_layer_pointer;
-    delete conditions_layer_pointer;
     delete inputs_pointer;
     delete outputs_pointer;
-    delete independent_parameters_pointer;
 
-    multilayer_perceptron_pointer = NULL;
-    inputs_trending_layer_pointer = NULL;
-    scaling_layer_pointer = NULL;
-    principal_components_layer_pointer = NULL;
-    unscaling_layer_pointer = NULL;
-    outputs_trending_layer_pointer = NULL;
-    bounding_layer_pointer = NULL;
-    probabilistic_layer_pointer = NULL;
-    conditions_layer_pointer = NULL;
-    inputs_pointer = NULL;
-    outputs_pointer = NULL;
-    independent_parameters_pointer = NULL;
+    multilayer_perceptron_pointer = nullptr;
+    inputs_trending_layer_pointer = nullptr;
+    scaling_layer_pointer = nullptr;
+    principal_components_layer_pointer = nullptr;
+    unscaling_layer_pointer = nullptr;
+    outputs_trending_layer_pointer = nullptr;
+    bounding_layer_pointer = nullptr;
+    probabilistic_layer_pointer = nullptr;
+    inputs_pointer = nullptr;
+    outputs_pointer = nullptr;
 }
 
-
-// void construct_multilayer_perceptron() method
 
 /// This method constructs an empty multilayer perceptron within the neural network. 
 
@@ -1877,8 +1427,6 @@ void NeuralNetwork::construct_multilayer_perceptron()
     }
 }
 
-
-// void construct_inputs_trending_layer() method
 
 /// This method constructs an inputs trending layer within the neural network.
 /// The size of the inputs trending layer is the number of inputs in the multilayer perceptron.
@@ -1899,8 +1447,6 @@ void NeuralNetwork::construct_inputs_trending_layer()
 }
 
 
-// void construct_scaling_layer() method
-
 /// This method constructs a scaling layer within the neural network. 
 /// The size of the scaling layer is the number of inputs in the multilayer perceptron. 
 
@@ -1919,8 +1465,6 @@ void NeuralNetwork::construct_scaling_layer()
     }
 }
 
-
-// void construct_principal_components_layer() method
 
 /// This method constructs a principal_components layer within the neural network.
 /// The size of the principal components layer is the number of inputs in the multilayer perceptron.
@@ -1942,8 +1486,6 @@ void NeuralNetwork::construct_principal_components_layer()
 }
 
 
-// void construct_unscaling_layer() method
-
 /// This method constructs an unscaling layer within the neural network. 
 /// The size of the unscaling layer is the number of outputs in the multilayer perceptron. 
 
@@ -1962,8 +1504,6 @@ void NeuralNetwork::construct_unscaling_layer()
     }
 }
 
-
-// void construct_outputs_trending_layer() method
 
 /// This method constructs an outputs trending layer within the neural network.
 /// The size of the outputs trending layer is the number of outputs in the multilayer perceptron.
@@ -1984,8 +1524,6 @@ void NeuralNetwork::construct_outputs_trending_layer()
 }
 
 
-// void construct_bounding_layer() method
-
 /// This method constructs a bounding layer within the neural network. 
 /// The size of the bounding layer is the number of outputs in the multilayer perceptron. 
 
@@ -2004,8 +1542,6 @@ void NeuralNetwork::construct_bounding_layer()
     }
 }
 
-
-// void construct_probabilistic_layer() method
 
 /// This method constructs a probabilistic layer within the neural network. 
 /// The size of the probabilistic layer is the number of outputs in the multilayer perceptron. 
@@ -2026,32 +1562,6 @@ void NeuralNetwork::construct_probabilistic_layer()
 }
 
 
-// void construct_conditions_layer() method
-
-/// This method constructs a conditions layer within the neural network. 
-/// The number of external inputs in the conditions layer is the number of inputs in the multilayer perceptron. 
-/// The size fo the conditions layer is the number of outputs in the multilayer perceptron. 
-
-void NeuralNetwork::construct_conditions_layer()
-{
-    if(!conditions_layer_pointer)
-    {
-        size_t inputs_number = 0;
-        size_t outputs_number = 0;
-
-        if(multilayer_perceptron_pointer)
-        {
-            inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-            outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-        }
-
-        conditions_layer_pointer = new ConditionsLayer(inputs_number, outputs_number);
-    }
-}
-
-
-// void construct_inputs() method
-
 /// This method constructs an inputs object within the neural network.
 /// The number of inputs is the number of inputs in the multilayer perceptron. 
 
@@ -2070,8 +1580,6 @@ void NeuralNetwork::construct_inputs()
     }
 }
 
-
-// void construct_outputs() method
 
 /// This method constructs an outputs object within the neural network.
 /// The number of outputs is the number of outputs in the multilayer perceptron.
@@ -2092,33 +1600,15 @@ void NeuralNetwork::construct_outputs()
 }
 
 
-// void construct_independent_parameters() method
-
-/// This method constructs an independent parameters object within the neural network. 
-/// It sets the number of parameters to zero. 
-
-void NeuralNetwork::construct_independent_parameters()
-{
-    if(!independent_parameters_pointer)
-    {
-        independent_parameters_pointer = new IndependentParameters();
-    }
-}
-
-
-// void destruct_multilayer_perceptron() method
-
 /// This method deletes the multilayer perceptron within the neural network. 
 
 void NeuralNetwork::destruct_multilayer_perceptron()
 {
     delete multilayer_perceptron_pointer;
 
-    multilayer_perceptron_pointer = NULL;
+    multilayer_perceptron_pointer = nullptr;
 }
 
-
-// void destruct_inputs_trending_layer() method
 
 /// This method deletes the inputs trending layer within the neural network.
 
@@ -2126,11 +1616,9 @@ void NeuralNetwork::destruct_inputs_trending_layer()
 {
     delete inputs_trending_layer_pointer;
 
-    inputs_trending_layer_pointer = NULL;
+    inputs_trending_layer_pointer = nullptr;
 }
 
-
-// void destruct_scaling_layer() method
 
 /// This method deletes the scaling layer within the neural network. 
 
@@ -2138,11 +1626,9 @@ void NeuralNetwork::destruct_scaling_layer()
 {
     delete scaling_layer_pointer;
 
-    scaling_layer_pointer = NULL;
+    scaling_layer_pointer = nullptr;
 }
 
-
-// void destruct_unscaling_layer() method
 
 /// This method deletes the unscaling layer within the neural network. 
 
@@ -2150,11 +1636,9 @@ void NeuralNetwork::destruct_unscaling_layer()
 {
     delete unscaling_layer_pointer;
 
-    unscaling_layer_pointer = NULL;
+    unscaling_layer_pointer = nullptr;
 }
 
-
-// void destruct_outputs_trending_layer() method
 
 /// This method deletes the outputs trending layer within the neural network.
 
@@ -2162,11 +1646,9 @@ void NeuralNetwork::destruct_outputs_trending_layer()
 {
     delete outputs_trending_layer_pointer;
 
-    outputs_trending_layer_pointer = NULL;
+    outputs_trending_layer_pointer = nullptr;
 }
 
-
-// void destruct_bounding_layer() method
 
 /// This method deletes the bounding layer within the neural network. 
 
@@ -2174,11 +1656,9 @@ void NeuralNetwork::destruct_bounding_layer()
 {
     delete bounding_layer_pointer;
 
-    bounding_layer_pointer = NULL;
+    bounding_layer_pointer = nullptr;
 }
 
-
-// void destruct_probabilistic_layer() method
 
 /// This method deletes the probabilistic layer within the neural network. 
 
@@ -2186,23 +1666,9 @@ void NeuralNetwork::destruct_probabilistic_layer()
 {
     delete probabilistic_layer_pointer;
 
-    probabilistic_layer_pointer = NULL;
+    probabilistic_layer_pointer = nullptr;
 }
 
-
-// void destruct_conditions_layer() method
-
-/// This method deletes the conditions layer within the neural network. 
-
-void NeuralNetwork::destruct_conditions_layer()
-{
-    delete conditions_layer_pointer;
-
-    conditions_layer_pointer = NULL;
-}
-
-
-// void destruct_inputs() method
 
 /// This method deletes the inputs object within the neural network.
 
@@ -2210,11 +1676,9 @@ void NeuralNetwork::destruct_inputs()
 {
     delete inputs_pointer;
 
-    inputs_pointer = NULL;
+    inputs_pointer = nullptr;
 }
 
-
-// void destruct_outputs() method
 
 /// This method deletes the outputs object within the neural network.
 
@@ -2222,23 +1686,9 @@ void NeuralNetwork::destruct_outputs()
 {
     delete outputs_pointer;
 
-    outputs_pointer = NULL;
+    outputs_pointer = nullptr;
 }
 
-
-// void destruct_independent_parameters() method
-
-/// This method deletes the independent parameters object within the neural network. 
-
-void NeuralNetwork::destruct_independent_parameters()
-{
-    delete independent_parameters_pointer;
-
-    independent_parameters_pointer = NULL;
-}
-
-
-// void initialize_random() method
 
 /// Initializes the neural network at random.
 /// This is useful for testing purposes. 
@@ -2340,18 +1790,6 @@ void NeuralNetwork::initialize_random()
         probabilistic_layer_pointer->initialize_random();
     }
 
-    // Conditions layer
-
-    if(rand()%5)
-    {
-        if(!conditions_layer_pointer)
-        {
-            conditions_layer_pointer = new ConditionsLayer(inputs_number, outputs_number);
-        }
-
-        conditions_layer_pointer->initialize_random();
-    }
-
     // Inputs
 
     if(rand()%5)
@@ -2371,23 +1809,8 @@ void NeuralNetwork::initialize_random()
             outputs_pointer = new Outputs(outputs_number);
         }
     }
-
-    // Independent parameters
-
-    if(rand()%5)
-    {
-        if(!independent_parameters_pointer)
-        {
-            independent_parameters_pointer = new IndependentParameters();
-        }
-
-        independent_parameters_pointer->initialize_random();
-    }
-
 }
 
-
-// void set_display(const bool&) method
 
 /// Sets a new display value.
 /// If it is set to true messages from this class are to be displayed on the screen;
@@ -2400,8 +1823,6 @@ void NeuralNetwork::set_display(const bool& new_display)
 }
 
 
-// void grow_input(const Statistics<double>&) method
-
 /// Add an input to the neural network and asociate the statistics to this input.
 /// @param new_statistics Values of the statistics of the new input. The default value is an empty vector.
 
@@ -2413,7 +1834,7 @@ void NeuralNetwork::grow_input(const Statistics<double>& new_statistics)
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void grow_input(const size_t&) method.\n"
-               << "Pointer to multilayer perceptron is NULL.\n";
+               << "Pointer to multilayer perceptron is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -2425,18 +1846,12 @@ void NeuralNetwork::grow_input(const Statistics<double>& new_statistics)
         scaling_layer_pointer->grow_scaling_neuron(new_statistics);
     }
 
-    if(conditions_layer_pointer)
-    {
-    }
-
     if(inputs_pointer)
     {
         inputs_pointer->grow_input();
     }
 }
 
-
-// void prune_input(const size_t&) method
 
 /// Removes a given input to the neural network.
 /// This involves removing the input itself and the corresponding scaling layer,
@@ -2451,7 +1866,7 @@ void NeuralNetwork::prune_input(const size_t& index)
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void prune_input(const size_t&) method.\n"
-               << "Pointer to multilayer perceptron is NULL.\n";
+               << "Pointer to multilayer perceptron is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -2468,18 +1883,12 @@ void NeuralNetwork::prune_input(const size_t& index)
         scaling_layer_pointer->prune_scaling_neuron(index);
     }
 
-    if(conditions_layer_pointer)
-    {
-    }
-
     if(inputs_pointer)
     {
         inputs_pointer->prune_input(index);
     }
 }
 
-
-// void prune_output(const size_t&) method
 
 /// Removes a given output from the neural network.
 /// This involves removing the output itself and the corresponding unscaling layer,
@@ -2494,7 +1903,7 @@ void NeuralNetwork::prune_output(const size_t& index)
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void prune_output(const size_t&) method.\n"
-               << "Pointer to multilayer perceptron is NULL.\n";
+               << "Pointer to multilayer perceptron is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -2521,18 +1930,12 @@ void NeuralNetwork::prune_output(const size_t& index)
         probabilistic_layer_pointer->prune_probabilistic_neuron();
     }
 
-    if(conditions_layer_pointer)
-    {
-    }
-
     if(outputs_pointer)
     {
         outputs_pointer->prune_output(index);
     }
 }
 
-
-// void resize_inputs_number(const size_t&) method
 
 /// @todo
 
@@ -2542,8 +1945,6 @@ void NeuralNetwork::resize_inputs_number(const size_t&)
 }
 
 
-// void resize_outputs_number(const size_t&) method
-
 /// @todo
 
 void NeuralNetwork::resize_outputs_number(const size_t&)
@@ -2551,8 +1952,6 @@ void NeuralNetwork::resize_outputs_number(const size_t&)
 
 }
 
-
-// size_t get_layers_number() method
 
 /// Returns the number of layers in the neural network.
 /// That includes perceptron, scaling, unscaling, inputs trending, outputs trending, bounding, probabilistic or conditions layers.
@@ -2601,16 +2000,9 @@ size_t NeuralNetwork::get_layers_number() const
         layers_number += 1;
     }
 
-    if(conditions_layer_pointer)
-    {
-        layers_number += 1;
-    }
-
     return(layers_number);
 }
 
-
-// void initialize_parameters(const double&) method
 
 /// Initializes all the neural and the independent parameters with a given value.
 
@@ -2620,15 +2012,8 @@ void NeuralNetwork::initialize_parameters(const double& value)
     {
         multilayer_perceptron_pointer->initialize_parameters(value);
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->initialize_parameters(value);
-    }
 }
 
-
-// void randomize_parameters_uniform() method
 
 /// Initializes all the parameters in the newtork(biases and synaptic weiths + independent parameters)
 /// at random with values comprised between -1 and +1.
@@ -2639,15 +2024,8 @@ void NeuralNetwork::randomize_parameters_uniform()
     {
         multilayer_perceptron_pointer->randomize_parameters_uniform();
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_uniform();
-    }
 }
 
-
-// void randomize_parameters_uniform(const double&, const double&) method
 
 /// Initializes all the parameters in the newtork(biases and synaptic weiths + independent
 /// parameters) at random with values comprised between a given minimum and a given maximum values.
@@ -2660,15 +2038,8 @@ void NeuralNetwork::randomize_parameters_uniform(const double& minimum, const do
     {
         multilayer_perceptron_pointer->randomize_parameters_uniform(minimum, maximum);
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_uniform(minimum, maximum);
-    }
 }
 
-
-// void randomize_parameters_uniform(const Vector<double>&, const Vector<double>&) method
 
 /// Initializes all the parameters in the newtork(biases and synaptic weiths + independent
 /// parameters) at random with values comprised between a different minimum and maximum numbers for each free 
@@ -2682,15 +2053,8 @@ void NeuralNetwork::randomize_parameters_uniform(const Vector<double>& minimum, 
     {
         multilayer_perceptron_pointer->randomize_parameters_uniform(minimum, maximum);
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_uniform(minimum, maximum);
-    }
 }
 
-
-// void randomize_parameters_uniform(const Vector< Vector<double> >&) method
 
 /// Initializes all the parameters in the newtork(biases and synaptic weiths + independent
 /// parameters) values comprised between a different minimum and maximum numbers for each parameter.
@@ -2706,14 +2070,8 @@ void NeuralNetwork::randomize_parameters_uniform(const Vector< Vector<double> >&
         multilayer_perceptron_pointer->randomize_parameters_uniform(minimum_maximum);
     }
 
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_uniform(minimum_maximum);
-    }
 }
 
-
-// void randomize_parameters_normal() method
 
 /// Initializes all the parameters in the neural newtork(biases and synaptic weiths + independent
 /// parameters) at random with values chosen from a normal distribution with mean 0 and standard deviation 1.
@@ -2724,15 +2082,8 @@ void NeuralNetwork::randomize_parameters_normal()
     {
         multilayer_perceptron_pointer->randomize_parameters_normal();
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_normal();
-    }
 }
 
-
-// void randomize_parameters_normal(const double&, const double&) method
 
 /// Initializes all the parameters in the newtork(biases and synaptic weiths + independent
 /// parameters) at random with values chosen from a normal distribution with a given mean and a given standard 
@@ -2746,15 +2097,8 @@ void NeuralNetwork::randomize_parameters_normal(const double& mean, const double
     {
         multilayer_perceptron_pointer->randomize_parameters_normal(mean, standard_deviation);
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_normal(mean, standard_deviation);
-    }
 }
 
-
-// void randomize_parameters_normal(const Vector<double>&, const Vector<double>&) method
 
 /// Initializes all the parameters in the neural newtork(biases and synaptic weiths +
 /// independent parameters) at random with values chosen from normal distributions with a given mean and a given 
@@ -2768,15 +2112,8 @@ void NeuralNetwork::randomize_parameters_normal(const Vector<double>& mean, cons
     {
         multilayer_perceptron_pointer->randomize_parameters_normal(mean, standard_deviation);
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_normal(mean, standard_deviation);
-    }
 }
 
-
-// void randomize_parameters_normal(const Vector< Vector<double> >&) method
 
 /// Initializes all the parameters in the newtork(biases and synaptic weiths + independent
 /// parameters) at random with values chosen from normal distributions with a given mean and a given standard 
@@ -2792,42 +2129,31 @@ void NeuralNetwork::randomize_parameters_normal(const Vector< Vector<double> >& 
     {
         multilayer_perceptron_pointer->randomize_parameters_normal(mean_standard_deviation);
     }
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->randomize_parameters_normal(mean_standard_deviation);
-    }
 }
 
-
-// double calculate_parameters_norm() const method
 
 /// Returns the norm of the vector of parameters.
 
 double NeuralNetwork::calculate_parameters_norm() const
 {
-    const Vector<double> parameters = arrange_parameters();
+    const Vector<double> parameters = get_parameters();
 
-    const double parameters_norm = parameters.calculate_norm();
+    const double parameters_norm = parameters.calculate_L2_norm();
 
     return(parameters_norm);
 }
 
-
-// Statistics<double> calculate_parameters_statistics() const method
 
 /// Returns a statistics structure of the parameters vector.
 /// That contains the minimum, maximum, mean and standard deviation values of the parameters.
 
 Statistics<double> NeuralNetwork::calculate_parameters_statistics() const
 {
-    const Vector<double> parameters = arrange_parameters();
+    const Vector<double> parameters = get_parameters();
 
     return(parameters.calculate_statistics());
 }
 
-
-// Histogram calculate_parameters_histogram(const size_t& = 10) const method
 
 /// Returns a histogram structure of the parameters vector.
 /// That will be used for looking at the distribution of the parameters.
@@ -2835,13 +2161,11 @@ Statistics<double> NeuralNetwork::calculate_parameters_statistics() const
 
 Histogram<double> NeuralNetwork::calculate_parameters_histogram(const size_t& bins_number) const
 {
-    const Vector<double> parameters = arrange_parameters();
+    const Vector<double> parameters = get_parameters();
 
     return(parameters.calculate_histogram(bins_number));
 }
 
-
-// void perturbate_parameters(const double&) method
 
 /// Perturbate parameters of the multilayer perceptron.
 /// @param perturbation Maximum distance of perturbation.
@@ -2863,7 +2187,7 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
 
 #endif
 
-    Vector<double>parameters = arrange_parameters();
+    Vector<double>parameters = get_parameters();
 
     Vector<double>parameters_perturbation(parameters);
 
@@ -2874,8 +2198,6 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
     set_parameters(parameters);
 }
 
-
-// Vector<double> calculate_inputs_importance_parameters(const size_t&) const method
 
 /// Calculates the inputs importance for a neural network with only one hidden layer.
 /// Returns a vector containing the importance for each of the inputs with respect to a given output.
@@ -2922,12 +2244,12 @@ Vector<double> NeuralNetwork::calculate_inputs_importance_parameters(const size_
 
     Vector<PerceptronLayer> layers = multilayer_perceptron_pointer->get_layers();
 
-    const Vector<size_t> layers_size = multilayer_perceptron_pointer->arrange_architecture();
+    const Vector<size_t> layers_size = multilayer_perceptron_pointer->get_architecture();
     const size_t layers_number = layers_size.size();
 
 //    cout << "Architecture: " << layers_size << endl;
 
-    const Vector< Matrix<double> > layers_synaptic_weights = multilayer_perceptron_pointer->arrange_layers_synaptic_weights();
+    const Vector< Matrix<double> > layers_synaptic_weights = multilayer_perceptron_pointer->get_layers_synaptic_weights();
 
     const size_t hidden_layer_neurons_number = layers_synaptic_weights[0].get_rows_number();
 
@@ -2945,8 +2267,8 @@ Vector<double> NeuralNetwork::calculate_inputs_importance_parameters(const size_
 //    cout << "products number: " << products_number << endl;
 //    cout << "layers number: " << layers.size() << endl;
 
-//    cout << "layer 0 weight: " << layers[0].arrange_synaptic_weights() << endl;
-//    cout << "layer 1 weight: " << layers[1].arrange_synaptic_weights() << endl;
+//    cout << "layer 0 weight: " << layers[0].get_synaptic_weights() << endl;
+//    cout << "layer 1 weight: " << layers[1].get_synaptic_weights() << endl;
 
 //    Vector<double> products(products_number, 1.0);
 
@@ -2954,7 +2276,7 @@ Vector<double> NeuralNetwork::calculate_inputs_importance_parameters(const size_
 //    {
 //       for(size_t j = 0; j < layers_size[i]; j++)
 //       {
-//           for(size_t k = 0; k < layers[i].arrange_synaptic_weights().size(); k++)
+//           for(size_t k = 0; k < layers[i].get_synaptic_weights().size(); k++)
 //           {
 
 //           }
@@ -3017,8 +2339,6 @@ Vector<double> NeuralNetwork::calculate_inputs_importance_parameters(const size_
 }
 
 
-// Vector<double> calculate_outputs(const Vector<double>&) method
-
 /// Calculates the outputs vector from the multilayer perceptron in response to an inputs vector.
 /// The activity for that is the following:
 /// <ul>
@@ -3031,7 +2351,7 @@ Vector<double> NeuralNetwork::calculate_inputs_importance_parameters(const size_
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs) const
+Matrix<double> NeuralNetwork::calculate_outputs(const Matrix<double>& inputs) const
 {
     // Control sentence(if debug)
 
@@ -3057,7 +2377,9 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs) co
 
 #endif
 
-    Vector<double> outputs(inputs_number);
+    const size_t points_number = inputs.get_rows_number();
+
+    Matrix<double> outputs(points_number, inputs_number,0.0);
 
     // Scaling layer
 
@@ -3078,13 +2400,6 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs) co
     if(multilayer_perceptron_pointer)
     {
         outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
-    }
-
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        outputs = conditions_layer_pointer->calculate_outputs(inputs, outputs);
     }
 
     // Unscaling layer
@@ -3112,7 +2427,6 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs) co
 }
 
 
-// Vector<double> calculate_outputs(const Vector<double>&, const double&) const method
 
 /// Calculates the outputs vector from the multilayer perceptron in response to an inputs vector
 /// and a time value.
@@ -3130,7 +2444,7 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs) co
 /// @param inputs Set of inputs to the neural network.
 /// @param time
 
-Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, const double& time) const
+Matrix<double> NeuralNetwork::calculate_outputs(const Matrix<double>& inputs, const double& time) const
 {
     // Control sentence(if debug)
 
@@ -3156,7 +2470,7 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, co
 
 #endif
 
-    Vector<double> outputs(inputs_number);
+    Matrix<double> outputs(inputs.get_rows_number(), inputs_number);
 
     // Inputs trending layer
 
@@ -3186,13 +2500,6 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, co
         outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
     }
 
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        outputs = conditions_layer_pointer->calculate_outputs(inputs, outputs);
-    }
-
     // Unscaling layer
 
     if(unscaling_layer_pointer)
@@ -3224,8 +2531,6 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, co
     return(outputs);
 }
 
-
-// Matrix<double> calculate_directional_input_data(const size_t&, const Vector<double>&, const double&, const double&, const size_t& = 101) const method
 
 /// Calculates the input data which is necessary to compute the output data from the neural network in some direction.
 /// @param direction Input index(must be between 0 and number of inputs - 1).
@@ -3234,7 +2539,7 @@ Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, co
 /// @param maximum Maximum value of the input with the above index.
 /// @param points_number Number of points in the directional input data set.
 
-Matrix<double> NeuralNetwork::calculate_directional_input_data(const size_t& direction,
+Matrix<double> NeuralNetwork::calculate_directional_inputs(const size_t& direction,
                                                                const Vector<double>& point,
                                                                const double& minimum,
                                                                const double& maximum,
@@ -3242,7 +2547,7 @@ Matrix<double> NeuralNetwork::calculate_directional_input_data(const size_t& dir
 {
     const size_t inputs_number = inputs_pointer->get_inputs_number();
 
-    Matrix<double> directional_input_data(points_number, inputs_number);
+    Matrix<double> directional_inputs(points_number, inputs_number);
 
     Vector<double> inputs(inputs_number);
 
@@ -3250,382 +2555,19 @@ Matrix<double> NeuralNetwork::calculate_directional_input_data(const size_t& dir
 
     for(size_t i = 0; i < points_number; i++)
     {
-        inputs[direction] = minimum +(maximum-minimum)*i/(double)(points_number-1);
+        inputs[direction] = minimum + (maximum-minimum)*i/static_cast<double>(points_number-1);
 
-        directional_input_data.set_row(i, inputs);
+        directional_inputs.set_row(i, inputs);
     }
 
-    return(directional_input_data);
+    return(directional_inputs);
 }
 
-
-// Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const method
-
-/// Returns which would be the outputs for a given inputs and a set of parameters.
-/// @param inputs Vector of inputs to the neural network.
-/// @param parameters Vector of potential parameters of the neural network.
-
-Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, const Vector<double>& parameters) const
-{
-    // Control sentence(if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-    const size_t inputs_size = inputs.size();
-
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-
-    if(inputs_size != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const method.\n"
-               << "Size of inputs(" << inputs_size << ") must be equal to number of inputs(" << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const size_t parameters_size = parameters.size();
-
-    const size_t parameters_number = count_parameters_number();
-
-    if(parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const method.\n"
-               << "Size of potential parameters(" << parameters_size << ") must be equal to number of parameters(" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Vector<double> outputs(inputs);
-
-    // Scaling layer
-
-    if(scaling_layer_pointer)
-    {
-        outputs = scaling_layer_pointer->calculate_outputs(inputs);
-    }
-
-    // Principal components layer
-
-    if(principal_components_layer_pointer)
-    {
-        outputs = principal_components_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Multilayer perceptron
-
-    if(multilayer_perceptron_pointer)
-    {
-        outputs = multilayer_perceptron_pointer->calculate_outputs(outputs, parameters);
-    }
-
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        outputs = conditions_layer_pointer->calculate_outputs(inputs, outputs);
-    }
-
-    // Unscaling layer
-
-    if(unscaling_layer_pointer)
-    {
-        outputs = unscaling_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Probabilistic layer
-
-    if(probabilistic_layer_pointer)
-    {
-        outputs = probabilistic_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Bounding layer
-
-    if(bounding_layer_pointer)
-    {
-        outputs = bounding_layer_pointer->calculate_outputs(outputs);
-    }
-
-    return(outputs);
-}
-
-
-// Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&, const double&) const method
-
-/// Returns which would be the outputs for a given inputs, a set of parameters
-/// and a time value.
-/// @param inputs Vector of inputs to the neural network.
-/// @param parameters Vector of potential parameters of the neural network.
-/// @param time Time value.
-
-Vector<double> NeuralNetwork::calculate_outputs(const Vector<double>& inputs, const Vector<double>& parameters,
-                                                const double& time) const
-{
-    // Control sentence(if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-    const size_t inputs_size = inputs.size();
-
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-
-    if(inputs_size != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&, const double&) const method.\n"
-               << "Size of inputs(" << inputs_size << ") must be equal to number of inputs(" << inputs_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    const size_t parameters_size = parameters.size();
-
-    const size_t parameters_number = count_parameters_number();
-
-    if(parameters_size != parameters_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Vector<double> calculate_outputs(const Vector<double>&, const Vector<double>&) const method.\n"
-               << "Size of potential parameters(" << parameters_size << ") must be equal to number of parameters(" << parameters_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Vector<double> outputs(inputs);
-
-    // Inputs trending layer
-
-    if(inputs_trending_layer_pointer)
-    {
-        outputs = inputs_trending_layer_pointer->calculate_outputs(inputs, time);
-    }
-
-    // Scaling layer
-
-    if(scaling_layer_pointer)
-    {
-        outputs = scaling_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Principal components layer
-
-    if(principal_components_layer_pointer)
-    {
-        outputs = principal_components_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Multilayer perceptron
-
-    if(multilayer_perceptron_pointer)
-    {
-        outputs = multilayer_perceptron_pointer->calculate_outputs(outputs, parameters);
-    }
-
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        outputs = conditions_layer_pointer->calculate_outputs(inputs, outputs);
-    }
-
-    // Unscaling layer
-
-    if(unscaling_layer_pointer)
-    {
-        outputs = unscaling_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Outputs trending layer
-
-    if(outputs_trending_layer_pointer)
-    {
-        outputs = outputs_trending_layer_pointer->calculate_outputs(outputs, time);
-    }
-
-    // Probabilistic layer
-
-    if(probabilistic_layer_pointer)
-    {
-        outputs = probabilistic_layer_pointer->calculate_outputs(outputs);
-    }
-
-    // Bounding layer
-
-    if(bounding_layer_pointer)
-    {
-        outputs = bounding_layer_pointer->calculate_outputs(outputs);
-    }
-
-    return(outputs);
-}
-
-
-// Matrix<double> calculate_output_data(const Matrix<double>&) const method
-
-/// Calculates a set of outputs from the neural network in response to a set of inputs.
-/// The format is a matrix, where each row contains the output for a single input.
-/// @param input_data Matrix of inputs to the neural network. 
-
-Matrix<double> NeuralNetwork::calculate_output_data(const Matrix<double>& input_data) const
-{
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    // Control sentence(if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-    const size_t columns_number = input_data.get_columns_number();
-
-    if(columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Matrix<double> calculate_output_data(const Matrix<double>&) const method.\n"
-               << "Number of columns must be equal to number of inputs.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const size_t input_vectors_number = input_data.get_rows_number();
-
-    Matrix<double> output_data(input_vectors_number, outputs_number, 0.0);
-
-#pragma omp parallel for
-
-    for(int i = 0; i <(int)input_vectors_number; i++)
-    {
-        const Vector<double> inputs = input_data.get_row(i);
-        const Vector<double> outputs = calculate_outputs(inputs);
-
-        output_data.set_row(i, outputs);
-    }
-
-    return(output_data);
-}
-
-
-// Matrix<double> calculate_output_data(const Matrix<double>&, const Vector<double>&) const method
-
-/// Calculates a set of outputs from the neural network in response to a set of inputs.
-/// The format is a matrix, where each row contains the output for a single input.
-/// @param input_data Matrix of inputs to the neural network.
-/// @param time Column of time.
-
-Matrix<double> NeuralNetwork::calculate_output_data(const Matrix<double>& input_data, const Vector<double>& time) const
-{
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    // Control sentence(if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-    const size_t columns_number = input_data.get_columns_number();
-
-    if(columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Matrix<double> calculate_output_data(const Matrix<double>&, const Vector<double>&) const method.\n"
-               << "Number of columns must be equal to number of inputs.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const size_t input_vectors_number = input_data.get_rows_number();
-
-    Matrix<double> output_data(input_vectors_number, outputs_number);
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-
-#pragma omp parallel for private(inputs, outputs)
-
-    for(int i = 0; i <(int)input_vectors_number; i++)
-    {
-        inputs = input_data.get_row(i);
-        outputs = calculate_outputs(inputs, time[i]);
-        output_data.set_row(i, outputs);
-    }
-
-    return(output_data);
-}
-
-
-// Matrix<double> calculate_output_data_missing_values(const Matrix<double>&) const method
-
-/// Calculates a set of outputs from the neural network in response to a set of inputs containing missing values.
-/// The format is a matrix, where each row contains the output for a single input.
-/// @param input_data Matrix of inputs to the neural network.
-
-Matrix<double> NeuralNetwork::calculate_output_data_missing_values(const Matrix<double>& input_data/*, const double& missing_values_flag*/) const
-{
-    const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
-    const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
-
-    // Control sentence(if debug)
-
-#ifdef __OPENNN_DEBUG__
-
-    const size_t columns_number = input_data.get_columns_number();
-
-    if(columns_number != inputs_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Matrix<double> calculate_output_data(const Matrix<double>&) const method.\n"
-               << "Number of columns must be equal to number of inputs.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const size_t input_vectors_number = input_data.get_rows_number();
-
-    Matrix<double> output_data(input_vectors_number, outputs_number);
-
-    Vector<double> inputs(inputs_number);
-    Vector<double> outputs(outputs_number);
-
-    for(size_t i = 0; i < input_vectors_number; i++)
-    {
-        inputs = input_data.get_row(i);
-        outputs = calculate_outputs(inputs);
-        output_data.set_row(i, outputs);
-    }
-
-    return(output_data);
-}
-
-
-// Matrix<double> calculate_Jacobian(const Vector<double>&) const method
 
 /// Returns the Jacobian Matrix of the neural network for a set of inputs, corresponding to the
 /// point in inputs space at which the Jacobian Matrix is to be found. It uses a forward-propagation method.
 /// @param inputs Set of inputs to the neural network.
+/// @todo
 
 Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) const
 {
@@ -3647,15 +2589,14 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
     }
 
 #endif
-
-    Vector<double> outputs(inputs);
+/*
+    Matrix<double> outputs(inputs);
 
     Matrix<double> scaling_layer_Jacobian;
     Matrix<double> principal_components_layer_Jacobian;
     Matrix<double> unscaling_layer_Jacobian;
     Matrix<double> multilayer_perceptron_Jacobian;
     Matrix<double> bounding_layer_Jacobian;
-    Matrix<double> conditions_layer_Jacobian;
     Matrix<double> probabilistic_layer_Jacobian;
 
     // Scaling layer
@@ -3664,7 +2605,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
     {
         const Vector<double> scaling_layer_derivative = scaling_layer_pointer->calculate_derivatives(outputs);
 
-        scaling_layer_Jacobian = scaling_layer_pointer->arrange_Jacobian(scaling_layer_derivative);
+        scaling_layer_Jacobian = scaling_layer_pointer->calculate_Jacobian(scaling_layer_derivative);
 
         outputs = scaling_layer_pointer->calculate_outputs(inputs);
     }
@@ -3682,9 +2623,9 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
 
     if(multilayer_perceptron_pointer)
     {
-        multilayer_perceptron_Jacobian = multilayer_perceptron_pointer->calculate_Jacobian(outputs);
+        //multilayer_perceptron_Jacobian = multilayer_perceptron_pointer->calculate_Jacobian(outputs);
 
-        outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
+        //outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
     }
 
     // Unscaling layer
@@ -3693,7 +2634,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
     {
         const Vector<double> unscaling_layer_derivative = unscaling_layer_pointer->calculate_derivatives(outputs);
 
-        unscaling_layer_Jacobian = unscaling_layer_pointer->arrange_Jacobian(unscaling_layer_derivative);
+        unscaling_layer_Jacobian = unscaling_layer_pointer->calculate_Jacobian(unscaling_layer_derivative);
 
         outputs = unscaling_layer_pointer->calculate_outputs(outputs);
     }
@@ -3711,9 +2652,9 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
 
     if(bounding_layer_pointer)
     {
-        const Vector<double>& derivatives = bounding_layer_pointer->calculate_derivative(outputs);
+        const Matrix<double> derivatives = bounding_layer_pointer->calculate_derivatives(outputs);
 
-        bounding_layer_Jacobian = bounding_layer_pointer->arrange_Jacobian(derivatives);
+        bounding_layer_Jacobian = bounding_layer_pointer->calculate_Jacobian(derivatives);
 
         outputs = bounding_layer_pointer->calculate_outputs(outputs);
     }
@@ -3765,30 +2706,17 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
         Jacobian = Jacobian.dot(scaling_layer_Jacobian);
     }
 
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        conditions_layer_Jacobian = conditions_layer_pointer->calculate_Jacobian(inputs, outputs, Jacobian);
-
-        outputs = conditions_layer_pointer->calculate_outputs(inputs, outputs);
-    }
-
-    if(conditions_layer_pointer)
-    {
-        Jacobian = Jacobian.dot(conditions_layer_Jacobian);
-    }
-
     return(Jacobian);
+*/
+    return Matrix<double>();
 }
 
-
-// Matrix<double> calculate_Jacobian(const Vector<double>&, const double&) const method
 
 /// Returns the Jacobian Matrix of the neural network for a set of inputs and a given time, corresponding to the
 /// point in inputs space at which the Jacobian Matrix is to be found. It uses a forward-propagation method.
 /// @param inputs Set of inputs to the neural network.
 /// @param time Instant of time.
+/// @todo
 
 Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, const double& time) const
 {
@@ -3810,7 +2738,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
     }
 
 #endif
-
+/*
     Vector<double> outputs(inputs);
 
     Matrix<double> inputs_trending_layer_Jacobian;
@@ -3820,7 +2748,6 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
     Matrix<double> outputs_trending_layer_Jacobian;
     Matrix<double> multilayer_perceptron_Jacobian;
     Matrix<double> bounding_layer_Jacobian;
-    Matrix<double> conditions_layer_Jacobian;
     Matrix<double> probabilistic_layer_Jacobian;
 
     // Inputs trending layer
@@ -3829,7 +2756,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
     {
         const Vector<double> derivatives = inputs_trending_layer_pointer->calculate_derivatives();
 
-        inputs_trending_layer_Jacobian = inputs_trending_layer_pointer->arrange_Jacobian(derivatives);
+        inputs_trending_layer_Jacobian = inputs_trending_layer_pointer->calculate_Jacobian(derivatives);
 
         outputs = inputs_trending_layer_pointer->calculate_outputs(inputs, time);
     }
@@ -3840,7 +2767,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
     {
         const Vector<double> scaling_layer_derivative = scaling_layer_pointer->calculate_derivatives(outputs);
 
-        scaling_layer_Jacobian = scaling_layer_pointer->arrange_Jacobian(scaling_layer_derivative);
+        scaling_layer_Jacobian = scaling_layer_pointer->calculate_Jacobian(scaling_layer_derivative);
 
         outputs = scaling_layer_pointer->calculate_outputs(outputs);
     }
@@ -3858,9 +2785,9 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
 
     if(multilayer_perceptron_pointer)
     {
-        multilayer_perceptron_Jacobian = multilayer_perceptron_pointer->calculate_Jacobian(outputs);
+        //multilayer_perceptron_Jacobian = multilayer_perceptron_pointer->calculate_Jacobian(outputs);
 
-        outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
+        //outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
     }
 
     // Unscaling layer
@@ -3869,7 +2796,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
     {
         const Vector<double> unscaling_layer_derivative = unscaling_layer_pointer->calculate_derivatives(outputs);
 
-        unscaling_layer_Jacobian = unscaling_layer_pointer->arrange_Jacobian(unscaling_layer_derivative);
+        unscaling_layer_Jacobian = unscaling_layer_pointer->calculate_Jacobian(unscaling_layer_derivative);
 
         outputs = unscaling_layer_pointer->calculate_outputs(outputs);
     }
@@ -3880,7 +2807,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
     {
         const Vector<double> derivatives = outputs_trending_layer_pointer->calculate_derivatives();
 
-        outputs_trending_layer_Jacobian = outputs_trending_layer_pointer->arrange_Jacobian(derivatives);
+        outputs_trending_layer_Jacobian = outputs_trending_layer_pointer->calculate_Jacobian(derivatives);
 
         outputs = outputs_trending_layer_pointer->calculate_outputs(outputs, time);
     }
@@ -3898,9 +2825,9 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
 
     if(bounding_layer_pointer)
     {
-        const Vector<double>& derivatives = bounding_layer_pointer->calculate_derivative(outputs);
+        const Vector<double>& derivatives = bounding_layer_pointer->calculate_derivatives(outputs);
 
-        bounding_layer_Jacobian = bounding_layer_pointer->arrange_Jacobian(derivatives);
+        bounding_layer_Jacobian = bounding_layer_pointer->calculate_Jacobian(derivatives);
 
         outputs = bounding_layer_pointer->calculate_outputs(outputs);
     }
@@ -3966,43 +2893,29 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
         Jacobian = Jacobian.dot(inputs_trending_layer_Jacobian);
     }
 
-    // Conditions
-
-    if(conditions_layer_pointer)
-    {
-        conditions_layer_Jacobian = conditions_layer_pointer->calculate_Jacobian(inputs, outputs, Jacobian);
-
-        outputs = conditions_layer_pointer->calculate_outputs(inputs, outputs);
-    }
-
-    if(conditions_layer_pointer)
-    {
-        Jacobian = Jacobian.dot(conditions_layer_Jacobian);
-    }
-
     return(Jacobian);
+*/
+    return Matrix<double>();
 }
 
 
-// Vector< Matrix<double> > calculate_Jacobian_data(const Matrix<double>&) const method
-
 /// Calculates a set of Jacobians from the neural network in response to a set of inputs.
 /// The format is a vector of matrices, where each element is the Jacobian matrix for a single input.
-/// @param input_data Matrix of inputs to the neural network.
+/// @param inputs Matrix of inputs to the neural network.
 
-Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian_data(const Matrix<double>& input_data) const
+Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian_data(const Matrix<double>& inputs) const
 {
     const size_t inputs_number = inputs_pointer->get_inputs_number();
 
-    const size_t input_data_size = input_data.get_rows_number();
+    const size_t inputs_size = inputs.get_rows_number();
 
-    Vector< Matrix<double> > Jacobian_data(input_data_size);
+    Vector< Matrix<double> > Jacobian_data(inputs_size);
 
     Vector<double> input_values(inputs_number);
 
-    for(size_t i = 0; i < input_data_size; i++)
+    for(size_t i = 0; i < inputs_size; i++)
     {
-        input_values = input_data.get_row(i);
+        input_values = inputs.get_row(i);
 
         Jacobian_data[i] = calculate_Jacobian(input_values);
     }
@@ -4010,8 +2923,6 @@ Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian_data(const Matrix<dou
     return(Jacobian_data);
 }
 
-
-// Vector< Histogram<double> > calculate_outputs_histograms(const size_t&, const size_t&) const;
 
 /// Calculates the histogram of the outputs with random inputs.
 /// @param points_number Number of random instances to evaluate the neural network.
@@ -4021,11 +2932,11 @@ Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const si
 {
     const size_t inputs_number = inputs_pointer->get_inputs_number();
 
-    Matrix<double> input_data(points_number, inputs_number);
+    Matrix<double> inputs(points_number, inputs_number);
 
-    if(scaling_layer_pointer == NULL)
+    if(scaling_layer_pointer == nullptr)
     {
-        input_data.randomize_uniform();
+        inputs.randomize_uniform();
     }
     else
     {
@@ -4061,67 +2972,32 @@ Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const si
                 input_column.randomize_normal(mean, standard_deviation);
             }
 
-            input_data.set_column(i, input_column, "");
+            inputs.set_column(i, input_column, "");
         }
     }
 
-    const Matrix<double> output_data = calculate_output_data(input_data);
+    const Matrix<double> outputs = calculate_outputs(inputs);
 
-    return(output_data.calculate_histograms(bins_number));
+    return(outputs.calculate_histograms(bins_number));
 }
 
-
-// Vector< Histogram<double> > calculate_outputs_histograms(const Matrix<double>&, const size_t& = 2) const method
 
 /// Calculates the histogram of the outputs with a matrix of given inputs.
-/// @param input_data Matrix of the data to evaluate the neural network.
+/// @param inputs Matrix of the data to evaluate the neural network.
 /// @param bins_number Number of bins for the histograms.
 
-Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const Matrix<double>& input_data, const size_t& bins_number) const
+Vector< Histogram<double> > NeuralNetwork::calculate_outputs_histograms(const Matrix<double>& inputs, const size_t& bins_number) const
 {
-    const Matrix<double> output_data = calculate_output_data(input_data);
+    const Matrix<double> outputs = calculate_outputs(inputs);
 
-    return(output_data.calculate_histograms(bins_number));
+    return(outputs.calculate_histograms(bins_number));
 }
 
 
-vector<double> NeuralNetwork::calculate_outputs_std(const vector<double>& inputs) const
-{
-    return calculate_outputs(Vector<double>(inputs)).to_std_vector();
-}
-
-
-// Matrix<double> calculate_Jacobian(const Vector<double>&, const Vector<double>&) const method
-
-/// Returns the partial derivatives of the outputs with respect to a given set of parameters.
-/// @todo
-
-Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, const Vector<double>& parameters) const
-{
-    return(multilayer_perceptron_pointer->calculate_Jacobian(inputs, parameters));
-}
-
-
-// Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&) const method
-
-/// Returns the second partial derivatives of the outputs with respect to the inputs.
-/// @todo
-
-Vector< Matrix<double> > NeuralNetwork::calculate_Hessian_form(const Vector<double>& inputs) const
-{
-    return(multilayer_perceptron_pointer->calculate_Hessian_form(inputs));
-}
-
-
-// Vector< Matrix<double> > calculate_Hessian_form(const Vector<double>&, const Vector<double>&) const method
-
-/// Returns the second partial derivatives of the outputs with respect to the neural network parameters.
-/// @todo
-
-Vector< Matrix<double> > NeuralNetwork::calculate_Hessian_form(const Vector<double>& inputs, const Vector<double>& parameters) const
-{
-    return(multilayer_perceptron_pointer->calculate_Hessian_form(inputs, parameters));
-}
+//vector<double> NeuralNetwork::calculate_outputs_std(const vector<double>& inputs) const
+//{
+//    return calculate_outputs(Vector<double>(inputs)).to_std_vector();
+//}
 
 
 /// Returns a string representation of the current neural network object.
@@ -4181,13 +3057,6 @@ string NeuralNetwork::object_to_string() const
         buffer << probabilistic_layer_pointer->object_to_string();
     }
 
-    // Conditions layer
-
-    if(conditions_layer_pointer)
-    {
-        buffer << conditions_layer_pointer->object_to_string();
-    }
-
     // Inputs
 
     if(inputs_pointer)
@@ -4202,20 +3071,11 @@ string NeuralNetwork::object_to_string() const
         buffer << outputs_pointer->object_to_string();
     }
 
-    // Independent parameters
-
-    if(independent_parameters_pointer)
-    {
-        buffer << independent_parameters_pointer->object_to_string();
-    }
-
     buffer << "Display: " <<  display << "\n";
 
     return(buffer.str());
 }
 
-
-// tinyxml2::XMLDocument* to_PMML() const method
 
 /// Serializes the neural network object into a PMML document of the TinyXML library.
 
@@ -4279,7 +3139,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
         number_of_fields = inputs_number + outputs_number;
     }
 
-    data_dictionary->SetAttribute("numberOfFields",(unsigned)number_of_fields);
+    data_dictionary->SetAttribute("numberOfFields",static_cast<unsigned>(number_of_fields));
 
     if(is_data_scaled)
     {
@@ -4315,7 +3175,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
 
     if(is_data_scaled)
     {
-        const Vector<string> inputs_names = inputs_pointer->arrange_names();
+        const Vector<string> inputs_names = inputs_pointer->get_names();
 
         scaling_layer_pointer->to_PMML(transformation_dictionary, inputs_names);
     }
@@ -4334,8 +3194,8 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
         neural_network->SetAttribute("functionName", "regression");
     }
 
-    const size_t number_of_layers = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers().size();
-    neural_network->SetAttribute("numberOfLayers",(unsigned)number_of_layers);
+    const size_t number_of_layers = multilayer_perceptron_pointer->get_layers_perceptrons_numbers().size();
+    neural_network->SetAttribute("numberOfLayers",static_cast<unsigned>(number_of_layers));
 
 
     // Neural network - mining schema markup
@@ -4352,7 +3212,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
     tinyxml2::XMLElement* neural_inputs = pmml_document->NewElement("NeuralInputs");
     neural_network->LinkEndChild(neural_inputs);
 
-    neural_inputs->SetAttribute("numberOfInputs",(unsigned)inputs_number);
+    neural_inputs->SetAttribute("numberOfInputs",static_cast<unsigned>(inputs_number));
 
 
     inputs_pointer->to_PMML(neural_inputs,is_data_scaled);
@@ -4366,7 +3226,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
     tinyxml2::XMLElement* neural_outputs = pmml_document->NewElement("NeuralOutputs");
     neural_network->LinkEndChild(neural_outputs);
 
-    neural_outputs->SetAttribute("numberOfOutputs",(unsigned)outputs_number);
+    neural_outputs->SetAttribute("numberOfOutputs",static_cast<unsigned>(outputs_number));
 
     outputs_pointer->to_PMML(neural_outputs,is_probabilistic,is_data_unscaled);
 
@@ -4423,7 +3283,7 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
     {
         if(is_data_unscaled)
         {
-            const Vector<string> outputs_names = outputs_pointer->arrange_names();
+            const Vector<string> outputs_names = outputs_pointer->get_names();
 
             unscaling_layer_pointer->to_PMML(transformation_dictionary,outputs_names);
         }
@@ -4434,8 +3294,6 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
     return pmml_document;
 }
 
-
-// void write_PMML(string) const method
 
 /// Serializes the neural network object into a PMML file without memory load.
 
@@ -4449,11 +3307,11 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
     pmml_file = fopen(file_name.c_str(), "w");
 
-    if(pmml_file == NULL)
+    if(pmml_file == nullptr)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void write_PMML(const string&) method.\n"
-               << "File " << file_name << " is NULL.\n";
+               << "File " << file_name << " is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -4517,7 +3375,7 @@ void NeuralNetwork::write_PMML(const string& file_name) const
     }
 
     // DataDictionary attribute
-    file_stream.PushAttribute("numberOfFields",(unsigned)number_of_fields);
+    file_stream.PushAttribute("numberOfFields",static_cast<unsigned>(number_of_fields));
 
     if(has_scaling_layer())
     {
@@ -4559,14 +3417,14 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
     if(is_data_scaled)
     {
-        const Vector<string> inputs_names = inputs_pointer->arrange_names();
+        const Vector<string> inputs_names = inputs_pointer->get_names();
 
         scaling_layer_pointer->write_PMML(file_stream, inputs_names);
     }
 
     if(is_data_unscaled)
     {
-        const Vector<string> outputs_names = outputs_pointer->arrange_names();
+        const Vector<string> outputs_names = outputs_pointer->get_names();
 
         unscaling_layer_pointer->write_PMML(file_stream, outputs_names);
     }
@@ -4632,19 +3490,19 @@ void NeuralNetwork::write_PMML(const string& file_name) const
         file_stream.PushAttribute("functionName", "regression");
     }
 
-    const size_t number_of_layers = multilayer_perceptron_pointer->arrange_layers_perceptrons_numbers().size();
+    const size_t number_of_layers = multilayer_perceptron_pointer->get_layers_perceptrons_numbers().size();
 
-    file_stream.PushAttribute("numberOfLayers",(unsigned)number_of_layers);
+    file_stream.PushAttribute("numberOfLayers",static_cast<unsigned>(number_of_layers));
 
-    Perceptron::ActivationFunction neural_network_activation_function = multilayer_perceptron_pointer->get_layers_activation_function().at(0);
+    PerceptronLayer::ActivationFunction neural_network_activation_function = multilayer_perceptron_pointer->get_layers_activation_function().at(0);
 
     switch(neural_network_activation_function)
     {
-    case Perceptron::Threshold:
+    case PerceptronLayer::Threshold:
         file_stream.PushAttribute("activationFunction","threshold");
         break;
 
-    case Perceptron::SymmetricThreshold:
+    case PerceptronLayer::SymmetricThreshold:
     {
         ostringstream buffer;
 
@@ -4654,19 +3512,20 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
         throw logic_error(buffer.str());
     }
-        break;
 
-    case Perceptron::Logistic:
+    case PerceptronLayer::Logistic:
         file_stream.PushAttribute("activationFunction","logistic");
         break;
 
-    case Perceptron::HyperbolicTangent:
+    case PerceptronLayer::HyperbolicTangent:
         file_stream.PushAttribute("activationFunction","tanh");
         break;
 
-    case Perceptron::Linear:
+    case PerceptronLayer::Linear:
         file_stream.PushAttribute("activationFunction","identity");
         break;
+//    default:
+//        break;
     }
 
     // Neural network - mining schema markup
@@ -4675,7 +3534,7 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
     // Mining schema inputs
 
-    for(size_t i = 0 ; i< inputs_number; i++)
+    for(size_t i = 0; i < inputs_number; i++)
     {
         file_stream.OpenElement("MiningField");
 
@@ -4696,7 +3555,7 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
     file_stream.OpenElement("NeuralInputs");
 
-    file_stream.PushAttribute("numberOfInputs",(unsigned)inputs_number);
+    file_stream.PushAttribute("numberOfInputs",static_cast<unsigned>(inputs_number));
 
     inputs_pointer->write_PMML_neural_inputs(file_stream,is_data_scaled);
 
@@ -4706,7 +3565,7 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
     // Neural network - neural layers markups
 
-    const bool is_softmax_normalization_method =(is_probabilistic &&(probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::Softmax));
+    const bool is_softmax_normalization_method = (is_probabilistic &&(probabilistic_layer_pointer->get_probabilistic_method() == ProbabilisticLayer::Softmax));
 
     multilayer_perceptron_pointer->write_PMML(file_stream, is_softmax_normalization_method);
 
@@ -4714,7 +3573,7 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 
     file_stream.OpenElement("NeuralOutputs");
 
-    file_stream.PushAttribute("numberOfOutputs",(unsigned) outputs_number);
+    file_stream.PushAttribute("numberOfOutputs",static_cast<unsigned>(outputs_number));
 
     outputs_pointer->write_PMML_neural_outputs(file_stream, number_of_layers ,is_probabilistic, is_data_unscaled);
 
@@ -4733,8 +3592,6 @@ void NeuralNetwork::write_PMML(const string& file_name) const
 }
 
 
-// void from_PMML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this neural network object.
 
 void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
@@ -4749,7 +3606,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-               << "PMML element is NULL.\n";
+               << "PMML element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -4762,7 +3619,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-               << "NeuralNetwork element is NULL.\n";
+               << "NeuralNetwork element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -4773,7 +3630,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-               << "Attibute \"functionName\" in NeuralNetwork element is NULL.\n";
+               << "Attibute \"functionName\" in NeuralNetwork element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -4808,7 +3665,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-               << "MiningSchema element is NULL.\n";
+               << "MiningSchema element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -4843,7 +3700,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: NeuralNetwork class.\n"
                    << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Attribute \"name\" in MiningField element is NULL.\n";
+                   << "Attribute \"name\" in MiningField element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -4881,7 +3738,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-               << "DataDictionary element is NULL.\n";
+               << "DataDictionary element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -4901,7 +3758,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: NeuralNetwork class.\n"
                    << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Attribute \"name\" in DataField in DataDictionary element is NULL.\n";
+                   << "Attribute \"name\" in DataField in DataDictionary element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -4914,7 +3771,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: NeuralNetwork class.\n"
                    << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Attribute \"optype\" in DataField in DataDictionary element is NULL.\n";
+                   << "Attribute \"optype\" in DataField in DataDictionary element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -4933,7 +3790,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
                 {
                     buffer << "OpenNN Exception: NeuralNetwork class.\n"
                            << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Value in DataField in DataDictionary element is NULL.\n";
+                           << "Value in DataField in DataDictionary element is nullptr.\n";
 
                     throw logic_error(buffer.str());
                 }
@@ -4946,7 +3803,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
                     {
                         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                               << "Attribute \"value\" in Value in DataDictionary element is NULL.\n";
+                               << "Attribute \"value\" in Value in DataDictionary element is nullptr.\n";
 
                         throw logic_error(buffer.str());
                     }
@@ -4973,7 +3830,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
                 {
                     buffer << "OpenNN Exception: NeuralNetwork class.\n"
                            << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Attribute \"leftMargin\" in Interval in DataField element is NULL.\n";
+                           << "Attribute \"leftMargin\" in Interval in DataField element is nullptr.\n";
 
                     throw logic_error(buffer.str());
                 }
@@ -4982,7 +3839,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
                 {
                     buffer << "OpenNN Exception: NeuralNetwork class.\n"
                            << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                           << "Attribute \"rightMargin\" in Interval in DataField element is NULL.\n";
+                           << "Attribute \"rightMargin\" in Interval in DataField element is nullptr.\n";
 
                     throw logic_error(buffer.str());
                 }
@@ -5055,7 +3912,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     //    {
     //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
     //               << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-    //               << "NeuralInputs element is NULL.\n";
+    //               << "NeuralInputs element is nullptr.\n";
 
     //        throw logic_error(buffer.str());
     //    }
@@ -5082,7 +3939,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     //        {
     //            buffer << "OpenNN Exception: NeuralNetwork class.\n"
     //                   << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-    //                   << "Attribute \"id\" in NeuralInput element is NULL.\n";
+    //                   << "Attribute \"id\" in NeuralInput element is nullptr.\n";
 
     //            throw logic_error(buffer.str());
     //        }
@@ -5126,7 +3983,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     //        {
     //            buffer << "OpenNN Exception: NeuralNetwork class.\n"
     //                   << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-    //                   << "DerivedField in NeuralInput element is NULL.\n";
+    //                   << "DerivedField in NeuralInput element is nullptr.\n";
 
     //            throw logic_error(buffer.str());
     //        }
@@ -5137,7 +3994,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     //        {
     //            buffer << "OpenNN Exception: NeuralNetwork class.\n"
     //                   << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-    //                   << "FieldRef in DerivedField in NeuralInput element is NULL.\n";
+    //                   << "FieldRef in DerivedField in NeuralInput element is nullptr.\n";
 
     //            throw logic_error(buffer.str());
     //        }
@@ -5147,7 +4004,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     //        {
     //            buffer << "OpenNN Exception: NeuralNetwork class.\n"
     //                   << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-    //                   << "Attribute \"field\" in FieldRef in DerivedField in NeuralInput element is NULL.\n";
+    //                   << "Attribute \"field\" in FieldRef in DerivedField in NeuralInput element is nullptr.\n";
 
     //            throw logic_error(buffer.str());
     //        }
@@ -5177,7 +4034,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-               << "NeuralLayer element is NULL.\n";
+               << "NeuralLayer element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -5198,7 +4055,7 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
         {
             buffer << "OpenNN Exception: NeuralNetwork class.\n"
                    << "void from_PMML(const tinyxml2::XMLDocument&) method.\n"
-                   << "Neuron element is NULL.\n";
+                   << "Neuron element is nullptr.\n";
 
             throw logic_error(buffer.str());
         }
@@ -5338,7 +4195,6 @@ void NeuralNetwork::from_PMML(const tinyxml2::XMLDocument& document)
     }
 }
 
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the neural network object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element. 
@@ -5473,21 +4329,6 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
         delete bounding_layer_document;
     }
 
-    // Conditions layer
-
-    if(conditions_layer_pointer)
-    {
-        const tinyxml2::XMLDocument* conditions_layer_document = conditions_layer_pointer->to_XML();
-
-        const tinyxml2::XMLElement* conditions_layer_element = conditions_layer_document->FirstChildElement("ConditionsLayer");
-
-        tinyxml2::XMLNode* node = conditions_layer_element->DeepClone(document);
-
-        neural_network_element->InsertEndChild(node);
-
-        delete conditions_layer_document;
-    }
-
     // Outputs
 
     if(outputs_pointer)
@@ -5501,21 +4342,6 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
         neural_network_element->InsertEndChild(node);
 
         delete outputs_document;
-    }
-
-    // Independent parameters
-
-    if(independent_parameters_pointer)
-    {
-        const tinyxml2::XMLDocument* independent_parameters_document = independent_parameters_pointer->to_XML();
-
-        const tinyxml2::XMLElement* independent_parameters_element = independent_parameters_document->FirstChildElement("IndependentParameters");
-
-        tinyxml2::XMLNode* node = independent_parameters_element->DeepClone(document);
-
-        neural_network_element->InsertEndChild(node);
-
-        delete independent_parameters_document;
     }
 
     //   // Display warnings
@@ -5533,8 +4359,6 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
     return(document);
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the neural network object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -5606,13 +4430,6 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
         bounding_layer_pointer->write_XML(file_stream);
     }
 
-    // Conditions layer
-
-    if(conditions_layer_pointer)
-    {
-        conditions_layer_pointer->write_XML(file_stream);
-    }
-
     // Outputs
 
     if(outputs_pointer)
@@ -5620,18 +4437,9 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
         outputs_pointer->write_XML(file_stream);
     }
 
-    // Independent parameters
-
-    if(independent_parameters_pointer)
-    {
-        independent_parameters_pointer->write_XML(file_stream);
-    }
-
     file_stream.CloseElement();
 }
 
-
-// void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Deserializes a TinyXML document into this neural network object.
 /// @param document XML document containing the member data.
@@ -5646,7 +4454,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Neural network element is NULL.\n";
+               << "Neural network element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -5674,54 +4482,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Outputs
-
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
-
-        if(element)
-        {
-            if(!outputs_pointer)
-            {
-                outputs_pointer = new Outputs();
-            }
-
-            tinyxml2::XMLDocument outputs_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&outputs_document);
-
-            outputs_document.InsertFirstChild(element_clone);
-
-            outputs_pointer->from_XML(outputs_document);
-        }
-    }
-
-    // Multilayer perceptron
-
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultilayerPerceptron");
-
-        if(element)
-        {
-            if(!multilayer_perceptron_pointer)
-            {
-                multilayer_perceptron_pointer = new MultilayerPerceptron();
-            }
-
-            tinyxml2::XMLDocument multilayer_perceptron_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&multilayer_perceptron_document);
-
-            multilayer_perceptron_document.InsertFirstChild(element_clone);
-
-            multilayer_perceptron_pointer->from_XML(multilayer_perceptron_document);
-        }
-    }
-
     // Inputs trending layer
-
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("InputsTrendingLayer");
 
@@ -5769,6 +4530,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
     // Principal components layer
 
     {
+
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("PrincipalComponentsLayer");
 
         if(element)
@@ -5789,6 +4551,31 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
+
+    // Multilayer perceptron
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MultilayerPerceptron");
+
+
+        if(element)
+        {
+            if(!multilayer_perceptron_pointer)
+            {
+                multilayer_perceptron_pointer = new MultilayerPerceptron();
+            }
+
+            tinyxml2::XMLDocument multilayer_perceptron_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&multilayer_perceptron_document);
+
+            multilayer_perceptron_document.InsertFirstChild(element_clone);
+
+            multilayer_perceptron_pointer->from_XML(multilayer_perceptron_document);
+        }
+    }
+
     // Unscaling layer
 
     {
@@ -5796,6 +4583,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
+
             if(!unscaling_layer_pointer)
             {
                 unscaling_layer_pointer = new UnscalingLayer();
@@ -5811,6 +4599,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             unscaling_layer_pointer->from_XML(unscaling_layer_document);
         }
     }
+
 
     // Outputs trending layer
 
@@ -5832,6 +4621,30 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             outputs_trending_layer_document.InsertFirstChild(element_clone);
 
             outputs_trending_layer_pointer->from_XML(outputs_trending_layer_document);
+        }
+    }
+
+    // Probabilistic layer
+
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ProbabilisticLayer");
+
+        if(element)
+        {
+
+            if(!probabilistic_layer_pointer)
+            {
+                probabilistic_layer_pointer = new ProbabilisticLayer();
+            }
+
+            tinyxml2::XMLDocument probabilistic_layer_document;
+            tinyxml2::XMLNode* element_clone;
+
+            element_clone = element->DeepClone(&probabilistic_layer_document);
+
+            probabilistic_layer_document.InsertFirstChild(element_clone);
+
+            probabilistic_layer_pointer->from_XML(probabilistic_layer_document);
         }
     }
 
@@ -5858,72 +4671,27 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Probabilistic layer
+    // Outputs
 
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ProbabilisticLayer");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Outputs");
 
         if(element)
         {
-            if(!probabilistic_layer_pointer)
+
+            if(!outputs_pointer)
             {
-                probabilistic_layer_pointer = new ProbabilisticLayer();
+                outputs_pointer = new Outputs();
             }
 
-            tinyxml2::XMLDocument probabilistic_layer_document;
+            tinyxml2::XMLDocument outputs_document;
             tinyxml2::XMLNode* element_clone;
 
-            element_clone = element->DeepClone(&probabilistic_layer_document);
+            element_clone = element->DeepClone(&outputs_document);
 
-            probabilistic_layer_document.InsertFirstChild(element_clone);
+            outputs_document.InsertFirstChild(element_clone);
 
-            probabilistic_layer_pointer->from_XML(probabilistic_layer_document);
-        }
-    }
-
-    // Conditions layer
-
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ConditionsLayer");
-
-        if(element)
-        {
-            if(!conditions_layer_pointer)
-            {
-                conditions_layer_pointer = new ConditionsLayer();
-            }
-
-            tinyxml2::XMLDocument conditions_layer_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&conditions_layer_document);
-
-            conditions_layer_document.InsertFirstChild(element_clone);
-
-            conditions_layer_pointer->from_XML(conditions_layer_document);
-        }
-    }
-
-    // Indpependent parameters
-
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("IndependentParameters");
-
-        if(element)
-        {
-            if(!independent_parameters_pointer)
-            {
-                independent_parameters_pointer = new IndependentParameters();
-            }
-
-            tinyxml2::XMLDocument independent_parameters_document;
-            tinyxml2::XMLNode* element_clone;
-
-            element_clone = element->DeepClone(&independent_parameters_document);
-
-            independent_parameters_document.InsertFirstChild(element_clone);
-
-            independent_parameters_pointer->from_XML(independent_parameters_document);
+            outputs_pointer->from_XML(outputs_document);
         }
     }
 
@@ -5942,14 +4710,12 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             }
             catch(const logic_error& e)
             {
-                cout << e.what() << endl;
+                cerr << e.what() << endl;
             }
         }
     }
 }
 
-
-// void print() const method   
 
 /// Prints to the screen the members of a neural network object in a XML-type format.
 
@@ -5961,8 +4727,6 @@ void NeuralNetwork::print() const
     }
 }
 
-
-// void save(const string&) const method 
 
 /// Saves to a XML file the members of a neural network object.
 /// @param file_name Name of neural network XML file.
@@ -5976,8 +4740,6 @@ void NeuralNetwork::save(const string& file_name) const
     delete document;
 }
 
-
-// void save_parameters(const string&) const method 
 
 /// Saves to a data file the parameters of a neural network object.
 /// @param file_name Name of parameters data file.
@@ -5997,7 +4759,7 @@ void NeuralNetwork::save_parameters(const string& file_name) const
         throw logic_error(buffer.str());
     }
 
-    const Vector<double> parameters = arrange_parameters();
+    const Vector<double> parameters = get_parameters();
 
     file << parameters << endl;
 
@@ -6006,8 +4768,6 @@ void NeuralNetwork::save_parameters(const string& file_name) const
     file.close();
 }
 
-
-// void load(const string&) method
 
 /// Loads from a XML file the members for this neural network object.
 /// Please mind about the file format, which is specified in the User's Guide. 
@@ -6034,8 +4794,6 @@ void NeuralNetwork::load(const string& file_name)
 }
 
 
-// void load_parameters(const string&) method
-
 /// Loads the multilayer perceptron parameters from a data file.
 /// The format of this file is just a sequence of numbers. 
 /// @param file_name Name of parameters data file. 
@@ -6055,7 +4813,7 @@ void NeuralNetwork::load_parameters(const string& file_name)
         throw logic_error(buffer.str());
     }
 
-    const size_t parameters_number = count_parameters_number();
+    const size_t parameters_number = get_parameters_number();
 
     Vector<double> new_parameters(parameters_number);
 
@@ -6066,8 +4824,6 @@ void NeuralNetwork::load_parameters(const string& file_name)
     file.close();
 }
 
-
-// string write_expression() const method
 
 /// Returns a string with the expression of the function represented by the neural network.
 
@@ -6083,7 +4839,7 @@ string NeuralNetwork::write_expression() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "string write_expression() const method.\n"
-               << "Pointer to inputs is NULL.\n";
+               << "Pointer to inputs is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -6094,7 +4850,7 @@ string NeuralNetwork::write_expression() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "string write_expression() const method.\n"
-               << "Pointer to multilayer perceptron is NULL.\n";
+               << "Pointer to multilayer perceptron is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -6105,7 +4861,7 @@ string NeuralNetwork::write_expression() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "string write_expression() const method.\n"
-               << "Pointer to outputs is NULL.\n";
+               << "Pointer to outputs is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -6115,8 +4871,8 @@ string NeuralNetwork::write_expression() const
     const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
-    Vector<string> inputs_name = inputs_pointer->arrange_names();
-    Vector<string> outputs_name = outputs_pointer->arrange_names();
+    Vector<string> inputs_name = inputs_pointer->get_names();
+    Vector<string> outputs_name = outputs_pointer->get_names();
 
     size_t position = 0;
 
@@ -6251,9 +5007,9 @@ string NeuralNetwork::write_expression() const
 
     // Scaled outputs
 
-    Vector<string> scaled_outputs_name(outputs_number);
+    Vector<string> scaled_outputs_name(/*outputs_number*/outputs_name.size());
 
-    for(size_t i = 0; i < outputs_number; i++)
+    for(size_t i = 0; i < outputs_name.size()/*outputs_number*/; i++)
     {
         buffer.str("");
 
@@ -6358,13 +5114,6 @@ string NeuralNetwork::write_expression() const
         buffer << bounding_layer_pointer->write_expression(outputs_name, outputs_name);
     }
 
-    // Conditions layer
-
-    //   if(conditions_layer_pointer)
-    //   {
-    //      buffer << conditions_layer_pointer->write_expression(inputs_name, outputs_name);
-    //   }
-
     string expression = buffer.str();
 
     position = 0;
@@ -6440,7 +5189,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "string write_expression() const method.\n"
-               << "Pointer to inputs is NULL.\n";
+               << "Pointer to inputs is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -6451,7 +5200,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "string write_expression() const method.\n"
-               << "Pointer to multilayer perceptron is NULL.\n";
+               << "Pointer to multilayer perceptron is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -6462,7 +5211,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "string write_expression() const method.\n"
-               << "Pointer to outputs is NULL.\n";
+               << "Pointer to outputs is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -6472,8 +5221,8 @@ string NeuralNetwork::write_mathematical_expression_php() const
     const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
-    Vector<string> inputs_name = inputs_pointer->arrange_names();
-    Vector<string> outputs_name = outputs_pointer->arrange_names();
+    Vector<string> inputs_name = inputs_pointer->get_names();
+    Vector<string> outputs_name = outputs_pointer->get_names();
 
     size_t position = 0;
 
@@ -6725,13 +5474,6 @@ string NeuralNetwork::write_mathematical_expression_php() const
         buffer << bounding_layer_pointer->write_expression_php(outputs_name, outputs_name);
     }
 
-    // Conditions layer
-
-    //   if(conditions_layer_pointer)
-    //   {
-    //      buffer << conditions_layer_pointer->write_expression(inputs_name, outputs_name);
-    //   }
-
     string expression = buffer.str();
 
     position = 0;
@@ -6793,8 +5535,6 @@ string NeuralNetwork::write_mathematical_expression_php() const
 }
 
 
-// string write_expression_python() const method
-
 /// Returns a string with the python function of the expression represented by the neural network.
 
 string NeuralNetwork::write_expression_python() const
@@ -6804,8 +5544,8 @@ string NeuralNetwork::write_expression_python() const
     const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
-    Vector<string> inputs_name = inputs_pointer->arrange_names();
-    Vector<string> outputs_name = outputs_pointer->arrange_names();
+    Vector<string> inputs_name = inputs_pointer->get_names();
+    Vector<string> outputs_name = outputs_pointer->get_names();
 
     size_t pos;
 
@@ -6956,7 +5696,7 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    Vector<Perceptron::ActivationFunction> activations;
+    Vector<PerceptronLayer::ActivationFunction> activations;
 
     const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
 
@@ -6967,7 +5707,7 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "#!/usr/bin/python\n\n";
 
-    if(activations.contains(Perceptron::Threshold))
+    if(activations.contains(PerceptronLayer::Threshold))
     {
         buffer << "def Threshold(x) : \n"
                   "   if x < 0 : \n"
@@ -6976,7 +5716,7 @@ string NeuralNetwork::write_expression_python() const
                   "       return 1\n\n";
     }
 
-    if(activations.contains(Perceptron::SymmetricThreshold))
+    if(activations.contains(PerceptronLayer::SymmetricThreshold))
     {
         buffer << "def SymmetricThreshold(x) : \n"
                   "   if x < 0 : \n"
@@ -6985,14 +5725,14 @@ string NeuralNetwork::write_expression_python() const
                   "       return 1\n\n";
     }
 
-    if(activations.contains(Perceptron::Logistic))
+    if(activations.contains(PerceptronLayer::Logistic))
     {
         buffer << "from math import exp\n"
                   "def Logistic(x) : \n"
                   "   return(1/(1+exp(-x))) \n\n";
     }
 
-    if(activations.contains(Perceptron::HyperbolicTangent))
+    if(activations.contains(PerceptronLayer::HyperbolicTangent))
     {
         buffer << "from math import tanh\n\n";
     }
@@ -7083,18 +5823,6 @@ string NeuralNetwork::write_expression_python() const
             break;
         case ProbabilisticLayer::NoProbabilistic :
             break;
-        default:
-
-            buffer.str("");
-
-            buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                   << "string write_expression_python() const method.\n"
-                   << "Unknown probabilistic method.\n";
-
-            throw logic_error(buffer.str());
-
-            break;
-
         }
     }
 
@@ -7177,8 +5905,8 @@ string NeuralNetwork::write_expression_php() const
     const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
-    Vector<string> inputs_name = inputs_pointer->arrange_names();
-    Vector<string> outputs_name = outputs_pointer->arrange_names();
+    Vector<string> inputs_name = inputs_pointer->get_names();
+    Vector<string> outputs_name = outputs_pointer->get_names();
 
     size_t pos;
 
@@ -7329,7 +6057,7 @@ string NeuralNetwork::write_expression_php() const
         }
     }
 
-    Vector<Perceptron::ActivationFunction> activations;
+    Vector<PerceptronLayer::ActivationFunction> activations;
 
     const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
 
@@ -7338,7 +6066,7 @@ string NeuralNetwork::write_expression_php() const
 
     buffer.str("");
 
-    if(activations.contains(Perceptron::Threshold))
+    if(activations.contains(PerceptronLayer::Threshold))
     {
         buffer << "function Threshold($x)\n"
                   "{\n"
@@ -7353,7 +6081,7 @@ string NeuralNetwork::write_expression_php() const
                   "}\n\n";
     }
 
-    if(activations.contains(Perceptron::SymmetricThreshold))
+    if(activations.contains(PerceptronLayer::SymmetricThreshold))
     {
         buffer << "function SymmetricThreshold(&x)\n"
                   "{\n"
@@ -7368,7 +6096,7 @@ string NeuralNetwork::write_expression_php() const
                   "}\n\n";
     }
 
-    if(activations.contains(Perceptron::Logistic))
+    if(activations.contains(PerceptronLayer::Logistic))
     {
         buffer << "function Logistic($x)\n"
                   "{\n"
@@ -7482,9 +6210,6 @@ string NeuralNetwork::write_expression_php() const
                    << "Unknown probabilistic method.\n";
 
             throw logic_error(buffer.str());
-
-            break;
-
         }
     }
 
@@ -7575,8 +6300,6 @@ string NeuralNetwork::write_expression_php() const
 }
 
 
-// string write_expression_R() const method
-
 /// Returns a string with the R function of the expression represented by the neural network.
 
 string NeuralNetwork::write_expression_R() const
@@ -7586,8 +6309,8 @@ string NeuralNetwork::write_expression_R() const
     const size_t inputs_number = multilayer_perceptron_pointer->get_inputs_number();
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
-    Vector<string> inputs_name = inputs_pointer->arrange_names();
-    Vector<string> outputs_name = outputs_pointer->arrange_names();
+    Vector<string> inputs_name = inputs_pointer->get_names();
+    Vector<string> outputs_name = outputs_pointer->get_names();
 
     size_t pos;
 
@@ -7738,7 +6461,7 @@ string NeuralNetwork::write_expression_R() const
         }
     }
 
-    Vector<Perceptron::ActivationFunction> activations;
+    Vector<PerceptronLayer::ActivationFunction> activations;
 
     const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
 
@@ -7747,7 +6470,7 @@ string NeuralNetwork::write_expression_R() const
 
     buffer.str("");
 
-    if(activations.contains(Perceptron::Threshold))
+    if(activations.contains(PerceptronLayer::Threshold))
     {
         buffer << "Threshold <- function(x) { \n"
                   "   if(x < 0)  0 \n"
@@ -7755,7 +6478,7 @@ string NeuralNetwork::write_expression_R() const
                   "}\n\n";
     }
 
-    if(activations.contains(Perceptron::SymmetricThreshold))
+    if(activations.contains(PerceptronLayer::SymmetricThreshold))
     {
         buffer << "SymmetricThreshold <- function(x) { \n"
                   "   if(x < 0)  -1 \n"
@@ -7763,7 +6486,7 @@ string NeuralNetwork::write_expression_R() const
                   "}\n\n";
     }
 
-    if(activations.contains(Perceptron::Logistic))
+    if(activations.contains(PerceptronLayer::Logistic))
     {
         buffer << "Logistic <- function(x) { \n"
                   "   1/(1+exp(-x))\n"
@@ -7854,18 +6577,6 @@ string NeuralNetwork::write_expression_R() const
             break;
         case ProbabilisticLayer::NoProbabilistic :
             break;
-        default:
-
-            buffer.str("");
-
-            buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                   << "string write_expression_R() const method.\n"
-                   << "Unknown probabilistic method.\n";
-
-            throw logic_error(buffer.str());
-
-            break;
-
         }
     }
 
@@ -7964,18 +6675,6 @@ string NeuralNetwork::write_expression_R() const
             replace = "outputs <- c(";
 
             break;
-        default:
-
-            buffer.str("");
-
-            buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                   << "string write_expression_R() const method.\n"
-                   << "Unknown probabilistic method.\n";
-
-            throw logic_error(buffer.str());
-
-            break;
-
         }
 
         while((pos = neural_network_expression.find(search, pos)) != string::npos)
@@ -8042,8 +6741,6 @@ string NeuralNetwork::write_expression_R() const
 }
 
 
-// void save_expression(const string&) method
-
 /// Saves the mathematical expression represented by the neural network to a text file.
 /// @param file_name Name of expression text file. 
 
@@ -8067,8 +6764,6 @@ void NeuralNetwork::save_expression(const string& file_name)
     file.close();
 }
 
-
-// void save_expression_python(const string&) method
 
 /// Saves the python function of the expression represented by the neural network to a text file.
 /// @param file_name Name of expression text file.
@@ -8094,8 +6789,6 @@ void NeuralNetwork::save_expression_python(const string& file_name)
 }
 
 
-// void save_expression_R(const string&) method
-
 /// Saves the R function of the expression represented by the neural network to a text file.
 /// @param file_name Name of expression text file.
 
@@ -8120,8 +6813,6 @@ void NeuralNetwork::save_expression_R(const string& file_name)
 }
 
 
-// void save_data(const string&) const method
-
 /// Saves a set of input-output values from the neural network to a data file.
 /// @param file_name Name of data file. 
 
@@ -8135,7 +6826,7 @@ void NeuralNetwork::save_data(const string& file_name) const
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void save_data(const string&) const method.\n"
-               << "Pointer to multilayer perceptron is NULL.\n";
+               << "Pointer to multilayer perceptron is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -8163,7 +6854,7 @@ void NeuralNetwork::save_data(const string& file_name) const
     {
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void save_data(const string&) const method.\n"
-               << "Pointer to scaling layer is NULL.\n";
+               << "Pointer to scaling layer is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -8193,12 +6884,12 @@ void NeuralNetwork::save_data(const string& file_name) const
     for(size_t i = 0; i < inputs_number; i++)
     {
         inputs[i] = scaling_layer_statistics[i].minimum;
-        increments[i] =(scaling_layer_statistics[i].maximum - scaling_layer_statistics[i].minimum)/(double)(points_number-1.0);
+        increments[i] = (scaling_layer_statistics[i].maximum - scaling_layer_statistics[i].minimum)/static_cast<double>(points_number-1.0);
     }
 
     for(size_t i = 0; i < points_number; i++)
     {
-        outputs = calculate_outputs(inputs);
+        outputs = calculate_outputs(inputs.to_column_matrix());
 
         row = inputs.assemble(outputs);
 
@@ -8208,10 +6899,7 @@ void NeuralNetwork::save_data(const string& file_name) const
     }
 
     data.save(file_name);
-
 }
-
-
 
 }
 

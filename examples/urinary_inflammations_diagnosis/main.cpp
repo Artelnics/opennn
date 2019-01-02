@@ -6,7 +6,7 @@
 /*   U R I N A R Y   I N F L A M M A T I O N S   D I A G N O S I S   A P P L I C A T I O N                      */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -32,9 +32,9 @@ int main(void)
 {
     try
     {
-        std::cout << "OpenNN. Urinary Inflammations Diagnosis Application." << std::endl;
+        cout << "OpenNN. Urinary Inflammations Diagnosis Application." << endl;
 
-        srand((unsigned)time(NULL));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
@@ -82,8 +82,8 @@ int main(void)
         variables_pointer->set_units(7, "boolean");
         variables_pointer->set_use(7, Variables::Target);
 
-        const Matrix<std::string> inputs_information = variables_pointer->arrange_inputs_information();
-        const Matrix<std::string> targets_information = variables_pointer->arrange_targets_information();
+        const Matrix<string> inputs_information = variables_pointer->get_inputs_information();
+        const Matrix<string> targets_information = variables_pointer->get_targets_information();
 
         // Instances
 
@@ -113,21 +113,15 @@ int main(void)
 
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
-        // Loss index
-
-        LossIndex loss_index(&neural_network, &data_set);
-
-        loss_index.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         // Training strategy
 
-        TrainingStrategy training_strategy(&loss_index);
+        TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_main_type(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_minimum_loss_increase(1.0e-6);
+        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
 
         training_strategy.set_display(false);
 
@@ -135,7 +129,7 @@ int main(void)
 
         ModelSelection model_selection(&training_strategy);
 
-        model_selection.set_inputs_selection_type(ModelSelection::GENETIC_ALGORITHM);
+        model_selection.set_inputs_selection_method(ModelSelection::GENETIC_ALGORITHM);
 
         GeneticAlgorithm* genetic_algorithm_pointer = model_selection.get_genetic_algorithm_pointer();
 
@@ -145,7 +139,7 @@ int main(void)
 
         genetic_algorithm_pointer->set_display(true);
 
-        ModelSelection::ModelSelectionResults model_selection_results = model_selection.perform_inputs_selection();
+        const ModelSelection::Results model_selection_results = model_selection.perform_inputs_selection();
 
         // Testing analysis
 
@@ -169,9 +163,9 @@ int main(void)
 
         return(0);
     }
-    catch(std::exception& e)
+    catch(exception& e)
     {
-        std::cout << e.what() << std::endl;
+        cout << e.what() << endl;
 
         return(1);
     }
@@ -179,7 +173,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2015 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

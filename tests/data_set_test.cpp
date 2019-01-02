@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   D A T A   S E T   T E S T   C L A S S                                                                      */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -140,8 +139,8 @@ void DataSetTest::test_get_variables()
 
    const Variables& variables = ds.get_variables();
 
-   assert_true(variables.count_inputs_number() == 3, LOG);
-   assert_true(variables.count_targets_number() == 2, LOG);
+   assert_true(variables.get_inputs_number() == 3, LOG);
+   assert_true(variables.get_targets_number() == 2, LOG);
 }
 
 
@@ -177,56 +176,56 @@ void DataSetTest::test_get_data()
 }
 
 
-void DataSetTest::test_arrange_training_data()
+void DataSetTest::test_get_training_data()
 {
-   message += "test_arrange_training_data\n";
+   message += "test_get_training_data\n";
 }
 
 
-void DataSetTest::test_arrange_selection_data()
+void DataSetTest::test_get_selection_data()
 {
-   message += "test_arrange_selection_data\n";
+   message += "test_get_selection_data\n";
 }
 
 
-void DataSetTest::test_arrange_testing_data()
+void DataSetTest::test_get_testing_data()
 {
-   message += "test_arrange_testing_data\n";
+   message += "test_get_testing_data\n";
 }
 
 
-void DataSetTest::test_arrange_input_data() 
+void DataSetTest::test_get_inputs() 
 {
-   message += "test_arrange_input_data\n";
+   message += "test_get_inputs\n";
 
 //   DataSet ds(1, 3, 2);
 
 //   size_t instances_number = ds.get_instances().get_instances_number();
-//   size_t inputs_number = ds.get_variables().count_inputs_number();
+//   size_t inputs_number = ds.get_variables().get_inputs_number();
 
-//   Matrix<double> input_data = ds.arrange_input_data();
+//   Matrix<double> inputs = ds.get_inputs();
 
-//   size_t rows_number = input_data.get_rows_number();
-//   size_t columns_number = input_data.get_columns_number();
+//   size_t rows_number = inputs.get_rows_number();
+//   size_t columns_number = inputs.get_columns_number();
 
 //   assert_true(instances_number == rows_number, LOG);
 //   assert_true(inputs_number == columns_number, LOG);
 }
 
 
-void DataSetTest::test_arrange_target_data() 
+void DataSetTest::test_get_targets() 
 {
-   message += "test_arrange_target_data\n";
+   message += "test_get_targets\n";
 
    DataSet ds(1,3,2);
 
    size_t instances_number = ds.get_instances().get_instances_number();
-   size_t targets_number = ds.get_variables().count_targets_number();
+   size_t targets_number = ds.get_variables().get_targets_number();
 
-   Matrix<double> target_data = ds.arrange_target_data();
+   Matrix<double> targets = ds.get_targets();
 
-   size_t rows_number = target_data.get_rows_number();
-   size_t columns_number = target_data.get_columns_number();
+   size_t rows_number = targets.get_rows_number();
+   size_t columns_number = targets.get_columns_number();
 
    assert_true(instances_number == rows_number, LOG);
    assert_true(targets_number == columns_number, LOG);
@@ -265,8 +264,8 @@ void DataSetTest::test_set()
    ds.set(1, 2, 3);
 
    assert_true(ds.get_instances().get_instances_number() == 1, LOG);
-   assert_true(ds.get_variables().count_inputs_number() == 2, LOG);
-   assert_true(ds.get_variables().count_targets_number() == 3, LOG);
+   assert_true(ds.get_variables().get_inputs_number() == 2, LOG);
+   assert_true(ds.get_variables().get_targets_number() == 3, LOG);
 
    data = ds.get_data();
 
@@ -786,15 +785,15 @@ void DataSetTest::test_unscale_inputs_mean_standard_deviation()
 
 //   // Test
 
-//   Matrix<double> input_data = ds.arrange_input_data();
+//   Matrix<double> inputs = ds.get_inputs();
 
 //   data_statistics.set(4);
 
 //   ds.unscale_inputs_mean_standard_deviation(data_statistics);
 
-//   Matrix<double> new_input_data = ds.arrange_input_data();
+//   Matrix<double> new_inputs = ds.get_inputs();
 
-//   assert_true(new_input_data == input_data, LOG);
+//   assert_true(new_inputs == inputs, LOG);
 
 }
 
@@ -808,15 +807,15 @@ void DataSetTest::test_unscale_targets_mean_standard_deviation()
 
    ds.set_display(false);
 
-   Matrix<double> target_data = ds.arrange_target_data();
+   Matrix<double> targets = ds.get_targets();
 
    Vector< Statistics<double> > data_statistics(4);
 
    ds.unscale_targets_mean_standard_deviation(data_statistics);
 
-   Matrix<double> new_target_data = ds.arrange_target_data();
+   Matrix<double> new_targets = ds.get_targets();
 
-   assert_true(new_target_data == target_data, LOG);
+   assert_true(new_targets == targets, LOG);
 }
 
 
@@ -839,15 +838,15 @@ void DataSetTest::test_unscale_inputs_minimum_maximum()
 
    // Test
 
-   Matrix<double> input_data = ds.arrange_input_data();
+   Matrix<double> inputs = ds.get_inputs();
 
    data_statistics.set(4);
 
    ds.unscale_inputs_minimum_maximum(data_statistics);
 
-   Matrix<double> new_input_data = ds.arrange_input_data();
+   Matrix<double> new_inputs = ds.get_inputs();
 
-   assert_true(new_input_data == input_data, LOG);
+   assert_true(new_inputs == inputs, LOG);
 }
 
 
@@ -860,15 +859,15 @@ void DataSetTest::test_unscale_targets_minimum_maximum()
 
    ds.set_display(false);
 
-   Matrix<double> target_data = ds.arrange_target_data();
+   Matrix<double> targets = ds.get_targets();
 
    Vector< Statistics<double> > data_statistics(4);
 
    ds.unscale_targets_minimum_maximum(data_statistics);
 
-   Matrix<double> new_target_data = ds.arrange_target_data();
+   Matrix<double> new_targets = ds.get_targets();
 
-   assert_true(new_target_data == target_data, LOG);
+   assert_true(new_targets == targets, LOG);
 
 }
 
@@ -893,8 +892,8 @@ void DataSetTest::test_subtract_constant_variables()
 
    ds.unuse_constant_variables();
 
-   assert_true(ds.get_variables().count_inputs_number() == 0, LOG);
-   assert_true(ds.get_variables().count_targets_number() == 1, LOG);
+   assert_true(ds.get_variables().get_inputs_number() == 0, LOG);
+   assert_true(ds.get_variables().get_targets_number() == 1, LOG);
 }
 
 
@@ -933,8 +932,8 @@ void DataSetTest::test_unuse_most_populated_target()
     unused_instances_indices = ds.unuse_most_populated_target(7);
 
     assert_true(unused_instances_indices.size() == 5, LOG);
-    assert_true(ds.get_instances().count_used_instances_number() == 0, LOG);
-    assert_true(ds.get_instances().count_unused_instances_number() == 5, LOG);
+    assert_true(ds.get_instances().get_used_instances_number() == 0, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 5, LOG);
 
     // Test
 
@@ -946,8 +945,8 @@ void DataSetTest::test_unuse_most_populated_target()
     unused_instances_indices = ds2.unuse_most_populated_target(99);
 
     assert_true(unused_instances_indices.size() == 99, LOG);
-    assert_true(ds2.get_instances().count_used_instances_number() == 1, LOG);
-    assert_true(ds2.get_instances().count_unused_instances_number() == 99, LOG);
+    assert_true(ds2.get_instances().get_used_instances_number() == 1, LOG);
+    assert_true(ds2.get_instances().get_unused_instances_number() == 99, LOG);
 
     // Test
 
@@ -959,8 +958,8 @@ void DataSetTest::test_unuse_most_populated_target()
     unused_instances_indices = ds3.unuse_most_populated_target(50);
 
     assert_true(unused_instances_indices.size() == 1, LOG);
-    assert_true(ds3.get_instances().count_used_instances_number() == 0, LOG);
-    assert_true(ds3.get_instances().count_unused_instances_number() == 1, LOG);
+    assert_true(ds3.get_instances().get_used_instances_number() == 0, LOG);
+    assert_true(ds3.get_instances().get_unused_instances_number() == 1, LOG);
 }
 
 void DataSetTest::test_balance_binary_targets_distribution()
@@ -998,7 +997,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     ds.balance_binary_targets_distribution();
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 12, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 12, LOG);
     assert_true(ds.calculate_target_distribution()[1] == 5, LOG);
     assert_true(ds.calculate_target_distribution()[0] == 5, LOG);
 
@@ -1081,7 +1080,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     ds.balance_binary_targets_distribution();
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 10, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 10, LOG);
     assert_true(ds.calculate_target_distribution()[1] == 0, LOG);
     assert_true(ds.calculate_target_distribution()[0] == 0, LOG);
     }
@@ -1165,7 +1164,7 @@ void DataSetTest::test_balance_binary_targets_distribution()
 
     ds.balance_binary_targets_distribution(50.0);
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 3, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 3, LOG);
     assert_true(ds.calculate_target_distribution()[1] == 2, LOG);
     assert_true(ds.calculate_target_distribution()[0] == 5, LOG);
     }
@@ -1226,8 +1225,8 @@ void DataSetTest::test_balance_binary_targets_distribution()
     Vector<size_t> target_distribution = ds.calculate_target_distribution();
 
     assert_true(target_distribution[0] == target_distribution[1], LOG);
-    assert_true(ds.get_instances().arrange_used_indices().size() == 2, LOG);
-    assert_true(ds.get_instances().arrange_unused_indices().size() == 2, LOG);
+    assert_true(ds.get_instances().get_used_indices().size() == 2, LOG);
+    assert_true(ds.get_instances().get_unused_indices().size() == 2, LOG);
     }
 
     //Test
@@ -1362,7 +1361,7 @@ void DataSetTest::test_balance_multiple_targets_distribution()
 
     ds.balance_multiple_targets_distribution();
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 9, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 9, LOG);
     assert_true(ds.calculate_target_distribution()[0] == 0, LOG);
     assert_true(ds.calculate_target_distribution()[1] == 0, LOG);
 
@@ -1455,8 +1454,8 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
 
     unused_instances = ds.balance_approximation_targets_distribution(10.0);
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 1, LOG);
-    assert_true(ds.get_instances().count_used_instances_number() == 9, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 1, LOG);
+    assert_true(ds.get_instances().get_used_instances_number() == 9, LOG);
     assert_true(unused_instances.size() == 1, LOG);
 
     // Test
@@ -1467,8 +1466,8 @@ void DataSetTest::test_balance_function_regression_targets_distribution()
 
     unused_instances = ds2.balance_approximation_targets_distribution(100.0);
 
-    assert_true(ds2.get_instances().count_used_instances_number() == 0, LOG);
-    assert_true(ds2.get_instances().count_unused_instances_number() == 1000, LOG);
+    assert_true(ds2.get_instances().get_used_instances_number() == 0, LOG);
+    assert_true(ds2.get_instances().get_unused_instances_number() == 1000, LOG);
     assert_true(unused_instances.size() == 1000, LOG);
 }
 
@@ -1647,7 +1646,7 @@ void DataSetTest::test_clean_local_outlier_factor()
 
     unused_instances = ds.clean_local_outlier_factor(5);
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 1, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 1, LOG);
     assert_true(unused_instances.size() == 1, LOG);
     assert_true(unused_instances[0] == 9, LOG);
 }
@@ -1677,7 +1676,7 @@ void DataSetTest::test_clean_Tukey_outliers()
 
     ds.get_instances_pointer()->set_unused(outliers_instances);
 
-    assert_true(ds.get_instances().count_unused_instances_number() == 1, LOG);
+    assert_true(ds.get_instances().get_unused_instances_number() == 1, LOG);
     assert_true(outliers_number == 1, LOG);
     assert_true(outliers_instances[0] == 9, LOG);
 }
@@ -1729,7 +1728,7 @@ void DataSetTest::test_to_XML()
 
    document = ds.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 }
 
 
@@ -2100,8 +2099,8 @@ void DataSetTest::test_load_data()
    ds.load_data();
 
    assert_true(ds.get_variables_pointer()->get_variables_number() == 7, LOG);
-   assert_true(ds.get_variables_pointer()->count_inputs_number() == 4, LOG);
-   assert_true(ds.get_variables_pointer()->count_targets_number() == 3, LOG);
+   assert_true(ds.get_variables_pointer()->get_inputs_number() == 4, LOG);
+   assert_true(ds.get_variables_pointer()->get_targets_number() == 3, LOG);
    assert_true(ds.get_instances_pointer()->get_instances_number() == 4, LOG);
 
    data = ds.get_data();
@@ -2142,8 +2141,8 @@ void DataSetTest::test_load_data()
    ds.load_data();
 
    assert_true(ds.get_variables_pointer()->get_variables_number() == 7, LOG);
-   assert_true(ds.get_variables_pointer()->count_inputs_number() == 4, LOG);
-   assert_true(ds.get_variables_pointer()->count_targets_number() == 3, LOG);
+   assert_true(ds.get_variables_pointer()->get_inputs_number() == 4, LOG);
+   assert_true(ds.get_variables_pointer()->get_targets_number() == 3, LOG);
 
    assert_true(ds.get_variables_pointer()->get_name(0) == "sepal length", LOG);
    assert_true(ds.get_variables_pointer()->get_name(1) == "sepal width", LOG);
@@ -2242,8 +2241,8 @@ void DataSetTest::test_load_data()
    ds.load_data();
 
    assert_true(ds.get_variables_pointer()->get_variables_number() == 2, LOG);
-   assert_true(ds.get_variables_pointer()->count_inputs_number() == 1, LOG);
-   assert_true(ds.get_variables_pointer()->count_targets_number() == 1, LOG);
+   assert_true(ds.get_variables_pointer()->get_inputs_number() == 1, LOG);
+   assert_true(ds.get_variables_pointer()->get_targets_number() == 1, LOG);
 
    data = ds.get_data();
 
@@ -2276,8 +2275,8 @@ void DataSetTest::test_load_data()
    ds.load_data();
 
    assert_true(ds.get_variables_pointer()->get_variables_number() == 7, LOG);
-   assert_true(ds.get_variables_pointer()->count_inputs_number() == 6, LOG);
-   assert_true(ds.get_variables_pointer()->count_targets_number() == 1, LOG);
+   assert_true(ds.get_variables_pointer()->get_inputs_number() == 6, LOG);
+   assert_true(ds.get_variables_pointer()->get_targets_number() == 1, LOG);
 
    assert_true(ds.get_missing_values_pointer()->get_missing_values_number() == 2, LOG);
 
@@ -2407,8 +2406,8 @@ void DataSetTest::test_convert_time_series()
    assert_true(ds.get_instances().get_instances_number() == 1, LOG);
    assert_true(ds.get_variables().get_variables_number() == 4, LOG);
 
-   assert_true(ds.get_variables().count_inputs_number() == 2, LOG);
-   assert_true(ds.get_variables().count_targets_number() == 2, LOG);
+   assert_true(ds.get_variables().get_inputs_number() == 2, LOG);
+   assert_true(ds.get_variables().get_targets_number() == 2, LOG);
 
 //   assert_true(ds.get_variables().get_name(0) == "x", LOG);
 //   assert_true(ds.get_variables().get_name(1) == "y", LOG);
@@ -2446,8 +2445,8 @@ void DataSetTest::test_convert_autoassociation()
    assert_true(ds.get_instances().get_instances_number() == 2, LOG);
    assert_true(ds.get_variables().get_variables_number() == 4, LOG);
 
-   assert_true(ds.get_variables().count_inputs_number() == 2, LOG);
-   assert_true(ds.get_variables().count_targets_number() == 2, LOG);
+   assert_true(ds.get_variables().get_inputs_number() == 2, LOG);
+   assert_true(ds.get_variables().get_targets_number() == 2, LOG);
 
    assert_true(ds.get_variables().get_name(0) == "x", LOG);
    assert_true(ds.get_variables().get_name(1) == "y", LOG);
@@ -3021,7 +3020,7 @@ void DataSetTest::test_count_tokens()
 
    // Test
 
-   str.assign(" , 1 , 2 , 3 , 4, ");
+   str.assign(", 1 , 2 , 3 , 4, ");
 
    tokens_number = ds.count_tokens(str);
 
@@ -3107,7 +3106,7 @@ void DataSetTest::test_get_tokens()
 
    ds.set_separator("Comma");
 
-   str.assign(" , 1 , 2 , 3 , 4 , ");
+   str.assign(", 1 , 2 , 3 , 4 , ");
 
    tokens = ds.get_tokens(str);
 
@@ -3122,7 +3121,7 @@ void DataSetTest::test_get_tokens()
 
    ds.set_separator("Comma");
 
-   str.assign(" , 1 , 2 , 3 , 4 , ");
+   str.assign(", 1 , 2 , 3 , 4 , ");
 
    tokens = ds.get_tokens(str);
 
@@ -3190,12 +3189,12 @@ void DataSetTest::run_test_case()
 
    test_get_data();
 
-   test_arrange_training_data();
-   test_arrange_selection_data();
-   test_arrange_testing_data();
+   test_get_training_data();
+   test_get_selection_data();
+   test_get_testing_data();
 
-   test_arrange_input_data();
-   test_arrange_target_data();
+   test_get_inputs();
+   test_get_targets();
 
    // Instance methods
 

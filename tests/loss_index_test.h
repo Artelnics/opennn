@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   P E R F O R M A N C E   F U N C T I O N A L   T E S T   C L A S S   H E A D E R                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -17,7 +17,7 @@
 // Unit testing includes
 
 #include "unit_testing.h"
-#include "mock_error_term.h"
+//#include "mock_error_term.h"
 
 using namespace OpenNN;
 
@@ -76,11 +76,13 @@ public:
 
    void test_set_display();
 
-   // Objective functional loss methods
+   // Loss index methods
 
    void test_calculate_loss();
 
    void test_calculate_gradient();
+
+   void test_calculate_layers_delta();
 
    void test_calculate_gradient_norm();
 
@@ -90,8 +92,8 @@ public:
 
    void test_calculate_vector_dot_Hessian();
 
-   void test_calculate_terms();
-   void test_calculate_terms_Jacobian();
+   void test_calculate_error_terms();
+   void test_calculate_error_terms_Jacobian();
 
    // Taylor approximation methods
 
@@ -102,8 +104,8 @@ public:
    // Directional loss methods
    
    void test_calculate_directional_loss();
-   void test_calculate_directional_loss_derivative();
-   void test_calculate_directional_loss_second_derivative();
+   void test_calculate_directional_loss_derivatives();
+   void test_calculate_directional_loss_second_derivatives();
 
    // Serialization methods
 

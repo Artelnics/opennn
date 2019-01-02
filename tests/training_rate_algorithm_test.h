@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   T R A I N I N G   R A T E   A L G O R I T H M   T E S T   C L A S S   H E A D E R                          */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -58,8 +57,7 @@ public:
 
    // Training parameters
 
-   void test_get_bracketing_factor();   
-   void test_get_training_rate_tolerance();
+   void test_get_loss_tolerance();
 
    void test_get_warning_training_rate();
 
@@ -88,7 +86,7 @@ public:
 
    // Training parameters
 
-   void test_set_training_rate_tolerance();
+   void test_set_loss_tolerance();
 
    void test_set_warning_training_rate();
 

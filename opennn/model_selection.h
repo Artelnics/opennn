@@ -79,7 +79,7 @@ public:
 
     /// Enumeration of all the available types of inputs selection algorithms.
 
-    enum InputsSelectionType
+    enum InputsSelectionMethod
     {
         NO_INPUTS_SELECTION,
         GROWING_INPUTS,
@@ -89,7 +89,7 @@ public:
 
     /// Enumeration of all the available types of order selection algorithms.
 
-    enum OrderSelectionType
+    enum OrderSelectionMethod
     {
         NO_ORDER_SELECTION,
         INCREMENTAL_ORDER,
@@ -99,7 +99,7 @@ public:
 
     /// Enumeration of all the available types of threshold selection algorithms.
 
-    enum ThresholdSelectionType
+    enum ThresholdSelectionMethod
     {
         NO_THRESHOLD_SELECTION,
         F1_SCORE_OPTIMIZATION,
@@ -116,7 +116,7 @@ public:
     /// This structure contains the results from the model selection process.
     ///
 
-    struct ModelSelectionResults
+    struct Results
     {
 
         void save(const string&) const;
@@ -176,9 +176,9 @@ public:
     TrainingStrategy* get_training_strategy_pointer() const;
     bool has_training_strategy() const;
 
-    const OrderSelectionType& get_order_selection_type() const;
-    const InputsSelectionType& get_inputs_selection_type() const;
-    const ThresholdSelectionType& get_threshold_selection_type() const;
+    const OrderSelectionMethod& get_order_selection_method() const;
+    const InputsSelectionMethod& get_inputs_selection_method() const;
+    const ThresholdSelectionMethod& get_threshold_selection_method() const;
 
     IncrementalOrder* get_incremental_order_pointer() const;
     GoldenSectionOrder* get_golden_section_order_pointer() const;
@@ -210,14 +210,14 @@ public:
     void set_threshold_selection_MPI(const ModelSelection*);
 #endif
 
-    void set_order_selection_type(const OrderSelectionType&);
-    void set_order_selection_type(const string&);
+    void set_order_selection_method(const OrderSelectionMethod&);
+    void set_order_selection_method(const string&);
 
-    void set_inputs_selection_type(const InputsSelectionType&);
-    void set_inputs_selection_type(const string&);
+    void set_inputs_selection_method(const InputsSelectionMethod&);
+    void set_inputs_selection_method(const string&);
 
-    void set_threshold_selection_type(const ThresholdSelectionType&);
-    void set_threshold_selection_type(const string&);
+    void set_threshold_selection_method(const ThresholdSelectionMethod&);
+    void set_threshold_selection_method(const string&);
 
     void set_approximation(const bool&);
 
@@ -241,13 +241,13 @@ public:
 
     Vector<double> calculate_inputs_importance() const;
 
-    ModelSelectionResults perform_order_selection() const;
+    Results perform_order_selection() const;
 
-    ModelSelectionResults perform_inputs_selection() const;
+    Results perform_inputs_selection() const;
 
-    ModelSelectionResults perform_threshold_selection() const;
+    Results perform_threshold_selection() const;
 
-    ModelSelectionResults perform_model_selection() const;
+    Results perform_model_selection() const;
 
     // Serialization methods
 
@@ -314,15 +314,15 @@ private:
 
     /// Type of order selection algorithm.
 
-    OrderSelectionType order_selection_type;
+    OrderSelectionMethod order_selection_method;
 
     /// Type of inputs selection algorithm.
 
-    InputsSelectionType inputs_selection_type;
+    InputsSelectionMethod inputs_selection_method;
 
     /// Type of threshold selection algorithm.
 
-    ThresholdSelectionType threshold_selection_type;
+    ThresholdSelectionMethod threshold_selection_method;
 
     /// Display messages to screen.
 

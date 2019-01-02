@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M A T R I X   T E S T   C L A S S   H E A D E R                                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -87,10 +87,10 @@ public:
    void test_get_rows_number();
    void test_get_columns_number();
 
-   void test_arrange_row();
-   void test_arrange_column();
+   void test_get_row();
+   void test_get_column();
 
-   void test_arrange_submatrix();
+   void test_get_submatrix();
 
    // Set methods
 
@@ -172,6 +172,20 @@ public:
 
    void test_calculate_k_means();
 
+   void test_threshold();
+   void test_symmetric_threshold();
+   void test_logistic();
+   void test_hyperbolic_tangent();
+
+   void test_hyperbolic_tangent_derivatives();
+   void test_hyperbolic_tangent_second_derivatives();
+   void test_logistic_derivatives();
+   void test_logistic_second_derivatives();
+   void test_threshold_derivatives();
+   void test_threshold_second_derivatives();
+   void test_symmetric_threshold_derivatives();
+   void test_symmetric_threshold_second_derivatives();
+
    // Scaling methods
  
    void test_scale_mean_standard_deviation();
@@ -228,7 +242,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Roberto Lopez.
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

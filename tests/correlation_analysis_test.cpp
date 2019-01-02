@@ -6,7 +6,7 @@
 /*   C O R R E L A T I O N   A N A L Y S I S   T E S T   C L A S S                                              */
 /*                                                                                                              */
 /*   Javier Sanchez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   E-mail: javiersanchez@artelnics.com                                                                        */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -61,13 +61,13 @@ void CorrelationAnalysisTest::test_calculate_linear_correlation()
 
     double correlation;
 
-    for(int i=0; i< test_size; i++) y[i] = 2*x[i];
+    for(int i = 0; i < test_size; i++) y[i] = 2*x[i];
 
     correlation = CorrelationAnalysis::calculate_linear_correlation(x,y);
     assert_true(correlation == 1, LOG);
     assert_true(abs(correlation) <= 1, LOG);
 
-    for(int i=0; i<test_size; i++) y[i] = -i;
+    for(int i = 0; i <test_size; i++) y[i] = -i;
 
     correlation = CorrelationAnalysis::calculate_linear_correlation(x,y);
     assert_true(correlation == -1, LOG);
@@ -85,7 +85,7 @@ void CorrelationAnalysisTest::test_calculate_spearman_linear_correlation()
     x.initialize_sequential();
     Vector<double> y(test_size);
 
-    for(int i=0; i< test_size; i++) y[i] = 2*x[i];
+    for(int i = 0; i < test_size; i++) y[i] = 2*x[i];
 
     double correlation;
 
@@ -93,7 +93,7 @@ void CorrelationAnalysisTest::test_calculate_spearman_linear_correlation()
     assert_true(correlation == 1, LOG);
     assert_true(abs(correlation) <= 1, LOG);
 
-    for(int i=0; i<test_size; i++) y[i] = -i;
+    for(int i = 0; i <test_size; i++) y[i] = -i;
 
     assert_true(CorrelationAnalysis::calculate_rank_linear_correlation(x,y) == -1, LOG);
     assert_true(abs(correlation) <= 1, LOG);
@@ -119,13 +119,13 @@ void CorrelationAnalysisTest::test_calculate_linear_correlation_missing_values()
 
     double correlation;
 
-    for(int i=0; i< test_size; i++) y[i] = 2*x[i];
+    for(int i = 0; i < test_size; i++) y[i] = 2*x[i];
 
     correlation = CorrelationAnalysis::calculate_linear_correlation_missing_values(x,y,z);
     assert_true(correlation == 1, LOG);
     assert_true(abs(correlation) <= 1, LOG);
 
-    for(int i=0; i<test_size; i++) y[i] = -i;
+    for(int i = 0; i <test_size; i++) y[i] = -i;
 
     correlation = CorrelationAnalysis::calculate_linear_correlation_missing_values(x,y,z);
     assert_true(correlation == -1, LOG);
@@ -175,12 +175,12 @@ void CorrelationAnalysisTest::test_calculate_logistic_correlation()
     double correlation;
 
     y.initialize(0);
-    for(int i= test_size - (test_size/2); i<test_size; i++) y[i] = 1;
+    for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 1;
     correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
     assert_true(correlation > 0.95, LOG);
 
     y.initialize(1);
-    for(int i= test_size - (test_size/2); i<test_size; i++) y[i] = 0;
+    for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 0;
     correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
     assert_true(correlation < -0.99, LOG);
 
@@ -203,12 +203,12 @@ void CorrelationAnalysisTest::test_calculate_rank_logistic_correlation()
     double correlation;
 
     y.initialize(0);
-    for(int i= test_size - (test_size/2); i<test_size; i++) y[i] = 1;
+    for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 1;
     correlation = CorrelationAnalysis::calculate_rank_logistic_correlation(x,y);
     assert_true(correlation > 0.95, LOG);
 
     y.initialize(1);
-    for(int i= test_size - (test_size/2); i<test_size; i++) y[i] = 0;
+    for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 0;
     correlation = CorrelationAnalysis::calculate_rank_logistic_correlation(x,y);
     assert_true(correlation < -0.99, LOG);
 
@@ -233,14 +233,14 @@ void CorrelationAnalysisTest::test_calculate_logistic_correlation_missing_values
 
     for(int i = 0; i < test_size/2; i++) y[i] = 0;
 
-    for(int i = test_size - (test_size/2); i<test_size; i++) y[i] = 1;
+    for(int i = test_size - (test_size/2); i <test_size; i++) y[i] = 1;
 
     correlation = CorrelationAnalysis::calculate_logistic_correlation_missing_values(x,y,z);
     assert_true(correlation > 0.95, LOG);
 
     for(int i = 0; i < test_size/2; i++) y[i] = 1;
 
-    for(int i= test_size - (test_size/2); i<test_size; i++) y[i] = 0;
+    for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 0;
 
     correlation = CorrelationAnalysis::calculate_logistic_correlation_missing_values(x,y,z);
     assert_true(correlation < -0.95, LOG);
@@ -282,7 +282,7 @@ void CorrelationAnalysisTest::test_calculate_point_biserial_correlation()
     double correlation;
 
     y.initialize(1);
-    for(int i=0; i < y.size(); i++)
+    for(int i = 0; i < y.size(); i++)
     {
         if(i%2 == 0) y[i] = 0;
     }
@@ -293,7 +293,7 @@ void CorrelationAnalysisTest::test_calculate_point_biserial_correlation()
     {
         y[i] = 0;
     }
-    for(int i = test_size - (test_size/2); i<test_size; i++)
+    for(int i = test_size - (test_size/2); i <test_size; i++)
     {
         y[i] = 1;
     }
@@ -304,7 +304,7 @@ void CorrelationAnalysisTest::test_calculate_point_biserial_correlation()
     {
         y[i] = 1;
     }
-    for(int i = test_size - (test_size/2); i<test_size; i++)
+    for(int i = test_size - (test_size/2); i <test_size; i++)
     {
         y[i] = 0;
     }
@@ -328,7 +328,7 @@ void CorrelationAnalysisTest::test_calculate_point_biserial_correlation_missing_
     double correlation;
 
     y.initialize(1);
-    for(int i=0; i < y.size(); i++)
+    for(int i = 0; i < y.size(); i++)
     {
         if(i%2 == 0) y[i] = 0;
     }
@@ -339,7 +339,7 @@ void CorrelationAnalysisTest::test_calculate_point_biserial_correlation_missing_
     {
         y[i] = 0;
     }
-    for(int i = test_size - (test_size/2); i<test_size; i++)
+    for(int i = test_size - (test_size/2); i <test_size; i++)
     {
         y[i] = 1;
     }
@@ -350,7 +350,7 @@ void CorrelationAnalysisTest::test_calculate_point_biserial_correlation_missing_
     {
         y[i] = 1;
     }
-    for(int i = test_size - (test_size/2); i<test_size; i++)
+    for(int i = test_size - (test_size/2); i <test_size; i++)
     {
         y[i] = 0;
     }

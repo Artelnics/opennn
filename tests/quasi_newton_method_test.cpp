@@ -5,9 +5,9 @@
 /*                                                                                                              */ 
 /*   Q U A S I - N E W T O N   M E T H O D   T E S T   C L A S S                                                */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -43,7 +43,7 @@ void QuasiNewtonMethodTest::test_constructor()
 {
    message += "test_constructor\n"; 
 
-   LossIndex pf;
+   SumSquaredError sse;
 
    // Default constructor
 
@@ -52,7 +52,7 @@ void QuasiNewtonMethodTest::test_constructor()
 
    // Loss index constructor
 
-   QuasiNewtonMethod qnm2(&pf); 
+   QuasiNewtonMethod qnm2(&sse); 
    assert_true(qnm2.has_loss_index() == true, LOG);
 }
 
@@ -102,22 +102,22 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
    NeuralNetwork nn(1, 1);
-   LossIndex pf(&nn, &ds);
-   QuasiNewtonMethod qnm(&pf);
+   SumSquaredError sse(&nn, &ds);
+   QuasiNewtonMethod qnm(&sse);
 
    // Test 
 
    nn.initialize_parameters(1.0);
-
-   Vector<double> old_parameters = nn.arrange_parameters();
-   Vector<double> old_gradient = pf.calculate_gradient();
-//   Matrix<double> old_inverse_Hessian = pf.calculate_inverse_Hessian();
+/*
+   Vector<double> old_parameters = nn.get_parameters();
+   Vector<double> old_gradient = sse.calculate_gradient();
+//   Matrix<double> old_inverse_Hessian = sse.calculate_inverse_Hessian();
 
    nn.initialize_parameters(-0.5);
 
-   Vector<double> parameters = nn.arrange_parameters();
-   Vector<double> gradient = pf.calculate_gradient();
-//   Matrix<double> inverse_Hessian = pf.calculate_inverse_Hessian();
+   Vector<double> parameters = nn.get_parameters();
+   Vector<double> gradient = sse.calculate_gradient();
+//   Matrix<double> inverse_Hessian = sse.calculate_inverse_Hessian();
 
 //   Matrix<double> DFP_inverse_Hessian
 //   = qnm.calculate_DFP_inverse_Hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
@@ -128,15 +128,15 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation()
 
    nn.initialize_parameters(1.0e-3);
 
-   old_parameters = nn.arrange_parameters();
-   old_gradient = pf.calculate_gradient();
-//   old_inverse_Hessian = pf.calculate_inverse_Hessian();
+   old_parameters = nn.get_parameters();
+   old_gradient = sse.calculate_gradient();
+//   old_inverse_Hessian = sse.calculate_inverse_Hessian();
 
    nn.initialize_parameters(1.0e-6);
 
-   parameters = nn.arrange_parameters();
-   gradient = pf.calculate_gradient();
-//   inverse_Hessian = pf.calculate_inverse_Hessian();
+   parameters = nn.get_parameters();
+   gradient = sse.calculate_gradient();
+//   inverse_Hessian = sse.calculate_inverse_Hessian();
 
 //   DFP_inverse_Hessian = qnm.calculate_DFP_inverse_Hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
 
@@ -146,15 +146,15 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation()
 
    nn.initialize_parameters(1.0e-6);
 
-   old_parameters = nn.arrange_parameters();
-   old_gradient = pf.calculate_gradient();
-//   old_inverse_Hessian = pf.calculate_inverse_Hessian();
+   old_parameters = nn.get_parameters();
+   old_gradient = sse.calculate_gradient();
+//   old_inverse_Hessian = sse.calculate_inverse_Hessian();
 
    nn.initialize_parameters(1.0e-9);
 
-   parameters = nn.arrange_parameters();
-   gradient = pf.calculate_gradient();
-//   inverse_Hessian = pf.calculate_inverse_Hessian();
+   parameters = nn.get_parameters();
+   gradient = sse.calculate_gradient();
+//   inverse_Hessian = sse.calculate_inverse_Hessian();
 
 //   DFP_inverse_Hessian = qnm.calculate_DFP_inverse_Hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
 
@@ -174,7 +174,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_Hessian_approximation()
 //   old_inverse_Hessian(1,1) = 0.75;
 
 //   DFP_inverse_Hessian = qnm.calculate_DFP_inverse_Hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-
+*/
 }
 
 
@@ -186,31 +186,30 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_Hessian_approximation()
 
    DataSet ds;
    NeuralNetwork nn(1, 1);
+/*
+   SumSquaredError sse(&nn, &ds);
 
-   LossIndex pf(&nn, &ds);
+   sse.set_regularization_method(LossIndex::L2);
 
-   pf.destruct_all_terms();
-   pf.set_regularization_type(LossIndex::NEURAL_PARAMETERS_NORM);
-
-   QuasiNewtonMethod qnm(&pf);
+   QuasiNewtonMethod qnm(&sse);
 
    nn.initialize_parameters(1.0);
 
-   Vector<double> old_parameters = nn.arrange_parameters();
-   Vector<double> old_gradient = pf.calculate_gradient();
-//   Matrix<double> old_inverse_Hessian = pf.calculate_inverse_Hessian();
+   Vector<double> old_parameters = nn.get_parameters();
+   Vector<double> old_gradient = sse.calculate_gradient();
+//   Matrix<double> old_inverse_Hessian = sse.calculate_inverse_Hessian();
 
    nn.initialize_parameters(-0.5);
 
-   Vector<double> parameters = nn.arrange_parameters();
-   Vector<double> gradient = pf.calculate_gradient();
-//   Matrix<double> inverse_Hessian = pf.calculate_inverse_Hessian();
+   Vector<double> parameters = nn.get_parameters();
+   Vector<double> gradient = sse.calculate_gradient();
+//   Matrix<double> inverse_Hessian = sse.calculate_inverse_Hessian();
 
 //   Matrix<double> BFGS_inverse_Hessian
 //   = qnm.calculate_BFGS_inverse_Hessian(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
 
 //   assert_true(BFGS_inverse_Hessian == inverse_Hessian, LOG);
-
+*/
 }
 
 // @todo
@@ -222,22 +221,22 @@ void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation()
    NeuralNetwork nn(1, 1);
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
-   LossIndex pf(&nn, &ds);
-   QuasiNewtonMethod qnm(&pf);
+   SumSquaredError sse(&nn, &ds);
+   QuasiNewtonMethod qnm(&sse);
 
    qnm.set_inverse_Hessian_approximation_method(QuasiNewtonMethod::DFP);
 
    nn.initialize_parameters(1.0);
-
-   Vector<double> old_parameters = nn.arrange_parameters();
-   Vector<double> old_gradient = pf.calculate_gradient();
-//   Matrix<double> old_inverse_Hessian = pf.calculate_inverse_Hessian();
+/*
+   Vector<double> old_parameters = nn.get_parameters();
+   Vector<double> old_gradient = sse.calculate_gradient();
+//   Matrix<double> old_inverse_Hessian = sse.calculate_inverse_Hessian();
 
    nn.initialize_parameters(-0.5);
 
-   Vector<double> parameters = nn.arrange_parameters();
-   Vector<double> gradient = pf.calculate_gradient();
-//   Matrix<double> inverse_Hessian = pf.calculate_inverse_Hessian();
+   Vector<double> parameters = nn.get_parameters();
+   Vector<double> gradient = sse.calculate_gradient();
+//   Matrix<double> inverse_Hessian = sse.calculate_inverse_Hessian();
 
 //   Matrix<double> inverse_Hessian_approximation
 //   = qnm.calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
@@ -248,15 +247,15 @@ void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation()
 
    nn.initialize_parameters(1.0);
 
-   old_parameters = nn.arrange_parameters();
-   old_gradient = pf.calculate_gradient();
-//   old_inverse_Hessian = pf.calculate_inverse_Hessian();
+   old_parameters = nn.get_parameters();
+   old_gradient = sse.calculate_gradient();
+//   old_inverse_Hessian = sse.calculate_inverse_Hessian();
 
    nn.initialize_parameters(-0.5);
 
-   parameters = nn.arrange_parameters();
-   gradient = pf.calculate_gradient();
-//   inverse_Hessian = pf.calculate_inverse_Hessian();
+   parameters = nn.get_parameters();
+   gradient = sse.calculate_gradient();
+//   inverse_Hessian = sse.calculate_inverse_Hessian();
 
 //   inverse_Hessian_approximation
 //   = qnm.calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
@@ -278,7 +277,7 @@ void QuasiNewtonMethodTest::test_calculate_inverse_Hessian_approximation()
 
 //   inverse_Hessian_approximation
 //   = qnm.calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-
+*/
 }
 
 
@@ -295,8 +294,8 @@ void QuasiNewtonMethodTest::test_perform_training()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
    NeuralNetwork nn(1, 1, 1);
-   LossIndex pf(&nn, &ds);
-   QuasiNewtonMethod qnm(&pf);
+   SumSquaredError sse(&nn, &ds);
+   QuasiNewtonMethod qnm(&sse);
    qnm.set_inverse_Hessian_approximation_method(QuasiNewtonMethod::DFP);
 
    qnm.set_reserve_all_training_history(true);
@@ -304,15 +303,15 @@ void QuasiNewtonMethodTest::test_perform_training()
     // Test
 
    nn.initialize_parameters(3.1415927);
-
-   double old_loss = pf.calculate_loss();
+/*
+   double old_loss = sse.calculate_loss();
 
    qnm.set_maximum_iterations_number(2),
    qnm.set_display(false);
 
    qnm.perform_training();
 
-   double loss = pf.calculate_loss();
+   double loss = sse.calculate_loss();
 
    assert_true(loss < old_loss, LOG);
 
@@ -324,7 +323,7 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    qnm.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
    qnm.set_loss_goal(0.0);
-   qnm.set_minimum_loss_increase(0.0);
+   qnm.set_minimum_loss_decrease(0.0);
    qnm.set_gradient_norm_goal(0.0);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
@@ -339,14 +338,14 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    qnm.set_minimum_parameters_increment_norm(0.0);
    qnm.set_loss_goal(loss_goal);
-   qnm.set_minimum_loss_increase(0.0);
+   qnm.set_minimum_loss_decrease(0.0);
    qnm.set_gradient_norm_goal(0.0);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
 
    qnm.perform_training();
 
-   loss = pf.calculate_loss();
+   loss = sse.calculate_loss();
 
    assert_true(loss < loss_goal, LOG);
 
@@ -358,7 +357,7 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    qnm.set_minimum_parameters_increment_norm(0.0);
    qnm.set_loss_goal(0.0);
-   qnm.set_minimum_loss_increase(minimum_loss_increase);
+   qnm.set_minimum_loss_decrease(minimum_loss_increase);
    qnm.set_gradient_norm_goal(0.0);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
@@ -373,16 +372,16 @@ void QuasiNewtonMethodTest::test_perform_training()
 
    qnm.set_minimum_parameters_increment_norm(0.0);
    qnm.set_loss_goal(0.0);
-   qnm.set_minimum_loss_increase(0.0);
+   qnm.set_minimum_loss_decrease(0.0);
    qnm.set_gradient_norm_goal(gradient_norm_goal);
    qnm.set_maximum_iterations_number(10);
    qnm.set_maximum_time(1000.0);
 
    qnm.perform_training();
 
-   double gradient_norm = pf.calculate_gradient().calculate_norm();
+   double gradient_norm = sse.calculate_gradient().calculate_norm();
    assert_true(gradient_norm < gradient_norm_goal, LOG);
-
+*/
 }
 
 
@@ -393,7 +392,7 @@ void QuasiNewtonMethodTest::test_to_XML()
    QuasiNewtonMethod qnm;
 
    tinyxml2::XMLDocument* document = qnm.to_XML();
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    delete document;
 }
@@ -407,9 +406,9 @@ void QuasiNewtonMethodTest::test_resize_training_history()
 
     NeuralNetwork nn;
 
-    LossIndex pf(&nn, &ds);
+    SumSquaredError sse(&nn, &ds);
 
-    QuasiNewtonMethod qnm(&pf);
+    QuasiNewtonMethod qnm(&sse);
 
     QuasiNewtonMethod::QuasiNewtonMethodResults results(&qnm);
 

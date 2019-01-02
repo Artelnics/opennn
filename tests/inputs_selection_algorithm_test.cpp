@@ -6,7 +6,7 @@
 /*   I N P U T   S E L E C T I O N   A L G O R I T H M   T E S T   C L A S S                                    */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/
@@ -73,7 +73,7 @@ void InputsSelectionAlgorithmTest::test_get_training_strategy_pointer()
 
     GrowingInputs gi(&ts);
 
-    assert_true(gi.get_training_strategy_pointer() != NULL, LOG);
+    assert_true(gi.get_training_strategy_pointer() != nullptr, LOG);
 
 }
 
@@ -113,7 +113,7 @@ void InputsSelectionAlgorithmTest::test_set_training_strategy_pointer()
 
     gi.set_training_strategy_pointer(&ts);
 
-    assert_true(gi.get_training_strategy_pointer() != NULL, LOG);
+    assert_true(gi.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 void InputsSelectionAlgorithmTest::test_set_default()
@@ -140,9 +140,9 @@ void InputsSelectionAlgorithmTest::test_set_neural_inputs()
 
 //    NeuralNetwork nn(2,6,1);
 
-//    LossIndex pf(&nn, &ds);
+//    SumSquaredError sse(&nn, &ds);
 
-//    TrainingStrategy ts(&pf);
+//    TrainingStrategy ts(&sse);
 
 //    GrowingInputs gi(&ts);
 
