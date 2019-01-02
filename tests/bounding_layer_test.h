@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   B O U N D I N G   L A Y E R   T E S T   C L A S S   H E A D E R                                            */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -50,7 +49,7 @@ public:
 
    // Get methods
 
-   // PerceptronLayer architecture 
+   // Architecture
 
    void test_get_bounding_neurons_number();
    
@@ -94,8 +93,8 @@ public:
    // Output methods
 
    void test_calculate_outputs();
-   void test_calculate_derivative();
-   void test_calculate_second_derivative();
+   void test_calculate_derivatives();
+   void test_calculate_second_derivatives();
 
 
    // Expression methods

@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   M A T R I X   T E S T   C L A S S                                                                          */
 /*                                                                                                              */ 
-/*   Roberto Lopez                                                                                              */ 
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+ 
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -461,9 +461,9 @@ void SparseMatrixTest::test_get_columns_number()
 }
 
 
-void SparseMatrixTest::test_arrange_row()
+void SparseMatrixTest::test_get_row()
 {
-   message += "test_arrange_row\n";
+   message += "test_get_row\n";
 
    SparseMatrix<int> m(1, 1);
 
@@ -475,9 +475,9 @@ void SparseMatrixTest::test_arrange_row()
 }
 
 
-void SparseMatrixTest::test_arrange_column()
+void SparseMatrixTest::test_get_column()
 {
-   message += "test_arrange_column\n";
+   message += "test_get_column\n";
 
    SparseMatrix<int> m(1, 1);
 
@@ -489,9 +489,9 @@ void SparseMatrixTest::test_arrange_column()
 }
 
 
-void SparseMatrixTest::test_arrange_submatrix()
+void SparseMatrixTest::test_get_submatrix()
 {
-   message += "test_arrange_submatrix\n";
+   message += "test_get_submatrix\n";
 }
 
 
@@ -1730,10 +1730,10 @@ void SparseMatrixTest::run_test_case()
    test_get_rows_number();
    test_get_columns_number();
 
-   test_arrange_row();
-   test_arrange_column();
+   test_get_row();
+   test_get_column();
 
-   test_arrange_submatrix();
+   test_get_submatrix();
 
    // Set methods
 
@@ -1895,7 +1895,7 @@ SparseMatrix<double> SparseMatrixTest::dot(const SparseMatrix<double>& matrix, c
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Roberto Lopez
+// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

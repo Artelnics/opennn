@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   O U T P U T S   C L A S S   H E A D E R                                                                    */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -68,11 +67,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   Outputs& operator =(const Outputs&);
+   Outputs& operator = (const Outputs&);
 
    // EQUAL TO OPERATOR
 
-   bool operator ==(const Outputs&) const;
+   bool operator == (const Outputs&) const;
 
    ///
    /// This structure contains the information of a single output.
@@ -111,18 +110,18 @@ public:
 
    // Output variables information
 
-   Vector<string> arrange_names() const;
+   Vector<string> get_names() const;
    const string& get_name(const size_t&) const;
 
-   Vector<string> arrange_units() const;
+   Vector<string> get_units() const;
    const string& get_unit(const size_t&) const;
 
-   Vector<string> arrange_descriptions() const;
+   Vector<string> get_descriptions() const;
    const string& get_description(const size_t&) const;
 
    // Variables
 
-   Matrix<string> arrange_information() const;
+   Matrix<string> get_information() const;
 
    // Display messages
 
@@ -153,6 +152,7 @@ public:
    // Variables
 
    void set_information(const Matrix<string>&);
+   void set_information_vector_of_vector(const vector< vector<string> >&);
 
    void set_display(const bool&);
 
@@ -177,8 +177,8 @@ public:
    // virtual void read_XML(   );
 
    // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const bool& , const bool& is_data_unscaled = false, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >());
-   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool& , const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >() );
+   void to_PMML(tinyxml2::XMLElement*, const bool&, const bool& is_data_unscaled = false, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >());
+   void write_PMML_data_dictionary(tinyxml2::XMLPrinter&, const bool&, const Vector< Statistics<double> >& outputs_statistics = Vector< Statistics<double> >() );
    void write_PMML_mining_schema(tinyxml2::XMLPrinter&, const bool&);
    void write_PMML_neural_outputs(tinyxml2::XMLPrinter&, size_t number_of_layers, const bool&, bool is_data_unscaled = false);
 

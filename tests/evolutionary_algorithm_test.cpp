@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   E V O L U T I O N A R Y   A L G O R I T H M   T E S T   C L A S S                                          */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -42,7 +42,7 @@ void EvolutionaryAlgorithmTest::test_constructor()
 
    EvolutionaryAlgorithm ea1; 
    assert_true(ea1.has_loss_index() == false, LOG);
-
+/*
    // Loss index constructor
 
    LossIndex pf2;
@@ -57,7 +57,7 @@ void EvolutionaryAlgorithmTest::test_constructor()
 
    EvolutionaryAlgorithm ea3(&mof3); 
    assert_true(ea3.has_loss_index() == true, LOG);
-
+*/
 }
 
 
@@ -85,8 +85,8 @@ void EvolutionaryAlgorithmTest::test_get_population()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn,&ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn,&ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -106,8 +106,8 @@ void EvolutionaryAlgorithmTest::test_get_loss()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -126,8 +126,8 @@ void EvolutionaryAlgorithmTest::test_get_fitness()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -146,8 +146,8 @@ void EvolutionaryAlgorithmTest::test_get_selection()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn,&ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn,&ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -408,8 +408,8 @@ void EvolutionaryAlgorithmTest::test_set_default()
 
    DataSet ds;
    NeuralNetwork nn;
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    // Test
    
@@ -430,8 +430,8 @@ void EvolutionaryAlgorithmTest::test_set_population_size()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
    
    ea.set_population_size(4);
 
@@ -446,12 +446,12 @@ void EvolutionaryAlgorithmTest::test_set_population()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
-   size_t parameters_number = nn.count_parameters_number();
+   size_t parameters_number = nn.get_parameters_number();
    size_t population_size = ea.get_population_size();
 
    Matrix<double> population(population_size, parameters_number, 0.0);   
@@ -661,8 +661,8 @@ void EvolutionaryAlgorithmTest::test_get_individual()
 
    DataSet ds;
    NeuralNetwork nn(1, 1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    // Test
 
@@ -681,8 +681,8 @@ void EvolutionaryAlgorithmTest::test_set_individual()
 
    DataSet ds;
    NeuralNetwork nn(1, 1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    Vector<double> individual(2, 0.0);
 
@@ -702,8 +702,8 @@ void EvolutionaryAlgorithmTest::test_randomize_population_uniform()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    // Test
 
@@ -729,8 +729,8 @@ void EvolutionaryAlgorithmTest::test_calculate_population_norm()
 
    DataSet ds;
    NeuralNetwork nn(1);
-   LossIndex pf(&nn, &ds);
-   EvolutionaryAlgorithm ea(&pf);
+   SumSquaredError sse(&nn, &ds);
+   EvolutionaryAlgorithm ea(&sse);
 
    // Test
 
@@ -750,11 +750,11 @@ void EvolutionaryAlgorithmTest::test_evaluate_population()
 
    DataSet ds(1, 1, 1);
    ds.initialize_data(0.0);
+/*
+   SumSquaredError sse(&nn, &ds);
+   sse.set_loss_method(LossIndex::SUM_SQUARED_ERROR);
 
-   LossIndex pf(&nn, &ds);
-   pf.set_error_type(LossIndex::SUM_SQUARED_ERROR);
-
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    // Test
 
@@ -765,6 +765,7 @@ void EvolutionaryAlgorithmTest::test_evaluate_population()
    ea.evaluate_population();
 
    assert_true(ea.get_loss() == 0.0, LOG);
+*/
 }
 
 
@@ -777,9 +778,9 @@ void EvolutionaryAlgorithmTest::test_perform_linear_ranking_fitness_assignment()
    DataSet ds(3, 1, 1);
    ds.randomize_data_normal();
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    size_t population_size;
 
@@ -857,9 +858,9 @@ void EvolutionaryAlgorithmTest::test_perform_roulette_wheel_selection()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -943,9 +944,9 @@ void EvolutionaryAlgorithmTest::test_perform_intermediate_recombination()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -975,9 +976,9 @@ void EvolutionaryAlgorithmTest::test_perform_line_recombination()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -1006,9 +1007,9 @@ void EvolutionaryAlgorithmTest::test_perform_normal_mutation()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -1039,9 +1040,9 @@ void EvolutionaryAlgorithmTest::test_perform_uniform_mutation()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal();
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
 
@@ -1072,19 +1073,19 @@ void EvolutionaryAlgorithmTest::test_perform_training()
    DataSet ds(2, 1, 1);
    ds.randomize_data_normal(0.0, 1.0e-3);
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    ea.set_population_size(4);
-
-   double old_loss = pf.calculate_loss();
+/*
+   double old_loss = sse.calculate_loss();
 
    ea.set_display(false);
    ea.set_maximum_generations_number(10);
    ea.perform_training();
 
-   double loss = pf.calculate_loss();
+   double loss = sse.calculate_loss();
 
    assert_true(loss <= old_loss, LOG);
 
@@ -1102,7 +1103,7 @@ void EvolutionaryAlgorithmTest::test_perform_training()
 
    ea.perform_training();
 
-   loss = pf.calculate_loss();
+   loss = sse.calculate_loss();
 
    assert_true(loss < best_loss_goal, LOG);
 
@@ -1141,6 +1142,7 @@ void EvolutionaryAlgorithmTest::test_perform_training()
    double standard_deviation_loss = ea.calculate_standard_deviation_loss();
 
    assert_true(standard_deviation_loss < standard_deviation_loss_goal, LOG);
+*/
 }
 
 
@@ -1151,7 +1153,7 @@ void EvolutionaryAlgorithmTest::test_to_XML()
    EvolutionaryAlgorithm ea;
    tinyxml2::XMLDocument* document = ea.to_XML();
 
-   assert_true(document != NULL, LOG);
+   assert_true(document != nullptr, LOG);
 
    delete document;
 }
@@ -1167,9 +1169,9 @@ void EvolutionaryAlgorithmTest::test_from_XML()
 
    NeuralNetwork nn;
 
-   LossIndex pf(&nn, &ds);
+   SumSquaredError sse(&nn, &ds);
 
-   EvolutionaryAlgorithm ea(&pf);
+   EvolutionaryAlgorithm ea(&sse);
 
    EvolutionaryAlgorithm ea1;
    EvolutionaryAlgorithm ea2;

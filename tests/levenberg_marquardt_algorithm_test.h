@@ -5,9 +5,9 @@
 /*                                                                                                              */
 /*   L E V E N B E R G   M A R Q U A R D T   A L G O R I T H M   T E S T   C L A S S   H E A D E R              */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   robertolopez@artelnics.com                                                                                 */
+
+/*   Artificial Intelligence Techniques SL                                                                      */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -17,7 +17,7 @@
 // Unit testing includes
 
 #include "unit_testing.h"
-#include "mock_error_term.h"
+//#include "mock_error_term.h"
 
 using namespace OpenNN;
 

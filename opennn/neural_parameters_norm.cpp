@@ -74,7 +74,6 @@ NeuralParametersNorm::~NeuralParametersNorm()
 
 // METHODS
 
-// const double& get_neural_parameters_norm_weight() const method
 
 /// Returns the weight value for the neural parameters norm in the error term expression. 
 
@@ -84,8 +83,6 @@ const double& NeuralParametersNorm::get_neural_parameters_norm_weight() const
 }
 
 
-// void set_neural_parameters_norm_weight(const double&) method
-
 /// Sets a new weight value for the neural parameters norm in the error term expression. 
 
 void NeuralParametersNorm::set_neural_parameters_norm_weight(const double& new_neural_parameters_norm_weight)
@@ -93,8 +90,6 @@ void NeuralParametersNorm::set_neural_parameters_norm_weight(const double& new_n
    neural_parameters_norm_weight = new_neural_parameters_norm_weight;
 }
 
-
-// void set_default() method
 
 /// Sets the default values for the neural parameters norm object:
 /// <ul>
@@ -110,8 +105,6 @@ void NeuralParametersNorm::set_default()
 }
 
 
-// void check() const method
-
 /// Checks that there is a neural network associated to this error term,
 /// and that there is a multilayer perceptron in the neural network. 
 /// If some of the above conditions is not hold, the method throws an exception. 
@@ -126,7 +119,7 @@ void NeuralParametersNorm::check() const
    {
       buffer << "OpenNN Exception: NeuralParametersNorm class.\n"
              << "void check() const method.\n"
-             << "Pointer to neural network is NULL.\n";
+             << "Pointer to neural network is nullptr.\n";
 
       throw logic_error(buffer.str());	  
    }
@@ -137,7 +130,7 @@ void NeuralParametersNorm::check() const
    {
       buffer << "OpenNN Exception: NeuralParametersNorm class.\n"
              << "void check() const method.\n"
-             << "Pointer to multilayer perceptron is NULL.\n";
+             << "Pointer to multilayer perceptron is nullptr.\n";
 
       throw logic_error(buffer.str());	  
    }
@@ -166,8 +159,6 @@ void NeuralParametersNorm::check() const
 }
 
 
-// double calculate_regularization() const method
-
 /// Returns the loss of this peformance term. 
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
@@ -181,17 +172,15 @@ double NeuralParametersNorm::calculate_regularization() const
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   const Vector<double> neural_parameters = multilayer_perceptron_pointer->arrange_parameters();
+   const Vector<double> neural_parameters = multilayer_perceptron_pointer->get_parameters();
 
-   const double neural_parameters_norm = neural_parameters.calculate_norm();
+   const double neural_parameters_norm = neural_parameters.calculate_L2_norm();
 
    return(neural_parameters_norm_weight*neural_parameters_norm);
 }
 
 
-// Vector<double> calculate_gradient() const method
-
-/// Calculates the objective gradient by means of the back-propagation algorithm, 
+/// Calculates the error gradient by means of the back-propagation algorithm, 
 /// and returns it in a single vector of size the number of neural parameters.
 
 /// @todo Case including independent parameters.
@@ -208,15 +197,13 @@ Vector<double> NeuralParametersNorm::calculate_gradient() const
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   const Vector<double> neural_parameters = multilayer_perceptron_pointer->arrange_parameters();
+   const Vector<double> neural_parameters = multilayer_perceptron_pointer->get_parameters();
 
-   return(neural_parameters.calculate_norm_gradient()*neural_parameters_norm_weight);
+   return(neural_parameters.calculate_L2_norm_gradient()*neural_parameters_norm_weight);
 }
 
 
-// Matrix<double> calculate_Hessian() const method
-
-/// Calculates the objective Hessian by means of the back-propagation algorithm, 
+/// Calculates the error Hessian by means of the back-propagation algorithm, 
 /// and returns it in a single symmetric matrix of size the number of multilayer perceptron parameters. 
 
 /// @todo Second derivatives.
@@ -234,13 +221,11 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian() const
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   const Vector<double> neural_parameters = multilayer_perceptron_pointer->arrange_parameters();
+   const Vector<double> neural_parameters = multilayer_perceptron_pointer->get_parameters();
 
-   return(neural_parameters.calculate_norm_Hessian()*neural_parameters_norm_weight);
+   return(neural_parameters.calculate_L2_norm_Hessian()*neural_parameters_norm_weight);
 }
 
-
-// double calculate_regularization(const Vector<double>&) method
 
 /// Returns the neural parameters norm value of a neural network for a vector of parameters.
 /// It does not set that vector of parameters to the neural network.
@@ -265,20 +250,18 @@ double NeuralParametersNorm::calculate_regularization(const Vector<double>& para
        Vector<double> neural_parameters(parameters);
        neural_parameters.resize(neural_parameters_number);
 
-       const double neural_parameters_norm = neural_parameters.calculate_norm();
+       const double neural_parameters_norm = neural_parameters.calculate_L2_norm();
 
        return(neural_parameters_norm*neural_parameters_norm_weight);
    }
    else
    {
-       const double neural_parameters_norm = parameters.calculate_norm();
+       const double neural_parameters_norm = parameters.calculate_L2_norm();
 
        return(neural_parameters_norm*neural_parameters_norm_weight);
    }
 }
 
-
-// Vector<double> calculate_gradient(const Vector<double>&) const method
 
 Vector<double> NeuralParametersNorm::calculate_gradient(const Vector<double>& parameters) const
 {
@@ -299,16 +282,14 @@ Vector<double> NeuralParametersNorm::calculate_gradient(const Vector<double>& pa
         Vector<double> neural_parameters(parameters);
         neural_parameters.resize(neural_parameters_number);
 
-        return(neural_parameters.calculate_norm_gradient()*neural_parameters_norm_weight);
+        return(neural_parameters.calculate_L2_norm_gradient()*neural_parameters_norm_weight);
     }
     else
     {
-         return(parameters.calculate_norm_gradient()*neural_parameters_norm_weight);
+         return(parameters.calculate_L2_norm_gradient()*neural_parameters_norm_weight);
     }
 }
 
-
-// Matrix<double> calculate_Hessian(const Vector<double>&) const method
 
 Matrix<double> NeuralParametersNorm::calculate_Hessian(const Vector<double>& parameters) const
 {
@@ -329,17 +310,15 @@ Matrix<double> NeuralParametersNorm::calculate_Hessian(const Vector<double>& par
         Vector<double> neural_parameters(parameters);
         neural_parameters.resize(neural_parameters_number);
 
-        return(neural_parameters.calculate_norm_Hessian()*neural_parameters_norm_weight);
+        return(neural_parameters.calculate_L2_norm_Hessian()*neural_parameters_norm_weight);
     }
     else
     {
-         return(parameters.calculate_norm_Hessian()*neural_parameters_norm_weight);
+         return(parameters.calculate_L2_norm_Hessian()*neural_parameters_norm_weight);
     }
 }
 
 /*
-// double calculate_selection_loss() const method
-
 /// Returns the selection loss of this peformance term.
 /// It is equal to the weighted norm of the parameters from the associated neural network.
 
@@ -353,13 +332,12 @@ double NeuralParametersNorm::calculate_selection_loss() const
 
    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
-   const Vector<double> neural_parameters = multilayer_perceptron_pointer->arrange_parameters();
+   const Vector<double> neural_parameters = multilayer_perceptron_pointer->get_parameters();
 
    return(neural_parameters.calculate_norm()*neural_parameters_norm_weight);
 }
 */
 
-// string write_error_term_type() const method
 
 /// Returns a string with the name of the neural parameters norm loss type,
 /// "NEURAL_PARAMETERS_NORM".
@@ -370,8 +348,6 @@ string NeuralParametersNorm::write_error_term_type() const
 }
 
 
-// string write_information() const method
-
 string NeuralParametersNorm::write_information() const
 {
    ostringstream buffer;
@@ -381,8 +357,6 @@ string NeuralParametersNorm::write_information() const
    return(buffer.str());
 }
 
-
-// tinyxml2::XMLDocument* to_XML() method method 
 
 /// Returns a representation of the sum squared error object, in XML format. 
 
@@ -427,8 +401,6 @@ tinyxml2::XMLDocument* NeuralParametersNorm::to_XML() const
 }
 
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
-
 /// Serializes the neural parameters norm object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -454,8 +426,6 @@ void NeuralParametersNorm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Loads a sum squared error object from a XML document.
 /// @param document TinyXML document containing the object members.
 
@@ -469,7 +439,7 @@ void NeuralParametersNorm::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: NeuralParametersNorm class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Neural parameters norm element is NULL.\n";
+               << "Neural parameters norm element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
@@ -488,7 +458,7 @@ void NeuralParametersNorm::from_XML(const tinyxml2::XMLDocument& document)
         }
         catch(const logic_error& e)
         {
-           cout << e.what() << endl;
+           cerr << e.what() << endl;
         }
      }
   }
@@ -507,7 +477,7 @@ void NeuralParametersNorm::from_XML(const tinyxml2::XMLDocument& document)
         }
         catch(const logic_error& e)
         {
-           cout << e.what() << endl;
+           cerr << e.what() << endl;
         }
      }
   }

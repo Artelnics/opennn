@@ -6,7 +6,7 @@
 /*   G O L D E N   S E C T I O N   O R D E R   T E S T   C L A S S   H E A D E R                                */
 /*                                                                                                              */
 /*   Fernando Gomez                                                                                             */
-/*   Artelnics - Making intelligent use of data                                                                 */
+/*   Artificial Intelligence Techniques SL                                                                      */
 /*   fernandogomez@artelnics.com                                                                                */
 /*                                                                                                              */
 /****************************************************************************************************************/

@@ -5,9 +5,8 @@
 /*                                                                                                              */
 /*   F I L E   U T I L I T I E S   C L A S S   H E A D E R                                                      */
 /*                                                                                                              */
-/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   robertolopez@artelnics.com                                                                                 */
+/*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -66,7 +65,7 @@ public:
 
    size_t count_lines_number() const;
 
-   Vector<string> arrange_output_file_names(const size_t&) const;
+   Vector<string> get_output_file_names(const size_t&) const;
 
    string read_header() const;
 
