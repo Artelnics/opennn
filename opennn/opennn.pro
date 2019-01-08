@@ -112,6 +112,7 @@ HEADERS += \
     text_analytics.h \
     k_nearest_neighbors.h \
     tinyxml2.h \
+    optimization_algorithm.h \
     correlation_analysis.h
 
 SOURCES += \
@@ -173,6 +174,7 @@ SOURCES += \
     text_analytics.cpp \
     k_nearest_neighbors.cpp \
     tinyxml2.cpp \
+    optimization_algorithm.cpp \
     correlation_analysis.cpp
 
 # MPI libraries
