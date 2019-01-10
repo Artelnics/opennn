@@ -7,7 +7,6 @@ cmake_minimum_required(VERSION 2.8.10)
 project(opennn)
 
 add_library(opennn
-adaptive_moment_estimation.cpp
 association_rules.cpp
 bounding_layer.cpp
 conjugate_gradient.cpp
@@ -47,7 +46,6 @@ principal_components_layer.cpp
 probabilistic_layer.cpp
 pruning_inputs.cpp
 quasi_newton_method.cpp
-random_search.cpp
 scaling_layer.cpp
 selective_pruning.cpp
 simulated_annealing_order.cpp
@@ -57,7 +55,6 @@ testing_analysis.cpp
 text_analytics.cpp
 tinyxml2.cpp
 training_strategy.cpp
-TrainingCUDA.cpp
 unscaling_layer.cpp
 variables.cpp
 weighted_squared_error.cpp)
