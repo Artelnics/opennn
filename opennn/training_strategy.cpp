@@ -19,7 +19,7 @@ namespace OpenNN
 
 /// Default constructor. 
 /// It creates a training strategy object not associated to any loss index object.
-/// It also constructs the main training algorithm object. 
+/// It also constructs the main optimization algorithm object. 
 
 TrainingStrategy::TrainingStrategy()
 {
@@ -82,17 +82,15 @@ TrainingStrategy::TrainingStrategy(const string& file_name)
 // DESTRUCTOR 
 
 /// Destructor.
-/// This destructor deletes the loss index and training algorithm objects.
+/// This destructor deletes the loss index and optimization algorithm objects.
 
 TrainingStrategy::~TrainingStrategy()
 {
     // Delete loss index objects
 
 
-    // Delete training algorithm objects
+    // Delete optimization algorithm objects
 
-    delete random_search_pointer;
-    delete evolutionary_algorithm_pointer;
     delete gradient_descent_pointer;
     delete conjugate_gradient_pointer;
     delete quasi_Newton_method_pointer;
@@ -112,7 +110,6 @@ LossIndex* TrainingStrategy::get_loss_index_pointer() const
 {
     if(sum_squared_error_pointer != nullptr) return sum_squared_error_pointer;
     else if(mean_squared_error_pointer != nullptr) return mean_squared_error_pointer;
-    else if(root_mean_squared_error_pointer != nullptr) return root_mean_squared_error_pointer;
     else if(normalized_squared_error_pointer != nullptr) return normalized_squared_error_pointer;
     else if(Minkowski_error_pointer != nullptr) return Minkowski_error_pointer;
     else if(cross_entropy_error_pointer != nullptr) return cross_entropy_error_pointer;
@@ -127,12 +124,12 @@ bool TrainingStrategy::has_loss_index() const
 }
 
 
-/// Initializes the loss index and training algorithm at random.
+/// Initializes the loss index and optimization algorithm at random.
 /// @todo
 
 void TrainingStrategy::initialize_random()
 {
-    // Training algorithm
+    // Optimization algorithm
 
     switch(rand()%2)
     {
@@ -148,54 +145,12 @@ void TrainingStrategy::initialize_random()
 
          buffer << "OpenNN Exception: TrainingStrategy class.\n"
                 << "void initialize_random() method.\n"
-                << "Unknown training algorithm.\n";
+                << "Unknown optimization algorithm.\n";
 
          throw logic_error(buffer.str());      
    }
 }
 
-
-/// Returns a pointer to the random search training algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-RandomSearch* TrainingStrategy::get_random_search_pointer() const
-{
-    if(!random_search_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "RandomSearch* get_random_search_pointer() const method.\n"
-               << "Random search pointer is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    return(random_search_pointer);
-}
-
-
-/// Returns a pointer to the evolutionary algorithm initialization algorithm.
-/// It also throws an exception if that pointer is nullptr.
-
-EvolutionaryAlgorithm* TrainingStrategy::get_evolutionary_algorithm_pointer() const
-{
-    if(!evolutionary_algorithm_pointer)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer() const method.\n"
-               << "Evolutionary algorithm pointer is nullptr.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    return(evolutionary_algorithm_pointer);
-}
-
-
-// GradientDescent* get_gradient_descent_pointer() const method
 
 /// Returns a pointer to the gradient descent main algorithm.
 /// It also throws an exception if that pointer is nullptr.
@@ -302,6 +257,24 @@ StochasticGradientDescent* TrainingStrategy::get_stochastic_gradient_descent_poi
     return(stochastic_gradient_descent_pointer);
 }
 
+/// Returns a pointer to the adaptive moment estimation main algorithm.
+/// It also throws an exception if that pointer is nullptr.
+
+AdaptiveMomentEstimation* TrainingStrategy::get_adaptive_moment_estimation_pointer() const
+{
+    if(!adaptive_moment_estimation_pointer)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer() const method.\n"
+               << "adaptive_moment_estimation_pointer is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    return(adaptive_moment_estimation_pointer);
+}
 
 
 /// Returns a pointer to the sum squared error which is used as error.
@@ -330,8 +303,6 @@ SumSquaredError* TrainingStrategy::get_sum_squared_error_pointer() const
 }
 
 
-// MeanSquaredError* get_mean_squared_error_pointer() const method
-
 /// Returns a pointer to the mean squared error which is used as error.
 /// If that object does not exists, an exception is thrown.
 
@@ -357,36 +328,6 @@ MeanSquaredError* TrainingStrategy::get_mean_squared_error_pointer() const
     return(mean_squared_error_pointer);
 }
 
-
-// RootMeanSquaredError* get_root_mean_squared_error_pointer() const method
-
-/// Returns a pointer to the root mean squared error which is used as error.
-/// If that object does not exists, an exception is thrown.
-
-RootMeanSquaredError* TrainingStrategy::get_root_mean_squared_error_pointer() const
-{
-    // Control sentence(if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(!root_mean_squared_error_pointer)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: LossIndex class.\n"
-              << "RootMeanSquaredError* get_root_mean_squared_error_pointer() const method.\n"
-              << "Pointer to root mean squared error error is nullptr.\n";
-
-       throw logic_error(buffer.str());
-     }
-
-     #endif
-
-    return(root_mean_squared_error_pointer);
-}
-
-
-// NormalizedSquaredError* get_normalized_squared_error_pointer() const method
 
 /// Returns a pointer to the normalized squared error which is used as error.
 /// If that object does not exists, an exception is thrown.
@@ -504,7 +445,7 @@ const TrainingStrategy::LossMethod& TrainingStrategy::get_loss_method() const
 }
 
 
-/// Returns the type of the main training algorithm composing this training strategy object.
+/// Returns the type of the main optimization algorithm composing this training strategy object.
 
 const TrainingStrategy::TrainingMethod& TrainingStrategy::get_training_method() const
 {
@@ -524,11 +465,6 @@ string TrainingStrategy::write_loss_method() const
        case MEAN_SQUARED_ERROR:
        {
         return "MEAN_SQUARED_ERROR";
-       }
-
-       case ROOT_MEAN_SQUARED_ERROR:
-       {
-        return "ROOT_MEAN_SQUARED_ERROR";
        }
 
        case NORMALIZED_SQUARED_ERROR:
@@ -556,7 +492,7 @@ string TrainingStrategy::write_loss_method() const
 }
 
 
-/// Returns a string with the type of the main training algorithm composing this training strategy object.
+/// Returns a string with the type of the main optimization algorithm composing this training strategy object.
 
 string TrainingStrategy::write_training_method() const
 {
@@ -579,6 +515,10 @@ string TrainingStrategy::write_training_method() const
    else if(training_method == STOCHASTIC_GRADIENT_DESCENT)
    {
       return("STOCHASTIC_GRADIENT_DESCENT");
+   }
+   else if(training_method == ADAPTIVE_MOMENT_ESTIMATION)
+   {
+      return("ADAPTIVE_MOMENT_ESTIMATION");
    }
    else
    {
@@ -619,7 +559,11 @@ string TrainingStrategy::write_training_method_text() const
    }
    else if(training_method == STOCHASTIC_GRADIENT_DESCENT)
    {
-      return("Stochastic gradient descent");
+      return("stochastic gradient descent");
+   }
+   else if(training_method == ADAPTIVE_MOMENT_ESTIMATION)
+   {
+      return("adaptive moment estimation");
    }
    else
    {
@@ -643,10 +587,8 @@ const bool& TrainingStrategy::get_display() const
 }
 
 
-// void set() method
-
 /// Sets the loss index pointer to nullptr.
-/// It also destructs the initialization, main and refinement training algorithms. 
+/// It also destructs the loss index and the optimization algorithm.
 /// Finally, it sets the rest of members to their default values. 
 
 void TrainingStrategy::set()
@@ -673,10 +615,6 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
        }
        break;
 
-       case ROOT_MEAN_SQUARED_ERROR:
-       {
-          root_mean_squared_error_pointer = new RootMeanSquaredError(neural_network_pointer, data_set_pointer);
-       }
        break;
 
        case NORMALIZED_SQUARED_ERROR:
@@ -724,12 +662,6 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
       }
       break;
 
-      case ROOT_MEAN_SQUARED_ERROR:
-      {
-         root_mean_squared_error_pointer = new RootMeanSquaredError(neural_network_pointer, data_set_pointer);
-      }
-      break;
-
       case NORMALIZED_SQUARED_ERROR:
       {
          normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
@@ -757,8 +689,8 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
 }
 
 
-/// Sets a new type of main training algorithm.
-/// @param new_training_method Type of main training algorithm.
+/// Sets a new type of main optimization algorithm.
+/// @param new_training_method Type of main optimization algorithm.
 
 void TrainingStrategy::set_training_method(const TrainingMethod& new_training_method)
 {
@@ -792,18 +724,23 @@ void TrainingStrategy::set_training_method(const TrainingMethod& new_training_me
       }
       break;
 
-
-     case STOCHASTIC_GRADIENT_DESCENT:
+      case STOCHASTIC_GRADIENT_DESCENT:
       {
-          stochastic_gradient_descent_pointer= new StochasticGradientDescent(loss_index_pointer);
+         stochastic_gradient_descent_pointer= new StochasticGradientDescent(loss_index_pointer);
+      }
+      break;
+
+      case ADAPTIVE_MOMENT_ESTIMATION:
+      {
+         adaptive_moment_estimation_pointer= new AdaptiveMomentEstimation(loss_index_pointer);
       }
       break;
    }
 }
 
 
-/// Sets a new main training algorithm from a string containing the type.
-/// @param new_training_method String with the type of main training algorithm.
+/// Sets a new main optimization algorithm from a string containing the type.
+/// @param new_training_method String with the type of main optimization algorithm.
 
 void TrainingStrategy::set_training_method(const string& new_training_method)
 {
@@ -826,6 +763,10 @@ void TrainingStrategy::set_training_method(const string& new_training_method)
    else if(new_training_method == "STOCHASTIC_GRADIENT_DESCENT")
    {
       set_training_method(STOCHASTIC_GRADIENT_DESCENT);
+   }
+   else if(new_training_method == "ADAPTIVE_MOMENT_ESTIMATION")
+   {
+      set_training_method(ADAPTIVE_MOMENT_ESTIMATION);
    }
    else
    {
@@ -878,6 +819,12 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
          stochastic_gradient_descent_pointer->set_loss_index_pointer(new_loss_index_pointer);
       }
       break;
+
+      case ADAPTIVE_MOMENT_ESTIMATION:
+      {
+         adaptive_moment_estimation_pointer->set_loss_index_pointer(new_loss_index_pointer);
+      }
+      break;
    }
 
 }
@@ -925,6 +872,12 @@ void TrainingStrategy::set_display(const bool& new_display)
            stochastic_gradient_descent_pointer->set_display(display);
       }
       break;
+
+      case ADAPTIVE_MOMENT_ESTIMATION:
+      {
+           adaptive_moment_estimation_pointer->set_display(display);
+      }
+      break;
    }
 }
 
@@ -940,21 +893,23 @@ void TrainingStrategy::set_default()
 }
 
 
-/// This method deletes the training algorithm object which composes this training strategy object.
+/// This method deletes the optimization algorithm object which composes this training strategy object.
 
-void TrainingStrategy::destruct_training_algorithm()
+void TrainingStrategy::destruct_optimization_algorithm()
 {
     delete gradient_descent_pointer;
     delete conjugate_gradient_pointer;
     delete quasi_Newton_method_pointer;
     delete Levenberg_Marquardt_algorithm_pointer;
     delete stochastic_gradient_descent_pointer;
+    delete adaptive_moment_estimation_pointer;
 
     gradient_descent_pointer = nullptr;
     conjugate_gradient_pointer = nullptr;
     quasi_Newton_method_pointer = nullptr;
     Levenberg_Marquardt_algorithm_pointer = nullptr;
     stochastic_gradient_descent_pointer = nullptr;
+    adaptive_moment_estimation_pointer = nullptr;
 }
 
 
@@ -1045,7 +1000,6 @@ void TrainingStrategy::initialize_layers_autoencoding()
 
 /// This is the most important method of this class. 
 /// It optimizes the loss index of a neural network.
-/// The most general training strategy consists of three steps: initialization, main and refinement training processes. 
 /// This method also returns a structure with the results from training. 
 
 TrainingStrategy::Results TrainingStrategy::perform_training() const
@@ -1054,7 +1008,7 @@ TrainingStrategy::Results TrainingStrategy::perform_training() const
 
 //    check_loss_index();
 
-//    check_training_algorithms();
+//    check_optimization_algorithms();
 
    #endif
 
@@ -1105,8 +1059,26 @@ TrainingStrategy::Results TrainingStrategy::perform_training() const
       {
            stochastic_gradient_descent_pointer->set_display(display);
 
-           training_strategy_results.stochastic_gradient_descent_results_pointer
-           = stochastic_gradient_descent_pointer->perform_training();
+           if(stochastic_gradient_descent_pointer->check_cuda())
+           {
+               training_strategy_results.stochastic_gradient_descent_results_pointer
+               = stochastic_gradient_descent_pointer->perform_training_cuda();
+           }
+           else
+           {
+               training_strategy_results.stochastic_gradient_descent_results_pointer
+               = stochastic_gradient_descent_pointer->perform_training();
+           }
+
+      }
+      break;
+
+      case ADAPTIVE_MOMENT_ESTIMATION:
+      {
+           adaptive_moment_estimation_pointer->set_display(display);
+
+           training_strategy_results.adaptive_moment_estimation_results_pointer
+           = adaptive_moment_estimation_pointer->perform_training();
       }
       break;
    }
@@ -1121,7 +1093,7 @@ void TrainingStrategy::perform_training_void() const
 
 //    check_loss_index();
 
-//    check_training_algorithms();
+//    check_optimization_algorithms();
 
 #endif
 
@@ -1179,6 +1151,18 @@ switch(training_method)
 //        = stochastic_gradient_descent_pointer->perform_training();
    }
    break;
+
+
+   case ADAPTIVE_MOMENT_ESTIMATION:
+   {
+        adaptive_moment_estimation_pointer->set_display(display);
+
+        adaptive_moment_estimation_pointer->perform_training_void();
+
+//        training_strategy_results.stochastic_gradient_descent_results_pointer
+//        = stochastic_gradient_descent_pointer->perform_training();
+}
+break;
 }
 }
 
@@ -1230,6 +1214,13 @@ string TrainingStrategy::object_to_string() const
       break;
 
 
+      case ADAPTIVE_MOMENT_ESTIMATION:
+
+           buffer << adaptive_moment_estimation_pointer->object_to_string();
+
+      break;
+
+
       default:
 
          ostringstream buffer;
@@ -1257,7 +1248,7 @@ void TrainingStrategy::print() const
 
 // tinyxml2::XMLDocument* to_XML() const method
 
-/// Returns a default string representation in XML-type format of the training algorithm object.
+/// Returns a default string representation in XML-type format of the optimization algorithm object.
 /// This containts the training operators, the training parameters, stopping criteria and other stuff.
 
 tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
@@ -1365,7 +1356,7 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
 
            const tinyxml2::XMLDocument* stochastic_gradient_descent_document = stochastic_gradient_descent_pointer->to_XML();
 
-           const tinyxml2::XMLElement* stochastic_gradient_descent_element = stochastic_gradient_descent_document->FirstChildElement("LevenbergMarquardtAlgorithm");
+           const tinyxml2::XMLElement* stochastic_gradient_descent_element = stochastic_gradient_descent_document->FirstChildElement("StochasticGradientDescent");
 
            for( const tinyxml2::XMLNode* nodeFor = stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
@@ -1373,6 +1364,26 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
            }
 
            delete stochastic_gradient_descent_document;
+      }
+      break;
+
+      case ADAPTIVE_MOMENT_ESTIMATION:
+      {
+           tinyxml2::XMLElement* main_element = document->NewElement("Main");
+           training_strategy_element->LinkEndChild(main_element);
+
+           main_element->SetAttribute("Type", "ADAPTIVE_MOMENT_ESTIMATION");
+
+           const tinyxml2::XMLDocument* adaptive_moment_estimation_document = adaptive_moment_estimation_pointer->to_XML();
+
+           const tinyxml2::XMLElement* adaptive_moment_estimation_element = adaptive_moment_estimation_document->FirstChildElement("AdaptiveMomentEstimation");
+
+           for( const tinyxml2::XMLNode* nodeFor = adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+               tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
+               main_element->InsertEndChild( copy );
+           }
+
+           delete adaptive_moment_estimation_document;
       }
       break;
 
@@ -1470,6 +1481,19 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.OpenElement("Main");
 
             file_stream.PushAttribute("Type", "STOCHASTIC_GRADIENT_DESCENT");
+
+            stochastic_gradient_descent_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+       }
+       break;
+
+
+       case ADAPTIVE_MOMENT_ESTIMATION:
+       {
+            file_stream.OpenElement("Main");
+
+            file_stream.PushAttribute("Type", "ADAPTIVE_MOMENT_ESTIMATION");
 
             stochastic_gradient_descent_pointer->write_XML(file_stream);
 
@@ -1610,6 +1634,23 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
              }
              break;
 
+             case ADAPTIVE_MOMENT_ESTIMATION:
+             {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* adaptive_moment_estimation_element = new_document.NewElement("AdaptiveMomentEstimation");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      adaptive_moment_estimation_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(adaptive_moment_estimation_element);
+
+                  adaptive_moment_estimation_pointer->from_XML(new_document);
+             }
+             break;
+
              default:
              {
                 ostringstream buffer;
@@ -1648,8 +1689,8 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
 // void save(const string&) const method
 
-/// Saves to a XML-type file the members of the training algorithm object.
-/// @param file_name Name of training algorithm XML-type file. 
+/// Saves to a XML-type file the members of the optimization algorithm object.
+/// @param file_name Name of optimization algorithm XML-type file. 
 
 void TrainingStrategy::save(const string& file_name) const
 {
@@ -1665,7 +1706,7 @@ void TrainingStrategy::save(const string& file_name) const
 
 /// Loads a gradient descent object from a XML-type file.
 /// Please mind about the file format, wich is specified in the User's Guide. 
-/// @param file_name Name of training algorithm XML-type file. 
+/// @param file_name Name of optimization algorithm XML-type file. 
 
 void TrainingStrategy::load(const string& file_name)
 {
@@ -1692,10 +1733,6 @@ void TrainingStrategy::load(const string& file_name)
 
 TrainingStrategy::Results::Results()
 {
-    random_search_results_pointer = nullptr;
-
-    evolutionary_algorithm_results_pointer = nullptr;
-
     gradient_descent_results_pointer = nullptr;
 
     conjugate_gradient_results_pointer = nullptr;
@@ -1705,6 +1742,8 @@ TrainingStrategy::Results::Results()
     Levenberg_Marquardt_algorithm_results_pointer = nullptr;
 
     stochastic_gradient_descent_results_pointer = nullptr;
+
+    adaptive_moment_estimation_results_pointer = nullptr;
 }
 
 
@@ -1712,9 +1751,6 @@ TrainingStrategy::Results::Results()
 
 TrainingStrategy::Results::~Results()
 {
-    delete random_search_results_pointer;
-
-    delete evolutionary_algorithm_results_pointer;
 
     delete gradient_descent_results_pointer;
 
@@ -1726,7 +1762,7 @@ TrainingStrategy::Results::~Results()
 
     delete stochastic_gradient_descent_results_pointer;
 
-
+    delete adaptive_moment_estimation_results_pointer;
 }
 
 
@@ -1738,16 +1774,6 @@ TrainingStrategy::Results::~Results()
 void TrainingStrategy::Results::save(const string& file_name) const
 {
    ofstream file(file_name.c_str());
-
-   if(random_search_results_pointer)
-   {
-      file << random_search_results_pointer->object_to_string();
-   }
-
-   if(evolutionary_algorithm_results_pointer)
-   {
-      file << evolutionary_algorithm_results_pointer->object_to_string();
-   }
 
    if(gradient_descent_results_pointer)
    {
@@ -1772,6 +1798,11 @@ void TrainingStrategy::Results::save(const string& file_name) const
    if(stochastic_gradient_descent_results_pointer)
    {
       file << stochastic_gradient_descent_results_pointer->object_to_string();
+   }
+
+   if(adaptive_moment_estimation_results_pointer)
+   {
+      file << adaptive_moment_estimation_results_pointer->object_to_string();
    }
 
    file.close();
@@ -1824,8 +1855,8 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
         {
             case(int)TrainingStrategy::GRADIENT_DESCENT:
 
-                training_rate_method = (int)training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
-                loss_tolerance = training_strategy->get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->get_loss_tolerance();
+                training_rate_method = (int)training_strategy->get_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->get_training_rate_method();
+                loss_tolerance = training_strategy->get_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->get_loss_tolerance();
 
                 return_minimum_selection_error_model = training_strategy->get_gradient_descent_pointer()->get_return_minimum_selection_error_neural_network();
                 minimum_parameters_increment_norm = training_strategy->get_gradient_descent_pointer()->get_minimum_parameters_increment_norm();
@@ -1846,8 +1877,8 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 training_direction_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_training_direction_method();
 
-                training_rate_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
-                loss_tolerance = training_strategy->get_conjugate_gradient_pointer()->get_training_rate_algorithm_pointer()->get_loss_tolerance();
+                training_rate_method = (int)training_strategy->get_conjugate_gradient_pointer()->get_learning_rate_algorithm_pointer()->get_training_rate_method();
+                loss_tolerance = training_strategy->get_conjugate_gradient_pointer()->get_learning_rate_algorithm_pointer()->get_loss_tolerance();
 
                 return_minimum_selection_error_model = training_strategy->get_conjugate_gradient_pointer()->get_return_minimum_selection_error_neural_network();
                 minimum_parameters_increment_norm = training_strategy->get_conjugate_gradient_pointer()->get_minimum_parameters_increment_norm();
@@ -1868,8 +1899,8 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
                 inverse_hessian_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_inverse_Hessian_approximation_method();
 
-                training_rate_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_training_rate_method();
-                loss_tolerance = training_strategy->get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->get_loss_tolerance();
+                training_rate_method = (int)training_strategy->get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->get_training_rate_method();
+                loss_tolerance = training_strategy->get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->get_loss_tolerance();
 
                 return_minimum_selection_error_model = training_strategy->get_quasi_Newton_method_pointer()->get_return_minimum_selection_error_neural_network();
                 minimum_parameters_increment_norm = training_strategy->get_quasi_Newton_method_pointer()->get_minimum_parameters_increment_norm();
@@ -1907,20 +1938,41 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
            case(int)TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT:
 
-                damping_parameter_factor = training_strategy->get_stochastic_gradient_descent_pointer()->get_damping_parameter_factor();
+               training_rate_method = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->get_training_rate_method();
+               loss_tolerance = training_strategy->get_stochastic_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->get_loss_tolerance();
 
-               return_minimum_selection_loss_model = training_strategy->get_stochastic_gradient_descent_pointer()->get_return_minimum_selection_error_neural_network();
+               return_minimum_selection_error_model = training_strategy->get_stochastic_gradient_descent_pointer()->get_return_minimum_selection_error_neural_network();
                minimum_parameters_increment_norm = training_strategy->get_stochastic_gradient_descent_pointer()->get_minimum_parameters_increment_norm();
                minimum_loss_decrease = training_strategy->get_stochastic_gradient_descent_pointer()->get_minimum_loss_increase();
                loss_goal = training_strategy->get_stochastic_gradient_descent_pointer()->get_loss_goal();
                gradient_norm_goal = training_strategy->get_stochastic_gradient_descent_pointer()->get_gradient_norm_goal();
-               maximum_selection_loss_increases = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_maximum_selection_failures();
+               maximum_selection_error_increases = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_maximum_selection_error_decreases();
                maximum_iterations_number = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_maximum_iterations_number();
                maximum_time = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_maximum_time();
                reserve_parameters_norm_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_parameters_norm_history();
                reserve_training_loss_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_loss_history();
                reserve_selection_error_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_selection_error_history();
                reserve_gradient_norm_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_gradient_norm_history();
+
+               break;
+
+           case(int)TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION:
+
+               training_rate_method = (int)training_strategy->get_adaptive_moment_estimation_pointer()->get_learning_rate_algorithm_pointer()->get_training_rate_method();
+               loss_tolerance = training_strategy->get_adaptive_moment_estimation_pointer()->get_learning_rate_algorithm_pointer()->get_loss_tolerance();
+
+               return_minimum_selection_error_model = training_strategy->get_adaptive_moment_estimation_pointer()->get_return_minimum_selection_error_neural_network();
+               minimum_parameters_increment_norm = training_strategy->get_adaptive_moment_estimation_pointer()->get_minimum_parameters_increment_norm();
+               minimum_loss_decrease = training_strategy->get_adaptive_moment_estimation_pointer()->get_minimum_loss_increase();
+               loss_goal = training_strategy->get_adaptive_moment_estimation_pointer()->get_loss_goal();
+               gradient_norm_goal = training_strategy->get_adaptive_moment_estimation_pointer()->get_gradient_norm_goal();
+               maximum_selection_error_increases = (int)training_strategy->get_adaptive_moment_estimation_pointer()->get_maximum_selection_error_decreases();
+               maximum_iterations_number = (int)training_strategy->get_adaptive_moment_estimation_pointer()->get_maximum_iterations_number();
+               maximum_time = (int)training_strategy->get_adaptive_moment_estimation_pointer()->get_maximum_time();
+               reserve_parameters_norm_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_parameters_norm_history();
+               reserve_training_loss_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_loss_history();
+               reserve_selection_error_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_selection_error_history();
+               reserve_gradient_norm_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_gradient_norm_history();
 
                break;
 
@@ -1983,6 +2035,17 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
             default:
                 break;
+
+           case(int)TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT:
+
+               MPI_Irecv(&damping_parameter_factor, 1, MPI_DOUBLE, rank-1, 1, MPI_COMM_WORLD, &req[0]);
+
+               MPI_Waitall(1, req, MPI_STATUS_IGNORE);
+
+               break;
+
+           default:
+               break;
         }
 
         MPI_Irecv(&return_minimum_selection_error_model, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[0]);
@@ -2050,6 +2113,17 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
             default:
                 break;
+
+           case(int)TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT:
+
+               MPI_Isend(&damping_parameter_factor, 1, MPI_DOUBLE, rank+1, 1, MPI_COMM_WORLD, &req[0]);
+
+               MPI_Waitall(1, req, MPI_STATUS_IGNORE);
+
+               break;
+
+           default:
+               break;
         }
 
         MPI_Isend(&return_minimum_selection_error_model, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[0]);
@@ -2078,8 +2152,8 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
     {
         case(int)TrainingStrategy::GRADIENT_DESCENT:
 
-            gradient_descent_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
-            gradient_descent_pointer->get_training_rate_algorithm_pointer()->set_loss_tolerance(loss_tolerance);
+            gradient_descent_pointer->get_learning_rate_algorithm_pointer()->set_training_rate_method((LearningRateAlgorithm::LearningRateMethod)training_rate_method);
+            gradient_descent_pointer->get_learning_rate_algorithm_pointer()->set_loss_tolerance(loss_tolerance);
 
             gradient_descent_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_error_model == 1);
             gradient_descent_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
@@ -2100,8 +2174,8 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
             conjugate_gradient_pointer->set_training_direction_method((ConjugateGradient::TrainingDirectionMethod)training_direction_method);
 
-            conjugate_gradient_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
-            conjugate_gradient_pointer->get_training_rate_algorithm_pointer()->set_loss_tolerance(loss_tolerance);
+            conjugate_gradient_pointer->get_learning_rate_algorithm_pointer()->set_training_rate_method((LearningRateAlgorithm::LearningRateMethod)training_rate_method);
+            conjugate_gradient_pointer->get_learning_rate_algorithm_pointer()->set_loss_tolerance(loss_tolerance);
 
             conjugate_gradient_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_error_model == 1);
             conjugate_gradient_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
@@ -2122,8 +2196,8 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
 
             quasi_Newton_method_pointer->set_inverse_Hessian_approximation_method((QuasiNewtonMethod::InverseHessianApproximationMethod)inverse_hessian_method);
 
-            quasi_Newton_method_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method((TrainingRateAlgorithm::TrainingRateMethod)training_rate_method);
-            quasi_Newton_method_pointer->get_training_rate_algorithm_pointer()->set_loss_tolerance(loss_tolerance);
+            quasi_Newton_method_pointer->get_learning_rate_algorithm_pointer()->set_training_rate_method((LearningRateAlgorithm::LearningRateMethod)training_rate_method);
+            quasi_Newton_method_pointer->get_learning_rate_algorithm_pointer()->set_loss_tolerance(loss_tolerance);
 
             quasi_Newton_method_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_error_model == 1);
             quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
@@ -2177,6 +2251,26 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
            stochastic_gradient_descent_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 
            break;
+
+       case(int)TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION:
+
+           adaptive_moment_estimation_pointer->set_damping_parameter_factor(damping_parameter_factor);
+
+           adaptive_moment_estimation_pointer->set_return_minimum_selection_error_neural_network(return_minimum_selection_loss_model == 1);
+           adaptive_moment_estimation_pointer->set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+           adaptive_moment_estimation_pointer->set_minimum_loss_increase(minimum_loss_decrease);
+           adaptive_moment_estimation_pointer->set_loss_goal(loss_goal);
+           adaptive_moment_estimation_pointer->set_gradient_norm_goal(gradient_norm_goal);
+           adaptive_moment_estimation_pointer->set_maximum_selection_error_increases(maximum_selection_loss_increases);
+           adaptive_moment_estimation_pointer->set_maximum_iterations_number(maximum_iterations_number);
+           adaptive_moment_estimation_pointer->set_maximum_time(maximum_time);
+           adaptive_moment_estimation_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
+           adaptive_moment_estimation_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+           adaptive_moment_estimation_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
+           adaptive_moment_estimation_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
+
+           break;
+
 
 
         default:
