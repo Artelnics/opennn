@@ -56,7 +56,6 @@ testing_analysis.cpp
 text_analytics.cpp
 tinyxml2.cpp
 training_strategy.cpp
-TrainingCUDA.cpp
 unscaling_layer.cpp
 variables.cpp
 weighted_squared_error.cpp)
