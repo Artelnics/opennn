@@ -47,7 +47,6 @@ principal_components_layer.cpp
 probabilistic_layer.cpp
 pruning_inputs.cpp
 quasi_newton_method.cpp
-random_search.cpp
 scaling_layer.cpp
 selective_pruning.cpp
 simulated_annealing_order.cpp
