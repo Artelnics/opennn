@@ -49,11 +49,11 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a quasi-Newton method training algorithm not associated to any loss index. 
+/// It creates a quasi-Newton method optimization algorithm not associated to any loss index. 
 /// It also initializes the class members to their default values.
 
 QuasiNewtonMethod::QuasiNewtonMethod() 
- : TrainingAlgorithm()
+ : OptimizationAlgorithm()
 {
    set_default();
 }
@@ -62,14 +62,14 @@ QuasiNewtonMethod::QuasiNewtonMethod()
 // LOSS INDEX CONSTRUCTOR
 
 /// Loss index constructor. 
-/// It creates a quasi-Newton method training algorithm associated to a loss index. 
+/// It creates a quasi-Newton method optimization algorithm associated to a loss index. 
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
-: TrainingAlgorithm(new_loss_index_pointer)
+: OptimizationAlgorithm(new_loss_index_pointer)
 {
-   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+   learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 
    set_default();
 }
@@ -78,11 +78,11 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
 // XML CONSTRUCTOR
 
 /// XML constructor. 
-/// It creates a quasi-Newton method training algorithm not associated to any loss index. 
+/// It creates a quasi-Newton method optimization algorithm not associated to any loss index. 
 /// It also initializes the class members to their default values.
 
 QuasiNewtonMethod::QuasiNewtonMethod(const tinyxml2::XMLDocument& document)
- : TrainingAlgorithm(document)
+ : OptimizationAlgorithm(document)
 {
    set_default();
 }
@@ -102,23 +102,23 @@ QuasiNewtonMethod::~QuasiNewtonMethod()
 
 
 
-// const TrainingRateAlgorithm& get_training_rate_algorithm() const method
+// const LearningRateAlgorithm& get_learning_rate_algorithm() const method
 
-/// Returns a constant reference to the training rate algorithm object inside the quasi-Newton method object. 
+/// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object. 
 
-const TrainingRateAlgorithm& QuasiNewtonMethod::get_training_rate_algorithm() const
+const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
 {
-   return(training_rate_algorithm);
+   return(learning_rate_algorithm);
 }
 
 
-// TrainingRateAlgorithm* get_training_rate_algorithm_pointer() method
+// LearningRateAlgorithm* get_learning_rate_algorithm_pointer() method
 
-/// Returns a pointer to the training rate algorithm object inside the quasi-Newton method object. 
+/// Returns a pointer to the learning rate algorithm object inside the quasi-Newton method object. 
 
-TrainingRateAlgorithm* QuasiNewtonMethod::get_training_rate_algorithm_pointer()
+LearningRateAlgorithm* QuasiNewtonMethod::get_learning_rate_algorithm_pointer()
 {
-   return(&training_rate_algorithm);
+   return(&learning_rate_algorithm);
 }
 
 
@@ -432,14 +432,14 @@ const bool& QuasiNewtonMethod::get_reserve_selection_error_history() const
 // void set_loss_index_pointer(LossIndex*) method
 
 /// Sets a pointer to a loss index object to be associated to the quasi-Newton method object.
-/// It also sets that loss index to the training rate algorithm.
+/// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 void QuasiNewtonMethod::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
    loss_index_pointer = new_loss_index_pointer;
 
-   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+   learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
 
@@ -524,7 +524,7 @@ void QuasiNewtonMethod::set_default()
 {
    inverse_Hessian_approximation_method = BFGS;
 
-   training_rate_algorithm.set_default();
+   learning_rate_algorithm.set_default();
 
    // TRAINING PARAMETERS
 
@@ -2010,7 +2010,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
 #endif
 
-   // Training algorithm stuff 
+   // Optimization algorithm stuff 
 
    Vector<double> training_direction(parameters_number);
 
@@ -2152,7 +2152,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 #endif
        }
 
-       // Training algorithm
+       // Optimization algorithm
 
        training_direction = calculate_training_direction(gradient, inverse_Hessian);
 
@@ -2175,7 +2175,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
        epoch == 0 ? initial_training_rate = first_training_rate : initial_training_rate = old_training_rate;
 
-       directional_point = training_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
+       directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
 
        training_rate = directional_point[0];
 //       training_loss = directional_point[1];
@@ -2188,10 +2188,11 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
            training_direction = calculate_gradient_descent_training_direction(gradient);
 
-           directional_point = training_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_training_rate);
+           directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_training_rate);
 
            training_rate = directional_point[0];
        }
+
 
        parameters_increment = training_direction*training_rate;
        parameters_increment_norm = parameters_increment.calculate_L2_norm();
@@ -2443,9 +2444,9 @@ void QuasiNewtonMethod::perform_training_void()
 }
 
 
-// string write_training_algorithm_type() const method
+// string write_optimization_algorithm_type() const method
 
-string QuasiNewtonMethod::write_training_algorithm_type() const
+string QuasiNewtonMethod::write_optimization_algorithm_type() const
 {
    return("QUASI_NEWTON_METHOD");
 }
@@ -2484,15 +2485,15 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
    // Training rate algorithm
    {
-      const tinyxml2::XMLDocument* training_rate_algorithm_document = training_rate_algorithm.to_XML();
+      const tinyxml2::XMLDocument* learning_rate_algorithm_document = learning_rate_algorithm.to_XML();
 
-      const tinyxml2::XMLElement* training_rate_algorithm_element = training_rate_algorithm_document->FirstChildElement("TrainingRateAlgorithm");
+      const tinyxml2::XMLElement* learning_rate_algorithm_element = learning_rate_algorithm_document->FirstChildElement("LearningRateAlgorithm");
 
-      tinyxml2::XMLNode* node = training_rate_algorithm_element->DeepClone(document);
+      tinyxml2::XMLNode* node = learning_rate_algorithm_element->DeepClone(document);
 
       root_element->InsertEndChild(node);
 
-      delete training_rate_algorithm_document;
+      delete learning_rate_algorithm_document;
    }
 
    // Return minimum selection error neural network
@@ -2543,7 +2544,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
    // Warning training rate 
 //   {
-//   element = document->NewElement("WarningTrainingRate");
+//   element = document->NewElement("WarningLearningRate");
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
@@ -2579,7 +2580,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
    // Error training rate
 //   {
-//   element = document->NewElement("ErrorTrainingRate");
+//   element = document->NewElement("ErrorLearningRate");
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
@@ -2772,7 +2773,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
    // Reserve training rate history 
 //   {
-//   element = document->NewElement("ReserveTrainingRateHistory");
+//   element = document->NewElement("ReserveLearningRateHistory");
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
@@ -2876,7 +2877,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Training rate algorithm
 
-    training_rate_algorithm.write_XML(file_stream);
+    learning_rate_algorithm.write_XML(file_stream);
 
     // Return minimum selection error neural network
 
@@ -3061,7 +3062,7 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
 
    labels.push_back("Training rate method");
 
-   const string training_rate_method = training_rate_algorithm.write_training_rate_method();
+   const string training_rate_method = learning_rate_algorithm.write_training_rate_method();
 
    values.push_back(training_rate_method);
 
@@ -3070,7 +3071,7 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
    labels.push_back("Loss tolerance");
 
    buffer.str("");
-   buffer << training_rate_algorithm.get_loss_tolerance();
+   buffer << learning_rate_algorithm.get_loss_tolerance();
 
    values.push_back(buffer.str());
 
@@ -3300,18 +3301,18 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
    // Training rate algorithm
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("TrainingRateAlgorithm");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("LearningRateAlgorithm");
 
        if(element)
        {
-           tinyxml2::XMLDocument training_rate_algorithm_document;
+           tinyxml2::XMLDocument learning_rate_algorithm_document;
            tinyxml2::XMLNode* element_clone;
 
-           element_clone = element->DeepClone(&training_rate_algorithm_document);
+           element_clone = element->DeepClone(&learning_rate_algorithm_document);
 
-           training_rate_algorithm_document.InsertFirstChild(element_clone);
+           learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
-         training_rate_algorithm.from_XML(training_rate_algorithm_document);
+         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
        }
    }
 
@@ -3355,7 +3356,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
    // Warning training rate 
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningTrainingRate");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningLearningRate");
 
        if(element)
        {
@@ -3412,7 +3413,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
    // Error training rate
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorTrainingRate");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorLearningRate");
 
        if(element)
        {
@@ -3752,7 +3753,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
    // Reserve training rate history 
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingRateHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveLearningRateHistory");
 
        if(element)
        {

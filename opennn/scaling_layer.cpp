@@ -527,10 +527,10 @@ void ScalingLayer::set_statistics_eigen(const Eigen::MatrixXd& statistics_eigen)
 
     for(size_t i = 0; i < scaling_neurons_number; i++)
     {
-        statistics[i].set_minimum(statistics_eigen(i, 0));
-        statistics[i].set_maximum(statistics_eigen(i, 1));
-        statistics[i].set_mean(statistics_eigen(i, 2));
-        statistics[i].set_standard_deviation(statistics_eigen(i, 3));
+        statistics[i].set_minimum(statistics_eigen(static_cast<int>(i), 0));
+        statistics[i].set_maximum(statistics_eigen(static_cast<int>(i), 1));
+        statistics[i].set_mean(statistics_eigen(static_cast<int>(i), 2));
+        statistics[i].set_standard_deviation(statistics_eigen(static_cast<int>(i), 3));
     }
 
     set_statistics(statistics);
@@ -1727,7 +1727,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t scaling_neurons_number = atoi(scaling_neurons_number_element->GetText());
+    const size_t scaling_neurons_number = static_cast<size_t>(atoi(scaling_neurons_number_element->GetText()));
 
     set(scaling_neurons_number);
 
@@ -2253,8 +2253,7 @@ void ScalingLayer::from_PMML(const tinyxml2::XMLElement* element, const Vector<s
             }
 
 
-            if(fabs(new_min - get_statistics().at(i).minimum) < 1e-5
-               && fabs(new_max - get_statistics().at(i).maximum) < 1e-5)
+            if(fabs(new_min - get_statistics().at(i).minimum) < 1e-5 && fabs(new_max - get_statistics().at(i).maximum) < 1e-5)
             {
                 if(new_scaling_method == NoScaling)
                 {

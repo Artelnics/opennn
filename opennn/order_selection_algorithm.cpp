@@ -1270,7 +1270,7 @@ void OrderSelectionAlgorithm::delete_parameters_history()
 
 void OrderSelectionAlgorithm::check() const
 {
-    // Training algorithm stuff
+    // Optimization algorithm stuff
 
     ostringstream buffer;
 

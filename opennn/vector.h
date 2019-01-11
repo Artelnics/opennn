@@ -203,11 +203,14 @@ public:
   bool is_decrescent() const;
 
   bool is_binary() const;
-  bool is_binary_0_1() const;
   bool is_binary(const Vector<size_t>&) const;
 
   bool is_integer() const;
   bool is_integer(const Vector<size_t>&) const;
+
+  bool is_discrete(const size_t&) const;
+  bool is_discrete(const Vector<size_t>&, const size_t&) const;
+
 
   bool is_positive() const;
   bool is_negative() const;
@@ -1741,24 +1744,6 @@ template <class T> bool Vector<T>::is_binary() const
 }
 
 
-/// Returns true if all the elements in the vector are 0 or 1, and false otherwise.
-
-template <class T> bool Vector<T>::is_binary_0_1() const
-{
-    const size_t this_size = this->size();
-
-    for(size_t i = 0; i < this_size; i++)
-    {
-        if((*this)[i] != 0 &&(*this)[i] != 1)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-
 /// Returns true if all the elements in the vector have binary values, and false otherwise.
 /// @param missing_indices Indices of the instances with missing values.
 
@@ -1817,6 +1802,35 @@ template <class T> bool Vector<T>::is_integer(const Vector<size_t>& missing_indi
         }
     }
 
+    return true;
+}
+
+
+template <class T>
+bool Vector<T>::is_discrete(const size_t& maximum) const
+{
+    Vector<T> values;
+
+    for(size_t i = 0; i < this->size(); i++)
+    {
+        if(!values.contains((*this)[i]))
+        {
+            values.push_back((*this)[i]);
+
+            if(values.size() > maximum) return false;
+        }
+
+
+
+    }
+
+
+    return true;
+}
+
+template <class T>
+bool Vector<T>::is_discrete(const Vector<size_t>&, const size_t&) const
+{
     return true;
 }
 
@@ -11902,8 +11916,8 @@ template <class T> struct LinearRegressionParameters {
 
 
 /// Initializes the linear regression parameters structure with a random
-/// intercept(), slope(between -1 and 1)
-/// and correlation(between -1 and 1).
+/// intercept (), slope (between -1 and 1)
+/// and correlation (between -1 and 1).
 
 template <class T> void LinearRegressionParameters<T>::initialize_random()
 {

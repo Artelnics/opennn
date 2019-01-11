@@ -189,11 +189,16 @@ public:
    Matrix<double> get_instances_submatrix_data(const Vector<size_t>&) const;
 
    Matrix<double> get_training_data() const;
+   Eigen::MatrixXd get_training_data_eigen() const;
    Matrix<double> get_selection_data() const;
+   Eigen::MatrixXd get_selection_data_eigen() const;
    Matrix<double> get_testing_data() const;
+   Eigen::MatrixXd get_testing_data_eigen() const;
 
    Matrix<double> get_inputs() const;
+   Eigen::MatrixXd get_inputs_eigen() const;
    Matrix<double> get_targets() const;
+   Eigen::MatrixXd get_targets_eigen() const;
 
    Matrix<double> get_inputs(const Vector<size_t>&) const;
    Matrix<double> get_targets(const Vector<size_t>&) const;
@@ -203,11 +208,19 @@ public:
    Matrix<double> get_used_targets() const;
 
    Matrix<double> get_training_inputs() const;
+   Eigen::MatrixXd get_training_inputs_eigen() const;
    Matrix<double> get_training_targets() const;
+   Eigen::MatrixXd get_training_targets_eigen() const;
+
    Matrix<double> get_selection_inputs() const;
+   Eigen::MatrixXd get_selection_inputs_eigen() const;
    Matrix<double> get_selection_targets() const;
+   Eigen::MatrixXd get_selection_targets_eigen() const;
+
    Matrix<double> get_testing_inputs() const;
+   Eigen::MatrixXd get_testing_inputs_eigen() const;
    Matrix<double> get_testing_targets() const;
+   Eigen::MatrixXd get_testing_targets_eigen() const;
    Vector<double> get_testing_time() const;
 
    DataSet get_training_data_set() const;
@@ -355,7 +368,7 @@ public:
    // Correlation methods
 
    Matrix<double> calculate_input_target_correlations() const;
-   std::vector<std::vector<double>> std_input_target_correlations() const;
+   Eigen::MatrixXd calculate_input_target_correlations_eigen() const;
 
    Vector<double> calculate_total_input_correlations() const;
 

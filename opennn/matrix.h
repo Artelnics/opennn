@@ -518,6 +518,9 @@ public:
 
     Vector< double > calculate_missing_values_percentage() const;
 
+    Vector<double> calculate_LP_norm(const double& p) const;
+    Matrix<double> calculate_LP_norm_gradient(const double& p) const;
+
     T calculate_minimum() const;
 
     T calculate_maximum() const;
@@ -7714,6 +7717,86 @@ Vector< double > Matrix<T>::calculate_missing_values_percentage() const
     return(missing_values);
 }
 
+/// Returns the matrix p-norm by rows.
+
+template <class T>
+Vector< double > Matrix<T>::calculate_LP_norm(const double& p) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+      ostringstream buffer;
+
+      if(p <= 0) {
+        buffer << "OpenNN Exception: Vector Template.\n"
+               << "Vector<double> calculate_LP_norm(const double&) const "
+                  "method.\n"
+               << "p value must be greater than zero.\n";
+
+        throw logic_error(buffer.str());
+      }
+
+    #endif
+
+      // Control sentence(if debug)
+
+    Vector<double> norm(rows_number, 0.0);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            norm[i] += pow(fabs((*this)(i,j)), p);
+        }
+
+        norm[i] = pow(norm[i], 1.0 / p);
+    }
+
+    return(norm);
+}
+
+
+/// Returns the gradient of the matrix norm.
+
+template <class T>
+Matrix< double > Matrix<T>::calculate_LP_norm_gradient(const double& p) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+      ostringstream buffer;
+
+      if(p <= 0) {
+        buffer << "OpenNN Exception: Vector Template.\n"
+               << "Matrix<double> calculate_p_norm_gradient(const double&) const "
+                  "method.\n"
+               << "p value must be greater than zero.\n";
+
+        throw logic_error(buffer.str());
+      }
+
+    #endif
+
+      Matrix<double> gradient(rows_number, columns_number);
+
+      const Vector<double> p_norm = calculate_LP_norm(p);
+
+      if(p_norm == 0.0) {
+        gradient.initialize(0.0);
+      } else {
+        for(size_t i = 0; i < rows_number; i++) {
+            for(size_t j = 0; j < columns_number; j++) {
+                gradient(i,j) =
+                 (*this)(i,j) * pow(fabs((*this)(i,j)), p - 2.0) / pow(p_norm[i], p - 1.0);
+            }
+        }
+      }
+
+      return(gradient);
+
+}
 
 /// Returns the maximum value from all elements in the matrix.
 

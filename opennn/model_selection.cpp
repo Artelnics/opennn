@@ -30,11 +30,6 @@ ModelSelection::ModelSelection()
    , growing_inputs_pointer(nullptr)
    , pruning_inputs_pointer(nullptr)
    , genetic_algorithm_pointer(nullptr)
-   , f1_score_optimization_threshold_pointer(nullptr)
-   , matthew_correlation_optimization_threshold_pointer(nullptr)
-   , youden_index_optimization_threshold_pointer(nullptr)
-   , kappa_coefficient_optimization_threshold_pointer(nullptr)
-   , roc_curve_optimization_threshold_pointer(nullptr)
 {
     set_default();
 }
@@ -53,11 +48,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
    , growing_inputs_pointer(nullptr)
    , pruning_inputs_pointer(nullptr)
    , genetic_algorithm_pointer(nullptr)
-   , f1_score_optimization_threshold_pointer(nullptr)
-   , matthew_correlation_optimization_threshold_pointer(nullptr)
-   , youden_index_optimization_threshold_pointer(nullptr)
-   , kappa_coefficient_optimization_threshold_pointer(nullptr)
-   , roc_curve_optimization_threshold_pointer(nullptr)
 {
     set_default();
 }
@@ -76,11 +66,6 @@ ModelSelection::ModelSelection(const string& file_name)
    , growing_inputs_pointer(nullptr)
    , pruning_inputs_pointer(nullptr)
    , genetic_algorithm_pointer(nullptr)
-   , f1_score_optimization_threshold_pointer(nullptr)
-   , matthew_correlation_optimization_threshold_pointer(nullptr)
-   , youden_index_optimization_threshold_pointer(nullptr)
-   , kappa_coefficient_optimization_threshold_pointer(nullptr)
-   , roc_curve_optimization_threshold_pointer(nullptr)
 {
     load(file_name);
 }
@@ -99,11 +84,6 @@ ModelSelection::ModelSelection(const tinyxml2::XMLDocument& model_selection_docu
    , growing_inputs_pointer(nullptr)
    , pruning_inputs_pointer(nullptr)
    , genetic_algorithm_pointer(nullptr)
-   , f1_score_optimization_threshold_pointer(nullptr)
-   , matthew_correlation_optimization_threshold_pointer(nullptr)
-   , youden_index_optimization_threshold_pointer(nullptr)
-   , kappa_coefficient_optimization_threshold_pointer(nullptr)
-   , roc_curve_optimization_threshold_pointer(nullptr)
 {
     from_XML(model_selection_document);
 }
@@ -126,14 +106,6 @@ ModelSelection::~ModelSelection()
     delete incremental_order_pointer;
     delete golden_section_order_pointer;
     delete simulated_annelaing_order_pointer;
-
-    // Delete threshold selection algorithms
-
-    delete f1_score_optimization_threshold_pointer;
-    delete matthew_correlation_optimization_threshold_pointer;
-    delete youden_index_optimization_threshold_pointer;
-    delete kappa_coefficient_optimization_threshold_pointer;
-    delete roc_curve_optimization_threshold_pointer;
 }
 
 
@@ -195,14 +167,6 @@ const ModelSelection::InputsSelectionMethod& ModelSelection::get_inputs_selectio
 }
 
 
-/// Returns the type of algorithm for the threshold selection.
-
-const ModelSelection::ThresholdSelectionMethod& ModelSelection::get_threshold_selection_method() const
-{
-    return(threshold_selection_method);
-}
-
-
 /// Returns a pointer to the incremental order selection algorithm.
 
 IncrementalOrder* ModelSelection::get_incremental_order_pointer() const
@@ -251,53 +215,12 @@ GeneticAlgorithm* ModelSelection::get_genetic_algorithm_pointer() const
 }
 
 
-/// Returns a pointer to the f1 score optimiztion threshold selection algorithm.
-
-F1ScoreOptimizationThreshold* ModelSelection::get_f1_score_optimization_threshold_pointer() const
-{
-    return(f1_score_optimization_threshold_pointer);
-}
-
-
-/// Returns a pointer to the matthew correlation optimiztion threshold selection algorithm.
-
-MatthewCorrelationOptimizationThreshold* ModelSelection::get_matthew_correlation_optimization_threshold() const
-{
-    return(matthew_correlation_optimization_threshold_pointer);
-}
-
-
-/// Returns a pointer to the youden index optimiztion threshold selection algorithm.
-
-YoudenIndexOptimizationThreshold* ModelSelection::get_youden_index_optimization_threshold() const
-{
-    return(youden_index_optimization_threshold_pointer);
-}
-
-
-/// Returns a pointer to the kappa coefficient optimiztion threshold selection algorithm.
-
-KappaCoefficientOptimizationThreshold* ModelSelection::get_kappa_coefficient_optimization_threshold() const
-{
-    return(kappa_coefficient_optimization_threshold_pointer);
-}
-
-
-/// Returns a pointer to the roc curve optimiztion threshold selection algorithm.
-
-ROCCurveOptimizationThreshold* ModelSelection::get_roc_curve_optimization_threshold() const
-{
-    return(roc_curve_optimization_threshold_pointer);
-}
-
-
 /// Sets the members of the model selection object to their default values.
 
 void ModelSelection::set_default()
 {
     set_order_selection_method(ModelSelection::INCREMENTAL_ORDER);
     set_inputs_selection_method(ModelSelection::GROWING_INPUTS);
-    set_threshold_selection_method(ModelSelection::YOUDEN_INDEX);
 
     display = true;
 }
@@ -363,46 +286,6 @@ void ModelSelection::set_display(const bool& new_display)
     case SIMULATED_ANNEALING:
     {
         simulated_annelaing_order_pointer->set_display(new_display);
-
-        break;
-    }
-    }
-
-    switch(threshold_selection_method)
-    {
-    case NO_THRESHOLD_SELECTION:
-    {
-        // do nothing
-
-        break;
-    }
-    case F1_SCORE_OPTIMIZATION:
-    {
-        f1_score_optimization_threshold_pointer->set_display(new_display);
-
-        break;
-    }
-    case MATTHEW_CORRELATION:
-    {
-        matthew_correlation_optimization_threshold_pointer->set_display(new_display);
-
-        break;
-    }
-    case YOUDEN_INDEX:
-    {
-        youden_index_optimization_threshold_pointer->set_display(new_display);
-
-        break;
-    }
-    case KAPPA_COEFFICIENT:
-    {
-        kappa_coefficient_optimization_threshold_pointer->set_display(new_display);
-
-        break;
-    }
-    case ROC_CURVE_DISTANCE:
-    {
-        roc_curve_optimization_threshold_pointer->set_display(new_display);
 
         break;
     }
@@ -556,100 +439,7 @@ void ModelSelection::set_inputs_selection_method(const string& new_inputs_select
 }
 
 
-/// Sets a new method for selecting the threshold to improve the final model.
-/// @param new_threshold_selection_method Method for selecting the threshold.
-
-void ModelSelection::set_threshold_selection_method(const ModelSelection::ThresholdSelectionMethod& new_threshold_selection_method)
-{
-    destruct_threshold_selection();
-
-    threshold_selection_method = new_threshold_selection_method;
-
-    switch(new_threshold_selection_method)
-    {
-    case NO_THRESHOLD_SELECTION:
-    {
-        // do nothing
-
-        break;
-    }
-    case F1_SCORE_OPTIMIZATION:
-    {
-        f1_score_optimization_threshold_pointer = new F1ScoreOptimizationThreshold(training_strategy_pointer);
-
-        break;
-    }
-    case MATTHEW_CORRELATION:
-    {
-        matthew_correlation_optimization_threshold_pointer = new MatthewCorrelationOptimizationThreshold(training_strategy_pointer);
-
-        break;
-    }
-    case YOUDEN_INDEX:
-    {
-        youden_index_optimization_threshold_pointer = new YoudenIndexOptimizationThreshold(training_strategy_pointer);
-
-        break;
-    }
-    case KAPPA_COEFFICIENT:
-    {
-        kappa_coefficient_optimization_threshold_pointer = new KappaCoefficientOptimizationThreshold(training_strategy_pointer);
-
-        break;
-    }
-    case ROC_CURVE_DISTANCE:
-    {
-        roc_curve_optimization_threshold_pointer = new ROCCurveOptimizationThreshold(training_strategy_pointer);
-
-        break;
-    }
-    }
-}
-
-
-/// Sets a new threshold selection algorithm from a string.
-/// @param new_threshold_selection_method String with the threshold selection type.
-
-void ModelSelection::set_threshold_selection_method(const string& new_threshold_selection_method)
-{
-    if(new_threshold_selection_method == "NO_THRESHOLD_SELECTION")
-    {
-        set_threshold_selection_method(NO_THRESHOLD_SELECTION);
-    }
-    else if(new_threshold_selection_method == "F1_SCORE_OPTIMIZATION")
-    {
-        set_threshold_selection_method(F1_SCORE_OPTIMIZATION);
-    }
-    else if(new_threshold_selection_method == "MATTHEW_CORRELATION")
-    {
-        set_threshold_selection_method(MATTHEW_CORRELATION);
-    }
-    else if(new_threshold_selection_method == "YOUDEN_INDEX")
-    {
-        set_threshold_selection_method(YOUDEN_INDEX);
-    }
-    else if(new_threshold_selection_method == "KAPPA_COEFFICIENT")
-    {
-        set_threshold_selection_method(KAPPA_COEFFICIENT);
-    }
-    else if(new_threshold_selection_method == "ROC_CURVE_DISTANCE")
-    {
-        set_threshold_selection_method(ROC_CURVE_DISTANCE);
-    }
-    else
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "void set_threshold_selection_method(const string&) method.\n"
-               << "Unknown threshold selection type: " << new_threshold_selection_method << ".\n";
-
-        throw logic_error(buffer.str());
-    }
-}
-
-
-/// Sets a new regression value.
+/// Sets a new approximation method.
 /// If it is set to true the problem will be taken as a approximation;
 /// if it is set to false the problem will be taken as a classification.
 /// @param new_approximation Approximation value.
@@ -742,41 +532,6 @@ void ModelSelection::set_training_strategy_pointer(TrainingStrategy* new_trainin
             break;
         }
     }
-
-    switch(threshold_selection_method)
-    {
-        case NO_THRESHOLD_SELECTION:
-        {
-            // do nothing
-
-            break;
-        }
-        case F1_SCORE_OPTIMIZATION:
-        {
-            f1_score_optimization_threshold_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-        case MATTHEW_CORRELATION:
-        {
-            matthew_correlation_optimization_threshold_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-        case YOUDEN_INDEX:
-        {
-            youden_index_optimization_threshold_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-        case KAPPA_COEFFICIENT:
-        {
-            kappa_coefficient_optimization_threshold_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-        case ROC_CURVE_DISTANCE:
-        {
-            roc_curve_optimization_threshold_pointer->set_training_strategy_pointer(new_training_strategy_pointer);
-            break;
-        }
-    }
 }
 
 #ifdef __OPENNN_MPI__
@@ -793,10 +548,6 @@ void ModelSelection::set_MPI(TrainingStrategy* new_training_strategy, const Mode
     // Order Selection
 
     set_order_selection_MPI(model_selection);
-
-    // Threshold selection
-
-    set_threshold_selection_MPI(model_selection);
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -1353,180 +1104,6 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
     }
 }
 
-void ModelSelection::set_threshold_selection_MPI(const ModelSelection* model_selection)
-{
-    int size;
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    int original_threshold_selection_method;
-
-    // General parameters
-
-    double minimum_threshold;
-    double maximum_threshold;
-    double step;
-    int reserve_function_history;
-
-    if(rank == 0)
-    {
-        // Variables to send initialization
-
-        original_threshold_selection_method = (int)model_selection->get_threshold_selection_method();
-
-        switch(original_threshold_selection_method)
-        {
-            case(int)ModelSelection::F1_SCORE_OPTIMIZATION:
-            {
-                F1ScoreOptimizationThreshold* original_f1_score_optimization = model_selection->get_f1_score_optimization_threshold_pointer();
-
-                minimum_threshold = original_f1_score_optimization->get_minimum_threshold();
-                maximum_threshold = original_f1_score_optimization->get_maximum_threshold();
-                step = original_f1_score_optimization->get_step();
-                reserve_function_history = original_f1_score_optimization->get_reserve_function_data();
-            }
-            break;
-
-            case(int)ModelSelection::MATTHEW_CORRELATION:
-            {
-                MatthewCorrelationOptimizationThreshold* original_matthew_correlation_optimization = model_selection->get_matthew_correlation_optimization_threshold();
-
-                minimum_threshold = original_matthew_correlation_optimization->get_minimum_threshold();
-                maximum_threshold = original_matthew_correlation_optimization->get_maximum_threshold();
-                step = original_matthew_correlation_optimization->get_step();
-                reserve_function_history = original_matthew_correlation_optimization->get_reserve_function_data();
-            }
-            break;
-
-            case(int)ModelSelection::YOUDEN_INDEX:
-            {
-                YoudenIndexOptimizationThreshold* original_youden_index_optimization = model_selection->get_youden_index_optimization_threshold();
-
-                minimum_threshold = original_youden_index_optimization->get_minimum_threshold();
-                maximum_threshold = original_youden_index_optimization->get_maximum_threshold();
-                step = original_youden_index_optimization->get_step();
-                reserve_function_history = original_youden_index_optimization->get_reserve_function_data();
-            }
-            break;
-
-            case(int)ModelSelection::KAPPA_COEFFICIENT:
-            {
-                KappaCoefficientOptimizationThreshold* original_kappa_coefficient_optimization = model_selection->get_kappa_coefficient_optimization_threshold();
-
-                minimum_threshold = original_kappa_coefficient_optimization->get_minimum_threshold();
-                maximum_threshold = original_kappa_coefficient_optimization->get_maximum_threshold();
-                step = original_kappa_coefficient_optimization->get_step();
-                reserve_function_history = original_kappa_coefficient_optimization->get_reserve_function_data();
-            }
-            break;
-
-            case(int)ModelSelection::ROC_CURVE_DISTANCE:
-            {
-                ROCCurveOptimizationThreshold* original_roc_curve_optimization = model_selection->get_roc_curve_optimization_threshold();
-
-                minimum_threshold = original_roc_curve_optimization->get_minimum_threshold();
-                maximum_threshold = original_roc_curve_optimization->get_maximum_threshold();
-                step = original_roc_curve_optimization->get_step();
-                reserve_function_history = original_roc_curve_optimization->get_reserve_function_data();
-            }
-            break;
-
-            default:
-                break;
-        }
-    }
-
-    // Send variables
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if(rank > 0)
-    {
-        MPI_Recv(&original_threshold_selection_method, 1, MPI_INT, rank-1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        MPI_Request req[4];
-
-        MPI_Irecv(&minimum_threshold, 1, MPI_INT, rank-1, 2, MPI_COMM_WORLD, &req[0]);
-        MPI_Irecv(&maximum_threshold, 1, MPI_INT, rank-1, 3, MPI_COMM_WORLD, &req[1]);
-        MPI_Irecv(&step, 1, MPI_INT, rank-1, 4, MPI_COMM_WORLD, &req[2]);
-        MPI_Irecv(&reserve_function_history, 1, MPI_INT, rank-1, 5, MPI_COMM_WORLD, &req[3]);
-
-        MPI_Waitall(4, req, MPI_STATUS_IGNORE);
-    }
-
-    if(rank < size-1)
-    {
-        MPI_Send(&original_threshold_selection_method, 1, MPI_INT, rank+1, 1, MPI_COMM_WORLD);
-
-        MPI_Request req[4];
-
-        MPI_Isend(&minimum_threshold, 1, MPI_INT, rank+1, 2, MPI_COMM_WORLD, &req[0]);
-        MPI_Isend(&maximum_threshold, 1, MPI_INT, rank+1, 3, MPI_COMM_WORLD, &req[1]);
-        MPI_Isend(&step, 1, MPI_INT, rank+1, 4, MPI_COMM_WORLD, &req[2]);
-        MPI_Isend(&reserve_function_history, 1, MPI_INT, rank+1, 5, MPI_COMM_WORLD, &req[3]);
-
-        MPI_Waitall(4, req, MPI_STATUS_IGNORE);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    // Set variables
-
-    set_threshold_selection_method((ModelSelection::ThresholdSelectionType)original_threshold_selection_method);
-
-    switch(original_threshold_selection_method)
-    {
-        case(int)ModelSelection::F1_SCORE_OPTIMIZATION:
-        {
-            f1_score_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
-            f1_score_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
-            f1_score_optimization_threshold_pointer->set_step(step);
-            f1_score_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
-        }
-        break;
-
-        case(int)ModelSelection::MATTHEW_CORRELATION:
-        {
-            matthew_correlation_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
-            matthew_correlation_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
-            matthew_correlation_optimization_threshold_pointer->set_step(step);
-            matthew_correlation_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
-        }
-            break;
-
-        case(int)ModelSelection::YOUDEN_INDEX:
-        {
-            youden_index_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
-            youden_index_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
-            youden_index_optimization_threshold_pointer->set_step(step);
-            youden_index_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
-        }
-            break;
-
-        case(int)ModelSelection::KAPPA_COEFFICIENT:
-        {
-            kappa_coefficient_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
-            kappa_coefficient_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
-            kappa_coefficient_optimization_threshold_pointer->set_step(step);
-            kappa_coefficient_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
-        }
-            break;
-
-        case(int)ModelSelection::ROC_CURVE_DISTANCE:
-        {
-            roc_curve_optimization_threshold_pointer->set_minimum_threshold(minimum_threshold);
-            roc_curve_optimization_threshold_pointer->set_maximum_threshold(maximum_threshold);
-            roc_curve_optimization_threshold_pointer->set_step(step);
-            roc_curve_optimization_threshold_pointer->set_reserve_function_data(reserve_function_history == 1);
-        }
-        break;
-
-        default:
-            break;
-    }
-}
 #endif
 
 
@@ -1562,32 +1139,12 @@ void ModelSelection::destruct_inputs_selection()
 }
 
 
-/// This method deletes the threshold selection algorithm object which composes this model selection object.
-
-void ModelSelection::destruct_threshold_selection()
-{
-    delete f1_score_optimization_threshold_pointer;
-    delete matthew_correlation_optimization_threshold_pointer;
-    delete youden_index_optimization_threshold_pointer;
-    delete kappa_coefficient_optimization_threshold_pointer;
-    delete roc_curve_optimization_threshold_pointer;
-
-    f1_score_optimization_threshold_pointer = nullptr;
-    matthew_correlation_optimization_threshold_pointer = nullptr;
-    youden_index_optimization_threshold_pointer = nullptr;
-    kappa_coefficient_optimization_threshold_pointer = nullptr;
-    roc_curve_optimization_threshold_pointer = nullptr;
-
-    threshold_selection_method = NO_THRESHOLD_SELECTION;
-}
-
-
 /// Checks that the different pointers needed for performing the model selection are not nullptr.
 
 void ModelSelection::check() const
 {
 
-    // Training algorithm stuff
+    // Optimization algorithm stuff
 
     ostringstream buffer;
 
@@ -1894,89 +1451,6 @@ ModelSelection::Results ModelSelection::perform_inputs_selection() const
     return(results);
 }
 
-
-/// Perform the threshold selection, returns a structure with the results of the threshold selection.
-/// It also set the neural network with the optimum threshold.
-
-ModelSelection::Results ModelSelection::perform_threshold_selection() const
-{
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    if(threshold_selection_method == NO_THRESHOLD_SELECTION)
-    {
-        buffer << "OpenNN Exception: ModelSelection class.\n"
-               << "ModelSelectionResults perform_threshold_selection() const method.\n"
-               << "None threshold selection term is used.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    check();
-
-#endif
-
-    Results results;
-
-    switch(threshold_selection_method)
-    {
-        case F1_SCORE_OPTIMIZATION:
-        {
-            f1_score_optimization_threshold_pointer->set_display(display);
-
-            results.f1_score_opimization_results_pointer = f1_score_optimization_threshold_pointer->perform_threshold_selection();
-
-            break;
-        }
-        case MATTHEW_CORRELATION:
-        {
-            matthew_correlation_optimization_threshold_pointer->set_display(display);
-
-            results.matthew_correlation_optimization_results_pointer = matthew_correlation_optimization_threshold_pointer->perform_threshold_selection();
-
-            break;
-        }
-        case YOUDEN_INDEX:
-        {
-            youden_index_optimization_threshold_pointer->set_display(display);
-
-            results.youden_index_optimization_results_pointer = youden_index_optimization_threshold_pointer->perform_threshold_selection();
-
-            break;
-        }
-        case KAPPA_COEFFICIENT:
-        {
-            kappa_coefficient_optimization_threshold_pointer->set_display(display);
-
-            results.kappa_coefficient_optimization_results_pointer = kappa_coefficient_optimization_threshold_pointer->perform_threshold_selection();
-
-            break;
-        }
-        case ROC_CURVE_DISTANCE:
-        {
-            roc_curve_optimization_threshold_pointer->set_display(display);
-
-            results.roc_curve_optimization_results_pointer = roc_curve_optimization_threshold_pointer->perform_threshold_selection();
-
-            break;
-        }
-        default:
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: ModelSelection class.\n"
-                   << "ModelSelectionResults perform_threshold_selection() method.\n"
-                   << "Unknown threshold selection method.\n";
-
-            throw logic_error(buffer.str());
-        }
-    }
-
-    return(results);
-}
-
-
 /// @todo
 /// Perform inputs selection and order selection.
 
@@ -2153,120 +1627,6 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
         break;
     }
 
-    // Threshold Selection
-
-    switch(threshold_selection_method)
-    {
-        case NO_THRESHOLD_SELECTION:
-        {
-            tinyxml2::XMLElement* order_selection_element = document->NewElement("ThresholdSelection");
-            model_selection_element->LinkEndChild(order_selection_element);
-
-            order_selection_element->SetAttribute("Type", "NO_ORDER_SELECTION");
-        }
-            break;
-
-        case F1_SCORE_OPTIMIZATION:
-        {
-            tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
-            model_selection_element->LinkEndChild(threshold_selection_element);
-
-            threshold_selection_element->SetAttribute("Type", "F1_SCORE_OPTIMIZATION");
-
-            const tinyxml2::XMLDocument* f1_score_optimization_document = f1_score_optimization_threshold_pointer->to_XML();
-
-            const tinyxml2::XMLElement* f1_score_optimization_element = f1_score_optimization_document->FirstChildElement("F1ScoreOptimizationThreshold");
-
-            for( const tinyxml2::XMLNode* nodeFor=f1_score_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
-                threshold_selection_element->InsertEndChild( copy );
-            }
-
-            delete f1_score_optimization_document;
-        }
-            break;
-
-        case MATTHEW_CORRELATION:
-        {
-            tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
-            model_selection_element->LinkEndChild(threshold_selection_element);
-
-            threshold_selection_element->SetAttribute("Type", "MATTHEW_CORRELATION");
-
-            const tinyxml2::XMLDocument* matthew_correlation_optimization_document = matthew_correlation_optimization_threshold_pointer->to_XML();
-
-            const tinyxml2::XMLElement* matthew_correlation_optimization_element = matthew_correlation_optimization_document->FirstChildElement("MatthewCorrelationOptimizationThreshold");
-
-            for( const tinyxml2::XMLNode* nodeFor=matthew_correlation_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
-                threshold_selection_element->InsertEndChild( copy );
-            }
-
-            delete matthew_correlation_optimization_document;
-        }
-            break;
-
-        case YOUDEN_INDEX:
-        {
-            tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
-            model_selection_element->LinkEndChild(threshold_selection_element);
-
-            threshold_selection_element->SetAttribute("Type", "YOUDEN_INDEX");
-
-            const tinyxml2::XMLDocument* youden_index_optimization_document = youden_index_optimization_threshold_pointer->to_XML();
-
-            const tinyxml2::XMLElement* youden_index_optimization_element = youden_index_optimization_document->FirstChildElement("YoudenIndexOptimizationThreshold");
-
-            for( const tinyxml2::XMLNode* nodeFor=youden_index_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
-                threshold_selection_element->InsertEndChild( copy );
-            }
-
-            delete youden_index_optimization_document;
-        }
-            break;
-
-        case KAPPA_COEFFICIENT:
-        {
-            tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
-            model_selection_element->LinkEndChild(threshold_selection_element);
-
-            threshold_selection_element->SetAttribute("Type", "KAPPA_COEFFICIENT");
-
-            const tinyxml2::XMLDocument* kappa_coefficient_optimization_document = kappa_coefficient_optimization_threshold_pointer->to_XML();
-
-            const tinyxml2::XMLElement* kappa_coefficient_optimization_element = kappa_coefficient_optimization_document->FirstChildElement("KappaCoefficientOptimizationThreshold");
-
-            for( const tinyxml2::XMLNode* nodeFor=kappa_coefficient_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
-                threshold_selection_element->InsertEndChild( copy );
-            }
-
-            delete kappa_coefficient_optimization_document;
-        }
-            break;
-
-        case ROC_CURVE_DISTANCE:
-        {
-            tinyxml2::XMLElement* threshold_selection_element = document->NewElement("ThresholdSelection");
-            model_selection_element->LinkEndChild(threshold_selection_element);
-
-            threshold_selection_element->SetAttribute("Type", "ROC_CURVE_DISTANCE");
-
-            const tinyxml2::XMLDocument* roc_curve_optimization_document = roc_curve_optimization_threshold_pointer->to_XML();
-
-            const tinyxml2::XMLElement* roc_curve_optimization_element = roc_curve_optimization_document->FirstChildElement("ROCCurveOptimizationThreshold");
-
-            for( const tinyxml2::XMLNode* nodeFor=roc_curve_optimization_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone( document );
-                threshold_selection_element->InsertEndChild( copy );
-            }
-
-            delete roc_curve_optimization_document;
-        }
-            break;
-    }
-
     return(document);
 }
 
@@ -2380,81 +1740,6 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
         break;
     }
 
-    // Threshold Selection
-
-    switch(threshold_selection_method)
-    {
-    case NO_THRESHOLD_SELECTION:
-    {
-        file_stream.OpenElement("ThresholdSelection");
-
-        file_stream.PushAttribute("Type", "NO_THRESHOLD_SELECTION");
-
-        file_stream.CloseElement();
-    }
-        break;
-
-    case F1_SCORE_OPTIMIZATION:
-    {
-        file_stream.OpenElement("ThresholdSelection");
-
-        file_stream.PushAttribute("Type", "F1_SCORE_OPTIMIZATION");
-
-        f1_score_optimization_threshold_pointer->write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-        break;
-
-    case MATTHEW_CORRELATION:
-    {
-        file_stream.OpenElement("ThresholdSelection");
-
-        file_stream.PushAttribute("Type", "MATTHEW_CORRELATION");
-
-        matthew_correlation_optimization_threshold_pointer->write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-        break;
-
-    case YOUDEN_INDEX:
-    {
-        file_stream.OpenElement("ThresholdSelection");
-
-        file_stream.PushAttribute("Type", "YOUDEN_INDEX");
-
-        youden_index_optimization_threshold_pointer->write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-        break;
-
-    case KAPPA_COEFFICIENT:
-    {
-        file_stream.OpenElement("ThresholdSelection");
-
-        file_stream.PushAttribute("Type", "KAPPA_COEFFICIENT");
-
-        kappa_coefficient_optimization_threshold_pointer->write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-        break;
-
-    case ROC_CURVE_DISTANCE:
-    {
-        file_stream.OpenElement("ThresholdSelection");
-
-        file_stream.PushAttribute("Type", "ROC_CURVE_DISTANCE");
-
-        roc_curve_optimization_threshold_pointer->write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-        break;
-    }
-
     file_stream.CloseElement();
 }
 
@@ -2502,14 +1787,14 @@ cout << "1" << endl;
             {cout<<"inside if growing inputs"<<endl;
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("GrowingInputs");
+                tinyxml2::XMLElement* element = new_document.NewElement("GrowingInputs");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
+                    element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(random_search_element);
+                new_document.InsertEndChild(element);
 
                 growing_inputs_pointer->from_XML(new_document);
             }
@@ -2518,14 +1803,14 @@ cout << "1" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("PruningInputs");
+                tinyxml2::XMLElement* element = new_document.NewElement("PruningInputs");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
+                    element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(random_search_element);
+                new_document.InsertEndChild(element);
 
                 pruning_inputs_pointer->from_XML(new_document);
             }
@@ -2534,14 +1819,14 @@ cout << "1" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("GeneticAlgorithm");
+                tinyxml2::XMLElement* element = new_document.NewElement("GeneticAlgorithm");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
+                    element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(random_search_element);
+                new_document.InsertEndChild(element);
 
                 genetic_algorithm_pointer->from_XML(new_document);
             }
@@ -2571,14 +1856,14 @@ cout << "2" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("IncrementalOrder");
+                tinyxml2::XMLElement* element = new_document.NewElement("IncrementalOrder");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
+                    element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(random_search_element);
+                new_document.InsertEndChild(element);
 
                 incremental_order_pointer->from_XML(new_document);
             }
@@ -2587,14 +1872,14 @@ cout << "2" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("GoldenSectionOrder");
+                tinyxml2::XMLElement* element = new_document.NewElement("GoldenSectionOrder");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
+                    element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(random_search_element);
+                new_document.InsertEndChild(element);
 
                 golden_section_order_pointer->from_XML(new_document);
             }
@@ -2603,14 +1888,14 @@ cout << "2" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("SimulatedAnnealingOrder");
+                tinyxml2::XMLElement* element = new_document.NewElement("SimulatedAnnealingOrder");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
+                    element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(random_search_element);
+                new_document.InsertEndChild(element);
 
                 simulated_annelaing_order_pointer->from_XML(new_document);
             }
@@ -2618,108 +1903,6 @@ cout << "2" << endl;
             }
         }
     }
-cout << "3" << endl;
-    // Threshold Selection
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ThresholdSelection");
-
-        if(element)
-        {
-            const string new_threshold_selection_method = element->Attribute("Type");
-
-            set_threshold_selection_method(new_threshold_selection_method);
-
-            switch(threshold_selection_method)
-            {
-            case NO_THRESHOLD_SELECTION:
-            {
-                // do nothing
-            }
-                break;
-            case F1_SCORE_OPTIMIZATION:
-            {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("F1ScoreOptimizationThreshold");
-
-                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
-                }
-
-                new_document.InsertEndChild(random_search_element);
-
-                f1_score_optimization_threshold_pointer->from_XML(new_document);
-            }
-                break;
-            case MATTHEW_CORRELATION:
-            {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("MatthewCorrelationOptimizationThreshold");
-
-                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
-                }
-
-                new_document.InsertEndChild(random_search_element);
-
-                matthew_correlation_optimization_threshold_pointer->from_XML(new_document);
-            }
-                break;
-            case YOUDEN_INDEX:
-            {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("YoudenIndexOptimizationThreshold");
-
-                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
-                }
-
-                new_document.InsertEndChild(random_search_element);
-
-                youden_index_optimization_threshold_pointer->from_XML(new_document);
-            }
-                break;
-            case KAPPA_COEFFICIENT:
-            {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("KappaCoefficientOptimizationThreshold");
-
-                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
-                }
-
-                new_document.InsertEndChild(random_search_element);
-
-                kappa_coefficient_optimization_threshold_pointer->from_XML(new_document);
-            }
-                break;
-            case ROC_CURVE_DISTANCE:
-            {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* random_search_element = new_document.NewElement("ROCCurveOptimizationThreshold");
-
-                for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    random_search_element->InsertEndChild( copy );
-                }
-
-                new_document.InsertEndChild(random_search_element);
-
-                roc_curve_optimization_threshold_pointer->from_XML(new_document);
-            }
-                break;
-            }
-        }
-    }
-cout << "4" << endl;
 }
 
 
@@ -2807,33 +1990,6 @@ void ModelSelection::Results::save(const string& file_name) const
     if(genetic_algorithm_results_pointer)
     {
         file << genetic_algorithm_results_pointer->object_to_string();
-    }
-
-    file << "\n% Threhold Selection Results\n";
-
-    if(f1_score_opimization_results_pointer)
-    {
-        file << f1_score_opimization_results_pointer->object_to_string();
-    }
-
-    if(matthew_correlation_optimization_results_pointer)
-    {
-        file << matthew_correlation_optimization_results_pointer->object_to_string();
-    }
-
-    if(youden_index_optimization_results_pointer)
-    {
-        file << youden_index_optimization_results_pointer->object_to_string();
-    }
-
-    if(kappa_coefficient_optimization_results_pointer)
-    {
-        file << kappa_coefficient_optimization_results_pointer->object_to_string();
-    }
-
-    if(roc_curve_optimization_results_pointer)
-    {
-        file << roc_curve_optimization_results_pointer->object_to_string();
     }
 
     file.close();

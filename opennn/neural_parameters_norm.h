@@ -3,29 +3,29 @@
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
 /*                                                                                                              */
-/*   M E A N   S Q U A R E D   E R R O R    C L A S S   H E A D E R                                             */
+/*   N E U R A L   P A R A M E T E R S   N O R M   C L A S S   H E A D E R                                      */
 /*                                                                                                              */
+/*   Roberto Lopez                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
+/*   robertolopez@artelnics.com                                                                                 */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
-#ifndef __MEANSQUAREDERROR_H__
-#define __MEANSQUAREDERROR_H__
+#ifndef __NEURALPARAMETERSNORM_H__
+#define __NEURALPARAMETERSNORM_H__
 
 // System includes
 
-#include <string>
-#include <sstream>
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <sstream>
+#include <string>
 #include <limits>
-#include <math.h>
 
 // OpenNN includes
 
-#include "loss_index.h"
-#include "data_set.h"
+#include "regularization_term.h"
 
 // TinyXml includes
 
@@ -34,92 +34,73 @@
 namespace OpenNN
 {
 
-/// This class represents the mean squared error term.
-/// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
-/// This functional is used in data modeling problems, such as function regression, 
-/// classification and time series prediction.
+/// This class represents the neural parameters norm regularization term.
+/// This error term is very useful as a regularization functional in data modeling, optimal control or inverse problems.
 
-class MeanSquaredError : public LossIndex
+class NeuralParametersNorm : public RegularizationTerm
 {
 
 public:
 
    // DEFAULT CONSTRUCTOR
 
-   explicit MeanSquaredError();
+   explicit NeuralParametersNorm();
 
    // NEURAL NETWORK CONSTRUCTOR
 
-   explicit MeanSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
-
-   explicit MeanSquaredError(DataSet*);
-
-   // GENERAL CONSTRUCTOR
-
-   explicit MeanSquaredError(NeuralNetwork*, DataSet*);
+   explicit NeuralParametersNorm(NeuralNetwork*);
 
    // XML CONSTRUCTOR
 
-   explicit MeanSquaredError(const tinyxml2::XMLDocument&);
-
-   // COPY CONSTRUCTOR
-
-   MeanSquaredError(const MeanSquaredError&);
+   explicit NeuralParametersNorm(const tinyxml2::XMLDocument&);
 
    // DESTRUCTOR
 
-   virtual ~MeanSquaredError();
-
-   // STRUCTURES
-
+   virtual ~NeuralParametersNorm();    
 
    // METHODS
 
-   // Error methods
+   // Get methods
 
-   double calculate_training_error() const;
+   const double& get_neural_parameters_norm_weight() const;
 
-   double calculate_selection_error() const;
+   // Set methods
 
-   double calculate_training_error(const Vector<double>&) const;
+   void set_neural_parameters_norm_weight(const double&);
 
-   double calculate_batch_error(const Vector<size_t> &) const;
+   void set_default();
 
-   double calculate_batch_error_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
+   // Checking methods
 
-   // Gradient methods
+   void check() const;
 
-   Vector<double> calculate_training_error_gradient() const;
+   // loss methods
 
-   FirstOrderLoss calculate_first_order_loss() const;
+   double calculate_regularization() const;
+   Vector<double> calculate_gradient() const;
+   Matrix<double> calculate_Hessian() const;
 
-   Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const;
-
-   Vector<double> calculate_batch_error_gradient_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
-
-   FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
-
-   // Error terms methods
-
-   Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;
-   Vector<double> calculate_error_terms(const Vector<double>&) const;
+   double calculate_regularization(const Vector<double>&) const;
+   Vector<double> calculate_gradient(const Vector<double>&) const;
+   Matrix<double> calculate_Hessian(const Vector<double>&) const;
 
    string write_error_term_type() const;
 
-   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
-
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   string write_information() const;
 
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML() const;   
+   void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter &) const;
+   void write_XML(tinyxml2::XMLPrinter&) const;
    // void read_XML(   );
 
 private:
+
+   /// Weight value for the neural parameters norm regularization term.
+
+   double neural_parameters_norm_weight;
 
 };
 

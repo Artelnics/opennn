@@ -14,6 +14,27 @@
 
 #include "mean_squared_error.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                                const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                                const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                                const double* target_data_h, const size_t target_rows, const size_t target_columns,
+                                std::vector<double*> error_gradient_data,
+                                double* output_data_h, const size_t output_rows, const size_t output_columns,
+                                const std::vector<std::string> layers_activations, const std::string loss_method,
+                                const std::vector<double> loss_parameters = vector<double>());
+
+void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                          double* output_data_h, const size_t output_rows, const size_t output_columns,
+                          const std::vector<std::string> layers_activations);
+
+#endif
+
 namespace OpenNN
 {
 // DEFAULT CONSTRUCTOR
@@ -254,11 +275,56 @@ check();
 
     const double batch_error = outputs.calculate_sum_squared_error(targets);
 
-//    cout<< neural_network_pointer->get_multilayer_perceptron_pointer()->get_parameters();
-//    system("pause");
-
     return (batch_error/instances_number);
 
+}
+
+double MeanSquaredError::calculate_batch_error_cuda(const Vector<size_t>& batch_indices, const MultilayerPerceptron::Pointers& pointers) const
+{
+    double batch_error = 0.0;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+    }
+
+    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                         input_data, input_rows, input_columns,
+                         output_data, output_rows, output_columns,
+                         pointers.layer_activations.to_std_vector());
+
+    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+    const size_t instances_number = batch_indices.size();
+
+    batch_error = outputs.calculate_sum_squared_error(targets_matrix) / static_cast<double>(instances_number);
+
+#endif
+
+    return batch_error;
 }
 
 Vector<double> MeanSquaredError::calculate_training_error_gradient() const
@@ -316,6 +382,75 @@ check();
     return training_error_gradient/static_cast<double>(training_instances_number);
 }
 
+LossIndex::FirstOrderLoss MeanSquaredError::calculate_first_order_loss() const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Multilayer perceptron
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+
+    // Data set
+
+    const size_t training_instances_number = data_set_pointer->get_instances_pointer()->get_training_instances_number();
+
+    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+
+    const size_t batches_number = training_batches.size();
+
+    FirstOrderLoss first_order_loss(parameters_number);
+
+    #pragma omp parallel for
+
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    {
+        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
+        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
+
+        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+        const Vector<double> error_terms
+                = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+        Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/*/error_terms*/;
+        output_gradient.divide_by_rows(error_terms);
+
+        const Vector< Matrix<double> > layers_delta
+                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+        const Matrix<double> error_terms_Jacobian
+                = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+        const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+
+        const double loss = error_terms.dot(error_terms);
+
+        const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+
+        #pragma omp critical
+//        {
+            first_order_loss.loss += loss;
+            first_order_loss.gradient += gradient;
+//         }
+    }
+
+//    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
+
+    first_order_loss.loss /= static_cast<double>(training_instances_number);
+    first_order_loss.gradient *= (2.0/static_cast<double>(training_instances_number));
+
+    return first_order_loss;
+}
+
 
 Vector<double> MeanSquaredError::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
 {
@@ -351,6 +486,127 @@ check();
 
     return batch_error_gradient/static_cast<double>(instances_number);
 
+}
+
+
+Vector<double> MeanSquaredError::calculate_batch_error_gradient_cuda(const Vector<size_t>& batch_indices, const MultilayerPerceptron::Pointers& pointers) const
+{
+    Vector<double> error_gradient;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+    const double* target_data = targets_matrix.data();
+    const size_t target_rows = targets_matrix.get_rows_number();
+    const size_t target_columns = targets_matrix.get_columns_number();
+
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
+    }
+
+    error_gradient.set(parameters_number);
+    vector<double*> error_gradient_data(2*layers_number);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        error_gradient_data[2*i] = error_gradient.data() + index;
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        error_gradient_data[2*i+1] = error_gradient.data() + index;
+        index += bias_rows_numbers[i];
+    }
+
+    vector<double> loss_parameters;
+
+    string loss_method = write_error_term_type();
+
+    calculateErrorGradientCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                               pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                               input_data, input_rows, input_columns,
+                               target_data, target_rows, target_columns,
+                               error_gradient_data,
+                               output_data, output_rows, output_columns,
+                               pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
+
+    const size_t instances_number = batch_indices.size();
+
+    const double batch_error = outputs.calculate_sum_squared_error(targets_matrix) / static_cast<double>(instances_number);
+
+#endif
+
+    return error_gradient;
+}
+
+
+LossIndex::FirstOrderLoss MeanSquaredError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+     // Data set
+
+     const size_t instances_number = batch_indices.size();
+
+     // Neural network
+
+     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+     const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+     const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+
+     // Loss index
+
+     FirstOrderLoss first_order_loss(parameters_number);
+
+     const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+     const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+
+     const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+             = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+     const Vector<double> error_terms = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+     const Matrix<double> output_gradient = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+     const Vector< Matrix<double> > layers_delta = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+     const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+     first_order_loss.loss = error_terms.dot(error_terms)/ static_cast<double>(instances_number);
+     first_order_loss.gradient = batch_error_gradient/static_cast<double>(instances_number);
+
+    return first_order_loss;
 }
 
 
@@ -405,7 +661,7 @@ check();
 }
 
 
-LossIndex::SecondOrderErrorTerms MeanSquaredError::calculate_terms_second_order_loss() const
+LossIndex::SecondOrderLoss MeanSquaredError::calculate_terms_second_order_loss() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -429,7 +685,7 @@ check();
 
     const size_t batches_number = training_batches.size();
 
-    SecondOrderErrorTerms terms_second_order_loss(parameters_number);
+    SecondOrderLoss terms_second_order_loss(parameters_number);
 
     #pragma omp parallel for
 
@@ -470,11 +726,16 @@ check();
 //         }
     }
 
-//    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
-
     terms_second_order_loss.loss /= static_cast<double>(training_instances_number);
     terms_second_order_loss.gradient *= (2.0/static_cast<double>(training_instances_number));
     terms_second_order_loss.Hessian_approximation *= (2.0/static_cast<double>(training_instances_number));
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        terms_second_order_loss.loss += calculate_regularization();
+        terms_second_order_loss.gradient += calculate_regularization_gradient();
+        terms_second_order_loss.Hessian_approximation += calculate_regularization_Hessian();
+    }
 
     return terms_second_order_loss;
 }

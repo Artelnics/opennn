@@ -153,15 +153,20 @@ public:
        {
        }
 
-       virtual ~Pointers()
-       {
-       }
+       virtual ~Pointers();
 
-       double** biases_pointers;
-       double** weights_pointers;
+       Vector<double> get_parameters() const;
 
-       int layers_number;
-       int* architecture;
+       void update_parameters(const Vector<double>&);
+
+       Vector<double*> biases_pointers;
+       Vector<double*> weights_pointers;
+
+       size_t layers_number;
+       Vector<size_t> architecture;
+       Vector<string> layer_activations;
+
+       bool CUDA_initialized = false;
    };
 
 

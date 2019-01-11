@@ -434,11 +434,11 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
     training_strategy.set_training_method(TrainingStrategy::GRADIENT_DESCENT);
 //    training_strategy.get_quasi_Newton_method_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
 //    training_strategy.get_quasi_Newton_method_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
-//    training_strategy.get_quasi_Newton_method_pointer()->get_training_rate_algorithm_pointer()->set_training_rate_method(TrainingRateAlgorithm::Fixed);
+//    training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::Fixed);
 
     training_strategy.get_gradient_descent_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
     training_strategy.get_gradient_descent_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
-    training_strategy.get_gradient_descent_pointer()->get_training_rate_algorithm_pointer()->set_training_rate_method(TrainingRateAlgorithm::BrentMethod);
+    training_strategy.get_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
 
     training_strategy.set_display(false);
 

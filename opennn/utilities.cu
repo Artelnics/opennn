@@ -11,6 +11,8 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 void printHostVector(const double* vector, int n)
 {
     for(int i = 0; i < n; i++)
@@ -408,7 +410,7 @@ __global__ void exponential_linear_kernel (const double * src, double* dst, int 
     }
 }
 
-void calculateActivation(double* vector_src, double* vector_dst, const int lenght, const std::string activation)
+void calculateActivation(double* vector_src, double* vector_dst, const int lenght, const string activation)
 {
     /* Compute execution configuration */
     dim3 dimBlock(256);
@@ -584,7 +586,7 @@ __global__ void exponential_linear_derivative_kernel (const double * src, double
     }
 }
 
-void calculateActivationDerivative(const double* vector_src, double* vector_dst, const int lenght, const std::string activation)
+void calculateActivationDerivative(const double* vector_src, double* vector_dst, const int lenght, const string activation)
 {
     /* Compute execution configuration */
     dim3 dimBlock(256);
@@ -667,13 +669,23 @@ __global__ void cross_entropy_error_derivative_kernel (const double * outputs, c
     }
 }
 
-__global__ void minkowski_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len,
-                                                   const double minkowski_parameter)
+__global__ void pow_p_error_kernel (const double * outputs, const double * targets, double* dst, int len, const double p)
 {
     int stride = gridDim.x * blockDim.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
     for (int i = tid; i < len; i += stride) {
-        // TODO
+        dst[i] = pow(outputs[i]-targets[i], p);
+    }
+}
+
+__global__ void minkowski_error_derivative_kernel (const double * outputs, const double* targets, double* output_gradient, int len,
+                                                   const double p, const double p_norm)
+{
+    int stride = gridDim.x * blockDim.x;
+    int tid = blockDim.x * blockIdx.x + threadIdx.x;
+    for (int i = tid; i < len; i += stride) {
+        const double error = outputs[i] - targets[i];
+        output_gradient[i] = ((error) * pow(fabs(error), p - 2.0) / pow(p_norm, p - 1.0))/len;
     }
 }
 
@@ -693,7 +705,7 @@ __global__ void root_mean_squared_error_derivative_kernel (const double * output
     int stride = gridDim.x * blockDim.x;
     int tid = blockDim.x * blockIdx.x + threadIdx.x;
     for (int i = tid; i < len; i += stride) {
-        // TODO
+        output_gradient[i] = (outputs[i] - targets[i]) / (len * error);
     }
 }
 
@@ -708,7 +720,7 @@ __global__ void weighted_squared_error_derivative_kernel (const double * outputs
 }
 
 void calculateOutputDerivative(const double* outputs, const double* targets, double* output_gradient, const int lenght,
-                               const std::string loss_method, const std::vector<double> loss_parameters)
+                               const string loss_method, const vector<double> loss_parameters)
 {
     /* Compute execution configuration */
     dim3 dimBlock(256);
@@ -730,7 +742,18 @@ void calculateOutputDerivative(const double* outputs, const double* targets, dou
     }
     else if(loss_method == "MINKOWSKI_ERROR")
     {
-        // TODO
+        // Calculate p norm
+        double p_norm = 0;
+        cublasHandle_t handle;
+
+        createHandle(&handle);
+
+        pow_p_error_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght, loss_parameters[0]);
+        cublasDasum(handle, lenght, output_gradient, 1, &p_norm);
+        p_norm = pow(p_norm, 1/loss_parameters[0]);
+        cublasDestroy(handle);
+
+        minkowski_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght, loss_parameters[0], p_norm);
     }
     else if(loss_method == "NORMALIZED_SQUARED_ERROR")
     {
@@ -738,7 +761,18 @@ void calculateOutputDerivative(const double* outputs, const double* targets, dou
     }
     else if(loss_method == "ROOT_MEAN_SQUARED_ERROR")
     {
-        // TODO
+        // Calculate error
+        double error;
+        cublasHandle_t handle;
+
+        createHandle(&handle);
+
+        pow_p_error_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght, 2);
+        cublasDasum(handle, lenght, output_gradient, 1, &error);
+        error = pow(error/lenght, 1/2);
+        cublasDestroy(handle);
+
+        root_mean_squared_error_derivative_kernel<<<dimGrid,dimBlock>>>(outputs, targets, output_gradient, lenght, error);
     }
     else if(loss_method == "WEIGHTED_SQUARED_ERROR")
     {
@@ -775,11 +809,11 @@ void elementwiseMultiplication(const double* vector1, const double* vector2, dou
     cudaDeviceSynchronize();
 }
 
-void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+void calculateOutputsCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                          const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
                           const double* input_data_h, const size_t input_rows, const size_t input_columns,
                           double* output_data_h, const size_t output_rows, const size_t output_columns,
-                          const std::vector<std::string> layers_activations)
+                          const vector<string> layers_activations)
 {
     const size_t layers_number = weights_d.size();
 
@@ -790,7 +824,7 @@ void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vecto
 
     double* ones_vector;
 
-    std::vector<double> ones_vector_h(input_rows, 1);
+    vector<double> ones_vector_h(input_rows, 1);
     const double* ones_vector_h_data = ones_vector_h.data();
 
     cublasHandle_t handle;
@@ -866,12 +900,12 @@ void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vecto
     cublasDestroy(handle);
 }
 
-void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                                               const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+void calculateFirstOrderForwardPropagationCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                                               const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
                                                const double* input_data_h, const size_t input_rows, const size_t input_columns,
-                                               std::vector<double*> layers_activations_data, std::vector<double*> layers_activation_derivatives_data,
-                                               const std::vector<size_t> activations_rows_numbers, const std::vector<size_t> activations_columns_numbers,
-                                               const std::vector<std::string> layers_activations)
+                                               vector<double*> layers_activations_data, vector<double*> layers_activation_derivatives_data,
+                                               const vector<size_t> activations_rows_numbers, const vector<size_t> activations_columns_numbers,
+                                               const vector<string> layers_activations)
 {
     const size_t layers_number = weights_d.size();
 
@@ -882,10 +916,10 @@ void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weight
 
     double* ones_vector;
 
-    std::vector<double*> layers_activations_d(layers_number);
-    std::vector<double*> layers_activation_derivatives_d(layers_number);
+    vector<double*> layers_activations_d(layers_number);
+    vector<double*> layers_activation_derivatives_d(layers_number);
 
-    std::vector<double> ones_vector_h(input_rows, 1);
+    vector<double> ones_vector_h(input_rows, 1);
     const double* ones_vector_h_data = ones_vector_h.data();
 
     cublasHandle_t handle;
@@ -971,13 +1005,14 @@ void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weight
     cublasDestroy(handle);
 }
 
-void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                                const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+void calculateErrorGradientCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                                const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
                                 const double* input_data_h, const size_t input_rows, const size_t input_columns,
                                 const double* target_data_h, const size_t target_rows, const size_t target_columns,
-                                std::vector<double*> error_gradient_data,
-                                const std::vector<std::string> layers_activations, const std::string loss_method,
-                                const std::vector<double> loss_parameters)
+                                vector<double*> error_gradient_data,
+                                double* output_data_h, const size_t output_rows, const size_t output_columns,
+                                const vector<string> layers_activations, const string loss_method,
+                                const vector<double> loss_parameters)
 {
     const size_t layers_number = weights_d.size();
 
@@ -991,14 +1026,14 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
 
     double* ones_vector;
 
-    std::vector<double*> layers_activations_d(layers_number);
-    std::vector<double*> layers_activation_derivatives_d(layers_number);
+    vector<double*> layers_activations_d(layers_number);
+    vector<double*> layers_activation_derivatives_d(layers_number);
 
-    std::vector<double*> layers_delta_d(layers_number);
+    vector<double*> layers_delta_d(layers_number);
 
-    std::vector<double*> error_gradient_d(2*layers_number);
+    vector<double*> error_gradient_d(2*layers_number);
 
-    std::vector<double> ones_vector_h(input_rows, 1);
+    vector<double> ones_vector_h(input_rows, 1);
     const double* ones_vector_h_data = ones_vector_h.data();
 
     cublasHandle_t handle;
@@ -1125,19 +1160,83 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
 
     // LOSS OPERATIONS
 
-    if(loss_method == "MINKOWSKI_ERROR")
+    if(loss_method == "MEAN_SQUARED_ERROR")
     {
-        loss_parameters[0]; // Minkowski parameter
+        alpha = 1/static_cast<double>(input_rows);
+
+        for(size_t i = 0; i < layers_number; i++)
+        {
+            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
+
+            for(size_t j = 0; j < weights_columns_numbers[i]; j++)
+            {
+                error_gradient_data[2*i+1][j] *= alpha;
+            }
+        }
+    }
+    else if(loss_method == "SUM_SQUARED_ERROR")
+    {
+        // Do nothing
+    }
+    else if(loss_method == "CROSS_ENTROPY_ERROR")
+    {
+        alpha = 1/static_cast<double>(input_rows);
+
+        for(size_t i = 0; i < layers_number; i++)
+        {
+            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
+
+            for(size_t j = 0; j < weights_columns_numbers[i]; j++)
+            {
+                error_gradient_data[2*i+1][j] *= alpha;
+            }
+        }
+    }
+    else if(loss_method == "MINKOWSKI_ERROR")
+    {
+        alpha = 1/static_cast<double>(input_rows);
+
+        for(size_t i = 0; i < layers_number; i++)
+        {
+            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
+
+            for(size_t j = 0; j < weights_columns_numbers[i]; j++)
+            {
+                error_gradient_data[2*i+1][j] *= alpha;
+            }
+        }
     }
     else if(loss_method == "NORMALIZED_SQUARED_ERROR")
     {
-        loss_parameters[0]; // Normalization coefficient
+        alpha = 1/loss_parameters[0];
+
+        for(size_t i = 0; i < layers_number; i++)
+        {
+            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
+
+            for(size_t j = 0; j < weights_columns_numbers[i]; j++)
+            {
+                error_gradient_data[2*i+1][j] *= alpha;
+            }
+        }
+    }
+    else if(loss_method == "ROOT_MEAN_SQUARED_ERROR")
+    {
+        // TODO
     }
     else if(loss_method == "WEIGHTED_SQUARED_ERROR")
     {
-        loss_parameters[0]; // Positives weights
-        loss_parameters[1]; // Negatives weights
-        loss_parameters[2]; // Normalization coefficient
+        alpha = 1/loss_parameters[2];
+
+        for(size_t i = 0; i < layers_number; i++)
+        {
+            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
+
+            for(size_t j = 0; j < weights_columns_numbers[i]; j++)
+            {
+                error_gradient_data[2*i+1][j] *= alpha;
+            }
+        }
     }
 
     // Copy to host memory
@@ -1146,6 +1245,8 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
     {
         cudaMemcpy(error_gradient_data[2*i], error_gradient_d[2*i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double), cudaMemcpyDeviceToHost);
     }
+
+    cudaMemcpy(output_data_h, layers_activations_d[layers_number-1], output_rows*output_columns*sizeof(double), cudaMemcpyDeviceToHost);
 
     // Free GPU memory
 
@@ -1168,8 +1269,8 @@ void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std:
     cublasDestroy(handle);
 }
 
-void updateParametersCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                          std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+void updateParametersCUDA(vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                          vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
                           const double* gradient_h, const size_t parameters_number)
 {
     const size_t layers_number = weights_d.size();

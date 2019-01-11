@@ -29,17 +29,17 @@
 
 #include "loss_index.h"
 
-#include "training_algorithm.h"
-#include "training_rate_algorithm.h"
+#include "optimization_algorithm.h"
+#include "learning_rate_algorithm.h"
 
 
 namespace OpenNN
 {
 
-/// This concrete class represents the gradient descent training algorithm for
+/// This concrete class represents the gradient descent optimization algorithm for
 /// a loss index of a neural network.
 
-class GradientDescent : public TrainingAlgorithm
+class GradientDescent : public OptimizationAlgorithm
 {
 
 public:
@@ -66,7 +66,7 @@ public:
    /// This structure contains the training results for the gradient descent. 
    ///
 
-   struct GradientDescentResults : public TrainingAlgorithm::TrainingAlgorithmResults
+   struct GradientDescentResults : public OptimizationAlgorithm::OptimizationAlgorithmResults
    {
        /// Default constructor.
 
@@ -185,8 +185,8 @@ public:
 
    // METHODS
 
-   const TrainingRateAlgorithm& get_training_rate_algorithm() const;
-   TrainingRateAlgorithm* get_training_rate_algorithm_pointer();
+   const LearningRateAlgorithm& get_learning_rate_algorithm() const;
+   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
    // Training parameters
 
@@ -231,7 +231,7 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
-   void set_training_rate_algorithm(const TrainingRateAlgorithm&);
+   void set_learning_rate_algorithm(const LearningRateAlgorithm&);
 
 
    void set_default();
@@ -292,7 +292,7 @@ public:
 
    void perform_training_void();
 
-   string write_training_algorithm_type() const;
+   string write_optimization_algorithm_type() const;
 
    // Serialization methods
 
@@ -309,7 +309,7 @@ private:
 
    /// Training rate algorithm object for one-dimensional minimization. 
 
-   TrainingRateAlgorithm training_rate_algorithm;
+   LearningRateAlgorithm learning_rate_algorithm;
 
    // TRAINING PARAMETERS
 

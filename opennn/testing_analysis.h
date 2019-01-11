@@ -94,7 +94,7 @@ public:
        Vector<double> targets;
        Vector<double> outputs;
 
-//       void save(const string&) const;
+       void save(const string&) const;
     };
 
     ///
