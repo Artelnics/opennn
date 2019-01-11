@@ -29,8 +29,8 @@
 
 #include "loss_index.h"
 
-#include "training_algorithm.h"
-#include "training_rate_algorithm.h"
+#include "optimization_algorithm.h"
+#include "learning_rate_algorithm.h"
 
 // TinyXml includes
 
@@ -43,7 +43,7 @@ namespace OpenNN
 /// This concrete class represents a conjugate gradient training algorithm for a loss index of a neural network. 
 ///
 
-class ConjugateGradient : public TrainingAlgorithm
+class ConjugateGradient : public OptimizationAlgorithm
 {
 
 public:
@@ -80,7 +80,7 @@ public:
    /// This structure contains the conjugate gradient results. 
    ///
 
-   struct ConjugateGradientResults : public TrainingAlgorithm::TrainingAlgorithmResults
+   struct ConjugateGradientResults : public OptimizationAlgorithm::OptimizationAlgorithmResults
    {
        /// Default constructor.
 
@@ -197,8 +197,8 @@ public:
 
    // Get methods
 
-   const TrainingRateAlgorithm& get_training_rate_algorithm() const;
-   TrainingRateAlgorithm* get_training_rate_algorithm_pointer();
+   const LearningRateAlgorithm& get_learning_rate_algorithm() const;
+   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
    // Training operators
 
@@ -319,7 +319,7 @@ public:
 
    void perform_training_void();
 
-   string write_training_algorithm_type() const;
+   string write_optimization_algorithm_type() const;
 
    // Serialization methods
 
@@ -339,7 +339,7 @@ private:
 
    /// Training rate algorithm object for one-dimensional minimization. 
 
-   TrainingRateAlgorithm training_rate_algorithm;
+   LearningRateAlgorithm learning_rate_algorithm;
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
