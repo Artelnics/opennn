@@ -32,22 +32,19 @@
 
 #include "sum_squared_error.h"
 #include "mean_squared_error.h"
-#include "root_mean_squared_error.h"
 #include "normalized_squared_error.h"
 #include "minkowski_error.h"
 #include "cross_entropy_error.h"
 #include "weighted_squared_error.h"
 
-#include "training_algorithm.h"
-
-#include "random_search.h"
-#include "evolutionary_algorithm.h"
+#include "optimization_algorithm.h"
 
 #include "gradient_descent.h"
 #include "conjugate_gradient.h"
 #include "quasi_newton_method.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "stochastic_gradient_descent.h"
+#include "adaptive_moment_estimation.h"
 
 // TinyXml includes
 
@@ -57,11 +54,10 @@ namespace OpenNN
 {
 
 /// This class represents the concept of training strategy for a neural network. 
-/// A training strategy is composed of three training algorithms:
+/// A training strategy is composed of two things:
 /// <ul>
-/// <li> Initialization training algorithm.
-/// <li> Main training algorithm.
-/// <li> Refinement trainining algorithm.
+/// <li> Loss index.
+/// <li> Optimization algorithm.
 /// </ul> 
    
 class TrainingStrategy
@@ -95,14 +91,13 @@ public:
     {
        SUM_SQUARED_ERROR,
        MEAN_SQUARED_ERROR,
-       ROOT_MEAN_SQUARED_ERROR,
        NORMALIZED_SQUARED_ERROR,
        MINKOWSKI_ERROR,
        WEIGHTED_SQUARED_ERROR,
        CROSS_ENTROPY_ERROR
     };
 
-    /// Enumeration of all the available types of training algorithms.
+    /// Enumeration of all the available types of optimization algorithms.
 
     enum TrainingMethod
     {
@@ -110,14 +105,14 @@ public:
        CONJUGATE_GRADIENT,
        QUASI_NEWTON_METHOD,
        LEVENBERG_MARQUARDT_ALGORITHM,
-       STOCHASTIC_GRADIENT_DESCENT
+       STOCHASTIC_GRADIENT_DESCENT,
+       ADAPTIVE_MOMENT_ESTIMATION
     };
 
    // STRUCTURES 
 
    /// This structure stores the results from the training strategy.
-   /// They are composed of the initialization, refinement and training algorithms results. 
-
+   ///
    struct Results
    {
         /// Default constructor.
@@ -130,33 +125,30 @@ public:
 
         void save(const string&) const;
 
-        /// Pointer to a structure with the results from the random search training algorithm.
-
-        RandomSearch::RandomSearchResults* random_search_results_pointer;
-
-        /// Pointer to a structure with the results from the evolutionary training algorithm.
-
-        EvolutionaryAlgorithm::EvolutionaryAlgorithmResults* evolutionary_algorithm_results_pointer;
-
-        /// Pointer to a structure with the results from the gradient descent training algorithm.
+        /// Pointer to a structure with the results from the gradient descent optimization algorithm.
 
         GradientDescent::GradientDescentResults* gradient_descent_results_pointer;
 
-        /// Pointer to a structure with the results from the conjugate gradient training algorithm.
+        /// Pointer to a structure with the results from the conjugate gradient optimization algorithm.
 
         ConjugateGradient::ConjugateGradientResults* conjugate_gradient_results_pointer;
 
-        /// Pointer to a structure with the results from the quasi-Newton method training algorithm.
+        /// Pointer to a structure with the results from the quasi-Newton method optimization algorithm.
 
         QuasiNewtonMethod::QuasiNewtonMethodResults* quasi_Newton_method_results_pointer;
 
-        /// Pointer to a structure with the results from the Levenberg-Marquardt training algorithm.
+        /// Pointer to a structure with the results from the Levenberg-Marquardt optimization algorithm.
 
         LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* Levenberg_Marquardt_algorithm_results_pointer;
 
-        /// Pointer to a structure with the results from the StochasticGradientDescent training algoritm.
+        /// Pointer to a structure with the results from the stochastic gradient descent training algoritm.
 
         StochasticGradientDescent::StochasticGradientDescentResults* stochastic_gradient_descent_results_pointer;
+
+        /// Pointer to a structure with the results from the adaptive moment estimator training algoritm.
+
+        AdaptiveMomentEstimation::AdaptiveMomentEstimationResults* adaptive_moment_estimation_results_pointer;
+
 
   };
 
@@ -173,19 +165,16 @@ public:
 
    bool has_loss_index() const;
 
-   RandomSearch* get_random_search_pointer() const;
-   EvolutionaryAlgorithm* get_evolutionary_algorithm_pointer() const;
-
    GradientDescent* get_gradient_descent_pointer() const;
    ConjugateGradient* get_conjugate_gradient_pointer() const;
    QuasiNewtonMethod* get_quasi_Newton_method_pointer() const;
    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer() const;
    StochasticGradientDescent* get_stochastic_gradient_descent_pointer() const;
+   AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer() const;
 
 
    SumSquaredError* get_sum_squared_error_pointer() const;
    MeanSquaredError* get_mean_squared_error_pointer() const;
-   RootMeanSquaredError* get_root_mean_squared_error_pointer() const;
    NormalizedSquaredError* get_normalized_squared_error_pointer() const;
    MinkowskiError* get_Minkowski_error_pointer() const;
    CrossEntropyError* get_cross_entropy_error_pointer() const;
@@ -222,7 +211,7 @@ public:
 
    // Pointer methods
 
-   void destruct_training_algorithm();
+   void destruct_optimization_algorithm();
 
    // Training methods
 
@@ -264,10 +253,6 @@ private:
 
     MeanSquaredError* mean_squared_error_pointer = nullptr;
 
-    /// Pointer to the root mean squared error object wich can be used as the error term.
-
-    RootMeanSquaredError* root_mean_squared_error_pointer = nullptr;
-
     /// Pointer to the normalized squared error object wich can be used as the error term.
 
     NormalizedSquaredError* normalized_squared_error_pointer = nullptr;
@@ -288,37 +273,33 @@ private:
 
     LossMethod loss_method;
 
-    // Training algorithm
+    // Optimization algorithm
 
-    /// Pointer to a random search object to be used for initialization in the training strategy.
-
-    RandomSearch* random_search_pointer = nullptr;
-
-    /// Pointer to a evolutionary training object to be used for initialization in the training strategy.
-
-    EvolutionaryAlgorithm* evolutionary_algorithm_pointer = nullptr;
-
-    /// Pointer to a gradient descent object to be used as a main training algorithm.
+    /// Pointer to a gradient descent object to be used as a main optimization algorithm.
 
     GradientDescent* gradient_descent_pointer = nullptr;
 
-    /// Pointer to a conjugate gradient object to be used as a main training algorithm.
+    /// Pointer to a conjugate gradient object to be used as a main optimization algorithm.
 
     ConjugateGradient* conjugate_gradient_pointer = nullptr;
 
-    /// Pointer to a quasi-Newton method object to be used as a main training algorithm.
+    /// Pointer to a quasi-Newton method object to be used as a main optimization algorithm.
 
     QuasiNewtonMethod* quasi_Newton_method_pointer = nullptr;
 
-    /// Pointer to a Levenberg-Marquardt algorithm object to be used as a main training algorithm.
+    /// Pointer to a Levenberg-Marquardt algorithm object to be used as a main optimization algorithm.
 
     LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm_pointer = nullptr;
 
-    /// Pointer to a Stochastic gradient descent algorithm object to be used as a main training algorithm.
+    /// Pointer to a stochastic gradient descent algorithm object to be used as a main optimization algorithm.
 
     StochasticGradientDescent* stochastic_gradient_descent_pointer = nullptr;
 
-    /// Type of main training algorithm.
+    /// Pointer to a adaptive moment estimation algorithm object to be used as a main optimization algorithm.
+
+    AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
+
+    /// Type of main optimization algorithm.
 
     TrainingMethod training_method;
 
