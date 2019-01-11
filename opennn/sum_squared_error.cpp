@@ -450,8 +450,6 @@ Vector<double> SumSquaredError::calculate_batch_error_gradient_cuda(const Vector
                                output_data, output_rows, output_columns,
                                pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
 
-    const double batch_error = calculate_error(outputs, targets_matrix);
-
 #endif
 
     return error_gradient;
@@ -577,6 +575,80 @@ check();
 //    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
 
     // Regularization ??
+
+    return first_order_loss;
+}
+
+LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss_cuda(const Vector<size_t>& batch_indices,
+                                                                                 const MultilayerPerceptron::Pointers& pointers) const
+{
+    FirstOrderLoss first_order_loss;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+    const double* target_data = targets_matrix.data();
+    const size_t target_rows = targets_matrix.get_rows_number();
+    const size_t target_columns = targets_matrix.get_columns_number();
+
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
+    }
+
+    first_order_loss.gradient.set(parameters_number);
+    vector<double*> error_gradient_data(2*layers_number);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        error_gradient_data[2*i] = first_order_loss.gradient.data() + index;
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        error_gradient_data[2*i+1] = first_order_loss.gradient.data() + index;
+        index += bias_rows_numbers[i];
+    }
+
+    vector<double> loss_parameters;
+
+    string loss_method = write_error_term_type();
+
+    calculateErrorGradientCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                               pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                               input_data, input_rows, input_columns,
+                               target_data, target_rows, target_columns,
+                               error_gradient_data,
+                               output_data, output_rows, output_columns,
+                               pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
+
+    first_order_loss.loss = calculate_error(outputs, targets_matrix);
+
+#endif
 
     return first_order_loss;
 }

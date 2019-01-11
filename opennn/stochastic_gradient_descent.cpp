@@ -1469,15 +1469,16 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
    // Loss index stuff
 
+   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
+
    double training_error = 0.0;
    double old_training_error = 0.0;
 
    double selection_error = 0.0;
    double old_selection_error = 0.0;
 
-   Vector<double> loss(instances.get_training_batches(training_batch_size).size());
+   double loss = 0.0;
 
-   Vector<double> gradient(parameters_number);
    double gradient_norm = 0.0;
 
    // Optimization algorithm stuff
@@ -1516,19 +1517,23 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
+       loss = 0.0;
+
        for(size_t iteration = 0; iteration < batches_number; iteration++)
        {
            current_iteration++;
 
+           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
+
            //Loss
 
-           loss[iteration] = 0;//loss_index_pointer->calculate_batch_error_cuda(training_batches[iteration], multilayer_perceptron_pointers_device);
+           loss += first_order_loss.loss;
 
            // Gradient
 
-           gradient = loss_index_pointer->calculate_batch_error_gradient_cuda(training_batches[iteration], multilayer_perceptron_pointers_device);
+//           gradient = loss_index_pointer->calculate_batch_error_gradient_cuda(training_batches[iteration], multilayer_perceptron_pointers_device);
 
-           gradient_norm = gradient.calculate_L2_norm();
+           gradient_norm = first_order_loss.gradient.calculate_L2_norm();
 
            if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
 
@@ -1536,7 +1541,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
 //           parameters = neural_network_pointer->get_parameters();
 
-           parameters_increment =  gradient*(-learning_rate);
+           parameters_increment =  first_order_loss.gradient*(-learning_rate);
 
            if(momentum > 0.0 && !nesterov) {
 
@@ -1555,7 +1560,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
                last_increment = parameters_increment;
 
-               nesterov_increment = parameters_increment*momentum - gradient*(learning_rate) ;
+               nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
 
                multilayer_perceptron_pointers_device.update_parameters(nesterov_increment);
                parameters = parameters +  parameters_increment;
@@ -1575,9 +1580,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        // Loss
 
-       training_error = loss.calculate_sum()/static_cast<double>(batches_number);
-
-//       training_error = loss_index_pointer->calculate_batch_error_cuda(data_set_pointer->get_instances().get_training_indices(), multilayer_perceptron_pointers_device);
+       training_error = loss/static_cast<double>(batches_number);
 
        if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_batch_error_cuda(data_set_pointer->get_instances().get_selection_indices(),
                                                                                                            multilayer_perceptron_pointers_device);
@@ -1611,7 +1614,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        if(reserve_loss_history) results_pointer->loss_history[epoch] = training_error;
 
-       if(reserve_gradient_history) results_pointer->gradient_history[epoch] = gradient;
+       if(reserve_gradient_history) results_pointer->gradient_history[epoch] = first_order_loss.gradient;
 
        if(reserve_gradient_norm_history) results_pointer->gradient_norm_history[epoch] = gradient_norm;
 
