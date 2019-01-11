@@ -42,18 +42,15 @@
 #include "mean_squared_error.h"
 #include "minkowski_error.h"
 #include "normalized_squared_error.h"
-#include "root_mean_squared_error.h"
 #include "sum_squared_error.h"
 #include "weighted_squared_error.h"
 
 #include "conjugate_gradient.h"
-#include "evolutionary_algorithm.h"
 #include "gradient_descent.h"
 #include "levenberg_marquardt_algorithm.h"
 #include "quasi_newton_method.h"
-#include "random_search.h"
-#include "training_algorithm.h"
-#include "training_rate_algorithm.h"
+#include "optimization_algorithm.h"
+#include "learning_rate_algorithm.h"
 
 // Model selection
 
@@ -67,13 +64,13 @@
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
-#include "ant_colony_optimization.h"
-#include "threshold_selection_algorithm.h"
-#include "f1_score_optimization_threshold.h"
-#include "matthew_correlation_optimization_threshold.h"
-#include "youden_index_optimization_threshold.h"
-#include "kappa_coefficient_optimization_threshold.h"
-#include "roc_curve_optimization_threshold.h"
+//#include "ant_colony_optimization.h"
+//#include "threshold_selection_algorithm.h"
+//#include "f1_score_optimization_threshold.h"
+//#include "matthew_correlation_optimization_threshold.h"
+//#include "youden_index_optimization_threshold.h"
+//#include "kappa_coefficient_optimization_threshold.h"
+//#include "roc_curve_optimization_threshold.h"
 
 // Testing analysis
 
