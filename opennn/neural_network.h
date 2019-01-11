@@ -261,6 +261,7 @@ public:
 
    Matrix<double> calculate_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_outputs(const Matrix<double>&, const double&) const;
+   Eigen::MatrixXd calculate_outputs_eigen(const Eigen::MatrixXd&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&, const double&) const;
    Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;

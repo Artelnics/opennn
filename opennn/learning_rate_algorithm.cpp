@@ -553,7 +553,7 @@ Vector<double> LearningRateAlgorithm::calculate_fixed_directional_point(const do
 /// @param training_direction Training direction vector.
 /// @param initial_training_rate Initial training rate in line minimization.
 
-Vector<double> LearningRateAlgorithm::calculate_golden_section_directional_point(const double& loss,
+Vector<double> LearningRateAlgorithm:: calculate_golden_section_directional_point(const double& loss,
                                                                                  const Vector<double>& training_direction,
                                                                                  const double& initial_training_rate) const
 {
@@ -818,6 +818,20 @@ Vector<double> LearningRateAlgorithm::calculate_Brent_method_directional_point(c
 
       return(X);
    }
+}
+
+
+///
+
+Vector<double> LearningRateAlgorithm::calculate_scaled_method_directional_point(const double& loss,
+                                                                                const Vector<double>& training_direction,
+                                                                                const double& initial_training_rate) const
+{
+
+
+
+
+    return Vector<double>();
 }
 
 

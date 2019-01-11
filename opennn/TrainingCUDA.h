@@ -3,15 +3,15 @@
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
 /*                                                                                                              */
-/*   M I N K O W S K I   E R R O R   C L A S S   H E A D E R                                                    */
+/*   T R A I N I N G   C U D A    C L A S S   H E A D E R                                                       */
 /*                                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
 /*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
-#ifndef __MINKOWSKIERROR_H__
-#define __MINKOWSKIERROR_H__
+#ifndef __TRAININGCUDA_H__
+#define __TRAININGCUDA_H__
 
 // System includes
 
@@ -19,12 +19,22 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <functional>
+#include <limits>
 #include <cmath>
+#include <ctime>
+
+//#ifdef __OPENNN_CUDA__
+//#include <cublas_v2.h>
+//#endif
 
 // OpenNN includes
 
-#include "loss_index.h"
+#include "vector.h"
+
 #include "data_set.h"
+#include "multilayer_perceptron.h"
 
 // TinyXml includes
 
@@ -33,91 +43,68 @@
 namespace OpenNN
 {
 
-/// This class represents the Minkowski error term. 
-/// The Minkowski error measures the difference between the outputs of a neural network and the targets in a data set. 
-/// This error term is used in data modeling problems.
-/// It can be more useful when the data set presents outliers. 
+///
+/// This concrete class represents a quasi-Newton training algorithm for a loss index of a neural network.
+///
 
-class MinkowskiError : public LossIndex
+class TrainingCUDA
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+    // DEFAULT CONSTRUCTOR
 
-   explicit MinkowskiError();
+    explicit TrainingCUDA();
 
-   // NEURAL NETWORK CONSTRUCTOR
+    // LOSS INDEX CONSTRUCTOR
 
-   explicit MinkowskiError(NeuralNetwork*);
+    explicit TrainingCUDA(DataSet*);
 
-   // DATA SET CONSTRUCTOR
+    // DESTRUCTOR
 
-   explicit MinkowskiError(DataSet*);
+    virtual ~TrainingCUDA();
 
-   // NEURAL NETWORK AND DATA SET CONSTRUCTOR
+    // Getters
 
-   explicit MinkowskiError(NeuralNetwork*, DataSet*);
+    Matrix<double> get_weights_host(const size_t&) const;
+    Vector<double> get_biases_host(const size_t&) const;
 
-   // XML CONSTRUCTOR
+    Vector<double> get_parameters_host() const;
 
-   explicit MinkowskiError(const tinyxml2::XMLDocument&);
+    // Setters
 
-   // DESTRUCTOR
+    void set_neural_network_architecture(const Vector<size_t>&);
 
-   virtual ~MinkowskiError();
+    // CUDA initialization methods
 
+    void initialize_CUDA(void);
 
-   // METHODS
+    void randomize_parameters(void);
 
-   // Get methods
+    // Operation methods
 
-   double get_Minkowski_parameter() const;
+    Matrix<double> calculate_outputs(const Matrix<double>&);
 
-   // Set methods
+    MultilayerPerceptron::FirstOrderForwardPropagation calculate_first_order_forward_propagation(const Matrix<double>&);
 
-   void set_default();
+    Vector<double> calculate_batch_error_gradient(const Vector<size_t>&);
 
-   void set_Minkowski_parameter(const double&);
+    void update_parameters(const Vector<double>&);
 
+private: 
 
-   // loss methods
+    bool CUDA_initialized = false;
 
-   double calculate_training_error() const;
+    DataSet* data_set_pointer;
 
-   double calculate_selection_error() const;
+    Vector<size_t> neural_network_architecture;
 
-   double calculate_training_error(const Vector<double>&) const;
+    Vector<string> layer_activations;
 
-   double calculate_batch_error(const Vector<size_t> &) const;
+    Vector<double*> weights_gpu;
+    Vector<double*> biases_gpu;
 
-   Vector<double> calculate_training_error_gradient() const;
-
-   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
-
-   double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
-
-   double calculate_error(const Vector<double>&) const;
-
-   string write_error_term_type() const;
-
-   // Serialization methods
-
-   tinyxml2::XMLDocument* to_XML() const;   
-   void from_XML(const tinyxml2::XMLDocument&);   
-
-   void write_XML(tinyxml2::XMLPrinter&) const;
-
-private:
-
-   Vector<double> calculate_output_gradient(const Vector<size_t>&, const Vector<double>&, const Vector<double>&) const;
-
-   // MEMBERS
-
-   /// Minkowski exponent value.
-
-   double Minkowski_parameter;
-
+    string loss_method;
 };
 
 }

@@ -435,6 +435,39 @@ check();
 }
 
 
+Vector<double> NormalizedSquaredError::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Neural network
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+
+    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+            = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+    const Matrix<double> output_gradient
+            = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+    const Vector< Matrix<double> > layers_delta
+            = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+    const Vector<double> batch_gradient
+            = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+    return batch_gradient/normalization_coefficient;
+}
+
+
 double NormalizedSquaredError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -542,6 +575,129 @@ check();
 #endif
 
     return (outputs-targets)*2.0/normalization_coefficient;
+}
+
+
+LossIndex::FirstOrderLoss NormalizedSquaredError::calculate_first_order_loss() const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Multilayer perceptron
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+
+    // Data set
+
+    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+
+    const size_t batches_number = training_batches.size();
+
+    FirstOrderLoss first_order_loss(parameters_number);
+
+    #pragma omp parallel for
+
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    {
+        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
+        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
+
+        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+        const Vector<double> error_terms
+                = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+        const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+
+        const Vector< Matrix<double> > layers_delta
+                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+        const Matrix<double> error_terms_Jacobian
+                = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+        const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+
+        const double loss = error_terms.dot(error_terms);
+
+        const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+
+        #pragma omp critical
+//        {
+            first_order_loss.loss += loss;
+            first_order_loss.gradient += gradient;
+//         }
+    }
+
+    first_order_loss.loss /= normalization_coefficient;
+    first_order_loss.gradient *= (2.0/normalization_coefficient);
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
+
+    return first_order_loss;
+}
+
+
+LossIndex::FirstOrderLoss NormalizedSquaredError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Multilayer perceptron
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+
+    FirstOrderLoss first_order_loss(parameters_number);
+
+    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+
+    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+            = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+    const Vector<double> error_terms
+            = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+    const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+
+    const Vector< Matrix<double> > layers_delta
+            = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+    const Matrix<double> error_terms_Jacobian
+            = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+    const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+
+    const double loss = error_terms.dot(error_terms);
+
+    const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+
+    // Regularization ??
+
+    first_order_loss.loss += loss/normalization_coefficient;
+    first_order_loss.gradient += gradient*(2.0/normalization_coefficient);
+
+    return first_order_loss;
 }
 
 
@@ -684,7 +840,7 @@ Vector<size_t> NormalizedSquaredError::calculate_maximal_errors(const size_t& ma
 
 
 
-LossIndex::SecondOrderErrorTerms NormalizedSquaredError::calculate_terms_second_order_loss() const
+LossIndex::SecondOrderLoss NormalizedSquaredError::calculate_terms_second_order_loss() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -706,7 +862,7 @@ check();
 
     const size_t batches_number = training_batches.size();
 
-    SecondOrderErrorTerms terms_second_order_loss(parameters_number);
+    SecondOrderLoss terms_second_order_loss(parameters_number);
 
     #pragma omp parallel for
 
@@ -751,6 +907,13 @@ check();
     terms_second_order_loss.loss /= normalization_coefficient;
     terms_second_order_loss.gradient *= (2.0/normalization_coefficient);
     terms_second_order_loss.Hessian_approximation *= (2.0/normalization_coefficient);
+
+    if(regularization_method == RegularizationMethod::None)
+    {
+        terms_second_order_loss.loss += calculate_regularization();
+        terms_second_order_loss.gradient += calculate_regularization_gradient();
+        terms_second_order_loss.Hessian_approximation += calculate_regularization_Hessian();
+    }
 
     return terms_second_order_loss;
 }

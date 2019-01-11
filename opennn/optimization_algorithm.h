@@ -110,7 +110,7 @@ public:
 
        virtual Matrix<string> write_final_results(const size_t&) const
        {
-          Matrix<string> final_results;
+          Matrix<string> final_results;         
 
           return(final_results);
        }
@@ -140,8 +140,9 @@ public:
    void set();
    void set(LossIndex*);
 
-//   void set_training_batch_size(const size_t&);
-//   void set_selection_batch_size_(const size_t&);
+   void set_training_batch_size(const size_t&);
+   void set_selection_batch_size(const size_t&);
+
 //   void set_epochs_number(const size_t&);
 
    virtual void set_default();

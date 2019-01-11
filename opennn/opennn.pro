@@ -51,7 +51,6 @@ macx{
 
 HEADERS += \
     variables.h \
-    stochastic_gradient_descent.h\
     instances.h \
     missing_values.h \
     data_set.h \
@@ -67,7 +66,6 @@ HEADERS += \
     multilayer_perceptron.h \
     bounding_layer.h \
     sum_squared_error.h \
-    root_mean_squared_error.h \
     loss_index.h \
     normalized_squared_error.h \
     minkowski_error.h \
@@ -75,20 +73,19 @@ HEADERS += \
     weighted_squared_error.h \
     cross_entropy_error.h \
     training_strategy.h \
-    training_algorithm.h \
-    training_rate_algorithm.h \
-    random_search.h \
+    optimization_algorithm.h \
+    learning_rate_algorithm.h \
     quasi_newton_method.h \
     levenberg_marquardt_algorithm.h \
     gradient_descent.h \
-    evolutionary_algorithm.h \
+    stochastic_gradient_descent.h\
+    adaptive_moment_estimation.h\
     conjugate_gradient.h \
     model_selection.h \
     order_selection_algorithm.h \
     incremental_order.h \
     golden_section_order.h \
     simulated_annealing_order.h \
-    ant_colony_optimization.h \
     inputs_selection_algorithm.h \
     growing_inputs.h \
     pruning_inputs.h \
@@ -100,19 +97,12 @@ HEADERS += \
     numerical_differentiation.h \
     opennn.h \
     principal_components_layer.h \
-    threshold_selection_algorithm.h \
-    f1_score_optimization_threshold.h \
-    matthew_correlation_optimization_threshold.h \
-    youden_index_optimization_threshold.h \
-    kappa_coefficient_optimization_threshold.h \
-    roc_curve_optimization_threshold.h \
     selective_pruning.h \
     file_utilities.h \
     association_rules.h \
     text_analytics.h \
     k_nearest_neighbors.h \
     tinyxml2.h \
-    optimization_algorithm.h \
     correlation_analysis.h
 
 SOURCES += \
@@ -132,7 +122,6 @@ SOURCES += \
     multilayer_perceptron.cpp \
     bounding_layer.cpp \
     sum_squared_error.cpp \
-    root_mean_squared_error.cpp \
     loss_index.cpp \
     normalized_squared_error.cpp \
     minkowski_error.cpp \
@@ -140,21 +129,19 @@ SOURCES += \
     weighted_squared_error.cpp \
     cross_entropy_error.cpp \
     training_strategy.cpp \
-    training_algorithm.cpp \
-    stochastic_gradient_descent.cpp\
-    training_rate_algorithm.cpp \
-    random_search.cpp \
+    optimization_algorithm.cpp \
+    learning_rate_algorithm.cpp \
     quasi_newton_method.cpp \
     levenberg_marquardt_algorithm.cpp \
     gradient_descent.cpp \
-    evolutionary_algorithm.cpp \
+    stochastic_gradient_descent.cpp\
+    adaptive_moment_estimation.cpp\
     conjugate_gradient.cpp \
     model_selection.cpp \
     order_selection_algorithm.cpp \
     incremental_order.cpp \
     golden_section_order.cpp \
     simulated_annealing_order.cpp \
-    ant_colony_optimization.cpp \
     inputs_selection_algorithm.cpp \
     growing_inputs.cpp \
     pruning_inputs.cpp \
@@ -162,19 +149,12 @@ SOURCES += \
     testing_analysis.cpp \
     numerical_differentiation.cpp \
     principal_components_layer.cpp \
-    threshold_selection_algorithm.cpp \
-    f1_score_optimization_threshold.cpp \
-    matthew_correlation_optimization_threshold.cpp \
-    youden_index_optimization_threshold.cpp \
-    kappa_coefficient_optimization_threshold.cpp \
-    roc_curve_optimization_threshold.cpp \
     selective_pruning.cpp \
     file_utilities.cpp \
     association_rules.cpp \
     text_analytics.cpp \
     k_nearest_neighbors.cpp \
     tinyxml2.cpp \
-    optimization_algorithm.cpp \
     correlation_analysis.cpp
 
 # MPI libraries

@@ -81,39 +81,39 @@ public:
 
    enum RegularizationMethod{L1, L2, None};
 
-   struct FirstOrderError
+   struct FirstOrderLoss
    {
        /// Default constructor.
 
-       FirstOrderError(const size_t& parameters_number)
+       FirstOrderLoss(const size_t& parameters_number)
        {
-           error = 0.0;
+           loss = 0.0;
            gradient.set(parameters_number, 0.0);
        }
 
-       virtual ~FirstOrderError()
-       {
-       }
+//       virtual ~FirstOrderLoss()
+//       {
+//       }
 
-       double error;
+       double loss;
        Vector<double> gradient;
    };
 
 
-   struct SecondOrderErrorTerms
+   struct SecondOrderLoss
    {
        /// Default constructor.
 
-       SecondOrderErrorTerms(const size_t& parameters_number)
+       SecondOrderLoss(const size_t& parameters_number)
        {
            loss = 0.0;
            gradient.set(parameters_number, 0.0);
            Hessian_approximation.set(parameters_number, parameters_number, 0.0);
        }
 
-       virtual ~SecondOrderErrorTerms()
-       {
-       }
+//       virtual ~SecondOrderLoss()
+//       {
+//       }
 
        double loss;
        Vector<double> gradient;
@@ -212,20 +212,21 @@ public:
    virtual double calculate_training_error(const Vector<double>&) const = 0;
    virtual double calculate_batch_error(const Vector<size_t>&) const = 0;
 
-   virtual double calculate_batch_error_cuda(const MultilayerPerceptron::Pointers&) const {return 0.0;}
+   virtual double calculate_batch_error_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return 0.0;}
 
    virtual Vector<double> calculate_training_error_gradient() const = 0;
 
    virtual Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const {return Vector<double>();}
 
-   virtual Vector<double> calculate_batch_error_gradient_cuda(const MultilayerPerceptron::Pointers&) const {return Vector<double>();}
+   virtual Vector<double> calculate_batch_error_gradient_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return Vector<double>();}
 
    virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const  {return Vector<double>();}
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const  {return Matrix<double>();}
 
-   virtual FirstOrderError calculate_batch_first_order_error(const Vector<size_t>&) const {return FirstOrderError(0);}
+   virtual FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const {return FirstOrderLoss(0);}
 
-   virtual SecondOrderErrorTerms calculate_terms_second_order_loss() const {return SecondOrderErrorTerms(0);}
+   virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss(0);}
+   virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss(0);}
 
    // Regularization methods
 

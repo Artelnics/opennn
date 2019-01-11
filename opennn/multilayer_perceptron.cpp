@@ -14,6 +14,22 @@
 
 #include "multilayer_perceptron.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+void initCUDA();
+
+int mallocCUDA(double** A_d, int nBytes);
+int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
+int getHostVector(const double* A_d, double* A_h, int nBytes);
+void freeCUDA(double* A_d);
+
+void updateParametersCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                          std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                          const double* gradient_h, const size_t parameters_number);
+#endif
+
 #define numeric_to_string( x ) static_cast< ostringstream & >( \
    ( ostringstream() << dec << x ) ).str()
 
@@ -1697,13 +1713,23 @@ void MultilayerPerceptron::initialize_synaptic_weights_Glorot()
 {
     const size_t layers_number = get_layers_number();
 
-    const double fan_in = static_cast<double>(layers[0].get_synaptic_weights().size());
-    const double fan_out = static_cast<double>(layers[layers_number-1].get_synaptic_weights().size());
-
-    const double limit = sqrt(6.0/(fan_in + fan_out));
-
     for(size_t i = 0; i < layers_number; i++)
     {
+         double fan_in = static_cast<double>(layers[i].get_synaptic_weights().size());
+         double fan_out;
+
+        if(i ==layers_number-1){
+
+         fan_out = 1.0;
+        }
+        else{
+
+         fan_out = static_cast<double>(layers[i + 1].get_synaptic_weights().size());
+
+        }
+
+        const double limit = sqrt(6.0/(fan_in + fan_out));
+
         layers[i].initialize_synaptic_weights_Glorot(-limit,limit);
     }
 }
@@ -1977,9 +2003,173 @@ MultilayerPerceptron::Pointers MultilayerPerceptron::host_to_device() const
 {
     Pointers pointers;
 
+    pointers.layers_number = get_layers_number();
+    pointers.architecture = get_architecture();
+
+    pointers.weights_pointers.set(pointers.layers_number);
+    pointers.biases_pointers.set(pointers.layers_number);
+
+    pointers.layer_activations.set(pointers.layers_number);
+
+    for(size_t i = 0; i < pointers.layers_number; i++)
+    {
+        pointers.layer_activations[i] = get_layer(i).write_activation_function();
+    }
+
+#ifdef __OPENNN_CUDA__
+
+    int error;
+
+    for(size_t i = 0; i < pointers.layers_number; i++)
+    {
+        const int weights_num_bytes = pointers.architecture[i]*pointers.architecture[i+1]*sizeof(double);
+
+        error = mallocCUDA(&pointers.weights_pointers[i], weights_num_bytes);
+        if(error != 0)
+        {
+            for(size_t i = 0; i < pointers.layers_number; i++)
+            {
+                freeCUDA(pointers.weights_pointers[i]);
+                freeCUDA(pointers.biases_pointers[i]);
+            }
+
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+                   << "Pointers host_to_device() const method.\n"
+                   << "CUDA memory reserve failed.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        const int biases_num_bytes = pointers.architecture[i+1]*sizeof(double);
+
+        error = mallocCUDA(&pointers.biases_pointers[i], biases_num_bytes);
+        if(error != 0)
+        {
+            for(size_t i = 0; i < pointers.layers_number; i++)
+            {
+                freeCUDA(pointers.weights_pointers[i]);
+                freeCUDA(pointers.biases_pointers[i]);
+            }
+
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+                   << "Pointers host_to_device() const method.\n"
+                   << "CUDA memory reserve failed.\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        error = memcpyCUDA(pointers.weights_pointers[i], get_layer(i).get_synaptic_weights().data(), weights_num_bytes);
+        error += memcpyCUDA(pointers.biases_pointers[i], get_layer(i).get_biases().data(), biases_num_bytes);
+
+        if(error != 0)
+        {
+            for(size_t i = 0; i < pointers.layers_number; i++)
+            {
+                freeCUDA(pointers.weights_pointers[i]);
+                freeCUDA(pointers.biases_pointers[i]);
+            }
+
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+                   << "Pointers host_to_device() const method.\n"
+                   << "CUDA memory copy failed.\n";
+
+            throw logic_error(buffer.str());
+        }
+    }
+
+    pointers.CUDA_initialized = true;
+
+#endif
+
     return pointers;
 }
 
+MultilayerPerceptron::Pointers::~Pointers()
+{
+#ifdef __OPENNN_CUDA__
+    for(size_t i = 0; i < weights_pointers.size(); i++)
+    {
+        freeCUDA(weights_pointers[i]);
+    }
+
+    for(size_t i = 0; i < biases_pointers.size(); i++)
+    {
+        freeCUDA(biases_pointers[i]);
+    }
+#endif
+}
+
+Vector<double> MultilayerPerceptron::Pointers::get_parameters() const
+{
+    Vector<double> parameters;
+
+#ifdef __OPENNN_CUDA__
+    const size_t layers_number = architecture.size() - 1;
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        parameters_number += architecture[i]*architecture[i+1] + architecture[i+1];
+    }
+
+    parameters.set(parameters_number);
+    double* parameters_data = parameters.data();
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        const int weights_num_bytes = architecture[i]*architecture[i+1]*sizeof(double);
+
+        getHostVector(weights_pointers[i], parameters_data+index, weights_num_bytes);
+        index += architecture[i]*architecture[i+1];
+
+        const int biases_num_bytes = architecture[i+1]*sizeof(double);
+
+        getHostVector(biases_pointers[i], parameters_data+index, biases_num_bytes);
+        index += architecture[i+1];
+    }
+#endif
+
+    return parameters;
+}
+
+void MultilayerPerceptron::Pointers::update_parameters(const Vector<double>& increment)
+{
+#ifdef __OPENNN_CUDA__
+    const size_t layers_number = architecture.size() - 1;
+
+    const double* increment_data = increment.data();
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        parameters_number += architecture[i]*architecture[i+1] + architecture[i+1];
+    }
+
+    updateParametersCUDA(weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                         biases_pointers.to_std_vector(), bias_rows_numbers,
+                         increment_data, parameters_number);
+#endif
+}
 
 /// Returns a vector of matrix, where each row contains the combination values of a layer in response
 /// to an inputs to the multilayer perceptron

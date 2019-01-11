@@ -1191,7 +1191,7 @@ void InputsSelectionAlgorithm::delete_parameters_history()
 
 void InputsSelectionAlgorithm::check() const
 {
-    // Training algorithm stuff
+    // Optimization algorithm stuff
 
     ostringstream buffer;
 

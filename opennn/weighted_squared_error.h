@@ -114,6 +114,9 @@ public:
 
    Vector<double> calculate_training_error_gradient() const;
 
+   LossIndex::FirstOrderLoss calculate_first_order_loss() const;
+   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t> &) const;
+
 //   double calculate_error(const double&) const;
 //   double calculate_error(const Vector<double>&, const double&) const;
 //   double calculate_selection_error(const double&) const;
@@ -126,7 +129,7 @@ public:
    Vector<double> calculate_error_terms(const Vector<double>&) const;
    Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;
 
-   LossIndex::SecondOrderErrorTerms calculate_terms_second_order_loss() const;
+   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
    string write_error_term_type() const;
 

@@ -35,12 +35,6 @@
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
 
-#include "f1_score_optimization_threshold.h"
-#include "matthew_correlation_optimization_threshold.h"
-#include "youden_index_optimization_threshold.h"
-#include "kappa_coefficient_optimization_threshold.h"
-#include "roc_curve_optimization_threshold.h"
-
 // TinyXml includes
 
 #include "tinyxml2.h"
@@ -97,19 +91,6 @@ public:
         SIMULATED_ANNEALING
     };
 
-    /// Enumeration of all the available types of threshold selection algorithms.
-
-    enum ThresholdSelectionMethod
-    {
-        NO_THRESHOLD_SELECTION,
-        F1_SCORE_OPTIMIZATION,
-        MATTHEW_CORRELATION,
-        YOUDEN_INDEX,
-        KAPPA_COEFFICIENT,
-        ROC_CURVE_DISTANCE
-    };
-
-
     // STRUCTURES
 
     ///
@@ -146,27 +127,6 @@ public:
         /// Pointer to a structure with the results from the genetic inputs selection algorithm.
 
         GeneticAlgorithm::GeneticAlgorithmResults* genetic_algorithm_results_pointer;
-
-        /// Pointer to a structure with the results from the f1 score optimization threshold selection algorithm.
-
-        F1ScoreOptimizationThreshold::F1ScoreOptimizationThresholdResults* f1_score_opimization_results_pointer;
-
-        /// Pointer to a structure with the results from the matthew correlation optimization threshold selection algorithm.
-
-        MatthewCorrelationOptimizationThreshold::MatthewCorrelationOptimizationThresholdResults* matthew_correlation_optimization_results_pointer;
-
-        /// Pointer to a structure with the results from the youden index optimization threshold selection algorithm.
-
-        YoudenIndexOptimizationThreshold::YoudenIndexOptimizationThresholdResults* youden_index_optimization_results_pointer;
-
-        /// Pointer to a structure with the results from the kappa coefficient optimization threshold selection algorithm.
-
-        KappaCoefficientOptimizationThreshold::KappaCoefficientOptimizationThresholdResults* kappa_coefficient_optimization_results_pointer;
-
-        /// Pointer to a structure with the results from the roc curve optimization threshold selection algorithm.
-
-        ROCCurveOptimizationThreshold::ROCCurveOptimizationThresholdResults* roc_curve_optimization_results_pointer;
-
     };
 
     // METHODS
@@ -178,7 +138,6 @@ public:
 
     const OrderSelectionMethod& get_order_selection_method() const;
     const InputsSelectionMethod& get_inputs_selection_method() const;
-    const ThresholdSelectionMethod& get_threshold_selection_method() const;
 
     IncrementalOrder* get_incremental_order_pointer() const;
     GoldenSectionOrder* get_golden_section_order_pointer() const;
@@ -187,12 +146,6 @@ public:
     GrowingInputs* get_growing_inputs_pointer() const;
     PruningInputs* get_pruning_inputs_pointer() const;
     GeneticAlgorithm* get_genetic_algorithm_pointer() const;
-
-    F1ScoreOptimizationThreshold* get_f1_score_optimization_threshold_pointer() const;
-    MatthewCorrelationOptimizationThreshold* get_matthew_correlation_optimization_threshold() const;
-    YoudenIndexOptimizationThreshold* get_youden_index_optimization_threshold() const;
-    KappaCoefficientOptimizationThreshold* get_kappa_coefficient_optimization_threshold() const;
-    ROCCurveOptimizationThreshold* get_roc_curve_optimization_threshold() const;
 
     // Set methods
 
@@ -207,7 +160,6 @@ public:
 
     void set_inputs_selection_MPI(const ModelSelection*);
     void set_order_selection_MPI(const ModelSelection*);
-    void set_threshold_selection_MPI(const ModelSelection*);
 #endif
 
     void set_order_selection_method(const OrderSelectionMethod&);
@@ -216,9 +168,6 @@ public:
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
 
-    void set_threshold_selection_method(const ThresholdSelectionMethod&);
-    void set_threshold_selection_method(const string&);
-
     void set_approximation(const bool&);
 
     // Pointer methods
@@ -226,8 +175,6 @@ public:
     void destruct_order_selection();
 
     void destruct_inputs_selection();
-
-    void destruct_threshold_selection();
 
     // Cross validation methods
 
@@ -244,8 +191,6 @@ public:
     Results perform_order_selection() const;
 
     Results perform_inputs_selection() const;
-
-    Results perform_threshold_selection() const;
 
     Results perform_model_selection() const;
 
@@ -292,26 +237,6 @@ private:
 
     GeneticAlgorithm* genetic_algorithm_pointer;
 
-    /// Pointer to a f1 score optimization object to be used in the inputs selection.
-
-    F1ScoreOptimizationThreshold* f1_score_optimization_threshold_pointer;
-
-    /// Pointer to a matthew correlation optimization object to be used in the threshold selection.
-
-    MatthewCorrelationOptimizationThreshold* matthew_correlation_optimization_threshold_pointer;
-
-    /// Pointer to a youden index optimization object to be used in the threshold selection.
-
-    YoudenIndexOptimizationThreshold* youden_index_optimization_threshold_pointer;
-
-    /// Pointer to a kappa coefficient optimization object to be used in the threshold selection.
-
-    KappaCoefficientOptimizationThreshold* kappa_coefficient_optimization_threshold_pointer;
-
-    /// Pointer to a roc curve distance optimization object to be used in the threshold selection.
-
-    ROCCurveOptimizationThreshold* roc_curve_optimization_threshold_pointer;
-
     /// Type of order selection algorithm.
 
     OrderSelectionMethod order_selection_method;
@@ -319,10 +244,6 @@ private:
     /// Type of inputs selection algorithm.
 
     InputsSelectionMethod inputs_selection_method;
-
-    /// Type of threshold selection algorithm.
-
-    ThresholdSelectionMethod threshold_selection_method;
 
     /// Display messages to screen.
 

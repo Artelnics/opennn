@@ -733,6 +733,17 @@ Matrix<double> DataSet::get_training_data() const
    return(data.get_submatrix(training_indices, variables_indices));
 }
 
+Eigen::MatrixXd DataSet::get_training_data_eigen() const
+{
+    Matrix<double> data = get_training_data();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
+}
+
 
 /// Returns a matrix with the selection instances in the data set.
 /// The number of rows is the number of selection instances.
@@ -747,6 +758,18 @@ Matrix<double> DataSet::get_selection_data() const
    Vector<size_t> variables_indices(0, 1,variables_number-1);
 
    return(data.get_submatrix(selection_indices, variables_indices));
+}
+
+
+Eigen::MatrixXd DataSet::get_selection_data_eigen() const
+{
+    Matrix<double> data = get_selection_data();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
 }
 
 
@@ -765,6 +788,18 @@ Matrix<double> DataSet::get_testing_data() const
 }
 
 
+Eigen::MatrixXd DataSet::get_testing_data_eigen() const
+{
+    Matrix<double> data = get_testing_data();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
+}
+
+
 /// Returns a matrix with the input variables in the data set.
 /// The number of rows is the number of instances.
 /// The number of columns is the number of input variables.
@@ -780,6 +815,18 @@ Matrix<double> DataSet::get_inputs() const
 }
 
 
+Eigen::MatrixXd DataSet::get_inputs_eigen() const
+{
+    Matrix<double> data = get_inputs();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
+}
+
+
 /// Returns a matrix with the target variables in the data set.
 /// The number of rows is the number of instances.
 /// The number of columns is the number of target variables.
@@ -792,6 +839,18 @@ Matrix<double> DataSet::get_targets() const
    const Vector<size_t> targets_indices = variables.get_targets_indices();
 
    return(data.get_submatrix(indices, targets_indices));
+}
+
+
+Eigen::MatrixXd DataSet::get_targets_eigen() const
+{
+    Matrix<double> data = get_targets();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
 }
 
 
@@ -862,6 +921,18 @@ Matrix<double> DataSet::get_training_inputs() const
 }
 
 
+Eigen::MatrixXd DataSet::get_training_inputs_eigen() const
+{
+    Matrix<double> data = get_training_inputs();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
+}
+
+
 /// Returns a matrix with training instances and target variables.
 /// The number of rows is the number of training instances.
 /// The number of columns is the number of target variables.
@@ -873,6 +944,19 @@ Matrix<double> DataSet::get_training_targets() const
    const Vector<size_t> targets_indices = variables.get_targets_indices();
 
    return(data.get_submatrix(training_indices, targets_indices));
+}
+
+
+
+Eigen::MatrixXd DataSet::get_training_targets_eigen() const
+{
+    Matrix<double> data = get_training_targets();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
 }
 
 
@@ -890,6 +974,18 @@ Matrix<double> DataSet::get_selection_inputs() const
 }
 
 
+Eigen::MatrixXd DataSet::get_selection_inputs_eigen() const
+{
+    Matrix<double> data = get_selection_inputs();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
+}
+
+
 /// Returns a matrix with selection instances and target variables.
 /// The number of rows is the number of selection instances.
 /// The number of columns is the number of target variables.
@@ -901,6 +997,18 @@ Matrix<double> DataSet::get_selection_targets() const
    const Vector<size_t> targets_indices = variables.get_targets_indices();
 
    return(data.get_submatrix(selection_indices, targets_indices));
+}
+
+
+Eigen::MatrixXd DataSet::get_selection_targets_eigen() const
+{
+    Matrix<double> data = get_selection_targets();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
 }
 
 
@@ -918,6 +1026,18 @@ Matrix<double> DataSet::get_testing_inputs() const
 }
 
 
+Eigen::MatrixXd DataSet::get_testing_inputs_eigen() const
+{
+    Matrix<double> data = get_testing_inputs();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
+}
+
+
 /// Returns a matrix with testing instances and target variables.
 /// The number of rows is the number of testing instances.
 /// The number of columns is the number of target variables.
@@ -929,6 +1049,18 @@ Matrix<double> DataSet::get_testing_targets() const
    const Vector<size_t> testing_indices = instances.get_testing_indices();
 
    return(data.get_submatrix(testing_indices, targets_indices));
+}
+
+
+Eigen::MatrixXd DataSet::get_testing_targets_eigen() const
+{
+    Matrix<double> data = get_testing_targets();
+    const size_t rows_number = data.get_rows_number();
+    const size_t columns_number = data.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> data_eigen((double*)data.data(), rows_number, columns_number);
+
+    return(data_eigen);
 }
 
 
@@ -2560,17 +2692,14 @@ Vector< Histogram<double> > DataSet::calculate_data_histograms(const size_t& bin
        if(column.is_binary(missing_indices[static_cast<size_t>(i)]))
        {
            histograms[static_cast<size_t>(i)] = column.calculate_histogram_binary();
-//           histograms[i] = column.calculate_histogram_binary_missing_values(missing_indices[i]);
        }
        else if(column.count_integers_missing_values(missing_indices[static_cast<size_t>(i)], bins_number) != 0)
        {
            histograms[static_cast<size_t>(i)] = column.calculate_histogram(bins_number);
-//           histograms[i] = column.calculate_histogram_integers_missing_values(missing_indices[i], bins_number);
        }
        else
        {
            histograms[static_cast<size_t>(i)] = column.calculate_histogram(bins_number);
-//           histograms[i] = column.calculate_histogram_missing_values(missing_indices[i], bins_number);
        }
    }
 
@@ -3362,16 +3491,13 @@ Matrix<double> DataSet::calculate_input_target_correlations() const
    return correlations;
 }
 
-std::vector<std::vector<double>> DataSet::std_input_target_correlations() const
+
+Eigen::MatrixXd DataSet::calculate_input_target_correlations_eigen() const
 {
     const size_t target_number = variables.get_targets_number();
+    const size_t input_number = variables.get_inputs_number();
 
-    std::vector<std::vector<double>> correlations(target_number);
-
-    for(size_t i = 0; i < target_number; i++)
-    {
-        correlations[i] = calculate_input_target_correlations().get_column(i).to_std_vector();
-    }
+    const Eigen::Map<Eigen::MatrixXd> correlations((double*)calculate_input_target_correlations().data(), target_number, input_number);
 
     return(correlations);
 }

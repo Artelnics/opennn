@@ -348,7 +348,7 @@ void GeneticAlgorithm::set_population(const Vector< Vector<bool> >& new_populati
 {
 #ifdef __OPENNN_DEBUG__
 
-    // Training algorithm stuff
+    // Optimization algorithm stuff
 
     ostringstream buffer;
 

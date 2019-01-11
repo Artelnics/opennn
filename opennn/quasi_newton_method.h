@@ -33,8 +33,8 @@
 
 #include "loss_index.h"
 
-#include "training_algorithm.h"
-#include "training_rate_algorithm.h"
+#include "optimization_algorithm.h"
+#include "learning_rate_algorithm.h"
 
 // TinyXml includes
 
@@ -47,7 +47,7 @@ namespace OpenNN
 /// This concrete class represents a quasi-Newton training algorithm for a loss index of a neural network.
 ///
 
-class QuasiNewtonMethod : public TrainingAlgorithm
+class QuasiNewtonMethod : public OptimizationAlgorithm
 {
 
 public:
@@ -82,18 +82,18 @@ public:
    /// This structure contains the training results for the quasi-Newton method. 
    ///
 
-   struct QuasiNewtonMethodResults : public TrainingAlgorithm::TrainingAlgorithmResults
+   struct QuasiNewtonMethodResults : public OptimizationAlgorithm::OptimizationAlgorithmResults
    {
        /// Default constructor.
 
-       explicit QuasiNewtonMethodResults() : TrainingAlgorithm::TrainingAlgorithmResults()
+       explicit QuasiNewtonMethodResults() : OptimizationAlgorithm::OptimizationAlgorithmResults()
        {
            quasi_Newton_method_pointer = nullptr;
        }
 
        /// Quasi-Newton method constructor.
 
-       explicit QuasiNewtonMethodResults(QuasiNewtonMethod* new_quasi_Newton_method_pointer) : TrainingAlgorithm::TrainingAlgorithmResults()
+       explicit QuasiNewtonMethodResults(QuasiNewtonMethod* new_quasi_Newton_method_pointer) : OptimizationAlgorithm::OptimizationAlgorithmResults()
        {
            quasi_Newton_method_pointer = new_quasi_Newton_method_pointer;
        }
@@ -216,8 +216,8 @@ public:
 
    // Get methods
 
-   const TrainingRateAlgorithm& get_training_rate_algorithm() const;
-   TrainingRateAlgorithm* get_training_rate_algorithm_pointer();
+   const LearningRateAlgorithm& get_learning_rate_algorithm() const;
+   LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
    const InverseHessianApproximationMethod& get_inverse_Hessian_approximation_method() const;
    string write_inverse_Hessian_approximation_method() const;
@@ -347,7 +347,7 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-   string write_training_algorithm_type() const;
+   string write_optimization_algorithm_type() const;
 
    // Serialization methods
 
@@ -367,7 +367,7 @@ private:
    /// Training rate algorithm object. 
    /// It is used to calculate the step for the quasi-Newton training direction.
 
-   TrainingRateAlgorithm training_rate_algorithm;
+   LearningRateAlgorithm learning_rate_algorithm;
 
    /// Variable containing the actual method used to obtain a suitable training rate. 
 

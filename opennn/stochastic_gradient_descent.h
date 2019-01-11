@@ -30,7 +30,7 @@
 #include "loss_index.h"
 
 #include "optimization_algorithm.h"
-//#include "learning_rate_algorithm.h"
+#include "learning_rate_algorithm.h"
 
 
 namespace OpenNN

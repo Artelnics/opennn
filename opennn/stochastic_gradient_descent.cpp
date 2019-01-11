@@ -1150,16 +1150,18 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
    // Loss index stuff
 
+   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
+
+//   Vector<double> gradient;
+
    double training_error = 0.0;
-   double tensorflow_error = 0.0;
    double old_training_error = 0.0;
 
    double selection_error = 0.0;
    double old_selection_error = 0.0;
 
-   Vector<double> loss(instances.get_training_batches(training_batch_size).size());
+   double loss = 0.0;
 
-   Vector<double> gradient(parameters_number);
    double gradient_norm = 0.0;
 
    // Optimization algorithm stuff 
@@ -1198,17 +1200,21 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
+       loss = 0.0;
+
        for(size_t iteration = 0; iteration < batches_number; iteration++)
        {           
            //Loss
 
-           loss[iteration] = loss_index_pointer->calculate_batch_error(training_batches[iteration]);
+           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
+//           loss += loss_index_pointer->calculate_batch_error(training_batches[iteration]);
+           loss += first_order_loss.loss;
 
            // Gradient
 
-            gradient = loss_index_pointer->calculate_batch_error_gradient(training_batches[iteration]);
+//           gradient = loss_index_pointer->calculate_batch_error_gradient(training_batches[iteration]);
 
-            gradient_norm = gradient.calculate_L2_norm();
+            gradient_norm = first_order_loss.gradient.calculate_L2_norm();
 
             if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
 
@@ -1216,7 +1222,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
             parameters = neural_network_pointer->get_parameters();
 
-            parameters_increment = gradient*(-learning_rate);
+            parameters_increment = first_order_loss.gradient*(-learning_rate);
 
             if(momentum > 0.0 && !nesterov) {
 
@@ -1234,12 +1240,11 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
             last_increment = parameters_increment;
 
-            nesterov_increment = parameters_increment*momentum - gradient*(learning_rate) ;
+            nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
 
             neural_network_pointer->set_parameters(parameters + nesterov_increment);
 
             }
-
             else{
 
             neural_network_pointer->set_parameters(parameters + parameters_increment);
@@ -1251,9 +1256,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        // Loss
 
-       tensorflow_error = loss.calculate_sum()/(batches_number);
-
-       training_error = loss_index_pointer->calculate_training_error();
+       training_error = loss/static_cast<double>(batches_number);
 
        if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
 
@@ -1285,7 +1288,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        // Training history loss index
 
-       if(reserve_gradient_history) results_pointer->gradient_history[epoch] = gradient;
+//       if(reserve_gradient_history) results_pointer->gradient_history[epoch] = first_order_loss.gradient;
 
        if(reserve_gradient_norm_history) results_pointer->gradient_norm_history[epoch] = gradient_norm;
 
@@ -1349,7 +1352,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
            {
               cout << "Parameters norm: " << parameters_norm << "\n"
                         << "Training loss: " << training_error << "\n"
-                        << "Training loss Tensorflow: " << tensorflow_error << "\n"
                         << "Batch size: " << training_batch_size << "\n"
                         << "Gradient norm: " << gradient_norm << "\n"
                         << loss_index_pointer->write_information()
@@ -1381,7 +1383,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
            cout << "Epoch " << epoch << ";\n"
                 << "Parameters norm: " << parameters_norm << "\n"
                 << "Training loss: " << training_error << "\n"
-                << "Training loss Tensorflow: " << tensorflow_error << "\n"
                 << "Batch size: " << training_batch_size << "\n"
                 << "Gradient norm: " << gradient_norm << "\n"
                 << loss_index_pointer->write_information()
@@ -1469,7 +1470,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
    // Loss index stuff
 
    double training_error = 0.0;
-   double tensorflow_error = 0.0;
    double old_training_error = 0.0;
 
    double selection_error = 0.0;
@@ -1522,7 +1522,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
            //Loss
 
-           loss[iteration] = loss_index_pointer->calculate_batch_error_cuda(training_batches[iteration], multilayer_perceptron_pointers_device);
+           loss[iteration] = 0;//loss_index_pointer->calculate_batch_error_cuda(training_batches[iteration], multilayer_perceptron_pointers_device);
 
            // Gradient
 
@@ -1557,8 +1557,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
                nesterov_increment = parameters_increment*momentum - gradient*(learning_rate) ;
 
-               neural_network_pointer->set_parameters(parameters +  nesterov_increment);
-
                multilayer_perceptron_pointers_device.update_parameters(nesterov_increment);
                parameters = parameters +  parameters_increment;
                parameters_norm = parameters.calculate_L2_norm();
@@ -1573,33 +1571,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
            }
 
            learning_rate_iteration++;
-
-//           if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-
-//           initial_decay > 0.0 ? learning_rate =  initial_learning_rate * (1.0 / (1.0 + current_iteration*initial_decay)) : initial_learning_rate ;
-
-////           parameters = multilayer_perceptron_pointers_device.get_parameters();
-
-//           parameters_increment = gradient*(-learning_rate);
-
-//           if(momentum > 0.0)
-//           {
-//               parameters_increment += last_increment*momentum;
-
-//               last_increment = parameters_increment;
-
-//               multilayer_perceptron_pointers_device.update_parameters(parameters_increment);
-//               parameters = parameters +  parameters_increment;
-//               parameters_norm = parameters.calculate_L2_norm();
-////               neural_network_pointer->set_parameters(parameters +  parameters_increment);
-//           }
-//           else
-//           {
-//               multilayer_perceptron_pointers_device.update_parameters(parameters_increment);
-//               parameters = parameters +  parameters_increment;
-//               parameters_norm = parameters.calculate_L2_norm();
-////               neural_network_pointer->set_parameters(parameters +  parameters_increment);
-//           }
        }
 
        // Loss
@@ -1700,7 +1671,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
            {
               cout << "Parameters norm: " << parameters_norm << "\n"
                         << "Training loss: " << training_error << "\n"
-//                        << "Training loss Tensorflow: " << tensorflow_error << "\n"
                         << "Batch size: " << training_batch_size << "\n"
                         << "Gradient norm: " << gradient_norm << "\n"
                         << loss_index_pointer->write_information()
@@ -1732,7 +1702,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
            cout << "Epoch " << epoch << ";\n"
                 << "Parameters norm: " << parameters_norm << "\n"
                 << "Training loss: " << training_error << "\n"
-//                << "Training loss Tensorflow: " << tensorflow_error << "\n"
                 << "Batch size: " << training_batch_size << "\n"
                 << "Gradient norm: " << gradient_norm << "\n"
                 << loss_index_pointer->write_information()

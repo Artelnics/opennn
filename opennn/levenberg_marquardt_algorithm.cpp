@@ -18,23 +18,23 @@ namespace OpenNN
 {
 
 /// Default constructor. 
-/// It creates a Levenberg-Marquardt training algorithm object not associated to any loss index object. 
+/// It creates a Levenberg-Marquardt optimization algorithm object not associated to any loss index object. 
 /// It also initializes the class members to their default values.
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
- : TrainingAlgorithm()
+ : OptimizationAlgorithm()
 {
    set_default();
 }
 
 
 /// Loss index constructor. 
-/// It creates a Levenberg-Marquardt training algorithm object associated associated with a given loss index object. 
+/// It creates a Levenberg-Marquardt optimization algorithm object associated associated with a given loss index object. 
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to an external loss index object. 
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index_pointer)
- : TrainingAlgorithm(new_loss_index_pointer)
+ : OptimizationAlgorithm(new_loss_index_pointer)
 {
 /*
     if(!new_loss_index_pointer->is_sum_squared_terms())
@@ -60,7 +60,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_ind
 /// @param document TinyXML document containing the Levenberg-Marquardt algorithm data.
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument& document)
- : TrainingAlgorithm(document)
+ : OptimizationAlgorithm(document)
 {
    set_default();
 
@@ -490,7 +490,7 @@ void LevenbergMarquardtAlgorithm::set_warning_parameters_norm(const double& new_
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_warning_parameters_norm(const double&) method.\n"
              << "Warning parameters norm must be equal or greater than 0.\n";
 
@@ -519,7 +519,7 @@ void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const double& new_wa
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_warning_gradient_norm(const double&) method.\n"
              << "Warning gradient norm must be equal or greater than 0.\n";
 
@@ -548,7 +548,7 @@ void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const double& new_er
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_error_parameters_norm(const double&) method.\n"
              << "Error parameters norm must be equal or greater than 0.\n";
 
@@ -577,7 +577,7 @@ void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const double& new_erro
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_error_gradient_norm(const double&) method.\n"
              << "Error gradient norm must be equal or greater than 0.\n";
 
@@ -605,7 +605,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const do
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void new_minimum_parameters_increment_norm(const double&) method.\n"
              << "Minimum parameters increment norm must be equal or greater than 0.\n";
 
@@ -633,7 +633,7 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const double& new_mi
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_minimum_loss_decrease(const double&) method.\n"
              << "Minimum loss improvement must be equal or greater than 0.\n";
 
@@ -672,7 +672,7 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const double& new_gradi
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_gradient_norm_goal(const double&) method.\n"
              << "Gradient norm goal must be equal or greater than 0.\n";
 
@@ -718,7 +718,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const double& new_maximum_tim
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_maximum_time(const double&) method.\n"
              << "Maximum time must be equal or greater than 0.\n";
 
@@ -841,7 +841,7 @@ void LevenbergMarquardtAlgorithm::set_display_period(const size_t& new_display_p
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: TrainingAlgorithm class.\n"
+      buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
              << "void set_display_period(const double&) method.\n"
              << "First training rate must be greater than 0.\n";
 
@@ -857,7 +857,7 @@ void LevenbergMarquardtAlgorithm::set_display_period(const size_t& new_display_p
 /// Checks that the Levenberg-Marquard object is ok for training.  
 /// In particular, it checks that:
 /// <ul>
-/// <li> The loss index pointer associated to the training algorithm is not nullptr,
+/// <li> The loss index pointer associated to the optimization algorithm is not nullptr,
 /// <li> The neural network associated to that loss index is neither nullptr.
 /// <li> The data set associated to that loss index is neither nullptr.
 /// </ul>
@@ -1224,7 +1224,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       // Loss index 
 
-      LossIndex::SecondOrderErrorTerms terms_second_order_loss = loss_index_pointer->calculate_terms_second_order_loss();
+      LossIndex::SecondOrderLoss terms_second_order_loss = loss_index_pointer->calculate_terms_second_order_loss();
 
       training_loss = terms_second_order_loss.loss;
 
@@ -1336,7 +1336,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
          results_pointer->Hessian_approximation_history[epoch] = terms_second_order_loss.Hessian_approximation; // as computed by linear algebraic equations object
       }
 
-      // Training history training algorithm
+      // Training history optimization algorithm
 
       if(reserve_damping_parameter_history)
       {
@@ -1555,7 +1555,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
 }
 
 
-string LevenbergMarquardtAlgorithm::write_training_algorithm_type() const
+string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 {
    return("LEVENBERG_MARQUARDT_ALGORITHM");
 }
@@ -1753,7 +1753,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
 
-   // Training algorithm
+   // Optimization algorithm
 
    tinyxml2::XMLElement* root_element = document->NewElement("LevenbergMarquardtAlgorithm");
    document->InsertFirstChild(root_element);

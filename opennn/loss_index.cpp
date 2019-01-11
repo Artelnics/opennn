@@ -359,8 +359,6 @@ void LossIndex::check() const
 
   if(!multilayer_perceptron_pointer)
   {
-        ostringstream buffer;
-
         buffer << "OpenNN Exception: LossIndex class.\n"
             << "Vector< Vector<double> > calculate_layers_delta(const Vector< Vector<double> >&, const Vector<double>&) const method.\n"
             << "Pointer to multilayer perceptron in neural network is nullptr.\n";
@@ -944,7 +942,6 @@ Vector<double> LossIndex::calculate_training_loss_gradient() const
         return calculate_training_error_gradient() + calculate_regularization_gradient()*regularization_weight;
     }
 }
-
 
 /// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
 

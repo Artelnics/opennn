@@ -212,16 +212,16 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
    set_default();
 }
 
-//void OptimizationAlgorithm::set_training_batch_size(const size_t& new_training_batch_size)
-//{
-//    training_batch_size = new_training_batch_size;
-//}
+void OptimizationAlgorithm::set_training_batch_size(const size_t& new_training_batch_size)
+{
+    training_batch_size = new_training_batch_size;
+}
 
 
-//void OptimizationAlgorithm::set_selection_batch_size(const size_t& new_selection_batch_size)
-//{
-//    selection_batch_size = new_selection_batch_size;
-//}
+void OptimizationAlgorithm::set_selection_batch_size(const size_t& new_selection_batch_size)
+{
+    selection_batch_size = new_selection_batch_size;
+}
 
 
 /// Sets a pointer to a loss index object to be associated to the optimization algorithm.

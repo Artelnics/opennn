@@ -740,7 +740,7 @@ Matrix<double> OutputsTrendingLayer::calculate_outputs(const Matrix<double>& inp
 
     const size_t inputs_size = inputs.size();
 
-    if(inputs_size != outputs_trending_neurons_number)
+    if(inputs_size != outputs_number)
     {
        ostringstream buffer;
 

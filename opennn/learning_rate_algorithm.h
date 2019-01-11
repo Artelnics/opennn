@@ -276,6 +276,7 @@ public:
    Vector<double> calculate_fixed_directional_point(const double&, const Vector<double>&, const double&) const;
    Vector<double> calculate_golden_section_directional_point(const double&, const Vector<double>&, const double&) const;
    Vector<double> calculate_Brent_method_directional_point(const double&, const Vector<double>&, const double&) const;
+   Vector<double> calculate_scaled_method_directional_point(const double&, const Vector<double>&, const double&) const;
 
    Vector<double> calculate_directional_point(const double&, const Vector<double>&, const double&) const;
 

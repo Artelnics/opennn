@@ -2426,6 +2426,25 @@ Matrix<double> NeuralNetwork::calculate_outputs(const Matrix<double>& inputs) co
 }
 
 
+Eigen::MatrixXd NeuralNetwork::calculate_outputs_eigen(const Eigen::MatrixXd& inputs_eigen) const
+{
+    const size_t points_number = inputs_eigen.rows();
+    const size_t inputs_number = get_inputs_number();
+
+    Matrix<double> inputs(points_number, inputs_number);
+
+    Eigen::Map<Eigen::MatrixXd> aux((double*)inputs.data(), points_number, inputs_number);
+    aux = inputs_eigen;
+
+
+    const Matrix<double> outputs = calculate_outputs(inputs);
+
+    const Eigen::Map<Eigen::MatrixXd> outputs_eigen((double*)outputs.data(), points_number, outputs.get_columns_number());
+
+
+    return(outputs_eigen);
+}
+
 
 /// Calculates the outputs vector from the multilayer perceptron in response to an inputs vector
 /// and a time value.
@@ -3295,16 +3314,16 @@ tinyxml2::XMLDocument* NeuralNetwork::to_PMML() const
 
 
 /// Serializes the neural network object into a PMML file without memory load.
-
+/// @todo
+///
 void NeuralNetwork::write_PMML(const string& file_name) const
 {
+/*
     ostringstream buffer;
 
     // Required for XMLPrinter constructor
 
-    FILE* pmml_file;
-
-    pmml_file = fopen(file_name.c_str(), "w");
+    ofstream file(file_name.c_str());
 
     if(pmml_file == nullptr)
     {
@@ -3588,6 +3607,7 @@ void NeuralNetwork::write_PMML(const string& file_name) const
     file_stream.CloseElement();
 
     fclose(pmml_file);
+*/
 }
 
 

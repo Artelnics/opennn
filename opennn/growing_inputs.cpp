@@ -298,7 +298,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         if(display)
         {
-            cout << "Maximal correlation(" << total_input_correlations[index] << ") is nearly 1. \n"
+            cout << "Maximal correlation (" << total_input_correlations[index] << ") is nearly 1. \n"
                  << "The problem is linear separable with the input " << variables_pointer->get_names()[original_index] << ".\n\n";
         }
 

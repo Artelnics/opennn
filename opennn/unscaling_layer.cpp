@@ -1207,8 +1207,6 @@ string UnscalingLayer::object_to_string() const
 }
 
 
-// tinyxml2::XMLDocument* to_XML() const method
-
 /// Serializes this unscaling layer object into a TinyXML document-> 
 /// Please read the OpenNN manual for more information about this. 
 
@@ -1315,8 +1313,6 @@ tinyxml2::XMLDocument* UnscalingLayer::to_XML() const
     return(document);
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the unscaling layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
