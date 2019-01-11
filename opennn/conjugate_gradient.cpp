@@ -20,10 +20,10 @@ namespace OpenNN
 // DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
-/// It creates a conjugate gradient training algorithm object not associated to any loss index object.
+/// It creates a conjugate gradient optimization algorithm object not associated to any loss index object.
 /// It also initializes the class members to their default values.
 
-ConjugateGradient::ConjugateGradient() : TrainingAlgorithm()
+ConjugateGradient::ConjugateGradient() : OptimizationAlgorithm()
 {
    set_default();
 }
@@ -32,14 +32,14 @@ ConjugateGradient::ConjugateGradient() : TrainingAlgorithm()
 // GENERAL CONSTRUCTOR
 
 /// General constructor. 
-/// It creates a conjugate gradient training algorithm associated to a loss index object.
+/// It creates a conjugate gradient optimization algorithm associated to a loss index object.
 /// It also initializes the rest of class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
-: TrainingAlgorithm(new_loss_index_pointer)
+: OptimizationAlgorithm(new_loss_index_pointer)
 {
-   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);   
+   learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);   
 
    set_default();
 }
@@ -48,12 +48,12 @@ ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
 // XML CONSTRUCTOR 
 
 /// XML constructor. 
-/// It creates a conjugate gradient training algorithm not associated to any loss index object.
+/// It creates a conjugate gradient optimization algorithm not associated to any loss index object.
 /// It also loads the class members from a XML document.
 /// @param conjugate_gradient_document TinyXML document with the members of a conjugate gradient object.
 
 ConjugateGradient::ConjugateGradient(const tinyxml2::XMLDocument& conjugate_gradient_document)
- : TrainingAlgorithm(conjugate_gradient_document)
+ : OptimizationAlgorithm(conjugate_gradient_document)
 {
    set_default();
 
@@ -73,19 +73,19 @@ ConjugateGradient::~ConjugateGradient()
 // METHODS
 
 
-/// Returns a constant reference to the training rate algorithm object inside the conjugate gradient method object. 
+/// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object. 
 
-const TrainingRateAlgorithm& ConjugateGradient::get_training_rate_algorithm() const
+const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
 {
-   return(training_rate_algorithm);
+   return(learning_rate_algorithm);
 }
 
 
-/// Returns a pointer to the training rate algorithm object inside the conjugate gradient method object. 
+/// Returns a pointer to the learning rate algorithm object inside the conjugate gradient method object. 
 
-TrainingRateAlgorithm* ConjugateGradient::get_training_rate_algorithm_pointer()
+LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
 {
-   return(&training_rate_algorithm);
+   return(&learning_rate_algorithm);
 }
 
 
@@ -315,14 +315,14 @@ const bool& ConjugateGradient::get_reserve_selection_error_history() const
 
 
 /// Sets a pointer to a loss index object to be associated to the conjugate gradient object.
-/// It also sets that loss index to the training rate algorithm.
+/// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
 void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
    loss_index_pointer = new_loss_index_pointer;
 
-   training_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+   learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
 
@@ -399,7 +399,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 
    reserve_selection_error_history = new_reserve_all_training_history;
 
-   // Training algorithm
+   // Optimization algorithm
 
    reserve_training_direction_history = new_reserve_all_training_history;
    reserve_training_rate_history = new_reserve_all_training_history;
@@ -1707,7 +1707,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
    string information;
 
-   // Training algorithm stuff 
+   // Optimization algorithm stuff 
 
    Vector<double> parameters_increment(parameters_number);
    double parameters_increment_norm;
@@ -1799,7 +1799,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
           minimum_selection_error_parameters = neural_network_pointer->get_parameters();
       }
 
-      // Training algorithm 
+      // Optimization algorithm 
 
       if(epoch == 0 || epoch % parameters_number == 0)
       {
@@ -1848,7 +1848,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          initial_training_rate = old_training_rate;
       }
 
-      directional_point = training_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
+      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
 
 	  training_rate = directional_point[0];
 
@@ -1858,7 +1858,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          training_direction = calculate_gradient_descent_training_direction(gradient);         
 
-         directional_point = training_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_training_rate);
+         directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_training_rate);
 
 		 training_rate = directional_point[0];
       }
@@ -1905,7 +1905,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
          results_pointer->gradient_norm_history[epoch] = gradient_norm;
       }
 
-      // Training history training algorithm
+      // Training history optimization algorithm
 
       if(reserve_training_direction_history)
       {
@@ -2124,7 +2124,7 @@ void ConjugateGradient::perform_training_void()
 }
 
 
-string ConjugateGradient::write_training_algorithm_type() const
+string ConjugateGradient::write_optimization_algorithm_type() const
 {
    return("CONJUGATE_GRADIENT");
 }
@@ -2151,7 +2151,7 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    labels.push_back("Training rate method");
 
-   const string training_rate_method = training_rate_algorithm.write_training_rate_method();
+   const string training_rate_method = learning_rate_algorithm.write_training_rate_method();
 
    values.push_back(training_rate_method);
 
@@ -2160,7 +2160,7 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
    labels.push_back("Loss tolerance");
 
    buffer.str("");
-   buffer << training_rate_algorithm.get_loss_tolerance();
+   buffer << learning_rate_algorithm.get_loss_tolerance();
 
    values.push_back(buffer.str());
 
@@ -2362,15 +2362,15 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 
    // Training rate algorithm
    {
-      const tinyxml2::XMLDocument* training_rate_algorithm_document = training_rate_algorithm.to_XML();
+      const tinyxml2::XMLDocument* learning_rate_algorithm_document = learning_rate_algorithm.to_XML();
 
-      const tinyxml2::XMLElement* training_rate_algorithm_element = training_rate_algorithm_document->FirstChildElement("TrainingRateAlgorithm");
+      const tinyxml2::XMLElement* learning_rate_algorithm_element = learning_rate_algorithm_document->FirstChildElement("LearningRateAlgorithm");
 
-      tinyxml2::XMLNode* node = training_rate_algorithm_element->DeepClone(document);
+      tinyxml2::XMLNode* node = learning_rate_algorithm_element->DeepClone(document);
 
       root_element->InsertEndChild(node);
 
-      delete training_rate_algorithm_document;
+      delete learning_rate_algorithm_document;
    }
 
 //   // Return minimum selection error neural network
@@ -2421,7 +2421,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 
    // Warning training rate
 //   {
-//      element = document->NewElement("WarningTrainingRate");
+//      element = document->NewElement("WarningLearningRate");
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
@@ -2457,7 +2457,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 
    // Error training rate
 //   {
-//      element = document->NewElement("ErrorTrainingRate");
+//      element = document->NewElement("ErrorLearningRate");
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
@@ -2637,7 +2637,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 
    // Reserve training rate history
 //   {
-//      tinyxml2::XMLElement* element = document->NewElement("ReserveTrainingRateHistory");
+//      tinyxml2::XMLElement* element = document->NewElement("ReserveLearningRateHistory");
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
@@ -2741,7 +2741,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
    // Training rate algorithm
 
-   training_rate_algorithm.write_XML(file_stream);
+   learning_rate_algorithm.write_XML(file_stream);
 
 //   // Return minimum selection error neural network
 
@@ -2955,18 +2955,18 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Training rate algorithm
   {
-     const tinyxml2::XMLElement* training_rate_algorithm_element = root_element->FirstChildElement("TrainingRateAlgorithm");
+     const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
-     if(training_rate_algorithm_element)
+     if(learning_rate_algorithm_element)
      {
-         tinyxml2::XMLDocument training_rate_algorithm_document;
+         tinyxml2::XMLDocument learning_rate_algorithm_document;
          tinyxml2::XMLNode* element_clone;
 
-         element_clone = training_rate_algorithm_element->DeepClone(&training_rate_algorithm_document);
+         element_clone = learning_rate_algorithm_element->DeepClone(&learning_rate_algorithm_document);
 
-         training_rate_algorithm_document.InsertFirstChild(element_clone);
+         learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
-         training_rate_algorithm.from_XML(training_rate_algorithm_document);
+         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
      }
   }
 
@@ -3010,7 +3010,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Warning training rate
   {
-     const tinyxml2::XMLElement* warning_training_rate_element = root_element->FirstChildElement("WarningTrainingRate");
+     const tinyxml2::XMLElement* warning_training_rate_element = root_element->FirstChildElement("WarningLearningRate");
 
      if(warning_training_rate_element)
      {
@@ -3067,7 +3067,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Error training rate
   {
-     const tinyxml2::XMLElement* error_training_rate_element = root_element->FirstChildElement("ErrorTrainingRate");
+     const tinyxml2::XMLElement* error_training_rate_element = root_element->FirstChildElement("ErrorLearningRate");
 
      if(error_training_rate_element)
      {
@@ -3387,7 +3387,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Reserve training rate history
   {
-     const tinyxml2::XMLElement* reserve_training_rate_history_element = root_element->FirstChildElement("ReserveTrainingRateHistory");
+     const tinyxml2::XMLElement* reserve_training_rate_history_element = root_element->FirstChildElement("ReserveLearningRateHistory");
 
      if(reserve_training_rate_history_element)
      {
