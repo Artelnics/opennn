@@ -85,6 +85,11 @@ public:
    {
        /// Default constructor.
 
+       FirstOrderLoss()
+       {
+
+       }
+
        FirstOrderLoss(const size_t& parameters_number)
        {
            loss = 0.0;
