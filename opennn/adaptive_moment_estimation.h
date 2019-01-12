@@ -5,8 +5,9 @@
 /*                                                                                                              */
 /*   A D A P T I V E   M O M E N T   E S T I M A T I O N                                                        */
 /*                                                                                                              */
+/*   Carlos Barranquero                                                                                         */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
+/*   carlosbarranquero@artelnics.com                                                                            */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -30,7 +31,6 @@
 #include "loss_index.h"
 
 #include "optimization_algorithm.h"
-#include "learning_rate_algorithm.h"
 
 
 namespace OpenNN
@@ -118,20 +118,15 @@ public:
 
       Vector<double> gradient_norm_history;
 
-      /// History of the random search training direction over the training iterations.
+      /// History of the random search learning rate over the training iterations.
 
-      Vector< Vector<double> >  training_direction_history;
-
-      /// History of the random search training rate over the training iterations.
-
-      Vector<double> training_rate_history;
+      Vector<double> learning_rate_history;
 
       /// History of the elapsed time over the training iterations.
 
       Vector<double> elapsed_time_history;
 
       // Final values
-
 
       /// Final neural network parameters vector.
 
@@ -157,13 +152,9 @@ public:
 
       double final_gradient_norm;
 
-      /// Final gradient descent training direction. 
+      /// Final gradient descent learning rate.
 
-      Vector<double> final_training_direction;
-
-      /// Final gradient descent training rate. 
-
-      double final_training_rate;
+      double final_learning_rate;
 
       /// Elapsed time of the training process. 
 
@@ -186,43 +177,40 @@ public:
 
    // METHODS
 
+   // Training operators
+
+   const double& get_initial_learning_rate() const;
+   const double& get_beta_1() const;
+   const double& get_beta_2() const;
+   const double& get_epsilon() const;
+
    // Training parameters
 
    const double& get_warning_parameters_norm() const;
    const double& get_warning_gradient_norm() const;
-   const double& get_warning_training_rate() const;
-
    const double& get_error_parameters_norm() const;
    const double& get_error_gradient_norm() const;
-   const double& get_error_training_rate() const;
 
    // Stopping criteria
 
    const double& get_minimum_parameters_increment_norm() const;
-
    const double& get_minimum_loss_increase() const;
    const double& get_loss_goal() const;
    const double& get_gradient_norm_goal() const;
-   const size_t& get_maximum_selection_failures() const;
-
-   const size_t& get_maximum_iterations_number() const;
    const double& get_maximum_time() const;
-
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
+   const size_t& get_maximum_selection_failures() const;
 
    // Reserve training history
 
    const bool& get_reserve_parameters_history() const;
    const bool& get_reserve_parameters_norm_history() const;
-
    const bool& get_reserve_loss_history() const;
    const bool& get_reserve_gradient_history() const;
    const bool& get_reserve_gradient_norm_history() const;
    const bool& get_reserve_selection_error_history() const;
-
-   const bool& get_reserve_training_direction_history() const;
-   const bool& get_reserve_training_rate_history() const;
+   const bool& get_reserve_learning_rate_history() const;
    const bool& get_reserve_elapsed_time_history() const;
 
    // Set methods
@@ -233,32 +221,29 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
+   // Training operators
+
+   void set_initial_learning_rate(const double&);
+   void set_beta_1(const double&);
+   void set_beta_2(const double&);
+   void set_epsilon(const double&);
 
    // Training parameters
 
    void set_warning_parameters_norm(const double&);
    void set_warning_gradient_norm(const double&);
-   void set_warning_training_rate(const double&);
-
    void set_error_parameters_norm(const double&);
    void set_error_gradient_norm(const double&);
-   void set_error_training_rate(const double&);
-
    void set_maximum_epochs_number(const size_t&);
 
    // Stopping criteria
 
    void set_minimum_parameters_increment_norm(const double&);
-
    void set_minimum_loss_increase(const double&);
    void set_loss_goal(const double&);
-   void set_learning_rate(const double&);
    void set_gradient_norm_goal(const double&);
    void set_maximum_selection_error_increases(const size_t&);
-
-   void set_maximum_iterations_number(const size_t&);
    void set_maximum_time(const double&);
-
    void set_return_minimum_selection_error_neural_network(const bool&);
    void set_apply_early_stopping(const bool&);
 
@@ -266,14 +251,11 @@ public:
 
    void set_reserve_parameters_history(const bool&);
    void set_reserve_parameters_norm_history(const bool&);
-
    void set_reserve_loss_history(const bool&);
    void set_reserve_gradient_history(const bool&);
    void set_reserve_gradient_norm_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-
-   void set_reserve_training_direction_history(const bool&);
-   void set_reserve_training_rate_history(const bool&);
+   void set_reserve_learning_rate_history(const bool&);
    void set_reserve_elapsed_time_history(const bool&);
 
    // Utilities
@@ -281,8 +263,6 @@ public:
    void set_display_period(const size_t&);
 
    // Training methods
-
-   Vector<double> calculate_training_direction(const Vector<double>&) const;
 
    AdaptiveMomentEstimationResults* perform_training();
    AdaptiveMomentEstimationResults* perform_training_cuda();
@@ -304,10 +284,24 @@ private:
 
    // TRAINING OPERATORS
 
+   /// Initial learning rate
+
    double initial_learning_rate;
+
+   /// Learning rate decay over each update.
+
    double initial_decay;
+
+   /// Exponential decay over gradient estimates.
+
    double beta_1;
+
+   /// Exponential decay over square gradient estimates.
+
    double beta_2;
+
+   /// Small number to prevent any division by zero
+
    double epsilon;
 
    // TRAINING PARAMETERS
@@ -320,10 +314,6 @@ private:
 
    double warning_gradient_norm;   
 
-   /// Training rate value at wich a warning message is written to the screen.
-
-   double warning_training_rate;
-
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
    double error_parameters_norm;
@@ -331,10 +321,6 @@ private:
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
    double error_gradient_norm;
-
-   /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
-
-   double error_training_rate;
 
    // STOPPING CRITERIA
 
@@ -409,13 +395,9 @@ private:
 
    bool reserve_gradient_norm_history;
 
-   /// True if the training direction history matrix is to be reserved, false otherwise.
-   
-   bool reserve_training_direction_history;
+   /// True if the learning rate history vector is to be reserved, false otherwise.
 
-   /// True if the training rate history vector is to be reserved, false otherwise.
-
-   bool reserve_training_rate_history;
+   bool reserve_learning_rate_history;
 
    /// True if the elapsed time history vector is to be reserved, false otherwise.
 
