@@ -405,6 +405,8 @@ public:
 
   Vector<bool> calculate_binary() const;
 
+  Vector<T> calculate_square_root_elements() const;
+
   Vector<T> calculate_cumulative() const;
 
   size_t calculate_cumulative_index(const T &) const;
@@ -4767,6 +4769,23 @@ template <class T> Vector<bool> Vector<T>::calculate_binary() const {
   }
 
   return(binary);
+}
+
+
+/// This method calculates the square root of each element in the vector.
+
+template <class T> Vector<T> Vector<T>::calculate_square_root_elements() const {
+  const size_t this_size = this->size();
+
+  Vector<T> square(this_size);
+
+  for(size_t i = 0; i < this_size; i++) {
+
+      square[i]=sqrt((*this)[i]);
+
+  }
+
+  return(square);
 }
 
 

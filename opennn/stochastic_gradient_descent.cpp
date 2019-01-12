@@ -5,8 +5,9 @@
 /*                                                                                                              */
 /*   S T O C H A S T I C   G R A D I E N T   D E S C E N T   C L A S S                                          */
 /*                                                                                                              */
+/*   Carlos Barranquero                                                                                         */
 /*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
+/*   carlosbarranquero@artelnics.com                                                                            */
 /*                                                                                                              */
 /****************************************************************************************************************/
 
@@ -1152,8 +1153,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
    LossIndex::FirstOrderLoss first_order_loss(parameters_number);
 
-//   Vector<double> gradient;
-
    double training_error = 0.0;
    double old_training_error = 0.0;
 
@@ -1207,12 +1206,10 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
            //Loss
 
            first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
-//           loss += loss_index_pointer->calculate_batch_error(training_batches[iteration]);
+
            loss += first_order_loss.loss;
 
            // Gradient
-
-//           gradient = loss_index_pointer->calculate_batch_error_gradient(training_batches[iteration]);
 
             gradient_norm = first_order_loss.gradient.calculate_L2_norm();
 
@@ -1287,8 +1284,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
        if(reserve_parameters_norm_history) results_pointer->parameters_norm_history[epoch] = parameters_norm;
 
        // Training history loss index
-
-//       if(reserve_gradient_history) results_pointer->gradient_history[epoch] = first_order_loss.gradient;
 
        if(reserve_gradient_norm_history) results_pointer->gradient_norm_history[epoch] = gradient_norm;
 
@@ -1523,7 +1518,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
        {
            current_iteration++;
 
-           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
+           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss_cuda(training_batches[iteration], multilayer_perceptron_pointers_device);
 
            //Loss
 
