@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 2.8.10)
 project(yacht_hydrodynamics_production)
 
 if (WIN32)
-	if(EXISTS ../../opennn/Release/opennn)
+	if(EXISTS "../../opennn/Release/opennn")
 		(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 	else()
 		(PROJECT_LINK_LIBS ../../opennn/Debug/opennn)
@@ -16,11 +16,11 @@ endif (WIN32)
 
 if (UNIX)
     if(EXISTS ../../opennn/Release/opennn)
-		(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+		(PROJECT_LINK_LIBS "../../opennn/Release/opennn")
 	else()
 		(PROJECT_LINK_LIBS ../../opennn/Debug/opennn)
 	endif()
-endif (UNIX))
+endif (UNIX)
 
 link_directories(${CMAKE_SOURCE_DIR}/opennn)
 
