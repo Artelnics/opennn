@@ -1,0 +1,16 @@
+scaled_frequency = frequency;
+scaled_angle_of_attack = angle_of_attack;
+scaled_chord_length = chord_length;
+scaled_free_stream_velocity = free_stream_velocity;
+scaled_suction_side_displacement_thickness = suction_side_displacement_thickness;
+y_1_1 = tanh(-1.089+(scaled_frequency*-3.69651)+(scaled_angle_of_attack*2.15501)+(scaled_chord_length*-0.137775)+(scaled_free_stream_velocity*0.199141)+(scaled_suction_side_displacement_thickness*0.251304));
+y_1_2 = tanh(5.30093+(scaled_frequency*2.33233)+(scaled_angle_of_attack*-1.58468)+(scaled_chord_length*-1.59117)+(scaled_free_stream_velocity*0.100511)+(scaled_suction_side_displacement_thickness*-0.117125));
+y_1_3 = tanh(132.759+(scaled_frequency*-1.41038)+(scaled_angle_of_attack*-0.0120187)+(scaled_chord_length*164.144)+(scaled_free_stream_velocity*0.0362983)+(scaled_suction_side_displacement_thickness*-0.000107578));
+y_1_4 = tanh(-2.74462+(scaled_frequency*-2.82716)+(scaled_angle_of_attack*1.05903)+(scaled_chord_length*-0.318063)+(scaled_free_stream_velocity*0.104508)+(scaled_suction_side_displacement_thickness*-0.929312));
+y_1_5 = tanh(3.65088+(scaled_frequency*-2.55995)+(scaled_angle_of_attack*3.35386)+(scaled_chord_length*-44.6352)+(scaled_free_stream_velocity*0.495639)+(scaled_suction_side_displacement_thickness*6.10299));
+y_1_6 = tanh(-0.613861+(scaled_frequency*-2.67213)+(scaled_angle_of_attack*-1.61666)+(scaled_chord_length*-1.10134)+(scaled_free_stream_velocity*0.411982)+(scaled_suction_side_displacement_thickness*1.75513));
+y_1_7 = tanh(-4.08483+(scaled_frequency*-3.33435)+(scaled_angle_of_attack*16.0102)+(scaled_chord_length*7.23451)+(scaled_free_stream_velocity*-0.610988)+(scaled_suction_side_displacement_thickness*-3.27154));
+y_1_8 = tanh(10.1999+(scaled_frequency*-1.41083)+(scaled_angle_of_attack*-0.0100257)+(scaled_chord_length*14.3457)+(scaled_free_stream_velocity*0.0361922)+(scaled_suction_side_displacement_thickness*-0.001263));
+y_1_9 = tanh(17.9468+(scaled_frequency*14.6767)+(scaled_angle_of_attack*0.389919)+(scaled_chord_length*0.290059)+(scaled_free_stream_velocity*-0.0974147)+(scaled_suction_side_displacement_thickness*1.26861));
+scaled_scaled_sound_pressure_level = (28.4096+(y_1_1*-0.56051)+(y_1_2*-46.719)+(y_1_3*189.535)+(y_1_4*1.20363)+(y_1_5*-0.0894835)+(y_1_6*0.440312)+(y_1_7*-0.28843)+(y_1_8*-189.914)+(y_1_9*18.8344));
+(scaled_sound_pressure_level) = (scaled_scaled_sound_pressure_level);

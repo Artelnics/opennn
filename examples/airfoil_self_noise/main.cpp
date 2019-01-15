@@ -134,13 +134,13 @@ int main(void)
 
         quasi_Newton_method_pointer->set_reserve_loss_history(true);
 
-        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+        const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-//        TestingAnalysis::LinearRegressionAnalysis linear_regression_results = testing_analysis.perform_linear_regression_analysis();
+        TestingAnalysis::LinearRegressionAnalysis linear_regression_results = testing_analysis.perform_linear_regression_analysis()[0];
 
         // Save results
 
