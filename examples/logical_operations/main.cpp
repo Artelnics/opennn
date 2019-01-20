@@ -92,28 +92,28 @@ int main(void)
         inputs[0] = 1.0;
         inputs[1] = 1.0;
 
-        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
+        outputs = neural_network.get_multilayer_perceptron_pointer()->calculate_outputs(inputs.to_row_matrix());
 
         cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         inputs[0] = 1.0;
         inputs[1] = 0.0;
 
-        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
+        outputs = neural_network.get_multilayer_perceptron_pointer()->calculate_outputs(inputs.to_row_matrix());
 
         cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         inputs[0] = 0.0;
         inputs[1] = 1.0;
 
-        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
+        outputs = neural_network.get_multilayer_perceptron_pointer()->calculate_outputs(inputs.to_row_matrix());
 
         cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
         inputs[0] = 0.0;
         inputs[1] = 0.0;
 
-        outputs = neural_network.calculate_outputs(inputs.to_row_matrix());
+        outputs = neural_network.get_multilayer_perceptron_pointer()->calculate_outputs(inputs.to_row_matrix());
 
         cout << inputs.calculate_binary() << " " << outputs.calculate_binary() << endl;
 
