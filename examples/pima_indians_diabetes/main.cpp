@@ -108,7 +108,7 @@ int main(void)
 
         quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
 
-        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+        const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 

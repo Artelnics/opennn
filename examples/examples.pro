@@ -25,5 +25,5 @@ SUBDIRS += urinary_inflammations_diagnosis
 SUBDIRS += yacht_hydrodynamics_design
 SUBDIRS += yacht_hydrodynamics_production
 SUBDIRS += leukemia
-#SUBDIRS += performance_evaluation
-#SUBDIRS += temperature_forecasting
+SUBDIRS += performance_evaluation
+SUBDIRS += temperature_forecasting
