@@ -29,14 +29,14 @@ endif()
 #add_definitions(-D__Cpp11__)
 
 option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
-#option(OpenNN_BUILD_TESTS    "Build OpenNN tests"    ON)
+option(OpenNN_BUILD_TESTS    "Build OpenNN tests"    ON)
 
 add_subdirectory(opennn)
 include_directories(opennn)
 
-#if(OpenNN_BUILD_TESTS)
-    #add_subdirectory(tests)
-#endif(OpenNN_BUILD_TESTS)
+if(OpenNN_BUILD_TESTS)
+    add_subdirectory(tests)
+endif(OpenNN_BUILD_TESTS)
 
 if(OpenNN_BUILD_EXAMPLES)
     add_subdirectory(examples)
