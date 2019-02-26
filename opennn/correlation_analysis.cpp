@@ -421,24 +421,32 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-    WeightedSquaredError* weighted_squared_error = training_strategy.get_weighted_squared_error_pointer();
+//    WeightedSquaredError* weighted_squared_error = training_strategy.get_weighted_squared_error_pointer();
 
-    weighted_squared_error->set_weights();
+//    weighted_squared_error->set_weights();
 
-    weighted_squared_error->set_normalization_coefficient();
+//    weighted_squared_error->set_normalization_coefficient();
 
-    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::L2);
+//    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::L2);
 
-    training_strategy.set_training_method(TrainingStrategy::GRADIENT_DESCENT);
+    training_strategy.set_training_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+//    training_strategy.get_conjugate_gradient_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+//    training_strategy.get_conjugate_gradient_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+//    training_strategy.get_conjugate_gradient_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
+
+
+    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+
 //    training_strategy.get_quasi_Newton_method_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
 //    training_strategy.get_quasi_Newton_method_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
-//    training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::Fixed);
+//    training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
 
-    training_strategy.get_gradient_descent_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
-    training_strategy.get_gradient_descent_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
-    training_strategy.get_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
+//    training_strategy.get_gradient_descent_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+//    training_strategy.get_gradient_descent_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+//    training_strategy.get_gradient_descent_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
 
     training_strategy.set_display(false);
 
@@ -453,14 +461,19 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
         output[i] = neural_network.calculate_outputs(value.to_column_matrix())[0];
     }
 
-    if(calculate_linear_correlation(x,output) < 0)
-    {
-        return  -1 * calculate_linear_correlation(y,output);
-    }
-    else
-    {
-        return calculate_linear_correlation(y,output);
-    }
+//    cout << "target: " << y << endl;
+//    cout << "output: " << output << endl;
+
+    return calculate_linear_correlation(y,output);
+
+//    if(calculate_linear_correlation(x,output) < 0)
+//    {
+//        return  -1 * calculate_linear_correlation(y,output);
+//    }
+//    else
+//    {
+//        return calculate_linear_correlation(y,output);
+//    }
 
 //    return 0.0;
 }
@@ -809,6 +822,8 @@ double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const
     if (x.is_constant()) return 0;
     else if (y.is_constant()) return 0;
 
+    if (x == y) return 1;
+
     Vector<double> new_x = x;
     Vector<double> new_y = y;
     const bool this_binary = x.is_binary();
@@ -847,6 +862,10 @@ double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const
             }
         }
     }
+
+//    cout << "size: " << new_x.size() << " / " << new_y.size() << endl;
+//    cout << "x: " << new_x << endl;
+//    cout << "y: " << new_y << endl;
 
     if(!this_binary && !other_binary)
     {
@@ -1027,6 +1046,9 @@ Matrix<double> CorrelationAnalysis::calculate_multiple_linear_correlations(const
 
 double CorrelationAnalysis::calculate_multiple_linear_correlation(const Matrix<double>& x, const Vector<double>& y)
 {
+    // x: input variables
+    // y: target variables
+
     if(x.get_columns_number() == 1) // Simple linear correlation
     {
         return calculate_linear_correlation(x.get_column(0), y);
@@ -1034,7 +1056,11 @@ double CorrelationAnalysis::calculate_multiple_linear_correlation(const Matrix<d
 
     const Vector<double> multiple_linear_regression_parameters = x.calculate_multiple_linear_regression_parameters(y);
 
+    cout << "Multiple linear regression parameters: " << multiple_linear_regression_parameters << endl;
+
     const Vector<double> other_approximation = x.dot(multiple_linear_regression_parameters);
+
+    cout << "other_approximation: " << other_approximation << endl;
 
     return CorrelationAnalysis::calculate_linear_correlation(y, other_approximation);
 }

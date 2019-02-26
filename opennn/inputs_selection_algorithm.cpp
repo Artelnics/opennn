@@ -139,9 +139,9 @@ const bool& InputsSelectionAlgorithm::get_reserve_parameters_data() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& InputsSelectionAlgorithm::get_reserve_loss_data() const
+const bool& InputsSelectionAlgorithm::get_reserve_error_data() const
 {
-    return(reserve_loss_data);
+    return(reserve_error_data);
 }
 
 
@@ -153,7 +153,7 @@ const bool& InputsSelectionAlgorithm::get_reserve_selection_error_data() const
 }
 
 
-/// Returns true if the parameters vector of the neural network with minimum selection loss is to be reserved, and false otherwise.
+/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved, and false otherwise.
 
 const bool& InputsSelectionAlgorithm::get_reserve_minimal_parameters() const
 {
@@ -161,9 +161,9 @@ const bool& InputsSelectionAlgorithm::get_reserve_minimal_parameters() const
 }
 
 
-/// Returns the method for the calculation of the loss and the selection loss.
+/// Returns the method for the calculation of the loss and the selection error.
 
-const InputsSelectionAlgorithm::PerformanceCalculationMethod& InputsSelectionAlgorithm::get_loss_calculation_method() const
+const InputsSelectionAlgorithm::LossCalculationMethod& InputsSelectionAlgorithm::get_loss_calculation_method() const
 {
     return(loss_calculation_method);
 }
@@ -178,7 +178,7 @@ const bool& InputsSelectionAlgorithm::get_display() const
 }
 
 
-/// Returns the goal for the selection loss in the inputs selection algorithm.
+/// Returns the goal for the selection error in the inputs selection algorithm.
 
 const double& InputsSelectionAlgorithm::get_selection_error_goal() const
 {
@@ -281,7 +281,7 @@ void InputsSelectionAlgorithm::set_default()
     // inputs selection results
 
     reserve_parameters_data = true;
-    reserve_loss_data = true;
+    reserve_error_data = true;
     reserve_selection_error_data = true;
     reserve_minimal_parameters = true;
 
@@ -337,15 +337,15 @@ void InputsSelectionAlgorithm::set_reserve_parameters_data(const bool& new_reser
 
 
 /// Sets the reserve flag for the loss data.
-/// @param new_reserve_loss_data Flag value.
+/// @param new_reserve_error_data Flag value.
 
-void InputsSelectionAlgorithm::set_reserve_loss_data(const bool& new_reserve_loss_data)
+void InputsSelectionAlgorithm::set_reserve_error_data(const bool& new_reserve_error_data)
 {
-    reserve_loss_data = new_reserve_loss_data;
+    reserve_error_data = new_reserve_error_data;
 }
 
 
-/// Sets the reserve flag for the selection loss data.
+/// Sets the reserve flag for the selection error data.
 /// @param new_reserve_selection_error_data Flag value.
 
 void InputsSelectionAlgorithm::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
@@ -363,10 +363,10 @@ void InputsSelectionAlgorithm::set_reserve_minimal_parameters(const bool& new_re
 }
 
 
-/// Sets a new method to calculate the loss and the selection loss.
+/// Sets a new method to calculate the loss and the selection error.
 /// @param new_loss_calculation_method Method to calculate the loss(Minimum, Maximum or Mean).
 
-void InputsSelectionAlgorithm::set_loss_calculation_method(const InputsSelectionAlgorithm::PerformanceCalculationMethod& new_loss_calculation_method)
+void InputsSelectionAlgorithm::set_loss_calculation_method(const InputsSelectionAlgorithm::LossCalculationMethod& new_loss_calculation_method)
 {
     loss_calculation_method = new_loss_calculation_method;
 }
@@ -416,8 +416,8 @@ void InputsSelectionAlgorithm::set_display(const bool& new_display)
 }
 
 
-/// Sets the selection loss goal for the inputs selection algorithm.
-/// @param new_selection_error_goal Goal of the selection loss.
+/// Sets the selection error goal for the inputs selection algorithm.
+/// @param new_selection_error_goal Goal of the selection error.
 
 void InputsSelectionAlgorithm::set_selection_error_goal(const double& new_selection_error_goal)
 {
@@ -545,7 +545,7 @@ void InputsSelectionAlgorithm::set_tolerance(const double& new_tolerance)
 }
 
 
-/// Returns the minimum of the loss and selection loss in trials_number trainings.
+/// Returns the minimum of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const Vector<bool>& inputs)
@@ -695,7 +695,7 @@ Vector<double> InputsSelectionAlgorithm::perform_minimum_model_evaluation(const 
 }
 
 
-/// Returns the maximum of the loss and selection loss in trials_number trainings.
+/// Returns the maximum of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const Vector<bool>& inputs)
@@ -844,7 +844,7 @@ Vector<double> InputsSelectionAlgorithm::perform_maximum_model_evaluation(const 
 }
 
 
-/// Returns the mean of the loss and selection loss in trials_number trainings.
+/// Returns the mean of the loss and selection error in trials_number trainings.
 /// @param inputs Vector of the inputs to be trained with.
 
 Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vector<bool> &inputs)
@@ -985,7 +985,7 @@ Vector<double> InputsSelectionAlgorithm::perform_mean_model_evaluation(const Vec
 }
 
 
-/// Return final training loss and final selection loss depending on the training method.
+/// Return final training loss and final selection error depending on the training method.
 /// @param results Results of the perform_training method.
 
 Vector<double> InputsSelectionAlgorithm::get_final_losses(const TrainingStrategy::Results& results) const
@@ -1163,7 +1163,7 @@ string InputsSelectionAlgorithm::write_stopping_condition(const TrainingStrategy
 }
 
 
-/// Delete the history of the selection loss values.
+/// Delete the history of the selection error values.
 
 void InputsSelectionAlgorithm::delete_selection_history()
 {
@@ -1453,9 +1453,9 @@ string InputsSelectionAlgorithm::InputsSelectionResults::write_stopping_conditio
         {
             return("MaximumTime");
         }
-        case SelectionLossGoal:
+        case SelectionErrorGoal:
         {
-            return("SelectionLossGoal");
+            return("SelectionErrorGoal");
         }
         case MaximumInputs:
         {
@@ -1539,11 +1539,11 @@ string InputsSelectionAlgorithm::InputsSelectionResults::object_to_string() cons
    buffer << "% Stopping condition\n"
           << write_stopping_condition() << "\n";
 
-   // Optimum selection loss
+   // Optimum selection error
 
    if(fabs(final_selection_error - 0) > numeric_limits<double>::epsilon())
    {
-       buffer << "% Optimum selection loss:\n"
+       buffer << "% Optimum selection error:\n"
               << final_selection_error << "\n";
    }
 

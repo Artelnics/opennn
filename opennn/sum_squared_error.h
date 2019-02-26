@@ -103,6 +103,9 @@ public:
 
    LossIndex::FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
 
+   LossIndex::FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
+                                                                   const MultilayerPerceptron::Pointers&, const Vector<double*>&) const;
+
    // Terms methods
 
    Vector<double> calculate_error_terms(const Vector<double>&) const;

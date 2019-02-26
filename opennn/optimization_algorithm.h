@@ -71,7 +71,7 @@ public:
     /// Enumeration of all possibles condition of stop for the algorithms.
 
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
-                           MaximumSelectionLossIncreases, MaximumIterationsNumber, MaximumTime};
+                           MaximumSelectionErrorIncreases, MaximumIterationsNumber, MaximumTime};
 
    // STRUCTURES
 

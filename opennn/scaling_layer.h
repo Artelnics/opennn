@@ -168,7 +168,7 @@ public:
    Matrix<double> calculate_mean_standard_deviation_derivatives(const Matrix<double>&) const;
    Matrix<double> calculate_mean_standard_deviation_second_derivatives(const Matrix<double>&) const;
 
-   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector<Matrix<double>> calculate_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    // Expression methods

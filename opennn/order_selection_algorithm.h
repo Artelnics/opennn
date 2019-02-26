@@ -69,11 +69,11 @@ public:
 
     /// Enumeration of available methods for the calculus of the losses.
 
-    enum PerformanceCalculationMethod{Minimum, Maximum, Mean};
+    enum LossCalculationMethod{Minimum, Maximum, Mean};
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
-    enum StoppingCondition{MaximumTime, SelectionLossGoal, MaximumIterations, MaximumSelectionFailures, MinimumTemperature, AlgorithmFinished};
+    enum StoppingCondition{MaximumTime, SelectionErrorGoal, MaximumIterations, MaximumSelectionFailures, MinimumTemperature, AlgorithmFinished};
 
     // STRUCTURES
 
@@ -113,19 +113,19 @@ public:
 
        Vector<double> selection_error_data;
 
-       /// Vector of parameters for the neural network with minimum selection loss.
+       /// Vector of parameters for the neural network with minimum selection error.
 
        Vector<double> minimal_parameters;
 
-       /// Value of minimum selection loss.
+       /// Value of minimum selection error.
 
        double final_selection_error;
 
-       /// Value of loss for the neural network with minimum selection loss.
+       /// Value of loss for the neural network with minimum selection error.
 
        double final_loss;
 
-       /// Order of the neural network with minimum selection loss.
+       /// Order of the neural network with minimum selection error.
 
        size_t optimal_order;
 
@@ -155,11 +155,11 @@ public:
     const size_t& get_trials_number() const;
 
     const bool& get_reserve_parameters_data() const;
-    const bool& get_reserve_loss_data() const;
+    const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
     const bool& get_reserve_minimal_parameters() const;
 
-    const PerformanceCalculationMethod& get_loss_calculation_method() const;
+    const LossCalculationMethod& get_loss_calculation_method() const;
 
     const bool& get_display() const;
 
@@ -181,11 +181,11 @@ public:
     void set_trials_number(const size_t&);
 
     void set_reserve_parameters_data(const bool&);
-    void set_reserve_loss_data(const bool&);
+    void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
     void set_reserve_minimal_parameters(const bool&);
 
-    void set_loss_calculation_method(const PerformanceCalculationMethod&);
+    void set_loss_calculation_method(const LossCalculationMethod&);
     void set_loss_calculation_method(const string&);
 
     void set_display(const bool&);
@@ -258,7 +258,7 @@ protected:
 
     /// Method used for the calculation of the loss and the generalizaton loss.
 
-    PerformanceCalculationMethod loss_calculation_method;
+    LossCalculationMethod loss_calculation_method;
 
     // Order selection results
 
@@ -268,13 +268,13 @@ protected:
 
     /// True if the loss of all neural networks are to be reserved.
 
-    bool reserve_loss_data;
+    bool reserve_error_data;
 
-    /// True if the selection loss of all neural networks are to be reserved.
+    /// True if the selection error of all neural networks are to be reserved.
 
     bool reserve_selection_error_data;
 
-    /// True if the vector parameters of the neural network presenting minimum selection loss is to be reserved.
+    /// True if the vector parameters of the neural network presenting minimum selection error is to be reserved.
 
     bool reserve_minimal_parameters;
 
@@ -284,7 +284,7 @@ protected:
 
     // STOPPING CRITERIA
 
-    /// Goal value for the selection loss. It is used as a stopping criterion.
+    /// Goal value for the selection error. It is used as a stopping criterion.
 
     double selection_error_goal;
 

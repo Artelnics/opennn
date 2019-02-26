@@ -14,6 +14,27 @@
 
 #include "weighted_squared_error.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                                const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                                const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                                const double* target_data_h, const size_t target_rows, const size_t target_columns,
+                                std::vector<double*> error_gradient_data,
+                                double* output_data_h, const size_t output_rows, const size_t output_columns,
+                                const std::vector<std::string> layers_activations, const std::string loss_method,
+                                const std::vector<double> loss_parameters = vector<double>());
+
+void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                          double* output_data_h, const size_t output_rows, const size_t output_columns,
+                          const std::vector<std::string> layers_activations);
+
+#endif
+
 namespace OpenNN
 {
 // DEFAULT CONSTRUCTOR
@@ -155,6 +176,7 @@ void WeightedSquaredError::set_default()
     {
         set_weights();
         set_normalization_coefficient();
+        set_selection_normalization_coefficient();
     }
     else
     {
@@ -162,6 +184,7 @@ void WeightedSquaredError::set_default()
         positives_weight = 1.0;
 
         normalization_coefficient = 1.0;
+        selection_normalization_coefficient = 1.0;
     }
 }
 
@@ -238,7 +261,7 @@ void WeightedSquaredError::set_weights()
     }
 
     negatives_weight = 1.0;
-    positives_weight = (double)negatives/(double)positives;
+    positives_weight = static_cast<double>(negatives)/static_cast<double>(positives);
 }
 
 
@@ -439,7 +462,9 @@ double WeightedSquaredError::calculate_training_error() const
 
     double training_error = 0.0;
 
-    for(size_t i = 0; i < batches_number; i++)
+    #pragma omp parallel for reduction(+ : training_error)
+
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
         const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices[static_cast<unsigned>(i)]);
         const Matrix<double> targets = data_set_pointer->get_targets(batch_indices[static_cast<unsigned>(i)]);
@@ -608,6 +633,35 @@ check();
     return training_error_gradient / normalization_coefficient;
 }
 
+Vector<double> WeightedSquaredError::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
+{
+    // Data set
+
+    const size_t instances_number = batch_indices.size();
+
+    // Neural network
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    // Loss index
+
+    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+
+    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+            = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+    const Matrix<double> output_gradient = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+    const Vector< Matrix<double> > layers_delta = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+    return batch_error_gradient/normalization_coefficient;
+}
+
 
 LossIndex::FirstOrderLoss WeightedSquaredError::calculate_first_order_loss() const
 {
@@ -706,33 +760,128 @@ check();
     const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
             = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
-    const Vector<double> error_terms
-            = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
-
-    const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+    const Matrix<double> output_gradient
+            = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
 
     const Vector< Matrix<double> > layers_delta
             = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
 
-    const Matrix<double> error_terms_Jacobian
-            = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+    const Vector<double> batch_gradient
+            = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
 
-    const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+    const double batch_error = first_order_forward_propagation.layers_activations[layers_number-1].calculate_sum_squared_error(targets);
 
-    const double loss = error_terms.dot(error_terms);
+    first_order_loss.loss = batch_error / normalization_coefficient;
+    first_order_loss.gradient += batch_gradient/normalization_coefficient;
 
-    const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+    // Regularization
 
-    first_order_loss.loss += loss/normalization_coefficient;
-    first_order_loss.gradient += gradient*(2.0/normalization_coefficient);
-
-    // Regularization ??
-
-//    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
 
     return first_order_loss;
 }
 
+LossIndex::FirstOrderLoss WeightedSquaredError::calculate_batch_first_order_loss_cuda(const Vector<size_t>& batch_indices,
+                                                                                      const MultilayerPerceptron::Pointers& pointers) const
+{
+    FirstOrderLoss first_order_loss;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+    double* target_data = targets_matrix.data();
+    const size_t target_rows = targets_matrix.get_rows_number();
+    const size_t target_columns = targets_matrix.get_columns_number();
+
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
+    }
+
+    first_order_loss.gradient.set(parameters_number);
+    vector<double*> error_gradient_data(2*layers_number);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        error_gradient_data[2*i] = first_order_loss.gradient.data() + index;
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        error_gradient_data[2*i+1] = first_order_loss.gradient.data() + index;
+        index += bias_rows_numbers[i];
+    }
+
+    vector<double> loss_parameters(3);
+
+    loss_parameters[0] = positives_weight;
+    loss_parameters[1] = negatives_weight;
+    loss_parameters[2] = normalization_coefficient;
+
+    string loss_method = write_error_term_type();
+
+    calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                               pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                               input_data, input_rows, input_columns,
+                               target_data, target_rows, target_columns,
+                               error_gradient_data,
+                               output_data, output_rows, output_columns,
+                               pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
+
+//    first_order_loss.loss = outputs.calculate_weighted_sum_squared_error(targets_matrix, positives_weight, negatives_weight) / normalization_coefficient;
+
+    const Vector<double> error_terms = calculate_error_terms(outputs, targets_matrix);
+
+    first_order_loss.loss = error_terms.dot(error_terms)/ normalization_coefficient;
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
+
+#endif
+
+    return first_order_loss;
+}
+
+LossIndex::FirstOrderLoss WeightedSquaredError::calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
+                                                                                      const MultilayerPerceptron::Pointers&, const Vector<double*>&) const
+{
+    FirstOrderLoss first_order_loss;
+
+    return first_order_loss;
+}
 
 /*
 /// Returns the weighted squared error of a neural network on a data set.
@@ -1527,7 +1676,11 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("WeightedSquaredError");
+    // Error type
+
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "WEIGHTED_SQUARED_ERROR");
 
     // Positives weight
 
@@ -1551,8 +1704,13 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Close error
 
-    //file_stream.CloseElement();
+    file_stream.CloseElement();
+
+    // Regularization
+
+    write_regularization_XML(file_stream);
 }
 
 
@@ -1563,9 +1721,9 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
 void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 {
-   const tinyxml2::XMLElement* weighted_element = document.FirstChildElement("WeightedSquaredError");
+   const tinyxml2::XMLElement* root_element = document.FirstChildElement("WeightedSquaredError");
 
-   if(!weighted_element)
+   if(!root_element)
    {
        ostringstream buffer;
 
@@ -1573,11 +1731,14 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
               << "Weighted squared element is nullptr.\n";
 
-       throw logic_error(buffer.str());   }
+       throw logic_error(buffer.str());
+   }
 
    // Positives weight
 
-   const tinyxml2::XMLElement* positives_weight_element = weighted_element->FirstChildElement("PositivesWeight");
+   const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
+
+   const tinyxml2::XMLElement* positives_weight_element = error_element->FirstChildElement("PositivesWeight");
 
    if(positives_weight_element)
    {
@@ -1595,7 +1756,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
    // Negatives weight
 
-   const tinyxml2::XMLElement* negatives_weight_element = weighted_element->FirstChildElement("NegativesWeight");
+   const tinyxml2::XMLElement* negatives_weight_element = error_element->FirstChildElement("NegativesWeight");
 
    if(negatives_weight_element)
    {
@@ -1611,37 +1772,19 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
       }
    }
 
-   // Display
+   // Regularization
 
-   const tinyxml2::XMLElement* display_element = weighted_element->FirstChildElement("Display");
+   tinyxml2::XMLDocument regularization_document;
+   tinyxml2::XMLNode* element_clone;
 
-   if(display_element)
-   {
-      const string new_display_string = display_element->GetText();
+   const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
 
-      try
-      {
-         set_display(new_display_string != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;
-      }
-   }
+   element_clone = regularization_element->DeepClone(&regularization_document);
+
+   regularization_document.InsertFirstChild(element_clone);
+
+   regularization_from_XML(regularization_document);
 }
-
-
-// string write_information() const method
-/*
-string WeightedSquaredError::write_information() const
-{
-    ostringstream buffer;
-
-    buffer << "Weighted squared error: " << calculate_error() << "\n";
-
-    return(buffer.str());
-
-}*/
 
 
 // string print_weights() const method

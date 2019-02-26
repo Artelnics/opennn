@@ -116,27 +116,27 @@ public:
    // Probabilistic post-processing
 
    Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    Matrix<double> calculate_binary_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_binary_Jacobian(const Vector<double>&) const;
+   Vector <Matrix<double>> calculate_binary_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_binary_Hessian(const Vector<double>&) const;
 
    Matrix<double> calculate_probability_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_probability_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_probability_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_probability_Hessian(const Vector<double>&) const;
 
    Matrix<double> calculate_competitive_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_competitive_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_competitive_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_competitive_Hessian(const Vector<double>&) const;
 
    Matrix<double> calculate_softmax_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_softmax_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_softmax_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_softmax_Hessian(const Vector<double>&) const;
 
    Matrix<double> calculate_no_probabilistic_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_no_probabilistic_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_no_probabilistic_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_no_probabilistic_Hessian(const Vector<double>&) const;
 
    // Expression methods

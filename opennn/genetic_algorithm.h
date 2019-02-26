@@ -107,15 +107,15 @@ public:
 
         Vector<double> generation_optimum_loss_history;
 
-        /// Values of the minimum selection loss in each generation.
+        /// Values of the minimum selection error in each generation.
 
         Vector<double> generation_minimum_selection_history;
 
-        /// Mean of the selection loss in each generation.
+        /// Mean of the selection error in each generation.
 
         Vector<double> generation_mean_history;
 
-        /// Standard deviation of the selection loss in each generation.
+        /// Standard deviation of the selection error in each generation.
 
         Vector<double> generation_standard_deviation_history;
     };
@@ -335,15 +335,15 @@ private:
 
     // Inputs selection results
 
-    /// True if the mean of selection loss are to be reserved in each generation.
+    /// True if the mean of selection error are to be reserved in each generation.
 
     bool reserve_generation_mean;
 
-    /// True if the standard deviation of selection loss are to be reserved in each generation.
+    /// True if the standard deviation of selection error are to be reserved in each generation.
 
     bool reserve_generation_standard_deviation;
 
-    /// True if the minimum of selection loss are to be reserved in each generation.
+    /// True if the minimum of selection error are to be reserved in each generation.
 
     bool reserve_generation_minimum_selection;
 

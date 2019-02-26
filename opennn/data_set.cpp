@@ -15,6 +15,16 @@
 #include "data_set.h"
 #include "correlation_analysis.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+int mallocCUDA(double** A_d, int nBytes);
+int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
+void freeCUDA(double* A_d);
+
+#endif
+
 namespace OpenNN
 {
 
@@ -105,7 +115,7 @@ DataSet::DataSet(const tinyxml2::XMLDocument& data_set_document)
 
 /// File constructor. It creates a data set object by loading the object members from a data file.
 /// Please mind about the file format. This is specified in the User's Guide.
-/// @param file_name Data file file name.
+/// @param data_file_name Data file file name.
 
 DataSet::DataSet(const string& data_file_name)
 {
@@ -114,6 +124,28 @@ DataSet::DataSet(const string& data_file_name)
    set_default();
 
    set_data_file_name(data_file_name);
+
+   load_data();
+}
+
+
+// FILE AND SEPARATOR CONSTRUCTOR
+
+/// File and separator constructor. It creates a data set object by loading the object members from a data file.
+/// It also sets a separator.
+/// Please mind about the file format. This is specified in the User's Guide.
+/// @param data_file_name Data file file name.
+/// @param separator Data file file name.
+
+DataSet::DataSet(const string& data_file_name, const string& separator)
+{
+   set();
+
+   set_default();
+
+   set_data_file_name(data_file_name);
+
+   set_separator(separator);
 
    load_data();
 }
@@ -289,11 +321,17 @@ bool DataSet::is_multiple_classification() const
 
 bool DataSet::is_binary_variable(const size_t& variable_index) const
 {
-    const size_t instances_number = instances.get_instances_number();
+    const Vector<size_t> used_instances = instances.get_used_indices();
+
+    const Vector<size_t> missing_instances = missing_values.get_missing_instances(variable_index);
+
+    const Vector<size_t> indices_remaining = used_instances.get_difference(missing_instances);
+
+    const size_t instances_number = indices_remaining.size();
 
     for(size_t i = 0; i < instances_number; i++)
     {
-        if(data(i,variable_index) == 0.0 || data(i,variable_index) == 1.0)
+        if(data(indices_remaining[i],variable_index) == 0.0 || data(indices_remaining[i],variable_index) == 1.0)
         {
             continue;
         }
@@ -303,6 +341,23 @@ bool DataSet::is_binary_variable(const size_t& variable_index) const
         }
 
     }
+
+//    const size_t instances_number = instances.get_instances_number();
+
+//    cout << "unique_elements: " << data.get_c.get_column(variable_index).get_unique_elements().vector_to_string('/') << endl;
+
+//    for(size_t i = 0; i < instances_number; i++)
+//    {
+//        if(data(i,variable_index) == 0.0 || data(i,variable_index) == 1.0)
+//        {
+//            continue;
+//        }
+//        else
+//        {
+//            return false;
+//        }
+
+//    }
 
     return true;
 }
@@ -2666,7 +2721,7 @@ Vector< Histogram<double> > DataSet::calculate_data_histograms(const size_t& bin
    const size_t used_instances_number = instances.get_used_instances_number();
    const Vector<size_t> used_instances_indices = instances.get_used_indices();
 
-   const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices();
+   const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices(used_variables_indices);
 
    Vector< Histogram<double> > histograms(used_variables_number);
 
@@ -2680,8 +2735,11 @@ Vector< Histogram<double> > DataSet::calculate_data_histograms(const size_t& bin
 
    for(int i = 0; i < static_cast<int>(used_variables_number); i++)
    {
-       used_indices[static_cast<size_t>(i)] = used_instances_indices.get_difference(missing_values.get_missing_instances(used_variables_indices[static_cast<size_t>(i)]));
+//       used_indices[static_cast<size_t>(i)] = used_instances_indices.get_difference(missing_values.get_missing_instances(used_variables_indices[static_cast<size_t>(i)]));
+       used_indices[static_cast<size_t>(i)] = used_instances_indices.get_difference(missing_indices[static_cast<size_t>(i)]);
    }
+
+   const Vector<string> used_variables_names = variables.get_used_names();
 
    #pragma omp parallel for private(i, column) shared(histograms)
 
@@ -2689,13 +2747,13 @@ Vector< Histogram<double> > DataSet::calculate_data_histograms(const size_t& bin
    {
        column = data.get_column(used_variables_indices[static_cast<size_t>(i)], used_indices[static_cast<size_t>(i)]);
 
-       if(column.is_binary(missing_indices[static_cast<size_t>(i)]))
+       if(column.is_binary_0_1())
        {
            histograms[static_cast<size_t>(i)] = column.calculate_histogram_binary();
        }
-       else if(column.count_integers_missing_values(missing_indices[static_cast<size_t>(i)], bins_number) != 0)
+       else if(column.get_unique_elements().size() < 10)
        {
-           histograms[static_cast<size_t>(i)] = column.calculate_histogram(bins_number);
+           histograms[static_cast<size_t>(i)] = column.calculate_histogram_doubles();
        }
        else
        {
@@ -3261,6 +3319,8 @@ Vector< Statistics<double> > DataSet::calculate_inputs_statistics() const
         used_indices[static_cast<size_t>(i)] = used_instances.get_difference(missing_values.get_missing_instances(inputs_indices[static_cast<size_t>(i)]));
     }
 
+    data.calculate_statistics(used_indices, inputs_indices);
+
     return(data.calculate_statistics(used_indices, inputs_indices));
 }
 
@@ -3293,6 +3353,63 @@ Vector< Statistics<double> > DataSet::calculate_targets_statistics() const
 
    return(data.calculate_statistics(used_indices, targets_indices));
 }
+
+
+/// Returns a vector of vectors with minimums and maximums of the input variables on all instances with no missing values.
+/// The size of this vector is two. The subvectors are:
+/// <ul>
+/// <li> Input variables minimum.
+/// <li> Input variables maximum.
+/// </ul>
+
+Vector< Vector<double> > DataSet::calculate_inputs_minimums_maximums() const
+{
+    const size_t inputs_number = variables.get_inputs_number();
+
+    const Vector<size_t> inputs_indices = variables.get_inputs_indices();
+
+    Vector<size_t> used_instances = instances.get_used_indices();
+
+    Vector< Vector<size_t> > used_indices(inputs_number);
+
+#pragma omp parallel for schedule(dynamic)
+
+   for(int i = 0; i < static_cast<int>(inputs_number); i++)
+   {
+       used_indices[static_cast<size_t>(i)] = used_instances.get_difference(missing_values.get_missing_instances(inputs_indices[static_cast<size_t>(i)]));
+   }
+
+    return data.calculate_columns_minimums_maximums(used_indices, inputs_indices);
+}
+
+
+/// Returns a vector of vectors with minimums and maximums of the targets variables on all instances with no missing values.
+/// The size of this vector is two. The subvectors are:
+/// <ul>
+/// <li> Target variables minimum.
+/// <li> Target variables maximum.
+/// </ul>
+
+Vector< Vector<double> > DataSet::calculate_targets_minimums_maximums() const
+{
+    const size_t targets_number = variables.get_targets_number();
+
+    const Vector<size_t> targets_indices = variables.get_targets_indices();
+
+    Vector<size_t> used_instances = instances.get_used_indices();
+
+    Vector< Vector<size_t> > used_indices(targets_number);
+
+#pragma omp parallel for schedule(dynamic)
+
+   for(int i = 0; i < static_cast<int>(targets_number); i++)
+   {
+       used_indices[static_cast<size_t>(i)] = used_instances.get_difference(missing_values.get_missing_instances(targets_indices[static_cast<size_t>(i)]));
+   }
+
+    return data.calculate_columns_minimums_maximums(used_indices, targets_indices);
+}
+
 
 
 /// Returns a vector containing the means of a set of given variables.
@@ -4014,7 +4131,7 @@ Matrix<double> DataSet::perform_principal_components_analysis(const double& mini
 
 
 /// Performs the principal components analysis of the inputs.
-/// It returns a matrix containing the principal components getd in rows.
+/// It returns a matrix containing the principal components arranged in rows.
 /// This method deletes the unused instances of the original data set.
 /// @param covariance_matrix Matrix of covariances.
 /// @param explained_variance Vector of the explained variances of the variables.
@@ -4250,11 +4367,11 @@ Vector<string> DataSet::calculate_default_scaling_methods() const
         {
             scaling_methods[static_cast<size_t>(i)] = "MeanStandardDeviation";
         }
-        else if(current_distribution == 1) // Half-normal distribution
-        {
-            scaling_methods[static_cast<size_t>(i)] = "StandardDeviation";
-        }
-        else if(current_distribution == 2) // Uniform distribution
+//        else if(current_distribution == 1) // Half-normal distribution
+//        {
+//            scaling_methods[static_cast<size_t>(i)] = "StandardDeviation";
+//        }
+        else if(current_distribution == 1) // Uniform distribution
         {
             scaling_methods[static_cast<size_t>(i)] = "MinimumMaximum";
         }
@@ -4310,88 +4427,6 @@ void DataSet::scale_data_minimum_maximum(const Vector< Statistics<double> >& dat
 
    data.scale_minimum_maximum(data_statistics);
 }
-
-
-/*
-// void scale_data(const string&, const Vector< Statistics<double> >&) method
-
-/// Scales the data matrix.
-/// The method to be used is that in the scaling and unscaling method variable.
-/// @param scaling_unscaling_method_string String with the name of the scaling-unscaling method
-///(MinimumMaximum or MeanStandardDeviation).
-/// @param data_statistics Vector of statistics structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-
-void DataSet::scale_data(const string& scaling_unscaling_method_string, const Vector< Statistics<double> >& data_statistics)
-{
-   switch(get_scaling_unscaling_method(scaling_unscaling_method_string))
-   {
-      case MinimumMaximum:
-      {
-         scale_data_minimum_maximum(data_statistics);
-      }
-      break;
-
-      case MeanStandardDeviation:
-      {
-         scale_data_mean_standard_deviation(data_statistics);
-      }
-      break;
-
-      default:
-      {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: DataSet class\n"
-                << "void scale_data(const string&, const Vector< Vector<double> >&) method.\n"
-                << "Unknown data scaling and unscaling method.\n";
-
-         throw logic_error(buffer.str());
-      }
-      break;
-   }
-}
-
-
-// Vector< Statistics<double> > scale_data() method
-
-/// Calculates the data statistics, scales the data with that values and returns the statistics.
-/// The method to be used is that in the scaling and unscaling method variable.
-
-Vector< Statistics<double> > DataSet::scale_data(const string& scaling_unscaling_method)
-{
-   const Vector< Statistics<double> > statistics = data.calculate_statistics();
-
-   switch(get_scaling_unscaling_method(scaling_unscaling_method))
-   {
-      case MinimumMaximum:
-      {
-         scale_data_minimum_maximum(statistics);
-      }
-      break;
-
-      case MeanStandardDeviation:
-      {
-         scale_data_mean_standard_deviation(statistics);
-      }
-      break;
-
-      default:
-      {
-         ostringstream buffer;
-
-         buffer << "OpenNN Exception: DataSet class\n"
-                << "Vector< Statistics<double> > scale_data(const string&) method.\n"
-                << "Unknown scaling and unscaling method.\n";
-
-         throw logic_error(buffer.str());
-      }
-      break;
-   }
-
-   return(statistics);
-}
-*/
 
 
 /// Scales the input variables with given mean and standard deviation values.
@@ -5925,6 +5960,33 @@ void DataSet::save(const string& file_name) const
    document->SaveFile(file_name.c_str());
 
    delete document;
+}
+
+Vector<double*> DataSet::host_to_device(const Vector<size_t>& batch_indices) const
+{
+    Vector<double*> batch_pointers(2);
+
+#ifdef __OPENNN_CUDA__
+
+    const Matrix<double> inputs_matrix = get_inputs(batch_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    const Matrix<double> targets_matrix = get_targets(batch_indices);
+    const double* target_data = targets_matrix.data();
+    const size_t target_rows = targets_matrix.get_rows_number();
+    const size_t target_columns = targets_matrix.get_columns_number();
+
+    mallocCUDA(&batch_pointers[0], input_rows*input_columns*sizeof(double));
+    mallocCUDA(&batch_pointers[1], target_rows*target_columns*sizeof(double));
+
+    memcpyCUDA(batch_pointers[0], input_data, input_rows*input_columns*sizeof(double));
+    memcpyCUDA(batch_pointers[1], target_data, target_rows*target_columns*sizeof(double));
+
+#endif
+
+    return batch_pointers;
 }
 
 
@@ -8072,30 +8134,32 @@ bool DataSet::has_data() const
 
 Vector<size_t> DataSet::filter_data(const Vector<double>& minimums, const Vector<double>& maximums)
 {
-    const size_t variables_number = variables.get_variables_number();
+    const Vector<size_t> used_variables_indices = variables.get_used_indices();
+
+    const size_t used_variables_number = used_variables_indices.size();//variables.get_variables_number();
 
     // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(minimums.size() != variables_number)
+    if(minimums.size() != used_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "Vector<size_t> filter_data(const Vector<double>&, const Vector<double>&) method.\n"
-               << "Size of minimums(" << minimums.size() << ") is not equal to number of variables(" << variables_number << ").\n";
+               << "Size of minimums(" << minimums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
 
         throw logic_error(buffer.str());
     }
 
-    if(maximums.size() != variables_number)
+    if(maximums.size() != used_variables_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
                << "Vector<size_t> filter_data(const Vector<double>&, const Vector<double>&) method.\n"
-               << "Size of maximums(" << maximums.size() << ") is not equal to number of variables(" << variables_number << ").\n";
+               << "Size of maximums(" << maximums.size() << ") is not equal to number of variables(" << used_variables_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -8108,9 +8172,11 @@ Vector<size_t> DataSet::filter_data(const Vector<double>& minimums, const Vector
 
     const Vector<size_t> used_instances_indices = instances.get_used_indices();
 
-    for(size_t j = 0; j < variables_number; j++)
+    for(size_t j = 0; j < used_variables_number; j++)
     {
-        const Vector<size_t> current_missing_instances_indices = missing_values.get_missing_instances(j);
+        const size_t current_variable_index = used_variables_indices[j];
+
+        const Vector<size_t> current_missing_instances_indices = missing_values.get_missing_instances(current_variable_index);
 
         const Vector<size_t> current_instances_indices = used_instances_indices.get_difference(current_missing_instances_indices);
 
@@ -8118,13 +8184,14 @@ Vector<size_t> DataSet::filter_data(const Vector<double>& minimums, const Vector
 
         for(size_t i = 0; i < current_instances_number; i++)
         {
-            const size_t index = current_instances_indices[i];
+            const size_t current_instance_index = current_instances_indices[i];
 
-            if(data(index,j) < minimums[j] || data(index,j) > maximums[j])
+            if(data(current_instance_index,current_variable_index) < minimums[j]
+            || data(current_instance_index,current_variable_index) > maximums[j])
             {
-                filtered_indices[index] = 1.0;
+                filtered_indices[current_instance_index] = 1.0;
 
-                instances.set_use(index, Instances::Unused);
+                instances.set_use(current_instance_index, Instances::Unused);
             }
         }
     }
@@ -8402,7 +8469,9 @@ void DataSet::convert_angular_variables()
 
 void DataSet::impute_missing_values_unuse()
 {
-    const Vector<size_t> missing_instances = missing_values.get_missing_instances();
+    const Vector<size_t> used_variables_indices = get_variables_pointer()->get_used_indices();
+
+    const Vector<size_t> missing_instances = missing_values.get_missing_instances(used_variables_indices);
 
     const size_t missing_instances_size = missing_instances.size();
 
@@ -8419,11 +8488,14 @@ void DataSet::impute_missing_values_unuse()
 
 void DataSet::impute_missing_values_mean()
 {
-    const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices();
+    const Vector<size_t> used_variables_indices = get_variables_pointer()->get_used_indices();
 
-    const Vector<double> means = data.calculate_mean_missing_values(missing_indices);
+    const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices(used_variables_indices);
 
-    const size_t variables_number = variables.get_variables_number();
+    const Vector<double> means = data.calculate_mean_missing_values(Vector<size_t>(0,1,data.get_rows_number()-1),used_variables_indices,missing_indices);
+
+//    const size_t variables_number = variables.get_variables_number();
+    const size_t variables_number = used_variables_indices.size();
 
     #pragma omp parallel for schedule(dynamic)
 
@@ -8433,7 +8505,7 @@ void DataSet::impute_missing_values_mean()
         {
             const size_t instance_index = missing_indices[static_cast<size_t>(i)][j];
 
-            data(instance_index, static_cast<size_t>(i)) = means[static_cast<size_t>(i)];
+            data(instance_index, used_variables_indices[static_cast<size_t>(i)]) = means[static_cast<size_t>(i)];
         }
     }
 }
@@ -8544,11 +8616,14 @@ void DataSet::impute_missing_values_time_series_regression()
 
 void DataSet::impute_missing_values_median()
 {
-    const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices();
+    const Vector<size_t> used_variables_indices = get_variables_pointer()->get_used_indices();
 
-    const Vector<double> medians = data.calculate_median_missing_values(missing_indices);
+    const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices(used_variables_indices);
 
-    const size_t variables_number = variables.get_variables_number();
+    const Vector<double> medians = data.calculate_median_missing_values(Vector<size_t>(0,1,data.get_rows_number()-1),used_variables_indices,missing_indices);
+
+//    const size_t variables_number = variables.get_variables_number();
+    const size_t variables_number = used_variables_indices.size();
 
     #pragma omp parallel for schedule(dynamic)
 
@@ -8558,7 +8633,7 @@ void DataSet::impute_missing_values_median()
         {
             const size_t instance_index = missing_indices[static_cast<size_t>(i)][j];
 
-            data(instance_index, static_cast<size_t>(i)) = medians[static_cast<size_t>(i)];
+            data(instance_index, used_variables_indices[static_cast<size_t>(i)]) = medians[static_cast<size_t>(i)];
         }
     }
 }

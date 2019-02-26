@@ -565,7 +565,7 @@ Matrix<double> ProbabilisticLayer::calculate_outputs(const Matrix<double>& input
 /// This quantity is the Jacobian matrix of the probabilistic function. 
 /// @param inputs Inputs to the probabilistic layer.
 
-Matrix<double> ProbabilisticLayer::calculate_Jacobian(const Vector<double>& inputs) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_Jacobian(const Matrix<double>& inputs) const
 {
     // Control sentence(if debug)
 
@@ -756,7 +756,7 @@ Matrix<double> ProbabilisticLayer::calculate_binary_outputs(const Matrix<double>
 
 /// This method throws an exception, since the threshold function is not derivable.
 
-Matrix<double> ProbabilisticLayer::calculate_binary_Jacobian(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_binary_Jacobian(const Matrix<double>&) const
 {
     ostringstream buffer;
 
@@ -832,9 +832,16 @@ Matrix<double> ProbabilisticLayer::calculate_probability_outputs(const Matrix<do
 
 /// @todo Check that the input values fall between 0 and 1.
 
-Matrix<double> ProbabilisticLayer::calculate_probability_Jacobian(const Vector<double>&) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_probability_Jacobian(const Matrix<double>& inputs) const
 {
-    const Matrix<double> Jacobian(1, 1, 1.0);
+    const size_t points_number = inputs.get_rows_number();
+
+    Vector< Matrix<double> > Jacobian(points_number);
+
+    for(size_t i = 0; i < points_number; i++)
+    {
+        Jacobian[i].set(1, 1, 1.0);
+    }
 
     return(Jacobian);
 }
@@ -865,7 +872,7 @@ Matrix<double> ProbabilisticLayer::calculate_competitive_outputs(const Matrix<do
 
 /// This method throws an exception, since the competitive function is not derivable. 
 
-Matrix<double> ProbabilisticLayer::calculate_competitive_Jacobian(const Vector<double>&) const
+Vector<Matrix<double>> ProbabilisticLayer::calculate_competitive_Jacobian(const Matrix<double>&) const
 {
     ostringstream buffer;
 
@@ -906,23 +913,30 @@ Matrix<double> ProbabilisticLayer::calculate_softmax_outputs(const Matrix<double
 /// Returns the partial derivatives of the softmax outputs with respect to the inputs. 
 /// @param inputs Input values to the probabilistic layer. 
 
-Matrix<double> ProbabilisticLayer::calculate_softmax_Jacobian(const Vector<double>& inputs) const
+Vector< Matrix<double> > ProbabilisticLayer::calculate_softmax_Jacobian(const Matrix<double>& inputs) const
 {
-    Matrix<double> probabilistic_Jacobian(probabilistic_neurons_number, probabilistic_neurons_number);
+    const size_t points_number = inputs.get_rows_number();
 
-    const Vector<double> outputs = inputs.calculate_softmax();
+    Vector< Matrix<double> > probabilistic_Jacobian(points_number);
 
-    for(size_t i = 0; i < probabilistic_neurons_number; i++)
+    const Matrix<double> outputs = inputs.calculate_softmax();
+
+    for(size_t current_point = 0; current_point < points_number; current_point++)
     {
-        for(size_t j = 0; j < probabilistic_neurons_number; j++)
+        probabilistic_Jacobian[current_point].set(probabilistic_neurons_number, probabilistic_neurons_number);
+
+        for(size_t i = 0; i < probabilistic_neurons_number; i++)
         {
-            if(i == j)
+            for(size_t j = 0; j < probabilistic_neurons_number; j++)
             {
-                probabilistic_Jacobian(i,i) = outputs[i]*(1.0 - outputs[i]);
-            }
-            else
-            {
-                probabilistic_Jacobian(i,j) = -outputs[i]*outputs[j];
+                if(i == j)
+                {
+                    probabilistic_Jacobian[current_point](i,i) = outputs(current_point,i)*(1.0 - outputs(current_point,i));
+                }
+                else
+                {
+                    probabilistic_Jacobian[current_point](i,j) = -outputs(current_point,i)*outputs(current_point,j);
+                }
             }
         }
     }
@@ -995,11 +1009,18 @@ Matrix<double> ProbabilisticLayer::calculate_no_probabilistic_outputs(const Matr
 /// Returns the partial derivatives of the no probabilistic outputs with respect to the inputs.
 /// This is just the identity matrix of size the number of probabilistic neurons.
 
-Matrix<double> ProbabilisticLayer::calculate_no_probabilistic_Jacobian(const Vector<double>&) const
+Vector<Matrix<double>> ProbabilisticLayer::calculate_no_probabilistic_Jacobian(const Matrix<double>& inputs) const
 {
-    Matrix<double> Jacobian(probabilistic_neurons_number, probabilistic_neurons_number);
+    const size_t points_number = inputs.get_rows_number();
 
-    Jacobian.initialize_identity();
+    Vector< Matrix<double> > Jacobian(points_number);
+
+    for(size_t i = 0; i < points_number; i++)
+    {
+        Jacobian[i].set(probabilistic_neurons_number, probabilistic_neurons_number);
+
+        Jacobian[i].initialize_identity();
+    }
 
     return(Jacobian);
 }

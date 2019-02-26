@@ -121,7 +121,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     results->order_data.push_back(mu);
 
-    if(reserve_loss_data)
+    if(reserve_error_data)
     {
         results->loss_data.push_back(current_training_loss);
     }
@@ -143,7 +143,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
     results->order_data.push_back(ln);
 
-    if(reserve_loss_data)
+    if(reserve_error_data)
     {
         results->loss_data.push_back(current_training_loss);
     }
@@ -166,9 +166,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         cout << "Initial values: " << endl;
         cout << "a = " << a << " ln = " << ln << " mu = " << mu << " b = " << b << endl;
         cout << "ln final training loss: " << ln_loss[0] << endl;
-        cout << "ln final selection loss: " << ln_loss[1] << endl;
+        cout << "ln final selection error: " << ln_loss[1] << endl;
         cout << "mu final training loss: " << mu_loss[0] << endl;
-        cout << "mu final selection loss: " << mu_loss[1] << endl;
+        cout << "mu final selection error: " << mu_loss[1] << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
@@ -201,7 +201,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             results->order_data.push_back(ln);
 
-            if(reserve_loss_data)
+            if(reserve_error_data)
             {
                 results->loss_data.push_back(current_training_loss);
             }
@@ -231,7 +231,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
 
             results->order_data.push_back(mu);
 
-            if(reserve_loss_data)
+            if(reserve_error_data)
             {
                 results->loss_data.push_back(current_training_loss);
             }
@@ -286,7 +286,7 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
                 cout << "Selection loss reached." << endl;
             }
 
-            results->stopping_condition = GoldenSectionOrder::SelectionLossGoal;
+            results->stopping_condition = GoldenSectionOrder::SelectionErrorGoal;
         }
         else if(iterations >= maximum_iterations_number)
         {
@@ -306,9 +306,9 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
             cout << "Iteration: " << iterations << endl;
             cout << "a = " << a << " ln = " << ln << " mu = " << mu << " b = " << b << endl;
             cout << "ln final training loss: " << ln_loss[0] << endl;
-            cout << "ln final selection loss: " << ln_loss[1] << endl;
+            cout << "ln final selection error: " << ln_loss[1] << endl;
             cout << "mu final training loss: " << mu_loss[0] << endl;
-            cout << "mu final selection loss: " << mu_loss[1] << endl;
+            cout << "mu final selection error: " << mu_loss[1] << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
     }
@@ -333,13 +333,13 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
         cout << "Iteration: " << iterations << endl;
         cout << "a = " << a << " ln = " << ln << " mu = " << mu << " b = " << b << endl;
         cout << "a final training loss: " << perform_model_evaluation(a)[0] << endl;
-        cout << "a final selection loss: " << perform_model_evaluation(a)[1] << endl;
+        cout << "a final selection error: " << perform_model_evaluation(a)[1] << endl;
         cout << "ln final training loss: " << ln_loss[0] << endl;
-        cout << "ln final selection loss: " << ln_loss[1] << endl;
+        cout << "ln final selection error: " << ln_loss[1] << endl;
         cout << "mu final training loss: " << mu_loss[0] << endl;
-        cout << "mu final selection loss: " << mu_loss[1] << endl;
+        cout << "mu final selection error: " << mu_loss[1] << endl;
         cout << "b final training loss: " << perform_model_evaluation(b)[0] << endl;
-        cout << "b final selection loss: " << perform_model_evaluation(b)[1] << endl;
+        cout << "b final selection error: " << perform_model_evaluation(b)[1] << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
@@ -390,17 +390,8 @@ GoldenSectionOrder::GoldenSectionOrderResults* GoldenSectionOrder::perform_order
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron_pointer->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if(optimal_order > perceptrons_number)
-    {
-        multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
-    }
-    else
-    {
-        for(size_t i = 0; i <(perceptrons_number-optimal_order); i++)
-            multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
-    }
+    multilayer_perceptron_pointer->set_layer_perceptrons_number(last_hidden_layer, optimal_order);
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
@@ -479,7 +470,7 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML() const
 
    // Performance calculation method
    {
-   element = document->NewElement("PerformanceCalculationMethod");
+   element = document->NewElement("LossCalculationMethod");
    root_element->LinkEndChild(element);
 
    text = document->NewText(write_loss_calculation_method().c_str());
@@ -500,19 +491,19 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML() const
 
    // Reserve loss data
    {
-   element = document->NewElement("ReservePerformanceHistory");
+   element = document->NewElement("ReserveErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_loss_data;
+   buffer << reserve_error_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection loss data
+   // Reserve selection error data
    {
-   element = document->NewElement("ReserveSelectionLossHistory");
+   element = document->NewElement("ReserveSelectionErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -546,9 +537,9 @@ tinyxml2::XMLDocument* GoldenSectionOrder::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // selection loss goal
+   // selection error goal
    {
-   element = document->NewElement("SelectionLossGoal");
+   element = document->NewElement("SelectionErrorGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -642,7 +633,7 @@ void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Performance calculation method
 
-    file_stream.OpenElement("PerformanceCalculationMethod");
+    file_stream.OpenElement("LossCalculationMethod");
 
     file_stream.PushText(write_loss_calculation_method().c_str());
 
@@ -661,18 +652,18 @@ void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Reserve loss data
 
-    file_stream.OpenElement("ReservePerformanceHistory");
+    file_stream.OpenElement("ReserveErrorHistory");
 
     buffer.str("");
-    buffer << reserve_loss_data;
+    buffer << reserve_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection loss data
+    // Reserve selection error data
 
-    file_stream.OpenElement("ReserveSelectionLossHistory");
+    file_stream.OpenElement("ReserveSelectionErrorHistory");
 
     buffer.str("");
     buffer << reserve_selection_error_data;
@@ -703,9 +694,9 @@ void GoldenSectionOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // selection loss goal
+    // selection error goal
 
-    file_stream.OpenElement("SelectionLossGoal");
+    file_stream.OpenElement("SelectionErrorGoal");
 
     buffer.str("");
     buffer << selection_error_goal;
@@ -829,7 +820,7 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Performance calculation method
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("PerformanceCalculationMethod");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossCalculationMethod");
 
         if(element)
         {
@@ -867,15 +858,15 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve loss data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveErrorHistory");
 
         if(element)
         {
-           const string new_reserve_loss_data = element->GetText();
+           const string new_reserve_error_data = element->GetText();
 
            try
            {
-              set_reserve_loss_data(new_reserve_loss_data != "0");
+              set_reserve_error_data(new_reserve_error_data != "0");
            }
            catch(const logic_error& e)
            {
@@ -884,9 +875,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection loss data
+    // Reserve selection error data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
         if(element)
         {
@@ -941,9 +932,9 @@ void GoldenSectionOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // selection loss goal
+    // selection error goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
 
         if(element)
         {

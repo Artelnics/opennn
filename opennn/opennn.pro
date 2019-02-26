@@ -177,7 +177,7 @@ contains(DEFINES, __OPENNN_CUDA__){
 OTHER_FILES +=  utilities.cu
 
 windows{
-CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v9.0            # Path to cuda toolkit install
+CUDA_DIR = C:/"Program Files"/"NVIDIA GPU Computing Toolkit"/CUDA/v10.0            # Path to cuda toolkit install
 }else:mac{
 CUDA_DIR = /Developer/NVIDIA/CUDA-7.5
 }else:unix{
@@ -211,7 +211,7 @@ SYSTEM_TYPE = 64            # '32' or '64', depending on your system
 CUDA_ARCH = sm_35           # Type of CUDA architecture, for example 'compute_10', 'compute_11', 'sm_10'
 NVCC_OPTIONS = --use_fast_math
 
-CUDA_LIBS += -lcuda -lcudart -lcublas
+CUDA_LIBS += -lcuda -lcudart -lcublas -lcurand
 
 # The following makes sure all path names(which often include spaces) are put between quotation marks
 CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
@@ -219,6 +219,7 @@ CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
 CUDA_OBJECTS_DIR = $$OBJECTS_DIR
 
 # Configuration of the Cuda compiler
+
 CONFIG(debug, debug|release) {
 #     Debug mode
     cuda_d.input = CUDA_SOURCES

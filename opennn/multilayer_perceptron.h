@@ -159,6 +159,9 @@ public:
 
        void update_parameters(const Vector<double>&);
 
+       void update_parameters_sgd(const Vector<double*>&, const double&, const bool&, const double&,
+                                  const double&, const size_t&, const Vector<double>&);
+
        Vector<double*> biases_pointers;
        Vector<double*> weights_pointers;
 
@@ -504,6 +507,9 @@ public:
    FirstOrderForwardPropagation calculate_first_order_forward_propagation(const Matrix<double>&) const;
 
    // Output 
+
+   Vector< Vector< Matrix<double> > > calculate_layers_Jacobian(const Matrix<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
 
    Matrix<double> calculate_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_outputs(const Matrix<double>&,  const Vector<double>&) const;

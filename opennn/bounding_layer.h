@@ -95,7 +95,7 @@ public:
    const Vector<double>& get_upper_bounds() const;
    double get_upper_bound(const size_t&) const;
 
-   Vector< Vector<double>* > get_bounds();
+   Vector< Vector<double> > get_bounds();
 
    // Variables bounds
 
@@ -133,7 +133,7 @@ public:
    Matrix<double> calculate_derivatives(const Matrix<double>&) const;
    Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
 
-   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    // Expression methods

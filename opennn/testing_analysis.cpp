@@ -20,9 +20,9 @@ namespace OpenNN
 
 // DEFAULT CONSTRUCTOR
 
-/// Default constructor. 
+/// Default constructor.
 /// It creates a testing analysis object neither associated to a neural network nor to a mathematical model or a data set.
-/// By default, it constructs the function regression testing object. 
+/// By default, it constructs the function regression testing object.
 
 TestingAnalysis::TestingAnalysis()
  : neural_network_pointer(nullptr),
@@ -60,9 +60,9 @@ TestingAnalysis::TestingAnalysis(DataSet* new_data_set_pointer)
 }
 
 
-/// Neural network and data set constructor. 
+/// Neural network and data set constructor.
 /// It creates a testing analysis object associated to a neural network and to a data set.
-/// By default, it constructs the function regression testing object. 
+/// By default, it constructs the function regression testing object.
 /// @param new_neural_network_pointer Pointer to a neural network object.
 /// @param new_data_set_pointer Pointer to a data set object.
 
@@ -93,10 +93,10 @@ TestingAnalysis::TestingAnalysis(const tinyxml2::XMLDocument& testing_analysis_d
 
 // FILE CONSTRUCTOR
 
-/// File constructor. 
-/// It creates a testing analysis object neither associated to a neural network nor to a mathematical model or a data set. 
-/// It also loads the members of this object from XML file. 
-/// @param file_name Name of testing analysis XML file.  
+/// File constructor.
+/// It creates a testing analysis object neither associated to a neural network nor to a mathematical model or a data set.
+/// It also loads the members of this object from XML file.
+/// @param file_name Name of testing analysis XML file.
 
 TestingAnalysis::TestingAnalysis(const string& file_name)
  : neural_network_pointer(nullptr),
@@ -637,26 +637,6 @@ TestingAnalysis::LinearRegressionAnalysis TestingAnalysis::perform_forecasting_l
    return(linear_regression_results);
 }
 
-
-// void LinearRegressionResults::save(const string&) const method
-
-/// Saves a linear regression analysis results structure to a data file.
-/// @param file_name Name of results data file.
-
-//void TestingAnalysis::LinearRegressionResults::save(const string& file_name) const
-//{
-//   ofstream file(file_name.c_str());
-
-//   file << linear_regression_parameters
-//        << "Target-output data:\n"
-//        << target_outputs;
-
-//   file.close();
-//}
-
-
-// Matrix<double> calculate_error_data() const method
-
 /// Calculates the errors between the outputs from a neural network and the testing instances in a data set.
 /// It returns a vector of tree matrices:
 /// <ul>
@@ -676,7 +656,7 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data() const
    check();
 
    #endif
-/*
+
    const size_t testing_instances_number = data_set_pointer->get_instances().get_testing_instances_number();
 
     #ifdef __OPENNN_DEBUG__
@@ -726,8 +706,8 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data() const
 
    Vector< Matrix<double> > error_data(outputs_number);
 
-   Vector<double> targets(testing_instances_number);
-   Vector<double> outputs(testing_instances_number);
+   Vector<double> targets_vector(testing_instances_number);
+   Vector<double> outputs_vector(testing_instances_number);
 
    Vector<double> difference_absolute_value(testing_instances_number);
 
@@ -737,8 +717,8 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data() const
 
        // Absolute error
 
-       targets = targets.get_column(i);
-       outputs = outputs.get_column(i);
+       targets_vector = targets.get_column(i);
+       outputs_vector = outputs.get_column(i);
 
        difference_absolute_value = (targets - outputs).calculate_absolute_value();
 
@@ -754,9 +734,95 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data() const
     }
 
    return(error_data);
-*/
-   return Vector< Matrix<double> >();
 }
+
+
+/// Calculates the percentege errors between the outputs from a neural network and the testing instances in a data set.
+/// The number of rows in each matrix is the number of testing instances in the data set.
+
+Vector< Vector<double> > TestingAnalysis::calculate_percentage_error_data() const
+{
+   // Data set stuff
+
+   #ifdef __OPENNN_DEBUG__
+
+   check();
+
+   #endif
+
+   const size_t testing_instances_number = data_set_pointer->get_instances().get_testing_instances_number();
+
+    #ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(testing_instances_number == 0)
+    {
+       buffer << "OpenNN Exception: TestingAnalysis class.\n"
+              << "Vector< Matrix<double> > calculate_error_data() const.\n"
+              << "Number of testing instances is zero.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+    #endif
+
+   const Matrix<double> inputs = data_set_pointer->get_testing_inputs();
+
+   const Matrix<double> targets = data_set_pointer->get_testing_targets();
+
+   // Neural network stuff
+
+   const Matrix<double> outputs = neural_network_pointer->calculate_outputs(inputs);
+
+   const UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
+
+   #ifdef __OPENNN_DEBUG__
+
+   if(!unscaling_layer_pointer)
+   {
+      buffer << "OpenNN Exception: TestingAnalysis class.\n"
+             << "Vector< Vector<double> > calculate_percentage_error_data() const.\n"
+             << "Unscaling layer is nullptr.\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   const Vector<double>& outputs_minimum = unscaling_layer_pointer->get_minimums();
+   const Vector<double>& outputs_maximum = unscaling_layer_pointer->get_maximums();
+
+   const size_t outputs_number = unscaling_layer_pointer->get_unscaling_neurons_number();
+
+   // Error data
+
+   Vector< Vector<double> > error_data(outputs_number);
+
+   Vector<double> targets_vector(testing_instances_number);
+   Vector<double> outputs_vector(testing_instances_number);
+
+   Vector<double> difference_absolute_value(testing_instances_number);
+
+   for(size_t i = 0; i < outputs_number; i++)
+   {
+       error_data[i].set(testing_instances_number, 0.0);
+
+       // Absolute error
+
+       targets_vector = targets.get_column(i);
+       outputs_vector = outputs.get_column(i);
+
+       difference_absolute_value = (targets - outputs);
+
+       // Percentage error
+
+       error_data[i].set(difference_absolute_value*100.0/abs(outputs_maximum[i]-outputs_minimum[i]));
+    }
+
+   return(error_data);
+}
+
 
 
 /// Calculates the errors between the outputs from a neural network and the testing instances
@@ -938,14 +1004,14 @@ Vector< Vector< Statistics<double> > > TestingAnalysis::calculate_error_data_sta
 
     Vector< Vector< Statistics<double> > > statistics(outputs_number);
 
-   const Vector< Matrix<double> > error_data = calculate_error_data();
+    const Vector< Matrix<double> > error_data = calculate_error_data();
 
-   for(size_t i = 0; i < outputs_number; i++)
-   {
-       statistics[i] = error_data[i].calculate_statistics();
-   }
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+        statistics[i] = error_data[i].calculate_statistics();
+    }
 
-   return(statistics);
+    return(statistics);
 }
 
 
@@ -1074,7 +1140,7 @@ Vector< Matrix<double> > TestingAnalysis::calculate_forecasting_error_data_stati
 
 Vector< Histogram<double> > TestingAnalysis::calculate_error_data_histograms(const size_t& bins_number) const
 {
-   const Vector< Matrix<double> > error_data = calculate_error_data();
+   const Vector< Vector<double> > error_data = calculate_percentage_error_data();
 
    const size_t outputs_number = error_data.size();
 
@@ -1082,7 +1148,7 @@ Vector< Histogram<double> > TestingAnalysis::calculate_error_data_histograms(con
 
    for(size_t i = 0; i < outputs_number; i++)
    {
-       histograms[i] = error_data[i].get_column(0).calculate_histogram(bins_number);
+       histograms[i] = error_data[i].calculate_histogram_centered(0.0, bins_number);
    }
 
    return(histograms);

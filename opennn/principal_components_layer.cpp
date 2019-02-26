@@ -173,8 +173,6 @@ size_t PrincipalComponentsLayer::get_principal_components_number() const
 
 Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>& inputs) const
 {
-
-    const size_t points_number = inputs.get_rows_number();
     const size_t inputs_number = inputs.get_columns_number();
 
     // Control sentence(if debug)
@@ -256,22 +254,34 @@ Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>&
 /// Returns the partial derivatives of the outputs from the principal components layer with respect to its inputs.
 /// @param inputs Inputs to the principal components layer.
 
-Matrix<double> PrincipalComponentsLayer::calculate_Jacobian(const Vector<double>& inputs) const
+Vector< Matrix<double> > PrincipalComponentsLayer::calculate_Jacobian(const Matrix<double>& inputs) const
 {
+    const size_t points_number = inputs.get_rows_number();
+
     if(write_principal_components_method() != "NoPrincipalComponents")
     {
+        Vector< Matrix<double> > Jacobian(points_number);
+
         const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
         const Vector<size_t> inputs_indices(0, 1.0, get_inputs_number()-1);
 
-        return principal_components.get_submatrix(principal_components_indices, inputs_indices);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = principal_components.get_submatrix(principal_components_indices, inputs_indices);
+        }
+
+        return Jacobian;
     }
     else
     {
         const size_t size = inputs.size();
 
-        Matrix<double> Jacobian;
+        Vector< Matrix<double> > Jacobian(points_number);
 
-        Jacobian.set_identity(size);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i].set_identity(size);
+        }
 
         return Jacobian;
     }

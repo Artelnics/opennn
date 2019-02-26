@@ -266,9 +266,9 @@ double BoundingLayer::get_upper_bound(const size_t& i) const
 /// The first element contains the lower bound values.
 /// The second element contains the upper bound values.
 
-Vector< Vector<double>* > BoundingLayer::get_bounds()
+Vector< Vector<double> > BoundingLayer::get_bounds()
 {
-   return {&lower_bounds, &upper_bounds};
+   return {lower_bounds, upper_bounds};
 }
 
 
@@ -739,7 +739,7 @@ Matrix<double> BoundingLayer::calculate_second_derivatives(const Matrix<double>&
 /// The Jacobian matrix is composed of the partial derivatives of the layer outputs with respect to the layer inputs. 
 /// @param derivatives Vector of outputs-inputs derivatives of each bounding neuron. 
 
-Matrix<double> BoundingLayer::calculate_Jacobian(const Vector<double>& derivatives) const
+Vector< Matrix<double> > BoundingLayer::calculate_Jacobian(const Matrix<double>& derivatives) const
 {   
    const size_t bounding_neurons_number = get_bounding_neurons_number();
 
@@ -762,8 +762,15 @@ Matrix<double> BoundingLayer::calculate_Jacobian(const Vector<double>& derivativ
 
    #endif
 
-   Matrix<double> Jacobian(bounding_neurons_number, bounding_neurons_number, 0.0);
-   Jacobian.set_diagonal(derivatives);
+   const size_t points_number = derivatives.get_rows_number();
+
+   Vector< Matrix<double> > Jacobian(points_number);
+
+   for(size_t i = 0; i < points_number; i++)
+   {
+        Jacobian[i].set(bounding_neurons_number, bounding_neurons_number, 0.0);
+        Jacobian[i].set_diagonal(derivatives);
+   }
 
    return(Jacobian);
 }  

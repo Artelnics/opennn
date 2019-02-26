@@ -14,6 +14,29 @@
 
 #include "cross_entropy_error.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+void freeCUDA(double* A_d);
+
+void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                                const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                                const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                                const double* target_data_h, const size_t target_rows, const size_t target_columns,
+                                std::vector<double*> error_gradient_data,
+                                double* output_data_h, const size_t output_rows, const size_t output_columns,
+                                const std::vector<std::string> layers_activations, const std::string loss_method,
+                                const std::vector<double> loss_parameters = vector<double>());
+
+void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                          double* output_data_h, const size_t output_rows, const size_t output_columns,
+                          const std::vector<std::string> layers_activations);
+
+#endif
+
 namespace OpenNN
 {
 
@@ -286,6 +309,51 @@ check();
     return batch_error;
 }
 
+double CrossEntropyError::calculate_batch_error_cuda(const Vector<size_t>& batch_indices, const MultilayerPerceptron::Pointers& pointers) const
+{
+    double batch_error = 0.0;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+    }
+
+    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                         input_data, input_rows, input_columns,
+                         output_data, output_rows, output_columns,
+                         pointers.layer_activations.to_std_vector());
+
+    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+    batch_error = outputs.calculate_cross_entropy_error(targets_matrix);
+
+#endif
+
+    return batch_error;
+}
 
 /// Returns the cross entropy error function gradient of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
@@ -345,6 +413,85 @@ check();
     return training_error_gradient / static_cast<double>(training_instances_number);
 }
 
+LossIndex::FirstOrderLoss CrossEntropyError::calculate_batch_first_order_loss_cuda(const Vector<size_t>& batch_indices,
+                                                                                   const MultilayerPerceptron::Pointers& pointers, const Vector<double*>& data_device) const
+{
+    FirstOrderLoss first_order_loss;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t instances_number = batch_indices.size();
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    const size_t inputs_number = data_set_pointer->get_variables().get_inputs_number();
+    const size_t targets_number = data_set_pointer->get_variables().get_targets_number();
+
+    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+    Matrix<double> outputs(instances_number, pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = instances_number;
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
+    }
+
+    first_order_loss.gradient.set(parameters_number);
+    vector<double*> error_gradient_data(2*layers_number);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        error_gradient_data[2*i] = first_order_loss.gradient.data() + index;
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        error_gradient_data[2*i+1] = first_order_loss.gradient.data() + index;
+        index += bias_rows_numbers[i];
+    }
+
+    vector<double> loss_parameters;
+
+    string loss_method = write_error_term_type();
+
+    calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                               pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                               data_device[0], instances_number, inputs_number,
+                               data_device[1], instances_number, targets_number,
+                               error_gradient_data,
+                               output_data, output_rows, output_columns,
+                               pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
+
+    const double batch_error = outputs.calculate_cross_entropy_error(targets_matrix);
+
+    first_order_loss.loss = batch_error;
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
+
+#endif
+
+    return first_order_loss;
+}
 
 /// Returns the cross-entropy error function output gradient of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
@@ -406,11 +553,19 @@ tinyxml2::XMLDocument* CrossEntropyError::to_XML() const
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 
-void CrossEntropyError::write_XML(tinyxml2::XMLPrinter&) const
+void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    //file_stream.OpenElement("CrossEntropyError");
+    // Error type
 
-    //file_stream.CloseElement();
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "CROSS_ENTROPY_ERROR");
+
+    file_stream.CloseElement();
+
+    // Regularization
+
+    write_regularization_XML(file_stream);
 }
 
 
@@ -425,31 +580,57 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: CrossEntropyError class.\n"
+        buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Cross entropy error element is nullptr.\n";
+               << "Cross entropy element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-  // Display
-  {
-     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+    // Regularization
 
-     if(display_element)
-     {
-        const string new_display_string = display_element->GetText();
+    tinyxml2::XMLDocument regularization_document;
+    tinyxml2::XMLNode* element_clone;
 
-        try
-        {
-           set_display(new_display_string != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
+    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+
+    element_clone = regularization_element->DeepClone(&regularization_document);
+
+    regularization_document.InsertFirstChild(element_clone);
+
+    regularization_from_XML(regularization_document);
+
+//    const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
+
+//    if(!root_element)
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: CrossEntropyError class.\n"
+//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//               << "Cross entropy error element is nullptr.\n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//  // Display
+//  {
+//     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+
+//     if(display_element)
+//     {
+//        const string new_display_string = display_element->GetText();
+
+//        try
+//        {
+//           set_display(new_display_string != "0");
+//        }
+//        catch(const logic_error& e)
+//        {
+//           cerr << e.what() << endl;
+//        }
+//     }
+//  }
 }
 
 }

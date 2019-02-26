@@ -181,6 +181,8 @@ public:
 
    Matrix<double> calculate_outputs_combinations(const Matrix<double>&) const;
 
+   Vector<Matrix<double>> calculate_Jacobian(const Matrix<double>&) const;
+
    // Expression methods
 
    string write_expression(const Vector<string>&, const Vector<string>&) const;

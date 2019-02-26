@@ -18,7 +18,7 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
-void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
                                 const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
                                 const double* input_data_h, const size_t input_rows, const size_t input_columns,
                                 const double* target_data_h, const size_t target_rows, const size_t target_columns,
@@ -392,13 +392,13 @@ Vector<double> SumSquaredError::calculate_batch_error_gradient_cuda(const Vector
 
     const size_t layers_number = pointers.architecture.size() - 1;
 
-    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
-    const double* input_data = inputs_matrix.data();
+    Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    double* input_data = inputs_matrix.data();
     const size_t input_rows = inputs_matrix.get_rows_number();
     const size_t input_columns = inputs_matrix.get_columns_number();
 
-    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
-    const double* target_data = targets_matrix.data();
+    Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+    double* target_data = targets_matrix.data();
     const size_t target_rows = targets_matrix.get_rows_number();
     const size_t target_columns = targets_matrix.get_columns_number();
 
@@ -442,7 +442,7 @@ Vector<double> SumSquaredError::calculate_batch_error_gradient_cuda(const Vector
 
     string loss_method = write_error_term_type();
 
-    calculateErrorGradientCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+    calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
                                pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
                                input_data, input_rows, input_columns,
                                target_data, target_rows, target_columns,
@@ -552,29 +552,22 @@ check();
     const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
             = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
-    const Vector<double> error_terms
-            = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+    const Matrix<double> output_gradient = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
 
-    const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+    const Vector< Matrix<double> > layers_delta = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
 
-    const Vector< Matrix<double> > layers_delta
-            = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
 
-    const Matrix<double> error_terms_Jacobian
-            = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+    const double batch_error = first_order_forward_propagation.layers_activations[layers_number-1].calculate_sum_squared_error(targets);
 
-    const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+    first_order_loss.loss = batch_error;
+    first_order_loss.gradient += batch_error_gradient;
 
-    const double loss = error_terms.dot(error_terms);
-
-    const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
-
-    first_order_loss.loss += loss;
-    first_order_loss.gradient += gradient*2.0;
-
-//    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
-
-    // Regularization ??
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
 
     return first_order_loss;
 }
@@ -588,13 +581,13 @@ LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss_cuda
 
     const size_t layers_number = pointers.architecture.size() - 1;
 
-    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
-    const double* input_data = inputs_matrix.data();
+    Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    double* input_data = inputs_matrix.data();
     const size_t input_rows = inputs_matrix.get_rows_number();
     const size_t input_columns = inputs_matrix.get_columns_number();
 
-    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
-    const double* target_data = targets_matrix.data();
+    Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+    double* target_data = targets_matrix.data();
     const size_t target_rows = targets_matrix.get_rows_number();
     const size_t target_columns = targets_matrix.get_columns_number();
 
@@ -638,7 +631,7 @@ LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss_cuda
 
     string loss_method = write_error_term_type();
 
-    calculateErrorGradientCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+    calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
                                pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
                                input_data, input_rows, input_columns,
                                target_data, target_rows, target_columns,
@@ -648,11 +641,26 @@ LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss_cuda
 
     first_order_loss.loss = calculate_error(outputs, targets_matrix);
 
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
+
 #endif
 
     return first_order_loss;
 }
 
+LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
+                                                                                 const MultilayerPerceptron::Pointers&, const Vector<double*>&) const
+{
+    FirstOrderLoss first_order_loss;
+
+    return first_order_loss;
+}
 
 /// Returns the loss value of a neural network according to the sum squared error on a data set.
 
@@ -948,11 +956,19 @@ tinyxml2::XMLDocument* SumSquaredError::to_XML() const
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
 
-void SumSquaredError::write_XML(tinyxml2::XMLPrinter&) const
+void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    //file_stream.OpenElement("SumSquaredError");
+    // Error type
 
-    //file_stream.CloseElement();
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "SUM_SQUARED_ERROR");
+
+    file_stream.CloseElement();
+
+    // Regularization
+
+    write_regularization_XML(file_stream);
 }
 
 
@@ -971,29 +987,23 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
         buffer << "OpenNN Exception: SumSquaredError class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-               << "Sum squared error element is nullptr.\n";
+               << "Sum squared element is nullptr.\n";
 
         throw logic_error(buffer.str());
     }
 
-  // Display
-  {
-     const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
+    // Regularization
 
-     if(element)
-     {
-        const string new_display_string = element->GetText();
+    tinyxml2::XMLDocument regularization_document;
+    tinyxml2::XMLNode* element_clone;
 
-        try
-        {
-           set_display(new_display_string != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
+    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+
+    element_clone = regularization_element->DeepClone(&regularization_document);
+
+    regularization_document.InsertFirstChild(element_clone);
+
+    regularization_from_XML(regularization_document);
 }
 
 }

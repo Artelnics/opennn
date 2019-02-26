@@ -14,6 +14,27 @@
 
 #include "normalized_squared_error.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                                const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                                const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                                const double* target_data_h, const size_t target_rows, const size_t target_columns,
+                                std::vector<double*> error_gradient_data,
+                                double* output_data_h, const size_t output_rows, const size_t output_columns,
+                                const std::vector<std::string> layers_activations, const std::string loss_method,
+                                const std::vector<double> loss_parameters = vector<double>());
+
+void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                          double* output_data_h, const size_t output_rows, const size_t output_columns,
+                          const std::vector<std::string> layers_activations);
+
+#endif
+
 namespace OpenNN
 {
 
@@ -174,11 +195,15 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
     // Data set stuff
 
-    const Vector<size_t> selection_indices = data_set_pointer->get_instances_pointer()->get_selection_indices();
+    const Instances& instances = data_set_pointer->get_instances();
+
+    const Vector<size_t> selection_indices = instances.get_selection_indices();
 
     const size_t selection_instances_number = selection_indices.size();
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_variables_pointer()->get_targets_indices();
+    const Variables& variables = data_set_pointer->get_variables();
+
+    const Vector<size_t> targets_indices = variables.get_targets_indices();
 
     const Vector<double> selection_targets_mean = data_set_pointer->calculate_selection_targets_mean();
 
@@ -314,7 +339,7 @@ check();
         selection_error += batch_error;
     }
 
-    return selection_error/normalization_coefficient;
+    return selection_error/selection_normalization_coefficient;
 }
 
 
@@ -675,31 +700,120 @@ check();
     const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
             = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
 
-    const Vector<double> error_terms
-            = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
-
-    const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+    const Matrix<double> output_gradient
+            = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
 
     const Vector< Matrix<double> > layers_delta
             = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
 
-    const Matrix<double> error_terms_Jacobian
-            = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+    const Vector<double> batch_gradient
+            = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
 
-    const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
+    const double batch_error = first_order_forward_propagation.layers_activations[layers_number-1].calculate_sum_squared_error(targets);
 
-    const double loss = error_terms.dot(error_terms);
+    first_order_loss.loss = batch_error / normalization_coefficient;
+    first_order_loss.gradient += batch_gradient/normalization_coefficient;
 
-    const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+    // Regularization
 
-    // Regularization ??
-
-    first_order_loss.loss += loss/normalization_coefficient;
-    first_order_loss.gradient += gradient*(2.0/normalization_coefficient);
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
 
     return first_order_loss;
 }
 
+LossIndex::FirstOrderLoss NormalizedSquaredError::calculate_batch_first_order_loss_cuda(const Vector<size_t>& batch_indices,
+                                                                                        const MultilayerPerceptron::Pointers& pointers) const
+{
+    FirstOrderLoss first_order_loss;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    Matrix<double> inputs_matrix = data_set_pointer->get_inputs(batch_indices);
+    double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+    double* target_data = targets_matrix.data();
+    const size_t target_rows = targets_matrix.get_rows_number();
+    const size_t target_columns = targets_matrix.get_columns_number();
+
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
+    }
+
+    first_order_loss.gradient.set(parameters_number);
+    vector<double*> error_gradient_data(2*layers_number);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        error_gradient_data[2*i] = first_order_loss.gradient.data() + index;
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        error_gradient_data[2*i+1] = first_order_loss.gradient.data() + index;
+        index += bias_rows_numbers[i];
+    }
+
+    vector<double> loss_parameters(1, normalization_coefficient);
+
+    string loss_method = write_error_term_type();
+
+    calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                               pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                               input_data, input_rows, input_columns,
+                               target_data, target_rows, target_columns,
+                               error_gradient_data,
+                               output_data, output_rows, output_columns,
+                               pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
+
+    first_order_loss.loss = outputs.calculate_sum_squared_error(targets_matrix) / normalization_coefficient;
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
+
+#endif
+
+    return first_order_loss;
+}
+
+LossIndex::FirstOrderLoss NormalizedSquaredError::calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
+                                                                                        const MultilayerPerceptron::Pointers&, const Vector<double*>&) const
+{
+    FirstOrderLoss first_order_loss;
+
+    return first_order_loss;
+}
 
 /// Returns loss vector of the error terms function for the normalized squared error.
 /// It uses the error back-propagation method.
@@ -958,11 +1072,19 @@ tinyxml2::XMLDocument* NormalizedSquaredError::to_XML() const
 }
 
 
-void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter&) const
+void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    //file_stream.OpenElement("NormalizedSquaredError");
+    // Error type
 
-    //file_stream.CloseElement();
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "NORMALIZED_SQUARED_ERROR");
+
+    file_stream.CloseElement();
+
+    // Regularization
+
+    write_regularization_XML(file_stream);
 }
 
 
@@ -971,42 +1093,32 @@ void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter&) const
 
 void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 {
-   const tinyxml2::XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
+     const tinyxml2::XMLElement* root_element = document.FirstChildElement("NormalizedSquaredError");
 
-   if(!root_element)
-   {
-      return;
-   }
+    if(!root_element)
+    {
+        ostringstream buffer;
 
-   const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+        buffer << "OpenNN Exception: NormalizedSquaredError class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Normalized squared element is nullptr.\n";
 
-   if(display_element)
-   {
-      const string new_display_string = display_element->GetText();     
+        throw logic_error(buffer.str());
+    }
 
-      try
-      {
-         set_display(new_display_string != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
+    // Regularization
+
+    tinyxml2::XMLDocument regularization_document;
+    tinyxml2::XMLNode* element_clone;
+
+    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+
+    element_clone = regularization_element->DeepClone(&regularization_document);
+
+    regularization_document.InsertFirstChild(element_clone);
+
+    regularization_from_XML(regularization_document);
 }
-
-
-// string write_information() const method
-/*
-string NormalizedSquaredError::write_information() const
-{
-    ostringstream buffer;
-
-    buffer << "Normalized squared error: " << calculate_error() << "\n";
-
-    return(buffer.str());
-
-}*/
 
 }
 

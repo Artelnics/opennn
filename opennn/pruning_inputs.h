@@ -139,7 +139,7 @@ private:
 
     size_t maximum_inputs_number;
 
-    /// Maximum number of iterations at which the selection loss increases.
+    /// Maximum number of iterations at which the selection error increases.
 
     size_t maximum_selection_failures;
 };

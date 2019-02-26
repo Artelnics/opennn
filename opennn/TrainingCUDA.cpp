@@ -41,11 +41,12 @@ void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weight
                                                const std::vector<size_t> activations_rows_numbers, const std::vector<size_t> activations_columns_numbers,
                                                const std::vector<std::string> layers_activations);
 
-void calculateErrorGradientCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
                                 const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
                                 const double* input_data_h, const size_t input_rows, const size_t input_columns,
                                 const double* target_data_h, const size_t target_rows, const size_t target_columns,
                                 std::vector<double*> error_gradient_data,
+                                double* output_data_h, const size_t output_rows, const size_t output_columns,
                                 const std::vector<std::string> layers_activations, const std::string loss_method,
                                 const std::vector<double> loss_parameters = vector<double>());
 
@@ -170,7 +171,7 @@ void TrainingCUDA::initialize_CUDA(void)
     layer_activations.set(layers_number, "RectifiedLinear");
     layer_activations[layers_number-1] = "RectifiedLinear";
 
-    loss_method = "MEAN_SQUARED_ERROR";
+    loss_method = "SUM_SQUARED_ERROR";
 
     cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
 
@@ -340,6 +341,11 @@ Vector<double> TrainingCUDA::calculate_batch_error_gradient(const Vector<size_t>
     const size_t target_rows = targets_matrix.get_rows_number();
     const size_t target_columns = targets_matrix.get_columns_number();
 
+    Matrix<double> outputs(inputs_matrix.get_rows_number(), neural_network_architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = inputs_matrix.get_rows_number();
+    const size_t output_columns = neural_network_architecture[layers_number];
+
     vector<size_t> weights_rows_numbers(layers_number);
     vector<size_t> weights_columns_numbers(layers_number);
 
@@ -383,7 +389,7 @@ Vector<double> TrainingCUDA::calculate_batch_error_gradient(const Vector<size_t>
     {
         loss_parameters.resize(1);
 
-        loss_parameters[0] = 1; // Normalization coefficient
+        loss_parameters[0] = 100; // Normalization coefficient
     }
     else if(loss_method == "WEIGHTED_SQUARED_ERROR")
     {
@@ -394,11 +400,12 @@ Vector<double> TrainingCUDA::calculate_batch_error_gradient(const Vector<size_t>
         loss_parameters[2] = 1; // Normalization coefficient
     }
 
-    calculateErrorGradientCUDA(weights_gpu.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+    calculateFirstOrderLossCUDA(weights_gpu.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
                                biases_gpu.to_std_vector(), bias_rows_numbers,
                                input_data, input_rows, input_columns,
                                target_data, target_rows, target_columns,
                                error_gradient_data,
+                               output_data, output_rows, output_columns,
                                layer_activations.to_std_vector(), loss_method, loss_parameters);
 
 
