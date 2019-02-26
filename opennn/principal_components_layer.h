@@ -119,7 +119,7 @@ public:
    // Inputs principal components function
 
    Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
 
    // Expression methods
 

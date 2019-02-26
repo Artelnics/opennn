@@ -33,7 +33,7 @@
 namespace OpenNN
 {
 
-/// This class contains tools for testing neural networks in different learning tasks. 
+/// This class contains tools for testing neural networks in different learning tasks.
 /// In particular, it can be used for testing function regression, classification
 /// or time series prediction problems.
 
@@ -193,6 +193,7 @@ public:
    // Error data methods
 
    Vector< Matrix<double> > calculate_error_data() const;
+   Vector< Vector<double> > calculate_percentage_error_data() const;
    Vector< Matrix<double> > calculate_forecasting_error_data() const;
 
    Vector< Statistics<double> > calculate_absolute_errors_statistics() const;

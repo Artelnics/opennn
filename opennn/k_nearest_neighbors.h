@@ -60,14 +60,25 @@ public:
 
     // STRUCTURES
 
-    struct Neighbors
+    struct ShortNeighbors
     {
-        explicit Neighbors() {}
+        explicit ShortNeighbors() {}
 
-        virtual ~Neighbors() {}
+        virtual ~ShortNeighbors() {}
 
         Matrix<double> distances;
         Matrix<size_t> indices;
+    };
+
+    struct LongNeighbors
+    {
+        explicit LongNeighbors() {}
+
+        virtual ~LongNeighbors() {}
+
+        Matrix<double> distances;
+        Matrix<size_t> indices;
+        Vector< Matrix<double> > distances_matrix;
     };
 
     // METHODS
@@ -98,15 +109,16 @@ public:
 
     Vector<double> calculate_distances_weights(const Vector<double>&) const;
 
-    Neighbors calculate_k_nearest_neighbors_unsupervised(const Vector<double>&) const;
+    ShortNeighbors calculate_k_nearest_neighbors_unsupervised(const Vector<double>&) const;
+    LongNeighbors calculate_long_k_nearest_neighbors_unsupervised(const Vector<double>&) const;
 
-    Neighbors calculate_k_nearest_neighbors_supervised(const Vector<double>&) const;
+    ShortNeighbors calculate_k_nearest_neighbors_supervised(const Vector<double>&) const;
 
     // Output methods
 
     Vector<double> calculate_outputs(const Vector<double>&) const;
 
-    Vector<double> calculate_outputs(const Neighbors&) const;
+    Vector<double> calculate_outputs(const ShortNeighbors&) const;
 
     // Output data methods
 

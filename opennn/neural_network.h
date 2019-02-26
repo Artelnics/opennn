@@ -189,8 +189,10 @@ public:
    void construct_multilayer_perceptron();
    void construct_inputs_trending_layer();
    void construct_scaling_layer();
+   void construct_scaling_layer(const Vector< Statistics<double> >&);
    void construct_principal_components_layer();
    void construct_unscaling_layer();
+   void construct_unscaling_layer(const Vector< Statistics<double> >&);
    void construct_outputs_trending_layer();
    void construct_bounding_layer();
    void construct_probabilistic_layer();
@@ -262,7 +264,7 @@ public:
    Matrix<double> calculate_outputs(const Matrix<double>&) const;
    Matrix<double> calculate_outputs(const Matrix<double>&, const double&) const;
    Eigen::MatrixXd calculate_outputs_eigen(const Eigen::MatrixXd&) const;
-   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
    Matrix<double> calculate_Jacobian(const Vector<double>&, const double&) const;
    Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 

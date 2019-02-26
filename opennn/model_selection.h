@@ -43,7 +43,7 @@ namespace OpenNN
 {
 
 /// This class represents the concept of model selection algorithm.
-/// It is used for finding a network architecture with maximum selection capabilities. 
+/// It is used for finding a network architecture with maximum selection capabilities.
 
 class ModelSelection
 {

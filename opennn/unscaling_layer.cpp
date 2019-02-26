@@ -1150,13 +1150,22 @@ Matrix<double> UnscalingLayer::calculate_logarithmic_second_derivatives(const Ma
 
 /// Arranges a "Jacobian" matrix from the vector of derivatives. 
 
-Matrix<double> UnscalingLayer::calculate_Jacobian(const Vector<double>& derivatives) const
+Vector< Matrix<double> > UnscalingLayer::calculate_Jacobian(const Matrix<double>& derivatives) const
 {
+    const size_t points_number = derivatives.get_rows_number();
+
     const size_t unscaling_neurons_number = get_unscaling_neurons_number();
 
-    Matrix<double> Jacobian(unscaling_neurons_number, unscaling_neurons_number, 0.0);
+    Vector< Matrix<double> > Jacobian(points_number);
 
-    Jacobian.set_diagonal(derivatives);
+
+    for(size_t i = 0; i < points_number; i++)
+    {
+        Jacobian[i].set(unscaling_neurons_number, unscaling_neurons_number, 0.0);
+
+        Jacobian[i].set_diagonal(derivatives);
+    }
+
 
     return(Jacobian);
 }
@@ -1984,7 +1993,7 @@ string UnscalingLayer::write_minimum_maximum_expression(const Vector<string>& in
 
     buffer.str("");
 
-    buffer << outputs_name.vector_to_string(',') << " = " << expressions.vector_to_string(',') << ";\n";
+    buffer << "(" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }

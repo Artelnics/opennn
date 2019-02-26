@@ -108,7 +108,7 @@ public:
 
       Vector<double> loss_history;
 
-      /// History of the selection loss over the training iterations.
+      /// History of the selection error over the training iterations.
 
       Vector<double> selection_error_history;
 
@@ -142,7 +142,7 @@ public:
 
       double final_loss;
 
-      /// Final selection loss.
+      /// Final selection error.
 
       double final_selection_error;
 
@@ -204,7 +204,7 @@ public:
 
    const bool& get_reserve_parameters_history() const;
    const bool& get_reserve_parameters_norm_history() const;
-   const bool& get_reserve_loss_history() const;
+   const bool& get_reserve_error_history() const;
    const bool& get_reserve_gradient_history() const;
    const bool& get_reserve_gradient_norm_history() const;
    const bool& get_reserve_selection_error_history() const;
@@ -249,7 +249,7 @@ public:
 
    void set_reserve_parameters_history(const bool&);
    void set_reserve_parameters_norm_history(const bool&);
-   void set_reserve_loss_history(const bool&);
+   void set_reserve_error_history(const bool&);
    void set_reserve_gradient_history(const bool&);
    void set_reserve_gradient_norm_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
@@ -334,7 +334,7 @@ private:
 
    double gradient_norm_goal;
 
-   /// Maximum number of iterations at which the selection loss increases.
+   /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
    size_t maximum_selection_failures;
@@ -351,7 +351,7 @@ private:
 
    bool return_minimum_selection_error_neural_network;
 
-   /// True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
    bool apply_early_stopping;
 
@@ -367,7 +367,7 @@ private:
 
    /// True if the loss history vector is to be reserved, false otherwise.
 
-   bool reserve_loss_history;
+   bool reserve_error_history;
 
    /// True if the gradient history matrix is to be reserved, false otherwise.
 
@@ -385,7 +385,7 @@ private:
 
    bool reserve_elapsed_time_history;
 
-   /// True if the selection loss history vector is to be reserved, false otherwise.
+   /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
 };

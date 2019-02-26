@@ -251,7 +251,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
     results->order_data.push_back(optimal_order);
 
-    if(reserve_loss_data)
+    if(reserve_error_data)
     {
         results->loss_data.push_back(current_training_loss);
     }
@@ -339,7 +339,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
 
         results->order_data.push_back(current_order);
 
-        if(reserve_loss_data)
+        if(reserve_error_data)
         {
             results->loss_data.push_back(current_training_loss);
         }
@@ -391,7 +391,7 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
                 cout << "Selection loss reached." << endl;
             }
 
-            results->stopping_condition = SimulatedAnnealingOrder::SelectionLossGoal;
+            results->stopping_condition = SimulatedAnnealingOrder::SelectionErrorGoal;
         }
         else if(iterations >= maximum_iterations_number)
         {
@@ -426,24 +426,13 @@ SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* SimulatedAnnealingOrder
     if(display)
     {
         cout << "Optimal order : " << optimal_order << endl;
-        cout << "Optimum selection loss : " << optimum_loss[1] << endl;
+        cout << "Optimum selection error : " << optimum_loss[1] << endl;
         cout << "Corresponding training loss : " << optimum_loss[0] << endl;
     }
 
     const size_t last_hidden_layer = multilayer_perceptron_pointer->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron_pointer->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if(optimal_order > perceptrons_number)
-    {
-        multilayer_perceptron_pointer->grow_layer_perceptron(last_hidden_layer,optimal_order-perceptrons_number);
-    }
-    else
-    {
-        for(size_t i = 0; i <(perceptrons_number-optimal_order); i++)
-        {
-            multilayer_perceptron_pointer->prune_layer_perceptron(last_hidden_layer,0);
-        }
-    }
+    multilayer_perceptron_pointer->set_layer_perceptrons_number(last_hidden_layer, optimal_order);
 
     multilayer_perceptron_pointer->set_parameters(optimum_parameters);
 
@@ -521,7 +510,7 @@ Matrix<string> SimulatedAnnealingOrder::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // selection loss goal
+   // selection error goal
 
    labels.push_back("Selection loss goal");
 
@@ -559,11 +548,11 @@ Matrix<string> SimulatedAnnealingOrder::to_string_matrix() const
 
    // Plot training loss history
 
-   labels.push_back("Plot training loss history");
+   labels.push_back("Plot training error history");
 
    buffer.str("");
 
-   if(reserve_loss_data)
+   if(reserve_error_data)
    {
        buffer << "true";
    }
@@ -574,9 +563,9 @@ Matrix<string> SimulatedAnnealingOrder::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Plot selection loss history
+   // Plot selection error history
 
-   labels.push_back("Plot selection loss history");
+   labels.push_back("Plot selection error history");
 
    buffer.str("");
 
@@ -682,9 +671,9 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // selection loss goal
+   // selection error goal
    {
-   element = document->NewElement("SelectionLossGoal");
+   element = document->NewElement("SelectionErrorGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -730,21 +719,21 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Reserve loss data
+   // Reserve error data
    {
-   element = document->NewElement("ReservePerformanceHistory");
+   element = document->NewElement("ReserveErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_loss_data;
+   buffer << reserve_error_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection loss data
+   // Reserve selection error data
    {
-   element = document->NewElement("ReserveSelectionLossHistory");
+   element = document->NewElement("ReserveSelectionErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -756,7 +745,7 @@ tinyxml2::XMLDocument* SimulatedAnnealingOrder::to_XML() const
 
    // Performance calculation method
 //   {
-//   element = document->NewElement("PerformanceCalculationMethod");
+//   element = document->NewElement("LossCalculationMethod");
 //   root_element->LinkEndChild(element);
 
 //   text = document->NewText(write_loss_calculation_method().c_str());
@@ -869,9 +858,9 @@ void SimulatedAnnealingOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // selection loss goal
+    // selection error goal
 
-    file_stream.OpenElement("SelectionLossGoal");
+    file_stream.OpenElement("SelectionErrorGoal");
 
     buffer.str("");
     buffer << selection_error_goal;
@@ -913,20 +902,20 @@ void SimulatedAnnealingOrder::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve loss data
+    // Reserve error data
 
-    file_stream.OpenElement("ReservePerformanceHistory");
+    file_stream.OpenElement("ReserveErrorHistory");
 
     buffer.str("");
-    buffer << reserve_loss_data;
+    buffer << reserve_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection loss data
+    // Reserve selection error data
 
-    file_stream.OpenElement("ReserveSelectionLossHistory");
+    file_stream.OpenElement("ReserveSelectionErrorHistory");
 
     buffer.str("");
     buffer << reserve_selection_error_data;
@@ -1019,7 +1008,7 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Performance calculation method
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("PerformanceCalculationMethod");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossCalculationMethod");
 
         if(element)
         {
@@ -1076,15 +1065,15 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve loss data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveErrorHistory");
 
         if(element)
         {
-           const string new_reserve_loss_data = element->GetText();
+           const string new_reserve_error_data = element->GetText();
 
            try
            {
-              set_reserve_loss_data(new_reserve_loss_data != "0");
+              set_reserve_error_data(new_reserve_error_data != "0");
            }
            catch(const logic_error& e)
            {
@@ -1093,9 +1082,9 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection loss data
+    // Reserve selection error data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
         if(element)
         {
@@ -1150,9 +1139,9 @@ void SimulatedAnnealingOrder::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // selection loss goal
+    // selection error goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
 
         if(element)
         {

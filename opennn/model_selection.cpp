@@ -20,7 +20,7 @@ namespace OpenNN
 
 // DEFAULT CONSTRUCTOR
 
-/// Default constructor. 
+/// Default constructor.
 
 ModelSelection::ModelSelection()
     : training_strategy_pointer(nullptr)
@@ -37,7 +37,7 @@ ModelSelection::ModelSelection()
 
 // TRAINING STRATEGY CONSTRUCTOR
 
-/// Training strategy constructor. 
+/// Training strategy constructor.
 /// @param new_training_strategy_pointer Pointer to a training strategy object.
 
 ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
@@ -55,8 +55,8 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
 
 // FILE CONSTRUCTOR
 
-/// File constructor. 
-/// @param file_name Name of XML model selection file. 
+/// File constructor.
+/// @param file_name Name of XML model selection file.
 
 ModelSelection::ModelSelection(const string& file_name)
     : training_strategy_pointer(nullptr)
@@ -619,7 +619,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
                 maximum_correlation = original_growing_inputs->get_maximum_correlation();
                 maximum_iterations_number = (int)original_growing_inputs->get_maximum_iterations_number();
                 maximum_time = (int)original_growing_inputs->get_maximum_time();
-                reserve_loss_loss_history = original_growing_inputs->get_reserve_loss_data();
+                reserve_loss_loss_history = original_growing_inputs->get_reserve_error_data();
                 reserve_selection_error_loss_history = original_growing_inputs->get_reserve_selection_error_data();
             }
             break;
@@ -637,7 +637,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
                 maximum_correlation = original_pruning_inputs->get_maximum_correlation();
                 maximum_iterations_number = (int)original_pruning_inputs->get_maximum_iterations_number();
                 maximum_time = (int)original_pruning_inputs->get_maximum_time();
-                reserve_loss_loss_history = original_pruning_inputs->get_reserve_loss_data();
+                reserve_loss_loss_history = original_pruning_inputs->get_reserve_error_data();
                 reserve_selection_error_loss_history = original_pruning_inputs->get_reserve_selection_error_data();
             }
             break;
@@ -658,7 +658,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
                 selection_error_goal = original_genetic_algorithm->get_selection_error_goal();
                 maximum_iterations_number = (int)original_genetic_algorithm->get_maximum_iterations_number();
                 maximum_time = (int)original_genetic_algorithm->get_maximum_time();
-                reserve_loss_loss_history  = original_genetic_algorithm->get_reserve_loss_data();
+                reserve_loss_loss_history  = original_genetic_algorithm->get_reserve_error_data();
                 reserve_selection_error_loss_history = original_genetic_algorithm->get_reserve_selection_error_data();
                 reserve_generation_mean_history = original_genetic_algorithm->get_reserve_generation_mean();
                 reserve_generation_standard_deviation_history = original_genetic_algorithm->get_reserve_generation_standard_deviation();
@@ -815,7 +815,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
             growing_inputs_pointer->set_maximum_correlation(maximum_correlation);
             growing_inputs_pointer->set_maximum_iterations_number(maximum_iterations_number);
             growing_inputs_pointer->set_maximum_time(maximum_time);
-            growing_inputs_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            growing_inputs_pointer->set_reserve_error_data(reserve_loss_loss_history == 1);
             growing_inputs_pointer->set_reserve_selection_error_data(reserve_selection_error_loss_history == 1);
         }
         break;
@@ -831,7 +831,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
             pruning_inputs_pointer->set_maximum_correlation(maximum_correlation);
             pruning_inputs_pointer->set_maximum_iterations_number(maximum_iterations_number);
             pruning_inputs_pointer->set_maximum_time(maximum_time);
-            pruning_inputs_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            pruning_inputs_pointer->set_reserve_error_data(reserve_loss_loss_history == 1);
             pruning_inputs_pointer->set_reserve_selection_error_data(reserve_selection_error_loss_history == 1);
         }
         break;
@@ -850,7 +850,7 @@ void ModelSelection::set_inputs_selection_MPI(const ModelSelection* model_select
             genetic_algorithm_pointer->set_selection_error_goal(selection_error_goal);
             genetic_algorithm_pointer->set_maximum_iterations_number(maximum_iterations_number);
             genetic_algorithm_pointer->set_maximum_time(maximum_time);
-            genetic_algorithm_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            genetic_algorithm_pointer->set_reserve_error_data(reserve_loss_loss_history == 1);
             genetic_algorithm_pointer->set_reserve_selection_error_data(reserve_selection_error_loss_history == 1);
             genetic_algorithm_pointer->set_reserve_generation_mean(reserve_generation_mean_history == 1);
             genetic_algorithm_pointer->set_reserve_generation_standard_deviation(reserve_generation_standard_deviation_history == 1);
@@ -914,7 +914,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
                 selection_error_goal = original_incremental_order->get_selection_error_goal();
                 maximum_selection_failures = (int)original_incremental_order->get_maximum_selection_failures();
                 maximum_time = (int)original_incremental_order->get_maximum_time();
-                reserve_loss_loss_history = original_incremental_order->get_reserve_loss_data();
+                reserve_loss_loss_history = original_incremental_order->get_reserve_error_data();
                 reserve_selection_error_loss_history = original_incremental_order->get_reserve_selection_error_data();
             }
             break;
@@ -929,7 +929,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
                 tolerance = original_golden_section_order->get_tolerance();
                 selection_error_goal = original_golden_section_order->get_selection_error_goal();
                 maximum_time = (int)original_golden_section_order->get_maximum_time();
-                reserve_loss_loss_history = original_golden_section_order->get_reserve_loss_data();
+                reserve_loss_loss_history = original_golden_section_order->get_reserve_error_data();
                 reserve_selection_error_loss_history = original_golden_section_order->get_reserve_selection_error_data();
             }
             break;
@@ -947,7 +947,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
                 minimum_temperature = original_simulated_annealing->get_minimum_temperature();
                 maximum_iterations_number = (int)original_simulated_annealing->get_maximum_iterations_number();
                 maximum_time = (int)original_simulated_annealing->get_maximum_time();
-                reserve_loss_loss_history = original_simulated_annealing->get_reserve_loss_data();
+                reserve_loss_loss_history = original_simulated_annealing->get_reserve_error_data();
                 reserve_selection_error_loss_history = original_simulated_annealing->get_reserve_selection_error_data();
             }
             break;
@@ -1065,7 +1065,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
             incremental_order_pointer->set_selection_error_goal(selection_error_goal);
             incremental_order_pointer->set_maximum_selection_failures(maximum_selection_failures);
             incremental_order_pointer->set_maximum_time(maximum_time);
-            incremental_order_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            incremental_order_pointer->set_reserve_error_data(reserve_loss_loss_history == 1);
             incremental_order_pointer->set_reserve_selection_error_data(reserve_selection_error_loss_history == 1);
         }
         break;
@@ -1078,7 +1078,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
             golden_section_order_pointer->set_tolerance(tolerance);
             golden_section_order_pointer->set_selection_error_goal(selection_error_goal);
             golden_section_order_pointer->set_maximum_time(maximum_time);
-            golden_section_order_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            golden_section_order_pointer->set_reserve_error_data(reserve_loss_loss_history == 1);
             golden_section_order_pointer->set_reserve_selection_error_data(reserve_selection_error_loss_history == 1);
         }
         break;
@@ -1094,7 +1094,7 @@ void ModelSelection::set_order_selection_MPI(const ModelSelection* model_selecti
             simulated_annelaing_order_pointer->set_minimum_temperature(minimum_temperature);
             simulated_annelaing_order_pointer->set_maximum_iterations_number(maximum_iterations_number);
             simulated_annelaing_order_pointer->set_maximum_time(maximum_time);
-            simulated_annelaing_order_pointer->set_reserve_loss_data(reserve_loss_loss_history == 1);
+            simulated_annelaing_order_pointer->set_reserve_error_data(reserve_loss_loss_history == 1);
             simulated_annelaing_order_pointer->set_reserve_selection_error_data(reserve_selection_error_loss_history == 1);
         }
         break;
@@ -1232,7 +1232,7 @@ void ModelSelection::check() const
 }
 
 
-/// Calculate the importance of the inputs, returns a vector with the selection loss of the neural network removing one input.
+/// Calculate the importance of the inputs, returns a vector with the selection error of the neural network removing one input.
 
 Vector<double> ModelSelection::calculate_inputs_importance() const
 {
@@ -1320,8 +1320,8 @@ Vector<double> ModelSelection::calculate_inputs_importance() const
 }
 
 
-/// Perform the order selection, returns a structure with the results of the order selection
-/// It also set the neural network of the training strategy pointer with the optimum parameters
+/// Perform the order selection, returns a structure with the results of the order selection.
+/// It also set the neural network of the training strategy pointer with the optimum parameters.
 
 ModelSelection::Results ModelSelection::perform_order_selection() const
 {
@@ -1750,7 +1750,7 @@ void ModelSelection::write_XML(tinyxml2::XMLPrinter& file_stream) const
 void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 {
     const tinyxml2::XMLElement* root_element = document.FirstChildElement("ModelSelection");
-cout << "1" << endl;
+
     if(!root_element)
     {
         ostringstream buffer;
@@ -1770,11 +1770,7 @@ cout << "1" << endl;
         {
             const string new_inputs_selection_method = element->Attribute("Type");
 
-            cout << "Input selection type: " << new_inputs_selection_method <<endl;
-
             set_inputs_selection_method(new_inputs_selection_method);
-
-            cout << "After set new selection type" <<endl;
 
             switch(inputs_selection_method)
             {
@@ -1784,17 +1780,17 @@ cout << "1" << endl;
             }
                 break;
             case GROWING_INPUTS:
-            {cout<<"inside if growing inputs"<<endl;
+            {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element = new_document.NewElement("GrowingInputs");
+                tinyxml2::XMLElement* growing_element = new_document.NewElement("GrowingInputs");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    element->InsertEndChild( copy );
+                    growing_element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(element);
+                new_document.InsertEndChild(growing_element);
 
                 growing_inputs_pointer->from_XML(new_document);
             }
@@ -1803,14 +1799,14 @@ cout << "1" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element = new_document.NewElement("PruningInputs");
+                tinyxml2::XMLElement* pruning_element = new_document.NewElement("PruningInputs");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    element->InsertEndChild( copy );
+                    pruning_element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(element);
+                new_document.InsertEndChild(pruning_element);
 
                 pruning_inputs_pointer->from_XML(new_document);
             }
@@ -1819,14 +1815,14 @@ cout << "1" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element = new_document.NewElement("GeneticAlgorithm");
+                tinyxml2::XMLElement* genetic_element = new_document.NewElement("GeneticAlgorithm");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    element->InsertEndChild( copy );
+                    genetic_element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(element);
+                new_document.InsertEndChild(genetic_element);
 
                 genetic_algorithm_pointer->from_XML(new_document);
             }
@@ -1834,7 +1830,7 @@ cout << "1" << endl;
             }
         }
     }
-cout << "2" << endl;
+
     // Order Selection
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("OrderSelection");
@@ -1856,14 +1852,14 @@ cout << "2" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element = new_document.NewElement("IncrementalOrder");
+                tinyxml2::XMLElement* incremental_element = new_document.NewElement("IncrementalOrder");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    element->InsertEndChild( copy );
+                    incremental_element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(element);
+                new_document.InsertEndChild(incremental_element);
 
                 incremental_order_pointer->from_XML(new_document);
             }
@@ -1872,14 +1868,14 @@ cout << "2" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element = new_document.NewElement("GoldenSectionOrder");
+                tinyxml2::XMLElement* golden_section_element = new_document.NewElement("GoldenSectionOrder");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    element->InsertEndChild( copy );
+                    golden_section_element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(element);
+                new_document.InsertEndChild(golden_section_element);
 
                 golden_section_order_pointer->from_XML(new_document);
             }
@@ -1888,14 +1884,14 @@ cout << "2" << endl;
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* element = new_document.NewElement("SimulatedAnnealingOrder");
+                tinyxml2::XMLElement* simulated_annealing_element = new_document.NewElement("SimulatedAnnealingOrder");
 
                 for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
-                    element->InsertEndChild( copy );
+                    simulated_annealing_element->InsertEndChild( copy );
                 }
 
-                new_document.InsertEndChild(element);
+                new_document.InsertEndChild(simulated_annealing_element);
 
                 simulated_annelaing_order_pointer->from_XML(new_document);
             }

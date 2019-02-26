@@ -183,6 +183,10 @@ public:
   void trim();
   Vector<T> trimmed() const;
 
+  // Fill method
+
+  Vector<T> fill_from(const size_t&, const Vector<T>&) const;
+
   // Checking methods
 
   bool contains(const T &) const;
@@ -203,6 +207,7 @@ public:
   bool is_decrescent() const;
 
   bool is_binary() const;
+  bool is_binary_0_1() const;
   bool is_binary(const Vector<size_t>&) const;
 
   bool is_integer() const;
@@ -291,10 +296,6 @@ public:
 
   Vector<T> merge(const Vector<T>&, const char&) const;
 
-//  Vector<double> get_binary_vector(const Vector<T>&) const;
-//  Matrix<T> get_binary_matrix(const char& separator = ' ') const;
-//  Matrix<T> get_unique_binary_matrix(const char&, const Vector<T>&) const;
-
   Vector<T> filter_equal_to(const T&) const;
   Vector<T> filter_not_equal_to(const T&) const;
 
@@ -356,17 +357,18 @@ public:
   // Histogram methods
 
   Histogram<T> calculate_histogram(const size_t & = 10) const;
+  Histogram<T> calculate_histogram_centered(const double& = 0.0, const size_t & = 10) const;
   Histogram<T> calculate_histogram_binary() const;
 
   Histogram<T> calculate_histogram_integers(const size_t & = 10) const;
 
-  Histogram<T> calculate_histogram_missing_values(const Vector<size_t> &,
-                                                  const size_t & = 10) const;
+  Histogram<T> calculate_histogram_doubles() const;
+
+  Histogram<T> calculate_histogram_missing_values(const Vector<size_t> &, const size_t & = 10) const;
 
   Histogram<T> calculate_histogram_binary_missing_values(const Vector<size_t> &) const;
 
-  Histogram<T> calculate_histogram_integers_missing_values(const Vector<size_t> &,
-                                                           const size_t & = 10) const;
+  Histogram<T> calculate_histogram_integers_missing_values(const Vector<size_t> &, const size_t & = 10) const;
 
   Vector<T> calculate_moving_average(const T&) const;
 
@@ -517,9 +519,11 @@ public:
 
   double calculate_euclidean_distance(const Vector<T> &) const;
   double calculate_euclidean_weighted_distance(const Vector<T>&, const Vector<double>&) const;
+  Vector<double> calculate_euclidean_weighted_distance_vector(const Vector<T>&, const Vector<double>&) const;
 
   double calculate_manhattan_distance(const Vector<T> &) const;
   double calculate_manhattan_weighted_distance(const Vector<T>&, const Vector<double>&) const;
+  Vector<double> calculate_manhattan_weighted_distance_vector(const Vector<T>&, const Vector<double>&) const;
 
   double calculate_sum_squared_error(const Vector<double> &) const;
   double calculate_sum_squared_error(const Matrix<T> &, const size_t &,
@@ -677,11 +681,9 @@ public:
 
   // Unscaling methods
 
-  Vector<T> calculate_unscaled_minimum_maximum(const Vector<T> &,
-                                               const Vector<T> &) const;
+  Vector<T> calculate_unscaled_minimum_maximum(const Vector<T> &, const Vector<T> &) const;
 
-  Vector<T> calculate_unscaled_mean_standard_deviation(const Vector<T> &,
-                                                       const Vector<T> &) const;
+  Vector<T> calculate_unscaled_mean_standard_deviation(const Vector<T> &, const Vector<T> &) const;
 
   void unscale_minimum_maximum(const Vector<T> &, const Vector<T> &);
 
@@ -778,10 +780,13 @@ public:
   Vector<size_t> string_to_size_t(const size_t& exception_value = 999) const;
   Vector<time_t> string_to_time_t(const time_t& exception_value = 999) const;
 
-  Vector<time_t> www_mmm_ddd_yyyy_hh_mm_ss_to_time() const;
-  Vector<time_t> yyyy_mm_to_time(const char& = '/') const;
-  Vector<time_t> dd_mm_yyyy_to_time(const char& = '/') const;
-  Vector<time_t> yyyy_mm_dd_to_time(const char& = '/') const;
+  // Date-time
+
+  Vector<time_t> www_mmm_ddd_yyyy_hh_mm_ss_to_timestamp() const;
+  Vector<time_t> yyyy_mm_dd_hh_mm_ss_to_timestamp(const char& = '-') const;
+  Vector<time_t> yyyy_mm_to_timestamp(const char& = '/') const;
+  Vector<time_t> dd_mm_yyyy_to_timestamp(const char& = '/') const;
+  Vector<time_t> yyyy_mm_dd_to_timestamp(const char& = '/') const;
   Matrix<T> dd_mm_yyyy_to_dd_yyyy(const char& = '/') const;
   Matrix<T> yyyy_mm_dd_to_dd_yyyy(const char& = '/') const;
   Matrix<T> mm_yyyy_to_mm_yyyy(const char& = '/') const;
@@ -789,7 +794,8 @@ public:
   Vector<T> yyyy_mm_dd_to_weekday(const char& = '/') const;
   Vector<T> yyyy_mm_dd_to_yearday(const char& = '/') const;
 
-  Vector<struct tm> time_stamp_to_time_structure() const;
+  Vector<struct tm> timestamp_to_time_structure() const;
+  Vector<size_t> timestamp_to_yearday() const;
 
   Vector< Vector<T> >split(const size_t&) const;
 
@@ -1502,6 +1508,23 @@ Vector<T> Vector<T>::trimmed() const
 }
 
 
+template <class T>
+Vector<T> Vector<T>::fill_from(const size_t& from_index, const Vector<T>& fill_with) const
+{
+    Vector<T> new_vector(*this);
+
+    size_t counter = 0;
+
+    for (size_t i = from_index; i < from_index+fill_with.size(); i++)
+    {
+        new_vector[i] = fill_with[counter];
+
+        counter++;
+    }
+
+    return(new_vector);
+}
+
 /// Returns true if the vector contains a certain value, and false otherwise.
 
 template <class T>
@@ -1761,6 +1784,22 @@ template <class T> bool Vector<T>::is_binary(const Vector<size_t>& missing_indic
             {
                 return false;
             }
+        }
+    }
+
+    return true;
+}
+
+
+template <class T> bool Vector<T>::is_binary_0_1() const
+{
+    const size_t this_size = this->size();
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        if((*this)[i] != 0 &&(*this)[i] != 1)
+        {
+            return false;
         }
     }
 
@@ -2241,7 +2280,7 @@ Vector<T> Vector<T>::calculate_variation_percentage() const
 
 template <class T> size_t Vector<T>::perform_distribution_distance_analysis() const
 {
-    Vector<double> distances(3, 0.0);
+    Vector<double> distances(2, 0.0);
 
     const size_t n = this->size();
 
@@ -2255,12 +2294,12 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis() co
     const double minimum = sorted_vector[0];
     const double maximum = sorted_vector[n-1];
 
-    #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 
     for(int i = 0; i < static_cast<int>(n); i++)
     {
         const double normal_distribution = 0.5 * erfc((mean - sorted_vector[i])/(standard_deviation*sqrt(2)));
-        const double half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2)));
+//        const double half_normal_distribution = erf((sorted_vector[i])/(standard_deviation * sqrt(2)));
         const double uniform_distribution = (sorted_vector[i]-minimum)/(maximum-minimum);
 
         double empirical_distribution;
@@ -2292,13 +2331,14 @@ template <class T> size_t Vector<T>::perform_distribution_distance_analysis() co
             }
 
             empirical_distribution = static_cast<double>(counter)/static_cast<double>(n);
+
         }
 
         #pragma omp critical
         {
             distances[0] += abs(normal_distribution - empirical_distribution);
-            distances[1] += abs(half_normal_distribution - empirical_distribution);
-            distances[2] += abs(uniform_distribution - empirical_distribution);
+//            distances[1] += abs(half_normal_distribution - empirical_distribution);
+            distances[1] += abs(uniform_distribution - empirical_distribution);
         }
     }
 
@@ -3897,7 +3937,7 @@ template <class T> Vector<double> Vector<T>::calculate_percentage(const size_t& 
 
     for(size_t i = 0; i < this_size; i++)
     {
-        percentage_vector[i] = static_cast<double>((*this)[i])/static_cast<double>(total_sum*100.0);
+        percentage_vector[i] = static_cast<double>((*this)[i])*100.0/static_cast<double>(total_sum);
     }
 
     return percentage_vector;
@@ -4207,6 +4247,101 @@ Histogram<T> Vector<T>::calculate_histogram(const size_t &bins_number) const {
 }
 
 
+template<class T>
+Histogram<T> Vector<T>::calculate_histogram_centered(const double& center, const size_t & bins_number) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+      if(bins_number < 1) {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Vector Template.\n"
+               << "Histogram<T> calculate_histogram(const size_t&) const method.\n"
+               << "Number of bins is less than one.\n";
+
+        throw logic_error(buffer.str());
+      }
+
+    #endif
+
+      size_t bin_center;
+
+      if(bins_number%2 == 0)
+      {
+          bin_center = static_cast<size_t>(static_cast<double>(bins_number)/2.0);
+      }
+      else
+      {
+          bin_center = static_cast<size_t>(static_cast<double>(bins_number)/2.0+1.0/2.0);
+      }
+
+      Vector<T> minimums(bins_number);
+      Vector<T> maximums(bins_number);
+
+      Vector<T> centers(bins_number);
+      Vector<size_t> frequencies(bins_number, 0);
+
+      const Vector<T> minimum_maximum = calculate_minimum_maximum();
+
+      const T minimum = minimum_maximum[0];
+      const T maximum = minimum_maximum[1];
+
+      const double length = (maximum - minimum) /static_cast<double>(bins_number);
+
+//      minimums[0] = minimum;
+//      maximums[0] = minimum + length;
+//      centers[0] = (maximums[0] + minimums[0]) / 2.0;
+
+      minimums[bin_center-1] = center - length;
+      maximums[bin_center-1] = center + length;
+      centers[bin_center-1] = center;
+
+      // Calculate bins center
+
+      for(int i = bin_center; i < bins_number; i++) // Upper centers
+      {
+        minimums[i] = minimums[i - 1] + length;
+        maximums[i] = maximums[i - 1] + length;
+
+        centers[i] = (maximums[i] + minimums[i]) / 2.0;
+      }
+
+      for(int i = bin_center-2; i >= 0; i--) // Lower centers
+      {
+        minimums[i] = minimums[i + 1] - length;
+        maximums[i] = maximums[i + 1] - length;
+
+        centers[i] = (maximums[i] + minimums[i]) / 2.0;
+      }
+
+      // Calculate bins frequency
+
+      const size_t this_size = this->size();
+
+      for(size_t i = 0; i < this_size; i++) {
+        for(size_t j = 0; j < bins_number - 1; j++) {
+          if((*this)[i] >= minimums[j] &&(*this)[i] < maximums[j]) {
+            frequencies[j]++;
+          }
+        }
+
+        if((*this)[i] >= minimums[bins_number - 1]) {
+          frequencies[bins_number - 1]++;
+        }
+      }
+
+      Histogram<T> histogram(bins_number);
+      histogram.centers = centers;
+      histogram.minimums = minimums;
+      histogram.maximums = maximums;
+      histogram.frequencies = frequencies;
+
+      return(histogram);
+}
+
+
 /// This method bins the elements of the vector into a given number of equally
 /// spaced containers.
 /// It returns a vector of two vectors.
@@ -4292,6 +4427,38 @@ Histogram<T> Vector<T>::calculate_histogram_integers(const size_t& bins_number) 
     {
         minimums[i] = centers[i];
         maximums[i] = centers[i];
+        frequencies[i] = this->count_equal_to(centers[i]);
+    }
+
+    Histogram<T> histogram(centers_number);
+    histogram.centers = centers;
+    histogram.minimums = minimums;
+    histogram.maximums = maximums;
+    histogram.frequencies = frequencies;
+
+    return histogram;
+}
+
+
+template <class T>
+Histogram<T> Vector<T>::calculate_histogram_doubles() const {
+    // Control sentence(if debug)
+
+
+    Vector<T> centers = this->get_unique_elements();
+    const size_t centers_number = centers.size();
+
+    sort(centers.begin(), centers.end(), less<T>());
+
+    Vector<T> minimums(centers_number);
+    Vector<T> maximums(centers_number);
+    Vector<size_t> frequencies(centers_number);
+
+    for(size_t i = 0; i < centers_number; i++)
+    {
+        minimums[i] = centers[i]*1.01;
+        maximums[i] = centers[i]*1.01;
+
         frequencies[i] = this->count_equal_to(centers[i]);
     }
 
@@ -6622,6 +6789,39 @@ double Vector<T>::calculate_euclidean_weighted_distance(const Vector<T>& other_v
 
 
 template <class T>
+Vector<double> Vector<T>::calculate_euclidean_weighted_distance_vector(const Vector<T>& other_vector, const Vector<double>& weights) const {
+
+    const size_t this_size = this->size();
+#ifdef __OPENNN_DEBUG__
+
+  const size_t other_size = other_vector.size();
+
+  if(other_size != this_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Vector Template.\n"
+           << "double calculate_euclidean_weighted_distance(const Vector<T>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    Vector<double> distance(this_size,0.0);
+    double error;
+
+    for(size_t i = 0; i < this_size; i++) {
+        error = (*this)[i] - other_vector[i];
+
+        distance[i] = error * error * weights[i];
+    }
+
+    return(distance);
+}
+
+template <class T>
 double Vector<T>::calculate_manhattan_distance(const Vector<T> &other_vector) const {
 
     const size_t this_size = this->size();
@@ -6682,9 +6882,49 @@ double Vector<T>::calculate_manhattan_weighted_distance(const Vector<T>& other_v
     for(size_t i = 0; i < this_size; i++) {
         error = abs((*this)[i] - other_vector[i]);
 
+//        cout << (*this)[i] << "/" << other_vector[i] << "/" << weights[i] << "/" << error << endl;
+
         distance += error * weights[i];
 
 //        cout << distance << endl;
+    }
+
+//    system("pause");
+
+    return(distance);
+}
+
+
+template <class T>
+Vector<double> Vector<T>::calculate_manhattan_weighted_distance_vector(const Vector<T>& other_vector, const Vector<double>& weights) const {
+
+    const size_t this_size = this->size();
+#ifdef __OPENNN_DEBUG__
+
+  const size_t other_size = other_vector.size();
+
+  if(other_size != this_size) {
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Vector Template.\n"
+           << "double calculate_manhattan_weighted_distance(const Vector<T>&) const "
+              "method.\n"
+           << "Size must be equal to this size.\n";
+
+    throw logic_error(buffer.str());
+  }
+
+#endif
+
+    Vector<double> distance(this_size,0.0);
+    double error;
+
+    for(size_t i = 0; i < this_size; i++) {
+        error = abs((*this)[i] - other_vector[i]);
+
+//        if (i==0) cout << error << endl;
+
+        distance[i] = error * weights[i];
     }
 
     return(distance);
@@ -10404,7 +10644,7 @@ template <class T> Vector<time_t> Vector<T>::string_to_time_t(const time_t& exce
 /// Takes a string vector representing a date in the format Mon Jan 30 2017 12:52:24 and returns a timestamp vector.
 
 template <class T>
-Vector<time_t> Vector<T>::www_mmm_ddd_yyyy_hh_mm_ss_to_time() const
+Vector<time_t> Vector<T>::www_mmm_ddd_yyyy_hh_mm_ss_to_timestamp() const
 {
   const size_t this_size = this->size();
 
@@ -10514,7 +10754,7 @@ Vector<time_t> Vector<T>::www_mmm_ddd_yyyy_hh_mm_ss_to_time() const
 
 
 template <class T>
-Vector<time_t> Vector<T>::yyyy_mm_to_time(const char& delimiter) const
+Vector<time_t> Vector<T>::yyyy_mm_to_timestamp(const char& delimiter) const
 {
   const size_t this_size = this->size();
 
@@ -10578,12 +10818,84 @@ Vector<time_t> Vector<T>::yyyy_mm_to_time(const char& delimiter) const
 }
 
 
+template <class T>
+Vector<time_t> Vector<T>::yyyy_mm_dd_hh_mm_ss_to_timestamp(const char& delimiter) const
+{
+  const size_t this_size = this->size();
+
+  Vector<time_t> time(this_size);
+
+  vector<string> date_elements;
+
+  int yyyy;
+  int MM;
+  int dd;
+  int hh;
+  int mm;
+  int ss;
+
+  for(size_t i = 0; i < this_size; i++)
+  {
+      date_elements = split_string((*this)[i], delimiter);
+
+      if(date_elements.size() == 0)
+      {
+          time[i] = 0;
+      }
+      else if(date_elements.size() != 6)
+      {
+          ostringstream buffer;
+
+          buffer << "OpenNN Exception: Vector Template.\n"
+                 << "Vector<time_t> yyyy_mm_dd_hh_mm_ss_to_timestamp() const method.\n"
+                 << "Element " << i << " has a wrong format: \"" <<(*this)[i] << "\"" << endl;
+
+          throw logic_error(buffer.str());
+      }
+      else
+      {
+          yyyy = stoi(date_elements[0]);
+          MM = stoi(date_elements[1]);
+          dd = stoi(date_elements[2]);
+          hh = stoi(date_elements[3]);
+          mm = stoi(date_elements[4]);
+          ss = stoi(date_elements[5]);
+
+          struct tm time_info;
+
+          time_info.tm_year = yyyy - 1900;
+          time_info.tm_mon = MM - 1;
+          time_info.tm_mday = dd;
+          time_info.tm_hour = hh;
+          time_info.tm_min = mm;
+          time_info.tm_sec = ss;
+
+          time[i] = mktime(&time_info) + 3600*24;
+
+          if(time[i] == static_cast<time_t>(-1))
+          {
+              ostringstream buffer;
+
+              buffer << "OpenNN Exception: Vector Template.\n"
+                     << "Vector<time_t> dd_mm_yyyy_to_time() const method.\n"
+                     << "Element " << i << " can not be converted to time_t: \"" <<(*this)[i] << "\"" << endl;
+
+              throw logic_error(buffer.str());
+          }
+      }
+   }
+
+  return(time);
+}
+
+
+
 /// Takes a string vector representing a date with day, month and year and returns a timestamp vector.
 /// For instance, 21/12/2017 or 21-12-2017 to 1513814400.
 /// @param delimiter Char between year, month and day(/, -, etc).
 
 template <class T>
-Vector<time_t> Vector<T>::dd_mm_yyyy_to_time(const char& delimiter) const
+Vector<time_t> Vector<T>::dd_mm_yyyy_to_timestamp(const char& delimiter) const
 {
   const size_t this_size = this->size();
 
@@ -10657,7 +10969,7 @@ Vector<time_t> Vector<T>::dd_mm_yyyy_to_time(const char& delimiter) const
 /// @param delimiter Char between year, month and day(/, -, etc).
 
 template <class T>
-Vector<time_t> Vector<T>::yyyy_mm_dd_to_time(const char& delimiter) const
+Vector<time_t> Vector<T>::yyyy_mm_dd_to_timestamp(const char& delimiter) const
 {
   const size_t this_size = this->size();
 
@@ -10699,18 +11011,9 @@ Vector<time_t> Vector<T>::yyyy_mm_dd_to_time(const char& delimiter) const
       time_info.tm_mday = dd;
 
       time[static_cast<size_t>(i)] = mktime(&time_info);
-
-//      if(time[i] == (time_t)-1)
-//      {
-//          buffer << "OpenNN Exception: Vector Template.\n"
-//                 << "Vector<time_t> yyyy_mm_dd_to_time(cont char&) const method.\n"
-//                 << "Element " << i << " can not be converted to time_t: \"" <<(*this)[i] << "\"" << endl;
-
-//          throw logic_error(buffer.str());
-//      }
    }
 
-  return(time);
+  return time;
 }
 
 
@@ -10848,25 +11151,48 @@ Vector<T> Vector<T>::yyyy_mm_dd_to_yearday(const char& delimiter) const
 
 
 template <class T>
-Vector<struct tm> Vector<T>::time_stamp_to_time_structure() const
+Vector<struct tm> Vector<T>::timestamp_to_time_structure() const
 {
     const size_t this_size = this->size();
 
     Vector<struct tm> new_vector(this_size);
 
-    time_t time_stamp;
+    time_t timestamp;
     struct tm time_stucture;
 
     for(size_t i = 0; i < this_size; i++)
     {
-        time_stamp = (*this)[i];
+        timestamp = (*this)[i];
 
-        time_stucture = *gmtime(&time_stamp);
+        time_stucture = *gmtime(&timestamp);
 
         new_vector[i] = time_stucture;
     }
 
     return(new_vector);
+}
+
+
+template <class T>
+Vector<size_t> Vector<T>::timestamp_to_yearday() const
+{
+    const size_t this_size = this->size();
+
+    Vector<size_t> yearday(this_size);
+
+    time_t timestamp;
+    struct tm time_stucture;
+
+    for(size_t i = 0; i < this_size; i++)
+    {
+        timestamp = (*this)[i];
+
+        time_stucture = *gmtime(&timestamp);
+
+        yearday[i] = time_stucture.tm_yday;
+    }
+
+    return yearday;
 }
 
 
@@ -11278,8 +11604,6 @@ template <class T> istream &operator>>(istream &is, Vector<T> &v) {
 }
 
 
-// Vector output operator
-
 /// This method re-writes the output operator << for the Vector template.
 /// @param os Output stream.
 /// @param v Output vector.
@@ -11302,8 +11626,6 @@ ostream &operator<<(ostream &os, const Vector<T> &v) {
 }
 
 
-// Vector of vectors output operator
-
 /// This method re-writes the output operator << for vectors of vectors.
 /// @param os Output stream.
 /// @param v Output vector of vectors.
@@ -11319,8 +11641,6 @@ ostream &operator<<(ostream &os, const Vector< Vector<T> > &v)
   return(os);
 }
 
-
-// Vector of matrices output operator
 
 /// This method re-writes the output operator << for vectors of matrices.
 /// @param os Output stream.
@@ -11511,6 +11831,10 @@ template <class T> struct Statistics {
 
   void save(const string &file_name) const;
 
+  /// Name of variable
+
+  string name;
+
   /// Smallest value of a set, function, etc.
 
   T minimum = 0;
@@ -11531,6 +11855,7 @@ template <class T> struct Statistics {
 
 template <class T>
 Statistics<T>::Statistics() {
+  name = "Statistics";
   minimum = static_cast<T>(-1.0);
   maximum = static_cast<T>(1.0);
   mean = static_cast<T>(0.0);
@@ -11582,8 +11907,7 @@ template <class T> void Statistics<T>::set_mean(const double &new_mean) {
 /// @param new_standard_deviation Standard deviation value.
 
 template <class T>
-void
-Statistics<T>::set_standard_deviation(const double &new_standard_deviation) {
+void Statistics<T>::set_standard_deviation(const double &new_standard_deviation) {
   standard_deviation = new_standard_deviation;
 }
 
@@ -11664,8 +11988,9 @@ void Statistics<T>::save(const string &file_name) const {
 
   // Write file
 
-  file << "Minimum: " << minimum << endl << "Maximum: " << maximum
-       << endl << "Mean: " << mean << endl
+  file << "Minimum: " << minimum << endl
+       << "Maximum: " << maximum << endl
+       << "Mean: " << mean << endl
        << "Standard deviation: " << standard_deviation << endl;
 
   // Close file
@@ -11673,15 +11998,18 @@ void Statistics<T>::save(const string &file_name) const {
   file.close();
 }
 
-// Statistics output operator
-
 
 /// This method re-writes the output operator << for the Statistics template.
 /// @param os Output stream.
 /// @param v Output vector.
 
 template <class T>
-ostream &operator<<(ostream &os, const Statistics<T> &statistics) {
+ostream &operator<<(ostream &os, const Statistics<T> &statistics)
+{
+  //if(!statistics.name.empty())
+
+  os << statistics.name << endl;
+
   os << "  Minimum: " << statistics.minimum << endl
      << "  Maximum: " << statistics.maximum << endl
      << "  Mean: " << statistics.mean << endl
@@ -12171,15 +12499,6 @@ Vector<T> threshold(const Vector<T>& x)
     for(size_t i = 0; i < n; i++)
     {
         x[i] < 0.0 ? y[i] = 0.0 : y[i] = 1.0;
-
-//        if(x[i] < 0)
-//        {
-//            y[i] = 0.0;
-//        }
-//        else
-//        {
-//            y[i] = 1.0;
-//        }
     }
 
     return y;

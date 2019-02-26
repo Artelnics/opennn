@@ -317,6 +317,33 @@ void LossIndex::set_default()
 }
 
 
+void LossIndex::set_regularization_method(const string& new_regularization_method)
+{
+    if(new_regularization_method == "L1_NORM")
+    {
+        set_regularization_method(L1);
+    }
+    else if(new_regularization_method == "L2_NORM")
+    {
+        set_regularization_method(L2);
+    }
+    else if(new_regularization_method == "NO_REGULARIZATION")
+    {
+        set_regularization_method(None);
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void set_regularization_method(const string&) const method.\n"
+               << "Unknown regularization method: " << new_regularization_method << ".";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+
 void LossIndex::set_regularization_method(const LossIndex::RegularizationMethod& new_regularization_method)
 {
     regularization_method = new_regularization_method;
@@ -809,10 +836,11 @@ Vector<double> LossIndex::calculate_layer_error_gradient(const Matrix<double>& l
 
     // Biases
 
-    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
-    {
-        layer_error_gradient[synaptic_weights_number+perceptron] = layer_deltas.calculate_column_sum(perceptron);
-    }
+    layer_error_gradient.tuck_in(synaptic_weights_number, layer_deltas.calculate_columns_sum());
+//    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
+//    {
+//        layer_error_gradient[synaptic_weights_number+perceptron] = layer_deltas.calculate_column_sum(perceptron);
+//    }
 
     return layer_error_gradient;
 
@@ -958,6 +986,30 @@ string LossIndex::write_error_term_type() const
 string LossIndex::write_information() const
 {
    return string();
+}
+
+
+/// Returns a string with teh regularization method.
+
+string LossIndex::write_regularization_method() const
+{
+    switch(regularization_method)
+    {
+       case L1:
+       {
+            return "L1_NORM";
+       }
+       case L2:
+       {
+            return "L2_NORM";
+       }
+       case None:
+       {
+            return "NO_REGULARIZATION";
+       }
+    }
+
+    return "NO_REGULARIZATION";
 }
 
 
@@ -1161,28 +1213,121 @@ void LossIndex::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
+void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
+{
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("Regularization");
+
+    if(!root_element)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: LossIndex class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Regularization tag not found.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    const string new_regularization_method = root_element->Attribute("Type");
+
+    set_regularization_method(new_regularization_method);
+
+    const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralParametersNormWeight");
+
+    if(element)
+    {
+       const double new_regularization_weight = atof(element->GetText());
+
+       try
+       {
+          set_regularization_weight(new_regularization_weight);
+       }
+       catch(const logic_error& e)
+       {
+          cerr << e.what() << endl;
+       }
+    }
+}
+
+
+void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+     ostringstream buffer;
+
+     file_stream.OpenElement("Regularization");
+
+     // Regularization method
+
+     switch (regularization_method)
+     {
+        case L1:
+        {
+            file_stream.PushAttribute("Type", "L1_NORM");
+        }
+        break;
+
+        case L2:
+        {
+            file_stream.PushAttribute("Type", "L2_NORM");
+        }
+        break;
+
+        case None:
+        {
+            file_stream.PushAttribute("Type", "NO_REGULARIZATION");
+        }
+        break;
+     }
+
+     // Regularization weight
+
+     file_stream.OpenElement("NeuralParametersNormWeight");
+
+     buffer.str("");
+     buffer << regularization_weight;
+
+     file_stream.PushText(buffer.str().c_str());
+
+     // Close regularization weight
+
+     file_stream.CloseElement();
+
+     // Close regularization
+
+     file_stream.CloseElement();
+}
+
+
 /// Loads a default error term from a XML document.
 /// @param document TinyXML document containing the error term members.
 
 void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 {
-   // Display warnings
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("MeanSquaredError");
 
-   const tinyxml2::XMLElement* display_element = document.FirstChildElement("Display");
+    if(!root_element)
+    {
+        ostringstream buffer;
 
-   if(display_element)
-   {
-      string new_display_string = display_element->GetText();           
+        buffer << "OpenNN Exception: MeanSquaredError class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Mean squared element is nullptr.\n";
 
-      try
-      {
-         set_display(new_display_string != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
+        throw logic_error(buffer.str());
+    }
+
+    // Regularization
+
+    tinyxml2::XMLDocument regularization_document;
+    tinyxml2::XMLNode* element_clone;
+
+    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+
+    element_clone = regularization_element->DeepClone(&regularization_document);
+
+    regularization_document.InsertFirstChild(element_clone);
+
+    regularization_from_XML(regularization_document);
 }
 
 }

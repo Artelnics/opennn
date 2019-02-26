@@ -48,7 +48,7 @@ namespace OpenNN
 
 // DEFAULT CONSTRUCTOR
 
-/// Default constructor. 
+/// Default constructor.
 /// It creates a quasi-Newton method optimization algorithm not associated to any loss index. 
 /// It also initializes the class members to their default values.
 
@@ -61,8 +61,8 @@ QuasiNewtonMethod::QuasiNewtonMethod()
 
 // LOSS INDEX CONSTRUCTOR
 
-/// Loss index constructor. 
-/// It creates a quasi-Newton method optimization algorithm associated to a loss index. 
+/// Loss index constructor.
+/// It creates a quasi-Newton method optimization algorithm associated to a loss index.
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -77,8 +77,8 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
 
 // XML CONSTRUCTOR
 
-/// XML constructor. 
-/// It creates a quasi-Newton method optimization algorithm not associated to any loss index. 
+/// XML constructor.
+/// It creates a quasi-Newton method optimization algorithm not associated to any loss index.
 /// It also initializes the class members to their default values.
 
 QuasiNewtonMethod::QuasiNewtonMethod(const tinyxml2::XMLDocument& document)
@@ -321,7 +321,7 @@ const bool& QuasiNewtonMethod::get_return_minimum_selection_error_neural_network
 
 // const bool& get_apply_early_stopping() const method
 
-/// Returns true if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
 const bool& QuasiNewtonMethod::get_apply_early_stopping() const
 {
@@ -348,13 +348,11 @@ const bool& QuasiNewtonMethod::get_reserve_parameters_norm_history() const
 }
 
 
-// const bool& get_reserve_loss_history() const method
+/// Returns true if the error history vector is to be reserved, and false otherwise.
 
-/// Returns true if the loss history vector is to be reserved, and false otherwise.
-
-const bool& QuasiNewtonMethod::get_reserve_loss_history() const
+const bool& QuasiNewtonMethod::get_reserve_error_history() const
 {
-   return(reserve_loss_history);     
+   return(reserve_error_history);
 }
 
 
@@ -421,7 +419,7 @@ const bool& QuasiNewtonMethod::get_reserve_inverse_Hessian_history() const
 
 // const bool& get_reserve_selection_error_history() const method
 
-/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
+/// Returns true if the selection error history vector is to be reserved, and false otherwise.
 
 const bool& QuasiNewtonMethod::get_reserve_selection_error_history() const
 {
@@ -497,7 +495,7 @@ void QuasiNewtonMethod::set_reserve_all_training_history(const bool& new_reserve
    reserve_elapsed_time_history = new_reserve_all_training_history;
    reserve_parameters_history = new_reserve_all_training_history;
    reserve_parameters_norm_history = new_reserve_all_training_history;
-   reserve_loss_history = new_reserve_all_training_history;
+   reserve_error_history = new_reserve_all_training_history;
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
    reserve_training_direction_history = new_reserve_all_training_history;
@@ -556,7 +554,7 @@ void QuasiNewtonMethod::set_default()
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_loss_history = true;
+   reserve_error_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
    reserve_selection_error_history = false;
@@ -787,7 +785,7 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const double& new_
 }
 
 
-/// Sets a new minimum loss improvement during training.  
+/// Sets a new minimum loss improvement during training.
 /// @param new_minimum_loss_increase Minimum improvement in the loss between two epochs.
 
 void QuasiNewtonMethod::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
@@ -878,7 +876,7 @@ void QuasiNewtonMethod::set_maximum_epochs_number(const size_t& new_maximum_epoc
 }
 
 
-/// Sets a new maximum training time.  
+/// Sets a new maximum training time.
 /// @param new_maximum_time Maximum training time.
 
 void QuasiNewtonMethod::set_maximum_time(const double& new_maximum_time)
@@ -916,8 +914,8 @@ void QuasiNewtonMethod::set_return_minimum_selection_error_neural_network(const 
 
 // void set_apply_early_stopping(const bool&) method
 
-/// Makes the selection loss decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+/// Makes the selection error decrease stopping criteria has to be taken in account or not.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
 void QuasiNewtonMethod::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
@@ -946,14 +944,14 @@ void QuasiNewtonMethod::set_reserve_parameters_norm_history(const bool& new_rese
 }
 
 
-// void set_reserve_loss_history(bool) method
+// void set_reserve_error_history(bool) method
 
-/// Makes the loss history vector to be reseved or not in memory.
-/// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
+/// Makes the error history vector to be reseved or not in memory.
+/// @param new_reserve_error_history True if the loss history vector is to be reserved, false otherwise.
 
-void QuasiNewtonMethod::set_reserve_loss_history(const bool& new_reserve_loss_history)
+void QuasiNewtonMethod::set_reserve_error_history(const bool& new_reserve_error_history)
 {
-   reserve_loss_history = new_reserve_loss_history;     
+   reserve_error_history = new_reserve_error_history;
 }
 
 
@@ -1029,9 +1027,9 @@ void QuasiNewtonMethod::set_reserve_elapsed_time_history(const bool& new_reserve
 
 // void set_reserve_selection_error_history(bool) method
 
-/// Makes the selection loss history to be reserved or not in memory.
+/// Makes the selection error history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_error_history True if the selection loss history is to be reserved, false otherwise.
+/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
 
 void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)  
 {
@@ -1618,7 +1616,7 @@ void QuasiNewtonMethod::QuasiNewtonMethodResults::resize_training_history(const 
       parameters_norm_history.resize(new_size);
    }
 
-   if(quasi_Newton_method_pointer->get_reserve_loss_history())
+   if(quasi_Newton_method_pointer->get_reserve_error_history())
    {
       loss_history.resize(new_size);
    }
@@ -1866,7 +1864,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 {
    // Control sentence(if debug)
 
-   #ifdef __OPENNN_DEBUG__ 
+   #ifdef __OPENNN_DEBUG__
 
    check();
 
@@ -1900,8 +1898,12 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    // Loss index stuff
      
    double training_loss = 0.0;
+   double training_error = 0.0;
    double old_training_loss = 0.0;
    double training_loss_decrease = 0.0;
+
+   double training_regularization = 0.0;
+   double regularization_weight = loss_index_pointer->get_regularization_weight();
 
    Vector<double> gradient(parameters_number);
    Vector<double> old_gradient(parameters_number);
@@ -1914,6 +1916,8 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    double old_selection_error = 0.0;
 
 #ifdef __OPENNN_CUDA__
+
+   old_inverse_Hessian.set(parameters_number, parameters_number);
 
    double* parameters_data = parameters.data();
    double* old_parameters_data = old_parameters.data();
@@ -1932,7 +1936,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    double* auxiliar_matrix_d;
    double* old_inverse_Hessian_d;
 
-   const int num_bytes = (int)parameters_number * sizeof(double);
+   const int num_bytes = static_cast<int>(parameters_number) * sizeof(double);
 
    int error;
 
@@ -1995,13 +1999,13 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
            gpuDeviceCount = 0;
        }
 
-       error = mallocCUDA(&auxiliar_matrix_d,(int)parameters_number * num_bytes);
+       error = mallocCUDA(&auxiliar_matrix_d,static_cast<int>(parameters_number) * num_bytes);
        if(error != 0)
        {
            gpuDeviceCount = 0;
        }
 
-       error = mallocCUDA(&old_inverse_Hessian_d,(int)parameters_number * num_bytes);
+       error = mallocCUDA(&old_inverse_Hessian_d,static_cast<int>(parameters_number) * num_bytes);
        if(error != 0)
        {
            gpuDeviceCount = 0;
@@ -2025,7 +2029,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    Vector<double> directional_point(2, 0.0);
 
    Vector<double> minimum_selection_error_parameters;
-   double minimum_selection_error;
+   double minimum_selection_error = 0.0;
 
    bool stop_training = false;
 
@@ -2037,7 +2041,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
    // Main loop 
 
-   for(size_t epoch = 0; epoch < maximum_epochs_number; epoch++)
+   for(size_t epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
        // Neural network
 
@@ -2052,15 +2056,21 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
        // Loss index stuff
 
+       training_regularization = loss_index_pointer->calculate_regularization();
+
        if(epoch == 0)
        {
-           training_loss = loss_index_pointer->calculate_training_loss();
+           training_error = loss_index_pointer->calculate_training_error();
+
+           training_loss = training_error + regularization_weight*training_error;
            training_loss_decrease = 0.0;
        }
        else
        {
            training_loss = directional_point[1];
            training_loss_decrease = training_loss - old_training_loss;
+
+           training_error = training_loss - regularization_weight*training_regularization;
        }
 
        if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
@@ -2111,7 +2121,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
                error += memcpyCUDA(gradient_d, gradient_data, num_bytes);
 
-               error += memcpyCUDA(old_inverse_Hessian_d, old_inverse_Hessian_data,(int)parameters_number * num_bytes);
+               error += memcpyCUDA(old_inverse_Hessian_d, old_inverse_Hessian_data,static_cast<int>(parameters_number) * num_bytes);
 
                if(error != 0)
                {
@@ -2184,8 +2194,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
        if(epoch != 0 && training_rate < numeric_limits<double>::min())
        {
-           cout << "Gradient descent" << endl;
-
            training_direction = calculate_gradient_descent_training_direction(gradient);
 
            directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_training_rate);
@@ -2208,7 +2216,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
        if(reserve_parameters_norm_history) results_pointer->parameters_norm_history[epoch] = parameters_norm;
 
-       if(reserve_loss_history) results_pointer->loss_history[epoch] = training_loss;
+       if(reserve_error_history) results_pointer->loss_history[epoch] = training_error;
 
        if(reserve_selection_error_history) results_pointer->selection_error_history[epoch] = selection_error;
 
@@ -2276,13 +2284,13 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
        {
            if(display)
            {
-               cout << "Epoch " << epoch << ": Maximum selection loss increases reached.\n"
+               cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
                     << "Selection loss increases: "<< selection_failures << endl;
            }
 
            stop_training = true;
 
-           results_pointer->stopping_condition = MaximumSelectionLossIncreases;
+           results_pointer->stopping_condition = MaximumSelectionErrorIncreases;
        }
        else if(epoch == maximum_epochs_number)
        {
@@ -2317,7 +2325,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
            results_pointer->final_parameters = parameters;
            results_pointer->final_parameters_norm = parameters_norm;
 
-           results_pointer->final_loss = training_loss;
+           results_pointer->final_loss = training_error;
            results_pointer->final_selection_error = selection_error;
 
            results_pointer->final_gradient = gradient;
@@ -2334,7 +2342,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
            if(display)
            {
                cout << "Parameters norm: " << parameters_norm << "\n"
-                    << "Training loss: " << training_loss <<  "\n"
+                    << "Training error: " << training_error <<  "\n"
                     << "Gradient norm: " << gradient_norm <<  "\n"
                     << loss_index_pointer->write_information()
                     << "Training rate: " << training_rate <<  "\n"
@@ -2352,7 +2360,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
        {
            cout << "Epoch " << epoch << ";\n"
                 << "Parameters norm: " << parameters_norm << "\n"
-                << "Training loss: " << training_loss << "\n"
+                << "Training error: " << training_error << "\n"
                 << "Gradient norm: " << gradient_norm << "\n"
                 << loss_index_pointer->write_information()
                 << "Training rate: " << training_rate << "\n"
@@ -2362,7 +2370,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
            {
                cout << "Selection error: " << selection_error << endl;
            }
-
        }
 
        // Update stuff
@@ -2614,7 +2621,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Performance goal 
+   // Loss goal 
    {
    element = document->NewElement("LossGoal");
    root_element->LinkEndChild(element);
@@ -2638,9 +2645,9 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Maximum selection loss decreases
+   // Maximum selection error decreases
    {
-   element = document->NewElement("MaximumSelectionLossDecreases");
+   element = document->NewElement("MaximumSelectionErrorIncreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2700,19 +2707,19 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
    // Reserve loss history 
    {
-   element = document->NewElement("ReservePerformanceHistory");
+   element = document->NewElement("ReserveErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_loss_history;
+   buffer << reserve_error_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection loss history
+   // Reserve selection error history
    {
-   element = document->NewElement("ReserveSelectionLossHistory");
+   element = document->NewElement("ReserveSelectionErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2795,9 +2802,9 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 //   element->LinkEndChild(text);
 //   }
 
-   // Reserve selection loss history
+   // Reserve selection error history
 //   {
-//   element = document->NewElement("ReserveSelectionLossHistory");
+//   element = document->NewElement("ReserveSelectionErrorHistory");
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
@@ -2927,7 +2934,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Performance goal
+    // Loss goal
 
     file_stream.OpenElement("LossGoal");
 
@@ -2949,9 +2956,9 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Maximum selection loss decreases
+    // Maximum selection error decreases
 
-    file_stream.OpenElement("MaximumSelectionLossDecreases");
+    file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
     buffer << maximum_selection_error_decreases;
@@ -2993,20 +3000,20 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Reserve loss history
+    // Reserve error history
 
-    file_stream.OpenElement("ReservePerformanceHistory");
+    file_stream.OpenElement("ReserveErrorHistory");
 
     buffer.str("");
-    buffer << reserve_loss_history;
+    buffer << reserve_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection loss history
+    // Reserve selection error history
 
-    file_stream.OpenElement("ReserveSelectionLossHistory");
+    file_stream.OpenElement("ReserveSelectionErrorHistory");
 
     buffer.str("");
     buffer << reserve_selection_error_history;
@@ -3093,9 +3100,9 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Performance goal
+   // Loss goal
 
-   labels.push_back("Performance goal");
+   labels.push_back("Loss goal");
 
    buffer.str("");
    buffer << loss_goal;
@@ -3111,9 +3118,9 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Maximum selection loss decreases
+   // Maximum selection error decreases
 
-   labels.push_back("Maximum selection loss increases");
+   labels.push_back("Maximum selection error increases");
 
    buffer.str("");
    buffer << maximum_selection_error_decreases;
@@ -3155,13 +3162,13 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve loss history
+   // Reserve error history
 
-   labels.push_back("Reserve loss history");
+   labels.push_back("Reserve error history");
 
    buffer.str("");
 
-   if(reserve_loss_history)
+   if(reserve_error_history)
    {
        buffer << "true";
    }
@@ -3172,9 +3179,9 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve selection loss history
+   // Reserve selection error history
 
-   labels.push_back("Reserve selection loss history");
+   labels.push_back("Reserve selection error history");
 
    buffer.str("");
 
@@ -3312,7 +3319,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
            learning_rate_algorithm_document.InsertFirstChild(element_clone);
 
-         learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
+           learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
        }
    }
 
@@ -3504,7 +3511,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Performance goal 
+   // Loss goal 
    {
        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
 
@@ -3542,9 +3549,9 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Maximum selection loss decreases
+   // Maximum selection error decreases
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
        if(element)
        {
@@ -3639,15 +3646,15 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
    // Reserve loss history 
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveErrorHistory");
 
        if(element)
        {
-          const string new_reserve_loss_history = element->GetText();
+          const string new_reserve_error_history = element->GetText();
 
           try
           {
-             set_reserve_loss_history(new_reserve_loss_history != "0");
+             set_reserve_error_history(new_reserve_error_history != "0");
           }
           catch(const logic_error& e)
           {
@@ -3656,9 +3663,9 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve selection loss history
+   // Reserve selection error history
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
        if(element)
        {
@@ -3789,9 +3796,9 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
        }
    }
 
-   // Reserve selection loss history
+   // Reserve selection error history
    {
-       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
        if(element)
        {
@@ -3833,7 +3840,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_save_period = atoi(element->GetText());
+          const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
 
           try
           {

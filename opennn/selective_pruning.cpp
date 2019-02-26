@@ -246,7 +246,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
     results->inputs_data.push_back(current_inputs);
 
-    if(reserve_loss_data)
+    if(reserve_error_data)
     {
         results->loss_data.push_back(current_training_loss);
     }
@@ -343,7 +343,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
 
         results->inputs_data.push_back(current_inputs);
 
-        if(reserve_loss_data)
+        if(reserve_error_data)
         {
             results->loss_data.push_back(current_training_loss);
         }
@@ -381,7 +381,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
                 cout << "Selection loss reached." << endl;
             }
 
-            results->stopping_condition = InputsSelectionAlgorithm::SelectionLossGoal;
+            results->stopping_condition = InputsSelectionAlgorithm::SelectionErrorGoal;
         }
         else if(iterations >= maximum_iterations_number)
         {
@@ -493,7 +493,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
         cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->get_names().vector_to_string() << endl
                   << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl
                   << "Optimum training loss: " << optimum_loss_error << endl
-                  << "Optimum selection loss: " << optimum_selection_error << endl
+                  << "Optimum selection error: " << optimum_selection_error << endl
                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
@@ -593,18 +593,18 @@ Matrix<string> SelectivePruning::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Plot training loss history
+   // Plot training error history
 
-   labels.push_back("Plot training loss history");
+   labels.push_back("Plot training error history");
 
    buffer.str("");
-   buffer << reserve_loss_data;
+   buffer << reserve_error_data;
 
    values.push_back(buffer.str());
 
-   // Plot selection loss history
+   // Plot selection error history
 
-   labels.push_back("Plot selection loss history");
+   labels.push_back("Plot selection error history");
 
    buffer.str("");
    buffer << reserve_selection_error_data;
@@ -678,9 +678,9 @@ tinyxml2::XMLDocument* SelectivePruning::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // selection loss goal
+   // selection error goal
    {
-   element = document->NewElement("SelectionLossGoal");
+   element = document->NewElement("SelectionErrorGoal");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -762,21 +762,21 @@ tinyxml2::XMLDocument* SelectivePruning::to_XML() const
    element->LinkEndChild(text);
    }
 
-   // Reserve loss data
+   // Reserve error data
    {
-   element = document->NewElement("ReservePerformanceHistory");
+   element = document->NewElement("ReserveErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_loss_data;
+   buffer << reserve_error_data;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
    }
 
-   // Reserve selection loss data
+   // Reserve selection error data
    {
-   element = document->NewElement("ReserveSelectionLossHistory");
+   element = document->NewElement("ReserveSelectionErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -788,7 +788,7 @@ tinyxml2::XMLDocument* SelectivePruning::to_XML() const
 
    // Performance calculation method
 //   {
-//   element = document->NewElement("PerformanceCalculationMethod");
+//   element = document->NewElement("LossCalculationMethod");
 //   root_element->LinkEndChild(element);
 
 //   text = document->NewText(write_loss_calculation_method().c_str());
@@ -894,7 +894,7 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
 
     // Performance calculation method
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("PerformanceCalculationMethod");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossCalculationMethod");
 
         if(element)
         {
@@ -930,17 +930,17 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve loss data
+    // Reserve error data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveErrorHistory");
 
         if(element)
         {
-           const string new_reserve_loss_data = element->GetText();
+           const string new_reserve_error_data = element->GetText();
 
            try
            {
-              set_reserve_loss_data(new_reserve_loss_data != "0");
+              set_reserve_error_data(new_reserve_error_data != "0");
            }
            catch(const logic_error& e)
            {
@@ -949,9 +949,9 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection loss data
+    // Reserve selection error data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
         if(element)
         {
@@ -1006,9 +1006,9 @@ void SelectivePruning::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // selection loss goal
+    // selection error goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
 
         if(element)
         {

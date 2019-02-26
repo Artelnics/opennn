@@ -3,7 +3,7 @@
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
 /*                                                                                                              */
-/*   C O N J U G A T E   G R A D I E N T   C L A S S                                                            */
+/*   S C A L E D   C O N J U G A T E   G R A D I E N T   C L A S S   H E A D E R                                */
 /*                                                                                                              */
 /*   Artificial Intelligence Techniques SL                                                                      */
 /*   artelnics@artelnics.com                                                                                    */
@@ -12,18 +12,18 @@
 
 // OpenNN includes
 
-#include "conjugate_gradient.h"
+#include "scaled_conjugate_gradient.h"
 
 namespace OpenNN
 {
 
 // DEFAULT CONSTRUCTOR
 
-/// Default constructor.
+/// Default constructor. 
 /// It creates a conjugate gradient optimization algorithm object not associated to any loss index object.
 /// It also initializes the class members to their default values.
 
-ConjugateGradient::ConjugateGradient() : OptimizationAlgorithm()
+ScaledConjugateGradient::ScaledConjugateGradient() : OptimizationAlgorithm()
 {
    set_default();
 }
@@ -31,12 +31,12 @@ ConjugateGradient::ConjugateGradient() : OptimizationAlgorithm()
 
 // GENERAL CONSTRUCTOR
 
-/// General constructor.
+/// General constructor. 
 /// It creates a conjugate gradient optimization algorithm associated to a loss index object.
 /// It also initializes the rest of class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
-ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
+ScaledConjugateGradient::ScaledConjugateGradient(LossIndex* new_loss_index_pointer)
 : OptimizationAlgorithm(new_loss_index_pointer)
 {
    learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);   
@@ -47,17 +47,17 @@ ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
 
 // XML CONSTRUCTOR 
 
-/// XML constructor.
+/// XML constructor. 
 /// It creates a conjugate gradient optimization algorithm not associated to any loss index object.
 /// It also loads the class members from a XML document.
-/// @param conjugate_gradient_document TinyXML document with the members of a conjugate gradient object.
+/// @param scaled_conjugate_gradient_document TinyXML document with the members of a conjugate gradient object.
 
-ConjugateGradient::ConjugateGradient(const tinyxml2::XMLDocument& conjugate_gradient_document)
- : OptimizationAlgorithm(conjugate_gradient_document)
+ScaledConjugateGradient::ScaledConjugateGradient(const tinyxml2::XMLDocument& scaled_conjugate_gradient_document)
+ : OptimizationAlgorithm(scaled_conjugate_gradient_document)
 {
    set_default();
 
-   from_XML(conjugate_gradient_document);
+   from_XML(scaled_conjugate_gradient_document);
 }
 
 
@@ -65,7 +65,7 @@ ConjugateGradient::ConjugateGradient(const tinyxml2::XMLDocument& conjugate_grad
 
 /// Destructor.
 
-ConjugateGradient::~ConjugateGradient()
+ScaledConjugateGradient::~ScaledConjugateGradient()
 {
 }
 
@@ -75,7 +75,7 @@ ConjugateGradient::~ConjugateGradient()
 
 /// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object. 
 
-const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() const
+const LearningRateAlgorithm& ScaledConjugateGradient::get_learning_rate_algorithm() const
 {
    return(learning_rate_algorithm);
 }
@@ -83,7 +83,7 @@ const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() co
 
 /// Returns a pointer to the learning rate algorithm object inside the conjugate gradient method object. 
 
-LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
+LearningRateAlgorithm* ScaledConjugateGradient::get_learning_rate_algorithm_pointer()
 {
    return(&learning_rate_algorithm);
 }
@@ -91,7 +91,7 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
 
 /// Returns the conjugate gradient training direction method used for training.
 
-const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_training_direction_method() const
+const ScaledConjugateGradient::TrainingDirectionMethod& ScaledConjugateGradient::get_training_direction_method() const
 {
    return(training_direction_method);
 }
@@ -99,7 +99,7 @@ const ConjugateGradient::TrainingDirectionMethod& ConjugateGradient::get_trainin
 
 /// Returns a string with the name of the training direction.  
 
-string ConjugateGradient::write_training_direction_method() const
+string ScaledConjugateGradient::write_training_direction_method() const
 {
    switch(training_direction_method)
    {
@@ -120,7 +120,7 @@ string ConjugateGradient::write_training_direction_method() const
 
 /// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen. 
 
-const double& ConjugateGradient::get_warning_parameters_norm() const
+const double& ScaledConjugateGradient::get_warning_parameters_norm() const
 {
    return(warning_parameters_norm);       
 }
@@ -128,7 +128,7 @@ const double& ConjugateGradient::get_warning_parameters_norm() const
 
 /// Returns the minimum value for the norm of the gradient vector at wich a warning message is written to the screen. 
 
-const double& ConjugateGradient::get_warning_gradient_norm() const
+const double& ScaledConjugateGradient::get_warning_gradient_norm() const
 {
    return(warning_gradient_norm);       
 }
@@ -136,7 +136,7 @@ const double& ConjugateGradient::get_warning_gradient_norm() const
 
 /// Returns the training rate value at wich a warning message is written to the screen during line minimization.
 
-const double& ConjugateGradient::get_warning_training_rate() const
+const double& ScaledConjugateGradient::get_warning_training_rate() const
 {
    return(warning_training_rate);
 }
@@ -144,7 +144,7 @@ const double& ConjugateGradient::get_warning_training_rate() const
 
 /// Returns the value for the norm of the parameters vector at wich an error message is written to the screen and the program exits. 
 
-const double& ConjugateGradient::get_error_parameters_norm() const
+const double& ScaledConjugateGradient::get_error_parameters_norm() const
 {
    return(error_parameters_norm);
 }
@@ -153,7 +153,7 @@ const double& ConjugateGradient::get_error_parameters_norm() const
 /// Returns the value for the norm of the gradient vector at wich an error message is written
 /// to the screen and the program exits. 
 
-const double& ConjugateGradient::get_error_gradient_norm() const
+const double& ScaledConjugateGradient::get_error_gradient_norm() const
 {
    return(error_gradient_norm);
 }
@@ -162,7 +162,7 @@ const double& ConjugateGradient::get_error_gradient_norm() const
 /// Returns the training rate value at wich the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
 
-const double& ConjugateGradient::get_error_training_rate() const
+const double& ScaledConjugateGradient::get_error_training_rate() const
 {
    return(error_training_rate);
 }
@@ -170,7 +170,7 @@ const double& ConjugateGradient::get_error_training_rate() const
 
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training. 
 
-const double& ConjugateGradient::get_minimum_parameters_increment_norm() const
+const double& ScaledConjugateGradient::get_minimum_parameters_increment_norm() const
 {
    return(minimum_parameters_increment_norm);
 }
@@ -178,7 +178,7 @@ const double& ConjugateGradient::get_minimum_parameters_increment_norm() const
 
 /// Returns the minimum loss improvement during training.  
 
-const double& ConjugateGradient::get_minimum_loss_increase() const
+const double& ScaledConjugateGradient::get_minimum_loss_increase() const
 {
    return(minimum_loss_decrease);
 }
@@ -187,7 +187,7 @@ const double& ConjugateGradient::get_minimum_loss_increase() const
 /// Returns the goal value for the loss. 
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& ConjugateGradient::get_loss_goal() const
+const double& ScaledConjugateGradient::get_loss_goal() const
 {
    return(loss_goal);
 }
@@ -196,7 +196,7 @@ const double& ConjugateGradient::get_loss_goal() const
 /// Returns the goal value for the norm of the error function gradient.
 /// This is used as a stopping criterion when training a multilayer perceptron
 
-const double& ConjugateGradient::get_gradient_norm_goal() const
+const double& ScaledConjugateGradient::get_gradient_norm_goal() const
 {
    return(gradient_norm_goal);
 }
@@ -204,7 +204,7 @@ const double& ConjugateGradient::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& ConjugateGradient::get_maximum_selection_error_increases() const
+const size_t& ScaledConjugateGradient::get_maximum_selection_error_increases() const
 {
    return(maximum_selection_error_decreases);
 }
@@ -212,7 +212,7 @@ const size_t& ConjugateGradient::get_maximum_selection_error_increases() const
 
 /// Returns the maximum number of epochs for training.
 
-const size_t& ConjugateGradient::get_maximum_epochs_number() const
+const size_t& ScaledConjugateGradient::get_maximum_epochs_number() const
 {
    return(maximum_epochs_number);
 }
@@ -220,7 +220,7 @@ const size_t& ConjugateGradient::get_maximum_epochs_number() const
 
 /// Returns the maximum training time.  
 
-const double& ConjugateGradient::get_maximum_time() const
+const double& ScaledConjugateGradient::get_maximum_time() const
 {
    return(maximum_time);
 }
@@ -228,15 +228,15 @@ const double& ConjugateGradient::get_maximum_time() const
 
 /// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
 
-const bool& ConjugateGradient::get_return_minimum_selection_error_neural_network() const
+const bool& ScaledConjugateGradient::get_return_minimum_selection_error_neural_network() const
 {
     return(return_minimum_selection_error_neural_network);
 }
 
 
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+/// Returns true if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
 
-const bool& ConjugateGradient::get_apply_early_stopping() const
+const bool& ScaledConjugateGradient::get_apply_early_stopping() const
 {
     return(apply_early_stopping);
 }
@@ -244,7 +244,7 @@ const bool& ConjugateGradient::get_apply_early_stopping() const
 
 /// Returns true if the parameters history matrix is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_parameters_history() const
+const bool& ScaledConjugateGradient::get_reserve_parameters_history() const
 {
    return(reserve_parameters_history);     
 }
@@ -252,23 +252,23 @@ const bool& ConjugateGradient::get_reserve_parameters_history() const
 
 /// Returns true if the parameters norm history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_parameters_norm_history() const
+const bool& ScaledConjugateGradient::get_reserve_parameters_norm_history() const
 {
    return(reserve_parameters_norm_history);     
 }
 
 
-/// Returns true if the error history vector is to be reserved, and false otherwise.
+/// Returns true if the loss history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_error_history() const
+const bool& ScaledConjugateGradient::get_reserve_loss_history() const
 {
-   return(reserve_error_history);
+   return(reserve_loss_history);     
 }
 
 
 /// Returns true if the gradient history vector of vectors is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_gradient_history() const
+const bool& ScaledConjugateGradient::get_reserve_gradient_history() const
 {
    return(reserve_gradient_history);     
 }
@@ -276,7 +276,7 @@ const bool& ConjugateGradient::get_reserve_gradient_history() const
 
 /// Returns true if the gradient norm history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_gradient_norm_history() const
+const bool& ScaledConjugateGradient::get_reserve_gradient_norm_history() const
 {
    return(reserve_gradient_norm_history);     
 }
@@ -284,7 +284,7 @@ const bool& ConjugateGradient::get_reserve_gradient_norm_history() const
 
 /// Returns true if the training direction history matrix is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_training_direction_history() const
+const bool& ScaledConjugateGradient::get_reserve_training_direction_history() const
 {
    return(reserve_training_direction_history);     
 }
@@ -292,7 +292,7 @@ const bool& ConjugateGradient::get_reserve_training_direction_history() const
 
 /// Returns true if the training rate history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_training_rate_history() const
+const bool& ScaledConjugateGradient::get_reserve_training_rate_history() const
 {
    return(reserve_training_rate_history);     
 }
@@ -300,15 +300,15 @@ const bool& ConjugateGradient::get_reserve_training_rate_history() const
 
 /// Returns true if the elapsed time history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_elapsed_time_history() const
+const bool& ScaledConjugateGradient::get_reserve_elapsed_time_history() const
 {
    return(reserve_elapsed_time_history);     
 }
 
 
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
+/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_selection_error_history() const
+const bool& ScaledConjugateGradient::get_reserve_selection_error_history() const
 {
    return(reserve_selection_error_history);
 }
@@ -318,7 +318,7 @@ const bool& ConjugateGradient::get_reserve_selection_error_history() const
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
-void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
+void ScaledConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
    loss_index_pointer = new_loss_index_pointer;
 
@@ -329,8 +329,8 @@ void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer
 /// Sets a new training direction method to be used for training. 
 /// @param new_training_direction_method Conjugate gradient training direction method.
 
-void ConjugateGradient::set_training_direction_method
-(const ConjugateGradient::TrainingDirectionMethod& new_training_direction_method)
+void ScaledConjugateGradient::set_training_direction_method
+(const ScaledConjugateGradient::TrainingDirectionMethod& new_training_direction_method)
 {
    training_direction_method = new_training_direction_method;   
 }
@@ -344,7 +344,7 @@ void ConjugateGradient::set_training_direction_method
 /// </ul>
 /// @param new_training_direction_method_name String with the name of the training direction method.
 
-void ConjugateGradient::set_training_direction_method(const string& new_training_direction_method_name)
+void ScaledConjugateGradient::set_training_direction_method(const string& new_training_direction_method_name)
 {
    if(new_training_direction_method_name == "PR")
    {
@@ -358,7 +358,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_training_direction_method(const string&) method.\n"
 			 << "Unknown training direction method: " << new_training_direction_method_name << ".\n";
    
@@ -374,7 +374,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 /// <li> loss.
 /// <li> Gradient. 
 /// <li> Gradient norm. 
-/// <li> selection error.
+/// <li> selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm. 
 /// <li> Training rate.
@@ -383,7 +383,7 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 /// @param new_reserve_all_training_history True if all training history variables are to be reserved, 
 /// false otherwise.
 
-void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
+void ScaledConjugateGradient::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
 {
 
    // Multilayer perceptron
@@ -393,7 +393,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
    
    // Loss index
 
-   reserve_error_history = new_reserve_all_training_history;
+   reserve_loss_history = new_reserve_all_training_history;
    reserve_gradient_history = new_reserve_all_training_history;
    reserve_gradient_norm_history = new_reserve_all_training_history;
 
@@ -442,7 +442,7 @@ void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve
 /// </ul>
 ///
 
-void ConjugateGradient::set_default()
+void ScaledConjugateGradient::set_default()
 {
    // TRAINING PARAMETERS
 
@@ -474,7 +474,7 @@ void ConjugateGradient::set_default()
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_error_history = true;
+   reserve_loss_history = true;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
    reserve_selection_error_history = false;
@@ -496,7 +496,7 @@ void ConjugateGradient::set_default()
 /// screen. 
 /// @param new_warning_parameters_norm Warning norm of parameters vector value. 
 
-void ConjugateGradient::set_warning_parameters_norm(const double& new_warning_parameters_norm)
+void ScaledConjugateGradient::set_warning_parameters_norm(const double& new_warning_parameters_norm)
 {
    // Control sentence(if debug)
 
@@ -506,7 +506,7 @@ void ConjugateGradient::set_warning_parameters_norm(const double& new_warning_pa
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_warning_parameters_norm(const double&) method.\n"
              << "Warning parameters norm must be equal or greater than 0.\n";
 
@@ -525,7 +525,7 @@ void ConjugateGradient::set_warning_parameters_norm(const double& new_warning_pa
 /// a warning message is written to the screen. 
 /// @param new_warning_gradient_norm Warning norm of gradient vector value. 
 
-void ConjugateGradient::set_warning_gradient_norm(const double& new_warning_gradient_norm)
+void ScaledConjugateGradient::set_warning_gradient_norm(const double& new_warning_gradient_norm)
 {
    // Control sentence(if debug)
 
@@ -535,7 +535,7 @@ void ConjugateGradient::set_warning_gradient_norm(const double& new_warning_grad
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_warning_gradient_norm(const double&) method.\n"
              << "Warning gradient norm must be equal or greater than 0.\n";
 
@@ -554,7 +554,7 @@ void ConjugateGradient::set_warning_gradient_norm(const double& new_warning_grad
 /// minimization.
 /// @param new_warning_training_rate Warning training rate value.
 
-void ConjugateGradient::set_warning_training_rate(const double& new_warning_training_rate)
+void ScaledConjugateGradient::set_warning_training_rate(const double& new_warning_training_rate)
 {
    // Control sentence(if debug)
 
@@ -564,7 +564,7 @@ void ConjugateGradient::set_warning_training_rate(const double& new_warning_trai
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_warning_training_rate(const double&) method.\n"
              << "Warning training rate must be equal or greater than 0.\n";
 
@@ -581,7 +581,7 @@ void ConjugateGradient::set_warning_training_rate(const double& new_warning_trai
 /// screen and the program exits. 
 /// @param new_error_parameters_norm Error norm of parameters vector value. 
 
-void ConjugateGradient::set_error_parameters_norm(const double& new_error_parameters_norm)
+void ScaledConjugateGradient::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
    // Control sentence(if debug)
 
@@ -591,7 +591,7 @@ void ConjugateGradient::set_error_parameters_norm(const double& new_error_parame
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_error_parameters_norm(const double&) method.\n"
              << "Error parameters norm must be equal or greater than 0.\n";
 
@@ -610,7 +610,7 @@ void ConjugateGradient::set_error_parameters_norm(const double& new_error_parame
 /// and the program exits. 
 /// @param new_error_gradient_norm Error norm of gradient vector value. 
 
-void ConjugateGradient::set_error_gradient_norm(const double& new_error_gradient_norm)
+void ScaledConjugateGradient::set_error_gradient_norm(const double& new_error_gradient_norm)
 {
    // Control sentence(if debug)
 
@@ -620,7 +620,7 @@ void ConjugateGradient::set_error_gradient_norm(const double& new_error_gradient
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_error_gradient_norm(const double&) method.\n"
              << "Error gradient norm must be equal or greater than 0.\n";
 
@@ -639,7 +639,7 @@ void ConjugateGradient::set_error_gradient_norm(const double& new_error_gradient
 /// bracketing a minimum.
 /// @param new_error_training_rate Error training rate value.
 
-void ConjugateGradient::set_error_training_rate(const double& new_error_training_rate)
+void ScaledConjugateGradient::set_error_training_rate(const double& new_error_training_rate)
 {
    // Control sentence(if debug)
 
@@ -649,7 +649,7 @@ void ConjugateGradient::set_error_training_rate(const double& new_error_training
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_error_training_rate(const double&) method.\n"
              << "Error training rate must be equal or greater than 0.\n";
 
@@ -667,7 +667,7 @@ void ConjugateGradient::set_error_training_rate(const double& new_error_training
 /// Sets a new value for the minimum parameters increment norm stopping criterion. 
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training. 
 
-void ConjugateGradient::set_minimum_parameters_increment_norm(const double& new_minimum_parameters_increment_norm)
+void ScaledConjugateGradient::set_minimum_parameters_increment_norm(const double& new_minimum_parameters_increment_norm)
 {
    // Control sentence(if debug)
 
@@ -677,7 +677,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const double& new_
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void new_minimum_parameters_increment_norm(const double&) method.\n"
              << "Minimum parameters increment norm must be equal or greater than 0.\n";
 
@@ -695,7 +695,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const double& new_
 /// Sets a new minimum loss improvement during training.  
 /// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
 
-void ConjugateGradient::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
+void ScaledConjugateGradient::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
 {
    // Control sentence(if debug)
 
@@ -705,7 +705,7 @@ void ConjugateGradient::set_minimum_loss_decrease(const double& new_minimum_loss
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_minimum_loss_decrease(const double&) method.\n"
              << "Minimum loss improvement must be equal or greater than 0.\n";
 
@@ -724,7 +724,7 @@ void ConjugateGradient::set_minimum_loss_decrease(const double& new_minimum_loss
 /// This is used as a stopping criterion when training a multilayer perceptron
 /// @param new_loss_goal Goal value for the loss.
 
-void ConjugateGradient::set_loss_goal(const double& new_loss_goal)
+void ScaledConjugateGradient::set_loss_goal(const double& new_loss_goal)
 {
    loss_goal = new_loss_goal;
 }
@@ -734,7 +734,7 @@ void ConjugateGradient::set_loss_goal(const double& new_loss_goal)
 /// This is used as a stopping criterion when training a multilayer perceptron
 /// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
 
-void ConjugateGradient::set_gradient_norm_goal(const double& new_gradient_norm_goal)
+void ScaledConjugateGradient::set_gradient_norm_goal(const double& new_gradient_norm_goal)
 {
    // Control sentence(if debug)
 
@@ -744,7 +744,7 @@ void ConjugateGradient::set_gradient_norm_goal(const double& new_gradient_norm_g
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_gradient_norm_goal(const double&) method.\n"
              << "Gradient norm goal must be equal or greater than 0.\n";
 
@@ -762,7 +762,7 @@ void ConjugateGradient::set_gradient_norm_goal(const double& new_gradient_norm_g
 /// Sets a new maximum number of selection failures. 
 /// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void ConjugateGradient::set_maximum_selection_error_increases(const size_t& new_maximum_selection_error_increases)
+void ScaledConjugateGradient::set_maximum_selection_error_increases(const size_t& new_maximum_selection_error_increases)
 {
    maximum_selection_error_decreases = new_maximum_selection_error_increases;
 }
@@ -771,7 +771,7 @@ void ConjugateGradient::set_maximum_selection_error_increases(const size_t& new_
 /// Sets a maximum number of epochs for training.
 /// @param new_maximum_iterations_number Maximum number of iterations for training.
 
-void ConjugateGradient::set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
+void ScaledConjugateGradient::set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
 {
    maximum_epochs_number = new_maximum_epochs_number;
 }
@@ -780,7 +780,7 @@ void ConjugateGradient::set_maximum_epochs_number(const size_t& new_maximum_epoc
 /// Sets a new maximum training time.  
 /// @param new_maximum_time Maximum training time.
 
-void ConjugateGradient::set_maximum_time(const double& new_maximum_time)
+void ScaledConjugateGradient::set_maximum_time(const double& new_maximum_time)
 {
    // Control sentence(if debug)
 
@@ -790,7 +790,7 @@ void ConjugateGradient::set_maximum_time(const double& new_maximum_time)
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_maximum_time(const double&) method.\n"
              << "Maximum time must be equal or greater than 0.\n";
 
@@ -808,16 +808,16 @@ void ConjugateGradient::set_maximum_time(const double& new_maximum_time)
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
 /// @param new_return_minimum_selection_error_neural_network True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-void ConjugateGradient::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
+void ScaledConjugateGradient::set_return_minimum_selection_error_neural_network(const bool& new_return_minimum_selection_error_neural_network)
 {
    return_minimum_selection_error_neural_network = new_return_minimum_selection_error_neural_network;
 }
 
 
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+/// Makes the selection loss decrease stopping criteria has to be taken in account or not.
+/// @param new_apply_early_stopping True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
 
-void ConjugateGradient::set_apply_early_stopping(const bool& new_apply_early_stopping)
+void ScaledConjugateGradient::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
     apply_early_stopping = new_apply_early_stopping;
 }
@@ -826,7 +826,7 @@ void ConjugateGradient::set_apply_early_stopping(const bool& new_apply_early_sto
 /// Makes the parameters history vector of vectors to be reseved or not in memory.
 /// @param new_reserve_parameters_history True if the parameters history vector of vectors is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_parameters_history(const bool& new_reserve_parameters_history)
+void ScaledConjugateGradient::set_reserve_parameters_history(const bool& new_reserve_parameters_history)
 {
    reserve_parameters_history = new_reserve_parameters_history;     
 }
@@ -835,25 +835,25 @@ void ConjugateGradient::set_reserve_parameters_history(const bool& new_reserve_p
 /// Makes the parameters norm history vector to be reseved or not in memory.
 /// @param new_reserve_parameters_norm_history True if the parameters norm history vector is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_parameters_norm_history(const bool& new_reserve_parameters_norm_history)
+void ScaledConjugateGradient::set_reserve_parameters_norm_history(const bool& new_reserve_parameters_norm_history)
 {
    reserve_parameters_norm_history = new_reserve_parameters_norm_history;     
 }
 
 
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_error_history True if the loss history vector is to be reserved, false otherwise.
+/// Makes the loss history vector to be reseved or not in memory.
+/// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_error_history(const bool& new_reserve_error_history)
+void ScaledConjugateGradient::set_reserve_loss_history(const bool& new_reserve_loss_history)
 {
-   reserve_error_history = new_reserve_error_history;
+   reserve_loss_history = new_reserve_loss_history;     
 }
 
 
 /// Makes the gradient history vector of vectors to be reseved or not in memory.
 /// @param new_reserve_gradient_history True if the gradient history matrix is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_gradient_history(const bool& new_reserve_gradient_history)
+void ScaledConjugateGradient::set_reserve_gradient_history(const bool& new_reserve_gradient_history)
 {
    reserve_gradient_history = new_reserve_gradient_history;    
 }
@@ -863,7 +863,7 @@ void ConjugateGradient::set_reserve_gradient_history(const bool& new_reserve_gra
 /// @param new_reserve_gradient_norm_history True if the gradient norm history matrix is to be reserved, false 
 /// otherwise.
 
-void ConjugateGradient::set_reserve_gradient_norm_history(const bool& new_reserve_gradient_norm_history)
+void ScaledConjugateGradient::set_reserve_gradient_norm_history(const bool& new_reserve_gradient_norm_history)
 {
    reserve_gradient_norm_history = new_reserve_gradient_norm_history;     
 }
@@ -873,7 +873,7 @@ void ConjugateGradient::set_reserve_gradient_norm_history(const bool& new_reserv
 /// @param new_reserve_training_direction_history True if the training direction history matrix is to be reserved, 
 /// false otherwise.
 
-void ConjugateGradient::set_reserve_training_direction_history(const bool& new_reserve_training_direction_history)
+void ScaledConjugateGradient::set_reserve_training_direction_history(const bool& new_reserve_training_direction_history)
 {
    reserve_training_direction_history = new_reserve_training_direction_history;          
 }
@@ -883,7 +883,7 @@ void ConjugateGradient::set_reserve_training_direction_history(const bool& new_r
 /// @param new_reserve_training_rate_history True if the training rate history vector is to be reserved, false 
 /// otherwise.
 
-void ConjugateGradient::set_reserve_training_rate_history(const bool& new_reserve_training_rate_history)
+void ScaledConjugateGradient::set_reserve_training_rate_history(const bool& new_reserve_training_rate_history)
 {
    reserve_training_rate_history = new_reserve_training_rate_history;          
 }
@@ -893,17 +893,17 @@ void ConjugateGradient::set_reserve_training_rate_history(const bool& new_reserv
 /// @param new_reserve_elapsed_time_history True if the elapsed time history vector is to be reserved, false 
 /// otherwise.
 
-void ConjugateGradient::set_reserve_elapsed_time_history(const bool& new_reserve_elapsed_time_history)
+void ScaledConjugateGradient::set_reserve_elapsed_time_history(const bool& new_reserve_elapsed_time_history)
 {
    reserve_elapsed_time_history = new_reserve_elapsed_time_history;     
 }
 
 
-/// Makes the selection error history to be reserved or not in memory.
+/// Makes the selection loss history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
+/// @param new_reserve_selection_error_history True if the selection loss history is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
+void ScaledConjugateGradient::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
    reserve_selection_error_history = new_reserve_selection_error_history;
 }
@@ -913,7 +913,7 @@ void ConjugateGradient::set_reserve_selection_error_history(const bool& new_rese
 /// @param new_display_period
 /// Number of iterations between the training showing progress. 
 
-void ConjugateGradient::set_display_period(const size_t& new_display_period)
+void ScaledConjugateGradient::set_display_period(const size_t& new_display_period)
 {
    // Control sentence(if debug)
 
@@ -923,7 +923,7 @@ void ConjugateGradient::set_display_period(const size_t& new_display_period)
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_display_period(const double&) method.\n"
              << "Display period must be greater than 0.\n";
 
@@ -940,7 +940,7 @@ void ConjugateGradient::set_display_period(const size_t& new_display_period)
 /// @param new_save_period
 /// Number of iterations between the training saving progress.
 
-void ConjugateGradient::set_save_period(const size_t& new_save_period)
+void ScaledConjugateGradient::set_save_period(const size_t& new_save_period)
 {
    // Control sentence(if debug)
 
@@ -950,7 +950,7 @@ void ConjugateGradient::set_save_period(const size_t& new_save_period)
    {
       ostringstream buffer;
 
-      buffer << "OpenNN Exception: ConjugateGradient class.\n"
+      buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
              << "void set_save_period(const double&) method.\n"
              << "Save period must be greater than 0.\n";
 
@@ -968,7 +968,7 @@ void ConjugateGradient::set_save_period(const size_t& new_save_period)
 /// @param old_gradient Previous error function gradient.
 /// @param gradient: Current error function gradient.
 
-double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradient, const Vector<double>& gradient) const
+double ScaledConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradient, const Vector<double>& gradient) const
 {
     // Control sentence(if debug)
 
@@ -978,7 +978,7 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 
     if(!loss_index_pointer)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "double calculate_FR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
 
               << "Loss index pointer is nullptr.\n";
@@ -994,7 +994,7 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 
     if(old_gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "double calculate_FR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1005,7 +1005,7 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 
     if(gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "double calculate_FR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1046,7 +1046,7 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 /// @param old_gradient Previous error function gradient.
 /// @param gradient Current error function gradient.
 
-double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradient, const Vector<double>& gradient) const
+double ScaledConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradient, const Vector<double>& gradient) const
 {
     // Control sentence(if debug)
 
@@ -1056,7 +1056,7 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 
     if(!loss_index_pointer)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "double calculate_PR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
 
               << "Loss index pointer is nullptr.\n";
@@ -1072,7 +1072,7 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 
     if(old_gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "double calculate_PR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1083,7 +1083,7 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 
     if(gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "double calculate_PR_parameter(const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1129,7 +1129,7 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 /// @param gradient Current error function gradient.
 /// @param old_training_direction Previous training direction vector.
 
-Vector<double> ConjugateGradient::calculate_PR_training_direction
+Vector<double> ScaledConjugateGradient::calculate_PR_training_direction
 (const Vector<double>& old_gradient, const Vector<double>& gradient, const Vector<double>& old_training_direction) const
 {
     // Control sentence(if debug)
@@ -1140,7 +1140,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 
     if(!loss_index_pointer)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_PR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
@@ -1155,7 +1155,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 
     if(old_gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_PR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1166,7 +1166,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 
     if(gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_PR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1177,7 +1177,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 
     if(old_training_direction_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_PR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1204,7 +1204,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 /// @param gradient Current error function gradient.
 /// @param old_training_direction Previous training direction vector.
 
-Vector<double> ConjugateGradient::calculate_FR_training_direction
+Vector<double> ScaledConjugateGradient::calculate_FR_training_direction
 (const Vector<double>& old_gradient, const Vector<double>& gradient, const Vector<double>& old_training_direction) const
 {
     // Control sentence(if debug)
@@ -1215,7 +1215,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 
     if(!loss_index_pointer)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_FR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
@@ -1230,7 +1230,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 
     if(old_gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_FR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1241,7 +1241,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 
     if(gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_FR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1252,7 +1252,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 
     if(old_training_direction_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_FR_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1279,7 +1279,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 /// @param gradient Current gradient vector. 
 /// @param old_training_direction Training direction in the previous iteration. 
 
-Vector<double> ConjugateGradient::calculate_training_direction
+Vector<double> ScaledConjugateGradient::calculate_training_direction
 (const Vector<double>& old_gradient, const Vector<double>& gradient, const Vector<double>& old_training_direction) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -1294,7 +1294,7 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
     if(!loss_index_pointer)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
@@ -1305,7 +1305,7 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
     if(old_gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1316,7 +1316,7 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
     if(gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1327,7 +1327,7 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
     if(old_training_direction_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_training_direction(const Vector<double>&, const Vector<double>&, const Vector<double>&) const method.\n"
               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1358,10 +1358,35 @@ Vector<double> ConjugateGradient::calculate_training_direction
 }
 
 
+///
+
+double ScaledConjugateGradient::calculate_learning_rate() const
+{
+
+//    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+//    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+//    MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+//    const Matrix<double> inputs = data_set_pointer->get_inputs();
+//    const Matrix<double> targets = data_set_pointer->get_targets();
+
+//    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
+//            = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+//    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+
+
+
+
+    return 0.0;
+}
+
+
 /// Returns the gradient descent training direction, which is the negative of the normalized gradient. 
 /// @param gradient Gradient vector.
 
-Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(const Vector<double>& gradient) const
+Vector<double> ScaledConjugateGradient::calculate_gradient_descent_training_direction(const Vector<double>& gradient) const
 {
     // Control sentence(if debug)
 
@@ -1371,7 +1396,7 @@ Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(
 
     if(!loss_index_pointer)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
@@ -1386,7 +1411,7 @@ Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(
 
     if(gradient_size != parameters_number)
     {
-       buffer << "OpenNN Exception: ConjugateGradient class.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
               << "Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
@@ -1402,17 +1427,17 @@ Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(
 /// Resizes all the training history variables. 
 /// @param new_size Size of training history variables. 
 
-void ConjugateGradient::ConjugateGradientResults::resize_training_history(const size_t& new_size)
+void ScaledConjugateGradient::ScaledConjugateGradientResults::resize_training_history(const size_t& new_size)
 {
     // Control sentence(if debug)
 
     #ifdef __OPENNN_DEBUG__
 
-    if(conjugate_gradient_pointer == nullptr)
+    if(scaled_conjugate_gradient_pointer == nullptr)
     {
        ostringstream buffer;
 
-       buffer << "OpenNN Exception: ConjugateGradientResults structure.\n"
+       buffer << "OpenNN Exception: ScaledConjugateGradientResults structure.\n"
               << "void resize_training_history(const size_t&) method.\n"
               << "Conjugate gradient pointer is nullptr.\n";
 
@@ -1421,54 +1446,56 @@ void ConjugateGradient::ConjugateGradientResults::resize_training_history(const 
 
     #endif
 
-    if(conjugate_gradient_pointer->get_reserve_parameters_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_parameters_history())
     {
         parameters_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_parameters_norm_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_parameters_norm_history())
     {
         parameters_norm_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_error_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_loss_history())
     {
         loss_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_selection_error_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_selection_error_history())
     {
         selection_error_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_gradient_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_gradient_history())
     {
         gradient_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_gradient_norm_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_gradient_norm_history())
     {
         gradient_norm_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_training_direction_history())
+
+
+    if(scaled_conjugate_gradient_pointer->get_reserve_training_direction_history())
     {
         training_direction_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_training_rate_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_training_rate_history())
     {
         training_rate_history.resize(new_size);
     }
 
-    if(conjugate_gradient_pointer->get_reserve_elapsed_time_history())
+    if(scaled_conjugate_gradient_pointer->get_reserve_elapsed_time_history())
     {
         elapsed_time_history.resize(new_size);
     }
 }
 
 
-string ConjugateGradient::ConjugateGradientResults::object_to_string() const
+string ScaledConjugateGradient::ScaledConjugateGradientResults::object_to_string() const
 {
    ostringstream buffer;
 
@@ -1499,11 +1526,11 @@ string ConjugateGradient::ConjugateGradientResults::object_to_string() const
               << loss_history << "\n"; 
    }
 
-   // selection error history
+   // selection loss history
 
    if(!selection_error_history.empty())
    {
-       buffer << "% selection error history:\n"
+       buffer << "% selection loss history:\n"
               << selection_error_history << "\n";
    }
 
@@ -1557,7 +1584,7 @@ string ConjugateGradient::ConjugateGradientResults::object_to_string() const
 }
 
 
-Matrix<string> ConjugateGradient::ConjugateGradientResults::write_final_results(const int& precision) const
+Matrix<string> ScaledConjugateGradient::ScaledConjugateGradientResults::write_final_results(const int& precision) const
 {
    ostringstream buffer;
 
@@ -1584,7 +1611,7 @@ Matrix<string> ConjugateGradient::ConjugateGradientResults::write_final_results(
 
    // Final selection error
 /*
-   const LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
+   const LossIndex* loss_index_pointer = scaled_conjugate_gradient_pointer->get_loss_index_pointer();
 
    if(loss_index_pointer->has_selection())
    {
@@ -1653,7 +1680,7 @@ Matrix<string> ConjugateGradient::ConjugateGradientResults::write_final_results(
 /// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training()
+ScaledConjugateGradient::ScaledConjugateGradientResults* ScaledConjugateGradient::perform_training()
 {
    // Control sentence(if debug)
 
@@ -1667,7 +1694,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
    if(display) cout << "Training with conjugate gradient...\n";
 
-   ConjugateGradientResults* results_pointer = new ConjugateGradientResults(this);
+   ScaledConjugateGradientResults* results_pointer = new ScaledConjugateGradientResults(this);
    results_pointer->resize_training_history(maximum_epochs_number+1);
 
    // Elapsed time
@@ -1747,8 +1774,8 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
       {
          ostringstream buffer;
 
-         buffer << "OpenNN Exception: ConjugateGradient class.\n"
-                << "ConjugateGradientResults* perform_training() method.\n"
+         buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
+                << "ScaledConjugateGradientResults* perform_training() method.\n"
                 << "Parameters norm is greater than error parameters norm.\n";
  
          throw logic_error(buffer.str());
@@ -1885,7 +1912,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
       // Training history loss index
 
-      if(reserve_error_history)
+      if(reserve_loss_history)
       {
          results_pointer->loss_history[epoch] = training_loss;
       }
@@ -1984,7 +2011,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumSelectionErrorIncreases;
+         results_pointer->stopping_condition = MaximumSelectionLossIncreases;
       }
 
       else if(epoch == maximum_epochs_number)
@@ -2116,23 +2143,23 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 }
 
 
-void ConjugateGradient::perform_training_void()
+void ScaledConjugateGradient::perform_training_void()
 {
-    ConjugateGradientResults* results = perform_training();
+    ScaledConjugateGradientResults* results = perform_training();
 
     delete results;
 }
 
 
-string ConjugateGradient::write_optimization_algorithm_type() const
+string ScaledConjugateGradient::write_optimization_algorithm_type() const
 {
-   return("CONJUGATE_GRADIENT");
+   return("SCALED_CONJUGATE_GRADIENT");
 }
 
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<string> ConjugateGradient::to_string_matrix() const
+Matrix<string> ScaledConjugateGradient::to_string_matrix() const
 {
     ostringstream buffer;
 
@@ -2182,9 +2209,9 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Loss goal
+   // Performance goal
 
-   labels.push_back("Loss goal");
+   labels.push_back("Performance goal");
 
    buffer.str("");
    buffer << loss_goal;
@@ -2200,9 +2227,9 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Maximum selection error decreases
+   // Maximum selection loss decreases
 
-   labels.push_back("Maximum selection error increases");
+   labels.push_back("Maximum selection loss increases");
 
    buffer.str("");
    buffer << maximum_selection_error_decreases;
@@ -2244,13 +2271,13 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve error history
+   // Reserve loss history
 
-   labels.push_back("Reserve error history");
+   labels.push_back("Reserve loss history");
 
    buffer.str("");
 
-   if(reserve_error_history)
+   if(reserve_loss_history)
    {
        buffer << "true";
    }
@@ -2261,9 +2288,9 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve selection error history
+   // Reserve selection loss history
 
-   labels.push_back("Reserve selection error history");
+   labels.push_back("Reserve selection loss history");
 
    buffer.str("");
 
@@ -2335,7 +2362,7 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 /// Serializes the conjugate gradient object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element.
 
-tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
+tinyxml2::XMLDocument* ScaledConjugateGradient::to_XML() const
 {
    ostringstream buffer;
 
@@ -2343,7 +2370,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 
    // Conjugate gradient
 
-   tinyxml2::XMLElement* root_element = document->NewElement("ConjugateGradient");
+   tinyxml2::XMLElement* root_element = document->NewElement("ScaledConjugateGradient");
 
    document->InsertFirstChild(root_element);
 
@@ -2491,7 +2518,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
       element->LinkEndChild(text);
    }
 
-   // Loss goal
+   // Performance goal
    {
       element = document->NewElement("LossGoal");
       root_element->LinkEndChild(element);
@@ -2515,9 +2542,9 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
       element->LinkEndChild(text);
    }
 
-   // Maximum selection error decreases
+   // Maximum selection loss decreases
    {
-      element = document->NewElement("MaximumSelectionErrorIncreases");
+      element = document->NewElement("MaximumSelectionLossDecreases");
       root_element->LinkEndChild(element);
 
       buffer.str("");
@@ -2575,21 +2602,21 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
       element->LinkEndChild(text);
    }
 
-   // Reserve error history
+   // Reserve loss history
    {
-      element = document->NewElement("ReserveErrorHistory");
+      element = document->NewElement("ReservePerformanceHistory");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << reserve_error_history;
+      buffer << reserve_loss_history;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
    }
 
-   // Reserve selection error history
+   // Reserve selection loss history
    {
-      element = document->NewElement("ReserveSelectionErrorHistory");
+      element = document->NewElement("ReserveSelectionLossHistory");
       root_element->LinkEndChild(element);
 
       buffer.str("");
@@ -2659,9 +2686,9 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 //      element->LinkEndChild(text);
 //   }
 
-   // Reserve selection error history
+   // Reserve selection loss history
 //   {
-//      element = document->NewElement("ReserveSelectionErrorHistory");
+//      element = document->NewElement("ReserveSelectionLossHistory");
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
@@ -2723,11 +2750,11 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 /// Serializes the conjugate gradient object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this element.
 
-void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
+void ScaledConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
    ostringstream buffer;
 
-   //file_stream.OpenElement("ConjugateGradient");
+   //file_stream.OpenElement("ScaledConjugateGradient");
 
    // Training direction method
 
@@ -2795,7 +2822,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Loss goal
+   // Performance goal
 
    {
        file_stream.OpenElement("LossGoal");
@@ -2821,10 +2848,10 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Maximum selection error decreases
+   // Maximum selection loss decreases
 
    {
-       file_stream.OpenElement("MaximumSelectionErrorIncreases");
+       file_stream.OpenElement("MaximumSelectionLossDecreases");
 
        buffer.str("");
        buffer << maximum_selection_error_decreases;
@@ -2876,20 +2903,20 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
    // Reserve loss history
 
    {
-       file_stream.OpenElement("ReserveErrorHistory");
+       file_stream.OpenElement("ReservePerformanceHistory");
 
        buffer.str("");
-       buffer << reserve_error_history;
+       buffer << reserve_loss_history;
 
        file_stream.PushText(buffer.str().c_str());
 
        file_stream.CloseElement();
    }
 
-   // Reserve selection error history
+   // Reserve selection loss history
 
    {
-       file_stream.OpenElement("ReserveSelectionErrorHistory");
+       file_stream.OpenElement("ReserveSelectionLossHistory");
 
        buffer.str("");
        buffer << reserve_selection_error_history;
@@ -2919,15 +2946,15 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 /// Deserializes the conjugate gradient object from a XML document of the TinyXML library.
 /// @param document TinyXML document containing the member data.
 
-void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
+void ScaledConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("ConjugateGradient");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("ScaledConjugateGradient");
 
     if(!root_element)
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
+        buffer << "OpenNN Exception: ScaledConjugateGradient class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
                << "Conjugate gradient element is nullptr.\n";
 
@@ -2953,7 +2980,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Learning rate algorithm
+  // Training rate algorithm
   {
      const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
 
@@ -3158,7 +3185,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Loss goal
+  // Performance goal
   {
      const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
@@ -3196,9 +3223,9 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Maximum selection error decreases
+  // Maximum selection loss decreases
   {
-     const tinyxml2::XMLElement* maximum_selection_error_decreases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
+     const tinyxml2::XMLElement* maximum_selection_error_decreases_element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
 
      if(maximum_selection_error_decreases_element)
      {
@@ -3291,17 +3318,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Reserve error history
+  // Reserve loss history
   {
-     const tinyxml2::XMLElement* reserve_error_history_element = root_element->FirstChildElement("ReserveErrorHistory");
+     const tinyxml2::XMLElement* reserve_loss_history_element = root_element->FirstChildElement("ReservePerformanceHistory");
 
-     if(reserve_error_history_element)
+     if(reserve_loss_history_element)
      {
-        const string new_reserve_error_history = reserve_error_history_element->GetText();
+        const string new_reserve_loss_history = reserve_loss_history_element->GetText();
 
         try
         {
-           set_reserve_error_history(new_reserve_error_history != "0");
+           set_reserve_loss_history(new_reserve_loss_history != "0");
         }
         catch(const logic_error& e)
         {
@@ -3310,9 +3337,9 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-    // Reserve selection error history
+    // Reserve selection loss history
     {
-       const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
+       const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
        if(reserve_selection_error_history_element)
        {
@@ -3423,9 +3450,9 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Reserve selection error history
+  // Reserve selection loss history
   {
-     const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
+     const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionLossHistory");
 
      if(reserve_selection_error_history_element)
      {

@@ -109,6 +109,11 @@ public:
    {
        /// Default constructor.
 
+       SecondOrderLoss()
+       {
+
+       }
+
        SecondOrderLoss(const size_t& parameters_number)
        {
            loss = 0.0;
@@ -196,6 +201,7 @@ public:
    void set_default();
 
    void set_regularization_method(const RegularizationMethod&);
+   void set_regularization_method(const string&);
    void set_regularization_weight(const double&);
 
    void set_display(const bool&);
@@ -228,10 +234,13 @@ public:
    virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const  {return Vector<double>();}
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const  {return Matrix<double>();}
 
-   virtual FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const {return FirstOrderLoss(0);}
+   virtual FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const {return FirstOrderLoss();}
+   virtual FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return FirstOrderLoss();}
+   virtual FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
+                                                                const MultilayerPerceptron::Pointers&, const Vector<double*>&) const {return FirstOrderLoss();}
 
-   virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss(0);}
-   virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss(0);}
+   virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
+   virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
 
    // Regularization methods
 
@@ -250,11 +259,16 @@ public:
    tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;
+   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+
+   void regularization_from_XML(const tinyxml2::XMLDocument&);
+   void write_regularization_XML(tinyxml2::XMLPrinter&) const;
 
    string write_error_term_type() const;
 
    string write_information() const;
+
+   string write_regularization_method() const;
 
    // Checking methods
 

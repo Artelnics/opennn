@@ -34,6 +34,7 @@ missing_values.cpp
 model_selection.cpp
 multilayer_perceptron.cpp
 neural_network.cpp
+neural_parameters_norm.cpp
 normalized_squared_error.cpp
 numerical_differentiation.cpp
 numerical_integration.cpp

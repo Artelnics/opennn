@@ -88,7 +88,14 @@ public:
 
    double calculate_batch_error(const Vector<size_t> &) const;
 
+   double calculate_batch_error_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
+
+   // Gradient methods
+
    Vector<double> calculate_training_error_gradient() const;
+
+   FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
+                                                        const MultilayerPerceptron::Pointers&, const Vector<double*>&) const;
 
    Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 

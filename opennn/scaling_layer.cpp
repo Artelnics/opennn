@@ -44,9 +44,9 @@ ScalingLayer::ScalingLayer(const size_t& new_scaling_neurons_number)
 // STATISTICS CONSTRUCTOR
 
 /// Statistics constructor.
-/// This constructor creates a scaling layer with given minimums, maximums, means and standard deviations. 
-/// The rest of members of this object are initialized with the default values. 
-/// @param new_statistics Vector of vectors with the variables statistics. 
+/// This constructor creates a scaling layer with given minimums, maximums, means and standard deviations.
+/// The rest of members of this object are initialized with the default values.
+/// @param new_statistics Vector of vectors with the variables statistics.
 
 ScalingLayer::ScalingLayer(const Vector< Statistics<double> >& new_statistics)
 {
@@ -1275,15 +1275,22 @@ Matrix<double> ScalingLayer::calculate_mean_standard_deviation_second_derivative
 }
 
 
-/// Arranges a "Jacobian" matrix from the vector of derivatives. 
+/// Arranges a "Jacobian" vector of matrix from each of the rows of the matrix derivatives.
 
-Matrix<double> ScalingLayer::calculate_Jacobian(const Vector<double>& derivatives) const
+Vector<Matrix<double>> ScalingLayer::calculate_Jacobian(const Matrix<double>& derivatives) const
 {
+    const size_t points_number = derivatives.get_rows_number();
+
+    Vector<Matrix<double>> Jacobian(points_number);
+
     const size_t scaling_neurons_number = get_scaling_neurons_number();
 
-    Matrix<double> Jacobian(scaling_neurons_number, scaling_neurons_number, 0.0);
+    for(size_t i = 0; i < points_number; i++)
+    {
+        Jacobian[i].set(scaling_neurons_number, scaling_neurons_number, 0.0);
 
-    Jacobian.set_diagonal(derivatives);
+        Jacobian[i].set_diagonal(derivatives);
+    }
 
     return(Jacobian);
 }
@@ -1619,7 +1626,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.OpenElement("ScalingNeuron");
 
-        file_stream.PushAttribute("Index",(unsigned)i+1);
+        file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
 
         // Minimum
 
@@ -2236,8 +2243,8 @@ void ScalingLayer::from_PMML(const tinyxml2::XMLElement* element, const Vector<s
             const double new_data_standard_deviation = (orig_begin - orig_end) /(normalization_range_begin - normalization_range_end);
             const double new_data_mean = orig_begin - normalization_range_begin * new_data_standard_deviation;
 
-            set_mean(i,new_data_mean);
-            set_standard_deviation(i,new_data_standard_deviation);
+            set_mean(static_cast<unsigned>(i),new_data_mean);
+            set_standard_deviation(static_cast<unsigned>(i),new_data_standard_deviation);
 
 
             const double new_min = ((2 * normalization_range_end * orig_begin) + (2 * orig_begin) -(2 * normalization_range_begin * orig_end) -(2 * orig_end)) /(2 *(normalization_range_end - normalization_range_begin));

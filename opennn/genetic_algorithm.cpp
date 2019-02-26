@@ -195,7 +195,7 @@ const bool& GeneticAlgorithm::get_reserve_generation_standard_deviation() const
 }
 
 
-/// Returns true if the generation minimum selection loss are to be reserved, and false otherwise.
+/// Returns true if the generation minimum selection error are to be reserved, and false otherwise.
 
 const bool& GeneticAlgorithm::get_reserve_generation_minimum_selection() const
 {
@@ -792,7 +792,7 @@ void GeneticAlgorithm::set_reserve_generation_standard_deviation(const bool& new
 }
 
 
-/// Sets the reserve flag for the generation minimum selection loss history.
+/// Sets the reserve flag for the generation minimum selection error history.
 /// @param new_reserve_generation_minimum_selection Flag value.
 
 void GeneticAlgorithm::set_reserve_generation_minimum_selection(const bool& new_reserve_generation_minimum_selection)
@@ -1795,10 +1795,10 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             if(display)
             {
-                cout << "selection loss reached." << endl;
+                cout << "selection error reached." << endl;
             }
 
-            results->stopping_condition = InputsSelectionAlgorithm::SelectionLossGoal;
+            results->stopping_condition = InputsSelectionAlgorithm::SelectionErrorGoal;
         }
         else if(iterations >= maximum_iterations_number)
         {
@@ -1835,7 +1835,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             cout << "Generation: " << iterations << endl;
             cout << "Generation optimal inputs: " << variables->get_inputs_name().vector_to_string() << " " << endl;
             cout << "Generation optimal number of inputs: " << current_inputs.count_equal_to(true) << endl;
-            cout << "Generation optimum selection loss: " << current_minimum_selection_error << endl;
+            cout << "Generation optimum selection error: " << current_minimum_selection_error << endl;
             cout << "Corresponding training loss: " << current_minimum_loss_error << endl;
             cout << "Generation selection mean = " << loss.get_column(1).calculate_mean() << endl;
             cout << "Generation selection standard deviation = " << loss.get_column(1).calculate_standard_deviation() << endl;
@@ -1847,7 +1847,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     results->inputs_data.set(inputs_history);
 
-    if(reserve_loss_data)
+    if(reserve_error_data)
     {
         results->loss_data.set(loss_history);
     }
@@ -1912,7 +1912,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
         cout << "Optimum training loss: " << optimum_loss_error << endl;
-        cout << "Optimum selection loss: " << optimum_selection_error << endl;
+        cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
 
@@ -2052,13 +2052,13 @@ Matrix<string> GeneticAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Plot training loss history
+   // Plot training error history
 
-   labels.push_back("Plot training loss history");
+   labels.push_back("Plot training error history");
 
    buffer.str("");
 
-   if(reserve_loss_data)
+   if(reserve_error_data)
    {
        buffer << "true";
    }
@@ -2069,9 +2069,9 @@ Matrix<string> GeneticAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Plot selection loss history
+   // Plot selection error history
 
-   labels.push_back("Plot selection loss history");
+   labels.push_back("Plot selection error history");
 
    buffer.str("");
 
@@ -2285,9 +2285,9 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
         element->LinkEndChild(text);
     }
 
-    // selection loss goal
+    // selection error goal
     {
-        element = document->NewElement("SelectionLossGoal");
+        element = document->NewElement("SelectionErrorGoal");
         root_element->LinkEndChild(element);
 
         buffer.str("");
@@ -2323,7 +2323,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
 
     // Reserve generation optimum loss
     {
-        element = document->NewElement("ReserveGenerationOptimumPerformance");
+        element = document->NewElement("ReserveGenerationOptimumLoss");
         root_element->LinkEndChild(element);
 
         buffer.str("");
@@ -2371,7 +2371,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
 
     // Performance calculation method
 //    {
-//        element = document->NewElement("PerformanceCalculationMethod");
+//        element = document->NewElement("LossCalculationMethod");
 //        root_element->LinkEndChild(element);
 
 //        text = document->NewText(write_loss_calculation_method().c_str());
@@ -2404,19 +2404,19 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
 
     // Reserve loss data
 //    {
-//        element = document->NewElement("ReservePerformanceHistory");
+//        element = document->NewElement("ReserveErrorHistory");
 //        root_element->LinkEndChild(element);
 
 //        buffer.str("");
-//        buffer << reserve_loss_data;
+//        buffer << reserve_error_data;
 
 //        text = document->NewText(buffer.str().c_str());
 //        element->LinkEndChild(text);
 //    }
 
-    // Reserve selection loss data
+    // Reserve selection error data
 //    {
-//        element = document->NewElement("ReserveSelectionLossHistory");
+//        element = document->NewElement("ReserveSelectionErrorHistory");
 //        root_element->LinkEndChild(element);
 
 //        buffer.str("");
@@ -2599,9 +2599,9 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // selection loss goal
+    // selection error goal
 
-    file_stream.OpenElement("SelectionLossGoal");
+    file_stream.OpenElement("SelectionErrorGoal");
 
     buffer.str("");
     buffer << selection_error_goal;
@@ -2634,7 +2634,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Reserve generation optimum loss
 
-    file_stream.OpenElement("ReserveGenerationOptimumPerformance");
+    file_stream.OpenElement("ReserveGenerationOptimumLoss");
 
     buffer.str("");
     buffer << reserve_generation_optimum_loss;
@@ -2739,7 +2739,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     // Performance calculation method
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("PerformanceCalculationMethod");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossCalculationMethod");
 
         if(element)
         {
@@ -3005,7 +3005,7 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
     // Reserve generation optimum loss
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationOptimumPerformance");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveGenerationOptimumLoss");
 
         if(element)
         {
@@ -3041,17 +3041,17 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve loss data
+    // Reserve error data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReservePerformanceHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveErrorHistory");
 
         if(element)
         {
-            const string new_reserve_loss_data = element->GetText();
+            const string new_reserve_error_data = element->GetText();
 
             try
             {
-                set_reserve_loss_data(new_reserve_loss_data != "0");
+                set_reserve_error_data(new_reserve_error_data != "0");
             }
             catch(const logic_error& e)
             {
@@ -3060,9 +3060,9 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Reserve selection loss data
+    // Reserve selection error data
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
         if(element)
         {
@@ -3117,9 +3117,9 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // selection loss goal
+    // selection error goal
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionLossGoal");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SelectionErrorGoal");
 
         if(element)
         {
@@ -3293,7 +3293,7 @@ string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
                << loss_data.to_row_matrix() << "\n";
     }
 
-    // selection loss history
+    // selection error history
 
     if(!selection_error_data.empty())
     {
@@ -3346,11 +3346,11 @@ string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
     buffer << "% Stopping condition\n"
            << write_stopping_condition() << "\n";
 
-    // Optimum selection loss
+    // Optimum selection error
 
     if(fabs(final_selection_error - 0) > numeric_limits<double>::epsilon())
     {
-        buffer << "% Optimum selection loss:\n"
+        buffer << "% Optimum selection error:\n"
                << final_selection_error << "\n";
     }
 

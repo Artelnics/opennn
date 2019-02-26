@@ -84,6 +84,10 @@ public:
 
    explicit DataSet(const string&);
 
+   // DATA FILE AND SEPARATOR CONSTRUCTOR
+
+   explicit DataSet(const string&, const string&);
+
    // COPY CONSTRUCTOR
 
    DataSet(const DataSet&);
@@ -355,6 +359,9 @@ public:
    Vector< Statistics<double> > calculate_inputs_statistics() const;
    Vector< Statistics<double> > calculate_targets_statistics() const;
 
+   Vector< Vector<double> > calculate_inputs_minimums_maximums() const;
+   Vector< Vector<double> > calculate_targets_minimums_maximums() const;
+
    Vector<double> calculate_variables_means(const Vector<size_t>&) const;
 
    Statistics<double> calculate_input_statistics(const size_t&) const;
@@ -552,6 +559,8 @@ public:
    void generate_data_multiple_classification(const size_t&, const size_t&);
 
    // Serialization methods
+
+   Vector<double*> host_to_device(const Vector<size_t>&) const;
 
    string object_to_string() const;
 

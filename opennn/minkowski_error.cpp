@@ -527,7 +527,11 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("MinkowskiError");
+    // Error type
+
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "MINKOWSKI_ERROR");
 
     // Minkowski parameter
 
@@ -540,7 +544,14 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    //file_stream.CloseElement();
+    // Close error
+
+    file_stream.CloseElement();
+
+    // Regularization
+
+    write_regularization_XML(file_stream);
+
 }
 
 
@@ -562,13 +573,15 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-  // Minkowski parameter
-  {
-     const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinkowskiParameter");
+    // Minkowski parameter
 
-     if(element)
+     const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
+
+     if(error_element)
      {
-        const double new_Minkowski_parameter = atof(element->GetText());
+        const tinyxml2::XMLElement* parameter_element = error_element->FirstChildElement("MinkowskiParameter");
+
+        const double new_Minkowski_parameter = atof(parameter_element->GetText());
 
         try
         {
@@ -579,26 +592,38 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
            cerr << e.what() << endl;
         }
      }
-  }
 
-  // Display
-  {
-     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+     // Regularization
 
-     if(display_element)
-     {
-        const string new_display_string = display_element->GetText();
+     tinyxml2::XMLDocument regularization_document;
+     tinyxml2::XMLNode* element_clone;
 
-        try
-        {
-           set_display(new_display_string != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
+     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+
+     element_clone = regularization_element->DeepClone(&regularization_document);
+
+     regularization_document.InsertFirstChild(element_clone);
+
+     regularization_from_XML(regularization_document);
+
+//  // Display
+//  {
+//     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+
+//     if(display_element)
+//     {
+//        const string new_display_string = display_element->GetText();
+
+//        try
+//        {
+//           set_display(new_display_string != "0");
+//        }
+//        catch(const logic_error& e)
+//        {
+//           cerr << e.what() << endl;
+//        }
+//     }
+//  }
 }
 
 }

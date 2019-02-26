@@ -961,7 +961,7 @@ Matrix<double> PerceptronLayer::calculate_activations_derivatives(const Matrix<d
         }
     }
 
-    return Matrix<double>();
+//    return Matrix<double>();
 }
 
 
@@ -1160,6 +1160,40 @@ Matrix<double> PerceptronLayer::calculate_outputs(const Matrix<double>& inputs, 
 
    return outputs;
 }
+
+
+/// Returns the Jacobian matrix of a layer for a given inputs to that layer.
+/// This is composed by the derivatives of the layer outputs with respect to their inputs.
+/// The number of rows is the number of neurons in the layer.
+/// The number of columns is the number of inputs to that layer.
+/// @param inputs Input to layer.
+
+Vector< Matrix<double> > PerceptronLayer::calculate_Jacobian(const Matrix<double>& inputs) const
+{
+    // Control sentence(if debug)
+
+    #ifdef __OPENNN_DEBUG__
+
+    const size_t inputs_number = get_inputs_number();
+    const size_t inputs_size = inputs.size();
+
+    if(inputs_size != inputs_number)
+    {
+       ostringstream buffer;
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "Matrix<double> calculate_Jacobian(const Vector<double>&) const method.\n"
+              << "Size of inputs must be equal to number of inputs to layer.\n";
+       throw logic_error(buffer.str());
+    }
+    #endif
+
+    const Matrix<double> combinations = calculate_combinations(inputs);
+
+    const Matrix<double> activations_derivatives = calculate_activations_derivatives(combinations);
+
+    return(synaptic_weights.multiply_rows(activations_derivatives));
+}
+
 
 
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.

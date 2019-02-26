@@ -149,9 +149,9 @@ const bool& OrderSelectionAlgorithm::get_reserve_parameters_data() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& OrderSelectionAlgorithm::get_reserve_loss_data() const
+const bool& OrderSelectionAlgorithm::get_reserve_error_data() const
 {
-    return(reserve_loss_data);
+    return(reserve_error_data);
 }
 
 
@@ -163,7 +163,7 @@ const bool& OrderSelectionAlgorithm::get_reserve_selection_error_data() const
 }
 
 
-/// Returns true if the parameters vector of the neural network with minimum selection loss is to be reserved, and false otherwise.
+/// Returns true if the parameters vector of the neural network with minimum selection error is to be reserved, and false otherwise.
 
 const bool& OrderSelectionAlgorithm::get_reserve_minimal_parameters() const
 {
@@ -171,9 +171,9 @@ const bool& OrderSelectionAlgorithm::get_reserve_minimal_parameters() const
 }
 
 
-/// Returns the method for the calculation of the loss and the selection loss.
+/// Returns the method for the calculation of the loss and the selection error.
 
-const OrderSelectionAlgorithm::PerformanceCalculationMethod& OrderSelectionAlgorithm::get_loss_calculation_method() const
+const OrderSelectionAlgorithm::LossCalculationMethod& OrderSelectionAlgorithm::get_loss_calculation_method() const
 {
     return(loss_calculation_method);
 }
@@ -188,7 +188,7 @@ const bool& OrderSelectionAlgorithm::get_display() const
 }
 
 
-/// Returns the goal for the selection loss in the order selection algorithm.
+/// Returns the goal for the selection error in the order selection algorithm.
 
 const double& OrderSelectionAlgorithm::get_selection_error_goal() const
 {
@@ -283,7 +283,7 @@ void OrderSelectionAlgorithm::set_default()
     // order selection results
 
     reserve_parameters_data = true;
-    reserve_loss_data = true;
+    reserve_error_data = true;
     reserve_selection_error_data = true;
     reserve_minimal_parameters = true;
 
@@ -404,15 +404,15 @@ void OrderSelectionAlgorithm::set_reserve_parameters_data(const bool& new_reserv
 
 
 /// Sets the reserve flag for the loss data.
-/// @param new_reserve_loss_data Flag value.
+/// @param new_reserve_error_data Flag value.
 
-void OrderSelectionAlgorithm::set_reserve_loss_data(const bool& new_reserve_loss_data)
+void OrderSelectionAlgorithm::set_reserve_error_data(const bool& new_reserve_error_data)
 {
-    reserve_loss_data = new_reserve_loss_data;
+    reserve_error_data = new_reserve_error_data;
 }
 
 
-/// Sets the reserve flag for the selection loss data.
+/// Sets the reserve flag for the selection error data.
 /// @param new_reserve_selection_error_data Flag value.
 
 void OrderSelectionAlgorithm::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
@@ -430,10 +430,10 @@ void OrderSelectionAlgorithm::set_reserve_minimal_parameters(const bool& new_res
 }
 
 
-/// Sets a new method to calculate the loss and the selection loss.
+/// Sets a new method to calculate the loss and the selection error.
 /// @param new_loss_calculation_method Method to calculate the loss(Minimum, Maximum or Mean).
 
-void OrderSelectionAlgorithm::set_loss_calculation_method(const OrderSelectionAlgorithm::PerformanceCalculationMethod& new_loss_calculation_method)
+void OrderSelectionAlgorithm::set_loss_calculation_method(const OrderSelectionAlgorithm::LossCalculationMethod& new_loss_calculation_method)
 {
     loss_calculation_method = new_loss_calculation_method;
 }
@@ -483,8 +483,8 @@ void OrderSelectionAlgorithm::set_display(const bool& new_display)
 }
 
 
-/// Sets the selection loss goal for the order selection algorithm.
-/// @param new_selection_error_goal Goal of the selection loss.
+/// Sets the selection error goal for the order selection algorithm.
+/// @param new_selection_error_goal Goal of the selection error.
 
 void OrderSelectionAlgorithm::set_selection_error_goal(const double& new_selection_error_goal)
 {
@@ -579,7 +579,7 @@ void OrderSelectionAlgorithm::set_tolerance(const double& new_tolerance)
 }
 
 
-/// Returns the minimum of the loss and selection loss in trials_number trainings
+/// Returns the minimum of the loss and selection error in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
 Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const size_t& order_number)
@@ -615,8 +615,8 @@ Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const s
     TrainingStrategy::Results training_strategy_results;
 
     Vector<double> final(2);
-    final[0] = 10;
-    final[1] = 10;
+    final[0] = std::numeric_limits<double>::max();
+    final[1] = std::numeric_limits<double>::max();
 
     Vector<double> current_loss(2);
 
@@ -650,41 +650,20 @@ Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const s
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if(order_number > perceptrons_number)
-    {
-        multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
-        neural_network->randomize_parameters_normal();
-#ifdef __OPENNN_MPI__
-
-        neural_network->set_MPI(neural_network);
-
-#endif
-        training_strategy_results = training_strategy_pointer->perform_training();
-
-        final_parameters.set(neural_network->get_parameters());
-        final = get_final_losses(training_strategy_results);
-    }
-    else
-    {
-        for(size_t i = 0; i <(perceptrons_number-order_number); i++)
-        {
-            multilayer_perceptron->prune_layer_perceptron(last_hidden_layer,0);
-        }
-
-        neural_network->randomize_parameters_normal();
+    multilayer_perceptron->set_layer_perceptrons_number(last_hidden_layer, order_number);
+    neural_network->randomize_parameters_normal();
 
 #ifdef __OPENNN_MPI__
 
         neural_network->set_MPI(neural_network);
 
 #endif
-        training_strategy_results = training_strategy_pointer->perform_training();
 
-        final_parameters.set(neural_network->get_parameters());
-        final = get_final_losses(training_strategy_results);
-    }
+    training_strategy_results = training_strategy_pointer->perform_training();
+
+    final_parameters.set(neural_network->get_parameters());
+    final = get_final_losses(training_strategy_results);
 
     for(size_t i = 1; i < trials_number; i++)
     {
@@ -746,12 +725,14 @@ Vector<double> OrderSelectionAlgorithm::perform_minimum_model_evaluation(const s
     selection_error_history.push_back(final[1]);
 
     parameters_history.push_back(final_parameters);
-
+//    cout << "final " << final << endl; cout.flush();
+//    cout << "trials " << trials_number << endl; cout.flush();
+//    cout << neural_network->get_multilayer_perceptron_pointer()->get_architecture() << endl; cout.flush();
     return final;
 }
 
 
-/// Returns the maximum of the loss and selection loss in trials_number trainings
+/// Returns the maximum of the loss and selection error in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
 Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const size_t& order_number)
@@ -825,32 +806,20 @@ Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const s
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if(order_number > perceptrons_number)
-    {
-        multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
-        neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+    multilayer_perceptron->set_layer_perceptrons_number(last_hidden_layer, order_number);
+    neural_network->randomize_parameters_normal();
 
-        final_parameters.set(neural_network->get_parameters());
-        final = get_final_losses(training_strategy_results);
-    }
-    else
-    {
-        training_strategy_pointer->get_quasi_Newton_method_pointer()->set_maximum_selection_error_increases(training_strategy_pointer->get_quasi_Newton_method_pointer()->get_maximum_epochs_number());
+#ifdef __OPENNN_MPI__
 
-        for(size_t i = 0; i <(perceptrons_number-order_number); i++)
-        {
-            multilayer_perceptron->prune_layer_perceptron(last_hidden_layer,0);
-        }
+        neural_network->set_MPI(neural_network);
 
-        neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+#endif
 
-        final_parameters.set(neural_network->get_parameters());
-        final = get_final_losses(training_strategy_results);
-    }
+    training_strategy_results = training_strategy_pointer->perform_training();
+
+    final_parameters.set(neural_network->get_parameters());
+    final = get_final_losses(training_strategy_results);
 
     for(size_t i = 1; i < trials_number; i++)
     {
@@ -917,7 +886,7 @@ Vector<double> OrderSelectionAlgorithm::perform_maximum_model_evaluation(const s
 }
 
 
-/// Returns the mean of the loss and selection loss in trials_number trainings
+/// Returns the mean of the loss and selection error in trials_number trainings
 /// @param order_number Number of perceptrons in the hidden layer to be trained with.
 
 Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size_t& order_number)
@@ -992,30 +961,20 @@ Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size
 
     MultilayerPerceptron* multilayer_perceptron = neural_network->get_multilayer_perceptron_pointer();
     const size_t last_hidden_layer = multilayer_perceptron->get_layers_number()-2;
-    const size_t perceptrons_number = multilayer_perceptron->get_layer_pointer(last_hidden_layer)->get_perceptrons_number();
 
-    if(order_number > perceptrons_number)
-    {
-        multilayer_perceptron->grow_layer_perceptron(last_hidden_layer,order_number-perceptrons_number);
-        neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+    multilayer_perceptron->set_layer_perceptrons_number(last_hidden_layer, order_number);
+    neural_network->randomize_parameters_normal();
 
-        final_parameters.set(neural_network->get_parameters());
-        mean_final = get_final_losses(training_strategy_results);
-    }
-    else
-    {
-        for(size_t i = 0; i <(perceptrons_number-order_number); i++)
-        {
-            multilayer_perceptron->prune_layer_perceptron(last_hidden_layer,0);
-        }
+#ifdef __OPENNN_MPI__
 
-        neural_network->perturbate_parameters(0.001);
-        training_strategy_results = training_strategy_pointer->perform_training();
+        neural_network->set_MPI(neural_network);
 
-        final_parameters.set(neural_network->get_parameters());
-        mean_final = get_final_losses(training_strategy_results);
-    }
+#endif
+
+    training_strategy_results = training_strategy_pointer->perform_training();
+
+    final_parameters.set(neural_network->get_parameters());
+    mean_final = get_final_losses(training_strategy_results);
 
     for(size_t i = 1; i < trials_number; i++)
     {
@@ -1078,7 +1037,7 @@ Vector<double> OrderSelectionAlgorithm::perform_mean_model_evaluation(const size
 }
 
 
-/// Return final training loss and final selection loss depending on the training method.
+/// Return final training loss and final selection error depending on the training method.
 /// @param results Results of the perform_training method.
 
 Vector<double> OrderSelectionAlgorithm::get_final_losses(const TrainingStrategy::Results& results) const
@@ -1108,6 +1067,18 @@ Vector<double> OrderSelectionAlgorithm::get_final_losses(const TrainingStrategy:
         {
             losses[0] = results.Levenberg_Marquardt_algorithm_results_pointer->final_loss;
             losses[1] = results.Levenberg_Marquardt_algorithm_results_pointer->final_selection_error;
+            return(losses);
+        }
+        case TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT:
+        {
+            losses[0] = results.stochastic_gradient_descent_results_pointer->final_loss;
+            losses[1] = results.stochastic_gradient_descent_results_pointer->final_selection_error;
+            return(losses);
+        }
+        case TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION:
+        {
+            losses[0] = results.adaptive_moment_estimation_results_pointer->final_loss;
+            losses[1] = results.adaptive_moment_estimation_results_pointer->final_selection_error;
             return(losses);
         }
 //        default:
@@ -1218,6 +1189,14 @@ string OrderSelectionAlgorithm::write_stopping_condition(const TrainingStrategy:
         {
             return results.Levenberg_Marquardt_algorithm_results_pointer->write_stopping_condition();
         }
+        case TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT:
+        {
+            return results.stochastic_gradient_descent_results_pointer->write_stopping_condition();
+        }
+        case TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION:
+        {
+            return results.adaptive_moment_estimation_results_pointer->write_stopping_condition();
+        }
 //        default:
 //        {
 //            ostringstream buffer;
@@ -1242,7 +1221,7 @@ string OrderSelectionAlgorithm::write_stopping_condition(const TrainingStrategy:
 }
 
 
-/// Delete the history of the selection loss values.
+/// Delete the history of the selection error values.
 
 void OrderSelectionAlgorithm::delete_selection_history()
 {
@@ -1379,9 +1358,9 @@ string OrderSelectionAlgorithm::OrderSelectionResults::write_stopping_condition(
         {
             return("MaximumTime");
         }
-        case SelectionLossGoal:
+        case SelectionErrorGoal:
         {
-            return("SelectionLossGoal");
+            return("SelectionErrorGoal");
         }
         case MaximumIterations:
         {
@@ -1456,11 +1435,11 @@ string OrderSelectionAlgorithm::OrderSelectionResults::object_to_string() const
    buffer << "% Stopping condition\n"
           << write_stopping_condition() << "\n";
 
-   // Optimum selection loss
+   // Optimum selection error
 
    if(fabs(final_selection_error - 0) > numeric_limits<double>::epsilon())
    {
-       buffer << "% Optimum selection loss:\n"
+       buffer << "% Optimum selection error:\n"
               << final_selection_error << "\n";
    }
 

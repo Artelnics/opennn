@@ -17,9 +17,9 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
+/// Default constructor.
 /// It creates a training strategy object not associated to any loss index object.
-/// It also constructs the main optimization algorithm object. 
+/// It also constructs the main optimization algorithm object.
 
 TrainingStrategy::TrainingStrategy()
 {
@@ -64,9 +64,9 @@ TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
 }
 
 
-/// File constructor. 
+/// File constructor.
 /// It creates a training strategy object associated to a loss index object.
-/// It also loads the members of this object from a XML file. 
+/// It also loads the members of this object from a XML file.
 /// @param file_name Name of training strategy XML file.
 
 TrainingStrategy::TrainingStrategy(const string& file_name)
@@ -604,44 +604,36 @@ void TrainingStrategy::set_loss_method(const string& new_loss_method)
     {
         set_loss_method(SUM_SQUARED_ERROR);
     }
-/*
-          sum_squared_error_pointer = new SumSquaredError(neural_network_pointer, data_set_pointer);
-       }
-       break;
-
-       case MEAN_SQUARED_ERROR:
-       {
-           mean_squared_error_pointer = new MeanSquaredError(neural_network_pointer, data_set_pointer);
-       }
-       break;
-
-       break;
-
-       case NORMALIZED_SQUARED_ERROR:
-       {
-          normalized_squared_error_pointer = new NormalizedSquaredError(neural_network_pointer, data_set_pointer);
-       }
-       break;
-
-       case MINKOWSKI_ERROR:
-       {
-          Minkowski_error_pointer = new MinkowskiError(neural_network_pointer, data_set_pointer);
-       }
-       break;
-
-         case WEIGHTED_SQUARED_ERROR:
-         {
-           weighted_squared_error_pointer = new WeightedSquaredError(neural_network_pointer, data_set_pointer);
-         }
-         break;
-
-         case CROSS_ENTROPY_ERROR:
-         {
-           cross_entropy_error_pointer = new CrossEntropyError(neural_network_pointer, data_set_pointer);
-         }
-         break;
+    else if(new_loss_method == "MEAN_SQUARED_ERROR")
+    {
+        set_loss_method(MEAN_SQUARED_ERROR);
     }
-    */
+    else if(new_loss_method == "NORMALIZED_SQUARED_ERROR")
+    {
+        set_loss_method(NORMALIZED_SQUARED_ERROR);
+    }
+    else if(new_loss_method == "MINKOWSKI_ERROR")
+    {
+        set_loss_method(MINKOWSKI_ERROR);
+    }
+    else if(new_loss_method == "WEIGHTED_SQUARED_ERROR")
+    {
+        set_loss_method(WEIGHTED_SQUARED_ERROR);
+    }
+    else if(new_loss_method == "CROSS_ENTROPY_ERROR")
+    {
+        set_loss_method(CROSS_ENTROPY_ERROR);
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "void set_loss_method(const string&) method.\n"
+               << "Unknown loss method: " << new_loss_method << ".\n";
+
+        throw logic_error(buffer.str());
+    }
 }
 
 void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
@@ -998,9 +990,9 @@ void TrainingStrategy::initialize_layers_autoencoding()
 }
 
 
-/// This is the most important method of this class. 
+/// This is the most important method of this class.
 /// It optimizes the loss index of a neural network.
-/// This method also returns a structure with the results from training. 
+/// This method also returns a structure with the results from training.
 
 TrainingStrategy::Results TrainingStrategy::perform_training() const
 {
@@ -1387,8 +1379,6 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
       }
       break;
 
-
-
       default:
       {
          ostringstream buffer;
@@ -1425,6 +1415,70 @@ tinyxml2::XMLDocument* TrainingStrategy::to_XML() const
 void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     file_stream.OpenElement("TrainingStrategy");
+
+    // Loss index
+
+    switch(loss_method)
+    {
+        case SUM_SQUARED_ERROR:
+        {
+            file_stream.OpenElement("LossIndex");
+
+            sum_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+        break;
+
+        case MEAN_SQUARED_ERROR:
+        {
+            file_stream.OpenElement("LossIndex");
+
+            mean_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+        break;
+
+        case NORMALIZED_SQUARED_ERROR:
+        {
+            file_stream.OpenElement("LossIndex");
+
+            normalized_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+        break;
+
+        case MINKOWSKI_ERROR:
+        {
+            file_stream.OpenElement("LossIndex");
+
+            Minkowski_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+        break;
+
+        case CROSS_ENTROPY_ERROR:
+        {
+            file_stream.OpenElement("LossIndex");
+
+            cross_entropy_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+        break;
+
+        case WEIGHTED_SQUARED_ERROR:
+        {
+            file_stream.OpenElement("LossIndex");
+
+            weighted_squared_error_pointer->write_XML(file_stream);
+
+            file_stream.CloseElement();
+        }
+    }
 
     switch(training_method)
     {
@@ -1535,6 +1589,132 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
               << "Training strategy element is nullptr.\n";
 
        throw logic_error(buffer.str());
+   }
+
+   // Loss index
+   {
+       sum_squared_error_pointer = nullptr;
+       mean_squared_error_pointer = nullptr;
+       normalized_squared_error_pointer = nullptr;
+       Minkowski_error_pointer = nullptr;
+       cross_entropy_error_pointer = nullptr;
+       weighted_squared_error_pointer = nullptr;
+
+       const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossIndex");
+
+       if(element)
+       {           
+          const tinyxml2::XMLElement* error_element = element->FirstChildElement("Error");
+
+          const string new_loss_method = error_element->Attribute("Type");
+
+          set_loss_method(new_loss_method);
+
+          switch(loss_method)
+          {
+              case SUM_SQUARED_ERROR:
+              {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* sum_squared_error_element = new_document.NewElement("SumSquaredError");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      sum_squared_error_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(sum_squared_error_element);
+
+                  sum_squared_error_pointer->from_XML(new_document);
+              }
+              break;
+
+              case MEAN_SQUARED_ERROR:
+              {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* mean_squared_error_element = new_document.NewElement("MeanSquaredError");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      mean_squared_error_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(mean_squared_error_element);
+
+                  mean_squared_error_pointer->from_XML(new_document);
+              }
+              break;
+
+              case NORMALIZED_SQUARED_ERROR:
+              {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* normalized_squared_error_element = new_document.NewElement("NormalizedSquaredError");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      normalized_squared_error_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(normalized_squared_error_element);
+
+                  normalized_squared_error_pointer->from_XML(new_document);
+              }
+              break;
+
+              case MINKOWSKI_ERROR:
+              {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* Minkowski_error_element = new_document.NewElement("MinkowskiError");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      Minkowski_error_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(Minkowski_error_element);
+
+                  Minkowski_error_pointer->from_XML(new_document);
+              }
+              break;
+
+              case CROSS_ENTROPY_ERROR:
+              {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* cross_entropy_error_element = new_document.NewElement("CrossEntropyError");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      cross_entropy_error_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(cross_entropy_error_element);
+
+                  cross_entropy_error_pointer->from_XML(new_document);
+              }
+              break;
+
+              case WEIGHTED_SQUARED_ERROR:
+              {
+                  tinyxml2::XMLDocument new_document;
+
+                  tinyxml2::XMLElement* weighted_squared_error_element = new_document.NewElement("WeightedSquaredError");
+
+                  for( const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                      tinyxml2::XMLNode* copy = nodeFor->DeepClone( &new_document );
+                      weighted_squared_error_element->InsertEndChild( copy );
+                  }
+
+                  new_document.InsertEndChild(weighted_squared_error_element);
+
+                  weighted_squared_error_pointer->from_XML(new_document);
+              }
+          }
+       }
+
    }
 
    // Main
@@ -1752,17 +1932,17 @@ TrainingStrategy::Results::Results()
 TrainingStrategy::Results::~Results()
 {
 
-    delete gradient_descent_results_pointer;
+//    delete gradient_descent_results_pointer;
 
-    delete conjugate_gradient_results_pointer;
+//    delete conjugate_gradient_results_pointer;
 
-    delete quasi_Newton_method_results_pointer;
+//    delete quasi_Newton_method_results_pointer;
 
-    delete Levenberg_Marquardt_algorithm_results_pointer;
+//    delete Levenberg_Marquardt_algorithm_results_pointer;
 
-    delete stochastic_gradient_descent_results_pointer;
+//    delete stochastic_gradient_descent_results_pointer;
 
-    delete adaptive_moment_estimation_results_pointer;
+//    delete adaptive_moment_estimation_results_pointer;
 }
 
 
@@ -1867,7 +2047,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 maximum_iterations_number = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_iterations_number();
                 maximum_time = (int)training_strategy->get_gradient_descent_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_gradient_descent_pointer()->get_reserve_parameters_norm_history();
-                reserve_training_loss_history = training_strategy->get_gradient_descent_pointer()->get_reserve_loss_history();
+                reserve_training_loss_history = training_strategy->get_gradient_descent_pointer()->get_reserve_error_history();
                 reserve_selection_error_history = training_strategy->get_gradient_descent_pointer()->get_reserve_selection_error_history();
                 reserve_gradient_norm_history = training_strategy->get_gradient_descent_pointer()->get_reserve_gradient_norm_history();
 
@@ -1889,7 +2069,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 maximum_iterations_number = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_iterations_number();
                 maximum_time = (int)training_strategy->get_conjugate_gradient_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_parameters_norm_history();
-                reserve_training_loss_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_loss_history();
+                reserve_training_loss_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_error_history();
                 reserve_selection_error_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_selection_error_history();
                 reserve_gradient_norm_history = training_strategy->get_conjugate_gradient_pointer()->get_reserve_gradient_norm_history();
 
@@ -1911,7 +2091,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 maximum_iterations_number = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_iterations_number();
                 maximum_time = (int)training_strategy->get_quasi_Newton_method_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_parameters_norm_history();
-                reserve_training_loss_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_loss_history();
+                reserve_training_loss_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_error_history();
                 reserve_selection_error_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_selection_error_history();
                 reserve_gradient_norm_history = training_strategy->get_quasi_Newton_method_pointer()->get_reserve_gradient_norm_history();
 
@@ -1930,7 +2110,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                 maximum_iterations_number = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_iterations_number();
                 maximum_time = (int)training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_maximum_time();
                 reserve_parameters_norm_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_parameters_norm_history();
-                reserve_training_loss_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_loss_history();
+                reserve_training_loss_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_error_history();
                 reserve_selection_error_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_selection_error_history();
                 reserve_gradient_norm_history = training_strategy->get_Levenberg_Marquardt_algorithm_pointer()->get_reserve_gradient_norm_history();
 
@@ -1950,7 +2130,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                maximum_iterations_number = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_maximum_iterations_number();
                maximum_time = (int)training_strategy->get_stochastic_gradient_descent_pointer()->get_maximum_time();
                reserve_parameters_norm_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_parameters_norm_history();
-               reserve_training_loss_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_loss_history();
+               reserve_training_loss_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_error_history();
                reserve_selection_error_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_selection_error_history();
                reserve_gradient_norm_history = training_strategy->get_stochastic_gradient_descent_pointer()->get_reserve_gradient_norm_history();
 
@@ -1970,7 +2150,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
                maximum_iterations_number = (int)training_strategy->get_adaptive_moment_estimation_pointer()->get_maximum_iterations_number();
                maximum_time = (int)training_strategy->get_adaptive_moment_estimation_pointer()->get_maximum_time();
                reserve_parameters_norm_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_parameters_norm_history();
-               reserve_training_loss_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_loss_history();
+               reserve_training_loss_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_error_history();
                reserve_selection_error_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_selection_error_history();
                reserve_gradient_norm_history = training_strategy->get_adaptive_moment_estimation_pointer()->get_reserve_gradient_norm_history();
 
@@ -2164,7 +2344,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
             gradient_descent_pointer->set_maximum_iterations_number(maximum_iterations_number);
             gradient_descent_pointer->set_maximum_time(maximum_time);
             gradient_descent_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
-            gradient_descent_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            gradient_descent_pointer->get_reserve_error_history(reserve_training_loss_history == 1);
             gradient_descent_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
             gradient_descent_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 
@@ -2186,7 +2366,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
             conjugate_gradient_pointer->set_maximum_iterations_number(maximum_iterations_number);
             conjugate_gradient_pointer->set_maximum_time(maximum_time);
             conjugate_gradient_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
-            conjugate_gradient_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            conjugate_gradient_pointer->get_reserve_error_history(reserve_training_loss_history == 1);
             conjugate_gradient_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
             conjugate_gradient_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 
@@ -2208,7 +2388,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
             quasi_Newton_method_pointer->set_maximum_iterations_number(maximum_iterations_number);
             quasi_Newton_method_pointer->set_maximum_time(maximum_time);
             quasi_Newton_method_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
-            quasi_Newton_method_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            quasi_Newton_method_pointer->get_reserve_error_history(reserve_training_loss_history == 1);
             quasi_Newton_method_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
             quasi_Newton_method_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 
@@ -2227,7 +2407,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
             Levenberg_Marquardt_algorithm_pointer->set_maximum_iterations_number(maximum_iterations_number);
             Levenberg_Marquardt_algorithm_pointer->set_maximum_time(maximum_time);
             Levenberg_Marquardt_algorithm_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
-            Levenberg_Marquardt_algorithm_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+            Levenberg_Marquardt_algorithm_pointer->get_reserve_error_history(reserve_training_loss_history == 1);
             Levenberg_Marquardt_algorithm_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
             Levenberg_Marquardt_algorithm_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 
@@ -2246,7 +2426,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
            stochastic_gradient_descent_pointer->set_maximum_iterations_number(maximum_iterations_number);
            stochastic_gradient_descent_pointer->set_maximum_time(maximum_time);
            stochastic_gradient_descent_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
-           stochastic_gradient_descent_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+           stochastic_gradient_descent_pointer->get_reserve_error_history(reserve_training_loss_history == 1);
            stochastic_gradient_descent_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
            stochastic_gradient_descent_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 
@@ -2265,7 +2445,7 @@ void TrainingStrategy::set_MPI(LossIndex* new_loss_index, const TrainingStrategy
            adaptive_moment_estimation_pointer->set_maximum_iterations_number(maximum_iterations_number);
            adaptive_moment_estimation_pointer->set_maximum_time(maximum_time);
            adaptive_moment_estimation_pointer->set_reserve_parameters_norm_history(reserve_parameters_norm_history == 1);
-           adaptive_moment_estimation_pointer->set_reserve_loss_history(reserve_training_loss_history == 1);
+           adaptive_moment_estimation_pointer->get_reserve_error_history(reserve_training_loss_history == 1);
            adaptive_moment_estimation_pointer->set_reserve_selection_error_history(reserve_selection_error_history == 1);
            adaptive_moment_estimation_pointer->set_reserve_gradient_norm_history(reserve_gradient_norm_history == 1);
 

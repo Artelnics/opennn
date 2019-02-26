@@ -486,8 +486,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
    if(triplet.A[1] > triplet.B[1])
    {
-       //cout << "Case 1" << endl;
-
        triplet.U = triplet.B;
 
        triplet.B[0] *= golden_ratio;
@@ -506,8 +504,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
    }
    else if(triplet.A[1] < triplet.B[1])
    {
-       //cout << "Case 2" << endl;
-
        triplet.U[0] = triplet.A[0] + (triplet.B[0] - triplet.A[0])*0.382;
        triplet.U[1] = loss_index_pointer->calculate_training_loss(training_direction, triplet.U[0]);
        count++;
@@ -518,11 +514,16 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
           triplet.U[0] = triplet.A[0] + (triplet.B[0]-triplet.A[0])*0.382;
           triplet.U[1] = loss_index_pointer->calculate_training_loss(training_direction, triplet.U[0]);
-          count++;
+
+          if(triplet.U[0] - triplet.A[0] <= loss_tolerance)
+          {
+              triplet.U = triplet.A;
+              triplet.B = triplet.A;
+              triplet.check();
+             return(triplet);
+          }
        }
    }
-
-//   cout << "Bracketing evaluations: " << count << endl;
 
    triplet.check();
 
@@ -672,10 +673,8 @@ Vector<double> LearningRateAlgorithm::calculate_Brent_method_directional_point(c
 
    try
    {
-      Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_training_rate);
 
-//      cout << "Initial triplet" << endl;
-//      triplet.print();
+      Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_training_rate);
 
       size_t count = 0;
 
@@ -696,9 +695,6 @@ Vector<double> LearningRateAlgorithm::calculate_Brent_method_directional_point(c
 	      }
          catch(const logic_error&)
 	      {
-            //cout << e.what() << endl;
-            //cout << "Golden section" << endl;
-            //V[0] = calculate_golden_section_training_rate(triplet);
               return triplet.calculate_minimum();
 	      }
 
@@ -733,40 +729,6 @@ Vector<double> LearningRateAlgorithm::calculate_Brent_method_directional_point(c
                triplet.U = V;
             }
         }
-/*
-         if(V[0] < triplet.U[0] && V[1] >= triplet.U[1])
-	      {
-            triplet.A = V;
-            //B = B;
-            //U = U;
-	      }
-         else if(V[0] < triplet.U[0] && V[1] <= triplet.U[1])
-         {
-            //A = A;
-            triplet.B = triplet.U;
-            triplet.U = V;
-	     }
-         else if(V[0] > triplet.U[0] && V[1] >= triplet.U[1])
-         {
-            //A = A;
-            triplet.B = V;
-            //U = U;
-         }
-         else if(V[0] > triplet.U[0] && V[1] <= triplet.U[1])
-         {
-            triplet.A = triplet.U;
-            //B = B;
-            triplet.U = V;
-         }
-         else if(V[0] == triplet.U[0])
-         {
-           buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                  << "Vector<double> calculate_Brent_method_directional_point(double, const Vector<double>, double) const method.\n"
-                  << "Both interior points have the same ordinate.\n";
-
-           break;
-         }
-         */
 	     else
 	     {
             buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
@@ -784,11 +746,6 @@ Vector<double> LearningRateAlgorithm::calculate_Brent_method_directional_point(c
 
          triplet.check();
       }
-
-//      cout << "Final triplet" << endl;
-//      triplet.print();
-
-//      cout << "Brent evaluations: " << count << endl;
 
       return(triplet.U);
    }

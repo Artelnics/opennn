@@ -1,4 +1,4 @@
-/****************************************************************************************************************/
+
 /*                                                                                                              */
 /*   OpenNN: Open Neural Networks Library                                                                       */
 /*   www.opennn.net                                                                                             */
@@ -118,8 +118,8 @@ NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_
 /// It creates a neural network object with a two layers perceptron. 
 /// The rest of pointers of this object are initialized to nullptr. 
 /// The other members are initialized to their default values. 
-/// @param new_inputs_number Number of inputs in the multilayer perceptron
-/// @param new_hidden_perceptrons_number Number of neurons in the hidden layer of the multilayer perceptron
+/// @param new_inputs_number Number of inputs in the multilayer perceptron.
+/// @param new_hidden_perceptrons_number Number of neurons in the hidden layer of the multilayer perceptron.
 /// @param new_output_perceptrons_number Number of outputs neurons.
 
 NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_hidden_perceptrons_number, const size_t& new_output_perceptrons_number)
@@ -1465,6 +1465,18 @@ void NeuralNetwork::construct_scaling_layer()
 }
 
 
+/// This method constructs a scaling layer within the neural network.
+/// The size of the scaling layer is the number of inputs in the multilayer perceptron.
+/// @param input_statistics Inputs Statistics vector.
+
+void NeuralNetwork::construct_scaling_layer(const Vector< Statistics<double> >& input_statistics)
+{
+    construct_scaling_layer();
+
+    scaling_layer_pointer->set_statistics(input_statistics);
+}
+
+
 /// This method constructs a principal_components layer within the neural network.
 /// The size of the principal components layer is the number of inputs in the multilayer perceptron.
 
@@ -1501,6 +1513,18 @@ void NeuralNetwork::construct_unscaling_layer()
 
         unscaling_layer_pointer = new UnscalingLayer(outputs_number);
     }
+}
+
+
+/// This method constructs a scaling layer within the neural network.
+/// The size of the scaling layer is the number of inputs in the multilayer perceptron.
+/// @param target_statistics Targets Statistics vector.
+
+void NeuralNetwork::construct_unscaling_layer(const Vector< Statistics<double> >& target_statistics)
+{
+    construct_unscaling_layer();
+
+    scaling_layer_pointer->set_statistics(target_statistics);
 }
 
 
@@ -2585,9 +2609,8 @@ Matrix<double> NeuralNetwork::calculate_directional_inputs(const size_t& directi
 /// Returns the Jacobian Matrix of the neural network for a set of inputs, corresponding to the
 /// point in inputs space at which the Jacobian Matrix is to be found. It uses a forward-propagation method.
 /// @param inputs Set of inputs to the neural network.
-/// @todo
 
-Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) const
+Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian(const Matrix<double>& inputs) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -2607,26 +2630,27 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
     }
 
 #endif
-/*
+
     Matrix<double> outputs(inputs);
 
-    Matrix<double> scaling_layer_Jacobian;
-    Matrix<double> principal_components_layer_Jacobian;
-    Matrix<double> unscaling_layer_Jacobian;
-    Matrix<double> multilayer_perceptron_Jacobian;
-    Matrix<double> bounding_layer_Jacobian;
-    Matrix<double> probabilistic_layer_Jacobian;
+    Vector< Matrix<double> > scaling_layer_Jacobian;
+    Vector< Matrix<double> > principal_components_layer_Jacobian;
+    Vector< Matrix<double> > unscaling_layer_Jacobian;
+    Vector< Matrix<double> > multilayer_perceptron_Jacobian;
+    Vector< Matrix<double> > bounding_layer_Jacobian;
+    Vector< Matrix<double> > probabilistic_layer_Jacobian;
 
     // Scaling layer
 
     if(scaling_layer_pointer)
     {
-        const Vector<double> scaling_layer_derivative = scaling_layer_pointer->calculate_derivatives(outputs);
+        const Matrix<double> scaling_layer_derivative = scaling_layer_pointer->calculate_derivatives(outputs);
 
         scaling_layer_Jacobian = scaling_layer_pointer->calculate_Jacobian(scaling_layer_derivative);
 
         outputs = scaling_layer_pointer->calculate_outputs(inputs);
     }
+
 
     // Principal components layer
 
@@ -2641,16 +2665,16 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
 
     if(multilayer_perceptron_pointer)
     {
-        //multilayer_perceptron_Jacobian = multilayer_perceptron_pointer->calculate_Jacobian(outputs);
+        multilayer_perceptron_Jacobian = multilayer_perceptron_pointer->calculate_Jacobian(outputs);
 
-        //outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
+        outputs = multilayer_perceptron_pointer->calculate_outputs(outputs);
     }
 
     // Unscaling layer
 
     if(unscaling_layer_pointer)
     {
-        const Vector<double> unscaling_layer_derivative = unscaling_layer_pointer->calculate_derivatives(outputs);
+        const Matrix<double> unscaling_layer_derivative = unscaling_layer_pointer->calculate_derivatives(outputs);
 
         unscaling_layer_Jacobian = unscaling_layer_pointer->calculate_Jacobian(unscaling_layer_derivative);
 
@@ -2679,54 +2703,78 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs) c
 
     const size_t outputs_number = multilayer_perceptron_pointer->get_outputs_number();
 
-    Matrix<double> Jacobian(outputs_number, outputs_number, 0.0);
-    Jacobian.set_diagonal(1.0);
+    const size_t points_number = inputs.get_rows_number();
+
+    Vector< Matrix<double> > Jacobian(points_number);
+
+    for(size_t i = 0; i < points_number; i++)
+    {
+        Jacobian[i].set(outputs_number, outputs_number, 0.0);
+        Jacobian[i].set_diagonal(1.0);
+    }
+
 
     // Bounding layer
 
-    if(bounding_layer_pointer)
+    if(bounding_layer_pointer && bounding_layer_pointer->write_bounding_method() != "NoBounding")
     {
-        Jacobian = Jacobian.dot(bounding_layer_Jacobian);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = Jacobian[i].dot(bounding_layer_Jacobian[i]);
+        }
     }
 
     // Probabilistic outputs
 
-    if(probabilistic_layer_pointer)
+    if(probabilistic_layer_pointer && probabilistic_layer_pointer->write_probabilistic_method() != "NoProbabilistic")
     {
-        Jacobian = Jacobian.dot(probabilistic_layer_Jacobian);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = Jacobian[i].dot(probabilistic_layer_Jacobian[i]);
+        }
     }
 
     // Unscaling layer
 
-    if(unscaling_layer_pointer)
+    if(unscaling_layer_pointer && unscaling_layer_pointer->write_unscaling_method() != "NoUnscaling")
     {
-        Jacobian = Jacobian.dot(unscaling_layer_Jacobian);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = Jacobian[i].dot(unscaling_layer_Jacobian[i]);
+        }
     }
 
     // Multilayer perceptron
 
     if(multilayer_perceptron_pointer)
     {
-        Jacobian = Jacobian.dot(multilayer_perceptron_Jacobian);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = Jacobian[i].dot(multilayer_perceptron_Jacobian[i]);
+        }
     }
 
     // Principal components layer
 
-    if(principal_components_layer_pointer)
+    if(principal_components_layer_pointer && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
     {
-        Jacobian = Jacobian.dot(principal_components_layer_Jacobian);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = Jacobian[i].dot(principal_components_layer_Jacobian[i]);
+        }
     }
 
     // Scaling layer
 
-    if(scaling_layer_pointer)
+    if(scaling_layer_pointer && scaling_layer_pointer->write_scaling_methods() != "NoScaling")
     {
-        Jacobian = Jacobian.dot(scaling_layer_Jacobian);
+        for(size_t i = 0; i < points_number; i++)
+        {
+            Jacobian[i] = Jacobian[i].dot(scaling_layer_Jacobian[i]);
+        }
     }
 
     return(Jacobian);
-*/
-    return Matrix<double>();
 }
 
 
@@ -2923,6 +2971,7 @@ Matrix<double> NeuralNetwork::calculate_Jacobian(const Vector<double>& inputs, c
 
 Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian_data(const Matrix<double>& inputs) const
 {
+/*
     const size_t inputs_number = inputs_pointer->get_inputs_number();
 
     const size_t inputs_size = inputs.get_rows_number();
@@ -2939,6 +2988,9 @@ Vector< Matrix<double> > NeuralNetwork::calculate_Jacobian_data(const Matrix<dou
     }
 
     return(Jacobian_data);
+*/
+
+    return Vector<Matrix<double>>();
 }
 
 
@@ -4946,6 +4998,17 @@ string NeuralNetwork::write_expression() const
             inputs_name[i].replace(position, search.length(), replace);
             position += replace.length();
         }
+
+        position = 0;
+
+        search = ":";
+        replace = "_";
+
+        while((position = inputs_name[i].find(search, position)) != string::npos)
+        {
+            inputs_name[i].replace(position, search.length(), replace);
+            position += replace.length();
+        }
     }
 
     for(size_t i = 0; i < outputs_number; i++)
@@ -4989,6 +5052,17 @@ string NeuralNetwork::write_expression() const
         position = 0;
 
         search = ")";
+        replace = "_";
+
+        while((position = outputs_name[i].find(search, position)) != string::npos)
+        {
+            outputs_name[i].replace(position, search.length(), replace);
+            position += replace.length();
+        }
+
+        position = 0;
+
+        search = ":";
         replace = "_";
 
         while((position = outputs_name[i].find(search, position)) != string::npos)
@@ -5641,6 +5715,17 @@ string NeuralNetwork::write_expression_python() const
             inputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
+
+        pos = 0;
+
+        search = ":";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
     }
 
     for(size_t i = 0; i < outputs_number; i++)
@@ -5706,6 +5791,17 @@ string NeuralNetwork::write_expression_python() const
         pos = 0;
 
         search = "/";
+        replace = "_";
+
+        while((pos = outputs_name[i].find(search, pos)) != string::npos)
+        {
+            outputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
+        search = ":";
         replace = "_";
 
         while((pos = outputs_name[i].find(search, pos)) != string::npos)
@@ -5849,11 +5945,11 @@ string NeuralNetwork::write_expression_python() const
 
     buffer << "if type(inputs) != list:\n    "
            << "   print('Argument must be a list')\n    "
-           << "   exit()\n    ";
+           << "   return\n    ";
 
     buffer << "if len(inputs) != " << inputs_number << ":\n    "
            << "   print('Incorrect number of inputs')\n    "
-           << "   exit()\n    ";
+           << "   return\n    ";
 
     for(size_t i = 0; i < inputs_number; i++)
     {
@@ -6002,6 +6098,17 @@ string NeuralNetwork::write_expression_php() const
             inputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
+
+        pos = 0;
+
+        search = ":";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
     }
 
     for(size_t i = 0; i < outputs_number; i++)
@@ -6067,6 +6174,17 @@ string NeuralNetwork::write_expression_php() const
         pos = 0;
 
         search = "/";
+        replace = "_";
+
+        while((pos = outputs_name[i].find(search, pos)) != string::npos)
+        {
+            outputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
+        search = ":";
         replace = "_";
 
         while((pos = outputs_name[i].find(search, pos)) != string::npos)
@@ -6406,6 +6524,17 @@ string NeuralNetwork::write_expression_R() const
             inputs_name[i].replace(pos, search.length(), replace);
             pos += replace.length();
         }
+
+        pos = 0;
+
+        search = ":";
+        replace = "_";
+
+        while((pos = inputs_name[i].find(search, pos)) != string::npos)
+        {
+            inputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
     }
 
     for(size_t i = 0; i < outputs_number; i++)
@@ -6471,6 +6600,17 @@ string NeuralNetwork::write_expression_R() const
         pos = 0;
 
         search = "/";
+        replace = "_";
+
+        while((pos = outputs_name[i].find(search, pos)) != string::npos)
+        {
+            outputs_name[i].replace(pos, search.length(), replace);
+            pos += replace.length();
+        }
+
+        pos = 0;
+
+        search = ":";
         replace = "_";
 
         while((pos = outputs_name[i].find(search, pos)) != string::npos)
@@ -6646,6 +6786,44 @@ string NeuralNetwork::write_expression_R() const
         pos += replace.length();
     }
 
+    if(has_bounding_layer())
+    {
+        Vector< Vector<double> > boundings = bounding_layer_pointer->get_bounds();
+
+        for(size_t i = 0; i < outputs_number; i++)
+        {
+            pos = 0;
+
+            ostringstream bound;
+            bound.precision(10);
+            bound << boundings[0][i];
+
+            search = outputs_name[i] + " <- max(" + bound.str() + ", " + outputs_name[i] + ")";
+            replace = "outputs[" + to_string(i+1) + "] <- max(" + bound.str() + ", outputs[" + to_string(i+1) + "])";
+
+            while((pos = neural_network_expression.find(search, pos)) != string::npos)
+            {
+                neural_network_expression.replace(pos, search.length(), replace);
+                pos += replace.length();
+            }
+
+            pos = 0;
+
+            bound.str("");
+            bound.clear();
+            bound << boundings[1][i];
+
+            search = outputs_name[i] + " <- min(" + bound.str() + ", " + outputs_name[i] + ")";
+            replace = "outputs[" + to_string(i+1) + "] <- min(" + bound.str() + ", outputs[" + to_string(i+1) + "])";
+
+            while((pos = neural_network_expression.find(search, pos)) != string::npos)
+            {
+                neural_network_expression.replace(pos, search.length(), replace);
+                pos += replace.length();
+            }
+        }
+    }
+
     ostringstream outputs;
 
     if(has_probabilistic_layer())
@@ -6688,7 +6866,7 @@ string NeuralNetwork::write_expression_R() const
             break;
         case ProbabilisticLayer::NoProbabilistic :
 
-            outputs << "(" << outputs_name.vector_to_string(',') << ") <-(";
+            outputs << "(" << outputs_name.vector_to_string(',') << ") <- (";
 
             search = outputs.str();
             replace = "outputs <- c(";
@@ -6706,7 +6884,7 @@ string NeuralNetwork::write_expression_R() const
     }
     else if(has_unscaling_layer())
     {
-        outputs << "(" << outputs_name.vector_to_string(',') << ") <-(";
+        outputs << "(" << outputs_name.vector_to_string(',') << ") <- (";
 
         pos = 0;
 
@@ -6720,7 +6898,6 @@ string NeuralNetwork::write_expression_R() const
         }
 
         buffer << neural_network_expression;
-
     }
     else
     {

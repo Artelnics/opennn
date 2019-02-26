@@ -36,8 +36,8 @@ namespace OpenNN
 {
 
 /// This class represents a layer of unscaling neurons.
-/// Unscaling layers are included in the definition of a neural network. 
-/// They are used to unnormalize variables so they are in the original range after computer processing.  
+/// Unscaling layers are included in the definition of a neural network.
+/// They are used to unnormalize variables so they are in the original range after computer processing.
 
 class UnscalingLayer
 {
@@ -166,7 +166,7 @@ public:
    Matrix<double> calculate_logarithmic_derivatives(const Matrix<double>&) const;
    Matrix<double> calculate_logarithmic_second_derivatives(const Matrix<double>&) const;
 
-   Matrix<double> calculate_Jacobian(const Vector<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
    Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
 
    void check_range(const Vector<double>&) const;

@@ -284,7 +284,7 @@ Matrix<double> KNearestNeighbors::calculate_testing_outputs(void) const
 
 Vector<double> KNearestNeighbors::calculate_outputs(const Vector<double>& inputs) const
 {
-    const Neighbors k_nearest_neighbors = calculate_k_nearest_neighbors_supervised(inputs);
+    const ShortNeighbors k_nearest_neighbors = calculate_k_nearest_neighbors_supervised(inputs);
 
     const Vector<double> outputs = calculate_outputs(k_nearest_neighbors);
 
@@ -296,7 +296,7 @@ Vector<double> KNearestNeighbors::calculate_outputs(const Vector<double>& inputs
 /// Neighbors structure contains k_nearest_distances matrix and k_nearest_neighbors matrix.
 /// @param inpus Vector of inputs to the KNN.
 
-KNearestNeighbors::Neighbors KNearestNeighbors::calculate_k_nearest_neighbors_supervised(const Vector<double>& inputs) const
+KNearestNeighbors::ShortNeighbors KNearestNeighbors::calculate_k_nearest_neighbors_supervised(const Vector<double>& inputs) const
 {
     const Matrix<double> training_inputs = data_set_pointer->get_training_inputs();
 
@@ -326,7 +326,7 @@ KNearestNeighbors::Neighbors KNearestNeighbors::calculate_k_nearest_neighbors_su
         k_nearest_neighbors.set_column(i,nearest_neighbors);
     }
 
-    Neighbors neighbors;
+    ShortNeighbors neighbors;
     neighbors.distances = k_nearest_distances;
     neighbors.indices = k_nearest_neighbors;
 
@@ -338,7 +338,7 @@ KNearestNeighbors::Neighbors KNearestNeighbors::calculate_k_nearest_neighbors_su
 /// Neighbors structure contains k_nearest_distances matrix and k_nearest_neighbors matrix.
 /// @param inpus Vector of inputs to the KNN.
 
-KNearestNeighbors::Neighbors KNearestNeighbors::calculate_k_nearest_neighbors_unsupervised(const Vector<double>& inputs) const
+KNearestNeighbors::ShortNeighbors KNearestNeighbors::calculate_k_nearest_neighbors_unsupervised(const Vector<double>& inputs) const
 {
     const Matrix<double> training_inputs = data_set_pointer->get_training_inputs();
 
@@ -363,7 +363,48 @@ KNearestNeighbors::Neighbors KNearestNeighbors::calculate_k_nearest_neighbors_un
     k_nearest_distances.set_column(0,nearest_distances);
     k_nearest_neighbors.set_column(0,nearest_neighbors);
 
-    Neighbors neighbors;
+    ShortNeighbors neighbors;
+    neighbors.distances = k_nearest_distances;
+    neighbors.indices = k_nearest_neighbors;
+
+    return neighbors;
+}
+
+
+KNearestNeighbors::LongNeighbors KNearestNeighbors::calculate_long_k_nearest_neighbors_unsupervised(const Vector<double>& inputs) const
+{
+    const Matrix<double> training_inputs = data_set_pointer->get_training_inputs();
+
+    Vector< Matrix<double> > k_nearest_distances_matrix(1);
+    Matrix<double> k_nearest_distances(k,1);
+    Matrix<size_t> k_nearest_neighbors(k,1);
+
+    Matrix<double> weighted_distances_matrix;
+    Vector<double> weighted_distances;
+
+    if (distance_method == Euclidean)
+    {
+        weighted_distances_matrix = training_inputs.calculate_euclidean_weighted_distance_matrix(inputs, weights.get_column(0));
+
+        weighted_distances = weighted_distances_matrix.calculate_rows_sum().calculate_square_root_elements();
+    }
+    else if (distance_method == Manhattan)
+    {
+        weighted_distances_matrix = training_inputs.calculate_manhattan_weighted_distance_matrix(inputs, weights.get_column(0));
+
+        weighted_distances = weighted_distances_matrix.calculate_rows_sum();
+    }
+
+    const Vector<size_t> nearest_neighbors = weighted_distances.calculate_lower_indices(k);
+
+    const Vector<double> nearest_distances = weighted_distances.calculate_lower_values(k);
+
+    k_nearest_distances_matrix[0] = weighted_distances_matrix.sort_rank_rows(nearest_neighbors);
+    k_nearest_distances.set_column(0,nearest_distances);
+    k_nearest_neighbors.set_column(0,nearest_neighbors);
+
+    LongNeighbors neighbors;
+    neighbors.distances_matrix = k_nearest_distances_matrix;
     neighbors.distances = k_nearest_distances;
     neighbors.indices = k_nearest_neighbors;
 
@@ -375,7 +416,7 @@ KNearestNeighbors::Neighbors KNearestNeighbors::calculate_k_nearest_neighbors_un
 /// The format is a vector, where each element contains the output associated to each target.
 /// @param k_nearest_neighbors is the Neighbors structure that contains k_nearest_distances matrix and k_nearest_neighbors matrix.
 
-Vector<double> KNearestNeighbors::calculate_outputs(const Neighbors& k_nearest_neighbors) const
+Vector<double> KNearestNeighbors::calculate_outputs(const ShortNeighbors& k_nearest_neighbors) const
 {
     const Matrix<double> targets = data_set_pointer->get_training_targets();
 

@@ -570,9 +570,9 @@ string OptimizationAlgorithm::OptimizationAlgorithmResults::write_stopping_condi
     {
         return("Gradient norm goal");
     }
-    case MaximumSelectionLossIncreases:
+    case MaximumSelectionErrorIncreases:
     {
-        return("Maximum selection loss increases");
+        return("Maximum selection error increases");
     }
     case MaximumIterationsNumber:
     {
@@ -607,6 +607,7 @@ bool OptimizationAlgorithm::check_cuda() const
     {
         cudaGetDeviceProperties(&properties, device);
 
+        cout << properties.major << "." << properties.minor << endl;
         if(properties.major != 9999) /* 9999 means emulation only */
         {
             ++gpuDeviceCount;

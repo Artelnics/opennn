@@ -17,8 +17,8 @@
 namespace OpenNN
 {
 
-/// Default constructor. 
-/// It creates a Levenberg-Marquardt optimization algorithm object not associated to any loss index object. 
+/// Default constructor.
+/// It creates a Levenberg-Marquardt optimization algorithm object not associated to any loss index object.
 /// It also initializes the class members to their default values.
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
@@ -28,8 +28,8 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
 }
 
 
-/// Loss index constructor. 
-/// It creates a Levenberg-Marquardt optimization algorithm object associated associated with a given loss index object. 
+/// Loss index constructor.
+/// It creates a Levenberg-Marquardt optimization algorithm object associated associated with a given loss index object.
 /// It also initializes the class members to their default values.
 /// @param new_loss_index_pointer Pointer to an external loss index object. 
 
@@ -56,7 +56,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_ind
 // XML CONSTRUCTOR
 
 /// XML Constructor.
-/// Creates a Levenberg-Marquardt algorithm object, and loads its members from a XML document. 
+/// Creates a Levenberg-Marquardt algorithm object, and loads its members from a XML document.
 /// @param document TinyXML document containing the Levenberg-Marquardt algorithm data.
 
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument& document)
@@ -180,7 +180,7 @@ const bool& LevenbergMarquardtAlgorithm::get_return_minimum_selection_error_neur
 }
 
 
-/// Returns true if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_apply_early_stopping() const
 {
@@ -204,11 +204,11 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_parameters_norm_history() c
 }
 
 
-/// Returns true if the loss history vector is to be reserved, and false otherwise.
+/// Returns true if the error history vector is to be reserved, and false otherwise.
 
-const bool& LevenbergMarquardtAlgorithm::get_reserve_loss_history() const
+const bool& LevenbergMarquardtAlgorithm::get_reserve_error_history() const
 {
-   return(reserve_loss_history);
+   return(reserve_error_history);
 }
 
 
@@ -245,7 +245,7 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_elapsed_time_history() cons
 }
 
 
-/// Returns true if the selection loss history vector is to be reserved, and false otherwise.
+/// Returns true if the selection error history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_error_history() const
 {
@@ -348,7 +348,7 @@ void LevenbergMarquardtAlgorithm::set_default()
    reserve_parameters_history = false;
    reserve_parameters_norm_history = false;
 
-   reserve_loss_history = false;
+   reserve_error_history = false;
    reserve_gradient_history = false;
    reserve_gradient_norm_history = false;
    reserve_selection_error_history = false;
@@ -742,8 +742,8 @@ void LevenbergMarquardtAlgorithm::set_return_minimum_selection_error_neural_netw
 }
 
 
-/// Makes the selection loss decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection loss decrease stopping criteria has to be taken in account, false otherwise.
+/// Makes the selection error decrease stopping criteria has to be taken in account or not.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
 void LevenbergMarquardtAlgorithm::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
@@ -769,12 +769,12 @@ void LevenbergMarquardtAlgorithm::set_reserve_parameters_norm_history(const bool
 }
 
 
-/// Makes the loss history vector to be reseved or not in memory.
-/// @param new_reserve_loss_history True if the loss history vector is to be reserved, false otherwise.
+/// Makes the error history vector to be reseved or not in memory.
+/// @param new_reserve_error_history True if the error history vector is to be reserved, false otherwise.
 
-void LevenbergMarquardtAlgorithm::set_reserve_loss_history(const bool& new_reserve_loss_history)
+void LevenbergMarquardtAlgorithm::set_reserve_error_history(const bool& new_reserve_error_history)
 {
-   reserve_loss_history = new_reserve_loss_history;
+   reserve_error_history = new_reserve_error_history;
 }
 
 
@@ -817,9 +817,9 @@ void LevenbergMarquardtAlgorithm::set_reserve_elapsed_time_history(const bool& n
 }
 
 
-/// Makes the selection loss history to be reserved or not in memory.
+/// Makes the selection error history to be reserved or not in memory.
 /// This is a vector. 
-/// @param new_reserve_selection_error_history True if the selection loss history is to be reserved, false otherwise.
+/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
 
 void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
@@ -932,7 +932,7 @@ void LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::resize_tra
         parameters_norm_history.resize(new_size);
     }
 
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_loss_history())
+    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_error_history())
     {
         loss_history.resize(new_size);
     }
@@ -1311,7 +1311,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       // Training history loss index
 
-      if(reserve_loss_history)
+      if(reserve_error_history)
       {
          results_pointer->loss_history[epoch] = training_loss;
       }
@@ -1404,13 +1404,13 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
       {
          if(display)
          {
-            cout << "Epoch " << epoch << ": Maximum selection loss increases reached.\n"
+            cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
                       << "Selection loss increases: "<< selection_failures << endl;
          }
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumSelectionLossIncreases;
+         results_pointer->stopping_condition = MaximumSelectionErrorIncreases;
       }
 
       else if(epoch == maximum_epochs_number)
@@ -1543,7 +1543,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
    reserve_parameters_history = true;
    reserve_parameters_norm_history = true;
 
-   reserve_loss_history = true;
+   reserve_error_history = true;
    reserve_selection_error_history = true;
 
    reserve_gradient_history = true;
@@ -1597,9 +1597,9 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Performance goal
+   // Loss goal
 
-   labels.push_back("Performance goal");
+   labels.push_back("Loss goal");
 
    buffer.str("");
    buffer << loss_goal;
@@ -1615,9 +1615,9 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Maximum selection loss decreases
+   // Maximum selection error decreases
 
-   labels.push_back("Maximum selection loss increases");
+   labels.push_back("Maximum selection error increases");
 
    buffer.str("");
    buffer << maximum_selection_error_decreases;
@@ -1661,11 +1661,11 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
    // Reserve loss history
 
-   labels.push_back("Reserve loss history");
+   labels.push_back("Reserve error history");
 
    buffer.str("");
 
-   if(reserve_loss_history)
+   if(reserve_error_history)
    {
        buffer << "true";
    }
@@ -1676,9 +1676,9 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve selection loss history
+   // Reserve selection error history
 
-   labels.push_back("Reserve selection loss history");
+   labels.push_back("Reserve selection error history");
 
    buffer.str("");
 
@@ -1893,7 +1893,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Performance goal 
+   // Loss goal 
 
    element = document->NewElement("LossGoal");
    root_element->LinkEndChild(element);
@@ -1915,9 +1915,9 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Maximum selection loss decreases
+   // Maximum selection error decreases
 
-   element = document->NewElement("MaximumSelectionLossDecreases");
+   element = document->NewElement("MaximumSelectionErrorIncreases");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -1972,18 +1972,18 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 
    // Reserve loss history
 
-   element = document->NewElement("ReservePerformanceHistory");
+   element = document->NewElement("ReserveErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_loss_history;
+   buffer << reserve_error_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve selection loss history
+   // Reserve selection error history
 
-   element = document->NewElement("ReserveSelectionLossHistory");
+   element = document->NewElement("ReserveSelectionErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -2036,9 +2036,9 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
 
-   // Reserve selection loss history
+   // Reserve selection error history
 
-//   element = document->NewElement("ReserveSelectionLossHistory");
+//   element = document->NewElement("ReserveSelectionErrorHistory");
 //   root_element->LinkEndChild(element);
 
 //   buffer.str("");
@@ -2162,7 +2162,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
-    // Performance goal
+    // Loss goal
 
     file_stream.OpenElement("LossGoal");
 
@@ -2184,9 +2184,9 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
-    // Maximum selection loss decreases
+    // Maximum selection error decreases
 
-    file_stream.OpenElement("MaximumSelectionLossDecreases");
+    file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
     buffer << maximum_selection_error_decreases;
@@ -2230,18 +2230,18 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     // Reserve loss history
 
-    file_stream.OpenElement("ReservePerformanceHistory");
+    file_stream.OpenElement("ReserveErrorHistory");
 
     buffer.str("");
-    buffer << reserve_loss_history;
+    buffer << reserve_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
-    // Reserve selection loss history
+    // Reserve selection error history
 
-    file_stream.OpenElement("ReserveSelectionLossHistory");
+    file_stream.OpenElement("ReserveSelectionErrorHistory");
 
     buffer.str("");
     buffer << reserve_selection_error_history;
@@ -2502,7 +2502,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Performance goal 
+   // Loss goal 
 
    const tinyxml2::XMLElement* loss_goal_element = root_element->FirstChildElement("LossGoal");
 
@@ -2538,9 +2538,9 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Maximum selection loss decreases
+   // Maximum selection error decreases
 
-   const tinyxml2::XMLElement* maximum_selection_error_decreases_element = root_element->FirstChildElement("MaximumSelectionLossDecreases");
+   const tinyxml2::XMLElement* maximum_selection_error_decreases_element = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
    if(maximum_selection_error_decreases_element)
    {
@@ -2630,15 +2630,15 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    // Reserve loss history
 
-   const tinyxml2::XMLElement* reserve_loss_history_element = root_element->FirstChildElement("ReservePerformanceHistory");
+   const tinyxml2::XMLElement* reserve_error_history_element = root_element->FirstChildElement("ReserveErrorHistory");
 
-   if(reserve_loss_history_element)
+   if(reserve_error_history_element)
    {
-      const string new_reserve_loss_history = reserve_loss_history_element->GetText();
+      const string new_reserve_error_history = reserve_error_history_element->GetText();
 
       try
       {
-         set_reserve_loss_history(new_reserve_loss_history != "0");
+         set_reserve_error_history(new_reserve_error_history != "0");
       }
       catch(const logic_error& e)
       {
@@ -2646,9 +2646,9 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Reserve selection loss history
+   // Reserve selection error history
 
-   const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionLossHistory");
+   const tinyxml2::XMLElement* reserve_selection_error_history_element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
 
    if(reserve_selection_error_history_element)
    {

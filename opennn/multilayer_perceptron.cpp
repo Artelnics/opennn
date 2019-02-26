@@ -28,6 +28,13 @@ void freeCUDA(double* A_d);
 void updateParametersCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
                           std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
                           const double* gradient_h, const size_t parameters_number);
+
+void updateParametersSgdCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                             std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                             const double* gradient_d, const size_t parameters_number,
+                             const double& momentum, const bool& nesterov, const double& initial_learning_rate,
+                             const double& initial_decay, const size_t& learning_rate_iteration, double*& last_increment);
+
 #endif
 
 #define numeric_to_string( x ) static_cast< ostringstream & >( \
@@ -1936,6 +1943,87 @@ double MultilayerPerceptron::calculate_parameters_norm() const
 }
 
 
+/// Returns the partial derivatives of the outputs from each layer with respect to the inputs to the corresponding layer,
+/// for a vector of inputs to the neural netwok.
+/// The format of this quantity is a vector of matrices.
+/// @param inputs Matrix of inputs to the multilayer perceptron
+
+Vector< Vector< Matrix<double> > > MultilayerPerceptron::calculate_layers_Jacobian(const Matrix<double>& inputs) const
+{
+    const size_t layers_number = get_layers_number();
+
+    Vector<Matrix<double> > layers_output(layers_number);
+    Vector< Vector< Matrix<double> > > layers_Jacobian(layers_number);
+
+    layers_output[0] = layers[0].calculate_outputs(inputs);
+
+    layers_Jacobian[0] = layers[0].calculate_Jacobian(inputs);
+
+    for(size_t i = 1; i < layers_number; i++)
+    {
+        layers_output[i] = layers[i].calculate_outputs(layers_output[i-1]);
+        layers_Jacobian[i] = layers[i].calculate_Jacobian(layers_output[i-1]);
+    }
+
+    return(layers_Jacobian);
+}
+
+
+/// Returns the partial derivatives of the outputs from the last layer with respect to the inputs to the first layer.
+/// That is, it computes the inputs-outputs partial derivatives of the raw multilayer perceptron.
+/// @param inputs Vector of inputs to the first layer of the multilayer perceptron architecture.
+
+Vector< Matrix<double> > MultilayerPerceptron::calculate_Jacobian(const Matrix<double>& inputs) const
+{
+#ifdef __OPENNN_DEBUG__
+    const size_t size = inputs.size();
+    const size_t inputs_number = get_inputs_number();
+    if(size != inputs_number)
+    {
+        ostringstream buffer;
+        buffer << "OpenNN Exception: MultilayerPerceptron class.\n"
+               << "Matrix<double> calculate_Jacobian(const Vector<double>&) const method.\n"
+               << "Size must be equal to number of inputs.\n";
+        throw logic_error(buffer.str());
+    }
+#endif
+
+    const size_t points_number = inputs.get_rows_number();
+    const size_t layers_number = get_layers_number();
+
+    if(layers_number == 0)
+    {
+        return Vector<Matrix<double>>();
+    }
+
+    Vector< Matrix<double> > Jacobian(points_number);
+
+    const Vector< Vector< Matrix<double> > > layers_Jacobian = calculate_layers_Jacobian(inputs);
+
+    Jacobian = layers_Jacobian[layers_number-1];
+
+    for(size_t i = layers_number-2; i == 0; i--)
+    {
+        for(size_t j = 0; j < points_number; j++)
+        {
+            Jacobian[j] = Jacobian[j].dot(layers_Jacobian[i][j]);
+        }
+    }
+
+    return(Jacobian);
+
+/*
+    const Vector< Matrix<double> >  layers_Jacobian = calculate_layers_Jacobian(inputs);
+    Matrix<double> Jacobian = layers_Jacobian[layers_number-1];
+
+    for(size_t i = layers_number-2; i == 0; i--)
+    {
+        Jacobian = Jacobian.dot(layers_Jacobian[i]);
+    }
+*/
+}
+
+
 Matrix<double> MultilayerPerceptron::calculate_outputs(const Matrix<double>& inputs) const
 {
     #ifdef __OPENNN_DEBUG__
@@ -2141,6 +2229,7 @@ Vector<double> MultilayerPerceptron::Pointers::get_parameters() const
     return parameters;
 }
 
+
 void MultilayerPerceptron::Pointers::update_parameters(const Vector<double>& increment)
 {
 #ifdef __OPENNN_CUDA__
@@ -2168,6 +2257,14 @@ void MultilayerPerceptron::Pointers::update_parameters(const Vector<double>& inc
     updateParametersCUDA(weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
                          biases_pointers.to_std_vector(), bias_rows_numbers,
                          increment_data, parameters_number);
+#endif
+}
+
+void MultilayerPerceptron::Pointers::update_parameters_sgd(const Vector<double*>& gradient_d, const double& momentum, const bool& nesterov, const double& initial_learning_rate,
+                                                           const double& initial_decay, const size_t& learning_rate_iteration, const Vector<double>& last_increment)
+{
+#ifdef __OPENNN_CUDA__
+
 #endif
 }
 
