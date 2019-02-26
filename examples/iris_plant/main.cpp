@@ -87,7 +87,10 @@ int main(void)
 
         // Neural network
 
-        NeuralNetwork neural_network(4, 6, 1);
+        NeuralNetwork neural_network(4, 6, 3);
+
+        neural_network.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+        neural_network.get_multilayer_perceptron_pointer()->get_layer_pointer(1)->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
 
         Inputs* inputs_pointer = neural_network.get_inputs_pointer();
 
@@ -119,21 +122,25 @@ int main(void)
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
+        //quasi_Newton_method_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method(TrainingRateAlgorithm::TrainingRateMethod::GoldenSection);
+
         quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+
+        quasi_Newton_method_pointer->perform_training();
 
         training_strategy.set_display(false);
 
         // Model selection
 
-        ModelSelection model_selection(&training_strategy);
+//        ModelSelection model_selection(&training_strategy);
 
-        model_selection.set_order_selection_method(ModelSelection::GOLDEN_SECTION);
+//        model_selection.set_order_selection_method(ModelSelection::GOLDEN_SECTION);
 
-        GoldenSectionOrder* golden_section_order_pointer = model_selection.get_golden_section_order_pointer();
+//        GoldenSectionOrder* golden_section_order_pointer = model_selection.get_golden_section_order_pointer();
 
-        golden_section_order_pointer->set_tolerance(1.0e-7);
+//        golden_section_order_pointer->set_tolerance(1.0e-7);
 
-        ModelSelection::Results model_selection_results = model_selection.perform_order_selection();
+//        ModelSelection::Results model_selection_results = model_selection.perform_order_selection();
 
         // Testing analysis
 
@@ -150,7 +157,7 @@ int main(void)
 
         training_strategy.save("../data/training_strategy.xml");
 
-        model_selection.save("../data/model_selection.xml");
+//        model_selection.save("../data/model_selection.xml");
 //        model_selection_results.save("../data/model_selection_results.dat");
 
         confusion.save("../data/confusion.dat");

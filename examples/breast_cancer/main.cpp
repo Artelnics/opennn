@@ -117,7 +117,7 @@ int main(void)
 
         simulated_annealing_order_pointer->set_maximum_iterations_number(15);
 
-        ModelSelection::Results model_selection_results = model_selection.perform_order_selection();
+        const ModelSelection::Results model_selection_results = model_selection.perform_order_selection();
 
         // Testing analysis
 
@@ -137,7 +137,7 @@ int main(void)
         training_strategy.save("../data/training_strategy.xml");
 
         model_selection.save("../data/model_selection.xml");
-//        model_selection_results.save("../data/model_selection_results.dat");
+        model_selection_results.save("../data/model_selection_results.dat");
 
         confusion.save("../data/confusion.dat");
         binary_classification_tests.save("../data/binary_classification_tests.dat");

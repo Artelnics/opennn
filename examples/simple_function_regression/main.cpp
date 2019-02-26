@@ -105,7 +105,7 @@ int main(void)
 
         quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
 
-        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+        const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 /*
         // Testing analysis
 

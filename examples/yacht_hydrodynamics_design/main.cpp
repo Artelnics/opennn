@@ -111,7 +111,7 @@ int main(void)
 
         quasi_Newton_method_pointer->set_display_period(100);
 
-        TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+        const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 

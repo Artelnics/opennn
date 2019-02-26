@@ -132,7 +132,7 @@ int main(void)
 
         quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
 
-        quasi_Newton_method_pointer->set_reserve_loss_history(true);
+//        quasi_Newton_method_pointer->set_reserve_loss_history(true);
 
         const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 

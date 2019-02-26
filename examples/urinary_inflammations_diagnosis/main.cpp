@@ -143,7 +143,7 @@ int main(void)
 
         // Testing analysis
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+        const TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
 

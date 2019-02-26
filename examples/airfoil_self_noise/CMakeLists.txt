@@ -6,21 +6,13 @@ cmake_minimum_required(VERSION 2.8.10)
 
 project(airfoil_self_noise)
 
-if(WIN32)
-	if(EXISTS ../../opennn/Release/opennn)
-		SET(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
-	else()
-		SET(PROJECT_LINK_LIBS ../../opennn/Debug/opennn)
-	endif()
-endif(WIN32)
+if (WIN32)
+    set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+endif (WIN32)
 
-if(UNIX)
-    if(EXISTS ../../opennn/Release/opennn)
-		SET(PROJECT_LINK_LIBS ../../opennn/Release/opennn)
-	else()
-		SET(PROJECT_LINK_LIBS ../../opennn/Debug/opennn)
-	endif()
-endif(UNIX)
+if (UNIX)
+    set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
+endif (UNIX)
 
 link_directories(${CMAKE_SOURCE_DIR}/opennn)
 
