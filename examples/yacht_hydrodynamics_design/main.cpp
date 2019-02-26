@@ -107,7 +107,7 @@ int main(void)
 
         quasi_Newton_method_pointer->set_maximum_epochs_number(1000);
 
-        quasi_Newton_method_pointer->set_reserve_loss_history(true);
+//        quasi_Newton_method_pointer->set_reserve_loss_history(true);
 
         quasi_Newton_method_pointer->set_display_period(100);
 
