@@ -22,5 +22,5 @@ DEFINES += NDEBUG
 
 SUBDIRS += opennn
 SUBDIRS += examples
-#SUBDIRS += tests
+SUBDIRS += tests
 
