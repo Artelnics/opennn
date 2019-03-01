@@ -146,7 +146,7 @@ void IncrementalOrderTest::test_perform_order_selection()
 
     assert_true(nn.get_multilayer_perceptron_pointer()->get_layers_perceptrons_numbers()[0] == 1, LOG);
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::SelectionLossGoal, LOG);
+                OrderSelectionAlgorithm::SelectionErrorGoal, LOG);
 
     // Test
 

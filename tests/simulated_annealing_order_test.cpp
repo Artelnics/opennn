@@ -144,7 +144,7 @@ void SimulatedAnnealingOrderTest::test_perform_order_selection()
     results = sa.perform_order_selection();
 
     assert_true(results->stopping_condition ==
-                OrderSelectionAlgorithm::SelectionLossGoal, LOG);
+                OrderSelectionAlgorithm::SelectionErrorGoal, LOG);
 
     // Test
 

@@ -85,6 +85,7 @@ public:
 
 #endif
 
+
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
 //

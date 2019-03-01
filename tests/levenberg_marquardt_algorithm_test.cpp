@@ -345,7 +345,7 @@ void LevenbergMarquardtAlgorithmTest::test_set_reserve_all_training_history()
    assert_true(lma.get_reserve_parameters_history() == true, LOG);
    assert_true(lma.get_reserve_parameters_norm_history() == true, LOG);
 
-   assert_true(lma.get_reserve_loss_history() == true, LOG);
+   assert_true(lma.get_reserve_error_history() == true, LOG);
    assert_true(lma.get_reserve_selection_error_history() == true, LOG);
    assert_true(lma.get_reserve_gradient_history() == true, LOG);
    assert_true(lma.get_reserve_gradient_norm_history() == true, LOG);
