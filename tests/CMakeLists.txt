@@ -7,11 +7,11 @@ cmake_minimum_required(VERSION 2.8.10)
 project(tests)
 
 if (WIN32)
-    set (PROJECT_LINK_LIBS ../opennn/Release/opennn)
+    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/Release/opennni/libopennn.a)
 endif (WIN32)
 
 if (UNIX)
-    set (PROJECT_LINK_LIBS ../opennn/Release/opennn)
+    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/Release/opennn/libopennn.a)
 endif (UNIX)
 
 link_directories(${CMAKE_SOURCE_DIR}/opennn)

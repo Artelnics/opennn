@@ -214,6 +214,7 @@ Makefile*
 ![Ee]xamples/airfoil_self_noise
 ![Ee]xamples/breast_cancer
 ![Ee]xamples/iris_plant
+![Ee]xamples/leukemia
 ![Ee]xamples/logical_operations
 ![Ee]xamples/pima_indians_diabetes
 ![Ee]xamples/simple_function_regression
