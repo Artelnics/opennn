@@ -38,7 +38,7 @@ int main(void)
 
         DataSet data_set;
 
-        data_set.set_data_file_name("../data/simplefunctionregression.dat");
+        data_set.set_data_file_name("./data/simplefunctionregression.dat");
 
         data_set.load_data();
 
