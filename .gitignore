@@ -210,6 +210,8 @@ Makefile*
 # Examples
 [Ee]xamples/*
 *filters
+*vcxproj
+*sln
 
 ![Ee]xamples/airfoil_self_noise
 ![Ee]xamples/breast_cancer
