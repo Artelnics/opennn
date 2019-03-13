@@ -7,11 +7,15 @@ cmake_minimum_required(VERSION 2.8.10)
 project(tests)
 
 if (WIN32)
-    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/libopennn.a)
+	if (CMAKE_GENERATOR MATCHES "Visual Studio 15 2017")
+		set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/Release/opennn.lib)
+	else()
+		set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/libopennn.a)
+	endif()
 endif (WIN32)
 
 if (UNIX)
-    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/libopennn.a)
+    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/Release/opennn)
 endif (UNIX)
 
 link_directories(${CMAKE_SOURCE_DIR}/opennn)

@@ -36,7 +36,7 @@ int main(void)
 
         // Neural network
 
-        const string neural_network_file_name = "./data/neural_network.xml";
+        const string neural_network_file_name = "../data/neural_network.xml";
 
         NeuralNetwork neural_network(neural_network_file_name);
 
