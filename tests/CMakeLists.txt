@@ -15,7 +15,7 @@ if (WIN32)
 endif (WIN32)
 
 if (UNIX)
-    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/Release/opennn)
+    set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/opennn/libopennn.a)
 endif (UNIX)
 
 link_directories(${CMAKE_SOURCE_DIR}/opennn)

@@ -11106,7 +11106,7 @@ Vector<T> Vector<T>::yyyy_mm_dd_to_weekday(const char& delimiter) const
 {
     const size_t this_size = this->size();
 
-    const Vector<time_t> time = yyyy_mm_dd_to_time(delimiter);
+    const Vector<time_t> time = yyyy_mm_dd_to_timestamp(delimiter);
 
     Vector<T> output(this_size);
 
