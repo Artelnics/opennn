@@ -345,6 +345,7 @@ public:
 
    Matrix<double> calculate_positives_data_statistics_matrix() const;
    Matrix<double> calculate_negatives_data_statistics_matrix() const;
+   Matrix<double> calculate_class_data_statistics_matrix(const size_t&) const;
 
    Matrix<double> calculate_data_shape_parameters_matrix() const;
 
@@ -394,7 +395,10 @@ public:
    // Nominal variables
 
    Matrix<double> calculate_multiple_linear_correlations(const Vector<size_t>&) const;
+   Matrix<double> calculate_multiple_correlations(const Vector<size_t>&) const;
    Vector<double> calculate_multiple_total_linear_correlations(const Vector<size_t>&) const;
+
+   Matrix<string> calculate_multiple_correlations_types(const Vector<size_t>&) const;
 
 //   Matrix<double> calculate_multiple_logistic_correlations(const Vector<size_t>&) const;
 
@@ -556,7 +560,7 @@ public:
    void generate_Rosenbrock_data(const size_t&, const size_t&);
 
    void generate_data_binary_classification(const size_t&, const size_t&);
-   void generate_data_multiple_classification(const size_t&, const size_t&);
+   void generate_data_multiple_classification(const size_t&, const size_t&, const size_t&);
 
    // Serialization methods
 
@@ -758,7 +762,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

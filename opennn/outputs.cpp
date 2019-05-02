@@ -223,6 +223,25 @@ const string& Outputs::get_description(const size_t& index) const
 }
 
 
+size_t Outputs::get_index(const string& name) const
+{
+    const size_t outputs_number = get_outputs_number();
+
+    for(size_t i = 0; i < outputs_number; i++)
+    {
+        if(items[i].name == name) return i;
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Outputs class.\n"
+           << "size_t get_index(const string&) const method.\n"
+           << "Name " << name << " not found.\n";
+
+    throw logic_error(buffer.str());
+}
+
+
 /// Returns the units of the output variables as strings. 
 /// Such units are only used to give the user basic information about the problem at hand.
 
@@ -279,13 +298,13 @@ Matrix<string> Outputs::get_information() const
 {
     const size_t outputs_number = get_outputs_number();
 
-    Matrix<string> information(outputs_number, 3);
+    Matrix<string> information(outputs_number, 1);
 
     for(size_t i = 0; i < outputs_number; i++)
     {
         information(i,0) = items[i].name;
-        information(i,1) = items[i].units;
-        information(i,2) = items[i].description;
+//        information(i,1) = items[i].units;
+//        information(i,2) = items[i].description;
     }
 
     return(information);
@@ -1275,7 +1294,7 @@ void Outputs::write_PMML_neural_outputs(tinyxml2::XMLPrinter& file_stream, size_
 
 }
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

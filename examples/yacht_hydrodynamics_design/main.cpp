@@ -67,6 +67,8 @@ int main(void)
         const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
         const Vector< Statistics<double> > targets_statistics = data_set.scale_targets_minimum_maximum();
 
+        cout << targets_statistics << endl;
+
         // Neural network
 
         const size_t inputs_number = data_set.get_variables().get_inputs_number();
@@ -99,7 +101,6 @@ int main(void)
 
         unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-        // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
@@ -107,27 +108,43 @@ int main(void)
 
         quasi_Newton_method_pointer->set_maximum_epochs_number(1000);
 
-//        quasi_Newton_method_pointer->set_reserve_loss_history(true);
+        quasi_Newton_method_pointer->set_reserve_error_history(true);
 
-        quasi_Newton_method_pointer->set_display_period(100);
+        quasi_Newton_method_pointer->set_display_period(10000);
 
         const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
 
+        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+
         // Testing analysis
+
+        data_set.unscale_inputs_minimum_maximum(inputs_statistics);
+
+        data_set.unscale_targets_minimum_maximum(targets_statistics);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
 //        TestingAnalysis::LinearRegressionResults linear_regression_results = testing_analysis.perform_linear_regression_analysis();
 
+        // Response optimization
+
+        ResponseOptimization response_optimization(&neural_network);
+
+        response_optimization.set_input_condition("froude_number", ResponseOptimization::EqualTo, {0.3});
+
+//        response_optimization.set_input_condition();
+
+        response_optimization.perform_optimization();
+
         // Save results
 
-        data_set.save("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+//        neural_network.save("../data/neural_network.xml");
+//        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
-        training_strategy_results.save("../data/training_strategy_results.dat");
+        //training_strategy_results.save("../data/training_strategy_results.dat");
 
 //        linear_regression_results.save("../data/linear_regression_analysis_results.dat");
 
@@ -143,7 +160,7 @@ int main(void)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

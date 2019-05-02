@@ -115,6 +115,8 @@ public:
    Vector<string> get_descriptions() const;
    const string& get_description(const size_t&) const;
 
+   size_t get_index(const string&) const;
+
    // Variables
 
    Matrix<string> get_information() const;
@@ -199,7 +201,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

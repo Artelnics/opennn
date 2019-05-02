@@ -682,8 +682,6 @@ void ScalingLayer::set_scaling_methods(const Vector<string>& new_scaling_methods
 }
 
 
-// void set_scaling_methods(const string&) method
-
 /// Sets all the methods to be used for scaling with the given method.
 /// The argument is a string containing the name of the method("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
@@ -742,8 +740,6 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
     set_scaling_methods(new_scaling_methods);
 }
 
-
-// void set_scaling_methods(const ScalingMethod&)
 
 /// Sets the method to be used for scaling the variables.
 /// @param new_scaling_method New scaling method for the variables.
@@ -969,7 +965,7 @@ Matrix<double> ScalingLayer::calculate_outputs(const Matrix<double>& inputs) con
 
     const size_t inputs_number = get_scaling_neurons_number();
 
-    const size_t size = inputs.size();
+    const size_t size = inputs.get_columns_number();
 
     if(size != inputs_number)
     {
@@ -1877,7 +1873,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //            buffer << "OpenNN Exception: ScalingLayer class.\n"
 //                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                   << "Unknown scaling method element " << i+1 << "(" << new_method << ").\n";
+//                   << "Unknown scaling method element " << i+1 << " (" << new_method << ").\n";
 
 //            throw logic_error(buffer.str());
         }
@@ -2284,7 +2280,7 @@ void ScalingLayer::from_PMML(const tinyxml2::XMLElement* element, const Vector<s
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

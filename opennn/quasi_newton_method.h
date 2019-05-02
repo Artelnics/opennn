@@ -316,6 +316,8 @@ public:
 
    // Utilities
 
+   void set_use_cuda(const bool&);
+
    void set_display_period(const size_t&);
 
    // Training methods
@@ -437,6 +439,10 @@ private:
 
    bool apply_early_stopping;
 
+   /// Use cuda
+
+   bool use_cuda;
+
    // TRAINING HISTORY
 
    /// True if the parameters history matrix is to be reserved, false otherwise.
@@ -487,7 +493,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -566,6 +566,8 @@ void QuasiNewtonMethod::set_default()
 
    // UTILITIES
 
+   use_cuda = false;
+
    display = true;
    display_period = 5;
 }
@@ -1034,6 +1036,14 @@ void QuasiNewtonMethod::set_reserve_elapsed_time_history(const bool& new_reserve
 void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)  
 {
    reserve_selection_error_history = new_reserve_selection_error_history;
+}
+
+/// Sets the use or not the cuda.
+/// @param use_cuda New use of cuda.
+
+void QuasiNewtonMethod::set_use_cuda(const bool& new_use_cuda)
+{
+    use_cuda = new_use_cuda;
 }
 
 
@@ -1791,17 +1801,17 @@ Matrix<string> QuasiNewtonMethod::QuasiNewtonMethodResults::write_final_results(
 
    // Final selection error
 
-//   const LossIndex* loss_index_pointer = quasi_Newton_method_pointer->get_loss_index_pointer();
+   const LossIndex* loss_index_pointer = quasi_Newton_method_pointer->get_loss_index_pointer();
 
-//   if(loss_index_pointer->has_selection())
-//   {
-//       names.push_back("Final selection error");
+   if(loss_index_pointer->has_selection())
+   {
+       names.push_back("Final selection error");
 
-//       buffer.str("");
-//       buffer << setprecision(precision) << final_selection_error;
+       buffer.str("");
+       buffer << setprecision(precision) << final_selection_error;
 
-//       values.push_back(buffer.str());
-//    }
+       values.push_back(buffer.str());
+    }
 
    // Final gradient norm
 
@@ -1946,7 +1956,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
    cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
 
-   if(cudaResultCode != cudaSuccess)
+   if(cudaResultCode != cudaSuccess || !use_cuda)
    {
        deviceCount = 0;
    }
@@ -1955,7 +1965,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    {
        cudaGetDeviceProperties(&properties, device);
 
-       if(properties.major != 9999) /* 9999 means emulation only */
+       if(properties.major != 9999) // 9999 means emulation only
        {
            ++gpuDeviceCount;
        }
@@ -2062,7 +2072,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
        {
            training_error = loss_index_pointer->calculate_training_error();
 
-           training_loss = training_error + regularization_weight*training_error;
+           training_loss = training_error + regularization_weight*training_regularization;
            training_loss_decrease = 0.0;
        }
        else
@@ -2188,6 +2198,7 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
        directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
 
        training_rate = directional_point[0];
+
 //       training_loss = directional_point[1];
 
        // Reset training direction when training rate is 0
@@ -2200,7 +2211,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 
            training_rate = directional_point[0];
        }
-
 
        parameters_increment = training_direction*training_rate;
        parameters_increment_norm = parameters_increment.calculate_L2_norm();
@@ -2418,10 +2428,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 //   results_pointer->final_training_direction = training_direction;
 //   results_pointer->final_training_rate = training_rate;
 //   results_pointer->elapsed_time = elapsed_time;
-
-//   results_pointer->epochs_number = epoch;
-
-//   results_pointer->resize_training_history(epoch+1);
 
 #ifdef __OPENNN_CUDA__
 
@@ -3895,7 +3901,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

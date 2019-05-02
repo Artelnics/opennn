@@ -5,7 +5,6 @@
 /*                                                                                                              */
 /*   N U M E R I C A L   D I F F E R E N T I A T I O N   C L A S S                                              */
 /*                                                                                                              */
-
 /*   Artificial Intelligence Techniques SL                                                                      */
 /*   artelnics@artelnics.com                                                                                    */
 /*                                                                                                              */
@@ -455,7 +454,7 @@ void NumericalDifferentiation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

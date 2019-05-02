@@ -19,9 +19,9 @@ namespace OpenNN
 
 // DEFAULT CONSTRUCTOR
 
-/// Default constructor. 
+/// Default constructor.
 /// It creates an empty neural network object.
-/// All pointers in the object are initialized to nullptr. 
+/// All pointers in the object are initialized to nullptr.
 /// The rest of members are initialized to their default values.
 
 NeuralNetwork::NeuralNetwork()
@@ -32,9 +32,9 @@ NeuralNetwork::NeuralNetwork()
 
 // MULTILAYER PERCEPTRON CONSTRUCTOR
 
-/// Multilayer Perceptron constructor. 
-/// It creates a neural network object from a given multilayer perceptron. 
-/// The rest of pointers are initialized to nullptr. 
+/// Multilayer Perceptron constructor.
+/// It creates a neural network object from a given multilayer perceptron.
+/// The rest of pointers are initialized to nullptr.
 /// This constructor also initializes the rest of class members to their default values.
 
 NeuralNetwork::NeuralNetwork(const MultilayerPerceptron& new_multilayer_perceptron)
@@ -53,12 +53,12 @@ NeuralNetwork::NeuralNetwork(const MultilayerPerceptron& new_multilayer_perceptr
 
 // MULTILAYER PERCEPTRON ARCHITECTURE CONSTRUCTOR
 
-/// Multilayer perceptron architecture constructor. 
+/// Multilayer perceptron architecture constructor.
 /// It creates a neural network object with a multilayer perceptron given by its architecture.
 /// This constructor allows an arbitrary deep learning architecture.
-/// The rest of pointers are initialized to nullptr.  
+/// The rest of pointers are initialized to nullptr.
 /// This constructor also initializes the rest of class members to their default values.
-/// @param new_multilayer_perceptron_architecture Vector with the number of inputs and the numbers of perceptrons in each layer. 
+/// @param new_multilayer_perceptron_architecture Vector with the number of inputs and the numbers of perceptrons in each layer.
 /// The size of this vector must be equal to one plus the number of layers.
 
 NeuralNetwork::NeuralNetwork(const Vector<size_t>& new_multilayer_perceptron_architecture)
@@ -91,10 +91,10 @@ NeuralNetwork::NeuralNetwork(const vector<size_t>& new_multilayer_perceptron_arc
 
 // ONE LAYER CONSTRUCTOR
 
-/// One layer constructor. 
-/// It creates a one-layer perceptron object. 
-/// The number of independent parameters is set to zero.  
-/// The multilayer perceptron parameters are initialized at random. 
+/// One layer constructor.
+/// It creates a one-layer perceptron object.
+/// The number of independent parameters is set to zero.
+/// The multilayer perceptron parameters are initialized at random.
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_perceptrons_number Number of perceptrons in the layer.
 
@@ -114,10 +114,10 @@ NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_
 
 // TWO LAYERS CONSTRUCTOR
 
-/// Two layers constructor. 
-/// It creates a neural network object with a two layers perceptron. 
-/// The rest of pointers of this object are initialized to nullptr. 
-/// The other members are initialized to their default values. 
+/// Two layers constructor.
+/// It creates a neural network object with a two layers perceptron.
+/// The rest of pointers of this object are initialized to nullptr.
+/// The other members are initialized to their default values.
 /// @param new_inputs_number Number of inputs in the multilayer perceptron.
 /// @param new_hidden_perceptrons_number Number of neurons in the hidden layer of the multilayer perceptron.
 /// @param new_output_perceptrons_number Number of outputs neurons.
@@ -138,7 +138,7 @@ NeuralNetwork::NeuralNetwork(const size_t& new_inputs_number, const size_t& new_
 
 // FILE CONSTRUCTOR
 
-/// File constructor. 
+/// File constructor.
 /// It creates a neural network object by loading its members from an XML-type file.
 /// Please be careful with the format of that file, which is specified in the OpenNN manual.
 /// @param file_name Name of neural network file.
@@ -151,7 +151,7 @@ NeuralNetwork::NeuralNetwork(const string& file_name)
 
 // XML CONSTRUCTOR
 
-/// XML constructor. 
+/// XML constructor.
 /// It creates a neural network object by loading its members from an XML document.
 /// @param document TinyXML document containing the neural network data.
 
@@ -163,8 +163,8 @@ NeuralNetwork::NeuralNetwork(const tinyxml2::XMLDocument& document)
 
 // COPY CONSTRUCTOR
 
-/// Copy constructor. 
-/// It creates a copy of an existing neural network object. 
+/// Copy constructor.
+/// It creates a copy of an existing neural network object.
 /// @param other_neural_network Neural network object to be copied.
 
 NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
@@ -194,7 +194,7 @@ NeuralNetwork::~NeuralNetwork()
 
 // ASSIGNMENT OPERATOR
 
-/// Assignment operator. 
+/// Assignment operator.
 /// It assigns to this object the members of an existing neural network object.
 /// @param other_neural_network Neural network object to be assigned.
 
@@ -208,7 +208,7 @@ NeuralNetwork& NeuralNetwork::operator = (const NeuralNetwork& other_neural_netw
 
 // EQUAL TO OPERATOR
 
-/// Equal to operator. 
+/// Equal to operator.
 /// @param other_neural_network Neural network object to be compared with.
 
 bool NeuralNetwork::operator == (const NeuralNetwork& other_neural_network) const
@@ -1476,6 +1476,23 @@ void NeuralNetwork::construct_scaling_layer(const Vector< Statistics<double> >& 
     scaling_layer_pointer->set_statistics(input_statistics);
 }
 
+void NeuralNetwork::construct_scaling_layer(const Eigen::MatrixXd& input_statistics)
+{
+    const Eigen::Index rows_number = input_statistics.rows();
+
+    Vector< Statistics<double> > stats(rows_number);
+
+    for(Eigen::Index i=0; i < rows_number; i++)
+    {
+        stats[i] = Statistics<double>(input_statistics(i, 0),
+                                      input_statistics(i, 1),
+                                      input_statistics(i, 2),
+                                      input_statistics(i, 3));
+    }
+
+    construct_scaling_layer(stats);
+}
+
 
 /// This method constructs a principal_components layer within the neural network.
 /// The size of the principal components layer is the number of inputs in the multilayer perceptron.
@@ -1524,7 +1541,26 @@ void NeuralNetwork::construct_unscaling_layer(const Vector< Statistics<double> >
 {
     construct_unscaling_layer();
 
-    scaling_layer_pointer->set_statistics(target_statistics);
+    unscaling_layer_pointer->set_statistics(target_statistics);
+}
+
+
+
+void NeuralNetwork::construct_unscaling_layer(const Eigen::MatrixXd& target_statistics)
+{
+    const Eigen::Index rows_number = target_statistics.rows();
+
+    Vector< Statistics<double> > stats(rows_number);
+
+    for(Eigen::Index i=0; i < rows_number; i++)
+    {
+        stats[i] = Statistics<double>(target_statistics(i, 0),
+                                      target_statistics(i, 1),
+                                      target_statistics(i, 2),
+                                      target_statistics(i, 3));
+    }
+
+    construct_unscaling_layer(stats);
 }
 
 
@@ -2384,7 +2420,7 @@ Matrix<double> NeuralNetwork::calculate_outputs(const Matrix<double>& inputs) co
 
     if(multilayer_perceptron_pointer)
     {
-        const size_t inputs_size = inputs.size();
+        const size_t inputs_size = inputs.get_columns_number();
 
         if(inputs_size != inputs_number)
         {
@@ -2402,7 +2438,7 @@ Matrix<double> NeuralNetwork::calculate_outputs(const Matrix<double>& inputs) co
 
     const size_t points_number = inputs.get_rows_number();
 
-    Matrix<double> outputs(points_number, inputs_number,0.0);
+    Matrix<double> outputs(points_number, inputs_number, 0.0);
 
     // Scaling layer
 
@@ -2582,10 +2618,10 @@ Matrix<double> NeuralNetwork::calculate_outputs(const Matrix<double>& inputs, co
 /// @param points_number Number of points in the directional input data set.
 
 Matrix<double> NeuralNetwork::calculate_directional_inputs(const size_t& direction,
-                                                               const Vector<double>& point,
-                                                               const double& minimum,
-                                                               const double& maximum,
-                                                               const size_t& points_number) const
+                                                           const Vector<double>& point,
+                                                           const double& minimum,
+                                                           const double& maximum,
+                                                           const size_t& points_number) const
 {
     const size_t inputs_number = inputs_pointer->get_inputs_number();
 
@@ -4954,7 +4990,7 @@ string NeuralNetwork::write_expression() const
     {
         position = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((position = inputs_name[i].find(search, position)) != string::npos)
@@ -5015,7 +5051,7 @@ string NeuralNetwork::write_expression() const
     {
         position = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((position = outputs_name[i].find(search, position)) != string::npos)
@@ -5326,7 +5362,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     {
         position = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((position = inputs_name[i].find(search, position)) != string::npos)
@@ -5376,7 +5412,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
     {
         position = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((position = outputs_name[i].find(search, position)) != string::npos)
@@ -5478,7 +5514,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     for (size_t i = 0; i < inputs_name.size(); i++)
     {
-        inputs_name[i] = "$"+inputs_name[i];
+        inputs_name[i] = "$_"+inputs_name[i];
     }
 
     for (size_t i = 0; i < outputs_name.size(); i++)
@@ -5543,7 +5579,7 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
     if(has_unscaling_layer())
     {
-        buffer << unscaling_layer_pointer->write_expression(scaled_outputs_name, outputs_name);
+        buffer << unscaling_layer_pointer->write_expression_php(scaled_outputs_name, outputs_name);
     }
 
     // Outputs trending layer
@@ -5663,7 +5699,7 @@ string NeuralNetwork::write_expression_python() const
 
         pos = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((pos = inputs_name[i].find(search, pos)) != string::npos)
@@ -5746,7 +5782,7 @@ string NeuralNetwork::write_expression_python() const
 
         pos = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((pos = outputs_name[i].find(search, pos)) != string::npos)
@@ -6046,7 +6082,7 @@ string NeuralNetwork::write_expression_php() const
 
         pos = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((pos = inputs_name[i].find(search, pos)) != string::npos)
@@ -6129,7 +6165,7 @@ string NeuralNetwork::write_expression_php() const
 
         pos = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((pos = outputs_name[i].find(search, pos)) != string::npos)
@@ -6365,7 +6401,7 @@ string NeuralNetwork::write_expression_php() const
 
     for (size_t i = 0; i < inputs_name.size(); i++)
     {
-        inputs_name[i] = "$"+inputs_name[i];
+        inputs_name[i] = "$_"+inputs_name[i];
     }
 
     for (size_t i = 0; i < outputs_name.size(); i++)
@@ -6472,7 +6508,7 @@ string NeuralNetwork::write_expression_R() const
 
         pos = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((pos = inputs_name[i].find(search, pos)) != string::npos)
@@ -6555,7 +6591,7 @@ string NeuralNetwork::write_expression_R() const
 
         pos = 0;
 
-        search = "(";
+        search = " (";
         replace = "_";
 
         while((pos = outputs_name[i].find(search, pos)) != string::npos)
@@ -6834,7 +6870,7 @@ string NeuralNetwork::write_expression_R() const
         {
         case ProbabilisticLayer::Binary :
 
-            outputs << "(" << outputs_name.vector_to_string(',') << ") <- Binary(";
+            outputs << " (" << outputs_name.vector_to_string(',') << ") <- Binary(";
 
             search = outputs.str();
             replace = "outputs <- Binary(";
@@ -6842,7 +6878,7 @@ string NeuralNetwork::write_expression_R() const
             break;
         case ProbabilisticLayer::Probability :
 
-            outputs << "(" << outputs_name.vector_to_string(',') << ") <- Probability(";
+            outputs << " (" << outputs_name.vector_to_string(',') << ") <- Probability(";
 
             search = outputs.str();
             replace = "outputs <- Probability(";
@@ -6850,7 +6886,7 @@ string NeuralNetwork::write_expression_R() const
             break;
         case ProbabilisticLayer::Competitive :
 
-            outputs << "(" << outputs_name.vector_to_string(',') << ") <- Competitive(";
+            outputs << " (" << outputs_name.vector_to_string(',') << ") <- Competitive(";
 
             search = outputs.str();
             replace = "outputs <- Competitive(";
@@ -6858,7 +6894,7 @@ string NeuralNetwork::write_expression_R() const
             break;
         case ProbabilisticLayer::Softmax :
 
-            outputs << "(" << outputs_name.vector_to_string(',') << ") <- Softmax(";
+            outputs << " (" << outputs_name.vector_to_string(',') << ") <- Softmax(";
 
             search = outputs.str();
             replace = "outputs <- Softmax(";
@@ -6866,7 +6902,7 @@ string NeuralNetwork::write_expression_R() const
             break;
         case ProbabilisticLayer::NoProbabilistic :
 
-            outputs << "(" << outputs_name.vector_to_string(',') << ") <- (";
+            outputs << " (" << outputs_name.vector_to_string(',') << ") <- (";
 
             search = outputs.str();
             replace = "outputs <- c(";
@@ -6884,7 +6920,7 @@ string NeuralNetwork::write_expression_R() const
     }
     else if(has_unscaling_layer())
     {
-        outputs << "(" << outputs_name.vector_to_string(',') << ") <- (";
+        outputs << " (" << outputs_name.vector_to_string(',') << ") <- (";
 
         pos = 0;
 
@@ -6938,7 +6974,7 @@ string NeuralNetwork::write_expression_R() const
 
 
 /// Saves the mathematical expression represented by the neural network to a text file.
-/// @param file_name Name of expression text file. 
+/// @param file_name Name of expression text file.
 
 void NeuralNetwork::save_expression(const string& file_name)
 {
@@ -7100,7 +7136,7 @@ void NeuralNetwork::save_data(const string& file_name) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

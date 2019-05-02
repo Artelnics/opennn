@@ -641,7 +641,6 @@ TestingAnalysis::LinearRegressionAnalysis TestingAnalysis::perform_forecasting_l
 /// It returns a vector of tree matrices:
 /// <ul>
 /// <li> Absolute error.
-/// <li> Relative error.
 /// <li> Percentage error.
 /// </ul>
 /// The number of rows in each matrix is the number of testing instances in the data set.
@@ -713,7 +712,7 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data() const
 
    for(size_t i = 0; i < outputs_number; i++)
    {
-       error_data[i].set(testing_instances_number, 3, 0.0);
+       error_data[i].set(testing_instances_number, 2, 0.0);
 
        // Absolute error
 
@@ -726,11 +725,11 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data() const
 
        // Relative error
 
-       error_data[i].set_column(1, difference_absolute_value/abs(outputs_maximum[i]-outputs_minimum[i]), "");
+//       error_data[i].set_column(1, difference_absolute_value/abs(outputs_maximum[i]-outputs_minimum[i]), "");
 
        // Percentage error
 
-       error_data[i].set_column(2, difference_absolute_value*100.0/abs(outputs_maximum[i]-outputs_minimum[i]), "");
+       error_data[i].set_column(1, difference_absolute_value*100.0/abs(outputs_maximum[i]-outputs_minimum[i]), "");
     }
 
    return(error_data);
@@ -1077,11 +1076,9 @@ Vector< Vector< Statistics<double> > > TestingAnalysis::calculate_forecasting_er
 }
 
 
-// Vector< Matrix<double> > calculate_error_data_statistics_matrices() const method
-
 /// Returns a vector of matrices with the statistics of the errors between the neural network outputs and the testing targets in the data set.
 /// The size of the vector is the number of output variables.
-/// The number of rows in each submatrix is three(absolute, relative and percentage errors).
+/// The number of rows in each submatrix is two(absolute and percentage errors).
 /// The number of columns in each submatrix is four(minimum, maximum, mean and standard deviation).
 
 Vector< Matrix<double> > TestingAnalysis::calculate_error_data_statistics_matrices() const
@@ -1094,10 +1091,9 @@ Vector< Matrix<double> > TestingAnalysis::calculate_error_data_statistics_matric
 
     for(size_t i = 0; i < outputs_number; i++)
     {
-        statistics[i].set(3, 4);
+        statistics[i].set(2, 4);
         statistics[i].set_row(0, error_data_statistics[i][0].to_vector());
         statistics[i].set_row(1, error_data_statistics[i][1].to_vector());
-        statistics[i].set_row(2, error_data_statistics[i][2].to_vector());
     }
 
     return(statistics);
@@ -1837,11 +1833,11 @@ double TestingAnalysis::calculate_testing_normalized_squared_error(const Matrix<
 
 //#pragma omp parallel for reduction(+:sum_squared_error, normalization_coefficient)
 
-    for(int i = 0; i < (int)testing_instances_number; i++)
+    for(int i = 0; i < static_cast<int>(testing_instances_number); i++)
     {
-        sum_squared_error += outputs.get_row(i).calculate_sum_squared_error(targets.get_row(i));
+        sum_squared_error += outputs.get_row(static_cast<unsigned>(i)).calculate_sum_squared_error(targets.get_row(static_cast<unsigned>(i)));
 
-        normalization_coefficient += targets.get_row(i).calculate_sum_squared_error(testing_targets_mean);
+        normalization_coefficient += targets.get_row(static_cast<unsigned>(i)).calculate_sum_squared_error(testing_targets_mean);
     }
 
     return sum_squared_error/normalization_coefficient;
@@ -4660,7 +4656,7 @@ void TestingAnalysis::load(const string& file_name)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

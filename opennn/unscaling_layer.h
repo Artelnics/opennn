@@ -193,8 +193,13 @@ public:
    string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const;
    string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const;
    string write_logarithmic_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_none_expression_php(const Vector<string>&, const Vector<string>&) const;
+   string write_minimum_maximum_expression_php(const Vector<string>&, const Vector<string>&) const;
+   string write_mean_standard_deviation_expression_php(const Vector<string>&, const Vector<string>&) const;
+   string write_logarithmic_expression_php(const Vector<string>&, const Vector<string>&) const;
 
    string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_expression_php(const Vector<string>&, const Vector<string>&) const;
 
 protected:
 
@@ -219,7 +224,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

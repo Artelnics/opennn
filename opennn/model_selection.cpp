@@ -1944,6 +1944,22 @@ void ModelSelection::load(const string& file_name)
     from_XML(document);
 }
 
+// Results constructor
+
+ModelSelection::Results::Results()
+{
+    incremental_order_results_pointer = nullptr;
+
+    golden_section_order_results_pointer = nullptr;
+
+    simulated_annealing_order_results_pointer = nullptr;
+
+    growing_inputs_results_pointer = nullptr;
+
+    pruning_inputs_results_pointer = nullptr;
+
+    genetic_algorithm_results_pointer = nullptr;
+}
 
 /// Saves the results structure to a data file.
 /// @param file_name Name of model selection results data file.
@@ -1957,17 +1973,17 @@ void ModelSelection::Results::save(const string& file_name) const
     file << "\n% Order Selection Results\n";
 
     if(incremental_order_results_pointer)
-    {
+    {cout << "here1\n"; cout.flush();
         file << incremental_order_results_pointer->object_to_string();
     }
 
     if(golden_section_order_results_pointer)
-    {
+    {cout << "here2\n"; cout.flush();
         file << golden_section_order_results_pointer->object_to_string();
     }
 
     if(simulated_annealing_order_results_pointer)
-    {
+    {cout << "here3\n"; cout.flush();
         file << simulated_annealing_order_results_pointer->object_to_string();
     }
 

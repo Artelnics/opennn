@@ -610,7 +610,7 @@ __global__ void weighted_squared_error_derivative_kernel (const double * outputs
                                                           const double positives_weight, const double negatives_weight, const double normalization_coefficient)
 {
     const int id = blockDim.x * blockIdx.x + threadIdx.x;
-    output_gradient[id] = (outputs[id]-targets[id])*(targets[id]*(negatives_weight/positives_weight-negatives_weight) + negatives_weight)*2.0/normalization_coefficient;
+    output_gradient[id] = (outputs[id]-targets[id])*(targets[id]*(negatives_weight/positives_weight-negatives_weight) + negatives_weight)*2.0;
 }
 
 void calculateOutputDerivative(const double* outputs, const double* targets, double* output_gradient, const int rows, const int columns,
@@ -677,6 +677,124 @@ void calculateOutputDerivative(const double* outputs, const double* targets, dou
     cudaDeviceSynchronize();
 }
 
+__global__ void cross_entropy_loss_kernel (const double * outputs, const double* targets, double* auxiliar_vector, int len)
+{
+    const int id = blockDim.x * blockIdx.x + threadIdx.x;
+    auxiliar_vector[id] = targets[id]*(log(outputs[id])) + (1-targets[id])*(log(1 - outputs[id]));
+}
+
+__global__ void pow_p_absolute_error_kernel (const double * outputs, const double * targets, double* dst, int len, const double p)
+{
+    const int id = blockDim.x * blockIdx.x + threadIdx.x;
+    dst[id] = pow(fabs(outputs[id]-targets[id]), p);
+}
+
+__global__ void weighted_squared_loss_kernel (const double * outputs, const double* targets, double* auxiliar_vector, int len,
+                                                          const double positives_weight, const double negatives_weight)
+{
+    const int id = blockDim.x * blockIdx.x + threadIdx.x;
+    const double error = outputs[id] - targets[id];
+
+    auxiliar_vector[id] = targets[id]*(positives_weight*error*error) + (1-targets[id])*(negatives_weight*error*error);
+}
+
+double calculateLoss(const double* outputs, const double* targets, const int rows, const int columns,
+                     const string loss_method, const vector<double> loss_parameters)
+{
+    double loss = -1;
+
+    const int length = rows*columns;
+
+    double* auxiliar_vector;
+
+    double alpha;
+
+    cublasHandle_t handle;
+
+    createHandle(&handle);
+
+    cudaMalloc(&auxiliar_vector, length*sizeof(double));
+
+    if(loss_method == "MEAN_SQUARED_ERROR")
+    {
+        alpha = -1;
+
+        cudaMemcpy(auxiliar_vector, targets, length*sizeof(double), cudaMemcpyDeviceToDevice);
+
+        cublasDaxpy(handle, length, &alpha,
+                    outputs, 1, auxiliar_vector, 1);
+
+        cublasDnrm2(handle, length, auxiliar_vector, 1, &loss);
+
+        loss *= loss/rows;
+    }
+    else if(loss_method == "SUM_SQUARED_ERROR")
+    {
+        alpha = -1;
+
+        cudaMemcpy(auxiliar_vector, outputs, length*sizeof(double), cudaMemcpyDeviceToDevice);
+
+        cublasDaxpy(handle, length, &alpha,
+                    targets, 1, auxiliar_vector, 1);
+
+        cublasDnrm2(handle, length, auxiliar_vector, 1, &loss);
+
+        loss *= loss;
+    }
+    else if(loss_method == "CROSS_ENTROPY_ERROR")
+    {
+        cross_entropy_loss_kernel<<<rows,columns>>>(outputs, targets, auxiliar_vector, length);
+
+        cublasDasum(handle, length, auxiliar_vector, 1, &loss);
+
+        loss *= -1;
+    }
+    else if(loss_method == "MINKOWSKI_ERROR")
+    {
+        pow_p_absolute_error_kernel<<<rows,columns>>>(outputs, targets, auxiliar_vector, length, loss_parameters[0]);
+
+        cudaDeviceSynchronize();
+
+        cublasDasum(handle, length, auxiliar_vector, 1, &loss);
+
+        loss /= rows;
+    }
+    else if(loss_method == "NORMALIZED_SQUARED_ERROR")
+    {
+        alpha = -1;
+
+        cudaMemcpy(auxiliar_vector, targets, length*sizeof(double), cudaMemcpyDeviceToDevice);
+
+        cublasDaxpy(handle, length, &alpha,
+                    outputs, 1, auxiliar_vector, 1);
+
+        cublasDnrm2(handle, length, auxiliar_vector, 1, &loss);
+
+        loss *= loss/loss_parameters[0];
+    }
+    else if(loss_method == "WEIGHTED_SQUARED_ERROR")
+    {
+        weighted_squared_loss_kernel<<<rows,columns>>>(outputs, targets, auxiliar_vector, length,
+                                                       loss_parameters[0], loss_parameters[1]);
+
+        cublasDasum(handle, length, auxiliar_vector, 1, &loss);
+
+        loss /= loss_parameters[2];
+    }
+    else
+    {
+        // TODO: error
+    }
+
+    cublasDestroy(handle);
+
+    cudaFree(auxiliar_vector);
+
+    cudaDeviceSynchronize();
+
+    return loss;
+}
+
 __global__ void elementwise_multiplication_kernel (const double * vector1, const double* vector2, double* result)
 {
     const int id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -687,6 +805,48 @@ __global__ void elementwise_multiplication_kernel (const double * vector1, const
 void elementwiseMultiplication(const double* vector1, const double* vector2, double* result, const int rows, const int columns)
 {
     elementwise_multiplication_kernel<<<rows,columns>>>(vector1, vector2, result);
+
+    cudaDeviceSynchronize();
+}
+
+__global__ void elementwise_square_kernel (const double * vector1, double* result)
+{
+    const int id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    result[id] = vector1[id] * vector1[id];
+}
+
+void elementwiseSquare(const double* vector1, double* result, const int rows, const int columns)
+{
+    elementwise_square_kernel<<<rows,columns>>>(vector1, result);
+
+    cudaDeviceSynchronize();
+}
+
+__global__ void elementwise_division_kernel (double * numerator, const double* denominator)
+{
+    const int id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    numerator[id] = numerator[id] / denominator[id];
+}
+
+void elementwiseDivision(double* numerator, const double* denominator, const int rows, const int columns)
+{
+    elementwise_division_kernel<<<rows,columns>>>(numerator, denominator);
+
+    cudaDeviceSynchronize();
+}
+
+__global__ void square_root_elements_kernel (double* result, const double& epsilon)
+{
+    const int id = blockIdx.x * blockDim.x + threadIdx.x;
+
+    result[id] = sqrt(result[id]) + epsilon;
+}
+
+void squareRootElementsPlusEpsilon(double* result, const double& epsilon,const int rows, const int columns)
+{
+    square_root_elements_kernel<<<rows,columns>>>(result, epsilon);
 
     cudaDeviceSynchronize();
 }
@@ -710,10 +870,8 @@ void calculateOutputsCUDA(const vector<double*> weights_d, const vector<size_t> 
     const double* ones_vector_h_data = ones_vector_h.data();
 
     cublasHandle_t handle;
-//    cublasXtHandle_t handleXt;
 
     createHandle(&handle);
-//    cublasXtCreate(&handleXt);
 
     alpha = 1;
     beta = 1;
@@ -736,9 +894,89 @@ void calculateOutputsCUDA(const vector<double*> weights_d, const vector<size_t> 
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
                 weights_d[0], input_columns, &beta, layer_outputs, input_rows);
 
-//    cublasXtDgemm(handleXt, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
-//                  weights_d[0], input_columns, &beta, layer_outputs, input_rows);
-//    cudaDeviceSynchronize();
+    calculateActivation(layer_outputs, layer_outputs, input_rows, weights_columns_numbers[0], layers_activations[0]);
+
+    cudaFree(input_data_d);
+
+    for(size_t i = 1; i < layers_number; i++)
+    {
+        double* input_layer;
+
+        cudaMalloc(&input_layer, input_rows*weights_columns_numbers[i-1]*sizeof(double));
+        cudaMemcpy(input_layer, layer_outputs, input_rows*weights_columns_numbers[i-1]*sizeof(double), cudaMemcpyDeviceToDevice);
+
+        cudaFree(layer_outputs);
+
+        cudaMalloc(&layer_outputs, input_rows*weights_columns_numbers[i]*sizeof(double));
+        cudaMemset(layer_outputs, 0, input_rows*weights_columns_numbers[i]*sizeof(double));
+
+        cublasDger(handle, input_rows, weights_columns_numbers[i], &alpha, ones_vector, 1, biases_d[i], 1, layer_outputs, input_rows);
+
+        cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
+                    weights_d[i], weights_columns_numbers[i-1], &beta, layer_outputs, input_rows);
+
+        calculateActivation(layer_outputs, layer_outputs, input_rows, weights_columns_numbers[i], layers_activations[i]);
+
+        cudaFree(input_layer);
+    }
+
+    // Copy to host memory
+
+    cudaMemcpy(output_data_h, layer_outputs, output_rows*output_columns*sizeof(double), cudaMemcpyDeviceToHost);
+
+    // Free GPU memory
+
+    cudaFree(ones_vector);
+    cudaFree(layer_outputs);
+
+    cublasDestroy(handle);
+
+    cudaDeviceSynchronize();
+}
+
+double calculateLossCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                         const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
+                         const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                         const double* target_data_d, const size_t target_rows, const size_t target_columns,
+                         const vector<string> layers_activations, const string loss_method,
+                         const vector<double> loss_parameters)
+{
+    const size_t layers_number = weights_d.size();
+
+    double alpha, beta;
+
+    double* layer_outputs;
+    double* input_data_d;
+
+    double* ones_vector;
+
+    vector<double> ones_vector_h(input_rows, 1);
+    const double* ones_vector_h_data = ones_vector_h.data();
+
+    cublasHandle_t handle;
+
+    createHandle(&handle);
+
+    alpha = 1;
+    beta = 1;
+
+    // Initialize GPU auxiliar data
+
+    cudaMalloc(&input_data_d, input_rows*input_columns*sizeof(double));
+    cudaMemcpy(input_data_d, input_data_h, input_rows*input_columns*sizeof(double), cudaMemcpyHostToDevice);
+
+    cudaMalloc(&ones_vector, input_rows*sizeof(double));
+    cudaMemcpy(ones_vector, ones_vector_h_data, input_rows*sizeof(double), cudaMemcpyHostToDevice);
+
+    // First layer
+
+    cudaMalloc(&layer_outputs, input_rows*weights_columns_numbers[0]*sizeof(double));
+    cudaMemset(layer_outputs, 0, input_rows*weights_columns_numbers[0]*sizeof(double));
+
+    cublasDger(handle, input_rows, weights_columns_numbers[0], &alpha, ones_vector, 1, biases_d[0], 1, layer_outputs, input_rows);
+
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
+                weights_d[0], input_columns, &beta, layer_outputs, input_rows);
 
     calculateActivation(layer_outputs, layer_outputs, input_rows, weights_columns_numbers[0], layers_activations[0]);
 
@@ -761,18 +999,16 @@ void calculateOutputsCUDA(const vector<double*> weights_d, const vector<size_t> 
         cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
                     weights_d[i], weights_columns_numbers[i-1], &beta, layer_outputs, input_rows);
 
-//        cublasXtDgemm(handleXt, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
-//                      weights_d[i], weights_columns_numbers[i-1], &beta, layer_outputs, input_rows);
-//        cudaDeviceSynchronize();
-
         calculateActivation(layer_outputs, layer_outputs, input_rows, weights_columns_numbers[i], layers_activations[i]);
 
         cudaFree(input_layer);
     }
 
-    // Copy to host memory
+    // LOSS OPERATIONS
 
-    cudaMemcpy(output_data_h, layer_outputs, output_rows*output_columns*sizeof(double), cudaMemcpyDeviceToHost);
+    // Calculate loss
+
+    double loss = calculateLoss(layer_outputs, target_data_d, target_rows, target_columns, loss_method, loss_parameters);
 
     // Free GPU memory
 
@@ -782,7 +1018,213 @@ void calculateOutputsCUDA(const vector<double*> weights_d, const vector<size_t> 
     cublasDestroy(handle);
 
     cudaDeviceSynchronize();
+
+    return loss;
 }
+
+void calculateGradientCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                           const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
+                           const double* input_data_d, const size_t input_rows, const size_t input_columns,
+                           const double* target_data_d, const size_t target_rows, const size_t target_columns,
+                           double* gradient_vec_d,
+                           const vector<string> layers_activations, const string loss_method,
+                           const vector<double> loss_parameters)
+{
+    const size_t layers_number = weights_d.size();
+
+    double alpha, beta;
+
+    double* layer_combinations;
+    double* output_gradient;
+
+    double* ones_vector;
+
+    vector<double*> layers_activations_d(layers_number);
+    vector<double*> layers_activation_derivatives_d(layers_number);
+
+    vector<double*> layers_delta_d(layers_number);
+
+    vector<double> ones_vector_h(input_rows, 1);
+    const double* ones_vector_h_data = ones_vector_h.data();
+
+    cublasHandle_t handle;
+
+    createHandle(&handle);
+
+    alpha = 1;
+    beta = 1;
+
+    // Initialize GPU data
+
+    cudaMalloc(&output_gradient, target_rows*target_columns*sizeof(double));
+
+    cudaMalloc(&ones_vector, input_rows*sizeof(double));
+    cudaMemcpy(ones_vector, ones_vector_h_data, input_rows*sizeof(double), cudaMemcpyHostToDevice);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        cudaMalloc(&layers_activations_d[i], input_rows*weights_columns_numbers[i]*sizeof(double));
+        cudaMalloc(&layers_activation_derivatives_d[i], input_rows*weights_columns_numbers[i]*sizeof(double));
+
+        cudaMalloc(&layers_delta_d[i], input_rows*weights_columns_numbers[i]*sizeof(double));
+    }
+
+    cudaDeviceSynchronize();
+
+    // CALCULATE FIRST ORDER FORWARD PROPAGATION
+
+    // First layer
+
+    cudaMalloc(&layer_combinations, input_rows*weights_columns_numbers[0]*sizeof(double));
+    cudaMemset(layer_combinations, 0, input_rows*weights_columns_numbers[0]*sizeof(double));
+
+    cublasDger(handle, input_rows, weights_columns_numbers[0], &alpha, ones_vector, 1, biases_d[0], 1, layer_combinations, input_rows);
+
+    cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
+                weights_d[0], input_columns, &beta, layer_combinations, input_rows);
+
+    calculateActivation(layer_combinations, layers_activations_d[0], input_rows, weights_columns_numbers[0], layers_activations[0]);
+    calculateActivationDerivative(layer_combinations, layers_activation_derivatives_d[0], input_rows, weights_columns_numbers[0], layers_activations[0]);
+
+    // Other layers
+
+    for(size_t i = 1; i < layers_number; i++)
+    {
+        double* input_layer;
+
+        cudaMalloc(&input_layer, input_rows*weights_columns_numbers[i-1]*sizeof(double));
+        cudaMemcpyAsync(input_layer, layers_activations_d[i-1], input_rows*weights_columns_numbers[i-1]*sizeof(double), cudaMemcpyDeviceToDevice);
+
+        cudaFree(layer_combinations);
+
+        cudaMalloc(&layer_combinations, input_rows*weights_columns_numbers[i]*sizeof(double));
+        cudaMemsetAsync(layer_combinations, 0, input_rows*weights_columns_numbers[i]*sizeof(double));
+
+        cudaDeviceSynchronize();
+
+        cublasDger(handle, input_rows, weights_columns_numbers[i], &alpha, ones_vector, 1, biases_d[i], 1, layer_combinations, input_rows);
+
+        cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
+                    weights_d[i], weights_columns_numbers[i-1], &beta, layer_combinations, input_rows);
+
+        calculateActivation(layer_combinations, layers_activations_d[i], input_rows, weights_columns_numbers[i], layers_activations[i]);
+        calculateActivationDerivative(layer_combinations, layers_activation_derivatives_d[i], input_rows, weights_columns_numbers[i], layers_activations[i]);
+
+        cudaFree(input_layer);
+    }
+
+    // Free GPU memory
+
+    cudaFree(layer_combinations);
+
+    // CALCULATE OUTPUT DERIVATIVE
+
+    calculateOutputDerivative(layers_activations_d[layers_number-1], target_data_d, output_gradient, target_rows, target_columns, loss_method, loss_parameters);
+
+    // CALCULATE LAYERS DELTA
+
+    elementwiseMultiplication(layers_activation_derivatives_d[layers_number-1], output_gradient, layers_delta_d[layers_number-1], target_rows, target_columns);
+
+    beta = 0;
+
+    for(int i = (layers_number-2); i >= 0; i--)
+    {
+        double* auxiliar_matrix;
+
+        cudaMalloc(&auxiliar_matrix, input_rows*weights_columns_numbers[i]*sizeof(double));
+
+        cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_T, input_rows, weights_columns_numbers[i], weights_columns_numbers[i+1], &alpha, layers_delta_d[i+1], input_rows,
+                    weights_d[i+1], weights_columns_numbers[i], &beta, auxiliar_matrix, input_rows);
+
+        elementwiseMultiplication(layers_activation_derivatives_d[i], auxiliar_matrix, layers_delta_d[i], input_rows, weights_columns_numbers[i]);
+
+        cudaFree(auxiliar_matrix);
+    }
+
+    // CALCULATE ERROR GRADIENT
+
+    size_t index = 0;
+
+    cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, input_columns, weights_columns_numbers[0], input_rows, &alpha, input_data_d, input_rows,
+                layers_delta_d[0], input_rows, &beta, gradient_vec_d + index, input_columns);
+
+    index += weights_rows_numbers[0]*weights_columns_numbers[0];
+
+    cublasDgemv(handle, CUBLAS_OP_T, input_rows, weights_columns_numbers[0], &alpha, layers_delta_d[0], input_rows,
+                ones_vector, 1, &beta, gradient_vec_d + index, 1);
+
+    index += weights_columns_numbers[0];
+
+    for(size_t i = 1; i < layers_number; i++)
+    {
+        cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, weights_columns_numbers[i-1], weights_columns_numbers[i], input_rows, &alpha, layers_activations_d[i-1], input_rows,
+                    layers_delta_d[i], input_rows, &beta, gradient_vec_d + index, weights_columns_numbers[i-1]);
+
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        cublasDgemv(handle, CUBLAS_OP_T, input_rows, weights_columns_numbers[i], &alpha, layers_delta_d[i], input_rows,
+                    ones_vector, 1, &beta, gradient_vec_d + index, 1);
+
+        index += weights_columns_numbers[i];
+    }
+
+    // Calculate final error gradient
+
+    if(loss_method == "MEAN_SQUARED_ERROR")
+    {
+        alpha = 1/static_cast<double>(input_rows);
+
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
+    }
+    else if(loss_method == "SUM_SQUARED_ERROR")
+    {
+        // Do nothing
+    }
+    else if(loss_method == "CROSS_ENTROPY_ERROR")
+    {
+        alpha = 1/static_cast<double>(input_rows);
+
+        cublasDscal(handle,index, &alpha, gradient_vec_d, 1);
+    }
+    else if(loss_method == "MINKOWSKI_ERROR")
+    {
+        alpha = 1/static_cast<double>(input_rows);
+
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
+    }
+    else if(loss_method == "NORMALIZED_SQUARED_ERROR")
+    {
+        alpha = 1/loss_parameters[0];
+
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
+    }
+    else if(loss_method == "WEIGHTED_SQUARED_ERROR")
+    {
+        alpha = 1/loss_parameters[2];
+
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
+    }
+
+    // Free GPU memory
+
+    cudaFree(ones_vector);
+    cudaFree(output_gradient);
+
+    cudaDeviceSynchronize();
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        cudaFree(layers_activations_d[i]);
+        cudaFree(layers_activation_derivatives_d[i]);
+
+        cudaFree(layers_delta_d[i]);
+    }
+
+    cublasDestroy(handle);
+
+    cudaDeviceSynchronize();
+}
+
 
 void calculateFirstOrderForwardPropagationCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
                                                const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
@@ -891,11 +1333,11 @@ void calculateFirstOrderForwardPropagationCUDA(const vector<double*> weights_d, 
     cudaDeviceSynchronize();
 }
 
-void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+double calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
                                 const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
                                 const double* input_data_d, const size_t input_rows, const size_t input_columns,
                                 const double* target_data_d, const size_t target_rows, const size_t target_columns,
-                                vector<double*> error_gradient_data,
+                                double* gradient_vec_d,
                                 double* output_data_h, const size_t output_rows, const size_t output_columns,
                                 const vector<string> layers_activations, const string loss_method,
                                 const vector<double> loss_parameters)
@@ -903,9 +1345,6 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
     const size_t layers_number = weights_d.size();
 
     double alpha, beta;
-
-//    double* input_data_d;
-//    double* target_data_d;
 
     double* layer_combinations;
     double* output_gradient;
@@ -917,36 +1356,22 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
 
     vector<double*> layers_delta_d(layers_number);
 
-    vector<double*> error_gradient_d(2*layers_number);
-
     vector<double> ones_vector_h(input_rows, 1);
     const double* ones_vector_h_data = ones_vector_h.data();
 
     cublasHandle_t handle;
-//    cublasXtHandle_t handleXt;
 
     createHandle(&handle);
-//    cublasXtCreate(&handleXt);
-
-//    const int nDevices = 1;
-//    int deviceId[nDevices] = {0};
-//    cublasXtDeviceSelect(handleXt, nDevices, deviceId);
 
     alpha = 1;
     beta = 1;
 
     // Initialize GPU data
 
-//    cudaMalloc(&input_data_d, input_rows*input_columns*sizeof(double));
-//    cudaMemcpyAsync(input_data_d, input_data_h, input_rows*input_columns*sizeof(double), cudaMemcpyHostToDevice);
-
-//    cudaMalloc(&target_data_d, target_rows*target_columns*sizeof(double));
-//    cudaMemcpyAsync(target_data_d, target_data_h, target_rows*target_columns*sizeof(double), cudaMemcpyHostToDevice);
-
     cudaMalloc(&output_gradient, target_rows*target_columns*sizeof(double));
 
     cudaMalloc(&ones_vector, input_rows*sizeof(double));
-    cudaMemcpyAsync(ones_vector, ones_vector_h_data, input_rows*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(ones_vector, ones_vector_h_data, input_rows*sizeof(double), cudaMemcpyHostToDevice);
 
     for(size_t i = 0; i < layers_number; i++)
     {
@@ -954,9 +1379,6 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
         cudaMalloc(&layers_activation_derivatives_d[i], input_rows*weights_columns_numbers[i]*sizeof(double));
 
         cudaMalloc(&layers_delta_d[i], input_rows*weights_columns_numbers[i]*sizeof(double));
-
-        cudaMalloc(&error_gradient_d[2*i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
-        cudaMalloc(&error_gradient_d[2*i+1], weights_columns_numbers[i]*sizeof(double));
     }
 
     cudaDeviceSynchronize();
@@ -972,9 +1394,6 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
 
     cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
                 weights_d[0], input_columns, &beta, layer_combinations, input_rows);
-
-//    cublasXtDgemm(handleXt, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[0], input_columns, &alpha, input_data_d, input_rows,
-//                  weights_d[0], input_columns, &beta, layer_combinations, input_rows);
 
     calculateActivation(layer_combinations, layers_activations_d[0], input_rows, weights_columns_numbers[0], layers_activations[0]);
     calculateActivationDerivative(layer_combinations, layers_activation_derivatives_d[0], input_rows, weights_columns_numbers[0], layers_activations[0]);
@@ -999,9 +1418,6 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
 
         cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
                     weights_d[i], weights_columns_numbers[i-1], &beta, layer_combinations, input_rows);
-
-//        cublasXtDgemm(handleXt, CUBLAS_OP_N, CUBLAS_OP_N, input_rows, weights_columns_numbers[i], weights_columns_numbers[i-1], &alpha, input_layer, input_rows,
-//                      weights_d[i], weights_columns_numbers[i-1], &beta, layer_combinations, input_rows);
 
         calculateActivation(layer_combinations, layers_activations_d[i], input_rows, weights_columns_numbers[i], layers_activations[i]);
         calculateActivationDerivative(layer_combinations, layers_activation_derivatives_d[i], input_rows, weights_columns_numbers[i], layers_activations[i]);
@@ -1039,32 +1455,44 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
 
     // CALCULATE ERROR GRADIENT
 
+    size_t index = 0;
+
     cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, input_columns, weights_columns_numbers[0], input_rows, &alpha, input_data_d, input_rows,
-                layers_delta_d[0], input_rows, &beta, error_gradient_d[0], input_columns);
+                layers_delta_d[0], input_rows, &beta, gradient_vec_d + index, input_columns);
+
+    index += weights_rows_numbers[0]*weights_columns_numbers[0];
 
     cublasDgemv(handle, CUBLAS_OP_T, input_rows, weights_columns_numbers[0], &alpha, layers_delta_d[0], input_rows,
-                ones_vector, 1, &beta, error_gradient_d[1], 1);
+                ones_vector, 1, &beta, gradient_vec_d + index, 1);
+
+    index += weights_columns_numbers[0];
 
     for(size_t i = 1; i < layers_number; i++)
     {
         cublasDgemm(handle, CUBLAS_OP_T, CUBLAS_OP_N, weights_columns_numbers[i-1], weights_columns_numbers[i], input_rows, &alpha, layers_activations_d[i-1], input_rows,
-                    layers_delta_d[i], input_rows, &beta, error_gradient_d[2*i], weights_columns_numbers[i-1]);
+                    layers_delta_d[i], input_rows, &beta, gradient_vec_d + index, weights_columns_numbers[i-1]);
+
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
 
         cublasDgemv(handle, CUBLAS_OP_T, input_rows, weights_columns_numbers[i], &alpha, layers_delta_d[i], input_rows,
-                    ones_vector, 1, &beta, error_gradient_d[2*i+1], 1);
+                    ones_vector, 1, &beta, gradient_vec_d + index, 1);
+
+        index += weights_columns_numbers[i];
     }
 
     // LOSS OPERATIONS
+
+    // Calculate loss
+
+    double loss = calculateLoss(layers_activations_d[layers_number-1], target_data_d, target_rows, target_columns, loss_method, loss_parameters);
+
+    // Calculate final error gradient
 
     if(loss_method == "MEAN_SQUARED_ERROR")
     {
         alpha = 1/static_cast<double>(input_rows);
 
-        for(size_t i = 0; i < layers_number; i++)
-        {
-            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
-            cublasDscal(handle, weights_columns_numbers[i], &alpha, error_gradient_d[2*i+1], 1);
-        }
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
     }
     else if(loss_method == "SUM_SQUARED_ERROR")
     {
@@ -1074,63 +1502,37 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
     {
         alpha = 1/static_cast<double>(input_rows);
 
-        for(size_t i = 0; i < layers_number; i++)
-        {
-            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
-            cublasDscal(handle, weights_columns_numbers[i], &alpha, error_gradient_d[2*i+1], 1);
-        }
+        cublasDscal(handle,index, &alpha, gradient_vec_d, 1);
     }
     else if(loss_method == "MINKOWSKI_ERROR")
     {
         alpha = 1/static_cast<double>(input_rows);
 
-        for(size_t i = 0; i < layers_number; i++)
-        {
-            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
-            cublasDscal(handle, weights_columns_numbers[i], &alpha, error_gradient_d[2*i+1], 1);
-        }
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
     }
     else if(loss_method == "NORMALIZED_SQUARED_ERROR")
     {
         alpha = 1/loss_parameters[0];
 
-        for(size_t i = 0; i < layers_number; i++)
-        {
-            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
-            cublasDscal(handle, weights_columns_numbers[i], &alpha, error_gradient_d[2*i+1], 1);
-        }
-    }
-    else if(loss_method == "ROOT_MEAN_SQUARED_ERROR")
-    {
-        // TODO
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
     }
     else if(loss_method == "WEIGHTED_SQUARED_ERROR")
     {
         alpha = 1/loss_parameters[2];
 
-        for(size_t i = 0; i < layers_number; i++)
-        {
-            cublasDscal(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha, error_gradient_d[2*i], 1);
-            cublasDscal(handle, weights_columns_numbers[i], &alpha, error_gradient_d[2*i+1], 1);
-        }
+        cublasDscal(handle, index, &alpha, gradient_vec_d, 1);
     }
 
     // Copy to host memory
-
-    for(size_t i = 0; i < layers_number; i++)
-    {
-        cudaMemcpyAsync(error_gradient_data[2*i], error_gradient_d[2*i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpyAsync(error_gradient_data[2*i+1], error_gradient_d[2*i+1], weights_columns_numbers[i]*sizeof(double), cudaMemcpyDeviceToHost);
-    }
 
     cudaMemcpyAsync(output_data_h, layers_activations_d[layers_number-1], output_rows*output_columns*sizeof(double), cudaMemcpyDeviceToHost);
 
     // Free GPU memory
 
     cudaFree(ones_vector);
-//    cudaFree(input_data_d);
-//    cudaFree(target_data_d);
     cudaFree(output_gradient);
+
+    cudaDeviceSynchronize();
 
     for(size_t i = 0; i < layers_number; i++)
     {
@@ -1138,15 +1540,13 @@ void calculateFirstOrderLossCUDA(const vector<double*> weights_d, const vector<s
         cudaFree(layers_activation_derivatives_d[i]);
 
         cudaFree(layers_delta_d[i]);
-
-        cudaFree(error_gradient_d[2*i]);
-        cudaFree(error_gradient_d[2*i+1]);
     }
 
     cublasDestroy(handle);
-//    cublasXtDestroy(handleXt);
 
     cudaDeviceSynchronize();
+
+    return loss;
 }
 
 void updateParametersCUDA(vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
@@ -1251,6 +1651,91 @@ void updateParametersSgdCUDA(std::vector<double*> weights_d, const std::vector<s
     }
 
     cudaFree(parameters_increment);
+
+    cublasDestroy(handle);
+
+    cudaDeviceSynchronize();
+}
+
+void updateParametersAdamCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                              std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                              const double* gradient_d, const size_t parameters_number,
+                              const double& beta_1, const double& beta_2, const double& epsilon,
+                              const double& initial_learning_rate, const double& initial_decay, const size_t& learning_rate_iteration,
+                              double*& last_increment, double*& last_square_increment)
+{
+    const size_t layers_number = weights_d.size();
+
+    const double learning_rate =  initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay));
+
+    double* parameters_increment;
+    double* square_gradient_increment;
+
+    double alpha;
+
+    cublasHandle_t handle;
+
+    createHandle(&handle);
+
+    cudaMalloc(&square_gradient_increment, parameters_number*sizeof(double));
+
+    double* aux;
+    cudaMalloc(&aux, parameters_number*sizeof(double));
+    cudaMemcpy(aux, gradient_d, parameters_number*sizeof(double), cudaMemcpyDeviceToDevice);
+
+    cudaMalloc(&parameters_increment, parameters_number*sizeof(double));
+    cudaMemcpy(parameters_increment, last_increment, parameters_number*sizeof(double), cudaMemcpyDeviceToDevice);
+
+    alpha = beta_1;
+    cublasDscal(handle, parameters_number, &alpha, parameters_increment, 1);
+
+    alpha = (1 - beta_1);
+    cublasDaxpy(handle, parameters_number, &alpha,
+                aux, 1, parameters_increment, 1);
+
+    alpha = beta_2;
+    cublasDscal(handle, parameters_number, &alpha, last_square_increment, 1);
+
+    elementwiseSquare(aux, square_gradient_increment, 1, parameters_number);
+
+    alpha = (1 - beta_2);
+    cublasDaxpy(handle, parameters_number, &alpha,
+                square_gradient_increment, 1, last_square_increment, 1);
+
+    cudaMemcpy(last_increment, parameters_increment, parameters_number*sizeof(double), cudaMemcpyDeviceToDevice);
+
+    cudaMemcpy(square_gradient_increment, last_square_increment, parameters_number*sizeof(double), cudaMemcpyDeviceToDevice);
+
+    alpha = learning_rate/(1 - pow(beta_1, learning_rate_iteration + 1));
+    cublasDscal(handle, parameters_number, &alpha, parameters_increment, 1);
+
+    alpha = 1/(1 - pow(beta_2, learning_rate_iteration + 1));
+    cublasDscal(handle, parameters_number, &alpha, square_gradient_increment, 1);
+
+    squareRootElementsPlusEpsilon(square_gradient_increment, epsilon, 1, parameters_number);
+
+    elementwiseDivision(parameters_increment, square_gradient_increment, 1, parameters_number);
+
+    size_t index = 0;
+
+    alpha = -1;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        cublasDaxpy(handle, weights_rows_numbers[i]*weights_columns_numbers[i], &alpha,
+                    parameters_increment + index, 1, weights_d[i], 1);
+
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        cublasDaxpy(handle, bias_rows_numbers[i], &alpha,
+                    parameters_increment + index, 1, biases_d[i], 1);
+
+        index += bias_rows_numbers[i];
+    }
+
+    cudaFree(parameters_increment);
+    cudaFree(square_gradient_increment);
+    cudaFree(aux);
 
     cublasDestroy(handle);
 

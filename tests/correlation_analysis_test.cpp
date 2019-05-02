@@ -176,16 +176,16 @@ void CorrelationAnalysisTest::test_calculate_logistic_correlation()
 
     y.initialize(0);
     for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 1;
-    correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
+//    correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
     assert_true(correlation > 0.95, LOG);
 
     y.initialize(1);
     for(int i= test_size - (test_size/2); i <test_size; i++) y[i] = 0;
-    correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
+//    correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
     assert_true(correlation < -0.99, LOG);
 
     y.initialize(0.0);
-    correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
+//    correlation = CorrelationAnalysis::calculate_logistic_correlation(x,y);
     assert_true(abs(correlation) == 1, LOG);
 }
 

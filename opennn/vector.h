@@ -4288,11 +4288,7 @@ Histogram<T> Vector<T>::calculate_histogram_centered(const double& center, const
       const T minimum = minimum_maximum[0];
       const T maximum = minimum_maximum[1];
 
-      const double length = (maximum - minimum) /static_cast<double>(bins_number);
-
-//      minimums[0] = minimum;
-//      maximums[0] = minimum + length;
-//      centers[0] = (maximums[0] + minimums[0]) / 2.0;
+      const double length = (maximum - minimum)/static_cast<double>(bins_number);
 
       minimums[bin_center-1] = center - length;
       maximums[bin_center-1] = center + length;
@@ -4338,7 +4334,7 @@ Histogram<T> Vector<T>::calculate_histogram_centered(const double& center, const
       histogram.maximums = maximums;
       histogram.frequencies = frequencies;
 
-      return(histogram);
+      return histogram;
 }
 
 
@@ -7125,9 +7121,9 @@ LinearRegressionParameters<T> Vector<T>::calculate_linear_regression_parameters(
     s_y += (*this)[i];
 
     s_xx += x[i] * x[i];
-    s_yy += (*this)[i] *(*this)[i];
+    s_yy += (*this)[i] * (*this)[i];
 
-    s_xy += x[i] *(*this)[i];
+    s_xy += x[i] * (*this)[i];
   }
 
   LinearRegressionParameters<T> linear_regression_parameters;
@@ -7143,7 +7139,7 @@ LinearRegressionParameters<T> Vector<T>::calculate_linear_regression_parameters(
        (s_y * s_xx - s_x * s_xy) /(n * s_xx - s_x * s_x);
 
     linear_regression_parameters.slope =
-       (n * s_xy - s_x * s_y) /(n * s_xx - s_x * s_x);
+       ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
 
     if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
     {
@@ -7159,6 +7155,14 @@ LinearRegressionParameters<T> Vector<T>::calculate_linear_regression_parameters(
 
   return(linear_regression_parameters);
 }
+
+
+/// Calculates the linear regression parameters(intercept, slope and
+/// correlation) between another vector and this vector.
+/// It returns a linear regression parameters structure.
+/// @param other Other vector for the linear regression analysis.
+
+
 
 
 /// Returns a vector with the absolute values of the current vector.
@@ -10278,7 +10282,7 @@ void Vector<T>::print_unique() const
 
     for(size_t i = 0; i < unique_size; i++)
     {
-        cout << unique_matrix(i,0) << ": " << unique_matrix(i,1) << "(" <<  unique_matrix(i,2) << "%)" << endl;
+        cout << unique_matrix(i,0) << ": " << unique_matrix(i,1) << " (" <<  unique_matrix(i,2) << "%)" << endl;
     }
 }
 
@@ -10404,7 +10408,7 @@ void Vector<T>::print_top(const size_t& rank) const
 
     for(size_t i = 0; i < end; i++)
     {
-        cout << i+1 << ". " << unique_matrix(i,0) << ": " << unique_matrix(i,1) << "(" <<  unique_matrix(i,2) << "%)" << endl;
+        cout << i+1 << ". " << unique_matrix(i,0) << ": " << unique_matrix(i,1) << " (" <<  unique_matrix(i,2) << "%)" << endl;
     }
 }
 
@@ -11027,7 +11031,7 @@ Matrix<T> Vector<T>::dd_mm_yyyy_to_dd_yyyy(const char& delimiter) const
 {
     const size_t this_size = this->size();
 
-    const Vector<time_t> time = this->dd_mm_yyyy_to_time(delimiter);
+    const Vector<time_t> time = this->dd_mm_yyyy_to_timestamp(delimiter);
 
     Matrix<T> output(this_size,2);
 
@@ -11055,7 +11059,7 @@ Matrix<T> Vector<T>::yyyy_mm_dd_to_dd_yyyy(const char& delimiter) const
 {
     const size_t this_size = this->size();
 
-    const Vector<time_t> time = this->yyyy_mm_dd_to_time(delimiter);
+    const Vector<time_t> time = this->yyyy_mm_dd_to_timestamp(delimiter);
 
     Matrix<T> output(this_size,2);
 
@@ -11078,7 +11082,7 @@ Matrix<T> Vector<T>::mm_yyyy_to_mm_yyyy(const char& delimiter) const
 {
     const size_t this_size = this->size();
 
-    const Vector<time_t> time = this->mm_yyyy_to_time(delimiter);
+    const Vector<time_t> time = this->mm_yyyy_to_timestamp(delimiter);
 
     Matrix<T> output(this_size,2);
 
@@ -11133,7 +11137,7 @@ Vector<T> Vector<T>::yyyy_mm_dd_to_yearday(const char& delimiter) const
 {
     const size_t this_size = this->size();
 
-    const Vector<time_t> time = this->yyyy_mm_dd_to_time(delimiter);
+    const Vector<time_t> time = this->yyyy_mm_dd_to_timestamp(delimiter);
 
     Vector<T> output(this_size);
 

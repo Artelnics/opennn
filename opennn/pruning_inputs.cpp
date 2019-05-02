@@ -584,7 +584,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
 
         cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
-        cout << "Optimum training loss: " << optimum_loss_error << endl;
+        cout << "Optimum training error: " << optimum_loss_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;;
     }
@@ -1490,7 +1490,7 @@ void PruningInputs::load(const string& file_name)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

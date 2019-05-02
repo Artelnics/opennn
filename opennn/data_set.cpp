@@ -3152,6 +3152,52 @@ Matrix<double> DataSet::calculate_negatives_data_statistics_matrix() const
     return data_statistics_matrix;
 }
 
+Matrix<double> DataSet::calculate_class_data_statistics_matrix(const size_t& class_index) const
+{
+    const Vector<size_t> used_instances_indices = instances.get_used_indices();
+
+    const Vector< Vector<size_t> > missing_indices = missing_values.get_missing_indices();
+
+    const Vector<double> targets = data.get_column(class_index, used_instances_indices);
+
+    #ifdef __OPENNN_DEBUG__
+        if(!targets.is_binary())
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "Matrix<double> calculate_class_data_statistics_matrix() const method.\n"
+                   << "Targets vector must be binary.\n";
+
+            throw logic_error(buffer.str());
+        }
+    #endif
+
+    const Vector<size_t> inputs_variables_indices = variables.get_inputs_indices();
+
+    const size_t inputs_number = inputs_variables_indices.size();
+
+    const Vector<size_t> class_used_instances_indices = used_instances_indices.get_subvector(targets.calculate_equal_to_indices(1.0));
+
+    Matrix<double> data_statistics_matrix(inputs_number, 4);
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        const size_t variable_index = inputs_variables_indices[i];
+
+        const Vector<size_t> current_variable_class_instances_index = class_used_instances_indices.get_difference(missing_indices[variable_index]);
+
+        const Vector<double> variable_data = data.get_column(variable_index, current_variable_class_instances_index);
+
+        const Statistics<double> data_statistics = variable_data.calculate_statistics();
+
+        data_statistics_matrix.set_row(i, data_statistics.to_vector());
+    }
+
+    return data_statistics_matrix;
+}
+
+
 
 /// Returns all the variables shape parameters from a single matrix.
 /// The number of rows is the number of used variables.
@@ -3860,6 +3906,121 @@ Matrix<double> DataSet::calculate_multiple_linear_correlations(const Vector<size
 }
 
 
+/// Calculates the linear correlations between each input and each target variable.
+/// For nominal input variables it calculates the multiple linear correlation between all the classes of
+/// the input variable and the target.
+/// @param nominal_variables Vector containing the classes of each nominal variable.
+
+Matrix<double> DataSet::calculate_multiple_correlations(const Vector<size_t> & nominal_variables) const
+{
+    const Vector<size_t> targets_indices = variables.get_targets_indices();
+    const size_t targets_number = variables.get_targets_number();
+
+    const Vector<size_t> used_instances_indices = instances.get_used_indices();
+
+    const size_t inputs_number = calculate_input_variables_number(nominal_variables);
+    const Vector< Vector<size_t> > new_input_indices = get_inputs_indices(inputs_number, nominal_variables);
+
+    // Calculate correlations
+
+    Matrix<double> multiple_linear_correlations(inputs_number, targets_number);
+
+    Matrix<double> input_variables;
+    Vector<size_t> input_indices;
+
+    Vector<double> target_variable;
+    size_t target_index;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        for(size_t j = 0; j < targets_number; j++)
+        {
+            input_indices = new_input_indices[i];
+
+            target_index = targets_indices[j];
+
+            const Vector<size_t> current_missing_values = missing_values.get_missing_instances(input_indices)
+                                          .get_union(missing_values.get_missing_instances(target_index));
+
+            const Vector<size_t> current_used_indices = used_instances_indices.get_difference(current_missing_values);
+
+            input_variables = data.get_submatrix(current_used_indices, input_indices);
+
+            target_variable = data.get_column(target_index, current_used_indices);
+
+            if(input_variables.get_columns_number() == 1)
+            {
+                multiple_linear_correlations(i,j) = CorrelationAnalysis::calculate_correlation(input_variables.to_vector(), target_variable);
+            }
+            else if(target_variable.is_binary())
+            {
+                multiple_linear_correlations(i,j) = CorrelationAnalysis::calculate_logistic_correlation(input_variables,target_variable);
+            }
+            else
+            {
+                multiple_linear_correlations(i,j) = CorrelationAnalysis::calculate_multiple_linear_correlation(input_variables,target_variable);
+            }
+        }
+    }
+
+    return multiple_linear_correlations;
+}
+
+
+Matrix<string> DataSet::calculate_multiple_correlations_types(const Vector<size_t>& nominal_variables) const
+{
+    const Vector<size_t> targets_indices = variables.get_targets_indices();
+    const size_t targets_number = variables.get_targets_number();
+
+    const Vector<size_t> used_instances_indices = instances.get_used_indices();
+
+    const size_t inputs_number = calculate_input_variables_number(nominal_variables);
+    const Vector< Vector<size_t> > new_input_indices = get_inputs_indices(inputs_number, nominal_variables);
+
+    Matrix<string> multiple_correlations_types(inputs_number, targets_number);
+
+    Matrix<double> input_variables;
+    Vector<size_t> input_indices;
+
+    Vector<double> target_variable;
+    size_t target_index;
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        for(size_t j = 0; j < targets_number; j++)
+        {
+            input_indices = new_input_indices[i];
+
+            target_index = targets_indices[j];
+
+            const Vector<size_t> current_missing_values = missing_values.get_missing_instances(input_indices)
+                                          .get_union(missing_values.get_missing_instances(target_index));
+
+            const Vector<size_t> current_used_indices = used_instances_indices.get_difference(current_missing_values);
+
+            input_variables = data.get_submatrix(current_used_indices, input_indices);
+
+            target_variable = data.get_column(target_index, current_used_indices);
+
+            if(input_variables.get_columns_number() == 1)
+            {
+                multiple_correlations_types(i,j) = CorrelationAnalysis::calculate_correlation_type(input_variables.to_vector(), target_variable);
+            }
+            else if (target_variable.is_binary())
+            {
+                multiple_correlations_types(i,j) = "Logistic";
+            }
+            else
+            {
+                multiple_correlations_types(i,j) = "Linear";
+            }
+        }
+    }
+
+    return multiple_correlations_types;
+}
+
+
 Vector<double> DataSet::calculate_multiple_total_linear_correlations(const Vector<size_t>& nominal_variables) const
 {
     const Matrix<double> correlations = calculate_multiple_linear_correlations(nominal_variables);
@@ -3913,7 +4074,7 @@ Matrix<double> DataSet::calculate_multiple_logistic_correlations(const Vector<si
             }
             else
             {
-                multiple_logistic_correlations(i,j) = input_variables.calculate_multiple_logistic_correlation(target_variable);
+//                multiple_logistic_correlations(i,j) = input_variables.calculate_multiple_logistic_correlation(target_variable);
             }
         }
     }
@@ -6830,8 +6991,6 @@ void DataSet::load_data()
         {
             ostringstream buffer;
 
-            buffer << "variable_" << i;
-
             columns_name.push_back(buffer.str());
         }
     }
@@ -8098,15 +8257,28 @@ void DataSet::generate_data_binary_classification(const size_t& instances_number
     // Assemble
 
     set(class_0.assemble_rows(class_1));
-
 }
 
 
 /// @todo
 
-void DataSet::generate_data_multiple_classification(const size_t&, const size_t&)
+void DataSet::generate_data_multiple_classification(const size_t& instances_number, const size_t& inputs_number, const size_t& outputs_number)
 {
+    Matrix<double> new_data(instances_number, inputs_number);
+    new_data.randomize_normal();
 
+    Matrix<double> targets(instances_number, outputs_number, 0.0);
+
+    size_t target_index = 0;
+
+    for(size_t i = 0; i < instances_number; i ++)
+    {
+        target_index = static_cast<unsigned>(std::rand())%outputs_number;
+
+        targets(i, target_index) = 1.0;
+    }
+
+    set(new_data.assemble_columns(targets));
 }
 
 
@@ -8914,17 +9086,20 @@ bool DataSet::is_mixed(const Vector<string>& v) const
     }
 }
 
+/// Set the use for a variable in the DataSet
+/// @param i Index of the variable.
+/// @param new_use New use fr the variable.
 
-void DataSet::set_variable_use(const size_t& index, const string& use)
+void DataSet::set_variable_use(const size_t& i, const string& new_use)
 {
-    variables.set_use(index, use);
+    variables.set_use(i, new_use);
 }
 
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

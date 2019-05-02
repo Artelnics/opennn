@@ -28,7 +28,12 @@
 #include <exception>
 
 // OpenNN includes
-#include "opennn.h"
+
+#include "data_set.h"
+#include "neural_network.h"
+#include "training_strategy.h"
+#include "vector.h"
+#include "matrix.h"
 
 
 using namespace std;
@@ -85,7 +90,7 @@ public:
 
     // Logistic
 
-    static double calculate_logistic_correlation(const Vector<double>&, const Vector<double>&);
+    static double calculate_logistic_correlation(const Matrix<double>&, const Vector<double>&);
 
     static double calculate_logistic_correlation_missing_values(const Vector<double>&, const Vector<double>&, const Vector<size_t> &);
 
@@ -119,10 +124,11 @@ public:
 
     static Vector<double> calculate_cross_correlations(const Vector<double> &, const Vector<double> &, const size_t & = 10);
 
-
     // General correlation methods
 
     static double calculate_correlation(const Vector<double>&, const Vector<double>&);
+
+    static string calculate_correlation_type(const Vector<double>&, const Vector<double>&);
 
     // Matrix Methods
 
@@ -148,6 +154,11 @@ public:
 
     static Matrix<double> remove_correlations(const Matrix<double>&, const size_t&, const double&);
 
+    // Regression methods
+
+    LinearRegressionParameters<double> calculate_linear_regression_parameters(const Vector<double>&, const Vector<double>&) const;
+    LogisticRegressionParameters<double> calculate_logistic_regression_parameters(const Vector<double>&, const Vector<double>&) const;
+
 };
 
 }
@@ -156,7 +167,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

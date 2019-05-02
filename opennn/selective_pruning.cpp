@@ -492,7 +492,7 @@ SelectivePruning::SelectivePruningResults* SelectivePruning::perform_inputs_sele
     {
         cout << "Optimal inputs: " << neural_network_pointer->get_inputs_pointer()->get_names().vector_to_string() << endl
                   << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl
-                  << "Optimum training loss: " << optimum_loss_error << endl
+                  << "Optimum training error: " << optimum_loss_error << endl
                   << "Optimum selection error: " << optimum_selection_error << endl
                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }

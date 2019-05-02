@@ -270,8 +270,8 @@ public:
     Matrix<T> filter_column_less_than_string(const string&, const double&) const;
     Matrix<T> filter_column_greater_than_string(const string&, const double&) const;
 
-    Matrix<T> filter_minimum_maximum(const size_t&, const T&, const T&) const;
-    Matrix<T> filter_minimum_maximum(const string&, const T&, const T&) const;
+    Matrix<T> filter_column_minimum_maximum(const size_t&, const T&, const T&) const;
+    Matrix<T> filter_column_minimum_maximum(const string&, const T&, const T&) const;
 
     Matrix<T> filter_extreme_values(const size_t&, const double&, const double&) const;
     Matrix<T> filter_extreme_values(const string&, const double&, const double&) const;
@@ -377,6 +377,7 @@ public:
     Matrix<T> delete_rows(const Vector<size_t>&) const;
 
     Matrix<T> delete_rows_with_value(const T&) const;
+    Matrix<T> delete_columns_with_value(const T&) const;
 
     Matrix<T> delete_rows_equal_to(const T&) const;
 
@@ -4696,6 +4697,49 @@ Matrix<T> Matrix<T>::delete_rows_with_value(const T& value) const
     }
 
     return(get_submatrix_rows(indices));
+}
+
+
+template <class T>
+Matrix<T> Matrix<T>::delete_columns_with_value(const T& value) const
+{
+    Vector<T> column(rows_number);
+
+    size_t count = 0;
+
+    for(size_t i = 0; i < columns_number; i++)
+    {
+        column = get_column(i);
+
+        if(!column.contains(value))
+        {
+            count++;
+        }
+    }
+
+    if(count == 0)
+    {
+        Matrix<T> copy_matrix(*this);
+
+        return copy_matrix;
+    }
+
+    Vector<size_t> indices(count);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < columns_number; i++)
+    {
+        column = get_column(i);
+
+        if(!column.contains(value))
+        {
+            indices[index] = i;
+            index++;
+        }
+    }
+
+    return(get_submatrix_columns(indices));
 }
 
 
@@ -11195,14 +11239,18 @@ double Matrix<T>::calculate_cross_entropy_error(const Matrix<double>& other_matr
     {
         for(int j = 0; j < columns_number; j++)
         {
-            if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < std::numeric_limits<double>::min())
-            {
-                cross_entropy_error -= log(1.0 - (*this)(i,j));
-            }
-            else if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < std::numeric_limits<double>::min())
-            {
-                cross_entropy_error -= log((*this)(i,j));
-            }
+            const double other_value = other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j));
+            const double value = (*this)(i,j);
+
+            cross_entropy_error -= (1.0 - other_value)*log(1.0-value) + other_value*log(value);
+//            if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < std::numeric_limits<double>::min())
+//            {
+//                cross_entropy_error -= log(1.0 - (*this)(i,j));
+//            }
+//            else if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 1.0) < std::numeric_limits<double>::min())
+//            {
+//                cross_entropy_error -= log((*this)(i,j));
+//            }
         }
     }
 
@@ -13233,7 +13281,7 @@ bool Matrix<T>::is_positive() const
 /// @param maximum Maximum filtering value.
 
 template <class T>
-Matrix<T> Matrix<T>::filter_minimum_maximum(const size_t& column_index, const T& minimum, const T& maximum) const
+Matrix<T> Matrix<T>::filter_column_minimum_maximum(const size_t& column_index, const T& minimum, const T& maximum) const
 {
     const Vector<T> column = get_column(column_index);
 
@@ -13247,7 +13295,7 @@ Matrix<T> Matrix<T>::filter_minimum_maximum(const size_t& column_index, const T&
 
     for(size_t i = 0; i < rows_number; i++)
     {
-        if((*this)(i,column_index) >= minimum &&(*this)(i,column_index) <= maximum)
+        if((*this)(i,column_index) >= minimum && (*this)(i,column_index) <= maximum)
         {
             row = get_row(i);
 
@@ -13262,11 +13310,11 @@ Matrix<T> Matrix<T>::filter_minimum_maximum(const size_t& column_index, const T&
 
 
 template <class T>
-Matrix<T> Matrix<T>::filter_minimum_maximum(const string& column_name, const T& minimum, const T& maximum) const
+Matrix<T> Matrix<T>::filter_column_minimum_maximum(const string& column_name, const T& minimum, const T& maximum) const
 {
     const size_t column_index = get_column_index(column_name);
 
-    return filter_minimum_maximum(column_index, minimum, maximum);
+    return filter_column_minimum_maximum(column_index, minimum, maximum);
 }
 
 
@@ -15939,14 +15987,14 @@ void Matrix<T>::print_preview() const
    {
       const Vector<T> row = get_row(rows_number-2);
 
-      cout << "Row " << rows_number-1 << ":\n" << row << endl;
+      cout << "Row " << rows_number-2 << ":\n" << row << endl;
    }
 
    if(rows_number > 2)
    {
       const Vector<T> last_row = get_row(rows_number-1);
 
-      cout << "Row " << rows_number << ":\n" << last_row << endl;
+      cout << "Row " << rows_number-1 << ":\n" << last_row << endl;
    }
 }
 
@@ -16778,7 +16826,7 @@ Matrix<T> exponential_linear_second_derivatives(const Matrix<T>& x)
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

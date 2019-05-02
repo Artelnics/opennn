@@ -78,11 +78,19 @@ public:
 
    double calculate_training_error() const;
 
+   double calculate_training_error_cuda() const;
+
    double calculate_selection_error() const;
+
+   double calculate_selection_error_cuda() const;
 
    double calculate_training_error(const Vector<double>&) const;
 
+   double calculate_training_error_cuda(const Vector<double>&) const;
+
    Vector<double> calculate_training_error_gradient() const;
+
+   Vector<double> calculate_training_error_gradient_cuda() const;
 
    double calculate_batch_error(const Vector<size_t>&) const;
 
@@ -95,8 +103,6 @@ public:
    // Gradient methods
 
    Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const;
-
-   Vector<double> calculate_batch_error_gradient_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
    LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
@@ -113,7 +119,8 @@ public:
 
    // Serialization methods
 
-   string write_error_term_type() const;
+   string get_error_type() const;
+   string get_error_type_text() const;
 
    tinyxml2::XMLDocument* to_XML() const;   
    void from_XML(const tinyxml2::XMLDocument&);
@@ -137,7 +144,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

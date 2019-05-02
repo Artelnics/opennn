@@ -18,23 +18,40 @@
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
+int getHostVector(const double* A_d, double* A_h, int nBytes);
+int mallocCUDA(double** A_d, int nBytes);
+int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
 void freeCUDA(double* A_d);
 
-void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+double calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
                                 const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
                                 const double* input_data_h, const size_t input_rows, const size_t input_columns,
                                 const double* target_data_h, const size_t target_rows, const size_t target_columns,
-                                std::vector<double*> error_gradient_data,
+                                double* gradient_vec_d,
                                 double* output_data_h, const size_t output_rows, const size_t output_columns,
                                 const std::vector<std::string> layers_activations, const std::string loss_method,
                                 const std::vector<double> loss_parameters = vector<double>());
 
-void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
-                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
-                          double* output_data_h, const size_t output_rows, const size_t output_columns,
-                          const std::vector<std::string> layers_activations);
+//void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+//                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+//                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
+//                          double* output_data_h, const size_t output_rows, const size_t output_columns,
+//                          const std::vector<std::string> layers_activations);
 
+double calculateLossCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                         const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
+                         const double* input_data_h, const size_t input_rows, const size_t input_columns,
+                         const double* target_data_d, const size_t target_rows, const size_t target_columns,
+                         const vector<string> layers_activations, const string loss_method,
+                         const vector<double> loss_parameters);
+
+void calculateGradientCUDA(const vector<double*> weights_d, const vector<size_t> weights_rows_numbers, const vector<size_t> weights_columns_numbers,
+                           const vector<double*> biases_d, const vector<size_t> bias_rows_numbers,
+                           const double* input_data_d, const size_t input_rows, const size_t input_columns,
+                           const double* target_data_d, const size_t target_rows, const size_t target_columns,
+                           double* gradient_vec_d,
+                           const vector<string> layers_activations, const string loss_method,
+                           const vector<double> loss_parameters);
 #endif
 
 namespace OpenNN
@@ -208,6 +225,94 @@ check();
     return training_error;
 }
 
+double CrossEntropyError::calculate_training_error_cuda() const
+{
+    double batch_error = 0.0;
+
+#ifdef __OPENNN_CUDA__
+
+    const Vector<size_t> training_indices = data_set_pointer->get_instances().get_training_indices();
+    const Vector<size_t> architecture = neural_network_pointer->get_multilayer_perceptron_pointer()->get_architecture();
+    const Vector<string> layer_activations = neural_network_pointer->get_multilayer_perceptron_pointer()->write_layers_activation_function();
+
+    const size_t layers_number = architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(training_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> targets = data_set_pointer->get_targets(training_indices);
+    const double* target_data = targets.data();
+    const size_t target_rows = targets.get_rows_number();
+    const size_t target_columns = targets.get_columns_number();
+
+    double* target_data_d;
+
+    mallocCUDA(&target_data_d, target_rows*target_columns*sizeof(double));
+    memcpyCUDA(target_data_d, target_data, target_rows*target_columns*sizeof(double));
+
+    vector<double*> weights_pointers(layers_number);
+    vector<double*> biases_pointers(layers_number);
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        const double* weights_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_synaptic_weights().to_vector().data();
+        const double* biases_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_biases().data();
+
+        mallocCUDA(&weights_pointers[i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        mallocCUDA(&biases_pointers[i], bias_rows_numbers[i]*sizeof(double));
+
+        memcpyCUDA(weights_pointers[i], weights_data, weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        memcpyCUDA(biases_pointers[i], biases_data, bias_rows_numbers[i]*sizeof(double));
+    }
+
+//    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+//                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+//                         input_data, input_rows, input_columns,
+//                         output_data, output_rows, output_columns,
+//                         pointers.layer_activations.to_std_vector());
+
+//    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+//    const size_t instances_number = batch_indices.size();
+
+//    batch_error = outputs.calculate_sum_squared_error(targets_matrix) / static_cast<double>(instances_number);
+
+    vector<double> loss_parameters;
+
+    string loss_method = get_error_type();
+
+    batch_error = calculateLossCUDA(weights_pointers, weights_rows_numbers, weights_columns_numbers,
+                                    biases_pointers, bias_rows_numbers,
+                                    input_data, input_rows, input_columns,
+                                    target_data_d, target_rows, target_columns,
+                                    layer_activations.to_std_vector(), loss_method,
+                                    loss_parameters);
+
+    freeCUDA(target_data_d);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        freeCUDA(weights_pointers[i]);
+        freeCUDA(biases_pointers[i]);
+    }
+
+#endif
+
+    return batch_error;
+}
+
 
 double CrossEntropyError::calculate_selection_error() const
 {
@@ -244,6 +349,95 @@ check();
     }
 
     return selection_error;
+}
+
+
+double CrossEntropyError::calculate_selection_error_cuda() const
+{
+    double batch_error = 0.0;
+
+#ifdef __OPENNN_CUDA__
+
+    const Vector<size_t> selection_indices = data_set_pointer->get_instances().get_selection_indices();
+    const Vector<size_t> architecture = neural_network_pointer->get_multilayer_perceptron_pointer()->get_architecture();
+    const Vector<string> layer_activations = neural_network_pointer->get_multilayer_perceptron_pointer()->write_layers_activation_function();
+
+    const size_t layers_number = architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(selection_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> targets = data_set_pointer->get_targets(selection_indices);
+    const double* target_data = targets.data();
+    const size_t target_rows = targets.get_rows_number();
+    const size_t target_columns = targets.get_columns_number();
+
+    double* target_data_d;
+
+    mallocCUDA(&target_data_d, target_rows*target_columns*sizeof(double));
+    memcpyCUDA(target_data_d, target_data, target_rows*target_columns*sizeof(double));
+
+    vector<double*> weights_pointers(layers_number);
+    vector<double*> biases_pointers(layers_number);
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        const double* weights_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_synaptic_weights().to_vector().data();
+        const double* biases_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_biases().data();
+
+        mallocCUDA(&weights_pointers[i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        mallocCUDA(&biases_pointers[i], bias_rows_numbers[i]*sizeof(double));
+
+        memcpyCUDA(weights_pointers[i], weights_data, weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        memcpyCUDA(biases_pointers[i], biases_data, bias_rows_numbers[i]*sizeof(double));
+    }
+
+//    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+//                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+//                         input_data, input_rows, input_columns,
+//                         output_data, output_rows, output_columns,
+//                         pointers.layer_activations.to_std_vector());
+
+//    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+//    const size_t instances_number = batch_indices.size();
+
+//    batch_error = outputs.calculate_sum_squared_error(targets_matrix) / static_cast<double>(instances_number);
+
+    vector<double> loss_parameters;
+
+    string loss_method = get_error_type();
+
+    batch_error = calculateLossCUDA(weights_pointers, weights_rows_numbers, weights_columns_numbers,
+                                    biases_pointers, bias_rows_numbers,
+                                    input_data, input_rows, input_columns,
+                                    target_data_d, target_rows, target_columns,
+                                    layer_activations.to_std_vector(), loss_method,
+                                    loss_parameters);
+
+    freeCUDA(target_data_d);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        freeCUDA(weights_pointers[i]);
+        freeCUDA(biases_pointers[i]);
+    }
+
+#endif
+
+    return batch_error;
 }
 
 
@@ -285,6 +479,102 @@ check();
 }
 
 
+double CrossEntropyError::calculate_training_error_cuda(const Vector<double>& parameters) const
+{
+    double batch_error = 0.0;
+
+#ifdef __OPENNN_CUDA__
+
+    const Vector<size_t> training_indices = data_set_pointer->get_instances().get_training_indices();
+    const Vector<size_t> architecture = neural_network_pointer->get_multilayer_perceptron_pointer()->get_architecture();
+    const Vector<string> layer_activations = neural_network_pointer->get_multilayer_perceptron_pointer()->write_layers_activation_function();
+
+    const size_t layers_number = architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(training_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> targets = data_set_pointer->get_targets(training_indices);
+    const double* target_data = targets.data();
+    const size_t target_rows = targets.get_rows_number();
+    const size_t target_columns = targets.get_columns_number();
+
+    double* target_data_d;
+
+    mallocCUDA(&target_data_d, target_rows*target_columns*sizeof(double));
+    memcpyCUDA(target_data_d, target_data, target_rows*target_columns*sizeof(double));
+
+    vector<double*> weights_pointers(layers_number);
+    vector<double*> biases_pointers(layers_number);
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t index = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        const double* weights_data = parameters.get_subvector(index, index+weights_rows_numbers[i]*weights_columns_numbers[i]-1).data();
+        index += weights_rows_numbers[i]*weights_columns_numbers[i];
+
+        const double* biases_data = parameters.get_subvector(index, index+bias_rows_numbers[i]-1).data();
+        index += bias_rows_numbers[i];
+
+//        const double* weights_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_synaptic_weights().to_vector().data();
+//        const double* biases_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_biases().data();
+
+        mallocCUDA(&weights_pointers[i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        mallocCUDA(&biases_pointers[i], bias_rows_numbers[i]*sizeof(double));
+
+        memcpyCUDA(weights_pointers[i], weights_data, weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        memcpyCUDA(biases_pointers[i], biases_data, bias_rows_numbers[i]*sizeof(double));
+    }
+
+//    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+//                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+//                         input_data, input_rows, input_columns,
+//                         output_data, output_rows, output_columns,
+//                         pointers.layer_activations.to_std_vector());
+
+//    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+//    batch_error = calculate_error(outputs, targets_matrix);
+
+
+    vector<double> loss_parameters;
+
+    string loss_method = get_error_type();
+
+    batch_error = calculateLossCUDA(weights_pointers, weights_rows_numbers, weights_columns_numbers,
+                                    biases_pointers, bias_rows_numbers,
+                                    input_data, input_rows, input_columns,
+                                    target_data_d, target_rows, target_columns,
+                                    layer_activations.to_std_vector(), loss_method,
+                                    loss_parameters);
+
+    freeCUDA(target_data_d);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        freeCUDA(weights_pointers[i]);
+        freeCUDA(biases_pointers[i]);
+    }
+
+#endif
+
+    return batch_error;
+}
+
+
 double CrossEntropyError::calculate_batch_error(const Vector<size_t>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -309,6 +599,7 @@ check();
     return batch_error;
 }
 
+
 double CrossEntropyError::calculate_batch_error_cuda(const Vector<size_t>& batch_indices, const MultilayerPerceptron::Pointers& pointers) const
 {
     double batch_error = 0.0;
@@ -322,10 +613,15 @@ double CrossEntropyError::calculate_batch_error_cuda(const Vector<size_t>& batch
     const size_t input_rows = inputs_matrix.get_rows_number();
     const size_t input_columns = inputs_matrix.get_columns_number();
 
-    Matrix<double> outputs(inputs_matrix.get_rows_number(), pointers.architecture[layers_number]);
-    double* output_data = outputs.data();
-    const size_t output_rows = inputs_matrix.get_rows_number();
-    const size_t output_columns = pointers.architecture[layers_number];
+    Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+    const double* target_data = targets.data();
+    const size_t target_rows = targets.get_rows_number();
+    const size_t target_columns = targets.get_columns_number();
+
+    double* target_data_d;
+
+    mallocCUDA(&target_data_d, target_rows*target_columns*sizeof(double));
+    memcpyCUDA(target_data_d, target_data, target_rows*target_columns*sizeof(double));
 
     vector<size_t> weights_rows_numbers(layers_number);
     vector<size_t> weights_columns_numbers(layers_number);
@@ -340,20 +636,35 @@ double CrossEntropyError::calculate_batch_error_cuda(const Vector<size_t>& batch
         bias_rows_numbers[i] = pointers.architecture[i+1];
     }
 
-    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
-                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
-                         input_data, input_rows, input_columns,
-                         output_data, output_rows, output_columns,
-                         pointers.layer_activations.to_std_vector());
+//    calculateOutputsCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+//                         pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+//                         input_data, input_rows, input_columns,
+//                         output_data, output_rows, output_columns,
+//                         pointers.layer_activations.to_std_vector());
 
-    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+//    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
 
-    batch_error = outputs.calculate_cross_entropy_error(targets_matrix);
+//    batch_error = outputs.calculate_cross_entropy_error(targets_matrix);
+
+
+    vector<double> loss_parameters;
+
+    string loss_method = get_error_type();
+
+    batch_error = calculateLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                                    pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                                    input_data, input_rows, input_columns,
+                                    target_data_d, target_rows, target_columns,
+                                    pointers.layer_activations.to_std_vector(), loss_method,
+                                    loss_parameters);
+
+    freeCUDA(target_data_d);
 
 #endif
 
     return batch_error;
 }
+
 
 /// Returns the cross entropy error function gradient of a multilayer perceptron on a data set.
 /// It uses the error back-propagation method.
@@ -413,6 +724,214 @@ check();
     return training_error_gradient / static_cast<double>(training_instances_number);
 }
 
+Vector<double> CrossEntropyError::calculate_training_error_gradient_cuda() const
+{
+    const size_t parameters_number = neural_network_pointer->get_multilayer_perceptron_pointer()->get_parameters_number();
+
+    Vector<double> training_error_gradient(parameters_number, 0.0);
+
+#ifdef __OPENNN_CUDA__
+
+    const Vector<size_t> training_indices = data_set_pointer->get_instances().get_training_indices();
+    const Vector<size_t> architecture = neural_network_pointer->get_multilayer_perceptron_pointer()->get_architecture();
+    const Vector<string> layer_activations = neural_network_pointer->get_multilayer_perceptron_pointer()->write_layers_activation_function();
+
+    const size_t layers_number = architecture.size() - 1;
+
+    const Matrix<double> inputs_matrix = data_set_pointer->get_inputs(training_indices);
+    const double* input_data = inputs_matrix.data();
+    const size_t input_rows = inputs_matrix.get_rows_number();
+    const size_t input_columns = inputs_matrix.get_columns_number();
+
+    Matrix<double> targets = data_set_pointer->get_targets(training_indices);
+    const double* target_data = targets.data();
+    const size_t target_rows = targets.get_rows_number();
+    const size_t target_columns = targets.get_columns_number();
+
+    double* input_data_d;
+    double* target_data_d;
+
+    mallocCUDA(&input_data_d, input_rows*input_columns*sizeof(double));
+    mallocCUDA(&target_data_d, target_rows*target_columns*sizeof(double));
+
+    memcpyCUDA(input_data_d, input_data, input_rows*input_columns*sizeof(double));
+    memcpyCUDA(target_data_d, target_data, target_rows*target_columns*sizeof(double));
+
+    vector<double*> weights_d(layers_number);
+    vector<double*> biases_d(layers_number);
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        const double* weights_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_synaptic_weights().to_vector().data();
+        const double* biases_data = neural_network_pointer->get_multilayer_perceptron_pointer()->get_layer(i).get_biases().data();
+
+        mallocCUDA(&weights_d[i], weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        mallocCUDA(&biases_d[i], bias_rows_numbers[i]*sizeof(double));
+
+        memcpyCUDA(weights_d[i], weights_data, weights_rows_numbers[i]*weights_columns_numbers[i]*sizeof(double));
+        memcpyCUDA(biases_d[i], biases_data, bias_rows_numbers[i]*sizeof(double));
+    }
+
+    vector<double> loss_parameters;
+
+    string loss_method = get_error_type();
+
+    double* training_error_gradient_d;
+
+    mallocCUDA(&training_error_gradient_d, parameters_number*sizeof(double));
+
+    calculateGradientCUDA(weights_d, weights_rows_numbers, weights_columns_numbers,
+                          biases_d, bias_rows_numbers,
+                          input_data_d, input_rows, input_columns,
+                          target_data_d, target_rows, target_columns,
+                          training_error_gradient_d,
+                          layer_activations, loss_method, loss_parameters);
+
+    getHostVector(training_error_gradient_d, training_error_gradient.data(), parameters_number*sizeof(double));
+
+    freeCUDA(input_data_d);
+    freeCUDA(target_data_d);
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        freeCUDA(weights_d[i]);
+        freeCUDA(biases_d[i]);
+    }
+
+#endif
+
+    return training_error_gradient;
+}
+
+
+LossIndex::FirstOrderLoss CrossEntropyError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
+
+    // Data set
+
+    const size_t instances_number = batch_indices.size();
+
+    // Neural network
+
+    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+
+    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+
+    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+
+    // Loss index
+
+    FirstOrderLoss first_order_loss(parameters_number);
+
+    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
+
+    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+
+    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation=
+           multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+
+    const Matrix<double> output_gradient = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+
+    const Vector< Matrix<double> > layers_delta = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+
+    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+
+    first_order_loss.loss = first_order_forward_propagation.layers_activations[layers_number-1].calculate_cross_entropy_error(targets);
+
+    first_order_loss.gradient = batch_error_gradient/static_cast<double>(instances_number);
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient();
+    }
+
+    return first_order_loss;
+}
+
+LossIndex::FirstOrderLoss CrossEntropyError::calculate_batch_first_order_loss_cuda(const Vector<size_t>& batch_indices,
+                                                                                  const MultilayerPerceptron::Pointers& pointers) const
+{
+    FirstOrderLoss first_order_loss;
+
+#ifdef __OPENNN_CUDA__
+
+    const size_t instances_number = batch_indices.size();
+    const size_t layers_number = pointers.architecture.size() - 1;
+
+    const size_t inputs_number = data_set_pointer->get_variables().get_inputs_number();
+    const size_t targets_number = data_set_pointer->get_variables().get_targets_number();
+
+    const Matrix<double> targets_matrix = data_set_pointer->get_targets(batch_indices);
+
+    Matrix<double> outputs(instances_number, pointers.architecture[layers_number]);
+    double* output_data = outputs.data();
+    const size_t output_rows = instances_number;
+    const size_t output_columns = pointers.architecture[layers_number];
+
+    Vector<double*> data_device = data_set_pointer->host_to_device(batch_indices);
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = pointers.architecture[i];
+        weights_columns_numbers[i] = pointers.architecture[i+1];
+
+        bias_rows_numbers[i] = pointers.architecture[i+1];
+
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
+    }
+
+    first_order_loss.set_parameters_number(parameters_number);
+
+    vector<double> loss_parameters;
+
+    string loss_method = get_error_type();
+
+    first_order_loss.loss = calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                                                        pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                                                        data_device[0], instances_number, inputs_number,
+                                                        data_device[1], instances_number, targets_number,
+                                                        first_order_loss.gradient_device,
+                                                        output_data, output_rows, output_columns,
+                                                        pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::None)
+    {
+        first_order_loss.loss += calculate_regularization(pointers.get_parameters());
+        first_order_loss.gradient += calculate_regularization_gradient(pointers.get_parameters());
+    }
+
+#endif
+
+    return first_order_loss;
+}
+
 LossIndex::FirstOrderLoss CrossEntropyError::calculate_batch_first_order_loss_cuda(const Vector<size_t>& batch_indices,
                                                                                    const MultilayerPerceptron::Pointers& pointers, const Vector<double*>& data_device) const
 {
@@ -450,42 +969,26 @@ LossIndex::FirstOrderLoss CrossEntropyError::calculate_batch_first_order_loss_cu
         parameters_number += pointers.architecture[i]*pointers.architecture[i+1] + pointers.architecture[i+1];
     }
 
-    first_order_loss.gradient.set(parameters_number);
-    vector<double*> error_gradient_data(2*layers_number);
-
-    size_t index = 0;
-
-    for(size_t i = 0; i < layers_number; i++)
-    {
-        error_gradient_data[2*i] = first_order_loss.gradient.data() + index;
-        index += weights_rows_numbers[i]*weights_columns_numbers[i];
-
-        error_gradient_data[2*i+1] = first_order_loss.gradient.data() + index;
-        index += bias_rows_numbers[i];
-    }
+    first_order_loss.set_parameters_number(parameters_number);
 
     vector<double> loss_parameters;
 
-    string loss_method = write_error_term_type();
+    string loss_method = get_error_type();
 
-    calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
-                               pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
-                               data_device[0], instances_number, inputs_number,
-                               data_device[1], instances_number, targets_number,
-                               error_gradient_data,
-                               output_data, output_rows, output_columns,
-                               pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
-
-    const double batch_error = outputs.calculate_cross_entropy_error(targets_matrix);
-
-    first_order_loss.loss = batch_error;
+    first_order_loss.loss = calculateFirstOrderLossCUDA(pointers.weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                                                        pointers.biases_pointers.to_std_vector(), bias_rows_numbers,
+                                                        data_device[0], instances_number, inputs_number,
+                                                        data_device[1], instances_number, targets_number,
+                                                        first_order_loss.gradient_device,
+                                                        output_data, output_rows, output_columns,
+                                                        pointers.layer_activations.to_std_vector(), loss_method, loss_parameters);
 
     // Regularization
 
     if(regularization_method != RegularizationMethod::None)
     {
-        first_order_loss.loss += calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient();
+        first_order_loss.loss += calculate_regularization(pointers.get_parameters());
+        first_order_loss.gradient += calculate_regularization_gradient(pointers.get_parameters());
     }
 
 #endif
@@ -512,9 +1015,15 @@ check();
 
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
 
-string CrossEntropyError::write_error_term_type() const
+string CrossEntropyError::get_error_type() const
 {
    return("CROSS_ENTROPY_ERROR");
+}
+
+
+string CrossEntropyError::get_error_type_text() const
+{
+   return "Cross entropy error";
 }
 
 
@@ -637,7 +1146,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -99,6 +99,9 @@ public:
 
     struct Results
     {
+        /// Default constructor.
+
+        explicit Results();
 
         void save(const string&) const;
 

@@ -90,18 +90,18 @@ public:
 
        }
 
-       FirstOrderLoss(const size_t& parameters_number)
-       {
-           loss = 0.0;
-           gradient.set(parameters_number, 0.0);
-       }
+       FirstOrderLoss(const size_t& new_parameters_number);
 
-//       virtual ~FirstOrderLoss()
-//       {
-//       }
+       void set_parameters_number(const size_t& new_parameters_number);
 
+       Vector<double> get_gradient_from_device() const;
+
+       virtual ~FirstOrderLoss();
+
+       size_t parameters_number;
        double loss;
        Vector<double> gradient;
+       double* gradient_device;
    };
 
 
@@ -206,6 +206,8 @@ public:
 
    void set_display(const bool&);
 
+   bool has_selection() const;
+
    // Loss methods
 
    double calculate_training_loss() const;
@@ -223,13 +225,16 @@ public:
    virtual double calculate_training_error(const Vector<double>&) const = 0;
    virtual double calculate_batch_error(const Vector<size_t>&) const = 0;
 
+   virtual double calculate_training_error_cuda() const = 0;
+   virtual double calculate_selection_error_cuda() const = 0;
+   virtual double calculate_training_error_cuda(const Vector<double>&) const = 0;
+
    virtual double calculate_batch_error_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return 0.0;}
 
    virtual Vector<double> calculate_training_error_gradient() const = 0;
+   virtual Vector<double> calculate_training_error_gradient_cuda() const = 0;
 
    virtual Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const {return Vector<double>();}
-
-   virtual Vector<double> calculate_batch_error_gradient_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return Vector<double>();}
 
    virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const  {return Vector<double>();}
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const  {return Matrix<double>();}
@@ -264,7 +269,8 @@ public:
    void regularization_from_XML(const tinyxml2::XMLDocument&);
    void write_regularization_XML(tinyxml2::XMLPrinter&) const;
 
-   string write_error_term_type() const;
+   string get_error_type() const;
+   virtual string get_error_type_text() const;
 
    string write_information() const;
 
@@ -316,7 +322,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

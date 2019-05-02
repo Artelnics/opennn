@@ -48,7 +48,7 @@ double CorrelationAnalysis::calculate_linear_correlation(const Vector<double>& x
 
   if(x.is_constant() || y.is_constant())
   {
-      return 1;
+      return 0;
   }
 
 // Control sentence(if debug)
@@ -376,7 +376,7 @@ double CorrelationAnalysis::calculate_logarithmic_correlation_missing_values(con
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>& x, const Vector<double>& y)
+double CorrelationAnalysis::calculate_logistic_correlation(const Matrix<double>& x, const Vector<double>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -392,10 +392,9 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
 #endif
 
-    Matrix<double> data(x.size(),2);
+    Matrix<double> data(x);
 
-    data.set_column(0, x);
-    data.set_column(1, y);
+    data = data.append_column(y);
 
     DataSet data_set(data);
 
@@ -403,7 +402,7 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     const Vector<Statistics<double>> inputs_statistics = data_set.scale_inputs_minimum_maximum();
 
-    NeuralNetwork neural_network(1,1);
+    NeuralNetwork neural_network(x.get_columns_number(),1);
 
     neural_network.construct_scaling_layer();
 
@@ -421,7 +420,8 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     TrainingStrategy training_strategy(&neural_network, &data_set);
 
-    training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+    training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+    training_strategy.get_weighted_squared_error_pointer()->set_regularization_weight(0.0001);
 
 //    WeightedSquaredError* weighted_squared_error = training_strategy.get_weighted_squared_error_pointer();
 
@@ -431,17 +431,17 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
 //    training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::L2);
 
-    training_strategy.set_training_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 //    training_strategy.get_conjugate_gradient_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
 //    training_strategy.get_conjugate_gradient_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
 //    training_strategy.get_conjugate_gradient_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
 
 
-    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
-    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+//    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+//    training_strategy.get_Levenberg_Marquardt_algorithm_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
 
-//    training_strategy.get_quasi_Newton_method_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
-//    training_strategy.get_quasi_Newton_method_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
+    training_strategy.get_quasi_Newton_method_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
+    training_strategy.get_quasi_Newton_method_pointer()->set_selection_batch_size(data_set.get_instances().get_selection_instances_number());
 //    training_strategy.get_quasi_Newton_method_pointer()->get_learning_rate_algorithm_pointer()->set_training_rate_method(LearningRateAlgorithm::BrentMethod);
 
 //    training_strategy.get_gradient_descent_pointer()->set_training_batch_size(data_set.get_instances().get_training_instances_number());
@@ -452,30 +452,18 @@ double CorrelationAnalysis::calculate_logistic_correlation(const Vector<double>&
 
     training_strategy.perform_training();
 
-    Vector<double> value(1);
-    Vector<double> output(x.size());
+    Vector<double> output = neural_network.calculate_outputs(x).get_column(0);
 
-    for(size_t i = 0; i <x.size(); i++)
+    const double correlation = calculate_linear_correlation(y,output);
+
+    if (output.get_last()-output.get_first() < 1e-6)
     {
-        value[0] = x[i];
-        output[i] = neural_network.calculate_outputs(value.to_column_matrix())[0];
+        return correlation*-1;
     }
-
-//    cout << "target: " << y << endl;
-//    cout << "output: " << output << endl;
-
-    return calculate_linear_correlation(y,output);
-
-//    if(calculate_linear_correlation(x,output) < 0)
-//    {
-//        return  -1 * calculate_linear_correlation(y,output);
-//    }
-//    else
-//    {
-//        return calculate_linear_correlation(y,output);
-//    }
-
-//    return 0.0;
+    else
+    {
+        return correlation;
+    }
 }
 
 
@@ -496,7 +484,7 @@ double CorrelationAnalysis::calculate_logistic_correlation_missing_values(const 
     const Vector<double> this_valid = x.delete_indices(missing_indices);
     const Vector<double> y_valid = y.delete_indices(missing_indices);
 
-    return calculate_logistic_correlation(this_valid, y_valid);
+    return calculate_logistic_correlation(this_valid.to_column_matrix(), y_valid);
 }
 
 /// Calculates the logistic correlation coefficient between two vectors.
@@ -509,7 +497,7 @@ double CorrelationAnalysis::calculate_rank_logistic_correlation(const Vector<dou
 {
     const Vector<double> x_new = x.calculate_less_rank_with_ties();
 
-    return calculate_logistic_correlation(x_new,y);
+    return calculate_logistic_correlation(x_new.to_column_matrix(),y);
 }
 
 
@@ -873,15 +861,88 @@ double CorrelationAnalysis::calculate_correlation(const Vector<double>& x, const
     }
     else if(this_binary && other_binary)
     {
-        return calculate_logistic_correlation(new_x, new_y);
+        return calculate_linear_correlation(new_x, new_y);
     }
     else if(this_binary && !other_binary)
     {
-        return calculate_logistic_correlation(new_y, new_x);
+        return calculate_logistic_correlation(new_y.to_column_matrix(), new_x);
     }
     else if(!this_binary && other_binary)
     {
-        return calculate_logistic_correlation(new_x, new_y);
+        return calculate_logistic_correlation(new_x.to_column_matrix(), new_y);
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: Correlation Analysis.\n"
+               << "double calculate_correlation(const Vector<double>&) method.\n"
+               << "Unknown case.\n";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+
+string CorrelationAnalysis::calculate_correlation_type(const Vector<double>& x, const Vector<double>& y)
+{
+    if (x.is_constant()) return "Constant";
+    else if (y.is_constant()) return "Constant";
+
+    Vector<double> new_x = x;
+    Vector<double> new_y = y;
+    const bool this_binary = x.is_binary();
+    const bool other_binary = y.is_binary();
+
+    if (this_binary)
+    {
+        Vector<double> unique_elements = new_x.get_unique_elements();
+
+        for (size_t i = 0; i < new_x.size(); i++)
+        {
+            if (fabs(new_x[i] - unique_elements[0]) < numeric_limits<double>::epsilon())
+            {
+                new_x[i] = 0;
+            }
+            else
+            {
+                new_x[i] = 1;
+            }
+        }
+    }
+
+    if (other_binary)
+    {
+        Vector<double> unique_elements = new_y.get_unique_elements();
+
+        for (size_t i = 0; i < new_y.size(); i++)
+        {
+            if (fabs(new_y[i] - unique_elements[0]) < numeric_limits<double>::epsilon())
+            {
+                new_y[i] = 0;
+            }
+            else
+            {
+                new_y[i] = 1;
+            }
+        }
+    }
+
+    if(!this_binary && !other_binary)
+    {
+        return "Linear";
+    }
+    else if(this_binary && other_binary)
+    {
+        return "Linear";
+    }
+    else if(this_binary && !other_binary)
+    {
+        return "Logistic";
+    }
+    else if(!this_binary && other_binary)
+    {
+        return "Logistic";
     }
     else
     {
@@ -1153,6 +1214,8 @@ double CorrelationAnalysis::calculate_logistic_function(const Vector<double>& co
 
 Matrix<double> CorrelationAnalysis::remove_correlations(const Matrix<double>& data, const size_t& index, const double& minimum_correlation)
 {
+    if(data.get_columns_number()<=5) return data;
+
     double new_minimum_correlation = minimum_correlation;
 
     const Vector<double> correlations = calculate_correlations(data,index).calculate_absolute_value();
@@ -1172,10 +1235,181 @@ Matrix<double> CorrelationAnalysis::remove_correlations(const Matrix<double>& da
     return data.delete_columns(indices_to_remove);
 }
 
+
+// Regression methods
+
+LinearRegressionParameters<double> CorrelationAnalysis::calculate_linear_regression_parameters(const Vector<double>& x, const Vector<double>& y) const
+{
+    const size_t n = y.size();
+
+  // Control sentence(if debug)
+
+  #ifdef __OPENNN_DEBUG__
+
+    const size_t x_size = x.size();
+
+    ostringstream buffer;
+
+    if(x_size != n) {
+      buffer << "OpenNN Exception: Vector Template.\n"
+             << "LinearRegressionParameters<T> "
+                "calculate_linear_regression_parameters(const Vector<T>&) const "
+                "method.\n"
+             << "Other size must be equal to this size.\n";
+
+      throw logic_error(buffer.str());
+    }
+
+  #endif
+
+    double s_x = 0;
+    double s_y = 0;
+
+    double s_xx = 0;
+    double s_yy = 0;
+
+    double s_xy = 0;
+
+    for(size_t i = 0; i < n; i++) {
+      s_x += x[i];
+      s_y += y[i];
+
+      s_xx += x[i] * x[i];
+      s_yy += y[i] * y[i];
+
+      s_xy += x[i] * y[i];
+    }
+
+    LinearRegressionParameters<double> linear_regression_parameters;
+
+    if(s_x == 0.0 && s_y == 0.0 && s_xx == 0.0 && s_yy == 0.0 && s_xy == 0.0) {
+      linear_regression_parameters.intercept = 0.0;
+
+      linear_regression_parameters.slope = 0.0;
+
+      linear_regression_parameters.correlation = 1.0;
+    } else {
+      linear_regression_parameters.intercept =
+         (s_y * s_xx - s_x * s_xy) /(n * s_xx - s_x * s_x);
+
+      linear_regression_parameters.slope =
+         ((n * s_xy) - (s_x * s_y)) /((n * s_xx) - (s_x * s_x));
+
+      if(sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y)) < 1.0e-12)
+      {
+          linear_regression_parameters.correlation = 1.0;
+      }
+      else
+      {
+          linear_regression_parameters.correlation =
+             (n * s_xy - s_x * s_y) /
+              sqrt((n * s_xx - s_x * s_x) *(n * s_yy - s_y * s_y));
+      }
+    }
+
+    return(linear_regression_parameters);
+}
+
+
+LogisticRegressionParameters<double> CorrelationAnalysis::calculate_logistic_regression_parameters(const Vector<double>& x, const Vector<double>& y) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    ostringstream buffer;
+
+    if(y.size() != x.size()) {
+      buffer << "OpenNN Exception: Correlation Analysis.\n"
+             << "static double calculate_logistic_correlation(const Vector<double>&, const Vector<double>&) method.\n"
+             << "Y size must be equal to X size.\n";
+
+      throw logic_error(buffer.str());
+    }
+
+#endif
+
+    Matrix<double> data(x.size(),2);
+
+    data.set_column(0, x);
+    data.set_column(1, y);
+
+    DataSet data_set(data);
+    data_set.get_instances_pointer()->set_training();
+
+    NeuralNetwork neural_network(1,1);
+
+    const Vector<double> parameters = neural_network.get_parameters();
+
+    if(parameters.is_constant(1.0e-3))
+    {
+        cout << "Perform training task warning:\n"
+                     "All parameters have very similar values.\n"
+                     "They will be randomized.\n";
+
+        neural_network.randomize_parameters_normal(0.0, 0.1);
+    }
+
+    neural_network.perturbate_parameters(0.005);
+
+    MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
+    multilayer_perceptron_pointer->set_layer_activation_function(0, PerceptronLayer::Logistic);
+
+    neural_network.construct_scaling_layer();
+
+    const Vector< Statistics<double> > inputs_statistics = data_set.calculate_inputs_statistics();
+
+    ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+    scaling_layer_pointer->set_statistics(inputs_statistics);
+
+    const size_t inputs_number = inputs_statistics.size();
+    Vector<string> scaling_methods;
+
+    scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+    scaling_methods.resize(inputs_number, "MinimumMaximum");
+
+    data_set.scale_inputs(scaling_methods,inputs_statistics);
+
+    scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
+
+    neural_network.construct_probabilistic_layer();
+
+    ProbabilisticLayer* probabilistic_layer = neural_network.get_probabilistic_layer_pointer();
+    probabilistic_layer->set_probabilistic_method(ProbabilisticLayer::Probability);
+    probabilistic_layer->set_decision_threshold(0.5);
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+    training_strategy.get_weighted_squared_error_pointer()->set_regularization_weight(0.0001);
+    training_strategy.get_weighted_squared_error_pointer()->set_normalization_coefficient();
+    training_strategy.get_weighted_squared_error_pointer()->set_selection_normalization_coefficient();
+
+    training_strategy.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+    training_strategy.set_display(false);
+
+    training_strategy.perform_training();
+
+    Vector<double> value(1);
+    Vector<double> output(x.size());
+
+    for(size_t i = 0; i <x.size(); i++)
+    {
+        value[0] = x[i];
+        output[i] = neural_network.calculate_outputs(value.to_column_matrix())[0];
+    }
+
+    LogisticRegressionParameters<double> logistic_regression_parameters;
+    logistic_regression_parameters.correlation = calculate_linear_correlation(y,output);
+    logistic_regression_parameters.a = neural_network.get_multilayer_perceptron_pointer()->get_layers_synaptic_weights()[0](0,0);
+    logistic_regression_parameters.b = neural_network.get_multilayer_perceptron_pointer()->get_layers_biases()[0][0];
+
+    return(logistic_regression_parameters);
+}
+
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

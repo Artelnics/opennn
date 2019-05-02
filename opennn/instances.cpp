@@ -847,7 +847,7 @@ void Instances::set_unused(const Vector<size_t> & indices)
 }
 
 
-/// Sets all the instances in the data set for training. 
+/// Sets all the instances in the data set for training.
 
 void Instances::set_training()
 {
@@ -1694,7 +1694,7 @@ void Instances::print() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

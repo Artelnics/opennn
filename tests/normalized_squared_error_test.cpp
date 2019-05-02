@@ -177,8 +177,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
    instances_number = 10;
    inputs_number = 7;
-   outputs_number = 7;
-   hidden_neurons = 5;
+   outputs_number = 8;
+   hidden_neurons = 4;
 
    nn.set(inputs_number, hidden_neurons, outputs_number);
    nn.randomize_parameters_normal();
@@ -187,14 +187,14 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
 
    ds.set(instances_number, inputs_number, outputs_number);
    ds.randomize_data_normal();
+   ds.get_instances_pointer()->set_training();
 
    nse.set_normalization_coefficient();
 
    indices.set(0, 1, instances_number-1);
 
    error_gradient = nse.calculate_training_error_gradient();
-cout << "error gradient: " << error_gradient << endl;
-system("pause");
+
    numerical_error_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, indices, parameters);
 
    assert_true((error_gradient - numerical_error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
@@ -216,6 +216,7 @@ system("pause");
 
    ds.set(instances_number, inputs_number, outputs_number);
    ds.randomize_data_normal();
+   ds.get_instances_pointer()->set_training();
 
    nse.set_normalization_coefficient();
 
