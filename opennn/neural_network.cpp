@@ -746,7 +746,8 @@ void NeuralNetwork::set(const string& file_name)
 
 void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
 {
-    // Pointers
+   if (this==&other_neural_network) return;
+   // Pointers
 
     delete_pointers();
 
