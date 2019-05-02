@@ -72,6 +72,7 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
+
         training_strategy.perform_training();
 
         // Save results

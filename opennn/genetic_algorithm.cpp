@@ -1911,7 +1911,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         }
 
         cout << "Optimal number of inputs: " << optimal_inputs.count_equal_to(true) << endl;
-        cout << "Optimum training loss: " << optimum_loss_error << endl;
+        cout << "Optimum training error: " << optimum_loss_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }

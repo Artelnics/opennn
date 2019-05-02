@@ -481,6 +481,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
    // Right point
 
    triplet.B[0] = initial_training_rate;
+
    triplet.B[1] = loss_index_pointer->calculate_training_loss(training_direction, triplet.B[0]);
    count++;
 
@@ -520,7 +521,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
               triplet.U = triplet.A;
               triplet.B = triplet.A;
               triplet.check();
-             return(triplet);
+
+              return(triplet);
           }
        }
    }
@@ -673,13 +675,12 @@ Vector<double> LearningRateAlgorithm::calculate_Brent_method_directional_point(c
 
    try
    {
-
       Triplet triplet = calculate_bracketing_triplet(loss, training_direction, initial_training_rate);
 
       size_t count = 0;
 
       if(triplet.A == triplet.B)
-	  {
+      {
          return(triplet.A);
 	  }
 
@@ -1136,7 +1137,7 @@ void LearningRateAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

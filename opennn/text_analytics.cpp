@@ -141,7 +141,7 @@ Vector<string> TextAnalytics::delete_punctuation(const Vector<string>& documents
     new_documents.replace_substring("¬", " ");
     new_documents.replace_substring("/", " ");
     new_documents.replace_substring("\\", " ");
-    new_documents.replace_substring("(", " ");
+    new_documents.replace_substring(" (", " ");
     new_documents.replace_substring(")", " ");
     new_documents.replace_substring("=", " ");
     new_documents.replace_substring("?", " ");
@@ -2205,7 +2205,7 @@ Matrix<double> TextAnalytics::get_unique_binary_matrix(const Vector<string>& vec
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

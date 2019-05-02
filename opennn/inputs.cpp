@@ -279,6 +279,25 @@ const string& Inputs::get_description(const size_t& index) const
 }
 
 
+size_t Inputs::get_index(const string& name) const
+{
+    const size_t inputs_number = get_inputs_number();
+
+    for(size_t i = 0; i < inputs_number; i++)
+    {
+        if(items[i].name == name) return i;
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Inputs class.\n"
+           << "size_t get_index(const string&) const method.\n"
+           << "Name " << name << " not found.\n";
+
+    throw logic_error(buffer.str());
+}
+
+
 /// Returns the information of all input variables from a single matrix of strings.
 /// The information contains names, inputs and descriptions.
 /// The number of rows in the matris is the number of inputs, and the number of columns is three.
@@ -288,13 +307,13 @@ Matrix<string> Inputs::get_information() const
 {
     const size_t inputs_number = get_inputs_number();
 
-    Matrix<string> information(inputs_number, 3);
+    Matrix<string> information(inputs_number, 1);
 
     for(size_t i = 0; i < inputs_number; i++)
     {
         information(i,0) = items[i].name;
-        information(i,1) = items[i].units;
-        information(i,2) = items[i].description;
+//        information(i,1) = items[i].units;
+//        information(i,2) = items[i].description;
     }
 
     return(information);
@@ -1209,7 +1228,7 @@ void Inputs::write_PMML_neural_inputs(tinyxml2::XMLPrinter& file_stream, const b
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

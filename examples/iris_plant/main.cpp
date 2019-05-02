@@ -118,29 +118,19 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
+        training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
+
         training_strategy.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        //quasi_Newton_method_pointer->get_training_rate_algorithm_pointer()->set_training_rate_method(TrainingRateAlgorithm::TrainingRateMethod::GoldenSection);
-
         quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+
+        quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(0.0);
 
         quasi_Newton_method_pointer->perform_training();
 
         training_strategy.set_display(false);
-
-        // Model selection
-
-//        ModelSelection model_selection(&training_strategy);
-
-//        model_selection.set_order_selection_method(ModelSelection::GOLDEN_SECTION);
-
-//        GoldenSectionOrder* golden_section_order_pointer = model_selection.get_golden_section_order_pointer();
-
-//        golden_section_order_pointer->set_tolerance(1.0e-7);
-
-//        ModelSelection::Results model_selection_results = model_selection.perform_order_selection();
 
         // Testing analysis
 
@@ -156,9 +146,6 @@ int main(void)
         neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
-
-//        model_selection.save("./data/model_selection.xml");
-//        model_selection_results.save("./data/model_selection_results.dat");
 
         confusion.save("../data/confusion.dat");
 

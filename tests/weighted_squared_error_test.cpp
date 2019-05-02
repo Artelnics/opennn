@@ -82,11 +82,37 @@ void WeightedSquaredErrorTest::test_calculate_loss()
    ds.initialize_data(0.0);
 
    WeightedSquaredError wse(&nn, &ds);
-/*
-   assert_true(wse.calculate_error() == 0.0, LOG);
+
+   assert_true(wse.calculate_training_error() == 0.0, LOG);
 
    // Test
 
+   size_t instances_number = 1000;
+   size_t inputs_number = 90;
+   size_t outputs_number = 1;
+   size_t hidden_neurons_number = 180;
+
+   ds.set(instances_number, inputs_number, outputs_number);
+   ds.generate_data_binary_classification(instances_number, inputs_number);
+   ds.get_instances_pointer()->set_training();
+
+   nn.set(inputs_number, hidden_neurons_number, outputs_number);
+   nn.randomize_parameters_normal();
+
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, PerceptronLayer::Logistic);
+   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, PerceptronLayer::Logistic);
+
+   parameters = nn. get_parameters();
+
+   wse.set_negatives_weight(1.0);
+   wse.set_positives_weight(2.0);
+
+
+
+   assert_true(std::abs(wse.calculate_training_error() - wse.calculate_training_error(parameters)) < 1.0e-3, LOG);
+
+   // Test
+/*
    nn.set(1, 1);
    nn.randomize_parameters_normal();
 
@@ -94,8 +120,9 @@ void WeightedSquaredErrorTest::test_calculate_loss()
 
    ds.set(2, 1, 1);
    ds.generate_data_binary_classification(2, 1);
+   ds.get_instances_pointer()->set_training();
 
-   assert_true(wse.calculate_error() == wse.calculate_error(parameters), LOG);
+   assert_true(wse.calculate_training_error() == wse.calculate_training_error(parameters), LOG);
 
    // Test
 
@@ -103,12 +130,13 @@ void WeightedSquaredErrorTest::test_calculate_loss()
 
    ds.set(2, 3, 1);
    ds.generate_data_binary_classification(2, 3);
+   ds.get_instances_pointer()->set_training();
 
    wse.set_weights();
 
    parameters = nn.get_parameters();
 
-   assert_true(wse.calculate_error() == wse.calculate_error(parameters), LOG);
+   assert_true(wse.calculate_training_error() == wse.calculate_training_error(parameters), LOG);
 
    // Test
 
@@ -142,7 +170,7 @@ void WeightedSquaredErrorTest::test_calculate_loss()
 void WeightedSquaredErrorTest::test_calculate_gradient()
 {
    message += "test_calculate_gradient\n";
-/*
+
    NumericalDifferentiation nd;
 
    NeuralNetwork nn;
@@ -158,9 +186,42 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
    Vector<double> numerical_gradient;
    Vector<double> error;
 
+   size_t instances_number;
+   size_t inputs_number;
+   size_t outputs_number;
+   size_t hidden_neurons_number;
+
    // Test
 
-   nn.set(1, 1, 1);
+   instances_number = 4000;
+   inputs_number = 6;
+   outputs_number = 1;
+   hidden_neurons_number = 3;
+
+   ds.set(instances_number, inputs_number, outputs_number);
+   ds.generate_data_multiple_classification(instances_number, inputs_number, outputs_number);
+   ds.get_instances_pointer()->set_training();
+
+   nn.set(inputs_number, hidden_neurons_number, outputs_number);
+   nn.randomize_parameters_normal();
+
+//   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, PerceptronLayer::Logistic);
+//   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, PerceptronLayer::Logistic);
+
+   parameters = nn.get_parameters();
+
+   wse.set_weights();
+//   wse.set_negatives_weight(1);
+//   wse.set_positives_weight(2.5);
+
+   gradient = wse.calculate_training_error_gradient();
+   numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_training_error, parameters);
+
+   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-2, LOG);
+
+   // Test
+
+/*   nn.set(1, 1, 1);
 
    nn.initialize_parameters(0.0);
 
@@ -170,7 +231,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    wse.set_weights();
 
-   gradient = wse.calculate_gradient();
+   gradient = wse.calculate_training_error_gradient();
 
    assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
@@ -187,7 +248,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    wse.set_weights();
 
-   gradient = wse.calculate_gradient();
+   gradient = wse.calculate_training_error_gradient();
 
    assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
@@ -208,7 +269,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    wse.set_weights();
 
-   gradient = wse.calculate_gradient();
+   gradient = wse.calculate_training_error_gradient();
 
    assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
@@ -225,7 +286,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    wse.set_weights();
 
-   gradient = wse.calculate_gradient();
+   gradient = wse.calculate_training_error_gradient();
 
    assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
@@ -241,7 +302,7 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    wse.set_weights();
 
-   gradient = wse.calculate_gradient();
+   gradient = wse.calculate_training_error_gradient();
 
    assert_true(gradient.size() == nn.get_parameters_number(), LOG);
    assert_true(gradient == 0.0, LOG);
@@ -255,8 +316,8 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
    ds.set(2, 1, 1);
    ds.initialize_data(1.0);
 
-   gradient = wse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_error, parameters);
+   gradient = wse.calculate_training_error_gradient();
+   numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_training_error, parameters);
    assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 
    // Test
@@ -268,25 +329,9 @@ void WeightedSquaredErrorTest::test_calculate_gradient()
 
    wse.set_weights();
 
-   gradient = wse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_error, parameters);
+   gradient = wse.calculate_training_error_gradient();
+   numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_training_error, parameters);
    error = (gradient - numerical_gradient).calculate_absolute_value();
-
-   // Test
-
-   nn.set(2, 1);
-   nn.initialize_parameters(1.0);
-   parameters = nn.get_parameters();
-
-   ds.set(3, 2, 1);
-   ds.generate_data_binary_classification(3, 2);
-
-   wse.set_weights();
-
-   gradient = wse.calculate_gradient();
-   numerical_gradient = nd.calculate_gradient(wse, &WeightedSquaredError::calculate_error, parameters);
-
-   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
 */
 }
 
@@ -506,8 +551,8 @@ void WeightedSquaredErrorTest::run_test_case()
 
    // Constructor and destructor methods
 
-   test_constructor();
-   test_destructor();
+//   test_constructor();
+//   test_destructor();
 
    // Get methods
 
@@ -515,9 +560,9 @@ void WeightedSquaredErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_loss();
+//   test_calculate_loss();
 
-   test_calculate_selection_error();
+//   test_calculate_selection_error();
 
    test_calculate_gradient();
 
@@ -533,8 +578,8 @@ void WeightedSquaredErrorTest::run_test_case()
 
    // Serialization methods
 
-   test_to_XML();
-   test_from_XML();
+//   test_to_XML();
+//   test_from_XML();
 
    message += "End of weighted squared error test case.\n";
 }

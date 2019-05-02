@@ -183,6 +183,7 @@ public:
    const double& get_beta_1() const;
    const double& get_beta_2() const;
    const double& get_epsilon() const;
+   const bool& get_adagrad() const;
 
    // Training parameters
 
@@ -227,6 +228,7 @@ public:
    void set_beta_1(const double&);
    void set_beta_2(const double&);
    void set_epsilon(const double&);
+   void set_adagrad(const bool&);
 
    // Training parameters
 
@@ -283,6 +285,10 @@ public:
 private:
 
    // TRAINING OPERATORS
+
+   /// Adagrad algorithm
+
+   bool adagrad;
 
    /// Initial learning rate
 

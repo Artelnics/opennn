@@ -1087,7 +1087,7 @@ Matrix<string> LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::
 
    // Final selection error
 
-/*   const LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm_pointer->get_loss_index_pointer();
+   const LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm_pointer->get_loss_index_pointer();
 
    if(loss_index_pointer->has_selection())
    {
@@ -1098,7 +1098,7 @@ Matrix<string> LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::
 
        values.push_back(buffer.str());
     }
-*/
+
    // Final gradient norm
 
    names.push_back("Final gradient norm");
@@ -2814,7 +2814,7 @@ Vector<double> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

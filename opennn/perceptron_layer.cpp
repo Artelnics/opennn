@@ -226,7 +226,7 @@ string PerceptronLayer::write_activation_function() const
    {
       case Logistic:
       {
-         return("Logistic");
+         return("logistic");
       }
 
       case HyperbolicTangent:
@@ -1239,18 +1239,14 @@ string PerceptronLayer::write_expression(const Vector<string>& inputs_name, cons
 
    ostringstream buffer;
 
-//   cout << "Synaptic Weights: " << synaptic_weights << endl;
-//   cout << "Biases: " << biases << endl;
-//   cout << "Activation Function: " << activation_function << ", " << write_activation_function_expression() << endl << endl;
-
    for(size_t j = 0; j < outputs_name.size(); j++)
    {
-       buffer << outputs_name[j] << " = " << write_activation_function_expression() << "(" << biases[j] << "+";
+       buffer << outputs_name[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
        for(size_t i = 0; i < inputs_name.size() - 1; i++)
        {
-           buffer << "(" << inputs_name[i] << "*" << synaptic_weights.get_column(j)[i] << ")+";
+           buffer << " (" << inputs_name[i] << "*" << synaptic_weights.get_column(j)[i] << ")+";
        }
-       buffer << "(" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights.get_column(j)[inputs_name.size() - 1] << "));\n";
+       buffer << " (" << inputs_name[inputs_name.size() - 1] << "*" << synaptic_weights.get_column(j)[inputs_name.size() - 1] << "));\n";
    }
 
 //   for(size_t i = 0; i < perceptrons_number; i++)
@@ -1302,7 +1298,7 @@ string PerceptronLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -379,8 +379,6 @@ void UnscalingLayer::set_default()
 }
 
 
-// void set_statistics(const Vector< Statistics<double> >&) method
-
 /// Sets the statistics for all the neurons in the unscaling layer from a vector.
 /// The size of this vector must be equal to the number of unscaling neurons.
 /// @param new_statistics Unscaling neurons statistics.
@@ -402,7 +400,7 @@ void UnscalingLayer::set_statistics(const Vector< Statistics<double> >& new_stat
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
                << "void set_statistics(const Vector< Statistics<double> >&) method.\n"
-               << "Size of statistics must be equal to number of unscaling neurons.\n";
+               << "Size of statistics (" << new_statistics_size << ") must be equal to number of unscaling neurons (" << unscaling_neurons_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -503,8 +501,6 @@ void UnscalingLayer::set_unscaling_method(const UnscalingLayer::UnscalingMethod&
 }
 
 
-// void set_unscaling_method(const string&) method
-
 /// Sets the method to be used for unscaling the outputs from the multilayer perceptron
 /// The argument is a string containing the name of the method("NoUnscaling", "MeanStandardDeviation", "MinimumMaximum" or "Logarithmic").
 /// @param new_unscaling_method New unscaling method for the output variables.
@@ -540,8 +536,6 @@ void UnscalingLayer::set_unscaling_method(const string& new_unscaling_method)
 }
 
 
-// void set_display(const bool&) method
-
 /// Sets a new display value. 
 /// If it is set to true messages from this class are to be displayed on the screen;
 /// if it is set to false messages from this class are not to be displayed on the screen.
@@ -552,8 +546,6 @@ void UnscalingLayer::set_display(const bool& new_display)
     display = new_display;
 }
 
-
-// void prune_unscaling_neuron(const size_t&) method
 
 /// Removes a single unscaling neuron from the unscaling layer.
 /// @param index Index of neuron to be removed.
@@ -719,7 +711,7 @@ Matrix<double> UnscalingLayer::calculate_outputs(const Matrix<double>& inputs) c
 
     const size_t unscaling_neurons_number = get_unscaling_neurons_number();
 
-    const size_t size = inputs.size();
+    const size_t size = inputs.get_columns_number();
 
     if(size != unscaling_neurons_number)
     {
@@ -1961,7 +1953,26 @@ string UnscalingLayer::write_none_expression(const Vector<string>& inputs_name, 
 
     buffer.str("");
 
-    buffer << "(" << outputs_name.vector_to_string(',') << ") = (" << inputs_name.vector_to_string(',') << ");\n";
+    if(outputs_name.size() > 1)
+    {
+        buffer << " (" << outputs_name.vector_to_string(',') << ") = (" << inputs_name.vector_to_string(',') << ");\n";
+    }
+    else
+    {
+        buffer << outputs_name.vector_to_string(',') << " = (" << inputs_name.vector_to_string(',') << ");\n";
+    }
+
+    return(buffer.str());
+}
+
+
+string UnscalingLayer::write_none_expression_php(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+{
+    ostringstream buffer;
+
+    buffer.str("");
+
+    buffer << outputs_name.vector_to_string(',') << " = " << inputs_name.vector_to_string(',') << ";\n";
 
     return(buffer.str());
 }
@@ -1993,7 +2004,47 @@ string UnscalingLayer::write_minimum_maximum_expression(const Vector<string>& in
 
     buffer.str("");
 
-    buffer << "(" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    if(outputs_name.size() > 1)
+    {
+        buffer << " (" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    }
+    else
+    {
+        buffer << outputs_name.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+    }
+
+    return(buffer.str());
+}
+
+
+string UnscalingLayer::write_minimum_maximum_expression_php(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+{
+    const size_t unscaling_neurons_number = get_unscaling_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    Vector<string> expressions(unscaling_neurons_number);
+
+    for(size_t i = 0; i < unscaling_neurons_number; i++)
+    {
+        buffer.str("");
+        buffer << "0.5*(" << inputs_name[i] << "+1.0)*(" << statistics[i].maximum << "-" << statistics[i].minimum << ")+" << statistics[i].minimum;
+
+        expressions[i] = buffer.str();
+    }
+
+    buffer.str("");
+
+    if(outputs_name.size() > 1)
+    {
+        buffer << " (" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    }
+    else
+    {
+        buffer << outputs_name.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+    }
 
     return(buffer.str());
 }
@@ -2025,7 +2076,40 @@ string UnscalingLayer::write_mean_standard_deviation_expression(const Vector<str
 
     buffer.str("");
 
-    buffer << "(" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    if(outputs_name.size() > 1)
+    {
+        buffer << " (" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    }
+    else
+    {
+        buffer << outputs_name.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+    }
+
+    return(buffer.str());
+}
+
+
+string UnscalingLayer::write_mean_standard_deviation_expression_php(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+{
+    const size_t unscaling_neurons_number = get_unscaling_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    Vector<string> expressions(unscaling_neurons_number);
+
+    for(size_t i = 0; i < unscaling_neurons_number; i++)
+    {
+        buffer.str("");
+        buffer <<   statistics[i].mean << "+" << statistics[i].standard_deviation << "*" << inputs_name[i];
+
+        expressions[i] = buffer.str();
+    }
+
+    buffer.str("");
+
+    buffer << outputs_name.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -2057,7 +2141,40 @@ string UnscalingLayer::write_logarithmic_expression(const Vector<string>& inputs
 
     buffer.str("");
 
-    buffer << "(" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    if(outputs_name.size() > 1)
+    {
+        buffer << " (" << outputs_name.vector_to_string(',') << ") = (" << expressions.vector_to_string(',') << ");\n";
+    }
+    else
+    {
+        buffer << outputs_name.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
+    }
+
+    return(buffer.str());
+}
+
+
+string UnscalingLayer::write_logarithmic_expression_php(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+{
+    const size_t unscaling_neurons_number = get_unscaling_neurons_number();
+
+    ostringstream buffer;
+
+    buffer.precision(10);
+
+    Vector<string> expressions(unscaling_neurons_number);
+
+    for(size_t i = 0; i < unscaling_neurons_number; i++)
+    {
+        buffer.str("");
+        buffer << "0.5*exp(" << inputs_name[i] << "-1)*(" << statistics[i].maximum << "-" << statistics[i].minimum << ")+" << statistics[i].minimum;
+
+        expressions[i] = buffer.str();
+    }
+
+    buffer.str("");
+
+    buffer << outputs_name.vector_to_string(',') << " = (" << expressions.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -2073,27 +2190,62 @@ string UnscalingLayer::write_expression(const Vector<string>& inputs_name, const
 {
     switch(unscaling_method)
     {
+        case NoUnscaling:
+        {
+            return(write_none_expression(inputs_name, outputs_name));
+        }
+
+        case MinimumMaximum:
+        {
+            return(write_minimum_maximum_expression(inputs_name, outputs_name));
+        }
+
+        case MeanStandardDeviation:
+        {
+            return(write_mean_standard_deviation_expression(inputs_name, outputs_name));
+        }
+
+        case Logarithmic:
+        {
+            return(write_logarithmic_expression(inputs_name, outputs_name));
+        }
+    }
+
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: UnscalingLayer class.\n"
+           << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+           << "Unknown unscaling method.\n";
+
+    throw logic_error(buffer.str());
+}
+
+
+string UnscalingLayer::write_expression_php(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+{
+    switch(unscaling_method)
+    {
     case NoUnscaling:
     {
-        return(write_none_expression(inputs_name, outputs_name));
+        return(write_none_expression_php(inputs_name, outputs_name));
     }
         break;
 
     case MinimumMaximum:
     {
-        return(write_minimum_maximum_expression(inputs_name, outputs_name));
+        return(write_minimum_maximum_expression_php(inputs_name, outputs_name));
     }
         break;
 
     case MeanStandardDeviation:
     {
-        return(write_mean_standard_deviation_expression(inputs_name, outputs_name));
+        return(write_mean_standard_deviation_expression_php(inputs_name, outputs_name));
     }
         break;
 
     case Logarithmic:
     {
-        return(write_logarithmic_expression(inputs_name, outputs_name));
+        return(write_logarithmic_expression_php(inputs_name, outputs_name));
     }
         break;
 
@@ -2102,7 +2254,7 @@ string UnscalingLayer::write_expression(const Vector<string>& inputs_name, const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+               << "string write_expression_php(const Vector<string>&, const Vector<string>&) const method.\n"
                << "Unknown unscaling method.\n";
 
         throw logic_error(buffer.str());
@@ -2111,11 +2263,12 @@ string UnscalingLayer::write_expression(const Vector<string>& inputs_name, const
     }
 }
 
+
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

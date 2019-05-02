@@ -1583,7 +1583,7 @@ Matrix<string> ConjugateGradient::ConjugateGradientResults::write_final_results(
    values.push_back(buffer.str());
 
    // Final selection error
-/*
+
    const LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
 
    if(loss_index_pointer->has_selection())
@@ -1595,7 +1595,7 @@ Matrix<string> ConjugateGradient::ConjugateGradientResults::write_final_results(
 
         values.push_back(buffer.str());
    }
-*/
+
    // Final gradient norm
 
    names.push_back("Final gradient norm");
@@ -3522,7 +3522,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

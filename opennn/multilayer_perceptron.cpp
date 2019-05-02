@@ -35,6 +35,13 @@ void updateParametersSgdCUDA(std::vector<double*> weights_d, const std::vector<s
                              const double& momentum, const bool& nesterov, const double& initial_learning_rate,
                              const double& initial_decay, const size_t& learning_rate_iteration, double*& last_increment);
 
+void updateParametersAdamCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
+                              std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
+                              const double* gradient_d, const size_t parameters_number,
+                              const double& beta_1, const double& beta_2, const double& epsilon,
+                              const double& initial_learning_rate, const double& initial_decay, const size_t& learning_rate_iteration,
+                              double*& last_increment, double*& last_square_increment);
+
 #endif
 
 #define numeric_to_string( x ) static_cast< ostringstream & >( \
@@ -2108,6 +2115,8 @@ MultilayerPerceptron::Pointers MultilayerPerceptron::host_to_device() const
 
     int error;
 
+    size_t parameters_number = 0;
+
     for(size_t i = 0; i < pointers.layers_number; i++)
     {
         const int weights_num_bytes = pointers.architecture[i]*pointers.architecture[i+1]*sizeof(double);
@@ -2130,6 +2139,8 @@ MultilayerPerceptron::Pointers MultilayerPerceptron::host_to_device() const
             throw logic_error(buffer.str());
         }
 
+        parameters_number += pointers.architecture[i]*pointers.architecture[i+1];
+
         const int biases_num_bytes = pointers.architecture[i+1]*sizeof(double);
 
         error = mallocCUDA(&pointers.biases_pointers[i], biases_num_bytes);
@@ -2149,6 +2160,8 @@ MultilayerPerceptron::Pointers MultilayerPerceptron::host_to_device() const
 
             throw logic_error(buffer.str());
         }
+
+        parameters_number += pointers.architecture[i+1];
 
         error = memcpyCUDA(pointers.weights_pointers[i], get_layer(i).get_synaptic_weights().data(), weights_num_bytes);
         error += memcpyCUDA(pointers.biases_pointers[i], get_layer(i).get_biases().data(), biases_num_bytes);
@@ -2171,6 +2184,16 @@ MultilayerPerceptron::Pointers MultilayerPerceptron::host_to_device() const
         }
     }
 
+    Vector<double> zeros(parameters_number, 0.0);
+
+    const double* zeros_data = zeros.data();
+
+    mallocCUDA(&pointers.last_increment, parameters_number*sizeof(double));
+    memcpyCUDA(pointers.last_increment, zeros_data, parameters_number*sizeof(double));
+
+    mallocCUDA(&pointers.last_square_increment, parameters_number*sizeof(double));
+    memcpyCUDA(pointers.last_square_increment, zeros_data, parameters_number*sizeof(double));
+
     pointers.CUDA_initialized = true;
 
 #endif
@@ -2190,6 +2213,10 @@ MultilayerPerceptron::Pointers::~Pointers()
     {
         freeCUDA(biases_pointers[i]);
     }
+
+    freeCUDA(last_increment);
+    freeCUDA(last_square_increment);
+
 #endif
 }
 
@@ -2260,11 +2287,68 @@ void MultilayerPerceptron::Pointers::update_parameters(const Vector<double>& inc
 #endif
 }
 
-void MultilayerPerceptron::Pointers::update_parameters_sgd(const Vector<double*>& gradient_d, const double& momentum, const bool& nesterov, const double& initial_learning_rate,
-                                                           const double& initial_decay, const size_t& learning_rate_iteration, const Vector<double>& last_increment)
+void MultilayerPerceptron::Pointers::update_parameters_sgd(double*& gradient_d, const double& momentum, const bool& nesterov,
+                                                           const double& initial_learning_rate, const double& initial_decay, const size_t& learning_rate_iteration)
 {
 #ifdef __OPENNN_CUDA__
 
+    const size_t layers_number = architecture.size() - 1;
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        parameters_number += architecture[i]*architecture[i+1] + architecture[i+1];
+    }
+
+    updateParametersSgdCUDA(weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                            biases_pointers.to_std_vector(), bias_rows_numbers,
+                            gradient_d, parameters_number,
+                            momentum, nesterov, initial_learning_rate,
+                            initial_decay, learning_rate_iteration, last_increment);
+#endif
+}
+
+void MultilayerPerceptron::Pointers::update_parameters_adam(double*& gradient_d, const double& beta_1, const double& beta_2, const double& epsilon,
+                                                            const double& initial_learning_rate, const double& initial_decay, const size_t& learning_rate_iteration)
+{
+#ifdef __OPENNN_CUDA__
+
+    const size_t layers_number = architecture.size() - 1;
+
+    vector<size_t> weights_rows_numbers(layers_number);
+    vector<size_t> weights_columns_numbers(layers_number);
+
+    vector<size_t> bias_rows_numbers(layers_number);
+
+    size_t parameters_number = 0;
+
+    for(size_t i = 0; i < layers_number; i++)
+    {
+        weights_rows_numbers[i] = architecture[i];
+        weights_columns_numbers[i] = architecture[i+1];
+
+        bias_rows_numbers[i] = architecture[i+1];
+
+        parameters_number += architecture[i]*architecture[i+1] + architecture[i+1];
+    }
+
+    updateParametersAdamCUDA(weights_pointers.to_std_vector(), weights_rows_numbers, weights_columns_numbers,
+                             biases_pointers.to_std_vector(), bias_rows_numbers,
+                             gradient_d, parameters_number,
+                             beta_1, beta_2, epsilon,
+                             initial_learning_rate, initial_decay, learning_rate_iteration,
+                             last_increment, last_square_increment);
 #endif
 }
 
@@ -3329,7 +3413,7 @@ string MultilayerPerceptron::write_expression_php(const Vector<string>& inputs_n
 }
 
 // OpenNN: Open Neural MultilayerPerceptrons Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

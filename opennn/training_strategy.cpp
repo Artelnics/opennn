@@ -88,6 +88,13 @@ TrainingStrategy::~TrainingStrategy()
 {
     // Delete loss index objects
 
+    delete sum_squared_error_pointer;
+    delete mean_squared_error_pointer;
+    delete normalized_squared_error_pointer;
+    delete Minkowski_error_pointer;
+    delete cross_entropy_error_pointer;
+    delete weighted_squared_error_pointer;
+
 
     // Delete optimization algorithm objects
 
@@ -96,6 +103,8 @@ TrainingStrategy::~TrainingStrategy()
     delete quasi_Newton_method_pointer;
     delete Levenberg_Marquardt_algorithm_pointer;
     delete stochastic_gradient_descent_pointer;
+    delete adaptive_moment_estimation_pointer;
+
 }
 
 
@@ -108,12 +117,12 @@ NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
 
 LossIndex* TrainingStrategy::get_loss_index_pointer() const
 {
-    if(sum_squared_error_pointer != nullptr) return sum_squared_error_pointer;
-    else if(mean_squared_error_pointer != nullptr) return mean_squared_error_pointer;
-    else if(normalized_squared_error_pointer != nullptr) return normalized_squared_error_pointer;
-    else if(Minkowski_error_pointer != nullptr) return Minkowski_error_pointer;
-    else if(cross_entropy_error_pointer != nullptr) return cross_entropy_error_pointer;
-    else if(weighted_squared_error_pointer != nullptr) return weighted_squared_error_pointer;
+    if(loss_method == SUM_SQUARED_ERROR && sum_squared_error_pointer != nullptr) return sum_squared_error_pointer;
+    else if(loss_method == MEAN_SQUARED_ERROR && mean_squared_error_pointer != nullptr) return mean_squared_error_pointer;
+    else if(loss_method == NORMALIZED_SQUARED_ERROR && normalized_squared_error_pointer != nullptr) return normalized_squared_error_pointer;
+    else if(loss_method == MINKOWSKI_ERROR && Minkowski_error_pointer != nullptr) return Minkowski_error_pointer;
+    else if(loss_method == WEIGHTED_SQUARED_ERROR && weighted_squared_error_pointer != nullptr) return weighted_squared_error_pointer;
+    else if(loss_method == CROSS_ENTROPY_ERROR && cross_entropy_error_pointer != nullptr) return cross_entropy_error_pointer;
     else return nullptr;
 }
 
@@ -874,6 +883,14 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
+/// Sets the use of cuda
+
+void TrainingStrategy::set_use_cuda(const bool& new_use_cuda)
+{
+    use_cuda = new_use_cuda;
+}
+
+
 /// Sets the members of the training strategy object to their default values:
 /// <ul>
 /// <li> Display: true.
@@ -881,6 +898,8 @@ void TrainingStrategy::set_display(const bool& new_display)
 
 void TrainingStrategy::set_default()
 {
+   use_cuda = false;
+
    display = true;
 }
 
@@ -1069,8 +1088,17 @@ TrainingStrategy::Results TrainingStrategy::perform_training() const
       {
            adaptive_moment_estimation_pointer->set_display(display);
 
-           training_strategy_results.adaptive_moment_estimation_results_pointer
-           = adaptive_moment_estimation_pointer->perform_training();
+           if(stochastic_gradient_descent_pointer->check_cuda())
+           {
+               training_strategy_results.adaptive_moment_estimation_results_pointer
+               = adaptive_moment_estimation_pointer->perform_training_cuda();
+           }
+           else
+           {
+               training_strategy_results.adaptive_moment_estimation_results_pointer
+               = adaptive_moment_estimation_pointer->perform_training();
+           }
+
       }
       break;
    }
@@ -1776,6 +1804,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                   new_document.InsertEndChild(quasi_newton_method_element);
 
+                  quasi_Newton_method_pointer->set_use_cuda(use_cuda);
                   quasi_Newton_method_pointer->from_XML(new_document);
              }
              break;
@@ -1909,7 +1938,6 @@ void TrainingStrategy::load(const string& file_name)
 }
 
 
-// Results constructor
 
 TrainingStrategy::Results::Results()
 {
@@ -1928,7 +1956,7 @@ TrainingStrategy::Results::Results()
 
 
 // Results destructor
-
+/*
 TrainingStrategy::Results::~Results()
 {
 
@@ -1944,9 +1972,7 @@ TrainingStrategy::Results::~Results()
 
 //    delete adaptive_moment_estimation_results_pointer;
 }
-
-
-// void Results::save(const string&) const method
+*/
 
 /// Saves the results structure to a data file.
 /// @param file_name Name of training strategy results data file. 

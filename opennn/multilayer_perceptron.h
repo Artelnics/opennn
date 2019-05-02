@@ -159,8 +159,11 @@ public:
 
        void update_parameters(const Vector<double>&);
 
-       void update_parameters_sgd(const Vector<double*>&, const double&, const bool&, const double&,
-                                  const double&, const size_t&, const Vector<double>&);
+       void update_parameters_sgd(double*&, const double&, const bool&, const double&,
+                                  const double&, const size_t&);
+
+       void update_parameters_adam(double*&, const double&, const double&, const double&,
+                                   const double&, const double&, const size_t&);
 
        Vector<double*> biases_pointers;
        Vector<double*> weights_pointers;
@@ -168,6 +171,9 @@ public:
        size_t layers_number;
        Vector<size_t> architecture;
        Vector<string> layer_activations;
+
+       double* last_increment;
+       double* last_square_increment;
 
        bool CUDA_initialized = false;
    };

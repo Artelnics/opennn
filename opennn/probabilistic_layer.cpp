@@ -1285,7 +1285,7 @@ string ProbabilisticLayer::write_binary_expression(const Vector<string>& inputs_
 
     buffer.str("");
 
-    buffer << "(" << outputs_names.vector_to_string(',') << ") = Binary(" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << outputs_names.vector_to_string(',') << " = binary(" << inputs_names.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -1301,7 +1301,7 @@ string ProbabilisticLayer::write_probability_expression(const Vector<string>& in
 {
     ostringstream buffer;
 
-    buffer << "(" << outputs_names.vector_to_string(',') << ") = Probability(" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << outputs_names.vector_to_string(',') << " = probability(" << inputs_names.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -1318,7 +1318,7 @@ string ProbabilisticLayer::write_competitive_expression(const Vector<string>& in
 {
     ostringstream buffer;
 
-    buffer << "(" << outputs_names.vector_to_string(',') << ") = Competitive(" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << outputs_names.vector_to_string(',') << " = competitive(" << inputs_names.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -1334,7 +1334,7 @@ string ProbabilisticLayer::write_softmax_expression(const Vector<string>& inputs
 {
     ostringstream buffer;
 
-    buffer << "(" << outputs_names.vector_to_string(',') << ") = Softmax(" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << outputs_names.vector_to_string(',') << " = softmax(" << inputs_names.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -1350,7 +1350,7 @@ string ProbabilisticLayer::write_no_probabilistic_expression(const Vector<string
 {
     ostringstream buffer;
 
-    buffer << "(" << outputs_names.vector_to_string(',') << ") = (" << inputs_names.vector_to_string(',') << ");\n";
+    buffer << outputs_names.vector_to_string(',') << " = (" << inputs_names.vector_to_string(',') << ");\n";
 
     return(buffer.str());
 }
@@ -1425,7 +1425,7 @@ string ProbabilisticLayer::write_expression(const Vector<string>& inputs_names, 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

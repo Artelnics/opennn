@@ -82,7 +82,7 @@ public:
 
    explicit NeuralNetwork(const size_t&, const size_t&);
 
-   // TWO PERCEPTRON LAYERS CONSTRUCTOR 
+   // TWO PERCEPTRON LAYERS CONSTRUCTOR
 
    explicit NeuralNetwork(const size_t&, const size_t&, const size_t&);
 
@@ -190,9 +190,11 @@ public:
    void construct_inputs_trending_layer();
    void construct_scaling_layer();
    void construct_scaling_layer(const Vector< Statistics<double> >&);
+   void construct_scaling_layer(const Eigen::MatrixXd&);
    void construct_principal_components_layer();
    void construct_unscaling_layer();
    void construct_unscaling_layer(const Vector< Statistics<double> >&);
+   void construct_unscaling_layer(const Eigen::MatrixXd&);
    void construct_outputs_trending_layer();
    void construct_bounding_layer();
    void construct_probabilistic_layer();
@@ -371,7 +373,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 2.6)
 project(OpenNN)
 
@@ -17,12 +16,16 @@ if(__OPENNN_MPI__)
     endif()
 endif()
 
-
 if(__OPENNN_OMP__)
     message("Using OpenMP")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")#${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")#${OpenMP_CXX_FLAGS}")
-    set(CMAEK_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+	if (MSVC)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /openmp")#${OpenMP_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")#${OpenMP_CXX_FLAGS}")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")#${OpenMP_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")#${OpenMP_CXX_FLAGS}")
+	endif()    
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
 # Uncomment next line to compile without using C++11

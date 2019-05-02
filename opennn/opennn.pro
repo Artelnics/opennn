@@ -103,7 +103,9 @@ HEADERS += \
     text_analytics.h \
     k_nearest_neighbors.h \
     tinyxml2.h \
-    correlation_analysis.h
+    correlation_analysis.h \
+    response_optimization.h 
+#    TrainingCUDA.h
 
 SOURCES += \
     variables.cpp \
@@ -155,7 +157,9 @@ SOURCES += \
     text_analytics.cpp \
     k_nearest_neighbors.cpp \
     tinyxml2.cpp \
-    correlation_analysis.cpp
+    correlation_analysis.cpp \
+    response_optimization.cpp 
+#    TrainingCUDA.cpp
 
 # MPI libraries
 #DEFINES += __OPENNN_MPI__
@@ -203,7 +207,7 @@ else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$CUDA_DIR
 
 INCLUDEPATH += $$CUDA_DIR/include
 
-# CUDA settings <-- may change depending on your system
+## CUDA settings <-- may change depending on your system
 
 CUDA_SOURCES += utilities.cu
 SYSTEM_NAME = x64           # Depending on your system either 'Win32', 'x64', or 'Win64'
@@ -213,13 +217,12 @@ NVCC_OPTIONS = --use_fast_math
 
 CUDA_LIBS += -lcuda -lcudart -lcublas -lcurand
 
-# The following makes sure all path names(which often include spaces) are put between quotation marks
+## The following makes sure all path names(which often include spaces) are put between quotation marks
 CUDA_INC = $$join(INCLUDEPATH,'" -I"','-I"','"')
 
 CUDA_OBJECTS_DIR = $$OBJECTS_DIR
 
-# Configuration of the Cuda compiler
-
+## Configuration of the Cuda compiler
 CONFIG(debug, debug|release) {
 #     Debug mode
     cuda_d.input = CUDA_SOURCES

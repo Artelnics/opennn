@@ -20,39 +20,7 @@
 #include <cublas_v2.h>
 #include <omp.h>
 
-void initCUDA();
-
-int mallocCUDA(double** A_d, int nBytes);
-int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
-int getHostVector(const double* A_d, double* A_h, int nBytes);
 void freeCUDA(double* A_d);
-
-void randomizeVector(double* A_d, int n);
-
-void calculateOutputsCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                          const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
-                          const double* input_data_h, const size_t input_rows, const size_t input_columns,
-                          double* output_data_h, const size_t output_rows, const size_t output_columns,
-                          const std::vector<std::string> layers_activations);
-
-void calculateFirstOrderForwardPropagationCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                                               const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
-                                               const double* input_data_h, const size_t input_rows, const size_t input_columns,
-                                               std::vector<double*> layers_activations_data, std::vector<double*> layers_activation_derivatives_data,
-                                               const std::vector<size_t> activations_rows_numbers, const std::vector<size_t> activations_columns_numbers,
-                                               const std::vector<std::string> layers_activations);
-
-void calculateFirstOrderLossCUDA(const std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                                const std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
-                                double* input_data_h, const size_t input_rows, const size_t input_columns,
-                                double* target_data_h, const size_t target_rows, const size_t target_columns,
-                                std::vector<double*> error_gradient_data,
-                                const std::vector<std::string> layers_activations, const std::string loss_method,
-                                const std::vector<double> loss_parameters = vector<double>());
-
-void updateParametersCUDA(std::vector<double*> weights_d, const std::vector<size_t> weights_rows_numbers, const std::vector<size_t> weights_columns_numbers,
-                          std::vector<double*> biases_d, const std::vector<size_t> bias_rows_numbers,
-                          const double* gradient_h, const size_t parameters_number);
 
 #endif
 
@@ -1212,10 +1180,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
            // Gradient
 
-            gradient_norm = first_order_loss.gradient.calculate_L2_norm();
-
-            if(display && gradient_norm >= warning_gradient_norm) cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-
             initial_decay > 0.0 ? learning_rate =  initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
             parameters = neural_network_pointer->get_parameters();
@@ -1224,33 +1188,35 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
             if(momentum > 0.0 && !nesterov) {
 
-            parameters_increment += last_increment*momentum;
+                parameters_increment += last_increment*momentum;
 
-            last_increment = parameters_increment;
+                last_increment = parameters_increment;
 
-            neural_network_pointer->set_parameters(parameters + parameters_increment);
+                neural_network_pointer->set_parameters(parameters + parameters_increment);
 
             }
 
             else if(momentum > 0.0 && nesterov ){
 
-            parameters_increment += last_increment*momentum;
+                parameters_increment += last_increment*momentum;
 
-            last_increment = parameters_increment;
+                last_increment = parameters_increment;
 
-            nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
+                nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
 
-            neural_network_pointer->set_parameters(parameters + nesterov_increment);
+                neural_network_pointer->set_parameters(parameters + nesterov_increment);
 
             }
             else{
 
-            neural_network_pointer->set_parameters(parameters + parameters_increment);
+                neural_network_pointer->set_parameters(parameters + parameters_increment);
 
             }
 
             learning_rate_iteration++;
        }
+
+       gradient_norm = first_order_loss.gradient.calculate_L2_norm();
 
        // Loss
 
@@ -1455,12 +1421,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters = neural_network_pointer->get_parameters();
-   Vector<double> parameters_increment(parameters_number, 0.0);
-   Vector<double> last_increment(parameters_number,0.0);
-
-   double parameters_norm = 0.0;
-
    MultilayerPerceptron::Pointers multilayer_perceptron_pointers_device = multilayer_perceptron_pointer->host_to_device();
 
    // Loss index stuff
@@ -1475,11 +1435,11 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
    double loss = 0.0;
 
-   double gradient_norm = 0.0;
-
    // CUDA stuff
 
-   omp_set_num_threads(2);
+   const int previous_num_threads = omp_get_max_threads();
+
+   omp_set_num_threads(3);
    const size_t num_threads = static_cast<size_t>(omp_get_max_threads());
 
    Vector< Vector<double*> > last_data_device(num_threads);
@@ -1508,7 +1468,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
    results_pointer->resize_training_history(maximum_epochs_number + 1);
 
-   size_t current_iteration = 0;
    size_t learning_rate_iteration = 1;
 
    // Main loop
@@ -1525,8 +1484,6 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        for(size_t iteration = 0; iteration < batches_number; iteration++)
        {
-           current_iteration++;
-
 #pragma omp parallel
            {
                const size_t thread_num = static_cast<size_t>(omp_get_thread_num());
@@ -1574,35 +1531,8 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
            // Gradient
 
-           learning_rate =  initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay));
-
-           parameters_increment =  first_order_loss.gradient*(-learning_rate);
-
-           if(momentum > 0.0 && !nesterov)
-           {
-               parameters_increment += last_increment*momentum;
-
-               last_increment = parameters_increment;
-
-               multilayer_perceptron_pointers_device.update_parameters(parameters_increment);
-               parameters = parameters +  parameters_increment;
-           }
-           else if(momentum > 0.0 && nesterov)
-           {
-               parameters_increment += last_increment*momentum;
-
-               last_increment = parameters_increment;
-
-               nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
-
-               multilayer_perceptron_pointers_device.update_parameters(nesterov_increment);
-               parameters = parameters +  nesterov_increment;
-           }
-           else
-           {
-               multilayer_perceptron_pointers_device.update_parameters(parameters_increment);
-               parameters = parameters +  parameters_increment;
-           }
+           multilayer_perceptron_pointers_device.update_parameters_sgd(first_order_loss.gradient_device, momentum, nesterov,
+                                                                       initial_learning_rate, initial_decay, learning_rate_iteration);
 
            learning_rate_iteration++;
        }
@@ -1622,7 +1552,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
        if(epoch == 0)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = parameters;
+          minimum_selection_error_parameters = multilayer_perceptron_pointers_device.get_parameters();
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -1631,7 +1561,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
        else if(selection_error <= minimum_selection_error)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = parameters;
+          minimum_selection_error_parameters = multilayer_perceptron_pointers_device.get_parameters();
        }
 
        // Elapsed time
@@ -1641,9 +1571,9 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        // Training history neural network
 
-       if(reserve_parameters_history) results_pointer->parameters_history[epoch] = parameters;
+       if(reserve_parameters_history) results_pointer->parameters_history[epoch] = multilayer_perceptron_pointers_device.get_parameters();
 
-       if(reserve_parameters_norm_history) results_pointer->parameters_norm_history[epoch] = parameters.calculate_L2_norm();
+       if(reserve_parameters_norm_history) results_pointer->parameters_norm_history[epoch] = multilayer_perceptron_pointers_device.get_parameters().calculate_L2_norm();
 
        // Training history loss index
 
@@ -1651,7 +1581,7 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
        if(reserve_gradient_history) results_pointer->gradient_history[epoch] = first_order_loss.gradient;
 
-       if(reserve_gradient_norm_history) results_pointer->gradient_norm_history[epoch] = first_order_loss.gradient.calculate_L2_norm();
+       if(reserve_gradient_norm_history) results_pointer->gradient_norm_history[epoch] = first_order_loss.get_gradient_from_device().calculate_L2_norm();
 
        if(reserve_selection_error_history) results_pointer->selection_error_history[epoch] = selection_error;
 
@@ -1717,15 +1647,15 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
 
            results_pointer->resize_training_history(1+epoch);
 
-           results_pointer->final_parameters = parameters;
+           results_pointer->final_parameters = multilayer_perceptron_pointers_device.get_parameters();
 
-           results_pointer->final_parameters_norm = parameters.calculate_L2_norm();
+           results_pointer->final_parameters_norm = results_pointer->final_parameters.calculate_L2_norm();
 
            results_pointer->final_loss = training_error;
 
            results_pointer->final_selection_error = selection_error;
 
-           results_pointer->final_gradient_norm = first_order_loss.gradient.calculate_L2_norm();
+           results_pointer->final_gradient_norm = first_order_loss.get_gradient_from_device().calculate_L2_norm();
 
            results_pointer->elapsed_time = elapsed_time;
 
@@ -1749,23 +1679,22 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
           old_training_error = training_error;
           old_selection_error = selection_error;
 
-          current_iteration++;
-
        if(stop_training) break;
    }
 
+   neural_network_pointer->set_parameters(multilayer_perceptron_pointers_device.get_parameters());
+
    if(return_minimum_selection_error_neural_network)
    {
-       parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.calculate_L2_norm();
+       const Vector<double> parameters = minimum_selection_error_parameters;
 
        neural_network_pointer->set_parameters(parameters);
 
        selection_error = minimum_selection_error;
    }
 
-   results_pointer->final_parameters = parameters;
-   results_pointer->final_parameters_norm = parameters_norm;
+   results_pointer->final_parameters = neural_network_pointer->get_parameters();
+   results_pointer->final_parameters_norm = neural_network_pointer->get_parameters().calculate_L2_norm();
 
    results_pointer->final_loss = training_error;
    results_pointer->final_selection_error = selection_error;
@@ -1773,6 +1702,8 @@ StochasticGradientDescent::StochasticGradientDescentResults* StochasticGradientD
    results_pointer->final_gradient_norm = first_order_loss.gradient.calculate_L2_norm();
 
    results_pointer->elapsed_time = elapsed_time;
+
+   omp_set_num_threads(previous_num_threads);
 
 #endif
    return(results_pointer);
@@ -2918,7 +2849,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

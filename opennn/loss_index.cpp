@@ -14,6 +14,17 @@
 
 #include "loss_index.h"
 
+#ifdef __OPENNN_CUDA__
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+int mallocCUDA(double** A_d, int nBytes);
+int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
+int getHostVector(const double* A_d, double* A_h, int nBytes);
+void freeCUDA(double* A_d);
+
+#endif
+
 namespace OpenNN
 {
 
@@ -364,6 +375,22 @@ void LossIndex::set_display(const bool& new_display)
 {
    display = new_display;
 }
+
+
+/// Returns true if there are selection instances and false otherwise.
+
+bool LossIndex::has_selection() const
+{
+   if(data_set_pointer->get_instances_pointer()->get_selection_instances_number() != 0)
+   {
+       return true;
+   }
+   else
+   {
+       return false;
+   }
+}
+
 
 
 /// Checks that there is a neural network associated to the error term.
@@ -837,49 +864,8 @@ Vector<double> LossIndex::calculate_layer_error_gradient(const Matrix<double>& l
     // Biases
 
     layer_error_gradient.tuck_in(synaptic_weights_number, layer_deltas.calculate_columns_sum());
-//    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
-//    {
-//        layer_error_gradient[synaptic_weights_number+perceptron] = layer_deltas.calculate_column_sum(perceptron);
-//    }
 
     return layer_error_gradient;
-
-//    size_t parameter = 0;
-
-//    for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
-//    {
-//        for(size_t input = 0; input < inputs_number; input++)
-//        {
-//            layer_error_gradient[parameter] = calculate_columns_product_sum(layer_deltas, perceptron, layer_inputs, input);
-
-//            parameter++;
-//        }
-//     }
-
-//    const size_t instances_number = layer_inputs.get_rows_number();
-
-//    Matrix<double> layer_error_Jacobian(instances_number, perceptrons_number*(1+inputs_number), 0.0);
-
-//    for(size_t instance = 0; instance < instances_number; instance++)
-//    {
-//        parameter = 0;
-
-//        for(size_t perceptron = 0; perceptron < perceptrons_number; perceptron++)
-//        {
-//            const double layer_delta = layer_deltas(instance, perceptron);
-
-//            for(size_t input = 0; input < inputs_number; input++)
-//            {
-//                layer_error_gradient[parameter] += layer_delta*layer_inputs(instance, input);
-
-//                parameter++;
-//            }
-
-//            layer_error_gradient[synaptic_weights_number+perceptron] += layer_delta;
-//         }
-//    }
-
-//    return layer_error_gradient;
 }
 
 
@@ -973,9 +959,15 @@ Vector<double> LossIndex::calculate_training_loss_gradient() const
 
 /// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
 
-string LossIndex::write_error_term_type() const
+string LossIndex::get_error_type() const
 {
-   return("USER_ERROR_TERM");
+   return "USER_ERROR_TERM";
+}
+
+
+string LossIndex::get_error_type_text() const
+{
+   return "USER_ERROR_TERM";
 }
 
 
@@ -1330,10 +1322,60 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
     regularization_from_XML(regularization_document);
 }
 
+LossIndex::FirstOrderLoss::FirstOrderLoss(const size_t& new_parameters_number)
+{
+    parameters_number = new_parameters_number;
+    loss = 0.0;
+    gradient.set(parameters_number, 0.0);
+
+#ifdef __OPENNN_CUDA__
+    mallocCUDA(&gradient_device, parameters_number*sizeof(double));
+    memcpyCUDA(gradient_device, gradient.data(), parameters_number*sizeof(double));
+#endif
+}
+
+LossIndex::FirstOrderLoss::~FirstOrderLoss()
+{
+#ifdef __OPENNN_CUDA__
+    freeCUDA(gradient_device);
+#endif
+}
+
+void LossIndex::FirstOrderLoss::set_parameters_number(const size_t& new_parameters_number)
+{
+    parameters_number = new_parameters_number;
+    loss = 0.0;
+    gradient.set(parameters_number, 0.0);
+
+#ifdef __OPENNN_CUDA__
+    Vector<double> zeros(parameters_number, 0.0);
+
+    freeCUDA(gradient_device);
+
+    mallocCUDA(&gradient_device, parameters_number*sizeof(double));
+    memcpyCUDA(gradient_device, zeros.data(), parameters_number*sizeof(double));
+#endif
+}
+
+Vector<double> LossIndex::FirstOrderLoss::get_gradient_from_device() const
+{
+    Vector<double> gradient_host(parameters_number);
+
+#ifdef __OPENNN_CUDA__
+
+    double* gradient_host_data = gradient_host.data();
+
+    getHostVector(gradient_device, gradient_host_data, parameters_number*sizeof(double));
+
+#endif
+
+    return gradient_host;
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

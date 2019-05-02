@@ -121,35 +121,41 @@ public:
 
         /// Destructor.
 
-        virtual ~Results();
+        virtual ~Results()
+       {
+           delete gradient_descent_results_pointer;
+           delete conjugate_gradient_results_pointer;
+           delete quasi_Newton_method_results_pointer;
+           delete Levenberg_Marquardt_algorithm_results_pointer;
+           delete stochastic_gradient_descent_results_pointer;
+           delete adaptive_moment_estimation_results_pointer;
+       }
 
         void save(const string&) const;
 
         /// Pointer to a structure with the results from the gradient descent optimization algorithm.
 
-        GradientDescent::GradientDescentResults* gradient_descent_results_pointer;
+        GradientDescent::GradientDescentResults* gradient_descent_results_pointer = nullptr;
 
         /// Pointer to a structure with the results from the conjugate gradient optimization algorithm.
 
-        ConjugateGradient::ConjugateGradientResults* conjugate_gradient_results_pointer;
+        ConjugateGradient::ConjugateGradientResults* conjugate_gradient_results_pointer = nullptr;
 
         /// Pointer to a structure with the results from the quasi-Newton method optimization algorithm.
 
-        QuasiNewtonMethod::QuasiNewtonMethodResults* quasi_Newton_method_results_pointer;
+        QuasiNewtonMethod::QuasiNewtonMethodResults* quasi_Newton_method_results_pointer = nullptr;
 
         /// Pointer to a structure with the results from the Levenberg-Marquardt optimization algorithm.
 
-        LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* Levenberg_Marquardt_algorithm_results_pointer;
+        LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* Levenberg_Marquardt_algorithm_results_pointer = nullptr;
 
         /// Pointer to a structure with the results from the stochastic gradient descent training algoritm.
 
-        StochasticGradientDescent::StochasticGradientDescentResults* stochastic_gradient_descent_results_pointer;
+        StochasticGradientDescent::StochasticGradientDescentResults* stochastic_gradient_descent_results_pointer = nullptr;
 
         /// Pointer to a structure with the results from the adaptive moment estimator training algoritm.
 
-        AdaptiveMomentEstimation::AdaptiveMomentEstimationResults* adaptive_moment_estimation_results_pointer;
-
-
+        AdaptiveMomentEstimation::AdaptiveMomentEstimationResults* adaptive_moment_estimation_results_pointer = nullptr;
   };
 
    // METHODS
@@ -161,6 +167,7 @@ public:
    // Get methods
 
    NeuralNetwork* get_neural_network_pointer() const;
+
    LossIndex* get_loss_index_pointer() const;
 
    bool has_loss_index() const;
@@ -208,6 +215,8 @@ public:
    void set_training_method(const string&);
 
    void set_display(const bool&);
+
+   void set_use_cuda(const bool&);
 
    // Pointer methods
 
@@ -302,6 +311,10 @@ private:
     /// Type of main optimization algorithm.
 
     TrainingMethod training_method;
+
+    /// Use cuda
+
+    bool use_cuda;
 
     /// Display messages to screen.
 

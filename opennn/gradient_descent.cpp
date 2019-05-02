@@ -1021,7 +1021,7 @@ Matrix<string> GradientDescent::GradientDescentResults::write_final_results(cons
 
    // Final selection error
 
-/*   const LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
+   const LossIndex* loss_index_pointer = gradient_descent_pointer->get_loss_index_pointer();
 
    if(loss_index_pointer->has_selection())
    {
@@ -1032,7 +1032,7 @@ Matrix<string> GradientDescent::GradientDescentResults::write_final_results(cons
 
        values.push_back(buffer.str());
     }
-*/
+
    // Final gradient norm
 
    names.push_back("Final gradient norm");
@@ -1254,6 +1254,8 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training()
       if(epoch == 0)
       {
          training_loss = loss_index_pointer->calculate_training_loss();
+
+         cout << "training_loss " << training_loss << endl;
       }
       else
       {
@@ -1312,14 +1314,16 @@ GradientDescent::GradientDescentResults* GradientDescent::perform_training()
 
       directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
 
-      training_rate = directional_point[0];
+      training_rate = directional_point[0];   
 
       if(training_rate == 0.0)
       {
           cout << "Training rate is zero" << endl;
 
           training_rate = 1.0e-2;
-          //throw logic_error("Training rate is zero");
+          //throw logic_error("Training rate is zero");ç
+
+          cout << "training_loss_gradient " << gradient << endl;
       }
 
       parameters_increment = training_direction*training_rate;
@@ -2882,7 +2886,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
