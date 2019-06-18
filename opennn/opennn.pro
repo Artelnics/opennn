@@ -104,8 +104,6 @@ HEADERS += \
     k_nearest_neighbors.h \
     tinyxml2.h \
     correlation_analysis.h \
-    response_optimization.h 
-#    TrainingCUDA.h
 
 SOURCES += \
     variables.cpp \
@@ -158,8 +156,6 @@ SOURCES += \
     k_nearest_neighbors.cpp \
     tinyxml2.cpp \
     correlation_analysis.cpp \
-    response_optimization.cpp 
-#    TrainingCUDA.cpp
 
 # MPI libraries
 #DEFINES += __OPENNN_MPI__

@@ -128,13 +128,13 @@ int main(void)
 
         // Response optimization
 
-        ResponseOptimization response_optimization(&neural_network);
+        //ResponseOptimization response_optimization(&neural_network);
 
-        response_optimization.set_input_condition("froude_number", ResponseOptimization::EqualTo, {0.3});
+        //response_optimization.set_input_condition("froude_number", ResponseOptimization::EqualTo, {0.3});
 
 //        response_optimization.set_input_condition();
 
-        response_optimization.perform_optimization();
+        //response_optimization.perform_optimization();
 
         // Save results
 
