@@ -883,14 +883,6 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
-/// Sets the use of cuda
-
-void TrainingStrategy::set_use_cuda(const bool& new_use_cuda)
-{
-    use_cuda = new_use_cuda;
-}
-
-
 /// Sets the members of the training strategy object to their default values:
 /// <ul>
 /// <li> Display: true.
@@ -898,8 +890,6 @@ void TrainingStrategy::set_use_cuda(const bool& new_use_cuda)
 
 void TrainingStrategy::set_default()
 {
-   use_cuda = false;
-
    display = true;
 }
 
@@ -1070,16 +1060,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training() const
       {
            stochastic_gradient_descent_pointer->set_display(display);
 
-           if(stochastic_gradient_descent_pointer->check_cuda())
-           {
-               training_strategy_results.stochastic_gradient_descent_results_pointer
-               = stochastic_gradient_descent_pointer->perform_training_cuda();
-           }
-           else
-           {
-               training_strategy_results.stochastic_gradient_descent_results_pointer
-               = stochastic_gradient_descent_pointer->perform_training();
-           }
+           training_strategy_results.stochastic_gradient_descent_results_pointer
+           = stochastic_gradient_descent_pointer->perform_training();
 
       }
       break;
@@ -1088,17 +1070,8 @@ TrainingStrategy::Results TrainingStrategy::perform_training() const
       {
            adaptive_moment_estimation_pointer->set_display(display);
 
-           if(stochastic_gradient_descent_pointer->check_cuda())
-           {
-               training_strategy_results.adaptive_moment_estimation_results_pointer
-               = adaptive_moment_estimation_pointer->perform_training_cuda();
-           }
-           else
-           {
-               training_strategy_results.adaptive_moment_estimation_results_pointer
-               = adaptive_moment_estimation_pointer->perform_training();
-           }
-
+           training_strategy_results.adaptive_moment_estimation_results_pointer
+           = adaptive_moment_estimation_pointer->perform_training();
       }
       break;
    }
@@ -1804,7 +1777,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                   new_document.InsertEndChild(quasi_newton_method_element);
 
-                  quasi_Newton_method_pointer->set_use_cuda(use_cuda);
                   quasi_Newton_method_pointer->from_XML(new_document);
              }
              break;

@@ -14,9 +14,6 @@
 
 #include "optimization_algorithm.h"
 
-#ifdef __OPENNN_CUDA__
-#include <cuda_runtime.h>
-#endif
 
 namespace OpenNN
 {
@@ -586,52 +583,6 @@ string OptimizationAlgorithm::OptimizationAlgorithmResults::write_stopping_condi
 
     return string();
 }
-
-
-bool OptimizationAlgorithm::check_cuda() const
-{
-#ifdef __OPENNN_CUDA__
-
-    int deviceCount;
-    int gpuDeviceCount = 0;
-    struct cudaDeviceProp properties;
-
-    const cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
-
-    if(cudaResultCode != cudaSuccess)
-    {
-        deviceCount = 0;
-    }
-
-    for(int device = 0; device < deviceCount; ++device)
-    {
-        cudaGetDeviceProperties(&properties, device);
-
-        cout << properties.major << "." << properties.minor << endl;
-        if(properties.major != 9999) /* 9999 means emulation only */
-        {
-            ++gpuDeviceCount;
-        }
-        else if(properties.major > 3)
-        {
-            ++gpuDeviceCount;
-        }
-        else if(properties.major == 3 && properties.minor >= 5)
-        {
-            ++gpuDeviceCount;
-        }
-    }
-
-    if(gpuDeviceCount > 0)
-    {
-        return true;
-    }
-
-#endif
-
-    return false;
-}
-
 
 
 }

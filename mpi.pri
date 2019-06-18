@@ -1,5 +1,3 @@
-# Path to cuda toolkit install
-
 DEFINES += __OPENNN_MPI__
 
 win32{

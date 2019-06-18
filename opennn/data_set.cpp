@@ -15,16 +15,6 @@
 #include "data_set.h"
 #include "correlation_analysis.h"
 
-#ifdef __OPENNN_CUDA__
-#include <cuda_runtime.h>
-#include <cublas_v2.h>
-
-int mallocCUDA(double** A_d, int nBytes);
-int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
-void freeCUDA(double* A_d);
-
-#endif
-
 namespace OpenNN
 {
 
@@ -6121,33 +6111,6 @@ void DataSet::save(const string& file_name) const
    document->SaveFile(file_name.c_str());
 
    delete document;
-}
-
-Vector<double*> DataSet::host_to_device(const Vector<size_t>& batch_indices) const
-{
-    Vector<double*> batch_pointers(2);
-
-#ifdef __OPENNN_CUDA__
-
-    const Matrix<double> inputs_matrix = get_inputs(batch_indices);
-    const double* input_data = inputs_matrix.data();
-    const size_t input_rows = inputs_matrix.get_rows_number();
-    const size_t input_columns = inputs_matrix.get_columns_number();
-
-    const Matrix<double> targets_matrix = get_targets(batch_indices);
-    const double* target_data = targets_matrix.data();
-    const size_t target_rows = targets_matrix.get_rows_number();
-    const size_t target_columns = targets_matrix.get_columns_number();
-
-    mallocCUDA(&batch_pointers[0], input_rows*input_columns*sizeof(double));
-    mallocCUDA(&batch_pointers[1], target_rows*target_columns*sizeof(double));
-
-    memcpyCUDA(batch_pointers[0], input_data, input_rows*input_columns*sizeof(double));
-    memcpyCUDA(batch_pointers[1], target_data, target_rows*target_columns*sizeof(double));
-
-#endif
-
-    return batch_pointers;
 }
 
 

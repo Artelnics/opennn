@@ -25,10 +25,6 @@
 #include <cmath>
 #include <ctime>
 
-//#ifdef __OPENNN_CUDA__
-//#include <cublas_v2.h>
-//#endif
-
 // OpenNN includes
 
 #include "loss_index.h"
@@ -316,8 +312,6 @@ public:
 
    // Utilities
 
-   void set_use_cuda(const bool&);
-
    void set_display_period(const size_t&);
 
    // Training methods
@@ -332,12 +326,6 @@ public:
 
    Matrix<double> calculate_inverse_Hessian_approximation(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) const;
    void update_inverse_Hessian_approximation(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&) const;
-
-#ifdef __OPENNN_CUDA__
-   Matrix<double> calculate_DFP_inverse_Hessian_CUDA(double*, double*, double*, double*, double*, double*) const;
-   Matrix<double> calculate_BFGS_inverse_Hessian_CUDA(double*, double*, double*, double*, double*, double*) const;
-   Matrix<double> calculate_inverse_Hessian_approximation_CUDA(double*, double*, double*, double*, double*, double*) const;
-#endif
 
    Vector<double> calculate_training_direction(const Vector<double>&, const Matrix<double>&) const;
 
@@ -438,10 +426,6 @@ private:
    /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
 
    bool apply_early_stopping;
-
-   /// Use cuda
-
-   bool use_cuda;
 
    // TRAINING HISTORY
 

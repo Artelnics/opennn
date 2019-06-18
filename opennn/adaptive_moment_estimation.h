@@ -267,7 +267,6 @@ public:
    // Training methods
 
    AdaptiveMomentEstimationResults* perform_training();
-   AdaptiveMomentEstimationResults* perform_training_cuda();
 
    void perform_training_void();
 

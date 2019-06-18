@@ -79,6 +79,3 @@ LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 
 # MPI include
 #include(../../mpi.pri)
-
-# CUDA include
-#include(../../cuda.pri)

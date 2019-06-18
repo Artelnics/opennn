@@ -184,8 +184,6 @@ public:
 
    virtual void initialize_random();
 
-   bool check_cuda() const;
-
 protected:
 
    // FIELDS

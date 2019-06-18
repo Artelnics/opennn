@@ -263,7 +263,6 @@ public:
    // Training methods
 
    StochasticGradientDescentResults* perform_training();
-   StochasticGradientDescentResults* perform_training_cuda();
 
    void perform_training_void();
 

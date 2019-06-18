@@ -216,8 +216,6 @@ public:
 
    void set_display(const bool&);
 
-   void set_use_cuda(const bool&);
-
    // Pointer methods
 
    void destruct_optimization_algorithm();
@@ -311,10 +309,6 @@ private:
     /// Type of main optimization algorithm.
 
     TrainingMethod training_method;
-
-    /// Use cuda
-
-    bool use_cuda;
 
     /// Display messages to screen.
 

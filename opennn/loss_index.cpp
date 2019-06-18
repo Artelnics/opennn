@@ -14,16 +14,6 @@
 
 #include "loss_index.h"
 
-#ifdef __OPENNN_CUDA__
-#include <cuda_runtime.h>
-#include <cublas_v2.h>
-
-int mallocCUDA(double** A_d, int nBytes);
-int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
-int getHostVector(const double* A_d, double* A_h, int nBytes);
-void freeCUDA(double* A_d);
-
-#endif
 
 namespace OpenNN
 {
@@ -1328,17 +1318,11 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const size_t& new_parameters_number)
     loss = 0.0;
     gradient.set(parameters_number, 0.0);
 
-#ifdef __OPENNN_CUDA__
-    mallocCUDA(&gradient_device, parameters_number*sizeof(double));
-    memcpyCUDA(gradient_device, gradient.data(), parameters_number*sizeof(double));
-#endif
 }
 
 LossIndex::FirstOrderLoss::~FirstOrderLoss()
 {
-#ifdef __OPENNN_CUDA__
-    freeCUDA(gradient_device);
-#endif
+
 }
 
 void LossIndex::FirstOrderLoss::set_parameters_number(const size_t& new_parameters_number)
@@ -1347,29 +1331,6 @@ void LossIndex::FirstOrderLoss::set_parameters_number(const size_t& new_paramete
     loss = 0.0;
     gradient.set(parameters_number, 0.0);
 
-#ifdef __OPENNN_CUDA__
-    Vector<double> zeros(parameters_number, 0.0);
-
-    freeCUDA(gradient_device);
-
-    mallocCUDA(&gradient_device, parameters_number*sizeof(double));
-    memcpyCUDA(gradient_device, zeros.data(), parameters_number*sizeof(double));
-#endif
-}
-
-Vector<double> LossIndex::FirstOrderLoss::get_gradient_from_device() const
-{
-    Vector<double> gradient_host(parameters_number);
-
-#ifdef __OPENNN_CUDA__
-
-    double* gradient_host_data = gradient_host.data();
-
-    getHostVector(gradient_device, gradient_host_data, parameters_number*sizeof(double));
-
-#endif
-
-    return gradient_host;
 }
 
 }
