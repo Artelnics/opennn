@@ -81,25 +81,15 @@ public:
 
    double calculate_training_error() const;
 
-   double calculate_training_error_cuda() const;
-
    double calculate_selection_error() const;
-
-   double calculate_selection_error_cuda() const;
 
    double calculate_training_error(const Vector<double>&) const;
 
-   double calculate_training_error_cuda(const Vector<double>&) const;
-
    double calculate_batch_error(const Vector<size_t> &) const;
-
-   double calculate_batch_error_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
 
    // Gradient methods
 
    Vector<double> calculate_training_error_gradient() const;
-
-   Vector<double> calculate_training_error_gradient_cuda() const;
 
    FirstOrderLoss calculate_first_order_loss() const;
 
@@ -107,10 +97,6 @@ public:
 
    FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
 
-   FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const;
-
-   FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
-                                                        const MultilayerPerceptron::Pointers&, const Vector<double*>&) const;
    // Error terms methods
 
    Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;

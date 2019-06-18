@@ -147,38 +147,6 @@ public:
    };
 
 
-   struct Pointers
-   {
-       Pointers()
-       {
-       }
-
-       virtual ~Pointers();
-
-       Vector<double> get_parameters() const;
-
-       void update_parameters(const Vector<double>&);
-
-       void update_parameters_sgd(double*&, const double&, const bool&, const double&,
-                                  const double&, const size_t&);
-
-       void update_parameters_adam(double*&, const double&, const double&, const double&,
-                                   const double&, const double&, const size_t&);
-
-       Vector<double*> biases_pointers;
-       Vector<double*> weights_pointers;
-
-       size_t layers_number;
-       Vector<size_t> architecture;
-       Vector<string> layer_activations;
-
-       double* last_increment;
-       double* last_square_increment;
-
-       bool CUDA_initialized = false;
-   };
-
-
    struct FirstOrderForwardPropagation
    {
        /// Default constructor.
@@ -521,8 +489,6 @@ public:
    Matrix<double> calculate_outputs(const Matrix<double>&,  const Vector<double>&) const;
 
    // Serialization methods
-
-   Pointers host_to_device() const;
 
    tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);

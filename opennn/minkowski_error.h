@@ -85,21 +85,13 @@ public:
 
    double calculate_training_error() const;
 
-   double calculate_training_error_cuda() const;
-
    double calculate_selection_error() const;
 
-   double calculate_selection_error_cuda() const;
-
    double calculate_training_error(const Vector<double>&) const;
-
-   double calculate_training_error_cuda(const Vector<double>&) const;
 
    double calculate_batch_error(const Vector<size_t> &) const;
 
    Vector<double> calculate_training_error_gradient() const;
-
-   Vector<double> calculate_training_error_gradient_cuda() const;
 
    Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
 

@@ -174,6 +174,3 @@ mac{
 
 # MPI libraries
 #include(../mpi.pri)
-
-# CUDA libraries
-#include(../cuda.pri)

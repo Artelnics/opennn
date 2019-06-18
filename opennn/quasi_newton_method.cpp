@@ -15,32 +15,6 @@
 #include "quasi_newton_method.h"
 
 
-#ifdef __OPENNN_CUDA__
-#include <cuda_runtime.h>
-#include <cublas_v2.h>
-
-void createHandle(cublasHandle_t* handle);
-void destroyHandle(cublasHandle_t* handle);
-void initCUDA();
-int mallocCUDA(double** A_d, int nBytes);
-int memcpyCUDA(double* A_d, const double* A_h, int nBytes);
-void freeCUDA(double* A_d);
-
-void dfpInverseHessian(
-        double* old_parameters, double* parameters,
-        double* old_gradient, double* gradient,
-        double* old_inverse_Hessian, double* auxiliar_matrix,
-        double* inverse_Hessian_host, int n);
-
-void bfgsInverseHessian(
-        double* old_parameters, double* parameters,
-        double* old_gradient, double* gradient,
-        double* old_inverse_Hessian, double* auxiliar_matrix,
-        double* inverse_Hessian_host, int n);
-
-#endif
-
-
 //#include"windows.h"
 
 namespace OpenNN
@@ -566,8 +540,6 @@ void QuasiNewtonMethod::set_default()
 
    // UTILITIES
 
-   use_cuda = false;
-
    display = true;
    display_period = 5;
 }
@@ -1038,14 +1010,6 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
    reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
-/// Sets the use or not the cuda.
-/// @param use_cuda New use of cuda.
-
-void QuasiNewtonMethod::set_use_cuda(const bool& new_use_cuda)
-{
-    use_cuda = new_use_cuda;
-}
-
 
 /// Sets a new number of epochs between the training showing progress.
 /// @param new_display_period
@@ -1107,52 +1071,6 @@ const Matrix<double>& old_inverse_Hessian) const
 
    throw logic_error(buffer.str());
 }
-
-
-#ifdef __OPENNN_CUDA__
-
-/// Calculates an approximation of the inverse Hessian, accoring to the method used. This method uses CUDA.
-/// @param old_parameters_d Another point of the error function.
-/// @param parameters_d Current point of the error function
-/// @param old_gradient_d Gradient at the other point.
-/// @param gradient_d Gradient at the current point.
-/// @param old_inverse_Hessian_d Inverse Hessian at the other point of the error function.
-/// @param auxiliar_matrix_d Auxiliar empty matrix used in the CUDA computation.
-
-Matrix<double> QuasiNewtonMethod::calculate_inverse_Hessian_approximation_CUDA(
-double* old_parameters_d, double* parameters_d,
-double* old_gradient_d, double* gradient_d,
-double* old_inverse_Hessian_d, double* auxiliar_matrix_d) const
-{
-    switch(inverse_Hessian_approximation_method)
-    {
-       case DFP:
-       {
-          return(calculate_DFP_inverse_Hessian_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d));
-       }
-       break;
-
-       case BFGS:
-       {
-          return(calculate_BFGS_inverse_Hessian_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d));
-       }
-       break;
-
-       default:
-       {
-          ostringstream buffer;
-
-          buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-                 << "Vector<double> calculate_inverse_Hessian_approximation_CUDA(const double*, const double*, const double*, const double*, const double*) method.\n"
-                 << "Unknown inverse Hessian approximation method.\n";
-
-          throw logic_error(buffer.str());
-       }
-       break;
-    }
-}
-
-#endif
 
 
 /// Returns the quasi-Newton method training direction, which has been previously normalized.
@@ -1516,61 +1434,6 @@ const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix
    return inverse_Hessian_approximation;
 }
 
-#ifdef __OPENNN_CUDA__
-
-/// Returns an approximation of the inverse Hessian matrix according to the Davidon-Fletcher-Powel
-///(DFP) algorithm. This method uses CUDA.
-/// @param old_parameters_d A previous set of parameters.
-/// @param parameters_d Actual set of parameters.
-/// @param old_gradient_d The gradient of the error function for that previous set of parameters.
-/// @param gradient_d The gradient of the error function for the actual set of parameters.
-/// @param old_inverse_Hessian The Hessian of the error function for that previous set of parameters.
-/// @param auxiliar_matrix_d Auxiliar empty matrix used in the CUDA computation.
-
-Matrix<double> QuasiNewtonMethod::calculate_DFP_inverse_Hessian_CUDA(
-double* old_parameters_d, double* parameters_d,
-double* old_gradient_d, double* gradient_d,
-double* old_inverse_Hessian_d, double* auxiliar_matrix_d) const
-{
-    const size_t parameters_number = loss_index_pointer->get_neural_network_pointer()->get_parameters_number();
-
-    Matrix<double> inverse_Hessian_approximation(parameters_number, parameters_number);
-
-    double* inverse_Hessian_approximation_data = inverse_Hessian_approximation.data();
-
-    dfpInverseHessian(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d, inverse_Hessian_approximation_data,(int)parameters_number);
-
-    return(inverse_Hessian_approximation);
-}
-
-// Matrix<double> calculate_BFGS_inverse_Hessian_CUDA(double*, double*, double*, double*, double*, double*) const method
-
-/// Returns an approximation of the inverse Hessian matrix according to the
-/// Broyden-Fletcher-Goldfarb-Shanno(BGFS) algorithm. This method uses CUDA.
-/// @param old_parameters_d A previous set of parameters.
-/// @param parameters_d Actual set of parameters.
-/// @param old_gradient_d The gradient of the error function for that previous set of parameters.
-/// @param gradient_d The gradient of the error function for the actual set of parameters.
-/// @param old_inverse_Hessian The Hessian of the error function for that previous set of parameters.
-/// @param auxiliar_matrix_d Auxiliar empty matrix used in the CUDA computation.
-
-Matrix<double> QuasiNewtonMethod::calculate_BFGS_inverse_Hessian_CUDA(
-double* old_parameters_d, double* parameters_d,
-double* old_gradient_d, double* gradient_d,
-double* old_inverse_Hessian_d, double* auxiliar_matrix_d) const
-{
-    const size_t parameters_number = loss_index_pointer->get_neural_network_pointer()->get_parameters_number();
-
-    Matrix<double> inverse_Hessian_approximation(parameters_number, parameters_number);
-
-    double* inverse_Hessian_approximation_data = inverse_Hessian_approximation.data();
-
-    bfgsInverseHessian(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d, inverse_Hessian_approximation_data,(int)parameters_number);
-
-    return(inverse_Hessian_approximation);
-}
-
-#endif
 
 // QuasiNewtonMethod* get_quasi_Newton_method_pointer() const method
 
@@ -1925,104 +1788,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
    double selection_error = 0.0;
    double old_selection_error = 0.0;
 
-#ifdef __OPENNN_CUDA__
-
-   old_inverse_Hessian.set(parameters_number, parameters_number);
-
-   double* parameters_data = parameters.data();
-   double* old_parameters_data = old_parameters.data();
-
-   double* gradient_data = gradient.data();
-   double* old_gradient_data = old_gradient.data();
-
-   double* old_inverse_Hessian_data = old_inverse_Hessian.data();
-
-   double* parameters_d;
-   double* old_parameters_d;
-
-   double* gradient_d;
-   double* old_gradient_d;
-
-   double* auxiliar_matrix_d;
-   double* old_inverse_Hessian_d;
-
-   const int num_bytes = static_cast<int>(parameters_number) * sizeof(double);
-
-   int error;
-
-   int deviceCount;
-   int gpuDeviceCount = 0;
-   struct cudaDeviceProp properties;
-
-   cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
-
-   if(cudaResultCode != cudaSuccess || !use_cuda)
-   {
-       deviceCount = 0;
-   }
-
-   for(int device = 0; device < deviceCount; ++device)
-   {
-       cudaGetDeviceProperties(&properties, device);
-
-       if(properties.major != 9999) // 9999 means emulation only
-       {
-           ++gpuDeviceCount;
-       }
-       else if(properties.major > 3)
-       {
-           ++gpuDeviceCount;
-       }
-       else if(properties.major == 3 && properties.minor >= 5)
-       {
-           ++gpuDeviceCount;
-       }
-   }
-
-   if(gpuDeviceCount > 0)
-   {
-       initCUDA();
-
-       //createHandle(&cublas_handle);
-
-       error = mallocCUDA(&parameters_d, num_bytes);
-       if(error != 0)
-       {
-           gpuDeviceCount = 0;
-       }
-
-       error = mallocCUDA(&old_parameters_d, num_bytes);
-       if(error != 0)
-       {
-           gpuDeviceCount = 0;
-       }
-
-       error = mallocCUDA(&gradient_d, num_bytes);
-       if(error != 0)
-       {
-           gpuDeviceCount = 0;
-       }
-
-       error = mallocCUDA(&old_gradient_d, num_bytes);
-       if(error != 0)
-       {
-           gpuDeviceCount = 0;
-       }
-
-       error = mallocCUDA(&auxiliar_matrix_d,static_cast<int>(parameters_number) * num_bytes);
-       if(error != 0)
-       {
-           gpuDeviceCount = 0;
-       }
-
-       error = mallocCUDA(&old_inverse_Hessian_d,static_cast<int>(parameters_number) * num_bytes);
-       if(error != 0)
-       {
-           gpuDeviceCount = 0;
-       }
-   }
-
-#endif
 
    // Optimization algorithm stuff 
 
@@ -2119,38 +1884,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
        }
        else
        {
-#ifdef __OPENNN_CUDA__
-
-           if(gpuDeviceCount > 0)
-           {
-               error += memcpyCUDA(old_parameters_d, old_parameters_data, num_bytes);
-
-               error += memcpyCUDA(parameters_d, parameters_data, num_bytes);
-
-               error += memcpyCUDA(old_gradient_d, old_gradient_data, num_bytes);
-
-               error += memcpyCUDA(gradient_d, gradient_data, num_bytes);
-
-               error += memcpyCUDA(old_inverse_Hessian_d, old_inverse_Hessian_data,static_cast<int>(parameters_number) * num_bytes);
-
-               if(error != 0)
-               {
-                   inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-
-                   error = 0;
-               }
-               else
-               {
-                   inverse_Hessian = calculate_inverse_Hessian_approximation_CUDA(old_parameters_d, parameters_d, old_gradient_d, gradient_d, old_inverse_Hessian_d, auxiliar_matrix_d);
-               }
-           }
-           else
-           {
-               inverse_Hessian = calculate_inverse_Hessian_approximation(old_parameters, parameters, old_gradient, gradient, old_inverse_Hessian);
-           }
-
-#else
-
            switch(inverse_Hessian_approximation_method)
            {
               case DFP:
@@ -2169,7 +1902,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
            old_parameters.set();
            old_gradient.set();
            //old_inverse_Hessian.set();
-#endif
        }
 
        // Optimization algorithm
@@ -2428,22 +2160,6 @@ QuasiNewtonMethod::QuasiNewtonMethodResults* QuasiNewtonMethod::perform_training
 //   results_pointer->final_training_direction = training_direction;
 //   results_pointer->final_training_rate = training_rate;
 //   results_pointer->elapsed_time = elapsed_time;
-
-#ifdef __OPENNN_CUDA__
-
-   if(gpuDeviceCount > 0)
-   {
-       freeCUDA(parameters_d);
-       freeCUDA(old_parameters_d);
-
-       freeCUDA(gradient_d);
-       freeCUDA(old_gradient_d);
-
-       freeCUDA(auxiliar_matrix_d);
-       freeCUDA(old_inverse_Hessian_d);
-   }
-
-#endif
 
    return(results_pointer);
 }

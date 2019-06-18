@@ -67,6 +67,3 @@ QMAKE_LFLAGS +=  -fopenmp
 
 # MPI include
 #include(../../mpi.pri)
-
-# CUDA include
-#include(../../cuda.pri)

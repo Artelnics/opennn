@@ -94,14 +94,11 @@ public:
 
        void set_parameters_number(const size_t& new_parameters_number);
 
-       Vector<double> get_gradient_from_device() const;
-
        virtual ~FirstOrderLoss();
 
        size_t parameters_number;
        double loss;
        Vector<double> gradient;
-       double* gradient_device;
    };
 
 
@@ -225,14 +222,7 @@ public:
    virtual double calculate_training_error(const Vector<double>&) const = 0;
    virtual double calculate_batch_error(const Vector<size_t>&) const = 0;
 
-   virtual double calculate_training_error_cuda() const = 0;
-   virtual double calculate_selection_error_cuda() const = 0;
-   virtual double calculate_training_error_cuda(const Vector<double>&) const = 0;
-
-   virtual double calculate_batch_error_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return 0.0;}
-
    virtual Vector<double> calculate_training_error_gradient() const = 0;
-   virtual Vector<double> calculate_training_error_gradient_cuda() const = 0;
 
    virtual Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const {return Vector<double>();}
 
@@ -240,9 +230,6 @@ public:
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const  {return Matrix<double>();}
 
    virtual FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const {return FirstOrderLoss();}
-   virtual FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&, const MultilayerPerceptron::Pointers&) const {return FirstOrderLoss();}
-   virtual FirstOrderLoss calculate_batch_first_order_loss_cuda(const Vector<size_t>&,
-                                                                const MultilayerPerceptron::Pointers&, const Vector<double*>&) const {return FirstOrderLoss();}
 
    virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}

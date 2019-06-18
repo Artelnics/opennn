@@ -564,8 +564,6 @@ public:
 
    // Serialization methods
 
-   Vector<double*> host_to_device(const Vector<size_t>&) const;
-
    string object_to_string() const;
 
    void print() const;
