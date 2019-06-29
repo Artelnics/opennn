@@ -2011,7 +2011,7 @@ ScaledConjugateGradient::ScaledConjugateGradientResults* ScaledConjugateGradient
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumSelectionLossIncreases;
+         results_pointer->stopping_condition = MaximumSelectionErrorIncreases;
       }
 
       else if(epoch == maximum_epochs_number)
