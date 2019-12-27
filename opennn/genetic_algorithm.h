@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   G E N E T I C   A L G O R I T H M   C L A S S   H E A D E R                                                */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   G E N E T I C   A L G O R I T H M   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __GENETICALGORITHM_H__
-#define __GENETICALGORITHM_H__
+#ifndef GENETICALGORITHM_H
+#define GENETICALGORITHM_H
 
 // System includes
 
@@ -28,46 +23,41 @@
 
 #include "vector.h"
 #include "matrix.h"
-
 #include "training_strategy.h"
-
-#include "inputs_selection_algorithm.h"
-
-// TinyXml includes
-
+#include "inputs_selection.h"
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-///
-/// This concrete class represents a genetic algorithm for the inputs selection of a neural network.
-///
+/// This concrete class represents a genetic algorithm, inspired by the process of natural selection[1] such as mutation, crossover and selection.
 
-class GeneticAlgorithm : public InputsSelectionAlgorithm
+///
+/// This algorithm are commonly used in optimization and search problems. if the dataset has many inputs,
+/// but we do not know how they affect the target,
+/// then this algorithm provides the best possible combination of variables to optimize the problem.
+///
+/// \cite 1 Neural Designer "Genetic Algorithms for Feature Selection." \ref https://www.neuraldesigner.com/blog/genetic_algorithms_for_feature_selection
+
+class GeneticAlgorithm : public InputsSelection
 {
 public:
-    // DEFAULT CONSTRUCTOR
+
+    // Constructors
 
     explicit GeneticAlgorithm();
 
-    // TRAINING STRATEGY CONSTRUCTOR
-
     explicit GeneticAlgorithm(TrainingStrategy*);
-
-    // XML CONSTRUCTOR
 
     explicit GeneticAlgorithm(const tinyxml2::XMLDocument&);
 
-    // FILE CONSTRUCTOR
-
     explicit GeneticAlgorithm(const string&);
 
-    // DESTRUCTOR
+    // Destructor
 
     virtual ~GeneticAlgorithm();
 
-    // ENUMERATIONS
+    // Enumerations
 
     /// Enumeration of available methods for the initialization of the population.
 
@@ -81,17 +71,15 @@ public:
 
     enum FitnessAssignment{ObjectiveBased, RankBased};
 
-    // STRUCTURES
+    // Structures
 
-    ///
-    /// This structure contains the training results for the genetic algorithm method.
-    ///
+    /// This structure contains the training results for the genetic algorithm method.    
 
-    struct GeneticAlgorithmResults : public InputsSelectionAlgorithm::InputsSelectionResults
+    struct GeneticAlgorithmResults : public InputsSelection::Results
     {
         /// Default constructor.
 
-        explicit GeneticAlgorithmResults() : InputsSelectionAlgorithm::InputsSelectionResults()
+        explicit GeneticAlgorithmResults() : InputsSelection::Results()
         {
         }
 
@@ -120,11 +108,9 @@ public:
         Vector<double> generation_standard_deviation_history;
     };
 
-    // METHODS
-
     // Get methods
 
-    const Vector< Vector<bool> >& get_population() const;
+    const Vector<Vector<bool>>& get_population() const;
 
     const Matrix<double>& get_loss() const;
 
@@ -168,7 +154,7 @@ public:
 
     void set_default();
 
-    void set_population(const Vector< Vector<bool> >&);
+    void set_population(const Vector<Vector<bool>>&);
 
     void set_loss(const Matrix<double>&);
 
@@ -256,20 +242,18 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
-    // void read_XML(   );
+    
 
     void save(const string&) const;
     void load(const string&);
 
 private:
 
-    // MEMBERS
-
     // Population stuff
 
     /// Population matrix.
 
-    Vector< Vector<bool> > population;
+    Vector<Vector<bool>> population;
 
     /// Performance of population.
 
@@ -295,7 +279,7 @@ private:
 
     /// Initial uses of the variables in the data set.
 
-    Vector<Variables::Use> original_uses;
+    Vector<DataSet::VariableUse> original_uses;
 
     /// Size of the population.
 

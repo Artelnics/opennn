@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   S C A L I N G   L A Y E R   T E S T   C L A S S   H E A D E R                                              */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S C A L I N G   L A Y E R   T E S T   C L A S S   H E A D E R         
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __SCALINGLAYERTEST_H__
-#define __SCALINGLAYERTEST_H__
+#ifndef SCALINGLAYERTEST_H
+#define SCALINGLAYERTEST_H
 
 // Unit testing includes
 
@@ -28,18 +23,11 @@ class ScalingLayerTest : public UnitTesting
 #define TOSTRING(x) STRING(x)
 #define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
 
-public:
-
-   // GENERAL CONSTRUCTOR
+public:  
 
    explicit ScalingLayerTest();
 
-
-   // DESTRUCTOR
-
    virtual ~ScalingLayerTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -54,7 +42,7 @@ public:
 
    // Multilayer perceptron architecture 
 
-   void test_get_scaling_neurons_number();
+   void test_get_neurons_number();
 
    // Statistics
 
@@ -70,7 +58,7 @@ public:
    void test_get_maximums();
    void test_get_maximum();
 
-   void test_get_statistics();
+   void test_get_descriptives();
 
    // Variables scaling and unscaling
 
@@ -85,14 +73,14 @@ public:
 
    void test_get_display();
 
-   // SET METHODS
+   // Set methods
 
    void test_set();
    void test_set_default();
 
    // Multilayer perceptron architecture
 
-   void test_set_layers_perceptrons_number();
+   void test_set_layers_neurons_number();
    void test_set_layer_size();
 
    // Multilayer perceptron parameters
@@ -116,7 +104,7 @@ public:
 
    void test_set_output_layer_activation_function();
 
-   // Input variables statistics
+   // Input variables descriptives
 
    void test_set_means();
    void test_set_mean();
@@ -130,9 +118,6 @@ public:
    void test_set_maximums();
    void test_set_maximum();
 
-   void test_set_means_standard_deviations();
-   void test_set_minimums_maximums();
-
    void test_set_statistics();
 
    // Scaling method
@@ -144,10 +129,6 @@ public:
    void test_set_display_inputs_warning();
    void test_set_display();
 
-   // Initialization methods
-
-   void test_initialize_random();
-
    // Input range
 
    void test_check_range();
@@ -155,16 +136,10 @@ public:
    // Scaling 
 
    void test_calculate_outputs();
-   void test_calculate_derivatives();
-   void test_calculate_second_derivatives();
 
    void test_calculate_minimum_maximum_output();
-   void test_calculate_minimum_maximum_derivatives();
-   void test_calculate_minimum_maximum_second_derivatives();
 
    void test_calculate_mean_standard_deviation_output();
-   void test_calculate_mean_standard_deviation_derivatives();
-   void test_calculate_mean_standard_deviation_second_derivatives();
 
    // XML expression methods
 
@@ -186,7 +161,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

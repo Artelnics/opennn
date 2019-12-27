@@ -1,37 +1,32 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   O P E N   N E U R A L   N E T W O R K S   L I B R A R Y                                                    */
-/*                                                                                                              */ 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   O P E N   N E U R A L   N E T W O R K S   L I B R A R Y               
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __OPENNN_H__
-#define __OPENNN_H__
+#ifndef OPENNN_H
+#define OPENNN_H
+
+#include "statistics.h"
 
 // Data set
 
 #include "data_set.h"
-#include "instances.h"
-#include "variables.h"
-#include "missing_values.h"
 
 // Neural network
 
+#include "layer.h"
+#include "pooling_layer.h"
+#include "convolutional_layer.h"
 #include "bounding_layer.h"
-#include "inputs.h"
-#include "outputs.h"
 #include "perceptron_layer.h"
-#include "multilayer_perceptron.h"
+#include "long_short_term_memory_layer.h"
+#include "recurrent_layer.h"
 #include "probabilistic_layer.h"
 #include "scaling_layer.h"
 #include "unscaling_layer.h"
-#include "inputs_trending_layer.h"
-#include "outputs_trending_layer.h"
 #include "neural_network.h"
 
 // Training strategy
@@ -55,22 +50,12 @@
 // Model selection
 
 #include "model_selection.h"
-#include "order_selection_algorithm.h"
-#include "incremental_order.h"
-#include "golden_section_order.h"
-#include "simulated_annealing_order.h"
-#include "inputs_selection_algorithm.h"
-#include "selective_pruning.h"
+#include "neurons_selection.h"
+#include "incremental_neurons.h"
+#include "inputs_selection.h"
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
-//#include "ant_colony_optimization.h"
-//#include "threshold_selection_algorithm.h"
-//#include "f1_score_optimization_threshold.h"
-//#include "matthew_correlation_optimization_threshold.h"
-//#include "youden_index_optimization_threshold.h"
-//#include "kappa_coefficient_optimization_threshold.h"
-//#include "roc_curve_optimization_threshold.h"
 
 // Testing analysis
 
@@ -78,19 +63,19 @@
 
 // Utilities
 
-#include "file_utilities.h"
 #include "math.h"
 #include "matrix.h"
-#include "sparse_matrix.h"
+#include "tensor.h"
 #include "numerical_differentiation.h"
-#include "numerical_integration.h"
-#include "association_rules.h"
-#include "text_analytics.h"
 #include "vector.h"
 #include "tinyxml2.h"
-#include "correlation_analysis.h"
-//#include "response_optimization.h"
-//#include "k_nearest_neighbors.h"
+#include "correlations.h"
+#include "functions.h"
+#include "metrics.h"
+#include "response_optimization.h"
+#include "statistics.h"
+#include "k_means.h"
+#include "opennn_strings.h"
 
 #endif
 

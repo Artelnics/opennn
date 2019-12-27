@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   G R O W I N G   I N P U T S   C L A S S   H E A D E R                                                      */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   G R O W I N G   I N P U T S   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __GROWINGINPUTS_H__
-#define __GROWINGINPUTS_H__
+#ifndef GROWINGINPUTS_H
+#define GROWINGINPUTS_H
 
 // System includes
 
@@ -28,64 +23,55 @@
 
 #include "vector.h"
 #include "matrix.h"
-
 #include "training_strategy.h"
-
-#include "inputs_selection_algorithm.h"
-
-// TinyXml includes
-
+#include "inputs_selection.h"
 #include "tinyxml2.h"
+
 
 namespace OpenNN
 {
 
-///
-/// This concrete class represents a growing algorithm for the inputs selection of a neural network.
-///
+/// This concrete class represents a growing inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
-class GrowingInputs : public InputsSelectionAlgorithm
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+
+class GrowingInputs : public InputsSelection
 {
+
 public:
-    // DEFAULT CONSTRUCTOR
+
+    // Constructors
 
     explicit GrowingInputs();
 
-    // TRAINING STRATEGY CONSTRUCTOR
-
     explicit GrowingInputs(TrainingStrategy*);
-
-    // XML CONSTRUCTOR
 
     explicit GrowingInputs(const tinyxml2::XMLDocument&);
 
-    // FILE CONSTRUCTOR
-
     explicit GrowingInputs(const string&);
 
-    // DESTRUCTOR
+    // Destructor
 
     virtual ~GrowingInputs();
 
-    // STRUCTURES
+    // Structures
 
     /// This structure contains the training results for the growing inputs method.
 
-    struct GrowingInputsResults : public InputsSelectionAlgorithm::InputsSelectionResults
+    struct GrowingInputsResults : public InputsSelection::Results
     {
         /// Default constructor.
 
-        explicit GrowingInputsResults() : InputsSelectionAlgorithm::InputsSelectionResults() {}
+        explicit GrowingInputsResults() : InputsSelection::Results() {}
 
         /// Destructor.
 
         virtual ~GrowingInputsResults() {}
 
-        Vector<bool> inputs_selection;
 
+        Vector<bool> selected_inputs;
     };
 
-    // METHODS
 
     // Get methods
 
@@ -117,14 +103,11 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
-    // void read_XML(   );
-
+    
     void save(const string&) const;
     void load(const string&);
 
 private:
-
-    // STOPPING CRITERIA
 
     /// Maximum number of inputs in the neural network.
 
@@ -132,11 +115,11 @@ private:
 
     /// Minimum number of inputs in the neural network.
 
-    size_t minimum_inputs_number;
+    size_t minimum_inputs_number = 1;
 
     /// Maximum number of iterations at which the selection error increases.
 
-    size_t maximum_selection_failures;
+    size_t maximum_selection_failures = 10;
 };
 
 }

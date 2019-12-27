@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: An Open Source Neural Networks C++ Library                                                         */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M O D E L   S E L E C T I O N   T E S T   C L A S S   H E A D E R                                          */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: An Open Source Neural Networks C++ Library                    
+//   www.opennn.net
+//
+//   M O D E L   S E L E C T I O N   T E S T   C L A S S   H E A D E R     
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com                                           
 
-#ifndef __MODELSELECTIONTEST_H__
-#define __MODELSELECTIONTEST_H__
+#ifndef MODELSELECTIONTEST_H
+#define MODELSELECTIONTEST_H
 
 #include "unit_testing.h"
 
@@ -28,17 +23,9 @@ class ModelSelectionTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit ModelSelectionTest();
 
-
-   // DESTRUCTOR
-
    virtual ~ModelSelectionTest();
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -57,7 +44,7 @@ public:
 
    // Model selection methods
 
-   void test_perform_order_selection();
+   void test_perform_neurons_selection();
 
    // Serialization methods
 
@@ -70,6 +57,5 @@ public:
 
    void run_test_case();
 };
-
 
 #endif

@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M E A N   S Q U A R E D   E R R O R    C L A S S   H E A D E R                                             */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M E A N   S Q U A R E D   E R R O R    C L A S S   H E A D E R        
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __MEANSQUAREDERROR_H__
-#define __MEANSQUAREDERROR_H__
+#ifndef MEANSQUAREDERROR_H
+#define MEANSQUAREDERROR_H
 
 // System includes
 
@@ -27,7 +23,7 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
@@ -35,6 +31,8 @@ namespace OpenNN
 {
 
 /// This class represents the mean squared error term.
+
+///
 /// The mean squared error measures the difference between the outputs from a neural network and the targets in a data set. 
 /// This functional is used in data modeling problems, such as function regression, 
 /// classification and time series prediction.
@@ -55,9 +53,7 @@ public:
    // DATA SET CONSTRUCTOR
 
    explicit MeanSquaredError(DataSet*);
-
-   // GENERAL CONSTRUCTOR
-
+   
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
 
    // XML CONSTRUCTOR
@@ -68,44 +64,35 @@ public:
 
    MeanSquaredError(const MeanSquaredError&);
 
-   // DESTRUCTOR
+   // Destructor
 
-   virtual ~MeanSquaredError();
-
-   // STRUCTURES
-
-
-   // METHODS
+   virtual ~MeanSquaredError(); 
 
    // Error methods
 
    double calculate_training_error() const;
+   double calculate_training_error(const Vector<double>&) const;
 
    double calculate_selection_error() const;
 
-   double calculate_training_error(const Vector<double>&) const;
-
-   double calculate_batch_error(const Vector<size_t> &) const;
+   double calculate_batch_error(const Vector<size_t>&) const;
+   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
 
    // Gradient methods
 
-   Vector<double> calculate_training_error_gradient() const;
-
    FirstOrderLoss calculate_first_order_loss() const;
-
-   Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const;
 
    FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
 
    // Error terms methods
 
-   Vector<double> calculate_error_terms(const Matrix<double>&, const Matrix<double>&) const;
-   Vector<double> calculate_error_terms(const Vector<double>&) const;
+   Vector<double> calculate_training_error_terms(const Tensor<double>&, const Tensor<double>&) const;
+   Vector<double> calculate_training_error_terms(const Vector<double>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
 
-   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
+   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
@@ -114,10 +101,6 @@ public:
    tinyxml2::XMLDocument* to_XML() const;   
 
    void write_XML(tinyxml2::XMLPrinter &) const;
-   // void read_XML(   );
-
-private:
-
 };
 
 }

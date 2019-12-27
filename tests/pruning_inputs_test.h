@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P R U N I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P R U N I N G   I N P U T S   T E S T   C L A S S   H E A D E R       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com                                           
 
-#ifndef __PRUNINGINPUTSTEST_H__
-#define __PRUNINGINPUTSTEST_H__
+#ifndef PRUNINGINPUTSTEST_H
+#define PRUNINGINPUTSTEST_H
 
 // Unit testing includes
 
@@ -35,12 +30,12 @@ public:
    explicit PruningInputsTest();
 
 
-   // DESTRUCTOR
+   
 
    virtual ~PruningInputsTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 

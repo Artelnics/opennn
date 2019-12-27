@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   T R A I N I N G   S T R A T E G Y   C L A S S   H E A D E R                                                */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   T R A I N I N G   S T R A T E G Y   C L A S S   H E A D E R           
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __TRAININGSTRATEGY_H__
-#define __TRAININGSTRATEGY_H__
+#ifndef TRAININGSTRATEGY_H
+#define TRAININGSTRATEGY_H
 
 // System includes
 
@@ -23,9 +19,6 @@
 #include <cmath>
 #include <ctime>
 
-#ifdef __OPENNN_MPI__
-#include <mpi.h>
-#endif
 // OpenNN includes
 
 #include "loss_index.h"
@@ -46,15 +39,15 @@
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 
-// TinyXml includes
-
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-/// This class represents the concept of training strategy for a neural network. 
-/// A training strategy is composed of two things:
+/// This class represents the concept of training strategy for a neural network in OpenNN.
+
+///
+/// A training strategy is composed of two objects:
 /// <ul>
 /// <li> Loss index.
 /// <li> Optimization algorithm.
@@ -65,25 +58,21 @@ class TrainingStrategy
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
     explicit TrainingStrategy();
 
     explicit TrainingStrategy(NeuralNetwork*, DataSet*);
 
-   // XML CONSTRUCTOR
+    explicit TrainingStrategy(const tinyxml2::XMLDocument&);
 
-   explicit TrainingStrategy(const tinyxml2::XMLDocument&);
+    explicit TrainingStrategy(const string&);
 
-   // FILE CONSTRUCTOR
-
-   explicit TrainingStrategy(const string&);
-
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~TrainingStrategy();
 
-   // ENUMERATIONS
+   // Enumerations
 
     /// Enumeration of available error terms in OpenNN.
 
@@ -99,7 +88,7 @@ public:
 
     /// Enumeration of all the available types of optimization algorithms.
 
-    enum TrainingMethod
+    enum OptimizationMethod
     {
        GRADIENT_DESCENT,
        CONJUGATE_GRADIENT,
@@ -109,68 +98,18 @@ public:
        ADAPTIVE_MOMENT_ESTIMATION
     };
 
-   // STRUCTURES 
-
-   /// This structure stores the results from the training strategy.
-   ///
-   struct Results
-   {
-        /// Default constructor.
-
-        explicit Results();
-
-        /// Destructor.
-
-        virtual ~Results()
-       {
-           delete gradient_descent_results_pointer;
-           delete conjugate_gradient_results_pointer;
-           delete quasi_Newton_method_results_pointer;
-           delete Levenberg_Marquardt_algorithm_results_pointer;
-           delete stochastic_gradient_descent_results_pointer;
-           delete adaptive_moment_estimation_results_pointer;
-       }
-
-        void save(const string&) const;
-
-        /// Pointer to a structure with the results from the gradient descent optimization algorithm.
-
-        GradientDescent::GradientDescentResults* gradient_descent_results_pointer = nullptr;
-
-        /// Pointer to a structure with the results from the conjugate gradient optimization algorithm.
-
-        ConjugateGradient::ConjugateGradientResults* conjugate_gradient_results_pointer = nullptr;
-
-        /// Pointer to a structure with the results from the quasi-Newton method optimization algorithm.
-
-        QuasiNewtonMethod::QuasiNewtonMethodResults* quasi_Newton_method_results_pointer = nullptr;
-
-        /// Pointer to a structure with the results from the Levenberg-Marquardt optimization algorithm.
-
-        LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* Levenberg_Marquardt_algorithm_results_pointer = nullptr;
-
-        /// Pointer to a structure with the results from the stochastic gradient descent training algoritm.
-
-        StochasticGradientDescent::StochasticGradientDescentResults* stochastic_gradient_descent_results_pointer = nullptr;
-
-        /// Pointer to a structure with the results from the adaptive moment estimator training algoritm.
-
-        AdaptiveMomentEstimation::AdaptiveMomentEstimationResults* adaptive_moment_estimation_results_pointer = nullptr;
-  };
-
-   // METHODS
-
-   // Initialization methods
-
-   void initialize_random();
-
    // Get methods
 
    NeuralNetwork* get_neural_network_pointer() const;
 
    LossIndex* get_loss_index_pointer() const;
+   OptimizationAlgorithm* get_optimization_algorithm_pointer() const;
+
+   bool has_neural_network() const;
+   bool has_data_set() const;
 
    bool has_loss_index() const;
+   bool has_optimization_algorithm() const;
 
    GradientDescent* get_gradient_descent_pointer() const;
    ConjugateGradient* get_conjugate_gradient_pointer() const;
@@ -178,7 +117,6 @@ public:
    LevenbergMarquardtAlgorithm* get_Levenberg_Marquardt_algorithm_pointer() const;
    StochasticGradientDescent* get_stochastic_gradient_descent_pointer() const;
    AdaptiveMomentEstimation* get_adaptive_moment_estimation_pointer() const;
-
 
    SumSquaredError* get_sum_squared_error_pointer() const;
    MeanSquaredError* get_mean_squared_error_pointer() const;
@@ -188,12 +126,13 @@ public:
    WeightedSquaredError* get_weighted_squared_error_pointer() const;
 
    const LossMethod& get_loss_method() const;
-   const TrainingMethod& get_training_method() const;
+   const OptimizationMethod& get_optimization_method() const;
 
    string write_loss_method() const;
-   string write_training_method() const;
+   string write_optimization_method() const;
 
-   string write_training_method_text() const;
+   string write_optimization_method_text() const;
+   string write_loss_method_text() const;
 
    const bool& get_display() const;
 
@@ -202,17 +141,13 @@ public:
    void set();
    void set_default();
 
-#ifdef __OPENNN_MPI__
-   void set_MPI(LossIndex*, const TrainingStrategy*);
-#endif
-
    void set_loss_index_pointer(LossIndex*);
 
    void set_loss_method(const LossMethod&);
-   void set_training_method(const TrainingMethod&);
+   void set_optimization_method(const OptimizationMethod&);
 
    void set_loss_method(const string&);
-   void set_training_method(const string&);
+   void set_optimization_method(const string&);
 
    void set_display(const bool&);
 
@@ -224,10 +159,12 @@ public:
 
    // This method trains a neural network which has a loss index associated.
 
-   void initialize_layers_autoencoding();
-
-   Results perform_training() const;
+   OptimizationAlgorithm::Results perform_training() const;
    void perform_training_void() const;
+
+   // Check methods
+
+   bool check_forecasting() const;
 
    // Serialization methods
 
@@ -239,8 +176,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(   );
-
+   
    void save(const string&) const;
    void load(const string&);
 
@@ -308,7 +244,7 @@ private:
 
     /// Type of main optimization algorithm.
 
-    TrainingMethod training_method;
+    OptimizationMethod optimization_method;
 
     /// Display messages to screen.
 
@@ -322,7 +258,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -6,25 +6,7 @@ cmake_minimum_required(VERSION 2.8.10)
 
 project(iris_plant)
 
-if (WIN32)
-    if (CMAKE_GENERATOR MATCHES "Visual Studio 15 2017")
-		set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/build/opennn/Release/opennn.lib)
-	else()
-		set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/build/opennn/libopennn.a)
-	endif()
-endif (WIN32)
-
-if (UNIX)
-    if (CMAKE_GENERATOR MATCHES "Visual Studio 15 2017")
-		set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/build/opennn/Release/opennn.lib)
-	else()
-		set (PROJECT_LINK_LIBS ${CMAKE_SOURCE_DIR}/build/opennn/libopennn.a)
-	endif()
-endif (UNIX)
-
-include_directories(./data)
-
-FILE(COPY ./data/iris_plant.dat DESTINATION "${PROJECT_BINARY_DIR}/data")
+set (PROJECT_LINK_LIBS ../../opennn/Release/opennn)
 
 link_directories(${CMAKE_SOURCE_DIR}/opennn)
 
@@ -33,3 +15,6 @@ include_directories(${CMAKE_SOURCE_DIR}/opennn)
 add_executable(iris_plant main.cpp)
 
 target_link_libraries(iris_plant ${PROJECT_LINK_LIBS})
+
+
+

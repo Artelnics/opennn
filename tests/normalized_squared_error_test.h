@@ -1,23 +1,20 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R                        */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL (Artelnics)                     
+//   artelnics@artelnics.com
 
-#ifndef __NORMALIZEDSQUAREDERRORTEST_H__
-#define __NORMALIZEDSQUAREDERRORTEST_H__
+#ifndef NORMALIZEDSQUAREDERRORTEST_H
+#define NORMALIZEDSQUAREDERRORTEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
 
 using namespace OpenNN;
+
 
 class NormalizedSquaredErrorTest : public UnitTesting 
 {
@@ -28,17 +25,9 @@ class NormalizedSquaredErrorTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
-   explicit NormalizedSquaredErrorTest(void);
-
-
-   // DESTRUCTOR
+   explicit NormalizedSquaredErrorTest(void); 
 
    virtual ~NormalizedSquaredErrorTest(void);
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -56,16 +45,15 @@ public:
 
    // Error methods
 
-   void test_calculate_error(void);
+   void test_calculate_training_error(void);
 
-   void test_calculate_error_gradient(void);
-   void test_calculate_Hessian(void);
+   void test_calculate_training_error_gradient(void);
 
    // Error terms methods
 
-   void test_calculate_terms(void);
+   void test_calculate_training_error_terms(void);
 
-   void test_calculate_terms_Jacobian(void);
+   void test_calculate_training_error_terms_Jacobian(void);
 
    // Squared errors methods
 
@@ -88,7 +76,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

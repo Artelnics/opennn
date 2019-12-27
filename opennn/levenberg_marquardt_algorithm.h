@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S   H E A D E R                        */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __LEVENBERGMARQUARDTALGORITHM_H__
-#define __LEVENBERGMARQUARDTALGORITHM_H__
+#ifndef LEVENBERGMARQUARDTALGORITHM_H
+#define LEVENBERGMARQUARDTALGORITHM_H
 
 // System includes
 
@@ -28,150 +24,33 @@
 // OpenNN includes
 
 #include "optimization_algorithm.h"
-
-// TinyXml includes
-
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-/// This concrete class represents a Levenberg-Marquardt Algorithm training
-/// algorithm for the sum squared error loss index for a multilayer perceptron.
+/// This concrete class represents a Levenberg-Marquardt Algorithm training algorithm[1] for the sum squared error loss index for a neural network.
+
+///
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
+
 
 class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit LevenbergMarquardtAlgorithm();
 
-    // LOSS INDEX CONSTRUCTOR
-
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
-
-   // XML CONSTRUCTOR
 
    explicit LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument&);
 
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~LevenbergMarquardtAlgorithm();
-
-   // STRUCTURES
-
-   ///
-   /// This structure contains the training results for the Levenberg-Marquardt algorithm. 
-   ///
-
-   struct LevenbergMarquardtAlgorithmResults : public OptimizationAlgorithm::OptimizationAlgorithmResults
-   {
-       /// Default constructor.
-
-       LevenbergMarquardtAlgorithmResults()
-       {
-           Levenberg_Marquardt_algorithm_pointer = nullptr;
-       }
-
-       /// Random search constructor.
-
-       LevenbergMarquardtAlgorithmResults(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_algorithm_pointer)
-       {
-           Levenberg_Marquardt_algorithm_pointer = new_Levenberg_Marquardt_algorithm_pointer;
-       }
-
-       /// Destructor.
-
-       virtual ~LevenbergMarquardtAlgorithmResults()
-       {
-       }
-
-       /// Pointer to the Levenberg-Marquardt algorithm object for which the training results are to be stored.
-
-      LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm_pointer;
-
-      // Training history
-
-      /// History of the neural network parameters over the training iterations. 
-
-      Vector< Vector<double> > parameters_history;
-
-      /// History of the parameters norm over the training iterations. 
-
-      Vector<double> parameters_norm_history;
-
-      /// History of the loss function loss over the training iterations.
-
-      Vector<double> loss_history;
-
-      /// History of the selection error over the training iterations.
-
-      Vector<double> selection_error_history;
-
-      /// History of the loss function gradient over the training iterations. 
-
-      Vector< Vector<double> > gradient_history;
-
-      /// History of the gradient norm over the training iterations. 
-
-      Vector<double> gradient_norm_history;
-
-      /// History of the Hessian approximation over the training iterations. 
-
-      Vector< Matrix<double> > Hessian_approximation_history;
-
-      /// History of the damping parameter over the training iterations. 
-
-      Vector<double> damping_parameter_history;
-
-      /// History of the elapsed time over the training iterations. 
-
-      Vector<double> elapsed_time_history;
-
-      // Final values
-
-      /// Final neural network parameters vector. 
-
-      Vector<double> final_parameters;
-
-      /// Final neural network parameters norm. 
-
-      double final_parameters_norm;
-
-      /// Final loss function evaluation.
-
-      double final_loss;
-
-      /// Final selection error.
-
-      double final_selection_error;
-
-      /// Final loss function gradient. 
-
-      Vector<double> final_gradient;
-
-      /// Final gradient norm.
-
-      double final_gradient_norm;
-
-      /// Elapsed time of the training process. 
-
-      double elapsed_time;
-
-      /// Maximum number of training iterations.
-
-      size_t iterations_number;
-
-      void resize_training_history(const size_t&);
-      string object_to_string() const;
-
-      Matrix<string> write_final_results(const int& precision = 3) const;
-
-   };
-
-   // METHODS
 
    // Get methods
 
@@ -200,16 +79,8 @@ public:
 
    // Reserve training history
 
-   const bool& get_reserve_parameters_history() const;
-   const bool& get_reserve_parameters_norm_history() const;
-
-   const bool& get_reserve_error_history() const;
-   const bool& get_reserve_gradient_history() const;
-   const bool& get_reserve_gradient_norm_history() const;
-   const bool& get_reserve_Hessian_approximation_history() const;
+   const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
-
-   const bool& get_reserve_elapsed_time_history() const;
 
    // Utilities
 
@@ -219,8 +90,6 @@ public:
 
    const double& get_minimum_damping_parameter() const;
    const double& get_maximum_damping_parameter() const;
-
-   const bool& get_reserve_damping_parameter_history() const;
 
    const Vector<double>& get_damping_parameter_history() const;
 
@@ -234,8 +103,6 @@ public:
 
    void set_minimum_damping_parameter(const double&);
    void set_maximum_damping_parameter(const double&);
-
-   void set_reserve_damping_parameter_history(const bool&);
 
    // Training parameters
 
@@ -262,16 +129,8 @@ public:
 
    // Reserve training history
 
-   void set_reserve_parameters_history(const bool&);
-   void set_reserve_parameters_norm_history(const bool&);
-
-   void set_reserve_error_history(const bool&);
-   void set_reserve_gradient_history(const bool&);
-   void set_reserve_gradient_norm_history(const bool&);
-   void set_reserve_Hessian_approximation_history(const bool&);
+   void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-
-   void set_reserve_elapsed_time_history(const bool&);
 
    /// Makes the training history of all variables to be reseved or not in memory.
 
@@ -285,7 +144,7 @@ public:
 
    void check() const;
 
-   LevenbergMarquardtAlgorithmResults* perform_training();
+   Results perform_training();
 
    void perform_training_void();
 
@@ -299,8 +158,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   // void read_XML(   );
-
+   
    Vector<double> perform_Householder_QR_decomposition(const Matrix<double>&, const Vector<double>&) const;
 
 private:
@@ -323,15 +181,6 @@ private:
 
    double damping_parameter_factor;
 
-   /// True if the damping parameter history vector is to be reserved, false otherwise.  
-
-   bool reserve_damping_parameter_history;
-
-   /// Vector containing the damping parameter history over the training iterations.
-
-   Vector<double> damping_parameter_history;
-
-
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
    double warning_parameters_norm;
@@ -349,7 +198,7 @@ private:
    double error_gradient_norm;
 
 
-   // STOPPING CRITERIA
+   // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
 
@@ -390,33 +239,9 @@ private:
 
    // TRAINING HISTORY
 
-   /// True if the parameters history matrix is to be reserved, false otherwise.
-
-   bool reserve_parameters_history;
-
-   /// True if the parameters norm history vector is to be reserved, false otherwise.
-
-   bool reserve_parameters_norm_history;
-
    /// True if the loss history vector is to be reserved, false otherwise.
 
-   bool reserve_error_history;
-
-   /// True if the gradient history matrix is to be reserved, false otherwise.
-
-   bool reserve_gradient_history;
-
-   /// True if the gradient norm history vector is to be reserved, false otherwise.
-
-   bool reserve_gradient_norm_history;
-
-   /// True if the Hessian history vector of matrices is to be reserved, false otherwise.
-
-   bool reserve_Hessian_approximation_history;
-
-   /// True if the elapsed time history vector is to be reserved, false otherwise.
-
-   bool reserve_elapsed_time_history;
+   bool reserve_training_error_history;
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 

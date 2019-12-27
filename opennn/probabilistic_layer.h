@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R                                            */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P R O B A B I L I S T I C   L A Y E R   C L A S S   H E A D E R       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __PROBABILISTICLAYER_H__
-#define __PROBABILISTICLAYER_H__
+#ifndef PROBABILISTICLAYER_H
+#define PROBABILISTICLAYER_H
 
 // System includes
 
@@ -26,8 +22,11 @@
 
 #include "vector.h"
 #include "matrix.h"
+#include "functions.h"
+#include "layer.h"
+#include "metrics.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
@@ -35,71 +34,85 @@ namespace OpenNN
 {
 
 /// This class represents a layer of probabilistic neurons.
-/// The neural network defined in OpenNN includes a probabilistic layer for those problems 
-/// when the outptus are to be interpreted as probabilities. 
 
-class ProbabilisticLayer
+///
+/// The neural network defined in OpenNN includes a probabilistic layer for those problems
+/// when the outptus are to be interpreted as probabilities.
+/// It does not has Synaptic weights or Biases
+
+class ProbabilisticLayer : public Layer
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit ProbabilisticLayer();
 
-   // PROBABILISTIC NEURONS NUMBER CONSTRUCTOR
-
-   explicit ProbabilisticLayer(const size_t&);
-
-   // COPY CONSTRUCTOR
+   explicit ProbabilisticLayer(const size_t&, const size_t&);
 
    ProbabilisticLayer(const ProbabilisticLayer&);
 
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~ProbabilisticLayer();
 
-   // ASSIGNMENT OPERATOR
+   // Enumerations
 
-   ProbabilisticLayer& operator = (const ProbabilisticLayer&);
+   /// Enumeration of available methods for interpreting variables as probabilities.
 
-   // EQUAL TO OPERATOR
+   enum ActivationFunction{Binary, Logistic, Competitive, Softmax};
 
-   bool operator == (const ProbabilisticLayer&) const;
+   // Get methods
 
-   // ENUMERATIONS
+   Vector<size_t> get_input_variables_dimensions() const;
 
-   /// Enumeration of available methods for interpreting variables as probabilities.  
-   
-   enum ProbabilisticMethod{Binary, Probability, Competitive, Softmax, NoProbabilistic};
-
-   // GET METHODS
-
-   const size_t& get_probabilistic_neurons_number() const;
+   size_t get_inputs_number() const;
+   size_t get_neurons_number() const;
 
    const double& get_decision_threshold() const;
 
-   const ProbabilisticMethod& get_probabilistic_method() const;
-   string write_probabilistic_method() const;
-   string write_probabilistic_method_text() const;
-
+   const ActivationFunction& get_activation_function() const;
+   string write_activation_function() const;
+   string write_activation_function_text() const;
 
    const bool& get_display() const;
 
-   // SET METHODS
+   // Set methods
 
    void set();
-   void set(const size_t&);
+   void set(const size_t&, const size_t&);
    void set(const ProbabilisticLayer&);
 
-   void set_probabilistic_neurons_number(const size_t&);
+   void set_inputs_number(const size_t&);
+   void set_neurons_number(const size_t&);
+
+   void set_biases(const Vector<double>&);
+   void set_synaptic_weights(const Matrix<double>&);
+
+   void set_parameters(const Vector<double>&);
 
    void set_decision_threshold(const double&);
 
-   void set_probabilistic_method(const ProbabilisticMethod&);
-   void set_probabilistic_method(const string&);
+   void set_activation_function(const ActivationFunction&);
+   void set_activation_function(const string&);
 
    virtual void set_default();
+
+   // Parameters
+
+   Vector<double> get_biases() const;
+   Matrix<double> get_synaptic_weights() const;
+
+   Vector<double> get_biases(const Vector<double>&) const;
+   Matrix<double> get_synaptic_weights(const Vector<double>&) const;
+
+   Matrix<double> get_synaptic_weights_transpose() const;
+
+   size_t get_parameters_number() const;
+   Vector<double> get_parameters() const;
+
+//   void randomize_parameters_normal(const double& = 0.0, const double& = 1.0);
 
    // Display messages
 
@@ -107,37 +120,49 @@ public:
 
    // Pruning and growing
 
-   void prune_probabilistic_neuron();
+   void prune_neuron(const size_t&);
 
-   // Initialization methods
+   // Parameters initialization methods
 
-   void initialize_random();
+   void initialize_biases(const double&);
+   void initialize_synaptic_weights(const double&);
+   void initialize_synaptic_weights_Glorot(const double&,const double&);
 
-   // Probabilistic post-processing
+   void initialize_parameters(const double&);
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
+   void randomize_parameters_uniform();
+   void randomize_parameters_uniform(const double&, const double&);
 
-   Matrix<double> calculate_binary_outputs(const Matrix<double>&) const;
-   Vector <Matrix<double>> calculate_binary_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_binary_Hessian(const Vector<double>&) const;
+   void randomize_parameters_normal();
+   void randomize_parameters_normal(const double&, const double&);
 
-   Matrix<double> calculate_probability_outputs(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_probability_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_probability_Hessian(const Vector<double>&) const;
 
-   Matrix<double> calculate_competitive_outputs(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_competitive_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_competitive_Hessian(const Vector<double>&) const;
+   // Combinations
 
-   Matrix<double> calculate_softmax_outputs(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_softmax_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_softmax_Hessian(const Vector<double>&) const;
+   Tensor<double> calculate_combinations(const Tensor<double>&) const;
 
-   Matrix<double> calculate_no_probabilistic_outputs(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_no_probabilistic_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_no_probabilistic_Hessian(const Vector<double>&) const;
+   // Outputs
+
+   Tensor<double> calculate_outputs(const Tensor<double>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
+
+   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+
+   // Deltas
+
+   Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+
+   // Gradient methods
+
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+
+   // Activations
+
+   Tensor<double> calculate_activations(const Tensor<double>&) const;
+
+   Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
+
 
    // Expression methods
 
@@ -154,28 +179,26 @@ public:
    string object_to_string() const;
 
    virtual tinyxml2::XMLDocument* to_XML() const;
+
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
-   //virtual void read_XML(   );
-
+   
 protected:
 
    // MEMBERS
 
-   /// Number of probabilistic neurons in the layer. 
+   Vector<double> biases;
 
-   size_t probabilistic_neurons_number;
+   Matrix<double> synaptic_weights;
 
-   /// Decision threshold.
+   /// Activation function variable.
+
+   ActivationFunction activation_function = Logistic;
 
    double decision_threshold;
 
-   /// Probabilistic processing method.
-
-   ProbabilisticMethod probabilistic_method;
-
-   /// Display messages to screen. 
+   /// Display messages to screen.
 
    bool display;
 };
@@ -202,4 +225,3 @@ protected:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

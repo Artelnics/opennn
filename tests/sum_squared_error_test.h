@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   S U M   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R                                      */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S U M   S Q U A R E D   E R R O R   T E S T   C L A S S   H E A D E R 
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#pragma once
-#ifndef __SUMSQUAREDERRORTEST_H__
-#define __SUMSQUAREDERRORTEST_H__
+#ifndef SUMSQUAREDERRORTEST_H
+#define SUMSQUAREDERRORTEST_H
 
 // Unit testing includes
 
@@ -27,19 +22,11 @@ class SumSquaredErrorTest : public UnitTesting
 #define TOSTRING(x) STRING(x)
 #define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
 
-public:
+public: 
 
-   // GENERAL CONSTRUCTOR
-
-   explicit SumSquaredErrorTest();
-
-
-   // DESTRUCTOR
+   explicit SumSquaredErrorTest(); 
 
    virtual ~SumSquaredErrorTest();
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -52,22 +39,20 @@ public:
 
    // Error methods
 
-   void test_calculate_error();
+   void test_calculate_training_error();
    void test_calculate_selection_error();
 
    // Gradient methods
 
    void test_calculate_layers_delta();
 
-   void test_calculate_error_gradient();
-
-   void test_calculate_error_Hessian();
+   void test_calculate_training_error_gradient();
 
    // Error terms methods
 
-   void test_calculate_error_terms();
+   void test_calculate_training_error_terms();
 
-   void test_calculate_error_terms_Jacobian();
+   void test_calculate_training_error_terms_Jacobian();
 
    // Other methods
 
@@ -87,7 +72,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

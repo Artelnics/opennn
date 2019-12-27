@@ -1,23 +1,17 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   U N S C A L I N G   L A Y E R   T E S T   C L A S S   H E A D E R                                          */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   U N S C A L I N G   L A Y E R   T E S T   C L A S S   H E A D E R     
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __UNSCALINGLAYERTEST_H__
-#define __UNSCALINGLAYERTEST_H__
+#ifndef UNSCALINGLAYERTEST_H
+#define UNSCALINGLAYERTEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
-
 
 using namespace OpenNN;
 
@@ -31,16 +25,9 @@ class UnscalingLayerTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit UnscalingLayerTest();
 
-
-   // DESTRUCTOR
-
    virtual ~UnscalingLayerTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -55,7 +42,7 @@ public:
 
    // Multilayer perceptron architecture 
 
-   void test_get_unscaling_neurons_number();
+   void test_get_neurons_number();
 
    // Statistics
 
@@ -71,7 +58,7 @@ public:
    void test_get_standard_deviations();
    void test_get_standard_deviation();
 
-   void test_get_statistics();
+   void test_get_descriptives();
 
    // Variables scaling and unscaling
 
@@ -86,12 +73,12 @@ public:
 
    void test_get_display();
 
-   // SET METHODS
+   // Set methods
 
    void test_set();
    void test_set_default();
 
-   // Output variables statistics
+   // Output variables descriptives
 
    void test_set_means();
    void test_set_mean();
@@ -118,10 +105,6 @@ public:
    void test_set_display_outputs_warning();
    void test_set_display();
 
-   // Initialization methods
-
-   void test_initialize_random();
-
    // Input range
 
    void test_check_outputs_range();
@@ -129,8 +112,6 @@ public:
    // Outputs unscaling
 
    void test_calculate_outputs();
-   void test_calculate_derivatives();
-   void test_calculate_second_derivatives();
 
    // Expression methods
 
@@ -152,7 +133,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P E R C E P T R O N   L A Y E R   C L A S S   H E A D E R                                                  */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P E R C E P T R O N   L A Y E R   C L A S S   H E A D E R             
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __PERCEPTRONLAYER_H__
-#define __PERCEPTRONLAYER_H__
+#ifndef PERCEPTRONLAYER_H
+#define PERCEPTRONLAYER_H
 
 // System includes
 
@@ -25,63 +21,62 @@
 // OpenNN includes
 
 #include "vector.h"
+#include "layer.h"
 #include "matrix.h"
+#include "tensor.h"
+#include "functions.h"
+#include "metrics.h"
+#include "probabilistic_layer.h"
 
 namespace OpenNN
 {
 
 /// This class represents a layer of perceptrons.
+
+///
 /// Layers of perceptrons will be used to construct multilayer perceptrons. 
 
-class PerceptronLayer
+class PerceptronLayer : public Layer
 {
 
 public:
-    // ENUMERATIONS
+
+    // Enumerations
 
     /// Enumeration of available activation functions for the perceptron neuron model.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit PerceptronLayer();
 
-   // ARCHITECTURE CONSTRUCTOR 
-
    explicit PerceptronLayer(const size_t&, const size_t&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
-
-   // COPY CONSTRUCTOR
 
    PerceptronLayer(const PerceptronLayer&);
 
-   // DESTRUCTOR
+   // Destructor
    
    virtual ~PerceptronLayer();
 
-   // ASSIGNMENT OPERATOR
-
-   PerceptronLayer& operator = (const PerceptronLayer&);
-
-   // EQUAL TO OPERATOR
-
-   bool operator == (const PerceptronLayer&) const;
-
-
-   // GET METHODS
+   // Get methods
 
    bool is_empty() const;
 
+   Vector<size_t> get_input_variables_dimensions() const;
+
    size_t get_inputs_number() const;
-   size_t get_perceptrons_number() const;
+   size_t get_neurons_number() const;
 
    // Parameters
 
-   const Vector<double>& get_biases() const;
-   const Matrix<double>& get_synaptic_weights() const;
+   Vector<double> get_biases() const;
+   Matrix<double> get_synaptic_weights() const;
 
    Vector<double> get_biases(const Vector<double>&) const;
    Matrix<double> get_synaptic_weights(const Vector<double>&) const;
+
+   Matrix<double> get_synaptic_weights_transpose() const;
 
    size_t get_parameters_number() const;
    Vector<double> get_parameters() const;
@@ -96,7 +91,7 @@ public:
 
    const bool& get_display() const;
 
-   // SET METHODS
+   // Set methods
 
    void set();
    void set(const size_t&, const size_t&, const PerceptronLayer::ActivationFunction& = PerceptronLayer::HyperbolicTangent);
@@ -107,7 +102,7 @@ public:
    // Architecture
 
    void set_inputs_number(const size_t&);
-   void set_perceptrons_number(const size_t&);
+   void set_neurons_number(const size_t&);
 
    // Parameters
 
@@ -132,30 +127,21 @@ public:
    void grow_perceptrons(const size_t&);
 
    void prune_input(const size_t&);
-   void prune_perceptron(const size_t&);
-
-   // Initialization methods
-
-   void initialize_random();
+   void prune_neuron(const size_t&);
 
    // Parameters initialization methods
 
    void initialize_biases(const double&); 
    void initialize_synaptic_weights(const double&);
-   void initialize_synaptic_weights_Glorot(const double&,const double&);
-
+   void initialize_synaptic_weights_glorot_uniform();
 
    void initialize_parameters(const double&);
 
    void randomize_parameters_uniform();
    void randomize_parameters_uniform(const double&, const double&);
-   void randomize_parameters_uniform(const Vector<double>&, const Vector<double>&);
-   void randomize_parameters_uniform(const Vector< Vector<double> >&);
 
    void randomize_parameters_normal();
-   void randomize_parameters_normal(const double&, const double&);
-   void randomize_parameters_normal(const Vector<double>&, const Vector<double>&);
-   void randomize_parameters_normal(const Vector< Vector<double> >&);
+   void randomize_parameters_normal(const double& = 0.0, const double& = 1.0);
 
    // Parameters norm 
 
@@ -163,25 +149,33 @@ public:
 
    // Perceptron layer combinations
 
-   Matrix<double> calculate_combinations(const Matrix<double>&) const;
+   Tensor<double> calculate_combinations(const Tensor<double>&) const;
 
-   Matrix<double> calculate_combinations(const Matrix<double>&, const Vector<double>&) const;
+   Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
 
-   Matrix<double> calculate_combinations(const Matrix<double>&, const Vector<double>&, const Matrix<double>&) const;
+   Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    // Perceptron layer activations
 
-   Matrix<double> calculate_activations(const Matrix<double>&) const;
-   Matrix<double> calculate_activations_derivatives(const Matrix<double>&) const;
+   Tensor<double> calculate_activations(const Tensor<double>&) const;
+   Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
 
    // Perceptron layer outputs
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_outputs(const Matrix<double>&, const Vector<double>&, const Matrix<double>&) const;
+   Tensor<double> calculate_outputs(const Tensor<double>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
+   Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
 
-   Matrix<double> calculate_outputs_combinations(const Matrix<double>&) const;
+   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
 
-   Vector<Matrix<double>> calculate_Jacobian(const Matrix<double>&) const;
+   // Delta methods
+
+   Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+
+   // Gradient methods
+
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
 
    // Expression methods
 
@@ -190,7 +184,7 @@ public:
 
    string object_to_string() const;
 
-private:
+protected:
 
    // MEMBERS
 
@@ -229,4 +223,3 @@ private:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

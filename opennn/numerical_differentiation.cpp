@@ -1,23 +1,15 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   N U M E R I C A L   D I F F E R E N T I A T I O N   C L A S S                                              */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   N U M E R I C A L   D I F F E R E N T I A T I O N   C L A S S         
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "numerical_differentiation.h"
 
 namespace OpenNN
 {
-
-// DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
 /// It creates a numerical differentiation object with the default members. 
@@ -28,8 +20,6 @@ NumericalDifferentiation::NumericalDifferentiation()
 }
 
 
-// COPY CONSTRUCTOR
-
 /// Copy constructor. 
 
 NumericalDifferentiation::NumericalDifferentiation(const NumericalDifferentiation& other_numerical_differentiation)
@@ -38,62 +28,12 @@ NumericalDifferentiation::NumericalDifferentiation(const NumericalDifferentiatio
 }
 
 
-// DESTRUCTOR
-
 /// Destructor.
 
 NumericalDifferentiation::~NumericalDifferentiation()
 {
 
 }
-
-
-// ASSIGNMENT OPERATOR
-
-
-/// Assignment operator.
-/// This operator sets the members of this object with the members of another object. 
-/// @param other_numerical_differentiation Numerical differentiation object to be copied.
-
-NumericalDifferentiation& NumericalDifferentiation::operator = (const NumericalDifferentiation& other_numerical_differentiation)
-{
-   if(this != &other_numerical_differentiation) 
-   {
-      numerical_differentiation_method = other_numerical_differentiation.numerical_differentiation_method;
-
-      precision_digits = other_numerical_differentiation.precision_digits;
-
-      display = other_numerical_differentiation.display;
-   }
-
-   return(*this);
-}
-
-
-// EQUAL TO OPERATOR
-
-
-/// Equal to operator. 
-/// This operator compares another object to this object. 
-/// It returns true if both objects are equal and false otherwise. 
-/// @param other_numerical_differentiation Numerical differentiation object to be compared.
-
-bool NumericalDifferentiation::operator == (const NumericalDifferentiation& other_numerical_differentiation) const
-{
-   if(numerical_differentiation_method == other_numerical_differentiation.numerical_differentiation_method
-   && precision_digits == other_numerical_differentiation.precision_digits
-   && display == other_numerical_differentiation.display)
-   {
-      return(true);
-   }
-   else
-   {
-      return(false);
-   }
-}
-
-
-// METHODS
 
 
 /// Returns the method used for numerical differentiation(forward differences or central differences).
@@ -112,20 +52,16 @@ string NumericalDifferentiation::write_numerical_differentiation_method() const
    {
       case ForwardDifferences:
       {
-         return("ForwardDifferences");
+         return "ForwardDifferences";
 	  }
 
       case CentralDifferences:
       {
-         return("CentralDifferences");
+         return "CentralDifferences";
  	  }
-
-//      default: throw logic_error("Error: string NumericalDifferentiation::write_numerical_differentiation_method() const");
    }
 
-   // Default
-
-   throw logic_error("Error: string NumericalDifferentiation::write_numerical_differentiation_method() const");
+   return string();
 }
 
 
@@ -141,7 +77,7 @@ const size_t& NumericalDifferentiation::get_precision_digits() const
 
 const bool& NumericalDifferentiation::get_display() const
 {
-   return(display);
+   return display;
 }
 
 
@@ -238,7 +174,7 @@ double NumericalDifferentiation::calculate_h(const double& x) const
 {
    const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
 
-   return(sqrt(eta)*(1.0 + fabs(x)));
+   return(sqrt(eta)*(1.0 + abs(x)));
 }
 
 
@@ -255,16 +191,39 @@ Vector<double> NumericalDifferentiation::calculate_h(const Vector<double>& x) co
 
    for(size_t i = 0; i < n; i++)
    {
-      h[i] = sqrt(eta)*(1.0 + fabs(x[i]));
+      h[i] = sqrt(eta)*(1.0 + abs(x[i]));
    }
  
    return(h);
 }
 
 
-Vector<double> NumericalDifferentiation::calculate_backward_differences_derivatives(const Vector<double>& x, const Vector<double>& y) const
+/// Calculates a tensor of step sizes for computing the derivatives, as a function of a vector of inputs.
+/// @param x Input tensor.
+
+Tensor<double> NumericalDifferentiation::calculate_h(const Tensor<double>& x) const
 {
-    // Control sentence(if debug)
+   const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
+
+   const size_t n = x.size();
+
+   const Vector<size_t> dimensions = x.get_dimensions();
+
+   Tensor<double> h(dimensions);
+
+   for(size_t i = 0; i < n; i++)
+   {
+      h[i] = sqrt(eta)*(1.0 + abs(x[i]));
+   }
+
+   return(h);
+}
+
+
+Vector<double> NumericalDifferentiation::calculate_backward_differences_derivatives(const Vector<double>& x,
+                                                                                    const Vector<double>& y) const
+{
+    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -319,7 +278,7 @@ Vector<double> NumericalDifferentiation::calculate_backward_differences_derivati
 tinyxml2::XMLDocument* NumericalDifferentiation::to_XML() const  
 {
    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-/*
+
    tinyxml2::XMLElement* element = nullptr;
    tinyxml2::XMLText* text = nullptr;
 
@@ -360,8 +319,8 @@ tinyxml2::XMLDocument* NumericalDifferentiation::to_XML() const
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
- */  
-   return(document);
+
+   return document;
 }
 
 

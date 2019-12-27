@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S   H E A D E R                                      */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S   H E A D E R 
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __OPTIMIZATIONALGORITHM_H__
-#define __OPTIMIZATIONALGORITHM_H__
+#ifndef OPTIMIZATIONALGORITHM_H
+#define OPTIMIZATIONALGORITHM_H
 
 // System includes
 
@@ -27,14 +23,16 @@
 
 #include "loss_index.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-/// This abstract class represents the concept of optimization algorithm for a neural network. 
+/// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
+
+///
 /// Any derived class must implement the perform_training() method.
 
 class OptimizationAlgorithm
@@ -42,53 +40,29 @@ class OptimizationAlgorithm
 
 public:
 
-   // DEFAULT CONSTRUCTOR
-
    explicit OptimizationAlgorithm();
-
-   // GENERAL CONSTRUCTOR
 
    explicit OptimizationAlgorithm(LossIndex*);
 
-   // XML CONSTRUCTOR
-
    explicit OptimizationAlgorithm(const tinyxml2::XMLDocument&);
 
-   // DESTRUCTOR
-
    virtual ~OptimizationAlgorithm();
-
-    // ASSIGNMENT OPERATOR
-
-    virtual OptimizationAlgorithm& operator = (const OptimizationAlgorithm&);
-
-    // EQUAL TO OPERATOR
-
-    virtual bool operator == (const OptimizationAlgorithm&) const;
-
-    // ENUMERATIONS
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
-                           MaximumSelectionErrorIncreases, MaximumIterationsNumber, MaximumTime};
+                           MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
-   // STRUCTURES
+   /// This structure contains the optimization algorithm results.    
 
-   ///
-   /// This structure contains the optimization algorithm results. 
-   ///
-
-   struct OptimizationAlgorithmResults
+   struct Results
    {
-       explicit OptimizationAlgorithmResults()
+       explicit Results()
        {
-
        }
 
-       virtual ~OptimizationAlgorithmResults()
+       virtual ~Results()
        {
-
        }
 
        string write_stopping_condition() const;
@@ -97,27 +71,71 @@ public:
 
        StoppingCondition stopping_condition;
 
-      /// Returns a string representation of the results structure. 
+       /// Returns a string representation of the results structure.
 
-      virtual string object_to_string() const
-      {
-         string str;
+       string object_to_string() const;
 
-         return(str);
-      }
+       void save(const string&) const;
 
        /// Returns a default(empty) string matrix with the final results from training.
 
-       virtual Matrix<string> write_final_results(const size_t&) const
-       {
-          Matrix<string> final_results;         
+       Matrix<string> write_final_results(const size_t&) const;
 
-          return(final_results);
-       }
+       /// Resizes training history variables.
+
+       void resize_training_history(const size_t&);
+
+       /// Writes final results of the training.
+
+       Matrix<string> write_final_results(const int& precision = 3) const;
+
+       // Training history
+
+       /// History of the loss function loss over the training iterations.
+
+       Vector<double> training_error_history;
+
+       /// History of the selection error over the training iterations.
+
+       Vector<double> selection_error_history;
+
+       // Final values
+
+       /// Final neural network parameters vector.
+
+       Vector<double> final_parameters;
+
+       /// Final neural network parameters norm.
+
+       double final_parameters_norm;
+
+       /// Final loss function evaluation.
+
+       double final_training_error;
+
+       /// Final selection error.
+
+       double final_selection_error;
+
+       /// Final gradient norm.
+
+       double final_gradient_norm;
+
+       /// Elapsed time of the training process.
+
+       double elapsed_time;
+
+       /// Maximum number of training iterations.
+
+       size_t epochs_number;
+
+       /// Stopping criterion.
+
+       string stopping_criterion;
    };
 
 
-   // METHODS
+
 
    // Get methods
 
@@ -140,11 +158,6 @@ public:
    void set();
    void set(LossIndex*);
 
-   void set_training_batch_size(const size_t&);
-   void set_selection_batch_size(const size_t&);
-
-//   void set_epochs_number(const size_t&);
-
    virtual void set_default();
 
    virtual void set_loss_index_pointer(LossIndex*);
@@ -162,7 +175,7 @@ public:
 
    /// Trains a neural network which has a loss index associated. 
 
-   virtual OptimizationAlgorithmResults* perform_training() = 0;
+   virtual Results perform_training() = 0;
 
    virtual string write_optimization_algorithm_type() const {return string();}
 
@@ -177,23 +190,17 @@ public:
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
-   //virtual void read_XML(   );
 
    void save(const string&) const;
    void load(const string&);
 
-   virtual void initialize_random();
-
 protected:
 
-   // FIELDS
+   /// Pointer to a loss index for a neural network object.
 
-   /// Pointer to a loss index for a multilayer perceptron object.
+   LossIndex* loss_index_pointer = nullptr;
 
-   LossIndex* loss_index_pointer;
-
-   size_t training_batch_size = 100;
-   size_t selection_batch_size = 100;
+   /// Number of training epochs in the neural network.
 
    size_t epochs_number = 10000;
 
@@ -214,8 +221,6 @@ protected:
    /// Display messages to screen.
 
    bool display;
-
-
 };
 
 }
@@ -239,4 +244,3 @@ protected:
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

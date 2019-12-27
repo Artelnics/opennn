@@ -1,14 +1,10 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
-/*                                                                                                              */
-/*   S I M P L E   P A T T E R N   R E C O G N I T I O N   A P P L I C A T I O N                                */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S I M P L E   P A T T E R N   R E C O G N I T I O N   A P P L I C A T I O N
+//
+//   Artificial Intelligence Techniques SL (Artelnics)
+//   artelnics@artelnics.com
 
 // This is a pattern recognition problem. 
 
@@ -29,68 +25,44 @@ int main(void)
 {
     try
     {
-        cout << "OpenNN. Simple Pattern Recognition Application." << endl;
+        cout << "OpenNN. Simple classification example." << endl;
 
         // Data set
 
-        DataSet data_set;
+        DataSet data_set("../data/simple_pattern_recognition.csv", ';', true);
 
-        data_set.set_data_file_name("../data/simple_pattern_recognition.dat");
+        // Variables
 
-        data_set.load_data();
+        data_set.set_training();
 
-        Variables* variables_pointer = data_set.get_variables_pointer();
+        const Vector<string> inputs_names = data_set.get_input_variables_names();
+        const Vector<string> targets_names = data_set.get_target_variables_names();
 
-        variables_pointer->set_name(0, "x1");
-        variables_pointer->set_name(1, "x2");
-        variables_pointer->set_name(2, "y");
-
-        Instances* instances_pointer = data_set.get_instances_pointer();
-
-        instances_pointer->set_training();
-
-        Matrix<string> inputs_information = variables_pointer->get_inputs_information();
-        Matrix<string> targets_information = variables_pointer->get_targets_information();
-
-        const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(2, 2, 1);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, {2, 2, 1});
 
-        Inputs* inputs_pointer = neural_network.get_inputs_pointer();
-
-        inputs_pointer->set_information(inputs_information);
-
-        neural_network.construct_scaling_layer();
+        neural_network.set_inputs_names(inputs_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_statistics(inputs_statistics);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
 
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
-
-        MultilayerPerceptron* multilayer_perceptron_pointer = neural_network.get_multilayer_perceptron_pointer();
-
-        multilayer_perceptron_pointer->set_layer_activation_function(1, PerceptronLayer::Logistic);
-
-        Outputs* outputs_pointer = neural_network.get_outputs_pointer();
-
-        outputs_pointer->set_information(targets_information);
+        neural_network.set_outputs_names(targets_names);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-4);
-
-        const TrainingStrategy::Results training_strategy_results = training_strategy.perform_training();
+        const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 
-        instances_pointer->set_testing();
+        data_set.set_testing();
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -106,24 +78,26 @@ int main(void)
         neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
-        training_strategy_results.save("../data/training_strategy_results.dat");
+//        training_strategy_results.save("../data/training_strategy_results.dat");
 
         binary_classification_tests.save("../data/binary_classification_tests.dat");
-        confusion.save("../data/confusion.dat");
+//        confusion.save("../data/confusion.dat");
 
-        return(0);
+        cout << "Bye" << endl;
+
+        return 0;
     }
     catch(exception& e)
     {
         cerr << e.what() << endl;
 
-        return(1);
+        return 1;
     }
 }  
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

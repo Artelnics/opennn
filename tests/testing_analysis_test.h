@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   T E S T I N G   A N A L Y S I S   T E S T   C L A S S   H E A D E R                                        */
-/*                                                                                                              */
- 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   T E S T I N G   A N A L Y S I S   T E S T   C L A S S   H E A D E R   
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __TESTINGANALYSISTEST_H__
-#define __TESTINGANALYSISTEST_H__
+#ifndef TESTINGANALYSISTEST_H
+#define TESTINGANALYSISTEST_H
 
 // Unit testing includes
 
@@ -30,17 +25,9 @@ class TestingAnalysisTest : public UnitTesting
 
 public:  
 
-   // GENERAL CONSTRUCTOR
-
-   explicit TestingAnalysisTest();
-
-
-   // DESTRUCTOR
+   explicit TestingAnalysisTest();   
 
    virtual ~TestingAnalysisTest();
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -61,26 +48,32 @@ public:
 
    void test_set_display();
 
-   // Target and output data methods
-
-   void test_calculate_target_outputs();
-
    // Error data methods
 
    void test_calculate_error_data();
+   void test_calculate_percentage_error_data();
+   void test_calculate_forecasting_error_data();
+
+   void test_calculate_absolute_errors_statistics();
+
+   void test_calculate_percentage_errors_statistics();
 
    void test_calculate_error_data_statistics();
+   void test_print_error_data_statistics();
    void test_calculate_error_data_statistics_matrices();
 
    void test_calculate_error_data_histograms();
 
+   void test_calculate_maximal_errors();
+
    // Linear regression parameters methods
 
-   void test_calculate_linear_regression_parameters();
-   void test_print_linear_regression_parameters();
-   void test_save_linear_regression_parameters();
+   void test_linear_regression();
+   void test_print_linear_regression_correlation();
+   void test_get_linear_regression_correlations_std();
+   void test_save_linear_regression();
 
-   void test_perform_linear_regression_parameters();
+   void test_perform_linear_regression();
 
    void test_print_linear_regression_analysis();
    void test_save_linear_regression_analysis();
@@ -133,7 +126,7 @@ public:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the s of the GNU Lesser General Public

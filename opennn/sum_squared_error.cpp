@@ -1,16 +1,10 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   S U M   S Q U A R E D   E R R O R   C L A S S                                                              */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S U M   S Q U A R E D   E R R O R   C L A S S                         
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "sum_squared_error.h"
 
@@ -84,8 +78,6 @@ SumSquaredError::SumSquaredError(const SumSquaredError& new_sum_squared_error)
 }
 
 
-// DESTRUCTOR
-
 /// Destructor.
 
 SumSquaredError::~SumSquaredError() 
@@ -93,7 +85,9 @@ SumSquaredError::~SumSquaredError()
 }
 
 
-// METHODS
+/// This method calculates the sum squared error of the given batch.
+/// Returns the sum squared error of this batch.
+/// @param batch_indices Indices of the batch instances corresponding to the dataset
 
 double SumSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices) const
 {
@@ -103,23 +97,19 @@ check();
 
 #endif
 
-    // Multilayer perceptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
     // Data set
 
-    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
-    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
 
-    const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const double training_error = outputs.calculate_sum_squared_error(targets);
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-    return training_error;
+    return sum_squared_error(outputs, targets);
 }
 
-double SumSquaredError::calculate_training_error() const
+
+double SumSquaredError::calculate_batch_error(const Vector<size_t>& batch_indices, const Vector<double>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -127,196 +117,21 @@ check();
 
 #endif
 
-    // Multilayer perceptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
     // Data set
 
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
 
-    const size_t batches_number = training_batches.size();
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    double training_error = 0.0;
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    #pragma omp parallel for reduction(+ : training_error)
-
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
-    {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
-
-        const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
-
-        const double batch_error = outputs.calculate_sum_squared_error(targets);
-
-        training_error += batch_error;
-    }
-
-    return training_error;
+    return sum_squared_error(outputs, targets);
 }
 
 
-double SumSquaredError::calculate_selection_error() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Multilayer perceptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    // Data set
-
-    const Vector< Vector<size_t> > selection_batches = data_set_pointer->get_instances_pointer()->get_selection_batches(batch_size);
-
-    const size_t batches_number = selection_batches.size();
-
-    double selection_error = 0.0;
-
-    #pragma omp parallel for reduction(+ : selection_error)
-
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
-    {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(selection_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(selection_batches[static_cast<unsigned>(i)]);
-
-        const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
-
-        const double batch_error = outputs.calculate_sum_squared_error(targets);
-
-        selection_error += batch_error;
-    }
-
-    return selection_error;
-}
-
-
-double SumSquaredError::calculate_training_error(const Vector<double>& parameters) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Multilayer perceptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    // Data set
-
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
-
-    const size_t batches_number = training_batches.size();
-
-    double training_error = 0.0;
-
-    #pragma omp parallel for reduction(+ : training_error)
-
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
-    {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
-
-        const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
-
-        const double batch_error = outputs.calculate_sum_squared_error(targets);
-
-        training_error += batch_error;
-    }
-
-    return training_error;
-}
-
-
-Vector<double> SumSquaredError::calculate_training_error_gradient() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
-
-    // Data set
-
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
-
-    const size_t batches_number = training_batches.size();
-
-    // Loss index
-
-    Vector<double> training_error_gradient(parameters_number, 0.0);
-
-    #pragma omp parallel for
-
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
-    {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
-
-        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
-                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-        const Matrix<double> output_gradient
-                = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
-
-        const Vector< Matrix<double> > layers_delta
-                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
-
-        const Vector<double> batch_gradient
-                = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
-
-        #pragma omp critical
-
-        training_error_gradient += batch_gradient;
-    }
-
-    return training_error_gradient;
-}
-
-
-Vector<double> SumSquaredError::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    // Loss index
-
-    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
-    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
-
-    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
-            = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-    const Matrix<double> output_gradient = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
-
-    const Vector< Matrix<double> > layers_delta = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
-
-    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
-
-    return batch_error_gradient;
-}
+/// This method calculates the first order loss.
+/// It is used for optimization of parameters during training.
+/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 
 LossIndex::FirstOrderLoss SumSquaredError::calculate_first_order_loss() const
 {
@@ -326,69 +141,71 @@ check();
 
 #endif
 
-    // Multilayer perceptron
+    // Neural network
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+     bool is_forecasting = false;
+
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Data set
 
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const size_t batches_number = training_batches.size();
 
     FirstOrderLoss first_order_loss(parameters_number);
 
-    #pragma omp parallel for
+     #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
-                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
         const Vector<double> error_terms
-                = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-        const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+        const Tensor<double> output_gradient = (forward_propagation.get_last().activations - targets).divide(error_terms, 0);
 
-        const Vector< Matrix<double> > layers_delta
-                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
         const Matrix<double> error_terms_Jacobian
-                = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
         const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = error_terms.dot(error_terms);
+        const double loss = dot(error_terms, error_terms);
 
-        const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+        const Vector<double> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
-        #pragma omp critical
+          #pragma omp critical
         {
             first_order_loss.loss += loss;
             first_order_loss.gradient += gradient;
          }
     }
 
-//    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
-
     first_order_loss.gradient *= 2.0;
 
-    if(regularization_method != RegularizationMethod::None)
+    if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        first_order_loss.loss += calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient();
+        first_order_loss.loss += regularization_weight*calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
 
     return first_order_loss;
 }
 
+
+/// This method calculates the first order loss for the selected batch.
+/// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
+/// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
 LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
 {
@@ -398,220 +215,147 @@ check();
 
 #endif
 
-    // Multilayer perceptron
+    // Neural network
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
     FirstOrderLoss first_order_loss(parameters_number);
 
-    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
-    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
-            = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+    const Vector<Layer::FirstOrderActivations> forward_propagation
+            = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
-    const Matrix<double> output_gradient = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+    const Tensor<double> output_gradient
+            = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
 
-    const Vector< Matrix<double> > layers_delta = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+    const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, forward_propagation, layers_delta);
 
-    const double batch_error = first_order_forward_propagation.layers_activations[layers_number-1].calculate_sum_squared_error(targets);
+    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, targets);
 
     first_order_loss.loss = batch_error;
     first_order_loss.gradient += batch_error_gradient;
 
-    if(regularization_method != RegularizationMethod::None)
+    if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        first_order_loss.loss += calculate_regularization();
-        first_order_loss.gradient += calculate_regularization_gradient();
+        first_order_loss.loss += regularization_weight*calculate_regularization();
+        first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
     }
 
     return first_order_loss;
 }
 
 
-/// Returns the loss value of a neural network according to the sum squared error on a data set.
+/// This method calculates the gradient of the output error function, necessary for backpropagation.
+/// Returns the gradient value.
+/// @param outputs Tensor with the values of the outputs from the neural network.
+/// @param targets Tensor with the values of the targets from the dataset.
 
-double SumSquaredError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
+Tensor<double> SumSquaredError::calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets) const
 {
-   #ifdef __OPENNN_DEBUG__
-
-   check();
-
-   #endif
-
-   return outputs.calculate_sum_squared_error(targets);
-}
-
-
-double SumSquaredError::calculate_error(const Vector<size_t>& instances_indices, const Vector<double>& parameters) const
-{
-   // Neural network stuff
-
-   #ifdef __OPENNN_DEBUG__
-
-   check();
-
-   // Sum squared error stuff
-
-   ostringstream buffer;
-
-   const size_t size = parameters.size();
-
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
-
-   if(size != parameters_number)
-   {
-      buffer << "OpenNN Exception: SumSquaredError class." << endl
-             << "double calculate_error(const Vector<double>&) const method." << endl
-             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ")." << endl;
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   // Data set stuff
-
-   const Matrix<double> inputs = data_set_pointer->get_inputs(instances_indices);
-
-   const Matrix<double> targets = data_set_pointer->get_targets(instances_indices);
-
-   // Neural network stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
-
-   return calculate_error(outputs, targets);
-}
-
-
-// Test combination
-
-Matrix<double> SumSquaredError::calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    return (outputs-targets)*2.0;
-}
-
-
-
-/// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
-
-Vector<double> SumSquaredError::calculate_error_terms(const Matrix<double>& outputs, const Matrix<double>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Control sentence
-
     #ifdef __OPENNN_DEBUG__
 
     check();
 
     #endif
 
-    return outputs.calculate_error_rows(targets);
+    return (outputs-targets)*2.0;
 }
 
 
-Vector<double> SumSquaredError::calculate_error_terms(const Vector<double>& parameters) const
+/// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
+
+Vector<double> SumSquaredError::calculate_training_error_terms(const Tensor<double>& outputs, const Tensor<double>& targets) const
 {
-#ifdef __OPENNN_DEBUG__
+    #ifdef __OPENNN_DEBUG__
 
-check();
+    check();
 
-#endif
+    #endif
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    return error_rows(outputs, targets);
+}
 
-    const Matrix<double> inputs = data_set_pointer->get_training_inputs();
 
-    const Matrix<double> targets = data_set_pointer->get_training_targets();
+/// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances.
+/// @param parameters
 
-    const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
+Vector<double> SumSquaredError::calculate_training_error_terms(const Vector<double>& parameters) const
+{
+    #ifdef __OPENNN_DEBUG__
 
-    return outputs.calculate_error_rows(targets);
+    check();
+
+    #endif
+
+    const Tensor<double> inputs = data_set_pointer->get_training_input_data();
+
+    const Tensor<double> targets = data_set_pointer->get_training_target_data();
+
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+
+    return error_rows(outputs, targets);
 }
 
 
 /// Returns the squared errors of the training instances. 
+/// @todo Use batchs, ready to review.
 
 Vector<double> SumSquaredError::calculate_squared_errors() const
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__
 
    check();
 
    #endif
-/*
-   // Neural network stuff
 
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    bool is_forecasting = false;
 
-   // Data set stuff
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-   const Instances& instances = data_set_pointer->get_instances();
+   // Data set
 
-   const Vector<size_t> training_indices = instances.get_training_indices();
+   const Vector<Vector<size_t>> batch_indices = data_set_pointer->get_training_batches(!is_forecasting);
 
-   const size_t training_instances_number = training_indices.size();
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.get_inputs_indices();
-   const Vector<size_t> targets_indices = variables.get_targets_indices();
-
-   const MissingValues missing_values = data_set_pointer->get_missing_values();
+   const size_t batches_number = batch_indices.size();
 
    // Loss index
 
-   Vector<double> squared_errors(training_instances_number);
+   Vector<double> squared_errors(batches_number);
 
-   #pragma omp parallel for
+    #pragma omp parallel for
 
-   for(int i = 0; i < static_cast<int>(training_instances_number); i++)
+   for(size_t i = 0; i < batches_number ; i++)
    {
-       const size_t training_index = training_indices[i];
-
       // Input vector
 
-      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
+      const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices[static_cast<size_t>(i)]);
 
       // Output vector
 
-      const Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+      const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
       // Target vector
 
-      const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
+      const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices[static_cast<size_t>(i)]);
 
       // Error
 
-      squared_errors[i] = outputs.calculate_sum_squared_error(targets);
+      squared_errors[i] = sum_squared_error(outputs, targets);
    }
 
-   return(squared_errors);
-*/
-    return Vector<double>();
+   return squared_errors;
 }
 
+
+/// This method calculates the second order loss.
+/// It is used for optimization of parameters during training.
+/// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
 
 LossIndex::SecondOrderLoss SumSquaredError::calculate_terms_second_order_loss() const
 {
@@ -621,64 +365,64 @@ check();
 
 #endif
 
-    // Multilayer perceptron
+    // Neural network
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
+     bool is_forecasting = false;
+
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Data set
 
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const size_t batches_number = training_batches.size();
 
     SecondOrderLoss terms_second_order_loss(parameters_number);
 
-    #pragma omp parallel for
+     #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
-                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
+        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
         const Vector<double> error_terms
-                = calculate_error_terms(first_order_forward_propagation.layers_activations[layers_number-1], targets);
+                = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
-        const Matrix<double> output_gradient = (first_order_forward_propagation.layers_activations[layers_number-1] - targets)/error_terms;
+        const Tensor<double> output_gradient = (forward_propagation[layers_number-1].activations - targets).divide(error_terms, 0);
 
-        const Vector< Matrix<double> > layers_delta
-                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
+        const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
         const Matrix<double> error_terms_Jacobian
-                = calculate_error_terms_Jacobian(inputs, first_order_forward_propagation.layers_activations, layers_delta);
+                = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
         const Matrix<double> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
 
-        const double loss = error_terms.dot(error_terms);
+        const double loss = dot(error_terms, error_terms);
 
-        const Vector<double> gradient = error_terms_Jacobian_transpose.dot(error_terms);
+        const Vector<double> gradient = dot(error_terms_Jacobian_transpose, error_terms);
 
-        Matrix<double> Hessian_approximation;
-        Hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
+        Matrix<double> hessian_approximation;
+        //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
 
-        #pragma omp critical
+          #pragma omp critical
         {
             terms_second_order_loss.loss += loss;
             terms_second_order_loss.gradient += gradient;
-            terms_second_order_loss.Hessian_approximation += Hessian_approximation;
+            terms_second_order_loss.hessian += hessian_approximation;
          }
     }
 
-//    const Matrix<double> regularization_Hessian = loss_index_pointer->calculate_regularization_Hessian();
+    const Matrix<double> regularization_hessian = calculate_regularization_hessian();
 
     terms_second_order_loss.gradient *= 2.0;
-    terms_second_order_loss.Hessian_approximation *= 2.0;
+    terms_second_order_loss.hessian *= 2.0;
 
     return terms_second_order_loss;
 }
@@ -692,11 +436,12 @@ string SumSquaredError::get_error_type() const
 }
 
 
+/// Returns a string with the name of the sum squared error loss type in text format.
+
 string SumSquaredError::get_error_type_text() const
 {
-   return "Sun squared error";
+   return "Sum squared error";
 }
-
 
 
 /// Returns a representation of the sum squared error object, in XML format. 
@@ -726,11 +471,14 @@ tinyxml2::XMLDocument* SumSquaredError::to_XML() const
 //      display_element->LinkEndChild(display_text);
 //   }
 
-   return(document);
+   return document;
 }
 
 
 // void write_XML(tinyxml2::XMLPrinter&) const method
+
+/// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document
 
 void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -747,8 +495,6 @@ void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     write_regularization_XML(file_stream);
 }
 
-
-// void load(const tinyxml2::XMLDocument&) method
 
 /// Loads a sum squared error object from a XML document.
 /// @param document TinyXML document containing the members of the object.

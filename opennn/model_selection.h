@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M O D E L   S E L E C T I O N   C L A S S   H E A D E R                                                    */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M O D E L   S E L E C T I O N   C L A S S   H E A D E R               
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __MODELSELECTION_H__
-#define __MODELSELECTION_H__
+#ifndef MODELSELECTION_H
+#define MODELSELECTION_H
 
 // System includes
 
@@ -26,76 +21,50 @@
 // OpenNN includes
 
 #include "training_strategy.h"
-
-#include "incremental_order.h"
-#include "golden_section_order.h"
-#include "simulated_annealing_order.h"
-
+#include "incremental_neurons.h"
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
-
-// TinyXml includes
-
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-/// This class represents the concept of model selection algorithm.
-/// It is used for finding a network architecture with maximum selection capabilities.
+/// This class represents the concept of model selection[1] algorithm in OpenNN.
+
+///
+/// It is used for finding a network architecture with maximum generalization capabilities.
+///
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
 
 class ModelSelection
 {
 
 public:  
 
-    // DEFAULT CONSTRUCTOR
+    // Constructors
 
     explicit ModelSelection();
 
-    // TRAINING STRATEGY CONSTRUCTOR
-
     explicit ModelSelection(TrainingStrategy*);
-
-    // FILE CONSTRUCTOR
 
     explicit ModelSelection(const string&);
 
-    // XML CONSTRUCTOR
-
     explicit ModelSelection(const tinyxml2::XMLDocument&);
 
-
-    // DESTRUCTOR
+    // Destructor
 
     virtual ~ModelSelection();
 
-    /// Enumeration of all the available types of inputs selection algorithms.
+    /// Enumeration of all the available order selection algorithms.
 
-    enum InputsSelectionMethod
-    {
-        NO_INPUTS_SELECTION,
-        GROWING_INPUTS,
-        PRUNING_INPUTS,
-        GENETIC_ALGORITHM
-    };
+    enum OrderSelectionMethod{NO_NEURONS_SELECTION, INCREMENTAL_NEURONS};
 
-    /// Enumeration of all the available types of order selection algorithms.
+    /// Enumeration of all the available inputs selection algorithms.
 
-    enum OrderSelectionMethod
-    {
-        NO_ORDER_SELECTION,
-        INCREMENTAL_ORDER,
-        GOLDEN_SECTION,
-        SIMULATED_ANNEALING
-    };
+    enum InputsSelectionMethod{NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
 
-    // STRUCTURES
-
-    ///
     /// This structure contains the results from the model selection process.
-    ///
 
     struct Results
     {
@@ -105,46 +74,36 @@ public:
 
         void save(const string&) const;
 
-        // Order selection results
-
         /// Pointer to a structure with the results from the incremental order selection algorithm.
 
-        IncrementalOrder::IncrementalOrderResults* incremental_order_results_pointer;
+        IncrementalNeurons::IncrementalNeuronsResults* incremental_neurons_results_pointer = nullptr;
 
-        /// Pointer to a structure with the results from the golden section order selection algorithm.
-
-        GoldenSectionOrder::GoldenSectionOrderResults* golden_section_order_results_pointer;
-
-        /// Pointer to a structure with the results from the simulated annealing order selection algorithm.
-
-        SimulatedAnnealingOrder::SimulatedAnnealingOrderResults* simulated_annealing_order_results_pointer;
 
         /// Pointer to a structure with the results from the growing inputs selection algorithm.
 
-        GrowingInputs::GrowingInputsResults* growing_inputs_results_pointer;
+        GrowingInputs::GrowingInputsResults* growing_inputs_results_pointer = nullptr;
+
 
         /// Pointer to a structure with the results from the pruning inputs selection algorithm.
 
-        PruningInputs::PruningInputsResults* pruning_inputs_results_pointer;
+        PruningInputs::PruningInputsResults* pruning_inputs_results_pointer = nullptr;
+
 
         /// Pointer to a structure with the results from the genetic inputs selection algorithm.
 
-        GeneticAlgorithm::GeneticAlgorithmResults* genetic_algorithm_results_pointer;
+        GeneticAlgorithm::GeneticAlgorithmResults* genetic_algorithm_results_pointer = nullptr;
     };
 
-    // METHODS
-
+    
     // Get methods
 
     TrainingStrategy* get_training_strategy_pointer() const;
     bool has_training_strategy() const;
 
-    const OrderSelectionMethod& get_order_selection_method() const;
+    const OrderSelectionMethod& get_neurons_selection_method() const;
     const InputsSelectionMethod& get_inputs_selection_method() const;
 
-    IncrementalOrder* get_incremental_order_pointer() const;
-    GoldenSectionOrder* get_golden_section_order_pointer() const;
-    SimulatedAnnealingOrder* get_simulated_annealing_order_pointer() const;
+    IncrementalNeurons* get_incremental_neurons_pointer() const;
 
     GrowingInputs* get_growing_inputs_pointer() const;
     PruningInputs* get_pruning_inputs_pointer() const;
@@ -158,15 +117,8 @@ public:
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
-#ifdef __OPENNN_MPI__
-    void set_MPI(TrainingStrategy*, const ModelSelection*);
-
-    void set_inputs_selection_MPI(const ModelSelection*);
-    void set_order_selection_MPI(const ModelSelection*);
-#endif
-
-    void set_order_selection_method(const OrderSelectionMethod&);
-    void set_order_selection_method(const string&);
+    void set_neurons_selection_method(const OrderSelectionMethod&);
+    void set_neurons_selection_method(const string&);
 
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
@@ -175,23 +127,21 @@ public:
 
     // Pointer methods
 
-    void destruct_order_selection();
+    void destruct_neurons_selection();
 
     void destruct_inputs_selection();
 
     // Cross validation methods
 
-    Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t& = 4);
-    Vector<NeuralNetwork> perform_random_cross_validation(const size_t& = 4, const double& = 0.25);
-    Vector<NeuralNetwork> perform_positives_cross_validation();
+    Vector<NeuralNetwork> perform_k_fold_cross_validation(const size_t& = 4) const;
+    Vector<NeuralNetwork> perform_random_cross_validation(const size_t& = 4, const double& = 0.25) const;
+    Vector<NeuralNetwork> perform_positives_cross_validation() const;
 
     // Model selection methods
 
     void check() const;
 
-    Vector<double> calculate_inputs_importance() const;
-
-    Results perform_order_selection() const;
+    Results perform_neurons_selection() const;
 
     Results perform_inputs_selection() const;
 
@@ -210,39 +160,29 @@ public:
 
 private: 
 
-    // MEMBERS
-
     /// Pointer to a training strategy object.
 
-    TrainingStrategy* training_strategy_pointer;
+    TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Pointer to a incremental order object to be used in the order selection.
+    /// Pointer to a incremental order object to be used for order selection.
 
-    IncrementalOrder* incremental_order_pointer;
+    IncrementalNeurons* incremental_neurons_pointer = nullptr;
 
-    /// Pointer to a golden section order object to be used in the order selection.
+    /// Pointer to a growing inputs object to be used for inputs selection.
 
-    GoldenSectionOrder* golden_section_order_pointer;
+    GrowingInputs* growing_inputs_pointer = nullptr;
 
-    /// Pointer to a simulated annealing order object to be used in the order selection.
+    /// Pointer to a pruning inputs object to be used for inputs selection.
 
-    SimulatedAnnealingOrder* simulated_annelaing_order_pointer;
+    PruningInputs* pruning_inputs_pointer = nullptr;
 
-    /// Pointer to a growing inputs object to be used in the inputs selection.
+    /// Pointer to a genetic algorithm object to be used for inputs selection.
 
-    GrowingInputs* growing_inputs_pointer;
-
-    /// Pointer to a pruning inputs object to be used in the inputs selection.
-
-    PruningInputs* pruning_inputs_pointer;
-
-    /// Pointer to a genetic algorithm object to be used in the inputs selection.
-
-    GeneticAlgorithm* genetic_algorithm_pointer;
+    GeneticAlgorithm* genetic_algorithm_pointer = nullptr;
 
     /// Type of order selection algorithm.
 
-    OrderSelectionMethod order_selection_method;
+    OrderSelectionMethod neurons_selection_method;
 
     /// Type of inputs selection algorithm.
 

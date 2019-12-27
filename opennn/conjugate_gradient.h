@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C O N J U G A T E   G R A D I E N T   C L A S S   H E A D E R                                              */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C O N J U G A T E   G R A D I E N T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __CONJUGATEGRADIENT_H__
-#define __CONJUGATEGRADIENT_H__
+#ifndef CONJUGATEGRADIENT_H
+#define CONJUGATEGRADIENT_H
 
 // System inlcludes
 
@@ -28,27 +24,28 @@
 // OpenNN includes
 
 #include "loss_index.h"
-
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
+/// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
+
+/// \cite 1 \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 ///
-/// This concrete class represents a conjugate gradient training algorithm for a loss index of a neural network.
-///
+/// \cite 2 D.P. O'Leary "The Block Conjugate Gradient Algorithm and Related Methods."
 
 class ConjugateGradient : public OptimizationAlgorithm
 {
 
 public:
 
-   // ENUMERATIONS
+   // Enumerations
 
    /// Enumeration of the available training operators for obtaining the training direction.
 
@@ -58,9 +55,6 @@ public:
 
    explicit ConjugateGradient(); 
 
-
-   // GENERAL CONSTRUCTOR
-
    explicit ConjugateGradient(LossIndex*);
 
 
@@ -68,132 +62,7 @@ public:
 
    explicit ConjugateGradient(const tinyxml2::XMLDocument&); 
 
-
-   // DESTRUCTOR
-
    virtual ~ConjugateGradient();
-
-
-   // STRUCTURES
-
-   ///
-   /// This structure contains the conjugate gradient results. 
-   ///
-
-   struct ConjugateGradientResults : public OptimizationAlgorithm::OptimizationAlgorithmResults
-   {
-       /// Default constructor.
-
-       ConjugateGradientResults()
-       {
-           conjugate_gradient_pointer = nullptr;
-       }
-
-       /// Conjugate gradient constructor.
-
-       ConjugateGradientResults(ConjugateGradient* new_conjugate_gradient_pointer)
-       {
-           conjugate_gradient_pointer = new_conjugate_gradient_pointer;
-       }
-
-       /// Destructor.
-
-       virtual ~ConjugateGradientResults()
-       {
-       }
-
-       /// Pointer to the conjugate gradient object for which the training results are to be stored.
-
-      ConjugateGradient* conjugate_gradient_pointer;
-
-      // TRAINING HISTORY
-
-      /// History of the neural network parameters over the training iterations. 
-
-      Vector< Vector<double> > parameters_history;
-
-      /// History of the parameters norm over the training iterations. 
-
-      Vector<double> parameters_norm_history;
-
-      /// History of the loss function loss over the training iterations. 
-
-      Vector<double> loss_history;
-
-      /// History of the selection error over the training iterations.
-
-      Vector<double> selection_error_history;
-
-      /// History of the loss function gradient over the training iterations. 
-
-      Vector< Vector<double> > gradient_history;
-
-      /// History of the gradient norm over the training iterations. 
-
-      Vector<double> gradient_norm_history;
-
-      /// History of the conjugate gradient training direction over the training iterations. 
-
-      Vector< Vector<double> > training_direction_history;
-
-      /// History of the training rate over the training iterations. 
-
-      Vector<double> training_rate_history;
-
-      /// History of the elapsed time over the training iterations. 
-
-      Vector<double> elapsed_time_history;
-
-      // FINAL VALUES
-
-      /// Final neural network parameters vector. 
-
-      Vector<double> final_parameters;
-
-      /// Final neural network parameters norm. 
-
-      double final_parameters_norm;
-
-      /// Final loss function evaluation.
-
-      double final_loss;
-
-      /// Final selection error.
-
-      double final_selection_error;
-
-      /// Final loss function gradient. 
-
-      Vector<double> final_gradient;
-
-      /// Final gradient norm. 
-
-      double final_gradient_norm;
-
-      /// Final conjugate gradient training direction. 
-
-      Vector<double> final_training_direction;
-
-      /// Final conjugate gradient training rate. 
-
-      double final_training_rate;
-
-      /// Elapsed time of the training process. 
-
-      double elapsed_time;
-
-      /// Maximum number of training iterations.
-
-      size_t iterations_number;
-
-      void resize_training_history(const size_t&);
-      string object_to_string() const;
-
-      Matrix<string> write_final_results(const int& precision = 3) const;
-   };
-
-
-   // METHODS
 
    // Get methods
 
@@ -209,11 +78,11 @@ public:
 
    const double& get_warning_parameters_norm() const;
    const double& get_warning_gradient_norm() const;
-   const double& get_warning_training_rate() const;
+   const double& get_warning_learning_rate() const;
 
    const double& get_error_parameters_norm() const;
    const double& get_error_gradient_norm() const;
-   const double& get_error_training_rate() const;
+   const double& get_error_learning_rate() const;
 
    // Stopping criteria
 
@@ -232,17 +101,8 @@ public:
 
    // Reserve training history
 
-   const bool& get_reserve_parameters_history() const;
-   const bool& get_reserve_parameters_norm_history() const;
-
-   const bool& get_reserve_error_history() const;
+   const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
-   const bool& get_reserve_gradient_history() const;
-   const bool& get_reserve_gradient_norm_history() const;
-
-   const bool& get_reserve_training_direction_history() const;
-   const bool& get_reserve_training_rate_history() const;
-   const bool& get_reserve_elapsed_time_history() const;
 
    // Set methods
 
@@ -259,11 +119,11 @@ public:
 
    void set_warning_parameters_norm(const double&);
    void set_warning_gradient_norm(const double&);
-   void set_warning_training_rate(const double&);
+   void set_warning_learning_rate(const double&);
 
    void set_error_parameters_norm(const double&);
    void set_error_gradient_norm(const double&);
-   void set_error_training_rate(const double&);
+   void set_error_learning_rate(const double&);
 
    // Stopping criteria
 
@@ -282,17 +142,8 @@ public:
 
    // Reserve training history
 
-   void set_reserve_parameters_history(const bool&);
-   void set_reserve_parameters_norm_history(const bool&);
-
-   void set_reserve_error_history(const bool&);
+   void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-   void set_reserve_gradient_history(const bool&);
-   void set_reserve_gradient_norm_history(const bool&);
-
-   void set_reserve_training_direction_history(const bool&);
-   void set_reserve_training_rate_history(const bool&);
-   void set_reserve_elapsed_time_history(const bool&);
 
    void set_reserve_all_training_history(const bool&);
 
@@ -315,7 +166,7 @@ public:
 
    // Training methods
 
-   ConjugateGradientResults* perform_training();
+   Results perform_training();
 
    void perform_training_void();
 
@@ -329,7 +180,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(   );
 
 private:
 
@@ -351,7 +201,7 @@ private:
 
    /// Training rate value at wich a warning message is written to the screen.
 
-   double warning_training_rate;
+   double warning_learning_rate;
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
@@ -363,10 +213,10 @@ private:
 
    /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
-   double error_training_rate;
+   double error_learning_rate;
 
 
-   // STOPPING CRITERIA
+   // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
 
@@ -407,42 +257,14 @@ private:
 
    // TRAINING HISTORY
 
-   /// True if the parameters history matrix is to be reserved, false otherwise.
+   /// True if the training error history vector is to be reserved, false otherwise.
 
-   bool reserve_parameters_history;
+   bool reserve_training_error_history;
 
-   /// True if the parameters norm history vector is to be reserved, false otherwise.
-
-   bool reserve_parameters_norm_history;
-
-   /// True if the error history vector is to be reserved, false otherwise.
-
-   bool reserve_error_history;
-
-   /// True if the gradient history matrix is to be reserved, false otherwise.
-
-   bool reserve_gradient_history;
-
-   /// True if the gradient norm history vector is to be reserved, false otherwise.
-
-   bool reserve_gradient_norm_history;
-
-   /// True if the training direction history matrix is to be reserved, false otherwise.
-   
-   bool reserve_training_direction_history;
-
-   /// True if the training rate history vector is to be reserved, false otherwise.
-
-   bool reserve_training_rate_history;
-
-   /// True if the elapsed time history vector is to be reserved, false otherwise.
-
-   bool reserve_elapsed_time_history;
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
-
 
 };
 

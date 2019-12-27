@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   U N S C A L I N G   L A Y E R   C L A S S   H E A D E R                                                    */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   U N S C A L I N G   L A Y E R   C L A S S   H E A D E R               
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __UNSCALINGLAYER_H__
-#define __UNSCALINGLAYER_H__
+#ifndef UNSCALINGLAYER_H
+#define UNSCALINGLAYER_H
 
 // System includes
 
@@ -26,103 +22,92 @@
 
 #include "vector.h"
 #include "matrix.h"
+#include "layer.h"
+#include "statistics.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
+// Eigen includes
+
+#include "../eigen/Eigen"
 
 namespace OpenNN
 {
 
 /// This class represents a layer of unscaling neurons.
+
+///
 /// Unscaling layers are included in the definition of a neural network.
 /// They are used to unnormalize variables so they are in the original range after computer processing.
 
-class UnscalingLayer
+class UnscalingLayer : public Layer
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit UnscalingLayer();
 
-   // UNSCALING NEURONS NUMBER CONSTRUCTOR
-
    explicit UnscalingLayer(const size_t&);
 
-   // STATISTICS CONSTRUCTOR
-
-   explicit UnscalingLayer(const Vector< Statistics<double> >&);
-
-   // XML CONSTRUCTOR
+   explicit UnscalingLayer(const Vector<Descriptives>&);
 
    explicit UnscalingLayer(const tinyxml2::XMLDocument&);
 
-   // COPY CONSTRUCTOR
-
    UnscalingLayer(const UnscalingLayer&);
 
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~UnscalingLayer();
 
-   // ASSIGNMENT OPERATOR
-
-   UnscalingLayer& operator = (const UnscalingLayer&);
-
-   // EQUAL TO OPERATOR
-
-   bool operator == (const UnscalingLayer&) const;
-
-   // ENUMERATIONS
+   // Enumerations
 
    /// Enumeration of available methods for input variables, output variables and independent parameters scaling.  
    
    enum UnscalingMethod{NoUnscaling, MinimumMaximum, MeanStandardDeviation, Logarithmic};
 
-   // GET METHODS
+   // Get methods
 
-   // Outputs number
+   Vector<size_t> get_input_variables_dimensions() const;
 
-   size_t get_unscaling_neurons_number() const;
+   size_t get_inputs_number() const;
+   size_t get_neurons_number() const;
 
-   // Output variables statistics
+   Vector<Descriptives> get_descriptives() const;
 
-   Vector< Statistics<double> > get_statistics() const;
-
-   Matrix<double> get_statistics_matrix() const;
+   Matrix<double> get_descriptives_matrix() const;
    Vector<double> get_minimums() const;
    Vector<double> get_maximums() const;
-
-   // Outputs unscaling method
 
    const UnscalingMethod& get_unscaling_method() const;
 
    string write_unscaling_method() const;
    string write_unscaling_method_text() const;
 
-   // Display messages
-
    const bool& get_display() const;
 
-   // SET METHODS
+   // Set methods
 
    void set();
    void set(const size_t&);
-   void set(const Vector< Statistics<double> >&);
+   void set(const Vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
+   void set_inputs_number(const size_t&);
+   void set_neurons_number(const size_t&);
+
    virtual void set_default();
 
-   // Output variables statistics
+   // Output variables descriptives
 
-   void set_statistics(const Vector< Statistics<double> >&);
-   void set_statistics_eigen(const Eigen::MatrixXd&);
+   void set_descriptives(const Vector<Descriptives>&);
+   void set_descriptives_eigen(const Eigen::MatrixXd&);
 
-   void set_item_statistics(const size_t&, const Statistics<double>&);
+   void set_item_descriptives(const size_t&, const Descriptives&);
 
    void set_minimum(const size_t&, const double&);
    void set_maximum(const size_t&, const double&);
@@ -140,34 +125,19 @@ public:
 
    // Pruning and growing
 
-   void prune_unscaling_neuron(const size_t&);
+   void prune_neuron(const size_t&);
 
    // Check methods
 
    bool is_empty() const;
   
-   // UnscalingLayer and unscaling
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
-   void initialize_random();
+   Tensor<double> calculate_minimum_maximum_outputs(const Tensor<double>&) const;
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
+   Tensor<double> calculate_mean_standard_deviation_outputs(const Tensor<double>&) const;
 
-   Matrix<double> calculate_minimum_maximum_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_minimum_maximum_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_minimum_maximum_second_derivatives(const Matrix<double>&) const;
-
-   Matrix<double> calculate_mean_standard_deviation_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_mean_standard_deviation_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_mean_standard_deviation_second_derivatives(const Matrix<double>&) const;
-
-   Matrix<double> calculate_logarithmic_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_logarithmic_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_logarithmic_second_derivatives(const Matrix<double>&) const;
-
-   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
+   Tensor<double> calculate_logarithmic_outputs(const Tensor<double>&) const;
 
    void check_range(const Vector<double>&) const;
 
@@ -179,13 +149,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(   );
-
-   // PMML Methods
-   void to_PMML(tinyxml2::XMLElement*, const Vector<string>& ) const;
-   void write_PMML(tinyxml2::XMLPrinter&, const Vector<string>&) const;
-
-   void from_PMML(const tinyxml2::XMLElement*, const Vector<string>& );
 
    // Expression methods
 
@@ -205,9 +168,9 @@ protected:
 
    // MEMBERS
 
-   /// Statistics of output variables.
+   /// Descriptives of output variables.
 
-   Vector< Statistics<double> > statistics;
+   Vector<Descriptives> descriptives;
 
    /// Unscaling method for the output variables.
 

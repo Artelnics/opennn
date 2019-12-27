@@ -1,42 +1,27 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M E A N   S Q U A R E D   E R R O R   T E S T   C L A S S                                                  */
-/*                                                                                                              */
-
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// Unit testing includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M E A N   S Q U A R E D   E R R O R   T E S T   C L A S S             
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "mean_squared_error_test.h"
 
-using namespace OpenNN;
-
-// GENERAL CONSTRUCTOR
 
 MeanSquaredErrorTest::MeanSquaredErrorTest() : UnitTesting() 
 {
 }
 
 
-// DESTRUCTOR
-
 MeanSquaredErrorTest::~MeanSquaredErrorTest()
 {
 }
 
 
-// METHODS
-
-
 void MeanSquaredErrorTest::test_constructor()
 {
-   message += "test_constructor\n";
+   cout << "test_constructor\n";
 
    // Default
 
@@ -67,201 +52,244 @@ void MeanSquaredErrorTest::test_constructor()
 
 void MeanSquaredErrorTest::test_destructor()
 {
-    message += "test_destructor\n";
-
+    cout << "test_destructor\n";
 }
 
 
-void MeanSquaredErrorTest::test_calculate_error()
+void MeanSquaredErrorTest::test_calculate_training_error()
 {
-   message += "test_calculate_error\n";
-/*
-   Vector<double> parameters;
-
-   NeuralNetwork nn(1, 1, 1);
-   nn.initialize_parameters(0.0);
-
-   DataSet ds(1, 1, 1);
-   ds.initialize_data(0.0);
-
-   MeanSquaredError mse(&nn, &ds);
-
-   assert_true(mse.calculate_all_instances_error() == 0.0, LOG);
-
-   // Test
-
-   nn.set(1, 1);
-   nn.randomize_parameters_normal();
-
-   parameters = nn.get_parameters();
-
-   ds.set(1, 1, 1);
-   ds.randomize_data_normal();
-
-   assert_true((mse.calculate_all_instances_error() - mse.calculate_error(parameters)) < std::numeric_limits<double>::min(), LOG);
-*/
-}
-
-
-void MeanSquaredErrorTest::test_calculate_error_gradient()
-{
-   message += "test_calculate_error_gradient\n";
-
-   NumericalDifferentiation nd;
-
-   NeuralNetwork nn;
-   Vector<size_t> multilayer_perceptron_architecture;
+   cout << "test_calculate_training_error\n";
 
    Vector<double> parameters;
 
-   DataSet ds;
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.initialize_parameters(0.0);
 
-   MeanSquaredError mse(&nn, &ds);
+   DataSet data_set(1, 1, 1);
+   data_set.initialize_data(0.0);
 
-   Vector<double> gradient;
-   Vector<double> numerical_gradient;
-   Vector<double> error;
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   // Test
-
-   nn.set(1, 1, 1);
-
-   nn.initialize_parameters(0.0);
-
-   ds.set(1, 1, 1);
-
-   ds.initialize_data(0.0);
-
-   gradient = mse.calculate_training_error_gradient();
-
-   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-   assert_true(gradient == 0.0, LOG);
-
-   // Test 
-
-   nn.set(3, 4, 2);
-   nn.initialize_parameters(0.0);
-
-   ds.set(3, 2, 5);
-   mse.set(&nn, &ds);
-   ds.initialize_data(0.0);
-
-   gradient = mse.calculate_training_error_gradient();
-
-   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-   assert_true(gradient == 0.0, LOG);
+//   assert_true(mean_squared_error.calculate_training_error() == 0.0, LOG);
 
    // Test
 
-   multilayer_perceptron_architecture.set(3);
-   multilayer_perceptron_architecture[0] = 2;
-   multilayer_perceptron_architecture[1] = 1;
-   multilayer_perceptron_architecture[2] = 3;
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.randomize_parameters_normal();
 
-   nn.set(multilayer_perceptron_architecture);
-   nn.initialize_parameters(0.0);
+   parameters = neural_network.get_parameters();
 
-   ds.set(2, 3, 5);
-   mse.set(&nn, &ds);
-   ds.initialize_data(0.0);
+   data_set.set(1, 1, 1);
+   data_set.randomize_data_normal();
 
-   gradient = mse.calculate_training_error_gradient();
+//   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_error(parameters)) < numeric_limits<double>::min(), LOG);
 
-   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-   assert_true(gradient == 0.0, LOG);
+   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+   neural_network.initialize_parameters(0.0);
 
-   // Test
+   data_set.set(1, 1, 1);
+   data_set.initialize_data(0.0);
+   data_set.set_training();
 
-   nn.set(1, 1, 1);
-
-   nn.initialize_parameters(0.0);
-
-   ds.set(1, 1, 1);
-
-   ds.initialize_data(0.0);
-
-   gradient = mse.calculate_training_error_gradient();
-
-   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-   assert_true(gradient == 0.0, LOG);
-
-   // Test 
-
-   nn.set(3, 4, 2);
-   nn.initialize_parameters(0.0);
-
-   ds.set(3, 2, 5);
-   mse.set(&nn, &ds);
-   ds.initialize_data(0.0);
-
-   gradient = mse.calculate_training_error_gradient();
-
-   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-   assert_true(gradient == 0.0, LOG);
+   assert_true(mean_squared_error.calculate_training_error() == 0.0, LOG);
 
    // Test
 
-   nn.set(2, 10, 3);
-   //nn.initialize_parameters(1.0);
-   nn.randomize_parameters_normal();
-   parameters = nn.get_parameters();
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.randomize_parameters_uniform();
 
-   ds.set(10, 2, 3);
-   ds.initialize_data(1.0);
+   parameters = neural_network.get_parameters();
 
-   const Vector<size_t> indices(0,1,9);
+   data_set.set(1, 1, 1);
+   data_set.randomize_data_normal();
+   data_set.set_training();
 
-   gradient = mse.calculate_training_error_gradient();
-   numerical_gradient = nd.calculate_gradient(mse, &MeanSquaredError::calculate_training_error, parameters);
-   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-
-   // Test
-
-   ds.initialize_data(1.0);
-
-   nn.randomize_parameters_normal();
-   parameters = nn.get_parameters();
-
-   gradient = mse.calculate_training_error_gradient();
-   numerical_gradient = nd.calculate_gradient(mse, &MeanSquaredError::calculate_training_error, parameters);
-   error = (gradient - numerical_gradient).calculate_absolute_value();
-
+   assert_true(abs(mean_squared_error.calculate_training_error() - mean_squared_error.calculate_training_error(parameters)) < numeric_limits<double>::min(), LOG);
 }
 
-/*
+
+void MeanSquaredErrorTest::test_calculate_training_error_gradient()
+{
+   cout << "test_calculate_training_error_gradient\n";
+
+   NeuralNetwork neural_network;
+
+   DataSet data_set;
+
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
+
+   Vector<double> error_gradient;
+   Vector<double> numerical_error_gradient;
+
+   size_t instances_number;
+   size_t inputs_number;
+   size_t outputs_number;
+   size_t hidden_neurons;
+
+   ScalingLayer* scaling_layer = new ScalingLayer();
+
+   RecurrentLayer* recurrent_layer = new RecurrentLayer();
+
+   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
+
+   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
+   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
+
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
+
+   // Test trivial
+{
+   instances_number = 100;
+   inputs_number = 1;
+   outputs_number = 1;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.initialize_data(0.0);
+
+   hidden_perceptron_layer->set(inputs_number, outputs_number);
+   neural_network.add_layer(hidden_perceptron_layer);
+
+   neural_network.initialize_parameters(0.0);
+
+   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+
+   error_gradient = mean_squared_error.calculate_training_error_gradient();
+
+   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
+   assert_true(error_gradient == 0.0, LOG);
+}
+
+   neural_network.set();
+
+   // Test perceptron and probabilistic
+{
+   instances_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(outputs_number, outputs_number);
+
+   neural_network.add_layer(hidden_perceptron_layer);
+   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
+
+   neural_network.randomize_parameters_normal();
+
+   error_gradient = mean_squared_error.calculate_training_error_gradient();
+
+   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+
+   neural_network.set();
+
+   // Test lstm
+{
+   instances_number = 5;
+   inputs_number = 4;
+   outputs_number = 2;
+   hidden_neurons = 3;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+
+   neural_network.add_layer(long_short_term_memory_layer);
+   neural_network.add_layer(output_perceptron_layer);
+
+   neural_network.randomize_parameters_normal();
+
+   error_gradient = mean_squared_error.calculate_training_error_gradient();
+
+   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+
+   neural_network.set();
+
+   // Test recurrent
+{
+   instances_number = 92;
+   inputs_number = 3;
+   outputs_number = 1;
+   hidden_neurons = 4;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   recurrent_layer->set(inputs_number, hidden_neurons);
+   recurrent_layer->set_timesteps(1);
+
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+
+   neural_network.add_layer(recurrent_layer);
+   neural_network.add_layer(output_perceptron_layer);
+
+   neural_network.randomize_parameters_normal();
+
+   error_gradient = mean_squared_error.calculate_training_error_gradient();
+
+   numerical_error_gradient = mean_squared_error.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+}
+
+
 void MeanSquaredErrorTest::test_calculate_selection_error()
 {
-   message += "test_calculate_selection_error\n";
+   cout << "test_calculate_selection_error\n";
 
-   NeuralNetwork nn(1, 1, 1);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
 
-   nn.initialize_parameters(0.0);
+   neural_network.initialize_parameters(0.0);
 
-   DataSet ds(1, 1, 1);
+   DataSet data_set(1, 1, 1);
 
-   ds.get_instances_pointer()->set_selection();
+   data_set.set_selection();
 
-   ds.initialize_data(0.0);
+   data_set.initialize_data(0.0);
 
-   MeanSquaredError mse(&nn, &ds);  
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
-   double selection_error = mse.calculate_error({0});
+   double selection_error = mean_squared_error.calculate_selection_error();
 
    assert_true(selection_error == 0.0, LOG);
+
 }
-*/
 
-void MeanSquaredErrorTest::test_calculate_error_terms()
+
+void MeanSquaredErrorTest::test_calculate_training_error_terms()
 {
-   message += "test_calculate_error_terms\n";
+   cout << "test_calculate_training_error_terms\n";
 
-   NeuralNetwork nn;
+   NeuralNetwork neural_network;
    Vector<size_t> hidden_layers_size;
    Vector<double> parameters;
 
-   DataSet ds;
+   DataSet data_set;
    
-   MeanSquaredError mse(&nn, &ds);
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
    double error;
 
@@ -269,37 +297,37 @@ void MeanSquaredErrorTest::test_calculate_error_terms()
 
    // Test
 
-   nn.set(1, 1);
-   nn.randomize_parameters_normal();
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.randomize_parameters_normal();
 
-   ds.set(1, 1, 1);
-   ds.randomize_data_normal();
+   data_set.set(1, 1, 1);
+   data_set.randomize_data_normal();
 
-   const Matrix<double> inputs = ds.get_training_inputs();
-   const Matrix<double> targets = ds.get_training_targets();
-   const Matrix<double> outputs = nn.calculate_outputs(inputs);
+   //const Matrix<double> inputs = data_set.get_training_input_data();
+   //const Matrix<double> targets = data_set.get_training_target_data();
+   //const Matrix<double> outputs = nn.calculate_outputs(inputs);
 
-   error = mse.calculate_training_error();
+   error = mean_squared_error.calculate_training_error();
 
-   error_terms = mse.calculate_error_terms(outputs, targets);
+   //error_terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
-   assert_true(fabs((error_terms.dot(error_terms)) - error) < 1.0e-3, LOG);
+   assert_true(abs(dot(error_terms, error_terms) - error) < 1.0e-3, LOG);
 }
 
 
-void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
+void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 {
-   message += "test_calculate_error_terms_Jacobian\n";
+   cout << "test_calculate_training_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
-   NeuralNetwork nn;
-   Vector<size_t> multilayer_perceptron_architecture;
+   NeuralNetwork neural_network;
+   Vector<size_t> architecture;
    Vector<double> parameters;
 
-   DataSet ds;
+   DataSet data_set;
 
-   MeanSquaredError mse(&nn, &ds);
+   MeanSquaredError mean_squared_error(&neural_network, &data_set);
 
    Vector<double> error_gradient;
 
@@ -307,493 +335,172 @@ void MeanSquaredErrorTest::test_calculate_error_terms_Jacobian()
    Matrix<double> terms_Jacobian;
    Matrix<double> numerical_Jacobian_terms;
 
-   Matrix<double> inputs;
-   Matrix<double> targets;
-   Matrix<double> outputs;
+   Tensor<double> inputs;
+   Tensor<double> targets;
+   Tensor<double> outputs;
 
-   Matrix<double> output_gradient;
-   Vector<Matrix<double>> layers_delta;
-
-   MultilayerPerceptron::FirstOrderForwardPropagation first_order_propagation(0);
+   Tensor<double> output_gradient;
+   Vector<Tensor<double>> layers_delta;
 
    // Test
-/*
-   nn.set(1, 1);
 
-   nn.initialize_parameters(0.0);
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
 
-   ds.set(1, 1, 1);
+   neural_network.initialize_parameters(0.0);
 
-   ds.initialize_data(0.0);
+   data_set.set(1, 1, 1);
 
-   inputs = ds.get_inputs();
-   targets = ds.get_targets();
-   outputs = nn.calculate_outputs(inputs);
+   data_set.initialize_data(0.0);
 
-   first_order_propagation = nn.get_multilayer_perceptron_pointer()->calculate_first_order_forward_propagation(inputs);
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
 
-   output_gradient = mse.calculate_output_gradient(outputs, targets);
+   Vector<Layer::FirstOrderActivations> forward_propagation = neural_network.calculate_trainable_forward_propagation(inputs);
 
-   layers_delta = mse.calculate_layers_delta(first_order_propagation.layers_activations, output_gradient);
+   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
-   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs, first_order_propagation.layers_activation_derivatives, layers_delta);
+   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
+   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+
+   assert_true(terms_Jacobian.get_rows_number() == data_set.get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == neural_network.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test 
 
-   nn.set(3, 4, 2);
-   nn.initialize_parameters(0.0);
+   neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
+   neural_network.initialize_parameters(0.0);
 
-   ds.set(3, 2, 5);
-   mse.set(&nn, &ds);
-   ds.initialize_data(0.0);
+   data_set.set(3, 2, 5);
+   mean_squared_error.set(&neural_network, &data_set);
+   data_set.initialize_data(0.0);
 
-   inputs = ds.get_inputs();
-   targets = ds.get_targets();
-   outputs = nn.calculate_outputs(inputs);
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
 
-   first_order_propagation = nn.get_multilayer_perceptron_pointer()->calculate_first_order_forward_propagation(inputs);
+   //forward_propagation = nn.calculate_forward_propagation(inputs);
 
-   output_gradient = mse.calculate_output_gradient(outputs, targets);
+   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
-   layers_delta = mse.calculate_layers_delta(first_order_propagation.layers_activations, output_gradient);
+   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
-   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs, first_order_propagation.layers_activation_derivatives, layers_delta);
+   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == data_set.get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == neural_network.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
-
 
    // Test
 
-   multilayer_perceptron_architecture.set(3);
-   multilayer_perceptron_architecture[0] = 2;
-   multilayer_perceptron_architecture[1] = 1;
-   multilayer_perceptron_architecture[2] = 2;
+   architecture.set(3);
+   architecture[0] = 2;
+   architecture[1] = 1;
+   architecture[2] = 2;
 
-   nn.set(multilayer_perceptron_architecture);
-   nn.initialize_parameters(0.0);
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.initialize_parameters(0.0);
 
-   ds.set(2, 2, 5);
-   mse.set(&nn, &ds);
-   ds.initialize_data(0.0);
+   data_set.set(2, 2, 5);
+   mean_squared_error.set(&neural_network, &data_set);
+   data_set.initialize_data(0.0);
 
-   inputs = ds.get_inputs();
-   targets = ds.get_targets();
-   outputs = nn.calculate_outputs(inputs);
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
 
-   first_order_propagation = nn.get_multilayer_perceptron_pointer()->calculate_first_order_forward_propagation(inputs);
+   forward_propagation = neural_network.calculate_trainable_forward_propagation(inputs);
 
-   output_gradient = mse.calculate_output_gradient(outputs, targets);
+   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
-   layers_delta = mse.calculate_layers_delta(first_order_propagation.layers_activations, output_gradient);
+   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
-   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs, first_order_propagation.layers_activation_derivatives, layers_delta);
+   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-   assert_true(terms_Jacobian.get_rows_number() == ds.get_instances().get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.get_columns_number() == nn.get_parameters_number(), LOG);
+   assert_true(terms_Jacobian.get_rows_number() == data_set.get_training_instances_number(), LOG);
+   assert_true(terms_Jacobian.get_columns_number() == neural_network.get_parameters_number(), LOG);
    assert_true(terms_Jacobian == 0.0, LOG);
-*/
    // Test
 
-   nn.set(1, 1);
-   nn.initialize_parameters(0.0);
-   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, PerceptronLayer::Linear);
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.initialize_parameters(0.0);
+   //nn.set_layer_activation_function(0, PerceptronLayer::Linear);
 //   nn.randomize_parameters_normal();
-   parameters = nn.get_parameters();
+   parameters = neural_network.get_parameters();
 
-   ds.set(1, 1, 1);
-//   ds.randomize_data_normal();
-   ds.initialize_data(1.0);
+   data_set.set(1, 1, 1);
+//   data_set.randomize_data_normal();
+   data_set.initialize_data(1.0);
 
-   inputs = ds.get_inputs();
-   targets = ds.get_targets();
-   outputs = nn.calculate_outputs(inputs);
+   inputs = data_set.get_training_input_data();
+   targets = data_set.get_training_target_data();
+   outputs = neural_network.calculate_outputs(inputs);
 
-   first_order_propagation = nn.get_multilayer_perceptron_pointer()->calculate_first_order_forward_propagation(inputs);
+//   forward_propagation = nn.calculate_forward_propagation(inputs);
 
-   output_gradient = mse.calculate_output_gradient(outputs, targets);
+   output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
-   layers_delta = mse.calculate_layers_delta(first_order_propagation.layers_activations, output_gradient);
+   layers_delta = mean_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
    cout << "layers delta: " << layers_delta << endl;
 
-   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs, first_order_propagation.layers_activation_derivatives, layers_delta);
+   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
 
-   numerical_Jacobian_terms = nd.calculate_Jacobian(mse, &MeanSquaredError::calculate_error_terms, parameters);
+   numerical_Jacobian_terms = nd.calculate_Jacobian(mean_squared_error, &MeanSquaredError::calculate_training_error_terms, parameters);
 
    cout << "Terms Jacobian: " << terms_Jacobian << endl;
    cout << "Numerical: " << numerical_Jacobian_terms << endl;
 
-   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
-
-   // Test
-/*
-   nn.set(2, 2, 2);
-   nn.randomize_parameters_normal();
-   parameters = nn.get_parameters();
-
-   ds.set(2, 2, 2);
-   ds.randomize_data_normal();
-
-   terms_Jacobian = mse.calculate_error_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(mse, &MeanSquaredError::calculate_error_terms, parameters);
-
-   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
+   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
 
    // Test
 
-   nn.set(2, 2, 2);
-   nn.randomize_parameters_normal();
+   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
+   neural_network.randomize_parameters_normal();
+   parameters = neural_network.get_parameters();
 
-   ds.set(2, 2, 2);
-   ds.randomize_data_normal();
+   data_set.set(2, 2, 2);
+   data_set.randomize_data_normal();
+
+//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(mean_squared_error, &MeanSquaredError::calculate_training_error_terms, parameters);
+
+   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+
+   // Test
+
+   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
+   neural_network.randomize_parameters_normal();
+
+   data_set.set(2, 2, 2);
+   data_set.randomize_data_normal();
    
-   error_gradient = mse.calculate_error_gradient({0, 1});
+//   error_gradient = mean_squared_error.calculate_error_gradient({0, 1});
 
-   error_terms = mse.calculate_error_terms();
-   terms_Jacobian = mse.calculate_error_terms_Jacobian();
+//   error_terms = mean_squared_error.calculate_training_error_terms();
+//   terms_Jacobian = mean_squared_error.calculate_error_terms_Jacobian();
 
-   assert_true(((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-*/
-}
-
-
-void MeanSquaredErrorTest::test_calculate_Hessian()
-{
-    message += "test_calculate_Hessian\n";
-
-    NumericalDifferentiation nd;
-    DataSet ds;
-    NeuralNetwork nn;
-    MeanSquaredError mse(&nn, &ds);
-
-    Vector<double> parameters;
-    Matrix<double> Hessian;
-    Matrix<double> numerical_Hessian;
-
-    Vector<size_t> architecture;
-
-    // Test activation linear
-
-//    {
-//        nn.set();
-//        nn.construct_multilayer_perceptron();
-
-//        ds.set();
-
-//        Hessian = mse.calculate_second_order_loss().Hessian;
-
-//        assert_true(Hessian.get_rows_number() == 0, LOG);
-//        assert_true(Hessian.get_columns_number() == 0, LOG);
-//    }
-
-    // Test activation linear
-
-    {
-        ds.set(20, 1, 1);
-        ds.randomize_data_normal();
-        ds.get_instances_pointer()->set_training();
-
-        nn.set(1,1);
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, PerceptronLayer::Linear);
-
-        nn.randomize_parameters_normal();
-        parameters = nn.get_parameters();
-/*
-        LossIndex::SecondOrderErrorTerms results = mse.calculate_terms_second_order_loss();
-
-        Hessian = results.Hessian_approximation;
-        nd.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
-        numerical_Hessian = nd.calculate_Hessian(mse, &MeanSquaredError::calculate_training_error, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-*/
-    }
-/*
-    // Test activation logistic
-
-    {
-        ds.set(1, 2, 2);
-        ds.randomize_data_normal();
-
-        nn.set(2,2);
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
-
-        nn.randomize_parameters_normal();
-        parameters = nn.get_parameters();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-    // Test activation hyperbolic tangent
-
-    {
-        ds.set(3, 2, 4);
-        ds.randomize_data_normal();
-
-        nn.set(2,4);
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
-
-        nn.randomize_parameters_normal();
-        parameters = nn.get_parameters();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-    // Test activation linear
-
-    {
-        ds.set(1,2,5);
-        ds.randomize_data_normal();
-
-        nn.set(2, 5);
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
-
-        nn.randomize_parameters_normal();
-        parameters = nn.get_parameters();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-    // Test activation logistic
-
-    {
-        ds.set(1,2,4);
-        ds.randomize_data_normal();
-
-        nn.set(2,4);
-
-        nn.randomize_parameters_normal();
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
-
-        parameters = nn.get_parameters();
-
-        Hessian.clear();
-        numerical_Hessian.clear();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-    // Test activation logistic
-
-    {
-        ds.set(1,1,1);
-        ds.randomize_data_normal();
-
-        nn.set(1,1);
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
-
-        parameters = nn.get_parameters();
-
-        Hessian.clear();
-        numerical_Hessian.clear();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-
-    // Test activation hyperbolic tangent
-
-    {
-        ds.set(1,1,1);
-        ds.randomize_data_normal();
-
-        nn.set(1,1);
-
-        nn.randomize_parameters_normal();
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
-
-        parameters = nn.get_parameters();
-
-        Hessian.clear();
-        numerical_Hessian.clear();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-    // Test activation hyperbolic tangent
-
-    {
-        ds.set(1,5,5);
-        ds.randomize_data_normal();
-
-        nn.set(5,5);
-
-        nn.randomize_parameters_normal();
-
-        nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::HyperbolicTangent);
-
-        parameters = nn.get_parameters();
-
-        Hessian.clear();
-        numerical_Hessian.clear();
-
-        Hessian = sse.calculate_Hessian();
-        numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-        assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    }
-
-
-    // Test activation linear (single hidden layer)
-
- {
-    ds.set(1, 2, 2);
-    ds.randomize_data_normal();
-
-    nn.set(2, 2, 2);
-
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
-
-    parameters = nn.get_parameters();
-
-    Hessian = sse.calculate_single_hidden_layer_Hessian();
-    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
- }
-
-    // Test activation linear (single hidden layer)
-
- {
-    ds.set(1, 1, 2);
-    ds.randomize_data_normal();
-
-    nn.set(1, 2, 2);
-
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
-
-    parameters = nn.get_parameters();
-
-    Hessian = sse.calculate_single_hidden_layer_Hessian();
-
-    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
- }
- */
-/*    // Test activation logistic (single hidden layer)
- {
-    ds.set(1,1,1);
-    ds.randomize_data_normal();
-    //ds.initialize_data(1.0);
-
-    nn.set(1,1,1);
- //   nn.initialize_parameters(1.0);
-
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Logistic);
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Logistic);
-
-    parameters = nn.get_parameters();
-
-    Hessian = sse.calculate_single_hidden_layer_Hessian();
-    Matrix<double> complete_Hessian = sse.calculate_Hessian();
-
-    cout << "Single hidden layer Hessian: \n" << Hessian << endl;
-    cout << "Complete Hessian: \n" << complete_Hessian << endl;
-
-    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_loss, parameters);
-
-    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-    assert_true((Hessian - complete_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
- }
-
-    // Test
- {
-    ds.set(1,1,1);
-    //ds.randomize_data_normal();
-    ds.initialize_data(1.0);
-
-    nn.set(1,1,1);
-
-    architecture.set(4);
-
-    architecture[0] = 1;
-    architecture[1] = 1;
-    architecture[2] = 1;
-    architecture[3] = 1;
-
-    Vector< Matrix<double> > weights(3);
-
-    for(size_t i = 0; i < 3; i++)
-    {
-        Matrix<double> layer_weights(1,1,(double)i+1.0);
-        weights[i] = layer_weights;
-    }
-
-    nn.set(architecture);
-    nn.get_multilayer_perceptron_pointer()->initialize_biases(0.0);
-    nn.get_multilayer_perceptron_pointer()->set_layers_synaptic_weights(weights);
-
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, Perceptron::Linear);
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, Perceptron::Linear);
-    nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(2, Perceptron::Linear);
-
-    parameters = nn.get_parameters();
-
-    Hessian = sse.calculate_Hessian();
-
-    numerical_Hessian = nd.calculate_Hessian(sse, &SumSquaredError::calculate_error, parameters);
-
-    cout << "Hessian: \n" << Hessian << endl;
-    cout << "Numerical Hessian: \n" << numerical_Hessian << endl;
-
- //   Vector<size_t> columns(4,1,5);
- //   Vector<size_t> rows(0,1,1);
-
- //   assert_true((Hessian.get_submatrix(rows,columns)-numerical_Hessian.get_submatrix(rows,columns)).calculate_absolute_value() < 1.0e-3, LOG);
-
-    assert_true((Hessian - numerical_Hessian).calculate_absolute_value() < 1.0e-3, LOG);
-*/
+//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient) < 1.0e-3, LOG);
 }
 
 
 void MeanSquaredErrorTest::test_to_XML()
 {
-   message += "test_to_XML\n";
+   cout << "test_to_XML\n";
 }
 
 
 void MeanSquaredErrorTest::test_from_XML()
 {
-   message += "test_from_XML\n";
+   cout << "test_from_XML\n";
 }
 
 
 void MeanSquaredErrorTest::run_test_case()
 {
-   message += "Running mean squared error test case...\n";
+   cout << "Running mean squared error test case...\n";
 
    // Constructor and destructor methods
 
@@ -806,31 +513,28 @@ void MeanSquaredErrorTest::run_test_case()
 
    // Error methods
 
-//   test_calculate_error();
-//   test_calculate_selection_error();
+   test_calculate_training_error();
 
-//   test_calculate_error_gradient();
+   test_calculate_selection_error();
+
+   test_calculate_training_error_gradient();
 
    // Error terms methods
 
-//   test_calculate_error_terms();
-//   test_calculate_error_terms_Jacobian();
-
-   // Loss Hessian methods
-
-   test_calculate_Hessian();
+//   test_calculate_training_error_terms();
+//   test_calculate_training_error_terms_Jacobian();
 
    // Serialization methods
 
 //   test_to_XML();
 //   test_from_XML();
 
-   message += "End of mean squared error test case.\n";
+   cout << "End of mean squared error test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lemser General Public

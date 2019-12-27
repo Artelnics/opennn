@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   V E C T O R   T E S T   C L A S S   H E A D E R                                                            */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   V E C T O R   T E S T   C L A S S   H E A D E R                       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __VECTORTEST_H__
-#define __VECTORTEST_H__
+#ifndef VECTORTEST_H
+#define VECTORTEST_H
 
 // Unit testing includes
 
@@ -34,11 +29,7 @@ public:
 
    explicit VectorTest();
 
-   // DESTRUCTOR
-
    virtual ~VectorTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -57,7 +48,7 @@ public:
 
    void test_sum_operator();
    void test_rest_operator();
-   void test_multiplication_operator();
+   void test_multiplication_operator();      
    void test_division_operator();
 
    // Operation an assignment operators
@@ -80,20 +71,25 @@ public:
 
    void test_output_operator();
 
+   // File operation
+
+    void test_tuck_in();
+
    // Get methods
 
    void test_get_size();
    void test_get_display();
 
+   void test_get_subvector();
    void test_get_subvector_random();
 
    // Set
 
    void test_set();
-
    void test_set_display();
 
-   // Resize methods
+
+  // Resize methods
 
    void test_resize();
 
@@ -102,6 +98,22 @@ public:
 
    void test_insert_element();
    void test_split_element();
+
+   void test_delete_index();
+   void test_delete_indices();
+
+   void test_delete_value();
+   void test_delete_values();
+
+   void test_assemble();
+
+   void test_get_difference();
+   void test_get_union();
+   void test_get_intersection();
+
+   void test_get_unique_elements();
+
+   void test_count_unique();
 
    void test_remove_element();
 
@@ -112,22 +124,54 @@ public:
 
    void test_get_unique();
 
+   void test_calculate_top_string();
+   void test_calculate_top_number();
+
+   void test_print_top_string();
+
+   void test_to_float_vector();
+
    // Initialization
 
    void test_initialize();
+   void test_initialize_first();
    void test_initialize_sequential();
    void test_randomize_uniform();
    void test_randomize_normal();
+   void test_randomize_binary();
+
+   void test_fill_from();
 
    // Checking methods
 
    void test_contains();
+   void test_contains_greater_than();
+
    void test_is_in();
+
    void test_is_constant();
+   void test_is_constant_string();
+
    void test_is_crescent();
    void test_is_decrescent();
 
-   void test_impute_time_series_missing_values_mean();
+   void test_has_same_elements();
+
+   void test_is_binary();
+   void test_is_binary_0_1();
+
+   void test_is_positive();
+   void test_is_negative();
+
+   void test_is_integer();
+
+   void test_check_period();
+
+   void test_get_reverse();
+
+   // Replace methods
+
+   void test_replace_value();
 
    // Mathematical operations
 
@@ -138,84 +182,8 @@ public:
    void test_calculate_partial_sum();
    void test_calculate_product();
 
-   void test_calculate_mean();
-   void test_calculate_standard_deviation();
-   void test_calculate_covariance();
-
-   void test_calculate_mean_standard_deviation();
-
-   void test_calculate_minimum();
-   void test_calculate_maximum();
-
-   void test_calculate_minimum_maximum();  
-
-   void test_calculate_minimum_missing_values();
-   void test_calculate_maximum_missing_values();
-
-   void test_calculate_minimum_maximum_missing_values();
-
-   void test_calculate_explained_variance();
-
-   void test_calculate_statistics();
-
-   void test_calculate_quartiles();
-
-   void test_calculate_histogram();
-
-   void test_calculate_bin();
-   void test_calculate_frequency();
-   void test_calculate_total_frequencies();
-
-   void test_calculate_maximal_indices();
-   void test_calculate_minimal_index();
    void test_index();
-   void test_calculate_maximal_index();
-   void test_calculate_minimal_indices();
 
-   void test_calculate_minimal_maximal_index();
-
-   void test_calculate_cumulative_index();
-   void test_calculate_closest_index();
-
-   void test_calculate_norm();
-   void test_calculate_normalized();
-
-   void test_calculate_sum_squared_error();
-   void test_calculate_mean_squared_error();
-   void test_calculate_root_mean_squared_error();
-   
-   void test_apply_absolute_value();
-
-   void test_calculate_lower_bounded();
-   void test_calculate_upper_bounded();
-
-   void test_calculate_lower_upper_bounded();
-
-   void test_apply_lower_bound();
-   void test_apply_upper_bound();
-   void test_apply_lower_upper_bounds();
-
-   void test_calculate_less_rank();
-   void test_calculate_greater_rank();
-
-   void test_calculate_linear_correlation();
-   void test_calculate_linear_correlation_missing_values();
-
-   void test_calculate_linear_regression_parameters();
-
-   void test_threshold();
-   void test_symmetric_threshold();
-   void test_logistic();
-   void test_hyperbolic_tangent();
-
-   void test_hyperbolic_tangent_derivatives();
-   void test_hyperbolic_tangent_second_derivatives();
-   void test_logistic_derivatives();
-   void test_logistic_second_derivatives();
-   void test_threshold_derivatives();
-   void test_threshold_second_derivatives();
-   void test_symmetric_threshold_derivatives();
-   void test_symmetric_threshold_second_derivatives();
 
    // Scaling and unscaling
 
@@ -234,22 +202,105 @@ public:
    void test_load();
    void test_save();
 
+   //Count methods
+
+   void test_count_equal_to();
+   void test_count_not_equal_to();
+
+   void test_count_NAN();
+
+   void test_count_negative();
+   void test_count_positive();
+   void test_count_integers();
+
+   void test_filter_equal_to();
+   void test_filter_not_equal_to();
+
+   void test_get_positive_elements();
+   void test_get_negative_elements();
+   void test_get_between_indices();
+
+   void test_get_indices_equal_to();
+   void test_get_indices_not_equal_to();
+
+   void test_filter_minimum_maximum();
+
+   void test_get_indices_less_than();
+   void test_get_indices_greater_than();
+
+   void test_count_greater_than();
+   void test_count_greater_equal_to();
+   void test_count_less_than();
+   void test_count_less_equal_to();
+   void test_count_between();
+
+   void test_get_indices_that_contains();
+   void test_get_indices_less_equal_to();
+   void test_get_indices_greater_equal_to();
+
+   void test_perform_Box_Cox_transformation();
+
+   void test_calculate_percentage();
+
+   void test_count_contains();
+
+   void test_merge();
+
+   //Descriptive methods
+
+   void test_get_first_index();
+   void test_calculate_cumulative_index();
+
+
+   // Ranks methods
+
+   void test_sort_ascending_indices();
+   void test_sort_ascending_values();
+   void test_sort_descending_indices();
+   void test_sort_descending_values();
+
+   void test_calculate_lower_indices();
+   void test_calculate_lower_values();
+
+
+   void test_calculate_less_rank();
+   void test_calculate_greater_rank();
+   void test_calculate_sort_rank();
+
+   // Filter methods
+
+   void test_filter_positive();
+   void test_filter_negative();
+
+   void test_get_first();
+   void test_get_last();
+   void test_get_before_last();
+
+   void test_delete_first();
+   void test_delete_last();
+
+   void test_get_integer_elements();
+   void test_get_integers();
+
+   void test_count_dates();
+
+
+   //Matrix
+
+   void test_matrix_without_NAN();
+
+
    // Unit testing methods
 
    void run_test_case();
 
-private:
-
-    static Vector<double> dot(const Vector<double>&, const Matrix<double>&);
-
-    static double dot(const Vector<double>&, const Vector<double>&);
 };
 
 #endif
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

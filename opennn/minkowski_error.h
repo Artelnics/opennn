@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M I N K O W S K I   E R R O R   C L A S S   H E A D E R                                                    */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M I N K O W S K I   E R R O R   C L A S S   H E A D E R               
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __MINKOWSKIERROR_H__
-#define __MINKOWSKIERROR_H__
+#ifndef MINKOWSKIERROR_H
+#define MINKOWSKIERROR_H
 
 // System includes
 
@@ -25,15 +21,14 @@
 
 #include "loss_index.h"
 #include "data_set.h"
-
-// TinyXml includes
-
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
 /// This class represents the Minkowski error term. 
+
+///
 /// The Minkowski error measures the difference between the outputs of a neural network and the targets in a data set. 
 /// This error term is used in data modeling problems.
 /// It can be more useful when the data set presents outliers. 
@@ -43,32 +38,21 @@ class MinkowskiError : public LossIndex
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit MinkowskiError();
 
-   // NEURAL NETWORK CONSTRUCTOR
-
    explicit MinkowskiError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
 
    explicit MinkowskiError(DataSet*);
 
-   // NEURAL NETWORK AND DATA SET CONSTRUCTOR
-
    explicit MinkowskiError(NeuralNetwork*, DataSet*);
-
-   // XML CONSTRUCTOR
 
    explicit MinkowskiError(const tinyxml2::XMLDocument&);
 
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~MinkowskiError();
-
-
-   // METHODS
 
    // Get methods
 
@@ -80,24 +64,17 @@ public:
 
    void set_Minkowski_parameter(const double&);
 
-
    // loss methods
 
    double calculate_training_error() const;
+   double calculate_training_error(const Vector<double>&) const;
 
    double calculate_selection_error() const;
 
-   double calculate_training_error(const Vector<double>&) const;
+   double calculate_batch_error(const Vector<size_t>&) const;
+   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
 
-   double calculate_batch_error(const Vector<size_t> &) const;
-
-   Vector<double> calculate_training_error_gradient() const;
-
-   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
-
-   double calculate_error(const Matrix<double>&, const Matrix<double>&) const;
-
-   double calculate_error(const Vector<double>&) const;
+   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -111,13 +88,9 @@ public:
 
 private:
 
-   Vector<double> calculate_output_gradient(const Vector<size_t>&, const Vector<double>&, const Vector<double>&) const;
-
-   // MEMBERS
-
    /// Minkowski exponent value.
 
-   double Minkowski_parameter;
+   double minkowski_parameter;
 
 };
 

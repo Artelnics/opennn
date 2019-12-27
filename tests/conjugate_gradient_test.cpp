@@ -1,42 +1,31 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C O N J U G A T E   G R A D I E N T   T E S T   C L A S S                                                  */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// Unit testing includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C O N J U G A T E   G R A D I E N T   T E S T   C L A S S             
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "conjugate_gradient_test.h"
 
 using namespace OpenNN;
 
-// GENERAL CONSTRUCTOR
 
 ConjugateGradientTest::ConjugateGradientTest() : UnitTesting() 
 {
 }
 
 
-// DESTRUCTOR
-
 ConjugateGradientTest::~ConjugateGradientTest()
 {
 }
 
 
-// METHODS
-
 void ConjugateGradientTest::test_constructor()
 {
-   message += "test_constructor\n"; 
+   cout << "test_constructor\n"; 
 
-   SumSquaredError sse;
+   SumSquaredError sum_squared_error;
 
    // Default constructor
 
@@ -45,26 +34,26 @@ void ConjugateGradientTest::test_constructor()
 
    // Loss index constructor
 
-   ConjugateGradient cg2(&sse);
+   ConjugateGradient cg2(&sum_squared_error);
    assert_true(cg2.has_loss_index() == true, LOG);
 }
 
 
 void ConjugateGradientTest::test_destructor()
 {
-   message += "test_destructor\n";
+   cout << "test_destructor\n";
 }
 
 
 void ConjugateGradientTest::test_get_training_direction_method()
 {
-   message += "test_get_training_direction_method\n";
+   cout << "test_get_training_direction_method\n";
 
-   ConjugateGradient cg;
+   ConjugateGradient conjugate_gradient;
 
-   cg.set_training_direction_method(ConjugateGradient::PR);
+   conjugate_gradient.set_training_direction_method(ConjugateGradient::PR);
 
-   ConjugateGradient::TrainingDirectionMethod training_direction_method = cg.get_training_direction_method();
+   ConjugateGradient::TrainingDirectionMethod training_direction_method = conjugate_gradient.get_training_direction_method();
 
    assert_true(training_direction_method == ConjugateGradient::PR, LOG);
 }
@@ -72,88 +61,83 @@ void ConjugateGradientTest::test_get_training_direction_method()
 
 void ConjugateGradientTest::test_get_training_direction_method_name()
 {
-   message += "test_get_training_direction_method_name\n";
+   cout << "test_get_training_direction_method_name\n";
 }
 
 
 void ConjugateGradientTest::test_set_training_direction_method()
 {
-   message += "test_set_training_direction_method\n";
+   cout << "test_set_training_direction_method\n";
 
-   ConjugateGradient cg;
+   ConjugateGradient conjugate_gradient;
 
-   cg.set_training_direction_method(ConjugateGradient::FR);
-   assert_true(cg.get_training_direction_method() == ConjugateGradient::FR, LOG);
+   conjugate_gradient.set_training_direction_method(ConjugateGradient::FR);
+   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::FR, LOG);
 
-   cg.set_training_direction_method(ConjugateGradient::PR);
-   assert_true(cg.get_training_direction_method() == ConjugateGradient::PR, LOG);
+   conjugate_gradient.set_training_direction_method(ConjugateGradient::PR);
+   assert_true(conjugate_gradient.get_training_direction_method() == ConjugateGradient::PR, LOG);
 }
 
 
 void ConjugateGradientTest::test_set_reserve_all_training_history()
 {
-   message += "test_set_reserve_all_training_history\n";
+   cout << "test_set_reserve_all_training_history\n";
 
-   ConjugateGradient cg;
-   cg.set_reserve_all_training_history(true);
+   ConjugateGradient conjugate_gradient;
+   conjugate_gradient.set_reserve_all_training_history(true);
 
-   assert_true(cg.get_reserve_parameters_history() == true, LOG);
-   assert_true(cg.get_reserve_parameters_norm_history() == true, LOG);
-
-   assert_true(cg.get_reserve_error_history() == true, LOG);
-   assert_true(cg.get_reserve_gradient_history() == true, LOG);
-   assert_true(cg.get_reserve_gradient_norm_history() == true, LOG);
-
-   assert_true(cg.get_reserve_training_direction_history() == true, LOG);
-   assert_true(cg.get_reserve_training_rate_history() == true, LOG);
-   assert_true(cg.get_reserve_elapsed_time_history() == true, LOG);
-   assert_true(cg.get_reserve_selection_error_history() == true, LOG);
+   assert_true(conjugate_gradient.get_reserve_training_error_history() == true, LOG);
+   assert_true(conjugate_gradient.get_reserve_selection_error_history() == true, LOG);
 }
 
+
+/// @todo
 
 void ConjugateGradientTest::test_calculate_PR_parameter()
 {
-   message += "test_calculate_PR_parameter\n";
+   cout << "test_calculate_PR_parameter\n";
 
-   DataSet ds(1, 1, 2);
-   ds.randomize_data_normal();
+   DataSet data_set(1, 1, 2);
+   data_set.randomize_data_normal();
 
-   NeuralNetwork nn(1 ,1);
-   SumSquaredError sse(&nn, &ds);
-   ConjugateGradient cg(&sse);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   nn.initialize_parameters(2.0);
-//   Vector<double> old_gradient = sse.calculate_gradient();
+   neural_network.initialize_parameters(2.0);
+//   Vector<double> old_gradient = sum_squared_error.calculate_gradient();
 
-   nn.initialize_parameters(1.0);
-//   Vector<double> gradient = sse.calculate_gradient();
+   neural_network.initialize_parameters(1.0);
+//   Vector<double> gradient = sum_squared_error.calculate_gradient();
 
-//   double PR_parameter = cg.calculate_PR_parameter(old_gradient, gradient);
+//   double PR_parameter = conjugate_gradient.calculate_PR_parameter(old_gradient, gradient);
 
 //   assert_true(PR_parameter >= 0.0, LOG);
 //   assert_true(PR_parameter <= 1.0, LOG);
+
 }
 
 
+/// @todo
+
 void ConjugateGradientTest::test_calculate_FR_parameter()
 {
-   message += "test_calculate_FR_parameter\n";
-
-   DataSet ds(1, 1, 2);
-   ds.randomize_data_normal();
-   NeuralNetwork nn(1 ,1);
-   SumSquaredError sse(&nn, &ds);
-   ConjugateGradient cg(&sse);
+   cout << "test_calculate_FR_parameter\n";
 /*
-   sse.set_loss_method("SUM_SQUARED_ERROR");
+   DataSet data_set(1, 1, 2);
+   data_set.randomize_data_normal();
 
-   nn.initialize_parameters(2.0);
-   Vector<double> old_gradient = sse.calculate_gradient();
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   ConjugateGradient conjugate_gradient(&sum_squared_error);
 
-   nn.initialize_parameters(1.0);
-   Vector<double> gradient = sse.calculate_gradient();
+   neural_network.initialize_parameters(2.0);
+   Vector<double> old_gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   double FR_parameter = cg.calculate_FR_parameter(old_gradient, gradient);
+   neural_network.initialize_parameters(1.0);
+   Vector<double> gradient = sum_squared_error.calculate_training_loss_gradient();
+
+   double FR_parameter = conjugate_gradient.calculate_FR_parameter(old_gradient, gradient);
 
    assert_true(FR_parameter >= 0.0, LOG);
    assert_true(FR_parameter <= 1.0, LOG);
@@ -161,58 +145,60 @@ void ConjugateGradientTest::test_calculate_FR_parameter()
 }
 
 
+/// @todo
+
 void ConjugateGradientTest::test_calculate_PR_training_direction()
 {
-   message += "test_calculate_PR_training_direction\n";
-
-   DataSet ds(1, 1, 2);
-   ds.randomize_data_normal();
-   NeuralNetwork nn(1 ,1);
-   SumSquaredError sse(&nn, &ds);
-   ConjugateGradient cg(&sse);
+   cout << "test_calculate_PR_training_direction\n";
 /*
-   sse.set_loss_method("SUM_SQUARED_ERROR");
+   DataSet data_set(1, 1, 2);
+   data_set.randomize_data_normal();
 
-   nn.initialize_parameters(2.0);
-   Vector<double> old_gradient = sse.calculate_gradient();
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   ConjugateGradient conjugate_gradient(&sum_squared_error);
+
+   neural_network.initialize_parameters(2.0);
+   Vector<double> old_gradient = sum_squared_error.calculate_training_error_gradient();
    Vector<double> old_training_direction = old_gradient;   
 
-   nn.initialize_parameters(1.0);
-   Vector<double> gradient = sse.calculate_gradient();
+   neural_network.initialize_parameters(1.0);
+   Vector<double> gradient = sum_squared_error.calculate_training_error_gradient();
 
    Vector<double> PR_training_direction 
-   = cg.calculate_PR_training_direction(old_gradient, gradient, old_training_direction);
+   = conjugate_gradient.calculate_PR_training_direction(old_gradient, gradient, old_training_direction);
 
-   size_t parameters_number = nn.get_parameters_number();
+   size_t parameters_number = neural_network.get_parameters_number();
 
    assert_true(PR_training_direction.size() == parameters_number, LOG);
 */
 }
 
 
+/// @todo
+
 void ConjugateGradientTest::test_calculate_FR_training_direction()
 {
-   message += "test_calculate_FR_training_direction\n";
-
-   DataSet ds(1, 1, 2);
-   ds.randomize_data_normal();
-   NeuralNetwork nn(1 ,1);
-   SumSquaredError sse(&nn, &ds);
-   ConjugateGradient cg(&sse);
+   cout << "test_calculate_FR_training_direction\n";
 /*
-   sse.set_loss_method("SUM_SQUARED_ERROR");
+   DataSet data_set(1, 1, 2);
+   data_set.randomize_data_normal();
 
-   nn.initialize_parameters(2.0);
-   Vector<double> old_gradient = sse.calculate_gradient();
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1 ,1});
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
+   ConjugateGradient conjugate_gradient(&sum_squared_error);
+
+   neural_network.initialize_parameters(2.0);
+   Vector<double> old_gradient = sum_squared_error.calculate_training_error_gradient();
    Vector<double> old_training_direction = old_gradient;   
 
-   nn.initialize_parameters(1.0);
-   Vector<double> gradient = sse.calculate_gradient();
+   neural_network.initialize_parameters(1.0);
+   Vector<double> gradient = sum_squared_error.calculate_training_error_gradient();
 	
    Vector<double> FR_training_direction 
-   = cg.calculate_FR_training_direction(old_gradient, gradient, old_training_direction);
+   = conjugate_gradient.calculate_FR_training_direction(old_gradient, gradient, old_training_direction);
 
-   size_t parameters_number = nn.get_parameters_number();
+   size_t parameters_number = neural_network.get_parameters_number();
 
    assert_true(FR_training_direction.size() == parameters_number, LOG);
 */
@@ -221,133 +207,131 @@ void ConjugateGradientTest::test_calculate_FR_training_direction()
 
 void ConjugateGradientTest::test_calculate_training_direction()
 {
-   message += "test_calculate_training_direction\n";
+   cout << "test_calculate_training_direction\n";
 
 }
 
 
 void ConjugateGradientTest::test_perform_training()
 {
-   message += "test_perform_training\n";
+   cout << "test_perform_training\n";
 
-   DataSet ds(1, 1, 1);
-   ds.randomize_data_normal();
+   DataSet data_set(1, 1, 1);
+   data_set.randomize_data_normal();
 
-   NeuralNetwork nn(1, 1, 1);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
 
-   SumSquaredError sse(&nn, &ds);
-/*
-   sse.set_loss_method(LossIndex::SUM_SQUARED_ERROR);
+   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
    double old_loss;
    double loss;
 
    double loss_goal;
 
-   ConjugateGradient cg(&sse);
+   ConjugateGradient conjugate_gradient(&sum_squared_error);
 
    double minimum_parameters_increment_norm;
 
    // Test
 
-   nn.randomize_parameters_normal();
+   neural_network.randomize_parameters_normal();
 
-   old_loss = sse.calculate_loss();
+   old_loss = sum_squared_error.calculate_training_loss();
 
-   cg.set_display(false);
-   cg.set_maximum_iterations_number(1);
+   conjugate_gradient.set_display(false);
+   conjugate_gradient.set_maximum_epochs_number(1);
 
-   cg.perform_training();
+   conjugate_gradient.perform_training();
 
-   loss = sse.calculate_loss();
+   loss = sum_squared_error.calculate_training_loss();
 
    assert_true(loss < old_loss, LOG);
 
    // Minimum parameters increment norm
 
-   nn.initialize_parameters(-1.0);
+   neural_network.initialize_parameters(-1.0);
 
    minimum_parameters_increment_norm = 0.1;
 
-   cg.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
-   cg.set_loss_goal(0.0);
-   cg.set_minimum_loss_decrease(0.0);
-   cg.set_gradient_norm_goal(0.0);
-   cg.set_maximum_iterations_number(1000);
-   cg.set_maximum_time(1000.0);
+   conjugate_gradient.set_minimum_parameters_increment_norm(minimum_parameters_increment_norm);
+   conjugate_gradient.set_loss_goal(0.0);
+   conjugate_gradient.set_minimum_loss_decrease(0.0);
+   conjugate_gradient.set_gradient_norm_goal(0.0);
+   conjugate_gradient.set_maximum_epochs_number(1000);
+   conjugate_gradient.set_maximum_time(1000.0);
 
-   cg.perform_training();
+   conjugate_gradient.perform_training();
 
    // Performance goal
 
-   nn.initialize_parameters(-1.0);
+   neural_network.initialize_parameters(-1.0);
 
    loss_goal = 0.1;
 
-   cg.set_minimum_parameters_increment_norm(0.0);
-   cg.set_loss_goal(loss_goal);
-   cg.set_minimum_loss_decrease(0.0);
-   cg.set_gradient_norm_goal(0.0);
-   cg.set_maximum_iterations_number(1000);
-   cg.set_maximum_time(1000.0);
+   conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
+   conjugate_gradient.set_loss_goal(loss_goal);
+   conjugate_gradient.set_minimum_loss_decrease(0.0);
+   conjugate_gradient.set_gradient_norm_goal(0.0);
+   conjugate_gradient.set_maximum_epochs_number(1000);
+   conjugate_gradient.set_maximum_time(1000.0);
 
-   cg.perform_training();
+   conjugate_gradient.perform_training();
 
-   loss = sse.calculate_loss();
+   loss = sum_squared_error.calculate_training_loss();
 
    assert_true(loss < loss_goal, LOG);
 
    // Minimum evaluation improvement
 
-   nn.initialize_parameters(-1.0);
+   neural_network.initialize_parameters(-1.0);
 
    double minimum_loss_increase = 0.1;
 
-   cg.set_minimum_parameters_increment_norm(0.0);
-   cg.set_loss_goal(0.0);
-   cg.set_minimum_loss_decrease(minimum_loss_increase);
-   cg.set_gradient_norm_goal(0.0);
-   cg.set_maximum_iterations_number(1000);
-   cg.set_maximum_time(1000.0);
+   conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
+   conjugate_gradient.set_loss_goal(0.0);
+   conjugate_gradient.set_minimum_loss_decrease(minimum_loss_increase);
+   conjugate_gradient.set_gradient_norm_goal(0.0);
+   conjugate_gradient.set_maximum_epochs_number(1000);
+   conjugate_gradient.set_maximum_time(1000.0);
 
-   cg.perform_training();
+   conjugate_gradient.perform_training();
 
    // Gradient norm goal 
 
-   nn.initialize_parameters(-1.0);
+   neural_network.initialize_parameters(-1.0);
 
    double gradient_norm_goal = 0.1;
 
-   cg.set_minimum_parameters_increment_norm(0.0);
-   cg.set_loss_goal(0.0);
-   cg.set_minimum_loss_decrease(0.0);
-   cg.set_gradient_norm_goal(gradient_norm_goal);
-   cg.set_maximum_iterations_number(1000);
-   cg.set_maximum_time(1000.0);
+   conjugate_gradient.set_minimum_parameters_increment_norm(0.0);
+   conjugate_gradient.set_loss_goal(0.0);
+   conjugate_gradient.set_minimum_loss_decrease(0.0);
+   conjugate_gradient.set_gradient_norm_goal(gradient_norm_goal);
+   conjugate_gradient.set_maximum_epochs_number(1000);
+   conjugate_gradient.set_maximum_time(1000.0);
 
-   cg.perform_training();
+   conjugate_gradient.perform_training();
 
-   double gradient_norm = sse.calculate_gradient().calculate_norm();
+//   double gradient_norm = sum_squared_error.calculate_gradient().calculate_norm();
 
-   assert_true(gradient_norm < gradient_norm_goal, LOG);
-*/
+//   assert_true(gradient_norm < gradient_norm_goal, LOG);
+
 }
 
 
 void ConjugateGradientTest::test_to_XML()   
 {
-   message += "test_to_XML\n";
+   cout << "test_to_XML\n";
 
-   ConjugateGradient cg;
+   ConjugateGradient conjugate_gradient;
 
-   tinyxml2::XMLDocument* cgd = cg.to_XML();
+   tinyxml2::XMLDocument* cgd = conjugate_gradient.to_XML();
    assert_true(cgd != nullptr, LOG);
 }
 
 
 void ConjugateGradientTest::test_from_XML()
 {
-   message += "test_from_XML\n";
+   cout << "test_from_XML\n";
 
    ConjugateGradient cg1;
    ConjugateGradient cg2;
@@ -364,14 +348,12 @@ void ConjugateGradientTest::test_from_XML()
 
    delete document;
 
-   assert_true(cg1 == cg2, LOG);
-
 }
 
 
 void ConjugateGradientTest::run_test_case()
 {
-   message += "Running conjugate gradient test case...\n";
+   cout << "Running conjugate gradient test case...\n";
 
    // Constructor and destructor methods
 
@@ -408,12 +390,12 @@ void ConjugateGradientTest::run_test_case()
    test_to_XML();   
    test_from_XML();
 
-   message += "End of conjugate gradient test case.\n";
+   cout << "End of conjugate gradient test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

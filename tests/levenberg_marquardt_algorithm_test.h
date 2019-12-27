@@ -1,23 +1,17 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   L E V E N B E R G   M A R Q U A R D T   A L G O R I T H M   T E S T   C L A S S   H E A D E R              */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   L E V E N B E R G   M A R Q U A R D T   A L G O R I T H M   T E S T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __LEVENBERGMARQUARDTALGORITHMTEST_H__
-#define __LEVENBERGMARQUARDTALGORITHMTEST_H__
+#ifndef LEVENBERGMARQUARDTALGORITHMTEST_H
+#define LEVENBERGMARQUARDTALGORITHMTEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
-//#include "mock_error_term.h"
 
 using namespace OpenNN;
 
@@ -30,24 +24,24 @@ class LevenbergMarquardtAlgorithmTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit LevenbergMarquardtAlgorithmTest(); 
 
 
-   // DESTRUCTOR
+   
 
    virtual ~LevenbergMarquardtAlgorithmTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
    void test_constructor();
    void test_destructor();
 
-   // METHODS
+   
 
    // Get methods
 
@@ -69,9 +63,9 @@ public:
 
    // Training methods
 
-   void test_calculate_loss();
-   void test_calculate_gradient();
-   void test_calculate_Hessian_approximation();
+   void test_calculate_training_loss();
+   void test_calculate_training_loss_gradient();
+   void test_calculate_hessian_approximation();
 
    void test_perform_training();
 
@@ -100,7 +94,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

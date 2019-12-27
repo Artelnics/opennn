@@ -1,14 +1,10 @@
-###################################################################################################
-#                                                                                                 #
-#   OpenNN: Open Neural Networks Library                                                          #
-#   www.artelnics.com/opennn                                                                      #
-#                                                                                                 #
-#   U R I N A R Y   I N F L A M M A T I O N S   D I A G N O S I S   P R O J E C T                 #
-#                                                                                                 #
-#   Artificial Intelligence Techniques SL (Artelnics)                                             #
-#   artelnics@artelnics.com                                                                       #
-#                                                                                                 #
-###################################################################################################
+#   OpenNN: Open Neural Networks Library
+#   www.opennn.net
+#
+#   U R I N A R Y   I N F L A M M A T I O N S   D I A G N O S I S   P R O J E C T
+#
+#   Artificial Intelligence Techniques SL (Artelnics)
+#   artelnics@artelnics.com
 
 TEMPLATE = app
 CONFIG += console
@@ -69,7 +65,7 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 
 !win32{
 QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
+QMAKE_LFLAGS += -fopenmp
 }
 
 mac{
@@ -77,5 +73,3 @@ INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
 
-# MPI include
-#include(../../mpi.pri)

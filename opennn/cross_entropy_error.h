@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C R O S S   E N T R O P Y   E R R O R   C L A S S   H E A D E R                                            */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C R O S S   E N T R O P Y   E R R O R   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __CROSSENTROPYERROR_H__
-#define __CROSSENTROPYERROR_H__
+#ifndef CROSSENTROPYERROR_H
+#define CROSSENTROPYERROR_H
 
 // System includes
 
@@ -24,15 +20,16 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
-
 
 namespace OpenNN
 {
 
-/// This class represents the cross entropy error term. 
+/// This class represents the cross entropy error term, used for predicting probabilities.
+
+///
 /// This functional is used in classification problems.
 
 class CrossEntropyError : public LossIndex
@@ -52,7 +49,7 @@ public:
 
    explicit CrossEntropyError(DataSet*);
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
@@ -64,37 +61,18 @@ public:
 
    CrossEntropyError(const CrossEntropyError&);
 
-   // DESTRUCTOR
-
    virtual ~CrossEntropyError();
-
-   // ASSIGNMENT OPERATOR
-
-   CrossEntropyError& operator = (const CrossEntropyError&);
-
-   // EQUAL TO OPERATOR
-
-   bool operator == (const CrossEntropyError&) const;
-
-   // METHODS
 
    // Error methods
 
-   double calculate_training_error() const;
-
-   double calculate_selection_error() const;
-
-   double calculate_training_error(const Vector<double>&) const;
-
-   double calculate_batch_error(const Vector<size_t> &) const;
+   double calculate_batch_error(const Vector<size_t>&) const;
+   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
 
    // Gradient methods
 
-   Vector<double> calculate_training_error_gradient() const;
-
    FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
 
-   Matrix<double> calculate_output_gradient(const Matrix<double>&, const Matrix<double>&) const;
+   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -105,6 +83,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
 };
 
 }

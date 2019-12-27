@@ -1,22 +1,17 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   Q U A S I - N E W T O N   M E T H O D   T E S T   C L A S S   H E A D E R                                  */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   Q U A S I - N E W T O N   M E T H O D   T E S T   C L A S S   H E A D E R      
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __QUASINEWTONMETHODTEST_H__
-#define __QUASINEWTONMETHODTEST_H__
+#ifndef QUASINEWTONMETHODTEST_H
+#define QUASINEWTONMETHODTEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
-
 
 using namespace OpenNN;
 
@@ -30,17 +25,17 @@ class QuasiNewtonMethodTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit QuasiNewtonMethodTest();
 
 
-   // DESTRUCTOR
+   
 
    virtual ~QuasiNewtonMethodTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
@@ -49,19 +44,19 @@ public:
 
    // Get methods
 
-   void test_get_inverse_Hessian_approximation_method();
-   void test_get_inverse_Hessian_approximation_method_name();
+   void test_get_inverse_hessian_approximation_method();
+   void test_get_inverse_hessian_approximation_method_name();
 
    // Set methods
 
-   void test_set_inverse_Hessian_approximation_method();
+   void test_set_inverse_hessian_approximation_method();
 
    // Training methods
 
-   void test_calculate_DFP_inverse_Hessian_approximation();
-   void test_calculate_BFGS_inverse_Hessian_approximation();
+   void test_calculate_DFP_inverse_hessian_approximation();
+   void test_calculate_BFGS_inverse_hessian_approximation();
 
-   void test_calculate_inverse_Hessian_approximation();
+   void test_calculate_inverse_hessian_approximation();
    void test_calculate_training_direction();
 
    void test_perform_training();
@@ -87,7 +82,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

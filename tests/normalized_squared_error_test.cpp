@@ -1,23 +1,12 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S                                      */
-/*                                                                                                              */
-/*   Artelnics - Making intelligent use of data                                                                 */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// Unit testing includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   N O R M A L I Z E D   S Q U A R E D   E R R O R   T E S T   C L A S S 
+//
+//   Artificial Intelligence Techniques, S.L. (Artelnics)                            
+//   artelnics@artelnics.com
 
 #include "normalized_squared_error_test.h"
-
-using namespace OpenNN;
-
-
-// GENERAL CONSTRUCTOR
 
 
 NormalizedSquaredErrorTest::NormalizedSquaredErrorTest(void) : UnitTesting() 
@@ -25,39 +14,35 @@ NormalizedSquaredErrorTest::NormalizedSquaredErrorTest(void) : UnitTesting()
 }
 
 
-// DESTRUCTOR
-
 NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest(void)
 {
 }
 
 
-// METHODS
-
 void NormalizedSquaredErrorTest::test_constructor(void)
 {
-   message += "test_constructor\n";
+   cout << "test_constructor\n";
 
    // Default
 
-   NormalizedSquaredError nse1;
+   NormalizedSquaredError normalized_squared_error_1;
 
-   assert_true(nse1.has_neural_network() == false, LOG);
-   assert_true(nse1.has_data_set() == false, LOG);
+   assert_true(normalized_squared_error_1.has_neural_network() == false, LOG);
+   assert_true(normalized_squared_error_1.has_data_set() == false, LOG);
 
    // Neural network
 
-   NeuralNetwork mlp2;
-   NormalizedSquaredError nse2(&mlp2);
+   NeuralNetwork neural_network_2;
+   NormalizedSquaredError normalized_squared_error_2(&neural_network_2);
 
-   assert_true(nse2.has_neural_network() == true, LOG);
-   assert_true(nse2.has_data_set() == false, LOG);
+   assert_true(normalized_squared_error_2.has_neural_network() == true, LOG);
+   assert_true(normalized_squared_error_2.has_data_set() == false, LOG);
 
    // Neural network and data set
 
-   NeuralNetwork mlp3;
-   DataSet ds3;
-   NormalizedSquaredError nse3(&mlp3, &ds3);
+   NeuralNetwork neural_network_3;
+   DataSet data_set_3;
+   NormalizedSquaredError nse3(&neural_network_3, &data_set_3);
 
    assert_true(nse3.has_neural_network() == true, LOG);
    assert_true(nse3.has_data_set() == true, LOG);
@@ -66,31 +51,24 @@ void NormalizedSquaredErrorTest::test_constructor(void)
 
 void NormalizedSquaredErrorTest::test_destructor(void)
 {
-   message += "test_destructor\n";
+   cout << "test_destructor\n";
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_error(void)
+void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 {
-   message += "test_calculate_error\n";
-/*
+   cout << "test_calculate_training_error\n";
+
    Vector<double> parameters;
 
-   NeuralNetwork nn(1,1);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
-   DataSet ds(1,1,1);
-
-   MultilayerPerceptron* mlpp = nn.get_multilayer_perceptron_pointer();
+   DataSet data_set(1,1,1);
 
    size_t instances_number;
    size_t inputs_number;
    size_t outputs_number;
    size_t hidden_neurons;
-
-   mlpp->get_layer_pointer(0)->set_activation_function(PerceptronLayer::Linear);
-
-   mlpp->initialize_biases(0.0);
-   mlpp->initialize_synaptic_weights(1.0);
 
    Matrix<double> new_data(2, 2);
    new_data(0,0) = -1.0;
@@ -98,11 +76,12 @@ void NormalizedSquaredErrorTest::test_calculate_error(void)
    new_data(1,0) = 1.0;
    new_data(1,1) = 1.0;
 
-   ds.set_data(new_data);
+   data_set.set_data(new_data);
+   data_set.set_training();
 
-   NormalizedSquaredError nse(&nn, &ds);
+   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
-   assert_true(nse.calculate_all_instances_error() == 0.0, LOG);
+//   assert_true(normalized_squared_error.calculate_training_error() == 0.0, LOG);
 
    // Test
 
@@ -111,145 +90,189 @@ void NormalizedSquaredErrorTest::test_calculate_error(void)
    outputs_number = 5;
    hidden_neurons = 3;
 
-   nn.set(inputs_number, hidden_neurons, outputs_number);
-   nn.randomize_parameters_normal();
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
+   neural_network.randomize_parameters_normal();
 
-   parameters = nn.get_parameters();
+   parameters = neural_network.get_parameters();
 
-   ds.set(instances_number, inputs_number, outputs_number);
-   ds.randomize_data_normal();
+   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.randomize_data_normal();
 
-   nse.set_normalization_coefficient();
+   normalized_squared_error.set_normalization_coefficient();
 
-   assert_true(fabs(nse.calculate_all_instances_error() - nse.calculate_all_instances_error(parameters)) < std::numeric_limits<double>::min(), LOG);
-*/
+   assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-03, LOG);
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_error_gradient(void)
+void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 {
-   message += "test_calculate_error_gradient\n";
+   cout << "test_calculate_training_error_gradient\n";
 
-   NumericalDifferentiation nd;
+   NeuralNetwork neural_network;
 
-   NeuralNetwork nn;
+   DataSet data_set;
 
-   Vector<double> parameters;
-
-   DataSet ds;
-   Matrix<double> data;
-
-   NormalizedSquaredError nse(&nn, &ds);
+   NormalizedSquaredError nse(&neural_network, &data_set);
 
    Vector<double> error_gradient;
    Vector<double> numerical_error_gradient;
 
-   size_t instances_number = 10;
-   size_t inputs_number = 10;
-   size_t outputs_number = 9;
-   size_t hidden_neurons = 5;
+   size_t instances_number;
+   size_t inputs_number;
+   size_t outputs_number;
+   size_t hidden_neurons;
 
-   Vector<size_t> indices;
+//   ScalingLayer* scaling_layer = new ScalingLayer();
 
-   // Test 
+   RecurrentLayer* recurrent_layer = new RecurrentLayer();
 
-   nn.set(1,1,1);
+   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
-   nn.initialize_parameters(0.0);
+   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
+   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
-   ds.set(2, 1, 1);
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
-   data.set(2, 2);
+   // Test trivial
+{
+   instances_number = 10;
+   inputs_number = 1;
+   outputs_number = 1;
 
-   data(0,0) = -1.0;
-   data(0,1) = -1.0;
-   data(1,0) = 1.0;
-   data(1,1) = 1.0;
+   data_set.set(instances_number, inputs_number, outputs_number);
 
-   ds.set_data(data);
+   data_set.initialize_data(0.0);
+
+   hidden_perceptron_layer->set(inputs_number, outputs_number);
+   neural_network.add_layer(hidden_perceptron_layer);
+
+   neural_network.initialize_parameters(0.0);
+
+   nse.set_normalization_coefficient(1.0);
+
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
 
    error_gradient = nse.calculate_training_error_gradient();
 
-   assert_true(error_gradient.size() == nn.get_parameters_number(), LOG);
+   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
    assert_true(error_gradient == 0.0, LOG);
+}
 
-   // Test
+   neural_network.set();
 
+   // Test perceptron and probabilistic
+{
    instances_number = 10;
-   inputs_number = 7;
-   outputs_number = 8;
-   hidden_neurons = 4;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
 
-   nn.set(inputs_number, hidden_neurons, outputs_number);
-   nn.randomize_parameters_normal();
+   data_set.set(instances_number, inputs_number, outputs_number);
 
-   parameters = nn.get_parameters();
+   data_set.randomize_data_normal();
 
-   ds.set(instances_number, inputs_number, outputs_number);
-   ds.randomize_data_normal();
-   ds.get_instances_pointer()->set_training();
+   data_set.set_training();
+
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(outputs_number, outputs_number);
+
+   neural_network.add_layer(hidden_perceptron_layer);
+   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
+
+   neural_network.randomize_parameters_normal();
 
    nse.set_normalization_coefficient();
 
-   indices.set(0, 1, instances_number-1);
-
    error_gradient = nse.calculate_training_error_gradient();
 
-   numerical_error_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, indices, parameters);
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
 
-   assert_true((error_gradient - numerical_error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
 
-   // Test
+   neural_network.set();
 
+   // Test lstm
+{
    instances_number = 10;
-   inputs_number = 7;
-   outputs_number = 7;
-   hidden_neurons = 5;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
 
-   nn.set(inputs_number, hidden_neurons, outputs_number);
-   nn.randomize_parameters_normal();
+   data_set.set(instances_number, inputs_number, outputs_number);
 
-   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(0, PerceptronLayer::Logistic);
-   nn.get_multilayer_perceptron_pointer()->set_layer_activation_function(1, PerceptronLayer::Logistic);
+   data_set.randomize_data_normal();
 
-   parameters = nn.get_parameters();
+   data_set.set_training();
 
-   ds.set(instances_number, inputs_number, outputs_number);
-   ds.randomize_data_normal();
-   ds.get_instances_pointer()->set_training();
+   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+
+   neural_network.add_layer(long_short_term_memory_layer);
+   neural_network.add_layer(output_perceptron_layer);
+
+   neural_network.randomize_parameters_normal();
 
    nse.set_normalization_coefficient();
 
-   indices.set(0,1,instances_number-1);
+   error_gradient = nse.calculate_training_error_gradient();
+
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+
+   neural_network.set();
+
+   // Test recurrent
+{
+   instances_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   recurrent_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+
+   neural_network.add_layer(recurrent_layer);
+   neural_network.add_layer(output_perceptron_layer);
+
+   neural_network.randomize_parameters_normal();
+
+   nse.set_normalization_coefficient();
 
    error_gradient = nse.calculate_training_error_gradient();
-   numerical_error_gradient = nd.calculate_gradient(nse, &NormalizedSquaredError::calculate_error, indices, parameters);
 
-   assert_true((error_gradient - numerical_error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+   numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_Hessian(void)
+void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
 {
-   message += "test_calculate_Hessian\n";
-}
+   cout << "test_calculate_training_error_terms\n";
 
-
-void NormalizedSquaredErrorTest::test_calculate_terms(void)
-{
-   message += "test_calculate_terms\n";
-/*
-   NeuralNetwork nn;
-   Vector<size_t> multilayer_perceptron_architecture;
+   NeuralNetwork neural_network;
+   Vector<size_t> architecture;
    Vector<double> network_parameters;
 
-   DataSet ds;
+   DataSet data_set;
 
-   NormalizedSquaredError nse(&nn, &ds);
+   NormalizedSquaredError nse(&neural_network, &data_set);
 
-   double error;
+//   double error;
 
-   Vector<double> evaluation_terms;
+   Vector<double> error_terms;
 
    size_t instances_number;
    size_t inputs_number;
@@ -261,108 +284,108 @@ void NormalizedSquaredErrorTest::test_calculate_terms(void)
    inputs_number = 6;
    outputs_number = 7;
 
-   nn.set(inputs_number, outputs_number);
-   nn.randomize_parameters_normal();
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
+   neural_network.randomize_parameters_normal();
 
-   ds.set(instances_number, inputs_number, outputs_number);
-   ds.randomize_data_normal();
+   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.randomize_data_normal();
 
    nse.set_normalization_coefficient();
 
-   error = nse.calculate_all_instances_error();
+//   error = nse.calculate_training_error();
 
-   evaluation_terms = nse.calculate_error_terms();
+//   error_terms = nse.calculate_training_error_terms();
 
-//   assert_true(fabs((evaluation_terms*evaluation_terms).calculate_sum() - error) < 1.0e-3, LOG);
-*/
+//   assert_true(abs((error_terms*error_terms).calculate_sum() - error) < 1.0e-3, LOG);
+
 }
 
 
-void NormalizedSquaredErrorTest::test_calculate_terms_Jacobian(void)
+void NormalizedSquaredErrorTest::test_calculate_training_error_terms_Jacobian(void)
 {
-   message += "test_calculate_terms_Jacobian\n";
+   cout << "test_calculate_training_error_terms_Jacobian\n";
 
    NumericalDifferentiation nd;
 
-   NeuralNetwork nn;
+   NeuralNetwork neural_network;
    Vector<int> hidden_layers_size;
    Vector<double> network_parameters;
 
-   DataSet ds;
+   DataSet data_set;
 
-   NormalizedSquaredError nse(&nn, &ds);
+   NormalizedSquaredError nse(&neural_network, &data_set);
 
    Vector<double> error_gradient;
 
-   Vector<double> evaluation_terms;
+   Vector<double> error_terms;
    Matrix<double> terms_Jacobian;
    Matrix<double> numerical_Jacobian_terms;
 
    // Test
-/*
-   nn.set(1, 1);
-   nn.randomize_parameters_normal();
-   network_parameters = nn.get_parameters();
 
-   ds.set(2, 1, 1);
-   ds.randomize_data_normal();
+   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.randomize_parameters_normal();
+   network_parameters = neural_network.get_parameters();
 
-   terms_Jacobian = nse.calculate_error_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_error_terms, network_parameters);
+   data_set.set(2, 1, 1);
+   data_set.randomize_data_normal();
 
-   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
+//   terms_Jacobian = nse.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_training_error_terms, network_parameters);
 
-   // Test
-
-   nn.set(2, 2, 2);
-   nn.randomize_parameters_normal();
-   network_parameters = nn.get_parameters();
-
-   ds.set(2, 2, 2);
-   ds.randomize_data_normal();
-
-   terms_Jacobian = nse.calculate_error_terms_Jacobian();
-   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_error_terms, network_parameters);
-
-   assert_true((terms_Jacobian-numerical_Jacobian_terms).calculate_absolute_value() < 1.0e-3, LOG);
+   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
 
    // Test
 
-   nn.set(2,2,2);
-   nn.randomize_parameters_normal();
+   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
+   neural_network.randomize_parameters_normal();
+   network_parameters = neural_network.get_parameters();
 
-   ds.set(2,2,2);
-   ds.randomize_data_normal();
+   data_set.set(2, 2, 2);
+   data_set.randomize_data_normal();
+
+//   terms_Jacobian = nse.calculate_error_terms_Jacobian();
+   numerical_Jacobian_terms = nd.calculate_Jacobian(nse, &NormalizedSquaredError::calculate_training_error_terms, network_parameters);
+
+   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+
+   // Test
+
+   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
+   neural_network.randomize_parameters_normal();
+
+   data_set.set(2,2,2);
+   data_set.randomize_data_normal();
    
-   error_gradient = nse.calculate_error_gradient();
+//   error_gradient = nse.calculate_error_gradient();
 
-   evaluation_terms = nse.calculate_error_terms();
-   terms_Jacobian = nse.calculate_error_terms_Jacobian();
+//   error_terms = nse.calculate_training_error_terms();
+//   terms_Jacobian = nse.calculate_error_terms_Jacobian();
 
-   assert_true(((terms_Jacobian.calculate_transpose()).dot(evaluation_terms)*2.0 - error_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-*/
+//   assert_true(absolute_value((terms_Jacobian.calculate_transpose()).dot(error_terms)*2.0 - error_gradient) < 1.0e-3, LOG);
+
 }
 
 
 void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
 {
-    message += "test_calculate_squared_errors\n";
+    cout << "test_calculate_squared_errors\n";
 
-    NeuralNetwork nn;
+    NeuralNetwork neural_network;
 
-    DataSet ds;
+    DataSet data_set;
 
-    NormalizedSquaredError nse(&nn, &ds);
+    NormalizedSquaredError nse(&neural_network, &data_set);
 
     Vector<double> squared_errors;
 
     // Test
 
-    nn.set(1, 1);
-    nn.randomize_parameters_normal();
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.randomize_parameters_normal();
 
-    ds.set(2, 1, 1);
-    ds.randomize_data_normal();
+    data_set.set(2, 1, 1);
+    data_set.randomize_data_normal();
 
     squared_errors = nse.calculate_squared_errors();
 
@@ -372,24 +395,24 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors(void)
 
 void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
 {
-    message += "test_calculate_maximal_errors\n";
+    cout << "test_calculate_maximal_errors\n";
 
-    NeuralNetwork nn;
+    NeuralNetwork neural_network;
 
-    DataSet ds;
+    DataSet data_set;
 
-    NormalizedSquaredError nse(&nn, &ds);
+    NormalizedSquaredError nse(&neural_network, &data_set);
 
     Vector<double> squared_errors;
     Vector<size_t> maximal_errors;
 
     // Test
 
-    nn.set(1, 1);
-    nn.randomize_parameters_normal();
+    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.randomize_parameters_normal();
 
-    ds.set(3, 1, 1);
-    ds.randomize_data_normal();
+    data_set.set(3, 1, 1);
+    data_set.randomize_data_normal();
 
     squared_errors = nse.calculate_squared_errors();
     maximal_errors = nse.calculate_maximal_errors(3);
@@ -402,22 +425,22 @@ void NormalizedSquaredErrorTest::test_calculate_maximal_errors(void)
 
 void NormalizedSquaredErrorTest::test_to_XML(void)
 {
-   message += "test_to_XML\n";
+   cout << "test_to_XML\n";
 }
 
 
 void NormalizedSquaredErrorTest::test_from_XML(void)
 {
-   message += "test_from_XML\n";
+   cout << "test_from_XML\n";
 }
 
 
 void NormalizedSquaredErrorTest::run_test_case(void)
 {
-   message += "Running normalized squared error test case...\n";
+   cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-/*
+
    test_constructor();
    test_destructor();
 
@@ -427,17 +450,15 @@ void NormalizedSquaredErrorTest::run_test_case(void)
 
    // Error methods
 
-   test_calculate_error();
-*/
-   test_calculate_error_gradient();
-/*
-   test_calculate_Hessian();
+   test_calculate_training_error();
+
+   test_calculate_training_error_gradient();
 
    // Error terms methods
 
-   test_calculate_terms();
+   test_calculate_training_error_terms();
 
-   test_calculate_terms_Jacobian();
+   test_calculate_training_error_terms_Jacobian();
 
    // Squared errors methods
 
@@ -449,13 +470,13 @@ void NormalizedSquaredErrorTest::run_test_case(void)
 
    test_to_XML();
    test_from_XML();
-*/
-   message += "End of normalized squared error test case.\n";
+
+   cout << "End of normalized squared error test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lenser General Public

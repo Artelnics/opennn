@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S   H E A D E R                                  */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S   H E A D E R      
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-
-#ifndef __CROSSENTROPYERRORTEST_H__
-#define __CROSSENTROPYERRORTEST_H__
+#ifndef CROSSENTROPYERRORTEST_H
+#define CROSSENTROPYERRORTEST_H
 
 // Unit testing includes
 
@@ -29,16 +24,16 @@ class CrossEntropyErrorTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit CrossEntropyErrorTest();
 
 
-   // DESTRUCTOR
+   
 
    virtual ~CrossEntropyErrorTest();
 
-   // METHODS
+   
 
    // Get methods
 
@@ -46,12 +41,10 @@ public:
 
    // Error methods
 
-   void test_calculate_error();
+   void test_calculate_training_error();
    void test_calculate_selection_error();
 
-   void test_calculate_gradient();
-
-   void test_calculate_Hessian();
+   void test_calculate_training_error_gradient();
 
    void test_to_XML();
    void test_from_XML();
@@ -65,7 +58,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

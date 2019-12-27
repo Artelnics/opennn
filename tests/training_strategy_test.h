@@ -1,18 +1,14 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S   H E A D E R                                      */
-/*                                                                                                              */ 
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S   H E A D E R 
+//
+//   Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __TRAININGSTRATEGYTEST_H__
-#define __TRAININGSTRATEGYTEST_H__
+#ifndef TRAININGSTRATEGYTEST_H
+#define TRAININGSTRATEGYTEST_H
 
 // Unit testing includes
 
@@ -30,17 +26,17 @@ class TrainingStrategyTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit TrainingStrategyTest(); 
 
 
-   // DESTRUCTOR
+   
 
    virtual ~TrainingStrategyTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
@@ -68,7 +64,6 @@ public:
 
    // Training methods
 
-   void test_initialize_layers_autoencoding();
    void test_perform_training();
 
    // Serialization methods
@@ -96,7 +91,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

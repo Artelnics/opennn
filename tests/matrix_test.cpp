@@ -1,103 +1,92 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M A T R I X   T E S T   C L A S S                                                                          */
-/*                                                                                                              */ 
- 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// Unit testing includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M A T R I X   T E S T   C L A S S                                     
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "matrix_test.h"
 
-// GENERAL CONSTRUCTOR
 
 MatrixTest::MatrixTest() : UnitTesting()
 {   
 }
 
 
-// DESTRUCTOR
-
 MatrixTest::~MatrixTest()
 {
 }
 
 
-// METHODS
-
 void MatrixTest::test_constructor()
 {
-   message += "test_constructor\n";
+   cout << "test_constructor\n";
 
-   string file_name = "../data/matrix.dat";
+   string file_name = "../data/matrix.csv";
 
    // Default
 
-   Matrix<size_t> m1;
+   Matrix<size_t> matrix1;
 
-   assert_true(m1.get_rows_number() == 0, LOG);
-   assert_true(m1.get_columns_number() == 0, LOG);
+   assert_true(matrix1.get_rows_number() == 0, LOG);
+   assert_true(matrix1.get_columns_number() == 0, LOG);
 
    // Rows and columns numbers
 
-   Matrix<size_t> m2(0, 0);
+   Matrix<size_t> matrix2(0, 0);
 
-   assert_true(m2.get_rows_number() == 0, LOG);
-   assert_true(m2.get_columns_number() == 0, LOG);
+   assert_true(matrix2.get_rows_number() == 0, LOG);
+   assert_true(matrix2.get_columns_number() == 0, LOG);
   
-   Matrix<double> m3(1, 1, 1.0);
-   assert_true(m3.get_rows_number() == 1, LOG);
-   assert_true(m3.get_columns_number() == 1, LOG);
+   Matrix<double> matrix3(1, 1, 1.0);
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
 
    // Rows and columns numbers and initialization
 
-   Matrix<size_t> m4(0, 0, 1);
+   Matrix<size_t> matrix4(0, 0, 1);
 
-   assert_true(m4.get_rows_number() == 0, LOG);
-   assert_true(m4.get_columns_number() == 0, LOG);
+   assert_true(matrix4.get_rows_number() == 0, LOG);
+   assert_true(matrix4.get_columns_number() == 0, LOG);
 
-   Matrix<size_t> m5(1, 1, 1);
+   Matrix<size_t> matrix5(1, 1, 1);
 
-   assert_true(m5.get_rows_number() == 1, LOG);
-   assert_true(m5.get_columns_number() == 1, LOG);
-   assert_true(m5 == true, LOG);
+   assert_true(matrix5.get_rows_number() == 1, LOG);
+   assert_true(matrix5.get_columns_number() == 1, LOG);
+   assert_true(matrix5 == true, LOG);
 
    // File constructor
 
-   m1.save(file_name);
+   matrix1.save_csv(file_name);
 
-   Matrix<size_t> m6(file_name);
-   assert_true(m6.get_rows_number() == 0, LOG);
-   assert_true(m6.get_columns_number() == 0, LOG);
+   Matrix<size_t> matrix6(file_name,',',false);
+   assert_true(matrix6.get_rows_number() == 0, LOG);
+   assert_true(matrix6.get_columns_number() == 0, LOG);
 
-   m2.save(file_name);
-   Matrix<size_t> m7(file_name);
-   assert_true(m7.get_rows_number() == 0, LOG);
-   assert_true(m7.get_columns_number() == 0, LOG);
+   matrix2.save_csv(file_name);
 
-   m3.save(file_name);
+   Matrix<size_t> matrix7(file_name,',',false);
+   assert_true(matrix7.get_rows_number() == 0, LOG);
+   assert_true(matrix7.get_columns_number() == 0, LOG);
 
-   Matrix<double> m8(file_name);
-   assert_true(m8.get_rows_number() == 1, LOG);
-   assert_true(m8.get_columns_number() == 1, LOG);
+   matrix3.save_csv(file_name);
 
-   m4.save(file_name);
-   Matrix<size_t> m9(file_name);
-   assert_true(m9.get_rows_number() == 0, LOG);
-   assert_true(m9.get_columns_number() == 0, LOG);
+   Matrix<double> matrix8(file_name,',',false);
+   assert_true(matrix8.get_rows_number() == 1, LOG);
+   assert_true(matrix8.get_columns_number() == 1, LOG);
 
-   m5.save(file_name);
+   matrix4.save_csv(file_name);
+   Matrix<size_t> matrix9(file_name,',',false);
+   assert_true(matrix9.get_rows_number() == 0, LOG);
+   assert_true(matrix9.get_columns_number() == 0, LOG);
 
-   Matrix<size_t> m10(file_name);
-   assert_true(m10.get_rows_number() == 1, LOG);
-   assert_true(m10.get_columns_number() == 1, LOG);
-   assert_true(m10 == true, LOG); 
+   matrix5.save_csv(file_name);
+
+   Matrix<double> matrix10(file_name,',',false);
+   assert_true(matrix10.get_rows_number() == 1, LOG);
+   assert_true(matrix10.get_columns_number() == 1, LOG);
+   assert_true(matrix10 == true, LOG);
 
    // Copy constructor
 
@@ -117,306 +106,274 @@ void MatrixTest::test_constructor()
 
    // Operator ++
 
-   Matrix<size_t> m11(2, 2, 0);
-   m11(0,0)++;
-   m11(1,1)++;
+   Matrix<size_t> matrix11(2, 2, 0);
+   matrix11(0,0)++;
+   matrix11(1,1)++;
 
-   assert_true(m11(0,0) == 1, LOG);
-   assert_true(m11(0,1) == 0, LOG);
-   assert_true(m11(1,0) == 0, LOG);
-   assert_true(m11(1,1) == 1, LOG);
+   assert_true(matrix11(0,0) == 1, LOG);
+   assert_true(matrix11(0,1) == 0, LOG);
+   assert_true(matrix11(1,0) == 0, LOG);
+   assert_true(matrix11(1,1) == 1, LOG);
 }
 
 
 void MatrixTest::test_destructor()
 {  
-   message += "test_destructor\n";
+   cout << "test_destructor\n";
 }
 
 
 void MatrixTest::test_assignment_operator()
 {
-   message += "test_assignment_operator\n";
+   cout << "test_assignment_operator\n";
 
-   Matrix<int> a(1, 1, 0);
+   Matrix<int> matrix1(1, 1, 0);
 
-   Matrix<int> b = a;
+   Matrix<int> matrix2 = matrix1;
 
    for(size_t i = 0; i < 2; i++)
    {
-      b = a;
+      matrix2 = matrix1;
    }
 
-   assert_true(b.get_rows_number() == 1, LOG);
-   assert_true(b.get_columns_number() == 1, LOG);
-   assert_true(b == 0, LOG);
-}
-
-
-void MatrixTest::test_reference_operator()
-{
-   message += "test_reference_operator\n";
+   assert_true(matrix2.get_rows_number() == 1, LOG);
+   assert_true(matrix2.get_columns_number() == 1, LOG);
+   assert_true(matrix2 == 0, LOG);
 }
 
 
 void MatrixTest::test_sum_operator()
 {
-   message += "test_sum_operator\n";
+   cout << "test_sum_operator\n";
 
-   Matrix<int> a(1, 1, 1);
-   Matrix<int> b(1, 1, 1);
-   Matrix<int> c(1, 1);
+   Matrix<int> matrix1(1, 1, 1);
+   Matrix<int> matrix2(1, 1, 1);
+   Matrix<int> matrix3(1, 1);
 
    // Test
    
-   c = a + 1;
+   matrix3 = matrix1 + 1;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 2, LOG);
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 2, LOG);
 
    // Test
 
-   c = a + b;
+   matrix3 = matrix1 + matrix2;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 2, LOG);
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 2, LOG);
 }
 
 
 void MatrixTest::test_rest_operator()
 {
-   message += "test_rest_operator\n";
+   cout << "test_rest_operator\n";
 
-   Matrix<int> a(1, 1, 1);
-   Matrix<int> b(1, 1, 1);
-   Matrix<int> c(1, 1);
-   Matrix<int> d;
-
-   // Test
-
-   c = a - 1;
-
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 0, LOG);
+   Matrix<int> matrix1(1, 1, 1);
+   Matrix<int> matrix2(1, 1, 1);
+   Matrix<int> matrix3(1, 1);
+   Matrix<int> matrix4;
 
    // Test
 
-   c = a - b;
+   matrix3 = matrix1 - 1;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 0, LOG);
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 0, LOG);
 
    // Test
 
-   a.set(3, 3, 1);
-   b.set(3, 3, 1);
-   c.set(3, 3, 1);
+   matrix3 = matrix1 - matrix2;
 
-   d = a + b - c;
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 0, LOG);
 
-   assert_true(d.get_rows_number() == 3, LOG);
-   assert_true(d.get_columns_number() == 3, LOG);
-   assert_true(d == 1, LOG);
+   // Test
 
+   matrix1.set(3, 3, 1);
+   matrix2.set(3, 3, 1);
+   matrix3.set(3, 3, 1);
+
+   matrix4 = matrix1 + matrix2 - matrix3;
+
+   assert_true(matrix4.get_rows_number() == 3, LOG);
+   assert_true(matrix4.get_columns_number() == 3, LOG);
+   assert_true(matrix4 == 1, LOG);
 }
 
 
 void MatrixTest::test_multiplication_operator()
 {
-   message += "test_multiplication_operator\n";
+   cout << "test_multiplication_operator\n";
 
-   Matrix<int> a;
-   Matrix<int> b;
-   Matrix<int> c;
+   Matrix<int> matrix1;
+   Matrix<int> matrix2;
+   Matrix<int> matrix3;
    
-   Vector<int> v;
+   Vector<int> vector;
 
    // Scalar
 
-   a.set(1, 1, 2);
+   matrix1.set(1, 1, 2);
 
-   c = a*2;
+   matrix3 = matrix1*2;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 4, LOG);
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 4, LOG);
 
    // Vector
 
-   a.set(1, 1, 1);
-   v.set(1, 1);
+   matrix1.set(1, 1, 1);
+   vector.set(1, 1);
   
    // Matrix
 
-   a.set(1, 1, 2);
-   b.set(1, 1, 2);
+   matrix1.set(1, 1, 2);
+   matrix2.set(1, 1, 2);
 
-   c = a*b;
+   matrix3 = matrix1*matrix2;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 4, LOG);
-
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 4, LOG);
 }
 
 
 void MatrixTest::test_division_operator()
 {
-   message += "test_division_operator\n";
+   cout << "test_division_operator\n";
 
-   Matrix<int> a(1, 1, 2);
-   Matrix<int> b(1, 1, 2);
-   Matrix<int> c(1, 1);
+   Matrix<int> matrix1(1, 1, 2);
+   Matrix<int> matrix2(1, 1, 2);
+   Matrix<int> matrix3(1, 1);
    
-   c = a/2;
+   matrix3 = matrix1/2;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 1, LOG);
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 1, LOG);
 
-   c = a/b;
+   matrix3 = matrix1/matrix2;
 
-   assert_true(c.get_rows_number() == 1, LOG);
-   assert_true(c.get_columns_number() == 1, LOG);
-   assert_true(c == 1, LOG);
-}
-
-
-void MatrixTest::test_sum_assignment_operator()
-{
-   message += "test_sum_assignment_operator\n";
-}
-
-
-void MatrixTest::test_rest_assignment_operator()
-{
-   message += "test_rest_assignment_operator\n";
-}
-
-
-void MatrixTest::test_multiplication_assignment_operator()
-{
-   message += "test_multiplication_assignment_operator\n";
-}
-
-
-void MatrixTest::test_division_assignment_operator()
-{
-   message += "test_division_assignment_operator\n";
+   assert_true(matrix3.get_rows_number() == 1, LOG);
+   assert_true(matrix3.get_columns_number() == 1, LOG);
+   assert_true(matrix3 == 1, LOG);
 }
 
 
 void MatrixTest::test_equal_to_operator()
 {
-	message += "test_equal_to_operator\n";
+    cout << "test_equal_to_operator\n";
 
-   Matrix<int> a(1,1,0);
-   Matrix<int> b(1,1,0);
-   Matrix<int> c(1,1,1);
+   Matrix<int> matrix1(1,1,0);
+   Matrix<int> matrix2(1,1,0);
+   Matrix<int> matrix3(1,1,1);
 
-   assert_true(a == b, LOG);
-   assert_false(a == c, LOG);
+   assert_true(matrix1 == matrix2, LOG);
+   assert_false(matrix1 == matrix3, LOG);
 }
 
 
 void MatrixTest::test_not_equal_to_operator()
 {
-   message += "test_not_equal_to_operator\n";
+   cout << "test_not_equal_to_operator\n";
 
-   Matrix<int> a(1,1,0);
-   Matrix<int> b(1,1,0);
-   Matrix<int> c(1,1,1);
+   Matrix<int> matrix1(1,1,0);
+   Matrix<int> matrix2(1,1,0);
+   Matrix<int> matrix3(1,1,1);
 
-   assert_false(a != b, LOG);
-   assert_true(a != c, LOG);
+   assert_false(matrix1 != matrix2, LOG);
+   assert_true(matrix1 != matrix3, LOG);
 }
 
 
 void MatrixTest::test_greater_than_operator()
 {
-   message += "test_greater_than_operator\n";
+   cout << "test_greater_than_operator\n";
 
-   Matrix<double> a(1,1,1.0);
-   Matrix<double> b(1,1,0.0);
+   Matrix<double> matrix1(1,1,1.0);
+   Matrix<double> matrix2(1,1,0.0);
 
-   assert_true(a > 0.0, LOG);
-   assert_true(a > b, LOG);
+   assert_true(matrix1 > 0.0, LOG);
+   assert_true(matrix1 > matrix2, LOG);
 }
 
 
 void MatrixTest::test_less_than_operator()
 {
-   message += "test_less_than_operator\n";
+   cout << "test_less_than_operator\n";
 
-   Matrix<double> a(1,1,0.0);
-   Matrix<double> b(1,1,1.0);
+   Matrix<double> matrix1(1,1,0.0);
+   Matrix<double> matrix2(1,1,1.0);
 
-   assert_true(a < 1.0, LOG);
-   assert_true(a < b, LOG);
+   assert_true(matrix1 < 1.0, LOG);
+   assert_true(matrix1 < matrix2, LOG);
 }
 
 
 void MatrixTest::test_greater_than_or_equal_to_operator()
 {
-   message += "test_greater_than_or_equal_to_operator\n";
+   cout << "test_greater_than_or_equal_to_operator\n";
 
-   Matrix<double> a(1,1,1.0);
-   Matrix<double> b(1,1,1.0);
+   Matrix<double> matrix1(1,1,1.0);
+   Matrix<double> matrix2(1,1,1.0);
 
-   assert_true(a >= 1.0, LOG);
-   assert_true(a >= b, LOG);
+   assert_true(matrix1 >= 1.0, LOG);
+   assert_true(matrix1 >= matrix2, LOG);
 }
 
 
 void MatrixTest::test_less_than_or_equal_to_operator()
 {
-   message += "test_less_than_or_equal_to_operator\n";
+   cout << "test_less_than_or_equal_to_operator\n";
 
-   Matrix<double> a(1,1,1.0);
-   Matrix<double> b(1,1,1.0);
+   Matrix<double> matrix1(1,1,1.0);
+   Matrix<double> matrix2(1,1,1.0);
 
-   assert_true(a <= 1.0, LOG);
-   assert_true(a <= b, LOG);
+   assert_true(matrix1 <= 1.0, LOG);
+   assert_true(matrix1 <= matrix2, LOG);
 }
 
 
 void MatrixTest::test_output_operator()
 {
-   message += "test_output_operator\n";
+   cout << "test_output_operator\n";
 
-   Matrix<double> m1;
-   Matrix< Vector<double> > m2;
-   Matrix< Matrix<size_t> > m3;
-
-   // Test
-
-   m1.set(2, 3, 0.0);
+   Matrix<double> matrix1;
+   Matrix<Vector<double>> matrix2;
+   Matrix< Matrix<size_t> > matrix3;
 
    // Test
 
-   m2.set(2, 2);
-   m2(0,0).set(1, 0.0);
-   m2(0,1).set(1, 1.0);
-   m2(1,0).set(1, 0.0);
-   m2(1,1).set(1, 1.0);
+   matrix1.set(2, 3, 0.0);
 
    // Test
 
-   m3.set(2, 2);
-   m3(0,0).set(1, 1, 0);
-   m3(0,1).set(1, 1, 1);
-   m3(1,0).set(1, 1, 0);
-   m3(1,1).set(1, 1, 1);
+   matrix2.set(2, 2);
+   matrix2(0,0).set(1, 0.0);
+   matrix2(0,1).set(1, 1.0);
+   matrix2(1,0).set(1, 0.0);
+   matrix2(1,1).set(1, 1.0);
+
+   // Test
+
+   matrix3.set(2, 2);
+   matrix3(0,0).set(1, 1, 0);
+   matrix3(0,1).set(1, 1, 1);
+   matrix3(1,0).set(1, 1, 0);
+   matrix3(1,1).set(1, 1, 1);
 }
 
 
 void MatrixTest::test_get_rows_number()
 {
-   message += "test_get_rows_number\n";
+   cout << "test_get_rows_number\n";
 
    Matrix<size_t> m(2,3);
 
@@ -428,11 +385,11 @@ void MatrixTest::test_get_rows_number()
 
 void MatrixTest::test_get_columns_number()
 {
-   message += "test_get_columns_number\n";
+   cout << "test_get_columns_number\n";
 
-   Matrix<size_t> m(2,3);
+   Matrix<size_t> matrix(2,3);
 
-   size_t columns_number = m.get_columns_number();
+   size_t columns_number = matrix.get_columns_number();
 
    assert_true(columns_number == 3, LOG);
 }
@@ -440,132 +397,1283 @@ void MatrixTest::test_get_columns_number()
 
 void MatrixTest::test_get_row()
 {
-   message += "test_get_row\n";
+   cout << "test_get_row\n";
 
-   Matrix<int> m(1, 1, 0);
+   Matrix<int> matrix(1, 1, 0);
 
-   Vector<int> row = m.get_row(0);
+   Vector<int> row = matrix.get_row(0);
 
    assert_true(row == 0, LOG);
 }
 
 
+void MatrixTest::test_get_rows()
+{
+    cout << "test_get_rows\n";
+
+    Matrix<double> matrix(4,4);
+    Vector<double> check_matrix;
+    Vector<double> solution({1, 2, 3, 4, 5, 6, 7, 8});
+
+    matrix.set_row(0, {1, 2, 3, 4});
+    matrix.set_row(1, {5, 6, 7, 8});
+    matrix.set_row(2, {9, 10, 11, 12});
+    matrix.set_row(3, {13, 14, 15, 16});
+
+    check_matrix = matrix.get_rows(1,2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
 void MatrixTest::test_get_column()
 {
-   message += "test_get_column\n";
+   cout << "test_get_column\n";
 
-   Matrix<int> m(1, 1, 0);
+   //One specific column demanded
 
-   Vector<int> column = m.get_column(0);
+   Matrix<size_t> matrix(2, 2);
 
-   assert_true(column == 0, LOG);
+   matrix.set_column(0, {1,5});
+   matrix.set_column(1, {4,7});
+
+   Vector<size_t> column = matrix.get_column(0);
+   Vector<size_t> solution({1,5});
+
+   assert_true(column == solution, LOG);
+
+   // Column and row indices demanded
+
+   Vector<size_t> column1;
+   Vector<size_t> solution1({5});
+
+   column1 = matrix.get_column(0, {1});
+
+   assert_true(column1 == solution1, LOG);
+
+   //Header demanded
+
+   Vector<size_t> check_matrix;
+
+   matrix.set_header({"col1", "col2"});
+
+   check_matrix = matrix.get_column({"col1"});
+
+   assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_columns()
+{
+    cout << "test_get_columns\n";
+
+    Matrix<double> matrix(4,4);
+    Matrix<double> check_matrix;
+    Matrix<double> solution(4,2);
+
+    matrix.set_row(0, {1, 2, 3, 4});
+    matrix.set_row(1, {5, 6, 7, 8});
+    matrix.set_row(2, {9, 10, 11, 12});
+    matrix.set_row(3, {13, 14, 15, 16});
+
+    solution.set_column(0, {1, 5, 9, 13});
+    solution.set_column(1, {2, 6, 10, 14});
+
+    solution.set_header({"col1", "col2"});
+
+    matrix.set_header({"col1", "col2", "col3", "col4"});
+
+    check_matrix = matrix.get_columns({"col1", "col2"});
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_header()
+{
+   cout << "test_get_header\n";
+
+   // All headers
+
+   Matrix<int> matrix(1, 1, 0);
+
+   Vector<string> header("number");
+
+   matrix.set_header(header);
+
+   const Vector<string> solution("number");
+
+   Vector<string> check_matrix  = matrix.get_header();
+
+   assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_column_index()
+{
+    cout << "test_get_column_index\n";
+
+    Matrix<size_t> matrix1(2, 2);
+
+    matrix1.set_column(0, {4, 5});
+    matrix1.set_column(1, {4, 6});
+
+    matrix1.set_header({"number1","number2"});
+
+    size_t solution = 1;
+    size_t check_matrix;
+
+    check_matrix = matrix1.get_column_index("number2");
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_columns_indices()
+{
+    cout << "test_get_columns_indices\n";
+
+      Matrix<size_t> matrix1(2,2);
+
+      matrix1.set_column(0, {4, 5});
+      matrix1.set_column(1, {4, 6});
+
+      matrix1.set_header({"number1", "number2"});
+
+      Vector<size_t> solution({0, 1});
+      Vector<size_t> check_matrix;
+
+      Vector<string> header({"number1", "number2"});
+
+      check_matrix = matrix1.get_columns_indices(header);
+
+      assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_binary_columns_indices()
+{
+    cout << "test_get_binary_columns_indices\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix1(3,3);
+    Vector<size_t> solution({1, 2});
+
+    matrix1.set_column(0, {1, 2, 3});
+    matrix1.set_column(1, {1, 0, 1});
+    matrix1.set_column(2, {0, 0, 1});
+
+    assert_true(matrix1.get_binary_columns_indices() == solution, LOG);
+
+    //Non binary columns
+
+    Matrix<size_t> matrix(3,3);
+    Vector<size_t> solution2({});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {1, 3, 1});
+    matrix.set_column(2, {0, 6, 1});
+
+    assert_true(matrix1.get_binary_columns_indices() == solution, LOG);
 }
 
 
 void MatrixTest::test_get_submatrix()
 {
-   message += "test_get_submatrix\n";
+   cout << "test_get_submatrix\n";
+
+   Matrix<size_t> matrix(4,4);
+   Matrix<size_t> sub_matrix(4,4);
+   Matrix<size_t> solution(2,4);
+
+   matrix.set_row(0, {1, 2, 3, 4});
+   matrix.set_row(1, {5, 6, 7, 8});
+   matrix.set_row(2, {9, 10, 11, 12});
+   matrix.set_row(3, {13, 14, 15, 16});
+
+   solution.set_row(0, {5, 6, 7, 8});
+   solution.set_row(1, {9, 10, 11, 12});
+
+   sub_matrix = matrix.get_submatrix({1,2}, {0, 1, 2, 3});
+
+   assert_true(sub_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_submatrix_rows()
+{
+   cout << "test_get_submatrix_rows\n";
+
+   Matrix<size_t> matrix(4,4);
+   Matrix<size_t> sub_matrix(4,4);
+   Matrix<size_t> solution(2,4);
+
+   matrix.set_row(0, {1, 2, 3, 4});
+   matrix.set_row(1, {5, 6, 7, 8});
+   matrix.set_row(2, {9, 10, 11, 12});
+   matrix.set_row(3, {13, 14, 15, 16});
+
+   solution.set_row(0, {5, 6, 7, 8});
+   solution.set_row(1, {9, 10, 11, 12});
+
+   sub_matrix = matrix.get_submatrix_rows({1,2});
+
+   assert_true(sub_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_submatrix_columns()
+{
+   cout << "test_get_submatrix_columns\n";
+
+   Matrix<size_t> matrix(4,4);
+   Matrix<size_t> sub_matrix(4,4);
+   Matrix<size_t> solution(4,2);
+
+   matrix.set_row(0, {1, 2, 3, 4});
+   matrix.set_row(1, {5, 6, 7, 8});
+   matrix.set_row(2, {9, 10, 11, 12});
+   matrix.set_row(3, {13, 14, 15, 16});
+
+   solution.set_column(0, {1, 5, 9, 13});
+   solution.set_column(1, {2, 6, 10, 14});
+
+   sub_matrix = matrix.get_submatrix_columns({0, 1});
+
+   assert_true(sub_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_first()
+{
+    cout << "test_get_first\n";
+
+    //Column number case
+
+    Matrix<size_t> matrix (3, 3);
+
+    const size_t solution = 4;
+    size_t check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    check_matrix = matrix.get_first(1);
+
+    assert_true(check_matrix == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+
+    const size_t solution1 = 3;
+    size_t check_matrix1;
+
+    check_matrix1 = matrix.get_first("col3");
+
+    assert_true(check_matrix1 == solution1, LOG);
+}
+
+
+void MatrixTest::test_get_last()
+{
+    cout << "test_get_last\n";
+
+    //Column number case
+
+    Matrix<size_t> matrix (3, 3);
+
+    const size_t solution = 1;
+    size_t check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    check_matrix = matrix.get_last(1);
+
+    assert_true(check_matrix == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+
+    const size_t solution1 = 9;
+    size_t check_matrix1;
+
+    check_matrix1 = matrix.get_last("col3");
+
+    assert_true(check_matrix1 == solution1, LOG);
+}
+
+
+void MatrixTest::test_get_constant_columns_indices()
+{
+    cout << "test_get_constant_columns_indices\n";
+
+    Matrix<size_t> matrix (3, 3);
+
+    const Vector<size_t> solution({0});
+    Vector<size_t> check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    check_matrix = matrix.get_constant_columns_indices();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_first_rows()
+{
+    cout << "test_get_first_rows\n";
+
+    Matrix<size_t> matrix(3, 3);
+
+    Matrix<size_t> solution(2,3);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    solution.set_row(0, {5, 4, 3});
+    solution.set_row(1, {5, 5, 6});
+
+    check_matrix = solution.get_first_rows(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_last_rows()
+{
+    cout << "test_get_last_rows\n";
+
+    Matrix<size_t> matrix (3, 3);
+
+    Matrix<size_t> solution(2,3);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    solution.set_row(1, {5, 1, 9});
+    solution.set_row(0, {5, 5, 6});
+
+    check_matrix = solution.get_last_rows(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_first_columns()
+{
+    cout << "test_get_first_columns\n";
+
+    Matrix<size_t> matrix (3, 3);
+
+    Matrix<size_t> solution(3,2);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    solution.set_column(0, {5, 5, 5});
+    solution.set_column(1, {4, 5, 1});
+
+    check_matrix = matrix.get_first_columns(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_get_last_columns()
+{
+    cout << "test_get_last_columns\n";
+
+    Matrix<size_t> matrix (3, 3);
+
+    Matrix<size_t> solution(3,2);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    solution.set_column(1, {3, 6, 9});
+    solution.set_column(0, {4, 5, 1});
+
+    check_matrix = matrix.get_last_columns(2);
+
+    assert_true(check_matrix == solution, LOG);
 }
 
 
 void MatrixTest::test_set()
 {
-   message += "test_set\n";
+   cout << "test_set\n";
 
    string file_name = "../data/matrix.dat";
 
-   Matrix<double> m;
+   Matrix<double> matrix;
 
    // Default
 
-   m.set();
+   matrix.set();
 
-   assert_true(m.get_rows_number() == 0, LOG);
-   assert_true(m.get_columns_number() == 0, LOG);
+   assert_true(matrix.get_rows_number() == 0, LOG);
+   assert_true(matrix.get_columns_number() == 0, LOG);
 
    // Numbers of rows and columns
 
-   m.set(0, 0);
+   matrix.set(0, 0);
 
-   assert_true(m.get_rows_number() == 0, LOG);
-   assert_true(m.get_columns_number() == 0, LOG);
+   assert_true(matrix.get_rows_number() == 0, LOG);
+   assert_true(matrix.get_columns_number() == 0, LOG);
 
-   m.set(2, 3);
+   matrix.set(2, 3);
 
-   assert_true(m.get_rows_number() == 2, LOG);
-   assert_true(m.get_columns_number() == 3, LOG);
+   assert_true(matrix.get_rows_number() == 2, LOG);
+   assert_true(matrix.get_columns_number() == 3, LOG);
 
-   m.set(0, 0);
+   matrix.set(0, 0);
 
-   assert_true(m.get_rows_number() == 0, LOG);
-   assert_true(m.get_columns_number() == 0, LOG);
+   assert_true(matrix.get_rows_number() == 0, LOG);
+   assert_true(matrix.get_columns_number() == 0, LOG);
 
    // Initialization 
 
-   m.set(3, 2, 1.0);
+   matrix.set(3, 2, 1.0);
 
-   assert_true(m.get_rows_number() == 3, LOG);
-   assert_true(m.get_columns_number() == 2, LOG);
-   assert_true(m == 1.0, LOG);
+   assert_true(matrix.get_rows_number() == 3, LOG);
+   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix == 1.0, LOG);
 
    // File 
 
-   m.save(file_name);
-   m.set(file_name);
+   matrix.save_csv(file_name);
+   matrix.set(file_name);
 
-   assert_true(m.get_rows_number() == 3, LOG);
-   assert_true(m.get_columns_number() == 2, LOG);
-   assert_true(m == 1.0, LOG);
+   assert_true(matrix.get_rows_number() == 3, LOG);
+   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix == 1.0, LOG);
+}
+
+
+void MatrixTest::test_set_identity()
+{
+    cout << "test_set_identity\n";
+
+    Matrix<size_t> matrix (3, 3);
+
+    Matrix<size_t> solution(2,2);
+    Matrix<size_t> check_matrix(2,2);
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    solution.set_column(0, {1, 0});
+    solution.set_column(1, {0, 1});
+
+    matrix.set_identity(2);
+
+    assert_true(matrix == solution, LOG);
 }
 
 
 void MatrixTest::test_set_rows_number()
 {
-   message += "test_set_rows_number\n";
+   cout << "test_set_rows_number\n";
+
+   Matrix<size_t> matrix (3, 3);
+
+   const size_t solution = 4;
+
+   matrix.set_rows_number(4);
+
+   assert_true(matrix.get_rows_number() == solution, LOG);
 }
 
 
 void MatrixTest::test_set_columns_number()
 {
-   message += "test_set_columns_number\n";
+   cout << "test_set_columns_number\n";
+
+   Matrix<size_t> matrix (3, 3);
+
+   const size_t solution = 4;
+
+   matrix.set_columns_number(4);
+
+   assert_true(matrix.get_columns_number() == solution, LOG);
+}
+
+
+void MatrixTest::test_set_header()
+{
+    cout << "test_set_header\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix (3, 3);
+
+    Vector<string> solution({"col1", "col2", "col3"});
+    Vector<string> solution1({"col5", "col2", "col3"});
+    Vector<string> check_matrix;
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    matrix.set_header({"col1", "col2", "col3"});
+
+    assert_true(matrix.get_header() == solution, LOG);
+
+    //Replace case
+
+    matrix.set_header(0, "col5");
+
+    assert_true(matrix.get_header() == solution1, LOG);
 }
 
 
 void MatrixTest::test_set_row()
 {
-   message += "test_set_row\n";
+   cout << "test_set_row\n";
 
-   Matrix<double> m(1,1);
+   Matrix<double> matrix(1,1);
 
    Vector<double> row(1, 1.0);
 
-   m.set_row(0, row);
+   matrix.set_row(0, row);
 
-   assert_true(m.get_row(0) == row, LOG);
+   assert_true(matrix.get_row(0) == row, LOG);
 }
 
 
 void MatrixTest::test_set_column()
 {
-   message += "test_set_column\n";
+   cout << "test_set_column\n";
 
-   Matrix<double> m(1,1);
+   Matrix<double> matrix(1,1);
 
    Vector<double> column(1, 1.0);
 
-   m.set_column(0, column);
+   matrix.set_column(0, column);
 
-   assert_true(m.get_column(0) == column, LOG);
+   assert_true(matrix.get_column(0) == column, LOG);
+}
+
+
+void MatrixTest::test_set_submatrix_rows()
+{
+    cout << "test_set_submatrix_rows\n";
+
+    Matrix<size_t> matrix (3, 3);
+    Matrix<size_t> solution (3, 3);
+    Matrix<size_t> replace(1,3);
+
+
+    matrix.set_row(0, {5, 4, 3});
+    matrix.set_row(1, {5, 5, 6});
+    matrix.set_row(2, {5, 1, 9});
+
+    solution.set_row(0, {5, 4, 3});
+    solution.set_row(1, {5, 5, 6});
+    solution.set_row(2, {6, 7, 8});
+
+    replace.set_row(0, {6, 7, 8});
+
+    matrix.set_submatrix_rows(2, replace);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_empty()
+{
+    cout << "test_empty\n";
+
+    Matrix<size_t> matrix (3, 3);
+    Matrix<size_t> matrix1 (0,0);
+
+    assert_true(matrix1.empty(), LOG);
+    assert_true(!matrix.empty(), LOG);
+}
+
+
+void MatrixTest::test_is_square()
+{
+    cout << "test_is_square\n";
+
+    Matrix<size_t> matrix (3, 4);
+    Matrix<size_t> matrix1 (3,3);
+
+    assert_true(matrix1.is_square(), LOG);
+    assert_true(!matrix.is_square(), LOG);
+}
+
+
+void MatrixTest::test_is_symmetric()
+{
+    cout << "test_is_symmetric\n";
+
+     Matrix<size_t> matrix (3,3);
+
+     matrix.set_row(0, {5, 3, 1});
+     matrix.set_row(1, {3, 5, 1});
+     matrix.set_row(2, {1, 1, 9});
+
+     assert_true(matrix.is_symmetric(), LOG);
+}
+
+
+void MatrixTest::test_is_diagonal()
+{
+    cout << "test_is_diagonal\n";
+
+    Matrix<size_t> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 1});
+    matrix.set_row(2, {1, 1, 9});
+
+    Matrix<size_t> matrix1 (3,3);
+
+    matrix1.set_row(0, {5, 0, 0});
+    matrix1.set_row(1, {0, 5, 0});
+    matrix1.set_row(2, {0, 0, 5});
+
+    assert_true(!matrix.is_diagonal(), LOG);
+    assert_true(matrix1.is_diagonal(), LOG);
+}
+
+
+void MatrixTest::test_is_scalar()
+{
+    cout << "test_is_scalar\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 1});
+    matrix.set_row(2, {1, 1, 9});
+
+    Matrix<double> matrix1 (3,3);
+
+    matrix1.set_row(0, {5, 0, 0});
+    matrix1.set_row(1, {0, 5, 0});
+    matrix1.set_row(2, {0, 0, 5});
+
+    assert_true(!matrix.is_scalar(), LOG);
+    assert_true(matrix1.is_scalar(), LOG);
+}
+
+
+void MatrixTest::test_is_identity()
+{
+    cout << "test_is_identity\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 1});
+    matrix.set_row(2, {1, 1, 9});
+
+    Matrix<double> matrix1 (3,3);
+
+    matrix1.set_row(0, {1, 0, 0});
+    matrix1.set_row(1, {0, 1, 0});
+    matrix1.set_row(2, {0, 0, 1});
+
+    assert_true(!matrix.is_identity(), LOG);
+    assert_true(matrix1.is_identity(), LOG);
+}
+
+
+void MatrixTest::test_is_binary()
+{
+    cout << "test_is_binary\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 1});
+    matrix.set_row(2, {1, 1, 9});
+
+    Matrix<double> matrix1 (3,3);
+
+    matrix1.set_row(0, {1, 0, 0});
+    matrix1.set_row(1, {0, 1, 0});
+    matrix1.set_row(2, {1, 0, 1});
+
+    assert_true(!matrix.is_binary(), LOG);
+    assert_true(matrix1.is_binary(), LOG);
+}
+
+
+void MatrixTest::test_is_column_binary()
+{
+    cout << "test_is_column_binary\n";
+
+    Matrix<double> matrix1 (3,3);
+
+    matrix1.set_row(0, {1, 0, 0});
+    matrix1.set_row(1, {0, 1, 0});
+    matrix1.set_row(2, {1, 5, 1});
+
+    assert_true(matrix1.is_column_binary(0), LOG);
+    assert_true(!matrix1.is_column_binary(1), LOG);
+}
+
+
+void MatrixTest::test_is_column_constant()
+{
+    cout << "test_is_column_constant\n";
+
+    Matrix<double> matrix1 (3,3);
+
+    matrix1.set_row(0, {1, 0, 0});
+    matrix1.set_row(1, {0, 1, 0});
+    matrix1.set_row(2, {1, 5, 0});
+
+    assert_true(matrix1.is_column_binary(2), LOG);
+    assert_true(!matrix1.is_column_binary(1), LOG);
+}
+
+
+void MatrixTest::test_is_positive()
+{
+    cout << "test_is_positive\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 1});
+    matrix.set_row(2, {1, 1, 9});
+
+    Matrix<double> matrix1 (3,3);
+
+    matrix1.set_row(0, {1, 0, 0});
+    matrix1.set_row(1, {0, -1, 0});
+    matrix1.set_row(2, {-1, 0, 1});
+
+    assert_true(matrix.is_positive(), LOG);
+    assert_true(!matrix1.is_positive(), LOG);
+}
+
+
+void MatrixTest::test_is_row_equal_to()
+{
+    cout << "test_is_row_equal_to\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {1, 1, 9});
+
+    assert_true(matrix.is_row_equal_to(1, {1, 2}, 5), LOG);
+    assert_true(!matrix.is_row_equal_to(1, {0}, 5), LOG);
+}
+
+
+void MatrixTest::test_has_column_value()
+{
+    cout << "test_has_column_value\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {1, 1, 9});
+
+    assert_true(matrix.has_column_value(1,3), LOG);
+    assert_true(!matrix.has_column_value(1,9), LOG);
+}
+
+
+void MatrixTest::test_count_diagonal_elements()
+{
+    cout << "test_count_diagonal_elements\n";
+
+    Matrix<double> matrix (3,3);
+
+    const size_t solution = 3;
+    size_t check_matrix;
+
+    matrix.set_row(0, {5, 3, 1});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {1, 1, 9});
+
+    check_matrix = matrix.count_diagonal_elements();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_count_off_diagonal_elements()
+{
+    cout << "test_count_off_diagonal_elements\n";
+
+    Matrix<double> matrix (3,3);
+
+    const size_t solution = 3;
+    size_t check_matrix;
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    check_matrix = matrix.count_off_diagonal_elements();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_count_equal_to()
+{
+    cout << "test_count_equal_to\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+
+    const size_t solution = 3;
+    size_t check_matrix;
+
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    check_matrix = matrix.count_equal_to(5);
+
+    assert_true(check_matrix == solution, LOG);
+
+    // Column case
+
+    Matrix<double> matrix1 (3,3);
+
+    const size_t solution1 = 2;
+    size_t check_matrix1;
+
+
+    matrix1.set_row(0, {5, 3, 0});
+    matrix1.set_row(1, {3, 5, 9});
+    matrix1.set_row(2, {0, 0, 9});
+
+    check_matrix1 = matrix1.count_equal_to(2,9);
+
+    assert_true(check_matrix1 == solution1, LOG);
+
+    // Set values case
+
+    Matrix<double> matrix2 (3,3);
+
+    const size_t solution2 = 2;
+    size_t check_matrix2;
+
+
+    matrix2.set_row(0, {5, 3, 0});
+    matrix2.set_row(1, {3, 5, 9});
+    matrix2.set_row(2, {0, 0, 9});
+
+    check_matrix2 = matrix2.count_equal_to(2, {9});
+
+    assert_true(check_matrix2 == solution2, LOG);
+
+    // Header case
+
+    matrix2.set_header({"col1","col2","col3"});
+
+    assert_true(matrix2.count_equal_to("col3",9) == 2, LOG);
+}
+
+
+void MatrixTest::test_count_not_equal_to()
+{
+    cout << "test_count_not_equal_to\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+
+    const size_t solution = 6;
+    size_t check_matrix;
+
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    check_matrix = matrix.count_not_equal_to(5);
+
+    assert_true(check_matrix == solution, LOG);
+
+    // Column case
+
+    Matrix<double> matrix1 (3,3);
+
+    const size_t solution1 = 2;
+    size_t check_matrix1;
+
+
+    matrix1.set_row(0, {5, 3, 0});
+    matrix1.set_row(1, {3, 5, 9});
+    matrix1.set_row(2, {0, 0, 9});
+
+    check_matrix1 = matrix1.count_not_equal_to(2,0);
+
+    assert_true(check_matrix1 == solution1, LOG);
+
+    // Set values case
+
+    Matrix<double> matrix2 (3,3);
+
+    const size_t solution2 = 1;
+    size_t check_matrix2;
+
+
+    matrix2.set_row(0, {5, 3, 0});
+    matrix2.set_row(1, {3, 5, 9});
+    matrix2.set_row(2, {0, 0, 9});
+
+    check_matrix2 = matrix2.count_not_equal_to(2, {9});
+
+    assert_true(check_matrix2 == solution2, LOG);
+
+    //Two columns case
+
+    const size_t solution3 = 1;
+    size_t check_matrix3;
+
+    check_matrix3 = matrix2.count_not_equal_to(0, 3, 2, 9);
+
+    assert_true(check_matrix3 == solution3, LOG);
+
+
+    // Header case
+
+    matrix2.set_header({"col1","col2","col3"});
+
+    assert_true(matrix2.count_not_equal_to("col3",9) == 1, LOG);
+
+    //Two columns - header case
+
+    assert_true(matrix2.count_not_equal_to("col1", 5, "col3",0 ) == 2,  LOG);
+}
+
+
+void MatrixTest::test_count_equal_to_by_rows()
+{
+    cout << "test_count_equal_to_by_rows\n";
+
+    Matrix<double> matrix (3,3);
+
+    const Vector<size_t> solution({1, 2, 0});
+    Vector<size_t> check_matrix;
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {3, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    assert_true(matrix.count_equal_to_by_rows(5) == solution, LOG);
+}
+
+
+void MatrixTest::test_count_rows_equal_to()
+{
+    cout << "test_count_rows_equal_to\n";
+
+    Matrix<double> matrix (3,3);
+
+    const size_t solution = 1;
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    assert_true(matrix.count_rows_equal_to(5) == solution, LOG);
+}
+
+
+void MatrixTest::test_count_rows_not_equal_to()
+{
+    cout << "test_count_rows_not_equal_to\n";
+
+    Matrix<double> matrix (3,3);
+
+    const size_t solution = 2;
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    assert_true(matrix.count_rows_not_equal_to(5) == solution, LOG);
+}
+
+
+void MatrixTest::test_has_nan()
+{
+    cout << "test_has_nan\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    assert_true(!matrix.has_nan(), LOG);
+}
+
+
+void MatrixTest::test_count_nan()
+{
+    cout << "test_count_nan\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    assert_true(matrix.count_nan() == 0, LOG);
+}
+
+
+void MatrixTest::test_count_rows_with_nan()
+{
+    cout << "test_count_rows_with_nan\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {NAN, 0, 9});
+
+    assert_true(matrix.count_rows_with_nan() == 1, LOG);
+}
+
+
+void MatrixTest::test_count_columns_with_nan()
+{
+    cout << "test_count_columns_with_nan\n";
+
+    Matrix<double> matrix (3,3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {0, 0, 9});
+
+    assert_true(matrix.count_columns_with_nan() == 0, LOG);
+}
+
+
+void MatrixTest::test_count_nan_rows()
+{
+    cout << "test_count_nan_rows\n";
+
+    Matrix<double> matrix (3,3);
+
+    Vector<size_t> solution({1, 0, 2});
+
+    matrix.set_row(0, {5, NAN, 0});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {NAN, NAN, 9});
+
+    assert_true(matrix.count_nan_rows() == solution, LOG);
+}
+
+
+void MatrixTest::test_count_nan_columns()
+{
+    cout << "test_count_nan_columns\n";
+
+    Matrix<double> matrix (3,3);
+
+    Vector<size_t> solution({1, 0, 2});
+
+    matrix.set_column(0, {5, NAN, 0});
+    matrix.set_column(1, {5, 5, 5});
+    matrix.set_column(2, {NAN, NAN, 9});
+
+    assert_true(matrix.count_nan_columns() == solution, LOG);
+}
+
+
+void MatrixTest::test_filter_column_equal_to()
+{
+    cout << "test_filter_column_equal_to\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+    Matrix<double> solution (2, 3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 2});
+    matrix.set_row(2, {0, 0, 9});
+
+    solution.set_row(0, {5, 3, 0});
+    solution.set_row(1, {5, 5, 2});
+
+    assert_true(matrix.filter_column_equal_to(0,5) == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    assert_true(matrix.filter_column_equal_to("col1", 5) == solution, LOG);
+
+    //Set values case
+
+    assert_true(matrix.filter_column_equal_to(0, {5,5}) == solution, LOG);
+}
+
+
+void MatrixTest::test_filter_column_not_equal_to()
+{
+    cout << "test_filter_column_not_equal_to\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+    Matrix<double> solution (2, 3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 2});
+    matrix.set_row(2, {0, 0, 9});
+
+    solution.set_row(0, {5, 3, 0});
+    solution.set_row(1, {5, 5, 2});
+
+    assert_true(matrix.filter_column_not_equal_to(0,0) == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    assert_true(matrix.filter_column_not_equal_to("col1", 0) == solution, LOG);
+
+    //Set values case
+
+    assert_true(matrix.filter_column_not_equal_to(0, {0}) == solution, LOG);
+}
+
+
+void MatrixTest::test_filter_column_less_than()
+{
+    cout << "test_filter_column_less_than\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+    Matrix<double> solution (1,3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 2});
+    matrix.set_row(2, {0, 0, 9});
+
+    solution.set_row(0, {0, 0, 9});
+
+    assert_true(matrix.filter_column_less_than(0,5) == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    assert_true(matrix.filter_column_less_than("col1", 5) == solution, LOG);
+
+    //Set values case
+
+    assert_true(matrix.filter_column_less_than(0, {5}) == solution, LOG);
+}
+
+
+void MatrixTest::test_filter_column_greater_than()
+{
+    cout << "test_filter_column_greater_than\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+    Matrix<double> solution (2, 3);
+
+    matrix.set_row(0, {5, 3, 0});
+    matrix.set_row(1, {5, 5, 2});
+    matrix.set_row(2, {0, 0, 9});
+
+    solution.set_row(0, {5, 3, 0});
+    solution.set_row(1, {5, 5, 2});
+
+    assert_true(matrix.filter_column_greater_than(0,1) == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    assert_true(matrix.filter_column_greater_than("col1", 1) == solution, LOG);
+
+    //Set values case
+
+    assert_true(matrix.filter_column_greater_than(0, {1}) == solution, LOG);
+}
+
+
+void MatrixTest::test_filter_column_minimum_maximum()
+{
+    cout << "test_filter_column_minimum_maximum\n";
+
+    //Normal case
+
+    Matrix<double> matrix (3,3);
+    Matrix<double> solution (2, 3);
+
+    matrix.set_row(0, {7, 3, 0});
+    matrix.set_row(1, {5, 5, 2});
+    matrix.set_row(2, {0, 0, 9});
+
+    solution.set_row(0, {7, 3, 0});
+    solution.set_row(1, {5, 5, 2});
+
+    assert_true(matrix.filter_column_minimum_maximum(0,4,8) == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    assert_true(matrix.filter_column_minimum_maximum("col1", 1,8) == solution, LOG);
+}
+
+
+void MatrixTest::test_initialize()
+{
+   cout << "test_initialize\n";
+
+   Matrix<double> matrix (3,3);
+   Matrix<double> solution (3, 3);
+
+   solution.set_row(0, {3, 3, 3});
+   solution.set_row(1, {3, 3, 3});
+   solution.set_row(2, {3, 3, 3});
+
+   matrix.initialize(3);
+
+   assert_true(matrix == solution, LOG);
 }
 
 
 void MatrixTest::test_get_diagonal()
 {
-   message += "test_get_diagonal\n";
+   cout << "test_get_diagonal\n";
 
-   Matrix<size_t> m(2, 2, 1);
+   Matrix<size_t> matrix(2, 2, 1);
 
-   Vector<size_t> diagonal = m.get_diagonal();
+   Vector<size_t> diagonal = matrix.get_diagonal();
 
    assert_true(diagonal.size() == 2, LOG);
    assert_true(diagonal == 1, LOG);
@@ -574,18 +1682,18 @@ void MatrixTest::test_get_diagonal()
 
 void MatrixTest::test_set_diagonal()
 {
-   message += "test_set_diagonal\n";
+   cout << "test_set_diagonal\n";
 
-   Matrix<size_t> m;
+   Matrix<size_t> matrix;
    Vector<size_t> diagonal;
 
    // Test
 
-   m.set(2, 2, 1);
+   matrix.set(2, 2, 1);
 
-   m.set_diagonal(0);
+   matrix.set_diagonal(0);
 
-   diagonal = m.get_diagonal();
+   diagonal = matrix.get_diagonal();
 
    assert_true(diagonal.size() == 2, LOG);
    assert_true(diagonal == 0, LOG);
@@ -596,9 +1704,9 @@ void MatrixTest::test_set_diagonal()
    diagonal[0] = 1;
    diagonal[1] = 0;
 
-   m.set_diagonal(diagonal);
+   matrix.set_diagonal(diagonal);
 
-   diagonal = m.get_diagonal();
+   diagonal = matrix.get_diagonal();
 
    assert_true(diagonal.size() == 2, LOG);
    assert_true(diagonal[0] == 1, LOG);
@@ -608,19 +1716,19 @@ void MatrixTest::test_set_diagonal()
 
 void MatrixTest::test_sum_diagonal()
 {
-   message += "test_sum_diagonal\n";
+   cout << "test_sum_diagonal\n";
 
-   Matrix<int> m;
+   Matrix<int> matrix;
    Matrix<int> sum;  
    Vector<int> diagonal;
 
    // Test
 
-   m.set(2, 2, 1);
+   matrix.set(2, 2, 1);
 
-   m.sum_diagonal(1);
+   matrix.sum_diagonal(1);
 
-   diagonal = m.get_diagonal();
+   diagonal = matrix.get_diagonal();
 
    assert_true(diagonal.size() == 2, LOG);
    assert_true(diagonal == 2, LOG);
@@ -629,1397 +1737,1835 @@ void MatrixTest::test_sum_diagonal()
 
 void MatrixTest::test_append_row()
 {
-   message += "test_append_row\n";
+   cout << "test_append_row\n";
 
-   Matrix<size_t> m(1, 1, 0);
+   Matrix<size_t> matrix(1, 1, 0);
 
-   Vector<size_t> v(1, 1);
+   Vector<size_t> vector(1, 1);
 
-   m.append_row(v);
+   matrix = matrix.append_row(vector);
 
-   assert_true(m.get_rows_number() == 2, LOG);
-   assert_true(m(1,0) == 1, LOG);
+   assert_true(matrix.get_rows_number() == 2, LOG);
+   assert_true(matrix(1,0) == 1, LOG);
 }
 
 
 void MatrixTest::test_append_column()
 {
-   message += "test_append_column\n";
+   cout << "test_append_column\n";
 
-   Matrix<size_t> m(1, 1, 0);
+   Matrix<size_t> matrix(1, 1, 0);
 
-   Vector<size_t> v(1, 1);
+   Vector<size_t> vector(1, 1);
 
-   m = m.append_column(v);
+   matrix = matrix.append_column(vector);
 
-   assert_true(m.get_columns_number() == 2, LOG);
-   assert_true(m(0,1) == 1, LOG);
+   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix(0,1) == 1, LOG);
 }
 
 
 void MatrixTest::test_insert_row()
 {
-   message += "test_insert_row\n";
+   cout << "test_insert_row\n";
 
-   Matrix<size_t> m(2, 1, 0);
+   Matrix<size_t> matrix(2, 1, 0);
 
-   Vector<size_t> v(1, 1);
+   Vector<size_t> vector(1, 1);
 
-   m = m.insert_row(1, v);
+   matrix = matrix.insert_row(1, vector);
 
-   assert_true(m.get_rows_number() == 3, LOG);
-   assert_true(m(1,0) == 1, LOG);
+   assert_true(matrix.get_rows_number() == 3, LOG);
+   assert_true(matrix(1,0) == 1, LOG);
 }
 
 
 void MatrixTest::test_insert_column()
 {
-   message += "test_insert_column\n";
+   cout << "test_insert_column\n";
 
-   Matrix<size_t> m(1, 2, 0);
+   Matrix<size_t> matrix(1, 2, 0);
 
-   Vector<size_t> v(1, 1);
+   Vector<size_t> vector(1, 1);
 
-   m = m.insert_column(1, v);
+   matrix = matrix.insert_column(1, vector);
 
-   assert_true(m.get_columns_number() == 3, LOG);
-   assert_true(m(0,1) == 1, LOG);
+   assert_true(matrix.get_columns_number() == 3, LOG);
+   assert_true(matrix(0,1) == 1, LOG);
 }
 
 
-// @todo
+void MatrixTest::test_insert_row_values()
+{
+    cout << "test_insert_row_values\n";
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,3);
+
+    solution.set_row(0, {1, 2, 3});
+    solution.set_row(1, {4, 5, 6});
+    solution.set_row(2, {11, 12, 13});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    Vector<size_t> vector({11, 12, 13});
+
+    matrix.insert_row_values(2, 0, vector);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_add_column()
+{
+    cout << "test_add_column\n";
+
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,4);
+    Matrix<size_t> check_matrix;
+
+    check_matrix = matrix.add_columns(1);
+
+    assert_true(check_matrix.get_columns_number() == solution.get_columns_number(), LOG);
+}
+
+
+void MatrixTest::test_add_column_first()
+{
+    cout << "test_add_column_first\n";
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,4);
+    Matrix<size_t> check_matrix;
+
+    check_matrix = matrix.add_columns_first(1);
+
+    assert_true(check_matrix.get_columns_number() == solution.get_columns_number(), LOG);
+}
+
+
+void MatrixTest::test_swap_columns()
+{
+    cout << "test_swap_columns\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,3);
+
+    solution.set_column(0, {1, 2, 3});
+    solution.set_column(1, {4, 5, 6});
+    solution.set_column(2, {7, 8, 9});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {7, 8, 9});
+    matrix.set_column(2, {4, 5, 6});
+
+    matrix.swap_columns(1,2);
+
+    assert_true(matrix == solution, LOG);
+
+    // Header case
+
+    Matrix<size_t> matrix1(3,3);
+    Matrix<size_t> solution1(3,3);
+
+    solution1.set_column(0, {1, 2, 3});
+    solution1.set_column(1, {4, 5, 6});
+    solution1.set_column(2, {7, 8, 9});
+
+    matrix1.set_column(0, {1, 2, 3});
+    matrix1.set_column(1, {7, 8, 9});
+    matrix1.set_column(2, {4, 5, 6});
+
+    solution1.set_header({"col1", "col2", "col3"});
+    matrix1.set_header({"col1", "col2", "col3"});
+
+    matrix1.swap_columns("col2", "col3");
+
+    assert_true(matrix1 == solution1, LOG);
+}
+
+
+void MatrixTest::test_delete_row()
+{
+    cout << "test_delete_row\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(2,3);
+    Matrix<size_t> check_matrix;
+
+    solution.set_row(0, {1, 2, 3});
+    solution.set_row(1, {4, 5, 6});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_row(2);
+
+    assert_true(check_matrix == solution, LOG);
+
+    // More than one row case
+
+    check_matrix = matrix.delete_row({2});
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_column()
+{
+    cout << "test_delete_column\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,2);
+    Matrix<size_t> check_matrix;
+
+    solution.set_column(0, {1, 2, 3});
+    solution.set_column(1, {4, 5, 6});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_column(2);
+
+    assert_true(check_matrix == solution, LOG);
+
+    // More than one row case
+
+    check_matrix = matrix.delete_column({2});
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_rows_wiht_value()
+{
+    cout << "test_delete_row_with_value\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(2,3);
+    Matrix<size_t> check_matrix;
+
+    solution.set_row(0, {1, 2, 3});
+    solution.set_row(1, {4, 5, 6});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_rows_with_value(7);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_columns_with_value()
+{
+    cout << "test_delete_columns_with_value\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,2);
+    Matrix<size_t> check_matrix;
+
+    solution.set_column(0, {1, 2, 3});
+    solution.set_column(1, {4, 5, 6});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_columns_with_value(7);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_first_rows()
+{
+    cout << "test_delete_first_rows\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(1,3);
+    Matrix<size_t> check_matrix;
+
+    solution.set_row(0, {7, 8, 9});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_first_rows(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_last_rows()
+{
+    cout << "test_delete_last_rows\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(1,3);
+    Matrix<size_t> check_matrix;
+
+    solution.set_row(0, {1, 2, 3});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_last_rows(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_first_columns()
+{
+    cout << "test_delete_first_columns\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,1);
+    Matrix<size_t> check_matrix;
+
+    solution.set_column(0, {7, 8, 9});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_first_columns(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_last_columns()
+{
+    cout << "test_delete_last_columns\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,1);
+    Matrix<size_t> check_matrix;
+
+    solution.set_column(0, {1, 2, 3});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.delete_last_columns(2);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_columns_name_contain()
+{
+    cout << "test_delete_columnd_name_contain\n";
+
+    //Normal case
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,1);
+    Matrix<size_t> check_matrix;
+
+    solution.set_column(0, {1, 2, 3});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    matrix.set_header({"col1", "columna1", "columna2"});
+
+    check_matrix = matrix.delete_columns_name_contains({"columna"});
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_constant_rows()
+{
+    cout << "test_delete_constant_rows\n";
+
+    //Normal case
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(1,3);
+    Matrix<double> check_matrix;
+
+    solution.set_row(0, {1, 2, 3});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {5, 5, 5});
+    matrix.set_row(2, {5, 5, 5});
+
+    check_matrix = matrix.delete_constant_rows();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_constant_columns()
+{
+    cout << "test_delete_constant_columns\n";
+
+    //Normal case
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,1);
+    Matrix<double> check_matrix;
+
+    solution.set_column(0, {1, 2, 3});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {5, 5, 5});
+    matrix.set_column(2, {5, 5, 5});
+
+    check_matrix = matrix.delete_constant_columns();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_delete_binary_columns()
+{
+    cout << "test_delete_binary_columns\n";
+
+    //Normal case
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,1);
+    Matrix<double> check_matrix;
+
+    solution.set_column(0, {1, 2, 3});
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {1, 0, 1});
+    matrix.set_column(2, {1, 0, 1});
+
+    check_matrix = matrix.delete_binary_columns();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_assembla_rows()
+{
+    cout << "test_assembla_rows\n";
+
+    Matrix<size_t> matrix(2,2);
+    Matrix<size_t> matrix1(2,2);
+    Matrix<size_t> solution(4,2);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_row(0, {1, 2});
+    matrix.set_row(1, {3, 4});
+
+    matrix1.set_row(0, {5, 6});
+    matrix1.set_row(1, {7, 8});
+
+    solution.set_row(0, {1, 2});
+    solution.set_row(1, {3, 4});
+    solution.set_row(2, {5, 6});
+    solution.set_row(3, {7, 8});
+
+    check_matrix = matrix.assemble_rows(matrix1);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_assembla_columns()
+{
+    cout << "test_assembla_columns\n";
+
+    Matrix<size_t> matrix(2,2);
+    Matrix<size_t> matrix1(2,2);
+    Matrix<size_t> solution(2,4);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_column(0, {1, 2});
+    matrix.set_column(1, {3, 4});
+
+    matrix1.set_column(0, {5, 6});
+    matrix1.set_column(1, {7, 8});
+
+    solution.set_row(0, {1, 3, 5, 7});
+    solution.set_row(1, {2, 4, 6, 8});
+
+    check_matrix = matrix.assemble_columns(matrix1);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
 
 void MatrixTest::test_subtract_row()
 {
-//   message += "test_subtract_row\n";
+   cout << "test_subtract_row\n";
 
-//   Matrix<size_t> m(2, 1);
-//   m(0,0) = true;
-//   m(1,0) = false;
+   Matrix<size_t> matrix(2, 2);
+   Matrix<size_t> solution(2, 2);
 
-//   m.subtract_row(0);
+   matrix.set_row(0, {1, 2});
+   matrix.set_row(1, {3, 4});
 
-//   assert_true(m.get_rows_number() == 1, LOG);
-//   assert_true(m(0,0) == false, LOG);
+   solution.set_row(0, {0, 1});
+   solution.set_row(1, {2, 3});
+
+   assert_true(matrix.subtract_rows({1, 1}) == solution, LOG);
 }
 
 
-// @todo
-
-void MatrixTest::test_subtract_column()
+void MatrixTest::test_sort_ascending()
 {
-//   message += "test_subtract_column\n";
+    cout << "test_sort_ascending\n";
 
-//   Matrix<size_t> m(1, 2, false);
-//   m(0,0) = true;
-//   m(0,1) = false;
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
 
-//   m.subtract_column(0);
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
 
-//   assert_true(m.get_columns_number() == 1, LOG);
-//   assert_true(m(0,0) == false, LOG);
+    solution.set_row(0, {1, 3, 2});
+    solution.set_row(1, {5, 5, 5});
+    solution.set_row(2, {7, 7, 2});
+
+    check_matrix = matrix.sort_ascending(1);
+
+    assert_true(check_matrix == solution, LOG);
 }
 
 
-// @todo
-
-void MatrixTest::test_sort_less_rows()
+void MatrixTest::test_sort_descending()
 {
-//    message += "test_sort_less_rows";
+    cout << "test_sort_descending\n";
 
-//    Matrix<double> m;
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
 
-//    Matrix<double> sorted_m;
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
 
-//    //Test
+    solution.set_row(2, {1, 3, 2});
+    solution.set_row(1, {5, 5, 5});
+    solution.set_row(0, {7, 7, 2});
 
-//    m.set(3, 3);
-//    sorted_m.set(3, 3);
+    check_matrix = matrix.sort_descending(1);
 
-//    m(0, 0) =  5;   m(0, 1) = 0.9;   m(0, 2) =  0.8;
-//    m(1, 0) =  9;   m(1, 1) =   7;   m(1, 2) =    5;
-//    m(2, 0) = -2;   m(2, 1) =   8;   m(2, 2) = -0.9;
-
-//    sorted_m = m.sort_less_rows(0);
-
-//    assert_true(sorted_m(0, 0) == -2, LOG);
-//    assert_true(sorted_m(0, 1) == 8, LOG);
-//    assert_true(sorted_m(0, 2) == -0.9, LOG);
-//    assert_true(sorted_m(1, 0) == 5, LOG);
-//    assert_true(sorted_m(1, 1) == 0.9, LOG);
-//    assert_true(sorted_m(1, 2) == 0.8, LOG);
-//    assert_true(sorted_m(2, 0) == 9, LOG);
-//    assert_true(sorted_m(2, 1) == 7, LOG);
-//    assert_true(sorted_m(2, 2) == 5, LOG);
-
-//    //Test
-
-//    m.set(6, 2);
-//    sorted_m.set(6, 2);
-
-//    m(0, 0) =  0.33;   m(0, 1) = 0.9;
-//    m(1, 0) =  0.33;   m(1, 1) =   7;
-//    m(2, 0) =  0.33;   m(2, 1) =   8;
-//    m(3, 0) =  0.33;   m(3, 1) = 0.9;
-//    m(4, 0) =  0.9;   m(4, 1) =   7;
-//    m(5, 0) =  0.2;   m(5, 1) =   8;
-
-//    sorted_m = m.sort_less_rows(0);
-
-//    assert_true(sorted_m(0, 0) == 0.2, LOG);
-//    assert_true(sorted_m(0, 1) == 8, LOG);
-//    assert_true(sorted_m(1, 0) == 0.33, LOG);
-//    assert_true(sorted_m(1, 1) == 0.9, LOG);
-//    assert_true(sorted_m(2, 0) == 0.33, LOG);
-//    assert_true(sorted_m(2, 1) == 7, LOG);
-//    assert_true(sorted_m(3, 0) == 0.33, LOG);
-//    assert_true(sorted_m(3, 1) == 8, LOG);
-//    assert_true(sorted_m(4, 0) == 0.33, LOG);
-//    assert_true(sorted_m(4, 1) == 0.9, LOG);
-//    assert_true(sorted_m(5, 0) == 0.9, LOG);
-//    assert_true(sorted_m(5, 1) == 7, LOG);
+    assert_true(check_matrix == solution, LOG);
 }
 
 
-// @todo
-
-void MatrixTest::test_sort_greater_rows()
+void MatrixTest::test_replace()
 {
-//    message += "test_sort_greater_rows";
+    cout <<"test_replace\n";
 
-//    Matrix<double> m;
+    //Normal case
 
-//    Matrix<double> sorted_m;
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
 
-//    //Test
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
 
-//    m.set(3, 3);
-//    sorted_m.set(3, 3);
+    solution.set_column(0, {0, 7, 5});
+    solution.set_column(1, {3, 7, 5});
+    solution.set_column(2, {2, 2, 5});
 
-//    m(0, 0) =  5;   m(0, 1) = 0.9;   m(0, 2) =  0.8;
-//    m(1, 0) =  9;   m(1, 1) =   7;   m(1, 2) =    5;
-//    m(2, 0) = -2;   m(2, 1) =   8;   m(2, 2) = -0.9;
+    matrix.replace(1, 0);
 
-//    sorted_m = m.sort_greater_rows(2);
+    assert_true(matrix == solution, LOG);
 
-//    assert_true(sorted_m(0, 0) == 9, LOG);
-//    assert_true(sorted_m(0, 1) == 7, LOG);
-//    assert_true(sorted_m(0, 2) == 5, LOG);
-//    assert_true(sorted_m(1, 0) == 5, LOG);
-//    assert_true(sorted_m(1, 1) == 0.9, LOG);
-//    assert_true(sorted_m(1, 2) == 0.8, LOG);
-//    assert_true(sorted_m(2, 0) == -2, LOG);
-//    assert_true(sorted_m(2, 1) == 8, LOG);
-//    assert_true(sorted_m(2, 2) == -0.9, LOG);
+    //More than one equal value
 
-//    //Test
+    solution.set_column(0, {0, 7, 8});
+    solution.set_column(1, {3, 7, 8});
+    solution.set_column(2, {2, 2, 8});
 
-//    m.set(6, 2);
-//    sorted_m.set(6, 2);
+    matrix.replace(5, 8);
 
-//    m(0, 0) =  0.33;   m(0, 1) = 0.9;
-//    m(1, 0) =  0.33;   m(1, 1) =   7;
-//    m(2, 0) =  0.33;   m(2, 1) =   8;
-//    m(3, 0) =  0.33;   m(3, 1) = 0.9;
-//    m(4, 0) =  0.9;   m(4, 1) =   7;
-//    m(5, 0) =  0.2;   m(5, 1) =   8;
-
-//    sorted_m = m.sort_greater_rows(0);
-
-//    assert_true(sorted_m(0, 0) == 0.9, LOG);
-//    assert_true(sorted_m(0, 1) == 7, LOG);
-//    assert_true(sorted_m(1, 0) == 0.33, LOG);
-//    assert_true(sorted_m(1, 1) == 0.9, LOG);
-//    assert_true(sorted_m(2, 0) == 0.33, LOG);
-//    assert_true(sorted_m(2, 1) == 7, LOG);
-//    assert_true(sorted_m(3, 0) == 0.33, LOG);
-//    assert_true(sorted_m(3, 1) == 8, LOG);
-//    assert_true(sorted_m(4, 0) == 0.33, LOG);
-//    assert_true(sorted_m(4, 1) == 0.9, LOG);
-//    assert_true(sorted_m(5, 0) == 0.2, LOG);
-//    assert_true(sorted_m(5, 1) == 8, LOG);
+    assert_true(matrix == solution, LOG);
 }
 
 
-void MatrixTest::test_initialize()
+void MatrixTest::test_replace_header()
 {
-   message += "test_initialize\n";
+    cout << "test_replace_header\n";
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
+
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
+
+    matrix.set_header({"col1", "col2", "col3"});
+
+    solution.set_column(0, {1, 7, 5});
+    solution.set_column(1, {3, 7, 5});
+    solution.set_column(2, {2, 2, 5});
+
+    solution.set_header({"col1", "col2", "columna"});
+
+    matrix.replace_header("col3", "columna");
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_in_row()
+{
+    cout << "test_replace_in_row\n";
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
+
+    matrix.set_row(0, {1, 7, 5});
+    matrix.set_row(1, {3, 7, 5});
+    matrix.set_row(2, {2, 2, 5});
+
+    solution.set_row(0, {1, 7, 5});
+    solution.set_row(1, {3, 9, 5});
+    solution.set_row(2, {2, 2, 5});
+
+    matrix.replace_in_row(1, 7, 9);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_in_column()
+{
+    cout << "test_replace_in_column\n";
+
+    // Normal case
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
+
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
+
+    solution.set_column(0, {1, 7, 5});
+    solution.set_column(1, {3, 9, 5});
+    solution.set_column(2, {2, 2, 5});
+
+    matrix.replace_in_column(1, 7, 9);
+
+    assert_true(matrix == solution, LOG);
+
+    //Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    solution.set_header({"col1", "col2", "col3"});
+
+    solution.set_column(0, {3, 7, 5});
+
+    matrix.replace_in_column("col1", 1, 3);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_substring()
+{
+    cout << "test_replace_substring\n";
+
+    //Normal case
+
+    Matrix<string> matrix(3,3);
+    Matrix<string> solution(3,3);
+    Matrix<string> check_matrix;
+
+    matrix.set_row(0, {"hello", "bye", "home"});
+    matrix.set_row(1, {"hello", "byes", "homes"});
+    matrix.set_row(2, {"hellod", "byed", "homed"});
+
+    solution.set_row(0, {"columna", "bye", "home"});
+    solution.set_row(1, {"columna", "byes", "homes"});
+    solution.set_row(2, {"columnad", "byed", "homed"});
+
+    matrix.replace_substring("hello", "columna");
+
+    assert_true(matrix == solution, LOG);
+
+    //Column case
+
+    solution.set_row(2, {"columnad", "dog", "homed"});
+
+    matrix.replace_substring(1, "byed", "dog");
+
+    assert_true(matrix == solution, LOG);
+
+    // Header case
+
+    matrix.set_header({"col1", "col2", "col3"});
+    solution.set_header({"col1", "col2", "col3"});
+
+    solution.set_row(2, {"columnad", "dog", "cat"});
+
+    matrix.replace_substring("col3", "homed", "cat");
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_contains()
+{
+    cout << "test_replace_contains\n";
+
+    //Normal case
+
+    Matrix<string> matrix(3,3);
+    Matrix<string> solution(3,3);
+    Matrix<string> check_matrix;
+
+    matrix.set_row(0, {"hello", "bye", "home"});
+    matrix.set_row(1, {"hello", "byes", "homes"});
+    matrix.set_row(2, {"hellod", "byed", "homed"});
+
+    solution.set_row(0, {"columna", "bye", "home"});
+    solution.set_row(1, {"columna", "byes", "homes"});
+    solution.set_row(2, {"columna", "byed", "homed"});
+
+    matrix.replace_contains("hello", "columna");
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_contains_in_row()
+{
+    cout << "test_replace_contains\n";
+
+    //Normal case
+
+    Matrix<string> matrix(3,3);
+    Matrix<string> solution(3,3);
+    Matrix<string> check_matrix;
+
+    matrix.set_row(0, {"hello", "bye", "home"});
+    matrix.set_row(1, {"hello", "byes", "homes"});
+    matrix.set_row(2, {"hellod", "byed", "homed"});
+
+    solution.set_row(0, {"hello", "bye", "home"});
+    solution.set_row(1, {"column", "byes", "homes"});
+    solution.set_row(2, {"hellod", "byed", "homed"});
+
+    matrix.replace_contains_in_row(1, "hello", "column");
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_column_equal_to()
+{
+    cout << "test_replace_column_equal_to\n";
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
+
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
+
+    solution.set_column(0, {1, 7, 5});
+    solution.set_column(1, {3, 9, 5});
+    solution.set_column(2, {2, 2, 5});
+
+    matrix.set_header({"col1", "col2", "col3"});
+    solution.set_header({"col1", "col2", "col3"});
+
+    matrix.replace_column_equal_to("col2", 7, 9);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_column_not_equal_to()
+{
+    cout << "test_replace_column_equal_to \n";
+
+    Matrix<double> matrix(3,3);
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix;
+
+    matrix.set_column(0, {1, 7, 5});
+    matrix.set_column(1, {3, 7, 5});
+    matrix.set_column(2, {2, 2, 5});
+
+    solution.set_column(0, {1, 7, 5});
+    solution.set_column(1, {3, 7, 5});
+    solution.set_column(2, {2, 2, 0});
+
+    matrix.set_header({"col1", "col2", "col3"});
+    solution.set_header({"col1", "col2", "col3"});
+
+    matrix.replace_column_not_equal_to("col3", 2, 0);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_replace_column_contain()
+{
+    cout << "test_replace_column_contain\n";
+
+    Matrix<string> matrix(3,3);
+    Matrix<string> solution(3,3);
+    Matrix<string> check_matrix;
+
+    matrix.set_column(0, {"hello", "bye", "home"});
+    matrix.set_column(1, {"hello", "bye", "home"});
+    matrix.set_column(2, {"hello", "bye", "home"});
+
+    solution.set_column(0, {"hello", "bye", "home"});
+    solution.set_column(1, {"hello", "bye", "home"});
+    solution.set_column(2, {"hello", "bye", "dog"});
+
+    matrix.set_header({"col1", "col2", "col3"});
+    solution.set_header({"col1", "col2", "col3"});
+
+    matrix.replace_column_contains("col3", "home", "dog");
+
+    assert_true(matrix == solution, LOG);
 }
 
 
 void MatrixTest::test_randomize_uniform()
 {
-   message += "test_randomize_uniform\n";
+   cout << "test_randomize_uniform\n";
 
-   Matrix<double> m(1, 1);
+   Matrix<double> matrix(1, 1);
 
-   m.randomize_uniform();
+   matrix.randomize_uniform();
 
-   assert_true(m >= -1.0, LOG);
-   assert_true(m <=  1.0, LOG);
+   assert_true(matrix >= -1.0, LOG);
+   assert_true(matrix <= 1.0, LOG);
 
-   m.randomize_uniform(-1.0, 0.0);
+   matrix.randomize_uniform(-1.0, 0.0);
 
-   assert_true(m >= -1.0, LOG);
-   assert_true(m <=  0.0, LOG);
+   assert_true(matrix >= -1.0, LOG);
+   assert_true(matrix <= 0.0, LOG);
 }
 
 
 void MatrixTest::test_randomize_normal()
 {
-   message += "test_randomize_normal\n";
+   cout << "test_randomize_normal\n";
+}
+
+
+void MatrixTest::test_initialize_identity()
+{
+    cout << "test_initialize_identity\n";
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,3);
+
+    solution.set_column(0, {1, 0, 0});
+    solution.set_column(1, {0, 1, 0});
+    solution.set_column(2, {0, 0, 1});
+
+    matrix.initialize_identity();
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_initialize_diagonal()
+{
+    cout << "test_initialize_diagonal\n";
+
+    Matrix<size_t> matrix(3,3);
+    Matrix<size_t> solution(3,3);
+
+    solution.set_column(0, {3, 0, 0});
+    solution.set_column(1, {0, 3, 0});
+    solution.set_column(2, {0, 0, 3});
+
+    matrix.initialize_diagonal(3);
+
+    assert_true(matrix == solution, LOG);
+
+    Matrix<size_t> solution1(4,4);
+    Matrix<size_t> matrix1;
+
+    solution1.set_column(0, {5, 0, 0, 0});
+    solution1.set_column(1, {0, 5, 0, 0});
+    solution1.set_column(2, {0, 0, 5, 0});
+    solution1.set_column(3, {0, 0, 0, 5});
+
+    matrix1.initialize_diagonal(4, 5);
+
+    assert_true(matrix1 == solution1, LOG);
+}
+
+
+void MatrixTest::test_append_header()
+{
+    cout << "test_append_header\n";
+
+    Matrix<size_t> matrix1(4,4);
+
+    const Vector<string> header({"col1a", "col2a", "col3a", "col4a"});
+
+    matrix1.set_column(0, {5, 0, 0, 0});
+    matrix1.set_column(1, {0, 5, 0, 0});
+    matrix1.set_column(2, {0, 0, 5, 0});
+    matrix1.set_column(3, {0, 0, 0, 5});
+
+    matrix1.set_header({"col1", "col2", "col3", "col4"});
+
+    matrix1.append_header("a");
+
+    assert_true(matrix1.get_header() == header, LOG);
+}
+
+
+void MatrixTest::test_tuck_in()
+{
+    cout << "tets_tuck_in\n";
+
+    //Matrix case
+
+    Matrix<size_t> matrix1(4,4);
+    Matrix<size_t> solution(4,4);
+    Matrix<size_t> other_matrix(2,2);
+
+    matrix1.set_column(0, {5, 0, 0, 0});
+    matrix1.set_column(1, {0, 5, 0, 0});
+    matrix1.set_column(2, {0, 0, 5, 0});
+    matrix1.set_column(3, {0, 0, 0, 5});
+
+    solution.set_column(0, {5, 0, 0, 0});
+    solution.set_column(1, {0, 5, 0, 0});
+    solution.set_column(2, {0, 0, 7, 8});
+    solution.set_column(3, {0, 0, 6, 9});
+
+    other_matrix.set_column(0, {7, 8});
+    other_matrix.set_column(1, {6, 9});
+
+    matrix1.embed(2, 2, other_matrix);
+
+    assert_true(matrix1 == solution, LOG);
+
+    // Vector case
+
+    const Vector<size_t> vector({1});
+
+    Matrix<size_t> solution1(4,4);
+    Matrix<size_t> matrix(4,4);
+
+    matrix.set_column(0, {5, 0, 0, 0});
+    matrix.set_column(1, {0, 5, 0, 0});
+    matrix.set_column(2, {0, 0, 5, 0});
+    matrix.set_column(3, {0, 0, 0, 5});
+
+    solution1.set_column(0, {5, 0, 0, 0});
+    solution1.set_column(1, {0, 5, 0, 0});
+    solution1.set_column(2, {0, 0, 5, 0});
+    solution1.set_column(3, {1, 0, 0, 5});
+
+    matrix.embed(0, 3, vector);
+
+    assert_true(matrix == solution1, LOG);
 }
 
 
 void MatrixTest::test_set_to_identity()
 {
-   message += "test_set_to_identity\n";
+   cout << "test_set_to_identity\n";
 
-   Matrix<int> a(2, 2);
-   a.initialize_identity();
+   Matrix<int> matrix1(2, 2);
+   matrix1.initialize_identity();
 
-   Matrix<int> b(2, 2);
-   b(0,0) = 1;
-   b(0,1) = 0;
-   b(1,0) = 0;
-   b(1,1) = 1;
+   Matrix<int> matrix2(2, 2);
+   matrix2(0,0) = 1;
+   matrix2(0,1) = 0;
+   matrix2(1,0) = 0;
+   matrix2(1,1) = 1;
 
-   assert_true(a == b, LOG);
+   assert_true(matrix1 == matrix2, LOG);
 }
 
 
 void MatrixTest::test_calculate_sum()
 {
-    message += "test_calculate_sum\n";
+    cout << "test_calculate_sum\n";
+
+    Matrix<size_t> matrix(3,3);
+
+    const size_t solution = 45;
+    size_t check_matrix;
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.calculate_sum();
+
+    assert_true(check_matrix == solution, LOG);
 }
 
 
 void MatrixTest::test_calculate_rows_sum()
 {
-    message += "test_calculate_rows_sum\n";
+    cout << "test_calculate_rows_sum\n";
+    Matrix<size_t> matrix(3,3);
+
+    const Vector<size_t> solution({12, 15, 18});
+    Vector<size_t> check_matrix;
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.calculate_rows_sum();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_calculate_columns_sum()
+{
+    cout << "test_calculate_columns_sum\n";
+
+    Matrix<size_t> matrix(3,3);
+
+    const Vector<size_t> solution({6, 15, 24});
+    Vector<size_t> check_matrix;
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    check_matrix = matrix.calculate_columns_sum();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_sum_row()
+{
+    cout << "test_sum_row\n";
+
+    Matrix<size_t> matrix(3,3);
+
+    Matrix<size_t> solution(3,3);
+    Matrix<size_t> check_matrix;
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    solution.set_row(0, {2, 3, 4});
+    solution.set_row(1, {4, 5, 6});
+    solution.set_row(2, {7, 8, 9});
+
+    matrix.sum_row(0, {1, 1, 1});
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_sum_rows()
+{
+    cout << "test_sum_rows\n";
+
+    Matrix<size_t> matrix(3,3);
+
+    Matrix<size_t> solution(3,3);
+    Matrix<size_t> check_matrix(3,3);
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    solution.set_row(0, {2, 3, 4});
+    solution.set_row(1, {5, 6, 7});
+    solution.set_row(2, {8, 9, 10});
+
+    check_matrix = matrix.sum_rows({1, 1, 1});
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_substract_rows()
+{
+    cout << "test_substract_rows\n";
+
+    Matrix<size_t> matrix(3,3);
+
+    Matrix<size_t> solution(3,3);
+    Matrix<size_t> check_matrix(3,3);
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    solution.set_row(0, {0, 1, 2});
+    solution.set_row(1, {3, 4, 5});
+    solution.set_row(2, {6, 7, 8});
+
+    check_matrix = matrix.subtract_rows({1, 1, 1});
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_multiply_rows()
+{
+    cout << "test_multiply_rows\n";
+
+    //Vector case
+
+    Matrix<double> matrix(3,3);
+
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix(3,3);
+
+    Vector<double> vector({2, 2, 2});
+
+    matrix.set_row(0, {1, 2, 3});
+    matrix.set_row(1, {4, 5, 6});
+    matrix.set_row(2, {7, 8, 9});
+
+    solution.set_row(0, {2, 4, 6});
+    solution.set_row(1, {8, 10, 12});
+    solution.set_row(2, {14, 16, 18});
+
+    check_matrix = matrix.multiply_rows(vector);
+
+    assert_true(check_matrix == solution, LOG);
+
+    //Matrix case
+
+    Matrix<double> matrix1(3,3);
+
+    Matrix<double> solution1(3,3);
+    Matrix<double> check_matrix1(3,3);
+    Matrix<double> matrix2(3,3);
+
+    matrix1.set_row(0, {1, 2, 3});
+    matrix1.set_row(1, {4, 5, 6});
+    matrix1.set_row(2, {7, 8, 9});
+
+    matrix2.set_row(0, {1, 1, 1});
+    matrix2.set_row(1, {1, 1, 1});
+    matrix2.set_row(2, {1, 1, 1});
+
+    solution1.set_row(0, {1, 2, 3});
+    solution1.set_row(1, {4, 5, 6});
+    solution1.set_row(2, {7, 8, 9});
+
+    check_matrix = matrix.multiply_rows(vector);
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_divide_rows()
+{
+    cout << "test_divide_rows\n";
+
+    Matrix<double> matrix(3,3);
+
+    Matrix<double> solution(3,3);
+
+    Vector<double> vector({2, 2, 2});
+
+    solution.set_row(0, {1, 2, 3});
+    solution.set_row(1, {4, 5, 6});
+    solution.set_row(2, {7, 8, 9});
+
+    matrix.set_row(0, {2, 4, 6});
+    matrix.set_row(1, {8, 10, 12});
+    matrix.set_row(2, {14, 16, 18});
+
+    matrix.divide_rows(vector);
+
+    assert_true(matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_calculate_trace()
+{
+    cout << "test_calculate_trace\n";
+
+    Matrix<double> matrix1(3,3);
+
+    double solution = 15;
+
+    matrix1.set_row(0, {1, 2, 3});
+    matrix1.set_row(1, {4, 5, 6});
+    matrix1.set_row(2, {7, 8, 9});
+
+    assert_true(matrix1.calculate_trace() == solution, LOG);
+}
+
+
+void MatrixTest::test_calculate_reverse_columns()
+{
+    cout << "test_calculate_reverse_columns\n";
+
+    Matrix<double> matrix(3,3);
+
+    Matrix<double> solution(3,3);
+    Matrix<double> check_matrix(3,3);
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    solution.set_column(0, {7, 8, 9});
+    solution.set_column(1, {4, 5, 6});
+    solution.set_column(2, {1, 2, 3});
+
+    check_matrix = matrix.calculate_reverse_columns();
+
+    assert_true(check_matrix == solution, LOG);
+}
+
+
+void MatrixTest::test_compare_rows()
+{
+    cout << "test_compare_rows\n";
+
+    Matrix<double> matrix(3,3);
+
+    Matrix<double> matrix2(3,3);
+    Matrix<double> matrix3(3,3);
+
+    matrix.set_column(0, {1, 2, 3});
+    matrix.set_column(1, {4, 5, 6});
+    matrix.set_column(2, {7, 8, 9});
+
+    matrix2.set_row(0, {7, 8, 9});
+    matrix2.set_row(1, {4, 5, 6});
+    matrix2.set_row(2, {1, 2, 3});
+
+    matrix3.set_column(0, {1, 2, 3});
+    matrix3.set_column(1, {4, 5, 6});
+    matrix3.set_column(2, {7, 8, 9});
+
+    assert_false(matrix.compare_rows(0, matrix2, 0), LOG);
+    assert_true(matrix.compare_rows(1, matrix3, 1), LOG);
 }
 
 
 void MatrixTest::test_dot_vector()
 {
-   message += "test_dot_vector\n";
+   cout << "test_dot_vector\n";
 
-   Matrix<double> a;
-   Vector<double> b;
+   Matrix<double> matrix;
+   Vector<double> vector1;
 
-   Vector<double> c;
-
-   // Test
-
-   a.set(2, 2, 0.0);
-   b.set(2, 0.0);
-
-   c = a.dot(b);
-
-   assert_true(c == 0.0, LOG);
+   Vector<double> vector2;
 
    // Test
 
-   a.set(2, 2, 1.0);
-   b.set(2, 1.0);
+   matrix.set(2, 2, 0.0);
+   vector1.set(2, 0.0);
 
-   c = a.dot(b);
+   vector2 = dot(matrix, vector1);
 
-   assert_true(c == 2.0, LOG);
-
-   // Test
-
-   a.set(2, 5);
-   a.randomize_normal();
-
-   b.set(5);
-   b.randomize_normal();
-
-   c = a.dot(b);
-
-   assert_true((c - dot(a, b)).calculate_absolute_value() < 1.0e-3, LOG);
+   assert_true(vector2 == 0.0, LOG);
 
    // Test
 
-   a.set(2, 2);
-   a(0,0) = 1.0;
-   a(0,1) = 2.0;
-   a(1,0) = 3.0;
-   a(1,1) = 4.0;
+   matrix.set(2, 2, 1.0);
+   vector1.set(2, 1.0);
 
-   b.set(2);
-   b[0] = -1.0;
-   b[1] =  1.0;
+   vector2 = dot(matrix, vector1);
 
-   c = a.dot(b);
+   assert_true(vector2 == 2.0, LOG);
 
-   assert_true(c == 1.0, LOG);
+   // Test
+
+   matrix.set(2, 5);
+   matrix.randomize_normal();
+
+   vector1.set(5);
+   vector1.randomize_normal();
+
+   vector2 = dot(matrix, vector1);
+
+   assert_true(absolute_value(vector2 - dot(matrix, vector1)) < 1.0e-3, LOG);
+
+   // Test
+
+   matrix.set(2, 2);
+   matrix(0,0) = 1.0;
+   matrix(0,1) = 2.0;
+   matrix(1,0) = 3.0;
+   matrix(1,1) = 4.0;
+
+   vector1.set(2);
+   vector1[0] = -1.0;
+   vector1[1] = 1.0;
+
+   vector2 = dot(matrix, vector1);
+
+   assert_true(vector2 == 1.0, LOG);
 }
 
 
 void MatrixTest::test_dot_matrix()
 {
-   message += "test_dot_matrix\n";
+   cout << "test_dot_matrix\n";
 
-   Matrix<double> a;
-   Matrix<double> b;
-
-   Matrix<double> c;
-
-   // Test
-
-   a.set(2, 2, 0.0);
-   b.set(2, 2, 0.0);
-
-   c = a.dot(b);
-
-   assert_true(c == 0.0, LOG);
+   Matrix<double> matrix1;
+   Matrix<double> matrix2;
+   Matrix<double> matrix3;
 
    // Test
 
-   a.set(2, 2, 1.0);
-   b.set(2, 2, 1.0);
+   matrix1.set(2, 2, 0.0);
+   matrix2.set(2, 2, 0.0);
 
-   c = a.dot(b);
+   matrix3 = dot(matrix1,matrix2);
 
-   assert_true(c == 2.0, LOG);
-
-   // Test
-
-   a.set(2, 2);
-   a(0,0) = 1.0;
-   a(0,1) = 2.0;
-   a(1,0) = 3.0;
-   a(1,1) = 4.0;
-
-   b = a;
-
-   c = a.dot(b);
-
-   assert_true(c(0,0) ==  7.0, LOG);
-   assert_true(c(0,1) == 10.0, LOG);
-   assert_true(c(1,0) == 15.0, LOG);
-   assert_true(c(1,1) == 22.0, LOG);
+   assert_true(matrix3 == 0.0, LOG);
 
    // Test
 
-   a.set(3, 2);
-   a.randomize_normal();
+   matrix1.set(2, 2, 1.0);
+   matrix2.set(2, 2, 1.0);
 
-   b.set(2, 3);
-   b.randomize_normal();
+   matrix3 = dot(matrix1, matrix2);
 
-   c = a.dot(b);
+   assert_true(matrix3 == 2.0, LOG);
 
-   assert_true((c - dot(a, b)).calculate_absolute_value() < 1.0e-3, LOG);
+   // Test
+
+   matrix1.set(2, 2);
+   matrix1(0,0) = 1.0;
+   matrix1(0,1) = 2.0;
+   matrix1(1,0) = 3.0;
+   matrix1(1,1) = 4.0;
+
+   matrix2 = matrix1;
+
+   matrix3 = dot(matrix1, matrix2);
+
+   assert_true(matrix3(0,0) == 7.0, LOG);
+   assert_true(matrix3(0,1) == 10.0, LOG);
+   assert_true(matrix3(1,0) == 15.0, LOG);
+   assert_true(matrix3(1,1) == 22.0, LOG);
+
+   // Test
+
+   matrix1.set(3, 2);
+   matrix1.randomize_normal();
+
+   matrix2.set(2, 3);
+   matrix2.randomize_normal();
+
+   matrix3 = dot(matrix1, matrix2);
+
+   assert_true(absolute_value(matrix3 - dot(matrix1, matrix2)) < 1.0e-3, LOG);
 }
 
 
-void MatrixTest::test_calculate_eigenvalues()
+void MatrixTest::test_eigenvalues()
 {
-    message += "test_calculate_eigenvalues\n";
+    cout << "test_eigenvalues\n";
 
-    Matrix<double> eigenvalues;
+    Matrix<double> matrix1;
 
-    Matrix<double> m;
-
-    // Test
-
-    m.set(10,10);
-
-    m.randomize_normal();
-
-    eigenvalues = m.calculate_eigenvalues();
-
-    assert_true(eigenvalues.size() == 10, LOG);
+    Matrix<double> matrix2;
 
     // Test
 
-    m.set_identity(20);
+    matrix2.set(10,10);
 
-    eigenvalues = m.calculate_eigenvalues();
+    matrix2.randomize_normal();
 
-    assert_true(eigenvalues.size() == 20, LOG);
-    assert_true(eigenvalues.get_column(0).is_constant(1.0), LOG);
+    matrix1 = OpenNN::eigenvalues(matrix2);
+
+    assert_true(matrix1.size() == 10, LOG);
+
+    // Test
+
+    matrix2.set_identity(20);
+
+    matrix1 = OpenNN::eigenvalues(matrix2);
+
+    assert_true(matrix1.size() == 20, LOG);
+    assert_true(matrix1.get_column(0).is_constant(1.0), LOG);
 }
 
 
-void MatrixTest::test_calculate_eigenvectors()
+void MatrixTest::test_eigenvectors()
 {
-    message += "test_calculate_eigenvectors\n";
+    cout << "test_eigenvectors\n";
 
-    Matrix<double> eigenvectors;
+    Matrix<double> matrix1;
 
-    Matrix<double> m;
+    Matrix<double> matrix2;
 
     // Test
 
-    m.set(10,10);
+    matrix2.set(10,10);
 
-    m.randomize_normal();
+    matrix2.randomize_normal();
 
-    eigenvectors = m.calculate_eigenvectors();
+    matrix1 = OpenNN::eigenvectors(matrix2);
 
-    assert_true(eigenvectors.get_rows_number() == 10, LOG);
-    assert_true(eigenvectors.get_columns_number() == 10, LOG);
+    assert_true(matrix1.get_rows_number() == 10, LOG);
+    assert_true(matrix1.get_columns_number() == 10, LOG);
 }
 
 
 void MatrixTest::test_direct()
 {
-   message += "test_direct\n";
+   cout << "test_direct\n";
 
-   Matrix<int> a;
-   Matrix<int> b;
-   Matrix<int> direct;
-
-   // Test
-
-   a.set(2,2);
-   a(0,0) = 1;
-   a(0,1) = 2;
-   a(1,0) = 3;
-   a(1,1) = 4;
-
-   b.set(2,2);
-   b(0,0) = 0;
-   b(0,1) = 5;
-   b(1,0) = 6;
-   b(1,1) = 7;
-
-   direct = a.direct(b);
-
-   assert_true(direct.get_rows_number() == 4, LOG);
-   assert_true(direct.get_columns_number() == 4, LOG);
-   assert_true(direct(0,0) == 0, LOG);
-   assert_true(direct(3,3) == 28, LOG);
-}
-
-
-void MatrixTest::test_calculate_mean_standard_deviation()
-{
-   message += "test_calculate_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_calculate_statistics()
-{
-   message += "test_calculate_statistics\n";
-}
-
-
-void MatrixTest::test_calculate_histogram()
-{
-   message += "test_calculate_histogram\n";
-
-   Matrix<double> m;
-
-   Vector< Histogram<double> >  histograms;
-   Histogram<double> histogram;
-
-   size_t bins_number;
+   Matrix<double> matrix1;
+   Matrix<double> matrix2;
+   Matrix<double> matrix3;
 
    // Test
 
-   m.set(2, 3);
-   m.randomize_normal();
+   matrix1.set(2,2);
+   matrix1(0,0) = 1;
+   matrix1(0,1) = 2;
+   matrix1(1,0) = 3;
+   matrix1(1,1) = 4;
 
-   bins_number = 1;
+   matrix2.set(2,2);
+   matrix2(0,0) = 0;
+   matrix2(0,1) = 5;
+   matrix2(1,0) = 6;
+   matrix2(1,1) = 7;
 
-   histograms = m.calculate_histograms(bins_number);
+   matrix3 = OpenNN::direct(matrix1, matrix2);
 
-   assert_true(histograms.size() == m.get_columns_number(), LOG);
-
-   if (!m.get_column(0).is_binary())
-   {
-       assert_true(histograms[0].get_bins_number() == bins_number, LOG);
-   }
-
-   // Test
-
-   m.set(4, 3);
-   m.randomize_normal();
-
-   bins_number = 4;
-
-   histograms = m.calculate_histograms(bins_number);
-
-   assert_true(histograms.size() == m.get_columns_number(), LOG);
-   if (!m.get_column(0).is_binary())
-   {
-       assert_true(histograms[0].get_bins_number() == bins_number, LOG);
-   }
+   assert_true(matrix3.get_rows_number() == 4, LOG);
+   assert_true(matrix3.get_columns_number() == 4, LOG);
+   assert_true(abs(matrix3(0,0) - 0) <= 10e-3, LOG);
+   assert_true(abs(matrix3(3,3) - 28) <= 10e-3, LOG);
 }
 
 
-void MatrixTest::test_calculate_covariance_matrix()
+void MatrixTest::test_determinant()
 {
-    message += "test_calculate_covariance_matrix\n";
+   cout << "test_determinant\n";
 
-    Matrix<double> covariance_matrix;
+   Matrix<double> matrix(1, 1, 1);
 
-    Matrix<double> data;
+   assert_true(abs(determinant(matrix) - 1) <= 10e-3, LOG);
 
-    // Test
+   matrix.set(2, 2);
 
-    data.set(10,5);
-    data.randomize_normal();
+   matrix(0,0) = 1;
+   matrix(0,1) = 2;
 
-    covariance_matrix = data.calculate_covariance_matrix();
+   matrix(1,0) = 3;
+   matrix(1,1) = 4;
 
-    assert_true(covariance_matrix.get_rows_number() == 5, LOG);
-    assert_true(covariance_matrix.get_columns_number() == 5, LOG);
-    assert_true(covariance_matrix.is_symmetric(), LOG);
+   assert_true(abs(determinant(matrix) + 2) <= 10e-3, LOG);
 
-    // Test
+   matrix.set(3, 3);
 
-    data.set(10,20);
-    data.randomize_normal();
+   matrix(0,0) = 1;
+   matrix(0,1) = 4;
+   matrix(0,2) = 7;
 
-    covariance_matrix = data.calculate_covariance_matrix();
+   matrix(1,0) = 2;
+   matrix(1,1) = 5;
+   matrix(1,2) = 8;
 
-    assert_true(covariance_matrix.get_rows_number() == 20, LOG);
-    assert_true(covariance_matrix.get_columns_number() == 20, LOG);
-    assert_true(covariance_matrix.is_symmetric(), LOG);
-}
+   matrix(2,0) = 3;
+   matrix(2,1) = 6;
+   matrix(2,2) = 9;
 
+   assert_true(determinant(matrix) == 0.0, LOG);
 
-void MatrixTest::test_calculate_minimal_indices()
-{
-   message += "test_calculate_minimal_indices\n";
-}
+   matrix.set(4, 4);
 
+   matrix(0,0) = 1;
+   matrix(0,1) = 2;
+   matrix(0,2) = 3;
+   matrix(0,3) = 4;
 
-void MatrixTest::test_calculate_maximal_indices()
-{
-   message += "test_calculate_maximal_indices\n";
-}
+   matrix(1,0) = 5;
+   matrix(1,1) = 6;
+   matrix(1,2) = 7;
+   matrix(1,3) = 8;
 
+   matrix(2,0) = 9;
+   matrix(2,1) = 10;
+   matrix(2,2) = 11;
+   matrix(2,3) = 12;
 
-void MatrixTest::test_calculate_minimal_maximal_indices()
-{
-   message += "test_calculate_minimal_maximal_indices\n";
-}
+   matrix(3,0) = 13;
+   matrix(3,1) = 14;
+   matrix(3,2) = 15;
+   matrix(3,3) = 16;
 
+   assert_true(abs(determinant(matrix)) <= 10e-3, LOG);
 
-void MatrixTest::test_calculate_sum_squared_error()
-{
-   message += "test_calculate_sum_squared_error\n";
-}
-
-
-void MatrixTest::test_calculate_mean_squared_error()
-{
-   message += "test_calculate_mean_squared_error\n";
-}
-
-
-void MatrixTest::test_calculate_root_mean_squared_error()
-{
-   message += "test_calculate_root_mean_squared_error\n";
-}
-
-
-void MatrixTest::test_calculate_minimum_maximum()
-{
-   message += "test_calculate_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_calculate_determinant()
-{
-   message += "test_calculate_determinant\n";
-
-   Matrix<int> m(1, 1, 1);
-
-   assert_true(m.calculate_determinant() == 1, LOG);
-
-   m.set(2, 2);
-
-   m(0,0) = 1;
-   m(0,1) = 2;
-
-   m(1,0) = 3;
-   m(1,1) = 4;
-
-   assert_true(m.calculate_determinant() == -2, LOG);
-
-   m.set(3, 3);
-
-   m(0,0) = 1;
-   m(0,1) = 2;
-   m(0,2) = 3;
-
-   m(1,0) = 4;
-   m(1,1) = 5;
-   m(1,2) = 6;
-
-   m(2,0) = 7;
-   m(2,1) = 8;
-   m(2,2) = 9;
-
-   assert_true(m.calculate_determinant() == 0, LOG);
-
-   m.set(4, 4);
-
-   m(0,0) = 1;
-   m(0,1) = 2;
-   m(0,2) = 3;
-   m(0,3) = 4;
-
-   m(1,0) = 5;
-   m(1,1) = 6;
-   m(1,2) = 7;
-   m(1,3) = 8;
-
-   m(2,0) = 9;
-   m(2,1) = 10;
-   m(2,2) = 11;
-   m(2,3) = 12;
-
-   m(3,0) = 13;
-   m(3,1) = 14;
-   m(3,2) = 15;
-   m(3,3) = 16;
-
-   assert_true(m.calculate_determinant() == 0, LOG);
 }
 
 
 void MatrixTest::test_calculate_transpose()
 {
-   message += "test_calculate_transpose\n";
+   cout << "test_calculate_transpose\n";
 
-   Matrix<int> m(1, 1, 0);
+   Matrix<size_t> matrix(2,2);
+   Matrix<size_t> solution(2,2);
 
-   Matrix<int> transpose = m.calculate_transpose();
 
-   assert_true(transpose == m, LOG);
+   matrix.set_column(0, {1, 2});
+   matrix.set_column(1, {3, 4});
+
+   solution.set_column(0, {1, 3});
+   solution.set_column(1, {2, 4});
+
+   Matrix<size_t> transpose = matrix.calculate_transpose();
+
+   assert_true(transpose == solution, LOG);
 }
 
 
-void MatrixTest::test_calculate_cofactor()
+void MatrixTest::test_cofactor()
 {
-   message += "test_calculate_cofactor\n";
+   cout << "test_cofactor\n";
 }
 
 
 void MatrixTest::test_calculate_inverse()
 {
-   message += "test_calculate_inverse\n";
+   cout << "test_calculate_inverse\n";
 
-   Matrix<double> m;
-   Matrix<double> inverse;
-
-   // Test
-
-   m.set(1, 1, 1.0);
-
-   assert_true(m.calculate_inverse() == 1.0, LOG);
+   Matrix<double> matrix1;
+   Matrix<double> matrix2;
 
    // Test
 
-   m.set(2, 2);
+   matrix1.set(1, 1, 1.0);
 
-   m(0,0) = 1.0;
-   m(0,1) = 2.0;
-
-   m(1,0) = 3.0;
-   m(1,1) = 4.0;
-
-   inverse = m.calculate_inverse();
-
-   assert_true(inverse.get_rows_number() == 2, LOG);
-   assert_true(inverse(0,0) == -2.0, LOG);
-   assert_true(inverse(0,1) ==  1.0, LOG);
-   assert_true(inverse(1,0) ==  3.0/2.0, LOG);
-   assert_true(inverse(1,1) == -1.0/2.0, LOG);
+   assert_true(OpenNN::inverse(matrix1) == 1.0, LOG);
 
    // Test
 
-   m.set(3, 3);
+   matrix1.set(2, 2);
 
-   m(0,0) =  24.0;
-   m(0,1) = -12.0;
-   m(0,2) =  -2.0;
+   matrix1(0,0) = 1.0;
+   matrix1(0,1) = 2.0;
 
-   m(1,0) =  5.0;
-   m(1,1) =  3.0;
-   m(1,2) = -5.0;
+   matrix1(1,0) = 3.0;
+   matrix1(1,1) = 4.0;
 
-   m(2,0) = -4.0;
-   m(2,1) =  2.0;
-   m(2,2) =  4.0;
+   matrix2 = OpenNN::inverse(matrix1);
 
-   inverse = m.calculate_inverse();
+   assert_true(matrix2.get_rows_number() == 2, LOG);
+   assert_true(abs(matrix2(0,0) + 2.0) <= 10e-3, LOG);
+   assert_true(abs(matrix2(0,1) - 1.0) <= 10e-3, LOG);
+   assert_true(abs(matrix2(1,0) - 3.0/2.0) <= 10e-3, LOG);
+   assert_true(abs(matrix2(1,1) + 1.0/2.0) <= 10e-3, LOG);
 
-   assert_true(inverse.get_rows_number() == 3, LOG);
+   // Test
 
-   m.set(4, 4);
+   matrix1.set(3, 3);
 
-   m(0,0) = 1.0;
-   m(0,1) = -2.0;
-   m(0,2) = 3.0;
-   m(0,3) = -4.0;
+   matrix1(0,0) = 24.0;
+   matrix1(0,1) = -12.0;
+   matrix1(0,2) = -2.0;
 
-   m(1,0) = 5.0;
-   m(1,1) = 6.0;
-   m(1,2) = 7.0;
-   m(1,3) = 8.0;
+   matrix1(1,0) = 5.0;
+   matrix1(1,1) = 3.0;
+   matrix1(1,2) = -5.0;
 
-   m(2,0) = 9.0;
-   m(2,1) = 10.0;
-   m(2,2) = 11.0;
-   m(2,3) = 12.0;
+   matrix1(2,0) = -4.0;
+   matrix1(2,1) = 2.0;
+   matrix1(2,2) = 4.0;
 
-   m(3,0) = -13.0;
-   m(3,1) = 14.0;
-   m(3,2) = -15.0;
-   m(3,3) = 16.0;
+   matrix2 = OpenNN::inverse(matrix1);
 
-   inverse = m.calculate_inverse();
+   assert_true(matrix2.get_rows_number() == 3, LOG);
 
-   assert_true(inverse.get_rows_number() == 4, LOG);
+   matrix1.set(4, 4);
 
+   matrix1(0,0) = 1.0;
+   matrix1(0,1) = -2.0;
+   matrix1(0,2) = 3.0;
+   matrix1(0,3) = -4.0;
 
+   matrix1(1,0) = 5.0;
+   matrix1(1,1) = 6.0;
+   matrix1(1,2) = 7.0;
+   matrix1(1,3) = 8.0;
 
+   matrix1(2,0) = 9.0;
+   matrix1(2,1) = 10.0;
+   matrix1(2,2) = 11.0;
+   matrix1(2,3) = 12.0;
+
+   matrix1(3,0) = -13.0;
+   matrix1(3,1) = 14.0;
+   matrix1(3,2) = -15.0;
+   matrix1(3,3) = 16.0;
+
+   matrix2 = OpenNN::inverse(matrix1);
+
+   assert_true(matrix2.get_rows_number() == 4, LOG);
 }
 
 
-void MatrixTest::test_is_symmetric()
+void MatrixTest::test_matrix_to_string()
 {
-   message += "test_is_symmetric\n";
+    cout << "test_matrix_to_string\n";
 
-   Matrix<int> m(1, 1, 1);
 
-   assert_true(m.is_symmetric(), LOG);
+    Matrix<size_t> matrix(2,2);
+    Matrix<string> solution(2,2);
 
-   m.set(2, 2);
+    matrix.set_row(0, {1, 2});
+    matrix.set_row(1, {3, 4});
 
-   m.initialize_identity();
+    matrix.matrix_to_string(',');
 
-   assert_true(m.is_symmetric(), LOG);
+
 }
 
 
 void MatrixTest::test_is_antisymmetric()
 {
-   message += "test_is_antisymmetric\n";
+   cout << "test_is_antisymmetric\n";
 
-   Matrix<int> m;
-
-   // Test
-
-   m.set(1, 1, 0);
-
-   assert_true(m.is_antisymmetric() == true, LOG);
+   Matrix<int> matrix;
 
    // Test
 
-   m.set(2, 2, 1);
+   matrix.set(1, 1, 0);
 
-   assert_true(m.is_antisymmetric() == false, LOG);
+   assert_true(matrix.is_antisymmetric() == true, LOG);
 
    // Test
 
-   m.set(2, 2, 1);
+   matrix.set(2, 2, 1);
 
-   m(0,0) = 0;
-   m(0,1) = -2;
-   m(1,0) = 2;
-   m(1,1) = 0;
+   assert_true(matrix.is_antisymmetric() == false, LOG);
 
-   assert_true(m.is_antisymmetric() == true, LOG);
+   // Test
+
+   matrix.set(2, 2, 1);
+
+   matrix(0,0) = 0;
+   matrix(0,1) = -2;
+   matrix(1,0) = 2;
+   matrix(1,1) = 0;
+
+   assert_true(matrix.is_antisymmetric() == true, LOG);
 }
 
 
-void MatrixTest::test_calculate_k_means()
+void MatrixTest::test_get_tensor()
 {
-    Matrix<double> m;
+    cout << "test_get_tensor\n";
+
+    Matrix<int> matrix;
+
+    Tensor<int> tensor;
+
+    Vector<size_t> rows_indices;
+    Vector<size_t> columns_indices;
+    Vector<size_t> columns_dimensions;
 
     // Test
 
-//    m.set(3,1);
+    tensor = matrix.get_tensor(rows_indices, columns_indices, columns_dimensions);
 
-//    m(0,0) = 1;
-//    m(1,0) = 10;
-//    m(2,0) = 11;
-
-//    Vector< Vector<size_t> > groups = m.calculate_k_means(2);
-
-//    assert_true(groups[0][0] == 0, LOG);
-//    assert_true(groups[1].size() == 2, LOG);
-}
-
-
-void MatrixTest::test_threshold()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = threshold(m);
-
-    assert_true(fabs(l(0,0) - 0) < 0.001, LOG);
-    assert_true(fabs(l(0,1) - 1) < 0.001, LOG);
-    assert_true(fabs(l(1,0) - 1) < 0.001, LOG);
-    assert_true(fabs(l(1,1) - 0) < 0.001, LOG);
-}
-
-
-void MatrixTest::test_symmetric_threshold()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = symmetric_threshold(m);
-
-    assert_true(fabs(l(0,0) - -1) < 0.001, LOG);
-    assert_true(fabs(l(0,1) - 1) < 0.001, LOG);
-    assert_true(fabs(l(1,0) - 1) < 0.001, LOG);
-    assert_true(fabs(l(1,1) - -1) < 0.001, LOG);
-}
-
-
-void MatrixTest::test_logistic()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = logistic(m);
-
-    assert_true(fabs(l(0,0) - 0.268941) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0.731059) < 0.000001, LOG);
-    assert_true(fabs(l(1,0) - 0.880797) < 0.000001, LOG);
-    assert_true(fabs(l(1,1) - 0.119203) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_hyperbolic_tangent()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = hyperbolic_tangent(m);
-
-    assert_true(fabs(l(0,0) - -0.761594) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0.761594) < 0.000001, LOG);
-    assert_true(fabs(l(1,0) - 0.964028) < 0.000001, LOG);
-    assert_true(fabs(l(1,1) - -0.964028) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_hyperbolic_tangent_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = hyperbolic_tangent_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0.419974) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0.419974) < 0.000001, LOG);
-    assert_true(fabs(l(1,0) - 0.070651) < 0.000001, LOG);
-    assert_true(fabs(l(1,1) - 0.070651) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_hyperbolic_tangent_second_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = hyperbolic_tangent_second_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0.639700) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - -0.639700) < 0.000001, LOG);
-    assert_true(fabs(l(1,0) - -0.136219) < 0.000001, LOG);
-    assert_true(fabs(l(1,1) - 0.136219) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_logistic_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = logistic_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0.196612) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0.196612) < 0.000001, LOG);
-    assert_true(fabs(l(1,0) - 0.104994) < 0.000001, LOG);
-    assert_true(fabs(l(1,1) - 0.104994) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_logistic_second_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(2,2);
-    l.set(2,2);
-
-    m(0,0) = -1;
-    m(0,1) = 1;
-    m(1,0) = 2;
-    m(1,1) = -2;
-
-    l = logistic_second_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0.090858) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - -0.090858) < 0.000001, LOG);
-    assert_true(fabs(l(1,0) - -0.079963) < 0.000001, LOG);
-    assert_true(fabs(l(1,1) - 0.079963) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_threshold_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(1,2);
-    l.set(1,2);
-
-    m(0,0) = 2;
-    m(0,1) = -2;
-
-    l = threshold_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_threshold_second_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(1,2);
-    l.set(1,2);
-
-    m(0,0) = 2;
-    m(0,1) = -2;
-
-    l = threshold_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_symmetric_threshold_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(1,2);
-    l.set(1,2);
-
-    m(0,0) = 2;
-    m(0,1) = -2;
-
-    l = threshold_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_symmetric_threshold_second_derivatives()
-{
-    Matrix<double> m;
-    Matrix<double> l;
-
-    m.set(1,2);
-    l.set(1,2);
-
-    m(0,0) = 2;
-    m(0,1) = -2;
-
-    l = threshold_derivatives(m);
-
-    assert_true(fabs(l(0,0) - 0) < 0.000001, LOG);
-    assert_true(fabs(l(0,1) - 0) < 0.000001, LOG);
-}
-
-
-void MatrixTest::test_scale_mean_standard_deviation()
-{
-   message += "test_scale_mean_standard_deviation\n";
-
-   Matrix<double> m;
-
-   Vector< Statistics<double> > statistics;
-
-   // Test
-
-   m.set(2, 2);
-   m.randomize_uniform();
-
-   m.scale_mean_standard_deviation();
-
-   statistics = m.calculate_statistics();
-
-   assert_true(statistics[0].has_mean_zero_standard_deviation_one(), LOG);
-   assert_true(statistics[1].has_mean_zero_standard_deviation_one(), LOG);
-}
-
-
-void MatrixTest::test_scale_rows_mean_standard_deviation()
-{
-   message += "test_scale_rows_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_scale_columns_mean_standard_deviation()
-{
-   message += "test_scale_columns_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_scale_rows_columns_mean_standard_deviation()
-{
-   message += "test_scale_rows_columns_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_scale_minimum_maximum()
-{
-   message += "test_scale_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_scale_rows_minimum_maximum()
-{
-   message += "test_scale_rows_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_scale_columns_minimum_maximum()
-{
-   message += "test_scale_columns_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_scale_rows_columns_minimum_maximum()
-{
-   message += "test_scale_rows_columns_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_unscale_mean_standard_deviation()
-{
-   message += "test_unscale_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_unscale_rows_mean_standard_deviation()
-{
-   message += "test_unscale_rows_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_unscale_columns_mean_standard_deviation()
-{
-   message += "test_unscale_columns_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_unscale_rows_columns_mean_standard_deviation()
-{
-   message += "test_unscale_rows_columns_mean_standard_deviation\n";
-}
-
-
-void MatrixTest::test_unscale_minimum_maximum()
-{
-   message += "test_unscale_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_unscale_rows_minimum_maximum()
-{
-   message += "test_unscale_rows_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_unscale_columns_minimum_maximum()
-{
-   message += "test_unscale_columns_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_unscale_rows_columns_minimum_maximum()
-{
-   message += "test_unscale_rows_columns_minimum_maximum\n";
-}
-
-
-void MatrixTest::test_convert_angular_variables_degrees()
-{
-   message += "test_convert_angular_variables_degrees\n";
-
-   Matrix<double> m;
-
-   // Test
-
-   m.set(1, 1, 90.0);
-
-   m.convert_angular_variables_degrees(0);
-
-   assert_true(m.get_rows_number() == 1, LOG);
-   assert_true(m.get_columns_number() == 2, LOG);
-
-   assert_true(fabs(m(0,0) - 1.0) < 1.0e-6, LOG);
-   assert_true(fabs(m(0,1) - 0.0) < 1.0e-6, LOG);
-}
-
-
-void MatrixTest::test_convert_angular_variables_radians()
-{
-   message += "test_convert_angular_variables_radians\n";
-
-   Matrix<double> m;
-
-   // Test
-
-   m.set(1, 1, 3.1415927/2.0);
-
-   m.convert_angular_variables_radians(0);
-
-   assert_true(m.get_rows_number() == 1, LOG);
-   assert_true(m.get_columns_number() == 2, LOG);
-
-   assert_true(fabs(m(0,0) - 1.0) < 1.0e-3, LOG);
-   assert_true(fabs(m(0,1) - 0.0) < 1.0e-3, LOG);
-}
-
-
-
-void MatrixTest::test_to_time_t()
-{
-    message += "test_to_time_t\n";
-
-    time_t timestamp;
+    assert_true(tensor.empty(), LOG);
 
     // Test
 
-    timestamp = Matrix<int>::to_time_t(1,8,2018);
+    matrix.set(2,3);
+    matrix.initialize_sequential();
 
-    assert_true(timestamp == 1533081600, LOG);
+    rows_indices.set(Vector<size_t>({0,1}));
+    columns_indices.set(Vector<size_t>({0,1,2}));
+    columns_dimensions.set(1, 3);
 
-    cout << timestamp << endl;
+    tensor = matrix.get_tensor(rows_indices, columns_indices, columns_dimensions);
 
-    // Test
-
-    timestamp = Matrix<int>::to_time_t(1,1,1970);
-
-    assert_true(timestamp == 0, LOG);
-
-    cout << timestamp << endl;
-}
-
-
-void MatrixTest::test_print()
-{
-   message += "test_print\n";
-
-   Matrix<size_t> m(6, 1, true);
-   //m.print();
+    assert_true(tensor.get_dimension(0) == 2, LOG);
+    assert_true(tensor.get_dimension(1) == 3, LOG);
 }
 
 
 void MatrixTest::test_save()
 {
-   message += "test_save\n";
+   cout << "test_save\n";
 
    string file_name = "../data/matrix.dat";
 
-   Matrix<int> m;
+   Matrix<int> matrix;
 
-   m.save(file_name);
+   matrix.save_csv(file_name);
 }
 
 
 void MatrixTest::test_load()
 {
-   message += "test_load\n";
+   cout << "test_load\n";
 
    string file_name = "../data/matrix.dat";
 
-   Matrix<int> m;
+   Matrix<int> matrix;
 
    // Test
 
-   m.set();
+   matrix.set();
 
-   m.save(file_name);
-   m.load(file_name);
+   matrix.save_csv(file_name);
+   matrix.load_csv(file_name);
 
-   assert_true(m.get_rows_number() == 0, LOG);
-   assert_true(m.get_columns_number() == 0, LOG);
-
-   // Test
-
-   m.set(1, 2, 3);
-
-   m.save(file_name);
-   m.load(file_name);
-
-   assert_true(m.get_rows_number() == 1, LOG);
-   assert_true(m.get_columns_number() == 2, LOG);
-   assert_true(m == 3, LOG);   
+   assert_true(matrix.get_rows_number() == 0, LOG);
+   assert_true(matrix.get_columns_number() == 0, LOG);
 
    // Test
 
-   m.set(2, 1, 1);
+   matrix.set(1, 2, 3);
 
-   m.save(file_name);
-   m.load(file_name);
+   matrix.save_csv(file_name);
+   matrix.load_csv(file_name);
 
-   assert_true(m.get_rows_number() == 2, LOG);
-   assert_true(m.get_columns_number() == 1, LOG);
-
-   // Test
-
-   m.set(4, 4, 0);
-
-   m.save(file_name);
-   m.load(file_name);
-
-   assert_true(m.get_rows_number() == 4, LOG);
-   assert_true(m.get_columns_number() == 4, LOG);
-   assert_true(m == 0, LOG);
+   assert_true(matrix.get_rows_number() == 1, LOG);
+   assert_true(matrix.get_columns_number() == 2, LOG);
+   assert_true(matrix == 3, LOG);
 
    // Test
 
-   m.set(1, 1, -99);
+   matrix.set(2, 1, 1);
 
-   m.save(file_name);
-   m.load(file_name);
+   matrix.save_csv(file_name);
+   matrix.load_csv(file_name);
 
-   assert_true(m.get_rows_number() == 1, LOG);
-   assert_true(m.get_columns_number() == 1, LOG);
-   assert_true(m == -99, LOG);
+   assert_true(matrix.get_rows_number() == 2, LOG);
+   assert_true(matrix.get_columns_number() == 1, LOG);
 
    // Test
 
-   m.set(3, 2);
+   matrix.set(4, 4, 0);
 
-   m(0,0) = 3; m(0,1) = 5;
-   m(1,0) = 7; m(1,1) = 9;
-   m(2,0) = 2; m(2,1) = 4;
+   matrix.save_csv(file_name);
+   matrix.load_csv(file_name);
 
-   m.save(file_name);
-   m.load(file_name);
+   assert_true(matrix.get_rows_number() == 4, LOG);
+   assert_true(matrix.get_columns_number() == 4, LOG);
+   assert_true(matrix == 0, LOG);
 
-   assert_true(m(0,0) == 3, LOG); assert_true(m(0,1) == 5, LOG);
-   assert_true(m(1,0) == 7, LOG); assert_true(m(1,1) == 9, LOG);
-   assert_true(m(2,0) == 2, LOG); assert_true(m(2,1) == 4, LOG);
+   // Test
+
+   matrix.set(1, 1, -99);
+
+   matrix.save_csv(file_name);
+   matrix.load_csv(file_name);
+
+   assert_true(matrix.get_rows_number() == 1, LOG);
+   assert_true(matrix.get_columns_number() == 1, LOG);
+   assert_true(matrix == -99, LOG);
+
+   // Test
+
+   matrix.set(3, 2);
+
+   matrix(0,0) = 3; matrix(0,1) = 5;
+   matrix(1,0) = 7; matrix(1,1) = 9;
+   matrix(2,0) = 2; matrix(2,1) = 4;
+
+   matrix.save_csv(file_name);
+   matrix.load_csv(file_name);
+
+   assert_true(matrix(0,0) == 3, LOG); assert_true(matrix(0,1) == 5, LOG);
+   assert_true(matrix(1,0) == 7, LOG); assert_true(matrix(1,1) == 9, LOG);
+   assert_true(matrix(2,0) == 2, LOG); assert_true(matrix(2,1) == 4, LOG);
 }
 
 
 void MatrixTest::test_parse()
 {
-    message += "test_parse\n";
+    cout << "test_parse\n";
 
-    Matrix<int> m;
-    string str;
-
-    // Test
-
-    str = "";
-
-    m.parse(str);
-
-    assert_true(m.get_rows_number() == 0, LOG);
-    assert_true(m.get_columns_number() == 0, LOG);
+    Matrix<int> matrix;
+    string string;
 
     // Test
 
-    str =
+    string = "";
+
+    matrix.parse(string);
+
+    assert_true(matrix.get_rows_number() == 0, LOG);
+    assert_true(matrix.get_columns_number() == 0, LOG);
+
+    // Test
+
+    string =
     "1 2 3\n"
     "4 5 6\n";
 
-    m.parse(str);
+    matrix.parse(string);
 
-    assert_true(m.get_rows_number() == 2, LOG);
-    assert_true(m.get_columns_number() == 3, LOG);
+    assert_true(matrix.get_rows_number() == 2, LOG);
+    assert_true(matrix.get_columns_number() == 3, LOG);
 
     // Test
 
-    str =
+    string =
     "1 2\n"
     "3 4\n"
     "5 6\n";
 
-    m.parse(str);
+    matrix.parse(string);
 
-    assert_true(m.get_rows_number() == 3, LOG);
-    assert_true(m.get_columns_number() == 2, LOG);
+    assert_true(matrix.get_rows_number() == 3, LOG);
+    assert_true(matrix.get_columns_number() == 2, LOG);
 }
 
 
 void MatrixTest::run_test_case()
 {
-   message += "Running matrix test case...\n";  
+   cout << "Running matrix test case...\n";
 
    // Constructor and destructor methods
 
@@ -2030,23 +3576,12 @@ void MatrixTest::run_test_case()
 
    test_assignment_operator();   
 
-   // Reference operator methods
-
-   test_reference_operator();   
-
    // Arithmetic operators
 
    test_sum_operator();
    test_rest_operator();
    test_multiplication_operator();
    test_division_operator();
-
-   // Arithmetic and assignment operators
-
-   test_sum_assignment_operator();
-   test_rest_assignment_operator();
-   test_multiplication_assignment_operator();
-   test_division_assignment_operator();
 
    // Equality and relational operators
 
@@ -2064,22 +3599,113 @@ void MatrixTest::run_test_case()
    // Get methods
 
    test_get_rows_number();
-   test_get_columns_number();  
+   test_get_columns_number();
+
+   test_get_header();
+
+   test_get_column_index();
+   test_get_columns_indices();
+   test_get_binary_columns_indices();
 
    test_get_row();
+   test_get_rows();
    test_get_column();
+   test_get_columns();
 
    test_get_submatrix();
+   test_get_submatrix_rows();
+   test_get_submatrix_columns();
+
+   test_get_first();
+   test_get_last();
+
+   test_get_constant_columns_indices();
+
+   test_get_first_rows();
+   test_get_last_rows();
+   test_get_first_columns();
+   test_get_last_columns();
 
    // Set methods
 
    test_set();
-   
+
+   test_set_identity();
+
    test_set_rows_number();
    test_set_columns_number();
 
    test_set_row();
    test_set_column();
+
+   test_set_header();
+
+   test_set_submatrix_rows();
+
+   //Check methods
+
+   test_empty();
+
+   test_is_square();
+
+   test_is_symmetric();
+   test_is_antisymmetric();
+
+   test_is_diagonal();
+
+   test_is_scalar();
+
+   test_is_identity();
+
+   test_is_binary();
+   test_is_column_binary();
+
+   test_is_column_constant();
+
+   test_is_positive();
+
+   test_is_row_equal_to();
+
+   test_has_column_value();
+
+   //Count methods
+
+   test_count_diagonal_elements();
+   test_count_off_diagonal_elements();
+
+   test_count_equal_to();
+   test_count_not_equal_to();
+
+   test_count_equal_to_by_rows();
+
+   test_count_rows_equal_to();
+   test_count_rows_not_equal_to();
+
+   test_count_nan_rows();
+   test_count_nan_columns();
+
+   //Not a number
+
+   test_has_nan();
+
+   test_count_nan();
+
+   test_count_rows_with_nan();
+   test_count_columns_with_nan();
+
+   //Filter
+
+   test_filter_column_equal_to();
+   test_filter_column_not_equal_to();
+
+   test_filter_column_less_than();
+   test_filter_column_greater_than();
+
+   test_filter_column_minimum_maximum();
+
+   // Initialize
+
+   test_initialize();
 
    // Diagonal methods
 
@@ -2095,17 +3721,74 @@ void MatrixTest::run_test_case()
    test_insert_row();
    test_insert_column();
 
-   test_subtract_row();
-   test_subtract_column();
+   test_insert_row_values();
 
-   test_sort_less_rows();
-   test_sort_greater_rows();
+   test_add_column();
+   test_add_column_first();
+
+   test_swap_columns();
+
+   test_delete_row();
+   test_delete_column();
+
+   test_delete_rows_wiht_value();
+   test_delete_columns_with_value();
+
+   test_delete_first_rows();
+   test_delete_last_rows();
+
+   test_delete_first_columns();
+   test_delete_last_columns();
+
+   test_delete_columns_name_contain();
+
+   test_delete_constant_rows();
+   test_delete_constant_columns();
+
+   test_delete_binary_columns();
+
+   test_assembla_rows();
+   test_assembla_columns();
+
+   test_subtract_row();
+
+   //Sorting case
+
+   test_sort_ascending();
+   test_sort_descending();
+
+   //Replace
+
+   test_replace();
+
+   test_replace_header();
+
+   test_replace_in_row();
+   test_replace_in_column();
+
+   test_replace_substring();
+
+   test_replace_contains();
+   test_replace_contains_in_row();
+
+   test_replace_column_equal_to();
+   test_replace_column_not_equal_to();
+
+   test_replace_column_contain();
 
    // Initialization methods
 
    test_initialize();
+
    test_randomize_uniform();
    test_randomize_normal();
+
+   test_initialize_identity();
+   test_initialize_diagonal();
+
+   test_append_header();
+
+   test_tuck_in();
 
    test_set_to_identity();
 
@@ -2113,89 +3796,43 @@ void MatrixTest::run_test_case()
 
    test_calculate_sum();
    test_calculate_rows_sum();
+   test_calculate_columns_sum();
+
+   test_sum_row();
+   test_sum_rows();
+
+   test_substract_rows();
+   test_multiply_rows();
+   test_divide_rows();
+
+   test_calculate_trace();
+
+   test_calculate_reverse_columns();
+
+   test_compare_rows();
 
    test_dot_vector();
    test_dot_matrix();
 
-   test_calculate_eigenvalues();
-   test_calculate_eigenvectors();
+   test_eigenvalues();
+   test_eigenvectors();
 
    test_direct();
 
-   test_calculate_minimum_maximum();
-   test_calculate_mean_standard_deviation();
-
-   test_calculate_statistics();
-
-   test_calculate_histogram();
-
-   test_calculate_covariance_matrix();
-
-   test_calculate_minimal_indices();
-   test_calculate_maximal_indices();
-   
-   test_calculate_minimal_maximal_indices();
-
-   test_calculate_sum_squared_error();
-   test_calculate_mean_squared_error();
-   test_calculate_root_mean_squared_error();
-
-   test_calculate_determinant();
+   test_determinant();
    test_calculate_transpose();
-   test_calculate_cofactor();
+   test_cofactor();
    test_calculate_inverse();
 
-   test_is_symmetric();
-   test_is_antisymmetric();
+   //CONVERSIONS
 
-   test_calculate_k_means();
-
-   test_threshold();
-   test_symmetric_threshold();
-   test_logistic();
-   test_hyperbolic_tangent();
-
-   test_hyperbolic_tangent_derivatives();
-   test_hyperbolic_tangent_second_derivatives();
-   test_logistic_derivatives();
-   test_logistic_second_derivatives();
-   test_threshold_derivatives();
-   test_threshold_second_derivatives();
-   test_symmetric_threshold_derivatives();
-   test_symmetric_threshold_second_derivatives();
-
-   // Scaling methods
+   test_matrix_to_string();
  
-   test_scale_mean_standard_deviation();
-   test_scale_rows_mean_standard_deviation();
-   test_scale_columns_mean_standard_deviation();
-   test_scale_rows_columns_mean_standard_deviation();
-
-   test_scale_minimum_maximum();
-   test_scale_rows_minimum_maximum();
-   test_scale_columns_minimum_maximum();
-   test_scale_rows_columns_minimum_maximum();
-
    // Unscaling methods
 
-   test_unscale_mean_standard_deviation();
-   test_unscale_rows_mean_standard_deviation();
-   test_unscale_columns_mean_standard_deviation();
-   test_unscale_rows_columns_mean_standard_deviation();
-
-   test_unscale_minimum_maximum();
-   test_unscale_rows_minimum_maximum();
-   test_unscale_columns_minimum_maximum();
-   test_unscale_rows_columns_minimum_maximum();
-
-   test_convert_angular_variables_degrees();
-   test_convert_angular_variables_radians();
-
-   test_to_time_t();
+   test_get_tensor();
 
    // Serialization methods
-
-   test_print();
 
    test_load();
 
@@ -2203,7 +3840,7 @@ void MatrixTest::run_test_case()
 
    test_parse();
 
-   message += "End of matrix test case.\n";
+   cout << "End of matrix test case.\n";
 }
 
 
@@ -2224,7 +3861,7 @@ Vector<double> MatrixTest::dot(const Matrix<double>& matrix, const Vector<double
        }
     }
 
-    return(product);
+    return product;
 }
 
 
@@ -2245,12 +3882,12 @@ Matrix<double> MatrixTest::dot(const Matrix<double>& matrix, const Matrix<double
         }
     }
 
-    return(product);
+    return product;
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,18 +1,16 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P R I N C I P A L   C O M P O N E N T S   L A Y E R   C L A S S   H E A D E R                              */
-/*                                                                                                              */
-/*   Pablo Martin                                                                                               */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   pablomartin@artelnics.com                                                                                  */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P R I N C I P A L   C O M P O N E N T S   L A Y E R   C L A S S   H E A D E R  
+//
+//   Pablo Martin                                                          
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com                                             
 
-#ifndef __PrincipalComponentsLayer_H__
-#define __PrincipalComponentsLayer_H__
+
+
+#ifndef PrincipalComponentsLayer_H
+#define PrincipalComponentsLayer_H
 
 // System includes
 
@@ -27,8 +25,10 @@
 
 #include "vector.h"
 #include "matrix.h"
+#include "metrics.h"
+#include "layer.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
@@ -36,9 +36,11 @@ namespace OpenNN
 {
 
 /// This class represents the layer of principal component analysis.
+
+///
 /// This layer is used to reduce the dimension of a dataset.
 
-class PrincipalComponentsLayer
+class PrincipalComponentsLayer : public Layer
 {
 
 public:
@@ -55,11 +57,11 @@ public:
 
    PrincipalComponentsLayer(const PrincipalComponentsLayer&);
 
-   // DESTRUCTOR
+   
 
    virtual ~PrincipalComponentsLayer();
 
-   // ENUMERATIONS
+   // Enumerations
 
    /// Enumeration of available methods for apply the principal components layer.
 
@@ -72,7 +74,7 @@ public:
    string write_principal_components_method() const;
    string write_principal_components_method_text() const;
 
-   // GET METHODS
+   // Get methods
 
    Matrix<double> get_principal_components() const;
    Vector<double> get_means() const;
@@ -81,6 +83,8 @@ public:
 
    size_t get_inputs_number() const;
    size_t get_principal_components_number() const;
+   size_t get_neurons_number() const;
+
 
    // Inputs principal components function
 
@@ -88,7 +92,7 @@ public:
 
    const bool& get_display() const;
 
-   // SET METHODS
+   // Set methods
 
    void set();
    void set(const size_t&, const size_t&);
@@ -118,8 +122,7 @@ public:
 
    // Inputs principal components function
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
    // Expression methods
 
@@ -134,7 +137,7 @@ public:
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   // void read_XML(   );
+   
 
 protected:
 
@@ -175,7 +178,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

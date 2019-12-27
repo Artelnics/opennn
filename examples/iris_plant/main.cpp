@@ -1,14 +1,10 @@
-/****************************************************************************************************************/
-/*                                                                                                              */ 
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.artelnics.com/opennn                                                                                   */
-/*                                                                                                              */
-/*   I R I S   P L A N T   A P P L I C A T I O N                                                                */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL (Artelnics)                                                          */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */  
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   I R I S   P L A N T   A P P L I C A T I O N
+//
+//   Artificial Intelligence Techniques SL (Artelnics)
+//   artelnics@artelnics.com
 
 // This is a classical pattern recognition problem.
 
@@ -31,100 +27,51 @@ int main(void)
 {
     try
     {
-        cout << "OpenNN. Iris Plant Application." << endl;
+        cout << "OpenNN. Iris Plant Example." << endl;
 
-        srand((unsigned)time(NULL));
+        srand(static_cast<unsigned>(time(nullptr)));
 
         // Data set
 
-        DataSet data_set;
+        DataSet data_set("../data/iris_plant_original.csv", ';', true);
 
-        data_set.set_data_file_name("../data/iris_plant.dat");
+        data_set.set_columns_uses({"Input","Input","Input","Input","Target"});
 
-        data_set.set_separator("Space");
+        const Vector<string> inputs_names = data_set.get_input_variables_names();
+        const Vector<string> targets_names = data_set.get_target_variables_names();
 
-        data_set.load_data();
+        const Vector<string> input_columns_names = data_set.get_input_columns_names();
+        const Vector<string> target_columns_names = data_set.get_target_columns_names();
 
-        // Variables
+        data_set.split_instances_random();
 
-        Variables* variables_pointer = data_set.get_variables_pointer();
-
-        variables_pointer->set_name(0, "sepal_length");
-        variables_pointer->set_units(0, "centimeters");
-        variables_pointer->set_use(0, Variables::Input);
-
-        variables_pointer->set_name(1, "sepal_width");
-        variables_pointer->set_units(1, "centimeters");
-        variables_pointer->set_use(1, Variables::Input);
-
-        variables_pointer->set_name(2, "petal_length");
-        variables_pointer->set_units(2, "centimeters");
-        variables_pointer->set_use(2, Variables::Input);
-
-        variables_pointer->set_name(3, "petal_width");
-        variables_pointer->set_units(3, "centimeters");
-        variables_pointer->set_use(3, Variables::Input);
-
-        variables_pointer->set_name(4, "iris_setosa");
-        variables_pointer->set_use(4, Variables::Target);
-
-        variables_pointer->set_name(5, "iris_versicolour");
-        variables_pointer->set_use(5, Variables::Target);
-
-        variables_pointer->set_name(6, "iris_virginica");
-        variables_pointer->set_use(6, Variables::Target);
-
-        const Matrix<string> inputs_information = variables_pointer->get_inputs_information();
-        const Matrix<string> targets_information = variables_pointer->get_targets_information();
-
-        // Instances
-
-        Instances* instances_pointer = data_set.get_instances_pointer();
-
-        instances_pointer->split_random_indices();
-
-        const Vector< Statistics<double> > inputs_statistics = data_set.scale_inputs_minimum_maximum();
+        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        NeuralNetwork neural_network(4, 6, 3);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, {4, 6, 3});
 
-        neural_network.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
-        neural_network.get_multilayer_perceptron_pointer()->get_layer_pointer(1)->set_activation_function(PerceptronLayer::ActivationFunction::Logistic);
+        neural_network.set_inputs_names(inputs_names);
 
-        Inputs* inputs_pointer = neural_network.get_inputs_pointer();
-
-        inputs_pointer->set_information(inputs_information);
-
-        Outputs* outputs_pointer = neural_network.get_outputs_pointer();
-
-        outputs_pointer->set_information(targets_information);
-
-        neural_network.construct_scaling_layer();
+        neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_statistics(inputs_statistics);
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
 
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
-
-        neural_network.construct_probabilistic_layer();
-
-        ProbabilisticLayer* probabilistic_layer_pointer = neural_network.get_probabilistic_layer_pointer();
-
-        probabilistic_layer_pointer->set_probabilistic_method(ProbabilisticLayer::Softmax);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::CROSS_ENTROPY_ERROR);
-
-        training_strategy.set_training_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
         quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+
+        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
 
         quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(0.0);
 
@@ -132,11 +79,20 @@ int main(void)
 
         training_strategy.set_display(false);
 
+        ModelSelection model_selection(&training_strategy);
+
+        model_selection.perform_inputs_selection();
+
         // Testing analysis
+
+        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const Matrix<size_t> confusion = testing_analysis.calculate_confusion();
+
+        cout << "Confusion: " << endl;
+        cout << confusion << endl;
 
         // Save results
 
@@ -147,21 +103,23 @@ int main(void)
 
         training_strategy.save("../data/training_strategy.xml");
 
-        confusion.save("../data/confusion.dat");
+        confusion.save_csv("../data/confusion.csv");
 
-        return(0);
+        cout << "Bye" << endl;
+
+        return 0;
     }
     catch(exception& e)
     {
         cout << e.what() << endl;
 
-        return(1);
+        return 1;
     }
 }  
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

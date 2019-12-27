@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   G R O W I N G   I N P U T S   T E S T   C L A S S   H E A D E R                                            */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   G R O W I N G   I N P U T S   T E S T   C L A S S   H E A D E R       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com                                           
 
-#ifndef __GROWINGINPUTSTEST_H__
-#define __GROWINGINPUTSTEST_H__
+#ifndef GROWINGINPUTSTEST_H
+#define GROWINGINPUTSTEST_H
 
 // Unit testing includes
 
@@ -35,12 +30,12 @@ public:
    explicit GrowingInputsTest();
 
 
-   // DESTRUCTOR
+   
 
    virtual ~GrowingInputsTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 

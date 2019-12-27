@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P E R C E P T R O N   L A Y E R   T E S T   C L A S S   H E A D E R                                        */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P E R C E P T R O N   L A Y E R   T E S T   C L A S S   H E A D E R   
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __PERCEPTRONLAYERTEST_H__
-#define __PERCEPTRONLAYERTEST_H__
+#ifndef PERCEPTRONLAYERTEST_H
+#define PERCEPTRONLAYERTEST_H
 
 // Unit testing includes
 
@@ -29,16 +25,9 @@ class PerceptronLayerTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit PerceptronLayerTest();
 
-
-   // DESTRUCTOR
-
    virtual ~PerceptronLayerTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -56,10 +45,9 @@ public:
    void test_is_empty();
 
    void test_get_inputs_number();
-   void test_get_perceptrons_number();
+   void test_get_neurons_number();
 
    void test_get_perceptrons();
-   void test_get_perceptron();
 
    // Parameters
 
@@ -80,7 +68,7 @@ public:
 
    void test_get_display();
 
-   // SET METHODS
+   // Set methods
 
    void test_set();
    void test_set_default();
@@ -117,11 +105,7 @@ public:
    void test_grow_perceptrons();
 
    void test_prune_input();
-   void test_prune_perceptron();
-
-   // Initialization methods
-
-   void test_initialize_random();
+   void test_prune_neuron();
 
    // Parameters initialization methods
 
@@ -136,27 +120,14 @@ public:
 
    void test_calculate_combinations();
 
-   void test_calculate_combinations_Jacobian();
-   void test_calculate_combinations_Hessian();
-
-   void test_calculate_combinations_parameters_Jacobian();
-   void test_calculate_combinations_parameters_Hessian();
-
    // Activation
 
    void test_calculate_activations();
    void test_calculate_activations_derivatives();
-   void test_calculate_activations_second_derivatives();
 
    // Outputs
 
    void test_calculate_outputs();
-
-   void test_calculate_Jacobian();   
-   void test_calculate_Hessian();
-
-   void test_calculate_parameters_Jacobian();
-   void test_calculate_parameters_Hessian();
 
    // Expression methods
 
@@ -183,7 +154,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
