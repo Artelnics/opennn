@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.artelnics.com/opennn                                                                      #
+#   www.opennn.net                                                                      #
 #                                                                                                 #
 #   L O G I C A L   O P E R A T I O N S   P R O J E C T                                           #
 #                                                                                                 #
@@ -52,13 +52,10 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 # OpenMP library
 !win32{
 QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
+QMAKE_LFLAGS += -fopenmp
 }
 
 mac{
 INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
-
-# MPI include
-#include(../../mpi.pri)

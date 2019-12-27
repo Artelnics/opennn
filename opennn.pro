@@ -1,14 +1,10 @@
-###################################################################################################
-#                                                                                                 #
-#   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                                #
-#                                                                                                 #
-#   O P E N N N   P R O J E C T                                                                   #
-#                                                                                                 #
-#   Artificial Intelligence Techniques SL (Artelnics)                                             #
-#   artelnics@artelnics.com                                                                       #
-#                                                                                                 #
-###################################################################################################
+#   OpenNN: Open Neural Networks Library
+#   www.opennn.net
+#
+#   O P E N N N   P R O J E C T
+#
+#   Artificial Intelligence Techniques SL (Artelnics)
+#   artelnics@artelnics.com
 
 # CONFIGURATION
 
@@ -21,6 +17,8 @@ DEFINES += NDEBUG
 }
 
 SUBDIRS += opennn
-SUBDIRS += examples
 SUBDIRS += tests
+SUBDIRS += examples
+SUBDIRS += blank
+
 

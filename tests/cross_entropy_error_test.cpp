@@ -1,358 +1,278 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S                                                */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C R O S S   E N T R O P Y   E R R O R   T E S T   C L A S S           
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "cross_entropy_error_test.h"
-
-using namespace OpenNN;
-
-// GENERAL CONSTRUCTOR
 
 CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting() 
 {
 }
 
 
-// DESTRUCTOR
-
 CrossEntropyErrorTest::~CrossEntropyErrorTest()
 {
 }
 
 
-// METHODS
-
-
-/// @todo
-
-void CrossEntropyErrorTest::test_calculate_error()
+void CrossEntropyErrorTest::test_calculate_training_error()
 {
-//   message += "test_calculate_loss\n";
+   cout << "test_calculate_training_error\n";
 
-//   NeuralNetwork nn;
-//   Vector<double> parameters;
+   DataSet data_set;
 
-//   MultilayerPerceptron* mlpp;
+   NeuralNetwork neural_network;
+   Vector<double> parameters;
 
-//   DataSet ds;
-   
-//   CrossEntropyError cee(&nn, &ds);
+   PerceptronLayer perceptron_layer;
+   ScalingLayer scaling_layer;
 
-//   double cross_entropy_error;
+   CrossEntropyError cee(&neural_network, &data_set);
 
-//   // Test
+   double cross_entropy_error;
 
-//   nn.set(1, 1);
+   // Test
 
-//   mlpp = nn.get_multilayer_perceptron_pointer();
+   data_set.generate_sum_data(10,2);
 
-//   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
+   Vector<Descriptives> inputs = data_set.scale_inputs_minimum_maximum();
 
-//   nn.initialize_parameters(0.0);
-//   parameters = nn.get_parameters();
-   
-//   ds.set(1,1,1);
-//   ds.initialize_data(0.0);
+   scaling_layer.set_neurons_number(1);
+   scaling_layer.set_inputs_number(1);
+   scaling_layer.set_descriptives(inputs);
 
-//   cross_entropy_error = cee.calculate_error();
+//   data_set.set(10,1,1);
 
-//   assert_true(cross_entropy_error == cee.calculate_error(parameters), LOG);
+//   Matrix<double> data(10,2);
+//   data.initialize_identity();
 
-//   // Test
+//   data_set.set_data(data);
 
-//   nn.set(1, 1);
+   data_set.set_training();
 
-//   mlpp = nn.get_multilayer_perceptron_pointer();
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
-//   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
+   perceptron_layer.set(1,1);
+   perceptron_layer.set_activation_function("Logistic");
+/*
+   neural_network.add_layer(&scaling_layer);
+   neural_network.add_layer(&perceptron_layer);
+*/
+   neural_network.initialize_parameters(0.0);
 
-//   nn.randomize_parameters_normal();
+   parameters = neural_network.get_parameters();
 
-//   parameters = nn.get_parameters();
+   cross_entropy_error = cee.calculate_training_error();
 
-//   ds.set(1, 1, 1);
-//   ds.randomize_data_normal();
-
-//   assert_true(cee.calculate_error() == cee.calculate_error(parameters), LOG);
-
-//   // Test
-
-//   nn.set(1, 1);
-
-//   mlpp = nn.get_multilayer_perceptron_pointer();
-
-//   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-
-//   nn.randomize_parameters_normal();
-
-//   parameters = nn.get_parameters();
-
-//   ds.set(1, 1, 1);
-//   ds.randomize_data_normal();
-
-//   assert_true(cee.calculate_error() != cee.calculate_error(parameters*2.0), LOG);
-
-//   // Test
-
-//   nn.set(3, 1);
-
-//   mlpp = nn.get_multilayer_perceptron_pointer();
-
-//   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-
-//   nn.randomize_parameters_normal();
-
-//   ds.set(50,3,1);
-//   ds.randomize_data_normal();
-
-//   assert_true(cee.calculate_error() > 0, LOG);
-
-//   // Test
-
-//   nn.set(3,3,3);
-
-//   mlpp = nn.get_multilayer_perceptron_pointer();
-
-//   mlpp->get_layer_pointer(0)->set_activation_function(Perceptron::Logistic);
-//   mlpp->get_layer_pointer(1)->set_activation_function(Perceptron::Logistic);
-
-//   nn.initialize_parameters(0);
-
-//   ds.set(50,3,3);
-//   ds.randomize_data_normal();
-
-//   assert_true(cee.calculate_error() > 0, LOG);
+   assert_true(abs(cross_entropy_error - cee.calculate_training_error(parameters)) < 1.0e-03, LOG);
 
 }
 
 
 void CrossEntropyErrorTest::test_calculate_selection_error()
 {
-   message += "test_calculate_selection_error\n";
+   cout << "test_calculate_selection_error\n";
 
-   NeuralNetwork nn;
-   DataSet ds;
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
+   DataSet data_set;
    
-   CrossEntropyError cee(&nn, &ds);
+   CrossEntropyError cee(&neural_network, &data_set);
 
    double selection_error;
 
    // Test
 
-   nn.set(1, 1);
-   nn.get_multilayer_perceptron_pointer()->get_layer_pointer(0)->set_activation_function(PerceptronLayer::Logistic);
-   nn.initialize_parameters(0.0);
+//   PerceptronLayer perceptron_layer(1,1);
+
+//   neural_network.add_layer(&perceptron_layer);
+
+   neural_network.initialize_parameters(0.0);
+
+   const Vector<double> parameters = neural_network.get_parameters();
    
-   ds.set(1,1,1);
-   ds.get_instances_pointer()->set_selection();
-   ds.initialize_data(0.0);
-   
-   selection_error = cee.calculate_training_error({0});
+   data_set.set(1,1,1);
+   data_set.initialize_data(0.0);
+   data_set.set_selection();
 
-   assert_true(selection_error > 0.0, LOG);
-}
+   selection_error = cee.calculate_selection_error();
 
-// @todo
-
-void CrossEntropyErrorTest::test_calculate_gradient()
-{
-//   message += "test_calculate_gradient\n";
-
-//   NumericalDifferentiation nd;
-
-//   NeuralNetwork nn;
-//   Vector<size_t> architecture;
-
-//   Vector<double> parameters;
-
-//   DataSet ds;
-
-//   CrossEntropyError cee(&nn, &ds);
-
-//   Vector<double> gradient;
-//   Vector<double> numerical_gradient;
-
-//   // Test
-
-//   nn.set(1, 1);
-
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(1,1,1);
-
-//   ds.initialize_data(0.0);
-
-//   gradient = cee.calculate_gradient();
-
-//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-
-//   // Test
-
-//   nn.set(3, 4, 2);
-
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(5,3,2);
-//   cee.set(&nn, &ds);
-//   ds.initialize_data(0.0);
-
-//   gradient = cee.calculate_gradient();
-
-//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-
-//   // Test
-
-//   architecture.set(3);
-//   architecture[0] = 2;
-//   architecture[1] = 1;
-//   architecture[2] = 3;
-
-//   nn.set(architecture);
-
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(5,2,3);
-//   cee.set(&nn, &ds);
-//   ds.initialize_data(0.0);
-
-//   gradient = cee.calculate_gradient();
-
-//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-
-//   // Test
-
-//   nn.set(1, 1, 1);
-
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(1,1,1);
-
-//   ds.initialize_data(0.0);
-
-//   gradient = cee.calculate_gradient();
-
-//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-
-
-//   // Test
-
-//   nn.set(3,4,2);
-
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(5,3,2);
-//   cee.set(&nn, &ds);
-//   ds.initialize_data(0.0);
-
-//   gradient = cee.calculate_gradient();
-
-//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-
-
-//   // Test
-
-//   architecture.set(3);
-//   architecture[0] = 2;
-//   architecture[1] = 1;
-//   architecture[2] = 3;
-
-//   nn.set(architecture);
-//   nn.initialize_parameters(0.0);
-
-//   ds.set(5,2,3);
-//   cee.set(&nn, &ds);
-//   ds.initialize_data(0.0);
-
-//   gradient = cee.calculate_gradient();
-
-//   assert_true(gradient.size() == nn.get_parameters_number(), LOG);
-
-//   // Test
-
-//   nn.set(1, 1);
-
-//   nn.initialize_parameters(1.0);
-//   parameters = nn.get_parameters();
-
-//   ds.set(2,1,1);
-//   ds.initialize_data(0.5);
-
-//   gradient = cee.calculate_gradient();
-//   numerical_gradient = nd.calculate_gradient(cee, &CrossEntropyError::calculate_error, parameters);
-
-//   cout << gradient.object_to_string() << endl;
-//   cout << numerical_gradient.object_to_string() << endl;
-
-//   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
-
-//   // Test
-
-//   nn.set(1, 1);
-
-//   nn.randomize_parameters_normal();
-//   parameters = nn.get_parameters();
-
-//   ds.set(2,1,1);
-//   ds.randomize_data_uniform(0.0, 1.0);
-
-//   gradient = cee.calculate_gradient();
-//   numerical_gradient = nd.calculate_gradient(cee, &CrossEntropyError::calculate_error, parameters);
-
-//   assert_true((gradient - numerical_gradient).calculate_absolute_value() < 1.0e-3, LOG);
+   assert_true(selection_error == 0.0, LOG);
 }
 
 
-void CrossEntropyErrorTest::test_calculate_Hessian()
+void CrossEntropyErrorTest::test_calculate_training_error_gradient()
 {
-   message += "test_calculate_Hessian\n";
+   cout << "test_calculate_training_error_gradient\n";
+
+   NeuralNetwork neural_network;
+
+   DataSet data_set;
+
+   CrossEntropyError cee(&neural_network, &data_set);
+
+   Vector<double> error_gradient;
+   Vector<double> numerical_error_gradient;
+
+   size_t instances_number;
+   size_t inputs_number;
+   size_t outputs_number;
+   size_t hidden_neurons;
+
+   ScalingLayer scaling_layer;
+
+   RecurrentLayer recurrent_layer;
+
+   LongShortTermMemoryLayer long_short_term_memory_layer;
+
+   PerceptronLayer hidden_perceptron_layer;
+   PerceptronLayer output_perceptron_layer;
+
+   ProbabilisticLayer probabilistic_layer;
+
+   neural_network.set();
+
+   // Test perceptron and probabilistic
+{
+   instances_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   neural_network.set(NeuralNetwork::Classification,{inputs_number, hidden_neurons, outputs_number});
+/*
+   hidden_perceptron_layer.set(inputs_number, hidden_neurons);
+   output_perceptron_layer.set(hidden_neurons, outputs_number);
+   probabilistic_layer.set(outputs_number, outputs_number);
+
+   neural_network.add_layer(&hidden_perceptron_layer);
+   neural_network.add_layer(&output_perceptron_layer);
+   neural_network.add_layer(&probabilistic_layer);
+*/
+   neural_network.randomize_parameters_normal();
+
+   error_gradient = cee.calculate_training_error_gradient();
+
+   numerical_error_gradient = cee.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+
+}
+
+   neural_network.set();
+
+   // Test lstm
+{
+   instances_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   neural_network.set(NeuralNetwork::Forecasting,{inputs_number, hidden_neurons, outputs_number});
+/*
+   long_short_term_memory_layer.set(inputs_number, hidden_neurons);
+   output_perceptron_layer.set(hidden_neurons, outputs_number);
+
+   neural_network.add_layer(&long_short_term_memory_layer);
+   neural_network.add_layer(&output_perceptron_layer);
+*/
+   neural_network.randomize_parameters_normal();
+
+   error_gradient = cee.calculate_training_error_gradient();
+
+   numerical_error_gradient = cee.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+
+   neural_network.set();
+
+   // Test recurrent
+   /*
+{
+   instances_number = 10;
+   inputs_number = 3;
+   outputs_number = 2;
+   hidden_neurons = 2;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   data_set.randomize_data_normal();
+
+   data_set.set_training();
+
+   recurrent_layer.set(inputs_number, hidden_neurons);
+   output_perceptron_layer.set(hidden_neurons, outputs_number);
+
+   neural_network.add_layer(&scaling_layer);
+   neural_network.add_layer(&recurrent_layer);
+   neural_network.add_layer(&output_perceptron_layer);
+
+   neural_network.randomize_parameters_normal();
+
+   error_gradient = cee.calculate_training_error_gradient();
+
+   numerical_error_gradient = cee.calculate_training_error_gradient_numerical_differentiation();
+
+   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+   */
 }
 
 
 void CrossEntropyErrorTest::test_to_XML()   
 {
-	message += "test_to_XML\n"; 
+	cout << "test_to_XML\n"; 
 }
 
 
 void CrossEntropyErrorTest::test_from_XML()
 {
-	message += "test_from_XML\n"; 
+	cout << "test_from_XML\n"; 
 }
 
 
 void CrossEntropyErrorTest::run_test_case()
 {
+    cout << "Running cross entropy error test case...\n";
+
    // Get methods
 
    // Set methods
 
    // Error methods
 
-   test_calculate_error();
+   test_calculate_training_error();
+
    test_calculate_selection_error();
 
-   test_calculate_gradient();
-   test_calculate_Hessian();
+   test_calculate_training_error_gradient();
 
    // Serialization methods
 
    test_to_XML();
    test_from_XML();
+
+   cout << "End of cross entropy error test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

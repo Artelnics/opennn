@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R                                                  */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __GRADIENTDESCENT_H__
-#define __GRADIENTDESCENT_H__
+#ifndef GRADIENTDESCENT_H
+#define GRADIENTDESCENT_H
 
 // System includes
 
@@ -36,8 +32,10 @@
 namespace OpenNN
 {
 
-/// This concrete class represents the gradient descent optimization algorithm for
-/// a loss index of a neural network.
+/// This concrete class represents the gradient descent optimization algorithm[1], used to minimize loss function.
+
+///
+/// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 
 class GradientDescent : public OptimizationAlgorithm
 {
@@ -56,134 +54,11 @@ public:
 
    explicit GradientDescent(const tinyxml2::XMLDocument&); 
 
-   // DESTRUCTOR
+   
 
    virtual ~GradientDescent();
 
-   // STRUCTURES
-
-   ///
-   /// This structure contains the training results for the gradient descent. 
-   ///
-
-   struct GradientDescentResults : public OptimizationAlgorithm::OptimizationAlgorithmResults
-   {
-       /// Default constructor.
-
-       GradientDescentResults()
-       {
-           gradient_descent_pointer = nullptr;
-       }
-
-       /// Gradient descent constructor.
-
-       GradientDescentResults(GradientDescent* new_gradient_descent_pointer)
-       {
-           gradient_descent_pointer = new_gradient_descent_pointer;
-       }
-
-       /// Destructor.
-
-       virtual ~GradientDescentResults()
-       {
-       }
-
-       /// Pointer to the gradient descent object for which the training results are to be stored.
-
-      GradientDescent* gradient_descent_pointer;
-
-      // Training history
-
-      /// History of the neural network parameters over the training iterations.
-
-      Vector< Vector<double> > parameters_history;
-
-      /// History of the parameters norm over the training iterations.
-
-      Vector<double> parameters_norm_history;
-
-      /// History of the loss function loss over the training iterations.
-
-      Vector<double> loss_history;
-
-      /// History of the selection error over the training iterations.
-
-      Vector<double> selection_error_history;
-
-      /// History of the loss function gradient over the training iterations.
-
-      Vector< Vector<double> > gradient_history;
-
-      /// History of the gradient norm over the training iterations.
-
-      Vector<double> gradient_norm_history;
-
-      /// History of the random search training direction over the training iterations.
-
-      Vector< Vector<double> >  training_direction_history;
-
-      /// History of the random search training rate over the training iterations.
-
-      Vector<double> training_rate_history;
-
-      /// History of the elapsed time over the training iterations.
-
-      Vector<double> elapsed_time_history;
-
-      // Final values
-
-      /// Final neural network parameters vector. 
-
-      Vector<double> final_parameters;
-
-      /// Final neural network parameters norm. 
-
-      double final_parameters_norm;
-
-      /// Final loss function evaluation.
-
-      double final_loss;
-
-      /// Final selection error.
-
-      double final_selection_error;
-
-      /// Final loss function gradient. 
-
-      Vector<double> final_gradient;
-
-      /// Final gradient norm. 
-
-      double final_gradient_norm;
-
-      /// Final gradient descent training direction. 
-
-      Vector<double> final_training_direction;
-
-      /// Final gradient descent training rate. 
-
-      double final_training_rate;
-
-      /// Elapsed time of the training process. 
-
-      double elapsed_time;
-
-      /// Maximum number of training iterations.
-
-      size_t iterations_number;
-
-      /// Stopping criterion
-
-      string stopping_criterion;
-
-      void resize_training_history(const size_t&);
-
-      string object_to_string() const;
-
-      Matrix<string> write_final_results(const int& precision = 3) const;
-   };
-
-   // METHODS
+   
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
@@ -192,11 +67,11 @@ public:
 
    const double& get_warning_parameters_norm() const;
    const double& get_warning_gradient_norm() const;
-   const double& get_warning_training_rate() const;
+   const double& get_warning_learning_rate() const;
 
    const double& get_error_parameters_norm() const;
    const double& get_error_gradient_norm() const;
-   const double& get_error_training_rate() const;
+   const double& get_error_learning_rate() const;
 
    // Stopping criteria
 
@@ -215,17 +90,8 @@ public:
 
    // Reserve training history
 
-   const bool& get_reserve_parameters_history() const;
-   const bool& get_reserve_parameters_norm_history() const;
-
-   const bool& get_reserve_error_history() const;
-   const bool& get_reserve_gradient_history() const;
-   const bool& get_reserve_gradient_norm_history() const;
+   const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
-
-   const bool& get_reserve_training_direction_history() const;
-   const bool& get_reserve_training_rate_history() const;
-   const bool& get_reserve_elapsed_time_history() const;
 
    // Set methods
 
@@ -243,11 +109,11 @@ public:
 
    void set_warning_parameters_norm(const double&);
    void set_warning_gradient_norm(const double&);
-   void set_warning_training_rate(const double&);
+   void set_warning_learning_rate(const double&);
 
    void set_error_parameters_norm(const double&);
    void set_error_gradient_norm(const double&);
-   void set_error_training_rate(const double&);
+   void set_error_learning_rate(const double&);
 
    void set_maximum_epochs_number(const size_t&);
 
@@ -267,17 +133,8 @@ public:
 
    // Reserve training history
 
-   void set_reserve_parameters_history(const bool&);
-   void set_reserve_parameters_norm_history(const bool&);
-
-   void set_reserve_error_history(const bool&);
-   void set_reserve_gradient_history(const bool&);
-   void set_reserve_gradient_norm_history(const bool&);
+   void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-
-   void set_reserve_training_direction_history(const bool&);
-   void set_reserve_training_rate_history(const bool&);
-   void set_reserve_elapsed_time_history(const bool&);
 
    // Utilities
 
@@ -287,7 +144,7 @@ public:
 
    Vector<double> calculate_training_direction(const Vector<double>&) const;
 
-   GradientDescentResults* perform_training();
+   Results perform_training();
 
    void perform_training_void();
 
@@ -322,7 +179,7 @@ private:
 
    /// Training rate value at wich a warning message is written to the screen.
 
-   double warning_training_rate;
+   double warning_learning_rate;
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
@@ -334,9 +191,9 @@ private:
 
    /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
-   double error_training_rate;
+   double error_learning_rate;
 
-   // STOPPING CRITERIA
+   // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
 
@@ -383,39 +240,11 @@ private:
 
    bool apply_early_stopping;
 
-   // TRAINING HISTORY
-
-   /// True if the parameters history matrix is to be reserved, false otherwise.
-
-   bool reserve_parameters_history;
-
-   /// True if the parameters norm history vector is to be reserved, false otherwise.
-
-   bool reserve_parameters_norm_history;
+   // TRAINING HISTORY 
 
    /// True if the loss history vector is to be reserved, false otherwise.
 
-   bool reserve_error_history;
-
-   /// True if the gradient history matrix is to be reserved, false otherwise.
-
-   bool reserve_gradient_history;
-
-   /// True if the gradient norm history vector is to be reserved, false otherwise.
-
-   bool reserve_gradient_norm_history;
-
-   /// True if the training direction history matrix is to be reserved, false otherwise.
-   
-   bool reserve_training_direction_history;
-
-   /// True if the training rate history vector is to be reserved, false otherwise.
-
-   bool reserve_training_rate_history;
-
-   /// True if the elapsed time history vector is to be reserved, false otherwise.
-
-   bool reserve_elapsed_time_history;
+   bool reserve_training_error_history;
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 

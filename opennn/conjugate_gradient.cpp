@@ -1,23 +1,15 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C O N J U G A T E   G R A D I E N T   C L A S S                                                            */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C O N J U G A T E   G R A D I E N T   C L A S S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "conjugate_gradient.h"
 
 namespace OpenNN
 {
-
-// DEFAULT CONSTRUCTOR
 
 /// Default constructor.
 /// It creates a conjugate gradient optimization algorithm object not associated to any loss index object.
@@ -29,9 +21,7 @@ ConjugateGradient::ConjugateGradient() : OptimizationAlgorithm()
 }
 
 
-// GENERAL CONSTRUCTOR
-
-/// General constructor.
+/// Destructor.
 /// It creates a conjugate gradient optimization algorithm associated to a loss index object.
 /// It also initializes the rest of class members to their default values.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -44,8 +34,6 @@ ConjugateGradient::ConjugateGradient(LossIndex* new_loss_index_pointer)
    set_default();
 }
 
-
-// XML CONSTRUCTOR 
 
 /// XML constructor.
 /// It creates a conjugate gradient optimization algorithm not associated to any loss index object.
@@ -61,16 +49,11 @@ ConjugateGradient::ConjugateGradient(const tinyxml2::XMLDocument& conjugate_grad
 }
 
 
-// DESTRUCTOR
-
 /// Destructor.
 
 ConjugateGradient::~ConjugateGradient()
 {
 }
-
-
-// METHODS
 
 
 /// Returns a constant reference to the learning rate algorithm object inside the conjugate gradient method object. 
@@ -85,7 +68,7 @@ const LearningRateAlgorithm& ConjugateGradient::get_learning_rate_algorithm() co
 
 LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
 {
-   return(&learning_rate_algorithm);
+   return &learning_rate_algorithm;
 }
 
 
@@ -105,12 +88,12 @@ string ConjugateGradient::write_training_direction_method() const
    {
       case PR:
       {
-         return("PR");
+         return "PR";
       }
 
       case FR:
       {
-         return("FR");
+         return "FR";
       }
    }
 
@@ -136,9 +119,9 @@ const double& ConjugateGradient::get_warning_gradient_norm() const
 
 /// Returns the training rate value at wich a warning message is written to the screen during line minimization.
 
-const double& ConjugateGradient::get_warning_training_rate() const
+const double& ConjugateGradient::get_warning_learning_rate() const
 {
-   return(warning_training_rate);
+   return(warning_learning_rate);
 }
 
 
@@ -162,9 +145,9 @@ const double& ConjugateGradient::get_error_gradient_norm() const
 /// Returns the training rate value at wich the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
 
-const double& ConjugateGradient::get_error_training_rate() const
+const double& ConjugateGradient::get_error_learning_rate() const
 {
-   return(error_training_rate);
+   return(error_learning_rate);
 }
 
 
@@ -185,7 +168,7 @@ const double& ConjugateGradient::get_minimum_loss_increase() const
 
 
 /// Returns the goal value for the loss. 
-/// This is used as a stopping criterion when training a multilayer perceptron
+/// This is used as a stopping criterion when training a neural network
 
 const double& ConjugateGradient::get_loss_goal() const
 {
@@ -194,7 +177,7 @@ const double& ConjugateGradient::get_loss_goal() const
 
 
 /// Returns the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a multilayer perceptron
+/// This is used as a stopping criterion when training a neural network
 
 const double& ConjugateGradient::get_gradient_norm_goal() const
 {
@@ -242,67 +225,11 @@ const bool& ConjugateGradient::get_apply_early_stopping() const
 }
 
 
-/// Returns true if the parameters history matrix is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_parameters_history() const
-{
-   return(reserve_parameters_history);     
-}
-
-
-/// Returns true if the parameters norm history vector is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_parameters_norm_history() const
-{
-   return(reserve_parameters_norm_history);     
-}
-
-
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
-const bool& ConjugateGradient::get_reserve_error_history() const
+const bool& ConjugateGradient::get_reserve_training_error_history() const
 {
-   return(reserve_error_history);
-}
-
-
-/// Returns true if the gradient history vector of vectors is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_gradient_history() const
-{
-   return(reserve_gradient_history);     
-}
-
-
-/// Returns true if the gradient norm history vector is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_gradient_norm_history() const
-{
-   return(reserve_gradient_norm_history);     
-}
-
-
-/// Returns true if the training direction history matrix is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_training_direction_history() const
-{
-   return(reserve_training_direction_history);     
-}
-
-
-/// Returns true if the training rate history vector is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_training_rate_history() const
-{
-   return(reserve_training_rate_history);     
-}
-
-
-/// Returns true if the elapsed time history vector is to be reserved, and false otherwise.
-
-const bool& ConjugateGradient::get_reserve_elapsed_time_history() const
-{
-   return(reserve_elapsed_time_history);     
+   return(reserve_training_error_history);
 }
 
 
@@ -386,24 +313,11 @@ void ConjugateGradient::set_training_direction_method(const string& new_training
 void ConjugateGradient::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
 {
 
-   // Multilayer perceptron
-
-   reserve_parameters_history = new_reserve_all_training_history;
-   reserve_parameters_norm_history = new_reserve_all_training_history;
-   
    // Loss index
 
-   reserve_error_history = new_reserve_all_training_history;
-   reserve_gradient_history = new_reserve_all_training_history;
-   reserve_gradient_norm_history = new_reserve_all_training_history;
-
+   reserve_training_error_history = new_reserve_all_training_history;
    reserve_selection_error_history = new_reserve_all_training_history;
 
-   // Optimization algorithm
-
-   reserve_training_direction_history = new_reserve_all_training_history;
-   reserve_training_rate_history = new_reserve_all_training_history;
-   reserve_elapsed_time_history = new_reserve_all_training_history;
 }
 
 
@@ -448,13 +362,13 @@ void ConjugateGradient::set_default()
 
    warning_parameters_norm = 1.0e6;
    warning_gradient_norm = 1.0e6;   
-   warning_training_rate = 1.0e6;
+   warning_learning_rate = 1.0e6;
 
    error_parameters_norm = 1.0e9;
    error_gradient_norm = 1.0e9;
-   error_training_rate = 1.0e9;
+   error_learning_rate = 1.0e9;
 
-   // STOPPING CRITERIA
+   // Stopping criteria
 
    minimum_parameters_increment_norm = 0.0;
 
@@ -471,17 +385,8 @@ void ConjugateGradient::set_default()
 
    // TRAINING HISTORY
 
-   reserve_parameters_history = false;
-   reserve_parameters_norm_history = false;
-
-   reserve_error_history = true;
-   reserve_gradient_history = false;
-   reserve_gradient_norm_history = false;
+   reserve_training_error_history = true;
    reserve_selection_error_history = false;
-
-   reserve_training_direction_history = false;
-   reserve_training_rate_history = false;
-   reserve_elapsed_time_history = false;
 
    // UTILITIES
 
@@ -498,8 +403,6 @@ void ConjugateGradient::set_default()
 
 void ConjugateGradient::set_warning_parameters_norm(const double& new_warning_parameters_norm)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_warning_parameters_norm < 0.0)
@@ -527,7 +430,7 @@ void ConjugateGradient::set_warning_parameters_norm(const double& new_warning_pa
 
 void ConjugateGradient::set_warning_gradient_norm(const double& new_warning_gradient_norm)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -550,22 +453,22 @@ void ConjugateGradient::set_warning_gradient_norm(const double& new_warning_grad
 }
 
 
-/// Sets a new training rate value at wich a warning message is written to the screen during line 
+/// Sets a new training rate value at which a warning message is written to the screen during line
 /// minimization.
-/// @param new_warning_training_rate Warning training rate value.
+/// @param new_warning_learning_rate Warning training rate value.
 
-void ConjugateGradient::set_warning_training_rate(const double& new_warning_training_rate)
+void ConjugateGradient::set_warning_learning_rate(const double& new_warning_learning_rate)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_training_rate < 0.0)
+   if(new_warning_learning_rate < 0.0)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_warning_training_rate(const double&) method.\n"
+             << "void set_warning_learning_rate(const double&) method.\n"
              << "Warning training rate must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -573,7 +476,7 @@ void ConjugateGradient::set_warning_training_rate(const double& new_warning_trai
 
    #endif
 
-   warning_training_rate = new_warning_training_rate;
+   warning_learning_rate = new_warning_learning_rate;
 }
 
 
@@ -583,7 +486,7 @@ void ConjugateGradient::set_warning_training_rate(const double& new_warning_trai
 
 void ConjugateGradient::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -612,7 +515,7 @@ void ConjugateGradient::set_error_parameters_norm(const double& new_error_parame
 
 void ConjugateGradient::set_error_gradient_norm(const double& new_error_gradient_norm)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -637,20 +540,20 @@ void ConjugateGradient::set_error_gradient_norm(const double& new_error_gradient
 
 /// Sets a new training rate value at wich a the line minimization algorithm is assumed to fail when 
 /// bracketing a minimum.
-/// @param new_error_training_rate Error training rate value.
+/// @param new_error_learning_rate Error training rate value.
 
-void ConjugateGradient::set_error_training_rate(const double& new_error_training_rate)
+void ConjugateGradient::set_error_learning_rate(const double& new_error_learning_rate)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_training_rate < 0.0)
+   if(new_error_learning_rate < 0.0)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_error_training_rate(const double&) method.\n"
+             << "void set_error_learning_rate(const double&) method.\n"
              << "Error training rate must be equal or greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -660,7 +563,7 @@ void ConjugateGradient::set_error_training_rate(const double& new_error_training
 
    // Set error training rate
 
-   error_training_rate = new_error_training_rate;
+   error_learning_rate = new_error_learning_rate;
 }
 
 
@@ -669,7 +572,7 @@ void ConjugateGradient::set_error_training_rate(const double& new_error_training
 
 void ConjugateGradient::set_minimum_parameters_increment_norm(const double& new_minimum_parameters_increment_norm)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -697,7 +600,7 @@ void ConjugateGradient::set_minimum_parameters_increment_norm(const double& new_
 
 void ConjugateGradient::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -721,7 +624,7 @@ void ConjugateGradient::set_minimum_loss_decrease(const double& new_minimum_loss
 
 
 /// Sets a new goal value for the loss. 
-/// This is used as a stopping criterion when training a multilayer perceptron
+/// This is used as a stopping criterion when training a neural network
 /// @param new_loss_goal Goal value for the loss.
 
 void ConjugateGradient::set_loss_goal(const double& new_loss_goal)
@@ -731,12 +634,12 @@ void ConjugateGradient::set_loss_goal(const double& new_loss_goal)
 
 
 /// Sets a new the goal value for the norm of the error function gradient. 
-/// This is used as a stopping criterion when training a multilayer perceptron
+/// This is used as a stopping criterion when training a neural network
 /// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
 
 void ConjugateGradient::set_gradient_norm_goal(const double& new_gradient_norm_goal)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -782,7 +685,7 @@ void ConjugateGradient::set_maximum_epochs_number(const size_t& new_maximum_epoc
 
 void ConjugateGradient::set_maximum_time(const double& new_maximum_time)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -823,79 +726,12 @@ void ConjugateGradient::set_apply_early_stopping(const bool& new_apply_early_sto
 }
 
 
-/// Makes the parameters history vector of vectors to be reseved or not in memory.
-/// @param new_reserve_parameters_history True if the parameters history vector of vectors is to be reserved, false otherwise.
-
-void ConjugateGradient::set_reserve_parameters_history(const bool& new_reserve_parameters_history)
-{
-   reserve_parameters_history = new_reserve_parameters_history;     
-}
-
-
-/// Makes the parameters norm history vector to be reseved or not in memory.
-/// @param new_reserve_parameters_norm_history True if the parameters norm history vector is to be reserved, false otherwise.
-
-void ConjugateGradient::set_reserve_parameters_norm_history(const bool& new_reserve_parameters_norm_history)
-{
-   reserve_parameters_norm_history = new_reserve_parameters_norm_history;     
-}
-
-
 /// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_error_history True if the loss history vector is to be reserved, false otherwise.
+/// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
 
-void ConjugateGradient::set_reserve_error_history(const bool& new_reserve_error_history)
+void ConjugateGradient::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
 {
-   reserve_error_history = new_reserve_error_history;
-}
-
-
-/// Makes the gradient history vector of vectors to be reseved or not in memory.
-/// @param new_reserve_gradient_history True if the gradient history matrix is to be reserved, false otherwise.
-
-void ConjugateGradient::set_reserve_gradient_history(const bool& new_reserve_gradient_history)
-{
-   reserve_gradient_history = new_reserve_gradient_history;    
-}
-
-
-/// Makes the gradient norm history vector to be reseved or not in memory.
-/// @param new_reserve_gradient_norm_history True if the gradient norm history matrix is to be reserved, false 
-/// otherwise.
-
-void ConjugateGradient::set_reserve_gradient_norm_history(const bool& new_reserve_gradient_norm_history)
-{
-   reserve_gradient_norm_history = new_reserve_gradient_norm_history;     
-}
-
-
-/// Makes the training direction history vector of vectors to be reseved or not in memory.
-/// @param new_reserve_training_direction_history True if the training direction history matrix is to be reserved, 
-/// false otherwise.
-
-void ConjugateGradient::set_reserve_training_direction_history(const bool& new_reserve_training_direction_history)
-{
-   reserve_training_direction_history = new_reserve_training_direction_history;          
-}
-
-
-/// Makes the training rate history vector to be reseved or not in memory.
-/// @param new_reserve_training_rate_history True if the training rate history vector is to be reserved, false 
-/// otherwise.
-
-void ConjugateGradient::set_reserve_training_rate_history(const bool& new_reserve_training_rate_history)
-{
-   reserve_training_rate_history = new_reserve_training_rate_history;          
-}
-
-
-/// Makes the elapsed time over the iterations to be reseved or not in memory. This is a vector.
-/// @param new_reserve_elapsed_time_history True if the elapsed time history vector is to be reserved, false 
-/// otherwise.
-
-void ConjugateGradient::set_reserve_elapsed_time_history(const bool& new_reserve_elapsed_time_history)
-{
-   reserve_elapsed_time_history = new_reserve_elapsed_time_history;     
+   reserve_training_error_history = new_reserve_training_error_history;
 }
 
 
@@ -915,7 +751,7 @@ void ConjugateGradient::set_reserve_selection_error_history(const bool& new_rese
 
 void ConjugateGradient::set_display_period(const size_t& new_display_period)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
      
@@ -942,8 +778,6 @@ void ConjugateGradient::set_display_period(const size_t& new_display_period)
 
 void ConjugateGradient::set_save_period(const size_t& new_save_period)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_save_period <= 0)
@@ -964,14 +798,11 @@ void ConjugateGradient::set_save_period(const size_t& new_save_period)
 
 
 /// Returns the Fletcher-Reeves parameter used to calculate the training direction.
-///
 /// @param old_gradient Previous error function gradient.
 /// @param gradient: Current error function gradient.
 
 double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradient, const Vector<double>& gradient) const
 {
-    // Control sentence(if debug)
-
     #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
@@ -1016,8 +847,8 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 
    double FR_parameter = 0.0;
 
-   const double numerator = gradient.dot(gradient);
-   const double denominator = old_gradient.dot(old_gradient);
+   const double numerator = dot(gradient, gradient);
+   const double denominator = dot(old_gradient, old_gradient);
 
    // Prevent a possible division by 0
 
@@ -1048,7 +879,7 @@ double ConjugateGradient::calculate_FR_parameter(const Vector<double>& old_gradi
 
 double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradient, const Vector<double>& gradient) const
 {
-    // Control sentence(if debug)
+    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1094,8 +925,8 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 
    double PR_parameter = 0.0;
 
-   const double numerator = (gradient-old_gradient).dot(gradient);
-   const double denominator = old_gradient.dot(old_gradient);
+   const double numerator = dot(gradient-old_gradient, gradient);
+   const double denominator = dot(old_gradient, old_gradient);
 
    // Prevent a possible division by 0
 
@@ -1132,7 +963,7 @@ double ConjugateGradient::calculate_PR_parameter(const Vector<double>& old_gradi
 Vector<double> ConjugateGradient::calculate_PR_training_direction
 (const Vector<double>& old_gradient, const Vector<double>& gradient, const Vector<double>& old_training_direction) const
 {
-    // Control sentence(if debug)
+    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1193,7 +1024,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 
    const Vector<double> PR_training_direction = gradient_descent_term + conjugate_direction_term;
 
-   const double PR_training_direction_norm = PR_training_direction.calculate_L2_norm();
+   const double PR_training_direction_norm = l2_norm(PR_training_direction);
 
    return(PR_training_direction/PR_training_direction_norm);
 }
@@ -1207,7 +1038,7 @@ Vector<double> ConjugateGradient::calculate_PR_training_direction
 Vector<double> ConjugateGradient::calculate_FR_training_direction
 (const Vector<double>& old_gradient, const Vector<double>& gradient, const Vector<double>& old_training_direction) const
 {
-    // Control sentence(if debug)
+    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1268,7 +1099,7 @@ Vector<double> ConjugateGradient::calculate_FR_training_direction
 
    const Vector<double> FR_training_direction = gradient_descent_term + conjugate_direction_term;
 
-   const double FR_training_direction_norm = FR_training_direction.calculate_L2_norm();
+   const double FR_training_direction_norm = l2_norm(FR_training_direction);
 
    return(FR_training_direction/FR_training_direction_norm);
 }
@@ -1286,7 +1117,7 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
     const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-    // Control sentence(if debug)
+    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1363,7 +1194,7 @@ Vector<double> ConjugateGradient::calculate_training_direction
 
 Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(const Vector<double>& gradient) const
 {
-    // Control sentence(if debug)
+    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -1395,280 +1226,25 @@ Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(
 
     #endif
 
-    return(gradient.calculate_normalized()*(-1.0));
-}
-
-
-/// Resizes all the training history variables. 
-/// @param new_size Size of training history variables. 
-
-void ConjugateGradient::ConjugateGradientResults::resize_training_history(const size_t& new_size)
-{
-    // Control sentence(if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(conjugate_gradient_pointer == nullptr)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: ConjugateGradientResults structure.\n"
-              << "void resize_training_history(const size_t&) method.\n"
-              << "Conjugate gradient pointer is nullptr.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    if(conjugate_gradient_pointer->get_reserve_parameters_history())
-    {
-        parameters_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_parameters_norm_history())
-    {
-        parameters_norm_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_error_history())
-    {
-        loss_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_selection_error_history())
-    {
-        selection_error_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_gradient_history())
-    {
-        gradient_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_gradient_norm_history())
-    {
-        gradient_norm_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_training_direction_history())
-    {
-        training_direction_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_training_rate_history())
-    {
-        training_rate_history.resize(new_size);
-    }
-
-    if(conjugate_gradient_pointer->get_reserve_elapsed_time_history())
-    {
-        elapsed_time_history.resize(new_size);
-    }
-}
-
-
-string ConjugateGradient::ConjugateGradientResults::object_to_string() const
-{
-   ostringstream buffer;
-
-   // Parameters history
-
-   if(!parameters_history.empty())
-   {
-	   if(!parameters_history[0].empty())
-	   {
-          buffer << "% Parameters history:\n"
-                 << parameters_history << "\n"; 
-	   }
-   }
-
-   // Parameters norm history
-
-   if(!parameters_norm_history.empty())
-   {
-       buffer << "% Parameters norm history:\n"
-              << parameters_norm_history << "\n"; 
-   }
-
-   // loss history
-
-   if(!loss_history.empty())
-   {
-       buffer << "% loss history:\n"
-              << loss_history << "\n"; 
-   }
-
-   // selection error history
-
-   if(!selection_error_history.empty())
-   {
-       buffer << "% selection error history:\n"
-              << selection_error_history << "\n";
-   }
-
-   // Gradient history
-
-   if(!gradient_history.empty())
-   {
-	   if(!gradient_history[0].empty())
-	   {
-          buffer << "% Gradient history:\n"
-                 << gradient_history << "\n"; 
-	   }
-   }
-
-   // Gradient norm history
-
-   if(!gradient_norm_history.empty())
-   {
-       buffer << "% Gradient norm history:\n"
-              << gradient_norm_history << "\n"; 
-   }
-
-   // Training direction history
-
-   if(!training_direction_history.empty())
-   {
-	   if(!training_direction_history[0].empty())
-	   {
-          buffer << "% Training direction history:\n"
-                 << training_direction_history << "\n"; 
-	   }
-   }
-
-   // Training rate history
-
-   if(!training_rate_history.empty())
-   {
-       buffer << "% Training rate history:\n"
-              << training_rate_history << "\n"; 
-   }
-
-   // Elapsed time history
-
-   if(!elapsed_time_history.empty())
-   {
-       buffer << "% Elapsed time history:\n"
-              << elapsed_time_history << "\n"; 
-   }
-
-   return(buffer.str());
-}
-
-
-Matrix<string> ConjugateGradient::ConjugateGradientResults::write_final_results(const int& precision) const
-{
-   ostringstream buffer;
-
-   Vector<string> names;
-   Vector<string> values;
-
-   // Final parameters norm
-
-   names.push_back("Final parameters norm");
-
-   buffer.str("");
-   buffer << setprecision(precision) << final_parameters_norm;
-
-   values.push_back(buffer.str());
-
-   // Final training loss
-
-   names.push_back("Final training loss");
-
-   buffer.str("");
-   buffer << setprecision(precision) << final_loss;
-
-   values.push_back(buffer.str());
-
-   // Final selection error
-
-   const LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
-
-   if(loss_index_pointer->has_selection())
-   {
-        names.push_back("Final selection error");
-
-        buffer.str("");
-        buffer << setprecision(precision) << final_selection_error;
-
-        values.push_back(buffer.str());
-   }
-
-   // Final gradient norm
-
-   names.push_back("Final gradient norm");
-
-   buffer.str("");
-   buffer << setprecision(precision) << final_gradient_norm;
-
-   values.push_back(buffer.str());
-
-   // Final training rate
-
-//   names.push_back("Final training rate");
-
-//   buffer.str("");
-//   buffer << setprecision(precision) << final_training_rate;
-
-//   values.push_back(buffer.str());
-
-   // Iterations number
-
-   names.push_back("Iterations number");
-
-   buffer.str("");
-   buffer << iterations_number;
-
-   values.push_back(buffer.str());
-
-   // Elapsed time
-
-   names.push_back("Elapsed time");
-
-   buffer.str("");
-   buffer << write_elapsed_time(elapsed_time);
-
-   values.push_back(buffer.str());
-
-   // Stopping criteria
-
-   names.push_back("Stopping criterion");
-
-   values.push_back(write_stopping_condition());
-
-   const size_t rows_number = names.size();
-   const size_t columns_number = 2;
-
-   Matrix<string> final_results(rows_number, columns_number);
-
-   final_results.set_column(0, names, "name");
-   final_results.set_column(1, values, "value");
-
-   return(final_results);
+    return normalized(gradient)*(-1.0);
 }
 
 
 /// Trains a neural network with an associated loss index according to the conjugate gradient algorithm.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training()
+OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 {
-   // Control sentence(if debug)
-
-   #ifdef __OPENNN_DEBUG__ 
+   
 
    check();
-
-   #endif
 
    // Start training
 
    if(display) cout << "Training with conjugate gradient...\n";
 
-   ConjugateGradientResults* results_pointer = new ConjugateGradientResults(this);
-   results_pointer->resize_training_history(maximum_epochs_number+1);
+   Results results; //= new ConjugateGradientResults(this);
+   results.resize_training_history(maximum_epochs_number+1);
 
    // Elapsed time
 
@@ -1680,9 +1256,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const size_t selection_instances_number = instances.get_selection_instances_number();
+   const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
 
    // Neural network stuff
 
@@ -1718,11 +1292,11 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
    double training_slope;
 
-   double initial_training_rate = 0.0;
-   double training_rate = 0.0;
-   double old_training_rate = 0.0;
+   double initial_learning_rate = 0.0;
+   double learning_rate = 0.0;
+   double old_learning_rate = 0.0;
 
-   Vector<double> directional_point(2, 0.0);
+   pair<double,double> directional_point(2, 0.0);
 
    Vector<double> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 0.0;
@@ -1731,7 +1305,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
    size_t selection_failures = 0;
    
-   double first_training_rate = 0.01;
+   double first_learning_rate = 0.01;
 
    // Main loop    
    
@@ -1741,7 +1315,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
       parameters = neural_network_pointer->get_parameters();
 
-      parameters_norm = parameters.calculate_L2_norm();
+      parameters_norm = l2_norm(parameters);
 
       if(parameters_norm >= error_parameters_norm)
       {
@@ -1767,13 +1341,13 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
       }
       else
       {
-         training_loss = directional_point[1];
+         training_loss = directional_point.second;
          training_loss_decrease = training_loss - old_training_loss;
       }
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-      gradient_norm = gradient.calculate_L2_norm();
+      gradient_norm = l2_norm(gradient);
 
       if(display && gradient_norm >= warning_gradient_norm)
       {
@@ -1807,14 +1381,6 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          training_direction = calculate_gradient_descent_training_direction(gradient);
       }
-//      else if(fabs(old_gradient.dot(gradient)) >= 0.2*gradient.dot(gradient)) // Powell-Bealle restarts
-//      {
-//         // Gradient descent training direction
-
-//          cout << "Epoch " << epoch << ": Powell-Bealle restart" << endl;
-
-//         training_direction = calculate_gradient_descent_training_direction(gradient);
-//      }
       else
       {
          // Conjugate gradient training direction
@@ -1824,7 +1390,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
       // Calculate loss training_slope
 
-      training_slope = (gradient/gradient_norm).dot(training_direction);
+      training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction 
 
@@ -1841,85 +1407,47 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
       if(epoch == 0)
       {
-         initial_training_rate = first_training_rate;
+         initial_learning_rate = first_learning_rate;
       }
       else
       {
-         initial_training_rate = old_training_rate;
+         initial_learning_rate = old_learning_rate;
       }
 
-      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_training_rate);
+      directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, initial_learning_rate);
 
-	  training_rate = directional_point[0];
+      learning_rate = directional_point.first;
 
-      if(epoch != 0 && training_rate < numeric_limits<double>::min())
+      if(epoch != 0
+      && abs(learning_rate) < numeric_limits<double>::min())
       {
          // Reset training direction
 
          training_direction = calculate_gradient_descent_training_direction(gradient);         
 
-         directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_training_rate);
+         directional_point = learning_rate_algorithm.calculate_directional_point(training_loss, training_direction, first_learning_rate);
 
-		 training_rate = directional_point[0];
+         learning_rate = directional_point.first;
       }
 
-      parameters_increment = training_direction*training_rate;
-      parameters_increment_norm = parameters_increment.calculate_L2_norm();
+      parameters_increment = training_direction*learning_rate;
+      parameters_increment_norm = l2_norm(parameters_increment);
       
       // Elapsed time
 
       time(&current_time);
       elapsed_time = difftime(current_time, beginning_time);
 
-      // Training history neural network
+      // Training error history index
 
-      if(reserve_parameters_history)
+      if(reserve_training_error_history)
       {
-         results_pointer->parameters_history[epoch] = parameters;
-      }
-
-      if(reserve_parameters_norm_history)
-      {
-         results_pointer->parameters_norm_history[epoch] = parameters_norm;
-      }
-
-      // Training history loss index
-
-      if(reserve_error_history)
-      {
-         results_pointer->loss_history[epoch] = training_loss;
+         results.training_error_history[epoch] = training_loss;
       }
 
       if(reserve_selection_error_history)
       {
-         results_pointer->selection_error_history[epoch] = selection_error;
-      }
-
-      if(reserve_gradient_history)
-      {
-         results_pointer->gradient_history[epoch] = gradient;
-      }
-
-      if(reserve_gradient_norm_history)
-      {
-         results_pointer->gradient_norm_history[epoch] = gradient_norm;
-      }
-
-      // Training history optimization algorithm
-
-      if(reserve_training_direction_history)
-      {
-         results_pointer->training_direction_history[epoch] = training_direction;
-      }
-
-      if(reserve_training_rate_history)
-      {
-         results_pointer->training_rate_history[epoch] = training_rate;
-      }
-
-      if(reserve_elapsed_time_history)
-      {
-         results_pointer->elapsed_time_history[epoch] = elapsed_time;
+         results.selection_error_history[epoch] = selection_error;
       }
 
       // Stopping Criteria
@@ -1934,7 +1462,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MinimumParametersIncrementNorm;
+         results.stopping_condition = MinimumParametersIncrementNorm;
       }
 
       else if(epoch != 0 && training_loss_decrease >= minimum_loss_decrease)
@@ -1947,7 +1475,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MinimumLossDecrease;
+         results.stopping_condition = MinimumLossDecrease;
       }
 
       else if(training_loss <= loss_goal)
@@ -1959,7 +1487,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = LossGoal;
+         results.stopping_condition = LossGoal;
       }
 
       else if(gradient_norm <= gradient_norm_goal)
@@ -1971,7 +1499,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = GradientNormGoal;
+         results.stopping_condition = GradientNormGoal;
       }
 
       else if(selection_failures > maximum_selection_error_decreases && apply_early_stopping)
@@ -1984,7 +1512,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumSelectionErrorIncreases;
+         results.stopping_condition = MaximumSelectionErrorIncreases;
       }
 
       else if(epoch == maximum_epochs_number)
@@ -1996,7 +1524,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumIterationsNumber;
+         results.stopping_condition = MaximumEpochsNumber;
       }
 
       else if(elapsed_time >= maximum_time)
@@ -2008,7 +1536,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumTime;
+         results.stopping_condition = MaximumTime;
       }
 
       if(epoch != 0 && epoch % save_period == 0)
@@ -2026,7 +1554,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
                   << "Training loss: " << training_loss << "\n"
                   << "Gradient norm: " << gradient_norm << "\n"
                   << information
-                  << "Training rate: " << training_rate << "\n"
+                  << "Training rate: " << learning_rate << "\n"
                   << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
              if(selection_instances_number > 0)
@@ -2035,22 +1563,19 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
              }
           }
 
-         results_pointer->resize_training_history(1+epoch);
+         results.resize_training_history(1+epoch);
 
-         results_pointer->final_parameters = parameters;
-         results_pointer->final_parameters_norm = parameters_norm;
+         results.final_parameters = parameters;
+         results.final_parameters_norm = parameters_norm;
 
-         results_pointer->final_loss = training_loss;
-         results_pointer->final_selection_error = selection_error;
+         results.final_training_error = training_loss;
+         results.final_selection_error = selection_error;
 
-         results_pointer->final_gradient = gradient;
-         results_pointer->final_gradient_norm = gradient_norm;
-   
-         results_pointer->final_training_direction = training_direction;
-         results_pointer->final_training_rate = training_rate;
-         results_pointer->elapsed_time = elapsed_time;
+         results.final_gradient_norm = gradient_norm;
 
-         results_pointer->iterations_number = epoch;
+         results.elapsed_time = elapsed_time;
+
+         results.epochs_number = epoch;
   
          break;
       }
@@ -2064,7 +1589,7 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
                    << "Training loss: " << training_loss << "\n"
                    << "Gradient norm: " << gradient_norm << "\n"
                    << information 
-                   << "Training rate: " << training_rate << "\n"
+                   << "Training rate: " << learning_rate << "\n"
                    << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
          if(selection_instances_number > 0)
@@ -2086,13 +1611,13 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
       old_selection_error = selection_error;
 
       old_training_direction = training_direction;   
-      old_training_rate = training_rate;
+      old_learning_rate = learning_rate;
    } 
 
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.calculate_L2_norm();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -2100,33 +1625,33 @@ ConjugateGradient::ConjugateGradientResults* ConjugateGradient::perform_training
        selection_error = minimum_selection_error;
    }
 
-   results_pointer->final_parameters = parameters;
-   results_pointer->final_parameters_norm = parameters_norm;
+   results.final_parameters = parameters;
+   results.final_parameters_norm = parameters_norm;
 
-   results_pointer->final_loss = training_loss;
-   results_pointer->final_selection_error = selection_error;
+   results.final_training_error = training_loss;
+   results.final_selection_error = selection_error;
 
-   results_pointer->final_gradient = gradient;
-   results_pointer->final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm;
 
-   results_pointer->elapsed_time = elapsed_time;
+   results.elapsed_time = elapsed_time;
 
-   return(results_pointer);
+   return results;
 
 }
 
+
+/// Perform the training.
 
 void ConjugateGradient::perform_training_void()
 {
-    ConjugateGradientResults* results = perform_training();
-
-    delete results;
+    perform_training();
 }
 
+/// Write a string with best algorithm type for the model.
 
 string ConjugateGradient::write_optimization_algorithm_type() const
 {
-   return("CONJUGATE_GRADIENT");
+   return "CONJUGATE_GRADIENT";
 }
 
 
@@ -2151,9 +1676,9 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    labels.push_back("Training rate method");
 
-   const string training_rate_method = learning_rate_algorithm.write_training_rate_method();
+   const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
 
-   values.push_back(training_rate_method);
+   values.push_back(learning_rate_method);
 
    // Loss tolerance
 
@@ -2227,30 +1752,13 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve parameters norm history
+   // Reserve training error history
 
-   labels.push_back("Reserve parameters norm history");
-
-   buffer.str("");
-
-   if(reserve_parameters_norm_history)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
-
-   values.push_back(buffer.str());
-
-   // Reserve error history
-
-   labels.push_back("Reserve error history");
+   labels.push_back("Reserve training error history");
 
    buffer.str("");
 
-   if(reserve_error_history)
+   if(reserve_training_error_history)
    {
        buffer << "true";
    }
@@ -2278,48 +1786,6 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve gradient norm history
-
-   labels.push_back("Reserve gradient norm history");
-
-   buffer.str("");
-
-   if(reserve_gradient_norm_history)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
-
-   values.push_back(buffer.str());
-
-   // Reserve training direction norm history
-
-//   labels.push_back("");
-
-//   buffer.str("");
-//   buffer << reserve_training_direction_norm_history;
-
-   // Reserve training rate history
-
-//   labels.push_back("");
-
-//   buffer.str("");
-//   buffer << reserve_training_rate_history;
-
-//   values.push_back(buffer.str());
-
-   // Reserve elapsed time history
-
-//   labels.push_back("Reserve elapsed time history");
-
-//   buffer.str("");
-//   buffer << reserve_elapsed_time_history;
-
-//   values.push_back(buffer.str());
-
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
 
@@ -2328,7 +1794,7 @@ Matrix<string> ConjugateGradient::to_string_matrix() const
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
 
-    return(string_matrix);
+    return string_matrix;
 }
 
 
@@ -2425,7 +1891,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
-//      buffer << warning_training_rate;
+//      buffer << warning_learning_rate;
 
 //      text = document->NewText(buffer.str().c_str());
 //      element->LinkEndChild(text);
@@ -2461,7 +1927,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 //      root_element->LinkEndChild(element);
 
 //      buffer.str("");
-//      buffer << error_training_rate;
+//      buffer << error_learning_rate;
 
 //      text = document->NewText(buffer.str().c_str());
 //      element->LinkEndChild(text);
@@ -2529,7 +1995,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 
    // Maximum iterations number
    {
-      element = document->NewElement("MaximumIterationsNumber");
+      element = document->NewElement("MaximumEpochsNumber");
       root_element->LinkEndChild(element);
 
       buffer.str("");
@@ -2551,37 +2017,13 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
       element->LinkEndChild(text);
    }
 
-   // Reserve parameters history
-//   {
-//      element = document->NewElement("ReserveParametersHistory");
-//      root_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << reserve_parameters_history;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-   // Reserve parameters norm history
+   // Reserve training error history
    {
-      element = document->NewElement("ReserveParametersNormHistory");
+      element = document->NewElement("ReserveTrainingErrorHistory");
       root_element->LinkEndChild(element);
 
       buffer.str("");
-      buffer << reserve_parameters_norm_history;
-
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
-
-   // Reserve error history
-   {
-      element = document->NewElement("ReserveErrorHistory");
-      root_element->LinkEndChild(element);
-
-      buffer.str("");
-      buffer << reserve_error_history;
+      buffer << reserve_training_error_history;
 
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
@@ -2598,78 +2040,6 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
       text = document->NewText(buffer.str().c_str());
       element->LinkEndChild(text);
    }
-
-   // Reserve gradient history
-//   {
-//      element = document->NewElement("ReserveGradientHistory");
-//      root_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << reserve_gradient_history;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-   // Reserve gradient norm history
-   {
-      element = document->NewElement("ReserveGradientNormHistory");
-      root_element->LinkEndChild(element);
-
-      buffer.str("");
-      buffer << reserve_gradient_norm_history;
-
-      text = document->NewText(buffer.str().c_str());
-      element->LinkEndChild(text);
-   }
-
-   // Reserve training direction history
-//   {
-//      element = document->NewElement("ReserveTrainingDirectionHistory");
-//      root_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << reserve_training_direction_history;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-   // Reserve training rate history
-//   {
-//      tinyxml2::XMLElement* element = document->NewElement("ReserveLearningRateHistory");
-//      root_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << reserve_training_rate_history;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-   // Reserve elapsed time history
-//   {
-//      element = document->NewElement("ReserveElapsedTimeHistory");
-//      root_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << reserve_elapsed_time_history;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
-
-   // Reserve selection error history
-//   {
-//      element = document->NewElement("ReserveSelectionErrorHistory");
-//      root_element->LinkEndChild(element);
-
-//      buffer.str("");
-//      buffer << reserve_selection_error_history;
-
-//      text = document->NewText(buffer.str().c_str());
-//      element->LinkEndChild(text);
-//   }
 
    // Display period
 //   {
@@ -2716,7 +2086,7 @@ tinyxml2::XMLDocument* ConjugateGradient::to_XML() const
 //      element->LinkEndChild(text);
 //   }
 
-   return(document);
+   return document;
 }
 
 
@@ -2837,7 +2207,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
    // Maximum iterations number
 
    {
-       file_stream.OpenElement("MaximumIterationsNumber");
+       file_stream.OpenElement("MaximumEpochsNumber");
 
        buffer.str("");
        buffer << maximum_epochs_number;
@@ -2860,26 +2230,13 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
        file_stream.CloseElement();
    }
 
-   // Reserve parameters norm history
+   // Reserve training error history
 
    {
-       file_stream.OpenElement("ReserveParametersNormHistory");
+       file_stream.OpenElement("ReserveTrainingErrorHistory");
 
        buffer.str("");
-       buffer << reserve_parameters_norm_history;
-
-       file_stream.PushText(buffer.str().c_str());
-
-       file_stream.CloseElement();
-   }
-
-   // Reserve loss history
-
-   {
-       file_stream.OpenElement("ReserveErrorHistory");
-
-       buffer.str("");
-       buffer << reserve_error_history;
+       buffer << reserve_training_error_history;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -2893,19 +2250,6 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
        buffer.str("");
        buffer << reserve_selection_error_history;
-
-       file_stream.PushText(buffer.str().c_str());
-
-       file_stream.CloseElement();
-   }
-
-   // Reserve gradient norm history
-
-   {
-       file_stream.OpenElement("ReserveGradientNormHistory");
-
-       buffer.str("");
-       buffer << reserve_gradient_norm_history;
 
        file_stream.PushText(buffer.str().c_str());
 
@@ -3010,15 +2354,15 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Warning training rate
   {
-     const tinyxml2::XMLElement* warning_training_rate_element = root_element->FirstChildElement("WarningLearningRate");
+     const tinyxml2::XMLElement* warning_learning_rate_element = root_element->FirstChildElement("WarningLearningRate");
 
-     if(warning_training_rate_element)
+     if(warning_learning_rate_element)
      {
-        const double new_warning_training_rate = atof(warning_training_rate_element->GetText());
+        const double new_warning_learning_rate = atof(warning_learning_rate_element->GetText());
 
         try
         {
-           set_warning_training_rate(new_warning_training_rate);
+           set_warning_learning_rate(new_warning_learning_rate);
         }
         catch(const logic_error& e)
         {
@@ -3067,15 +2411,15 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Error training rate
   {
-     const tinyxml2::XMLElement* error_training_rate_element = root_element->FirstChildElement("ErrorLearningRate");
+     const tinyxml2::XMLElement* error_learning_rate_element = root_element->FirstChildElement("ErrorLearningRate");
 
-     if(error_training_rate_element)
+     if(error_learning_rate_element)
      {
-        const double new_error_training_rate = atof(error_training_rate_element->GetText());
+        const double new_error_learning_rate = atof(error_learning_rate_element->GetText());
 
         try
         {
-           set_error_training_rate(new_error_training_rate);
+           set_error_learning_rate(new_error_learning_rate);
         }
         catch(const logic_error& e)
         {
@@ -3217,7 +2561,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 
   // Maximum iterations number
   {
-     const tinyxml2::XMLElement* maximum_iterations_number_element = root_element->FirstChildElement("MaximumIterationsNumber");
+     const tinyxml2::XMLElement* maximum_iterations_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
      if(maximum_iterations_number_element)
      {
@@ -3253,55 +2597,17 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
      }
   }
 
-  // Reserve parameters history
+  // Reserve training error history
   {
-     const tinyxml2::XMLElement* reserve_parameters_history_element = root_element->FirstChildElement("ReserveParametersHistory");
+     const tinyxml2::XMLElement* reserve_training_error_history_element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
 
-     if(reserve_parameters_history_element)
+     if(reserve_training_error_history_element)
      {
-        const string new_reserve_parameters_history = reserve_parameters_history_element->GetText();
+        const string new_reserve_training_error_history = reserve_training_error_history_element->GetText();
 
         try
         {
-           set_reserve_parameters_history(new_reserve_parameters_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
-
-  // Reserve parameters norm history
-  {
-     const tinyxml2::XMLElement* reserve_parameters_norm_history_element = root_element->FirstChildElement("ReserveParametersNormHistory");
-
-     if(reserve_parameters_norm_history_element)
-     {
-        const string new_reserve_parameters_norm_history = reserve_parameters_norm_history_element->GetText();
-
-        try
-        {
-           set_reserve_parameters_norm_history(new_reserve_parameters_norm_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
-
-  // Reserve error history
-  {
-     const tinyxml2::XMLElement* reserve_error_history_element = root_element->FirstChildElement("ReserveErrorHistory");
-
-     if(reserve_error_history_element)
-     {
-        const string new_reserve_error_history = reserve_error_history_element->GetText();
-
-        try
-        {
-           set_reserve_error_history(new_reserve_error_history != "0");
+           set_reserve_training_error_history(new_reserve_training_error_history != "0");
         }
         catch(const logic_error& e)
         {
@@ -3329,99 +2635,6 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
        }
     }
 
-  // Reserve gradient history
-  {
-     const tinyxml2::XMLElement* reserve_gradient_history_element = root_element->FirstChildElement("ReserveGradientHistory");
-
-     if(reserve_gradient_history_element)
-     {
-        const string new_reserve_gradient_history = reserve_gradient_history_element->GetText();
-
-        try
-        {
-           set_reserve_gradient_history(new_reserve_gradient_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-
-  // Reserve gradient norm history
-  {
-     const tinyxml2::XMLElement* reserve_gradient_norm_history_element = root_element->FirstChildElement("ReserveGradientNormHistory");
-
-     if(reserve_gradient_norm_history_element)
-     {
-        const string new_reserve_gradient_norm_history = reserve_gradient_norm_history_element->GetText();
-
-        try
-        {
-           set_reserve_gradient_norm_history(new_reserve_gradient_norm_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
-
-  // Reserve training direction history
-  {
-     const tinyxml2::XMLElement* reserve_training_direction_history_element = root_element->FirstChildElement("ReserveTrainingDirectionHistory");
-
-     if(reserve_training_direction_history_element)
-     {
-        const string new_reserve_training_direction_history = reserve_training_direction_history_element->GetText();
-
-        try
-        {
-           set_reserve_training_direction_history(new_reserve_training_direction_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
-
-  // Reserve training rate history
-  {
-     const tinyxml2::XMLElement* reserve_training_rate_history_element = root_element->FirstChildElement("ReserveLearningRateHistory");
-
-     if(reserve_training_rate_history_element)
-     {
-        const string new_reserve_training_rate_history = reserve_training_rate_history_element->GetText();
-
-        try
-        {
-           set_reserve_training_rate_history(new_reserve_training_rate_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
-
-  // Reserve elapsed time history
-  {
-     const tinyxml2::XMLElement* reserve_elapsed_time_history_element = root_element->FirstChildElement("ReserveElapsedTimeHistory");
-
-     if(reserve_elapsed_time_history_element)
-     {
-        const string new_reserve_elapsed_time_history = reserve_elapsed_time_history_element->GetText();
-
-        try
-        {
-           set_reserve_elapsed_time_history(new_reserve_elapsed_time_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-           cerr << e.what() << endl;
-        }
-     }
-  }
 
   // Reserve selection error history
   {
@@ -3519,7 +2732,7 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
   }
 }
 }
-}
+
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.

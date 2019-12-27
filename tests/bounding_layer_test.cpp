@@ -1,227 +1,214 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   B O U N D I N G   L A Y E R   T E S T   C L A S S                                                          */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   E-mail: artelnics@artelnics.com                                                                            */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// Unit testing includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   B O U N D I N G   L A Y E R   T E S T   C L A S S                     
+//
+//   Artificial Intelligence Techniques SL
+//   E-mail: artelnics@artelnics.com                                       
 
 #include "bounding_layer_test.h"
 
-using namespace OpenNN;
-
-// GENERAL CONSTRUCTOR
 
 BoundingLayerTest::BoundingLayerTest() : UnitTesting()
 {
 }
 
 
-// DESTRUCTOR
-
 BoundingLayerTest::~BoundingLayerTest()
 {
 }
 
 
-// METHODS
-
 void BoundingLayerTest::test_constructor()
 {
-   message += "test_constructor\n";
+   cout << "test_constructor\n";
 
    // Default constructor
 
-   BoundingLayer bl1;
+   BoundingLayer bounding_layer_1;
 
-   assert_true(bl1.get_bounding_neurons_number() == 0, LOG);
+   assert_true(bounding_layer_1.get_neurons_number() == 0, LOG);
 
    // Copy constructor
 
-   bl1.set(2);
+   bounding_layer_1.set(2);
 
-   BoundingLayer bl2(bl1);
+   BoundingLayer bounding_layer2(bounding_layer_1);
 
-   assert_true(bl2.get_bounding_neurons_number() == 2, LOG);
+   assert_true(bounding_layer2.get_neurons_number() == 2, LOG);
 }
 
 
 void BoundingLayerTest::test_destructor()
 {
-   message += "test_destructor\n";
+   cout << "test_destructor\n";
 }
 
 
 void BoundingLayerTest::test_assignment_operator()
 {
-   message += "test_assignment_operator\n";
+   cout << "test_assignment_operator\n";
 
-   BoundingLayer bl_1;
-   BoundingLayer bl_2 = bl_1;
+   BoundingLayer bounding_layer_1;
+   BoundingLayer bounding_layer_2 = bounding_layer_1;
 
-   assert_true(bl_2.get_bounding_neurons_number() == 0, LOG);
+   assert_true(bounding_layer_2.get_neurons_number() == 0, LOG);
 }
 
 
-void BoundingLayerTest::test_get_bounding_neurons_number()
+void BoundingLayerTest::test_get_neurons_number()
 {
-   message += "test_get_bounding_neurons_number\n";
+   cout << "test_get_neurons_number\n";
 
-   BoundingLayer bl;
-
-   // Test
-
-   bl.set();
-   assert_true(bl.get_bounding_neurons_number() == 0, LOG);
+   BoundingLayer bounding_layer;
 
    // Test
 
-   bl.set(1);
-   assert_true(bl.get_bounding_neurons_number() == 1, LOG);
+   bounding_layer.set();
+   assert_true(bounding_layer.get_neurons_number() == 0, LOG);
+
+   // Test
+
+   bounding_layer.set(1);
+   assert_true(bounding_layer.get_neurons_number() == 1, LOG);
 }
 
 
 void BoundingLayerTest::test_set()
 {
-   message += "test_set\n";
+   cout << "test_set\n";
 }
 
 
 void BoundingLayerTest::test_set_default()
 {
-   message += "test_set_default\n";
+   cout << "test_set_default\n";
 }
 
 
 void BoundingLayerTest::test_get_lower_bounds()
 {
-   message += "test_get_lower_bounds\n";
+   cout << "test_get_lower_bounds\n";
 }
 
 
 void BoundingLayerTest::test_get_upper_bounds()
 {
-   message += "test_get_upper_bounds\n";
+   cout << "test_get_upper_bounds\n";
 }
 
 
 void BoundingLayerTest::test_get_lower_bound()
 {
-   message += "test_get_lower_bound\n";
+   cout << "test_get_lower_bound\n";
 }
 
 
 void BoundingLayerTest::test_get_upper_bound()
 {
-   message += "test_get_upper_bound\n";
+   cout << "test_get_upper_bound\n";
 }
 
 
 void BoundingLayerTest::test_get_bounds()
 {
-   message += "test_get_bounds\n";
+   cout << "test_get_bounds\n";
+}
+
+
+void BoundingLayerTest::test_get_type()
+{
+   cout << "test_get_type\n";
+
+   BoundingLayer bounding_layer;
+
+   assert_true(bounding_layer.get_type() == Layer::Bounding, LOG);
+
 }
 
 
 void BoundingLayerTest::test_get_display()
 {
-   message += "test_get_display\n";
+   cout << "test_get_display\n";
 }
 
 
 void BoundingLayerTest::test_set_lower_bounds()
 {
-   message += "test_set_lower_bounds\n";
+   cout << "test_set_lower_bounds\n";
 }
 
 
 void BoundingLayerTest::test_set_upper_bounds()
 {
-   message += "test_set_upper_bounds\n";
+   cout << "test_set_upper_bounds\n";
 }
 
 
 void BoundingLayerTest::test_set_lower_bound()
 {
-   message += "test_set_lower_bound\n";
+   cout << "test_set_lower_bound\n";
 }
 
 
 void BoundingLayerTest::test_set_upper_bound()
 {
-   message += "test_set_upper_bound\n";
+   cout << "test_set_upper_bound\n";
 }
 
 
 void BoundingLayerTest::test_set_bounds()
 {
-   message += "test_set_bounds\n";
+   cout << "test_set_bounds\n";
 }
 
 
 void BoundingLayerTest::test_set_display()
 {
-   message += "test_set_display\n";
-}
-
-
-void BoundingLayerTest::test_initialize_random()
-{
-   message += "test_initialize_random\n";
-
-   BoundingLayer bl;
-
-   // Test
-
-   bl.initialize_random();
+   cout << "test_set_display\n";
 }
 
 
 void BoundingLayerTest::test_calculate_outputs()
 {
-   message += "test_calculate_outputs\n";
-/*
-   BoundingLayer bl(1);
-   bl.set_lower_bound(0, -1.0);
-   bl.set_upper_bound(0,  1.0);
-   bl.set_bounding_method("Bounding");
-   Vector<double> inputs(1);
+   cout << "test_calculate_outputs\n";
+
+   BoundingLayer bounding_layer(1);
+   bounding_layer.set_lower_bound(0, -1.0);
+   bounding_layer.set_upper_bound(0,  1.0);
+   bounding_layer.set_bounding_method("Bounding");
+
+   Tensor<double> inputs(1, 1);
 
    // Test
 
-   Vector<double> outputs(1);
+   Tensor<double> outputs(1, 1);
    inputs[0] = -2.0; 
-   outputs = bl.calculate_outputs(inputs);
-   assert_true(outputs.size() == 1, LOG);
+   outputs = bounding_layer.calculate_outputs(inputs);
+   assert_true(outputs.get_dimensions_number() == 2, LOG);
    assert_true(outputs == -1.0, LOG);
 
    // Test
 
    inputs[0] = 2.0;
-   outputs = bl.calculate_outputs(inputs);
-   assert_true(outputs.size() == 1, LOG);
+   outputs = bounding_layer.calculate_outputs(inputs);
+   assert_true(outputs.get_dimensions_number() == 2, LOG);
    assert_true(outputs == 1.0, LOG);
-*/
+
 }
 
 
 void BoundingLayerTest::test_to_XML()
 {
-   message += "test_to_XML\n";
+   cout << "test_to_XML\n";
 
-   BoundingLayer bl;
+   BoundingLayer bounding_layer;
 
    tinyxml2::XMLDocument* document;
 
    // Test
 
-   document = bl.to_XML();
+   document = bounding_layer.to_XML();
 
    assert_true(document != nullptr, LOG);
 
@@ -232,24 +219,24 @@ void BoundingLayerTest::test_to_XML()
 
 void BoundingLayerTest::test_from_XML()
 {
-   message += "test_from_XML\n";
+   cout << "test_from_XML\n";
 
-   BoundingLayer bl;
+   BoundingLayer bounding_layer;
 
    tinyxml2::XMLDocument* blep;
 
    // Test
 
-   blep = bl.to_XML();
+   blep = bounding_layer.to_XML();
 
-   bl.from_XML(*blep);
+   bounding_layer.from_XML(*blep);
 
 }
 
 
 void BoundingLayerTest::test_write_expression()
 {
-   message += "test_write_expression\n";
+   cout << "test_write_expression\n";
 
 
 }
@@ -257,7 +244,7 @@ void BoundingLayerTest::test_write_expression()
 
 void BoundingLayerTest::run_test_case()
 {
-   message += "Running bounding layer test case...\n";
+   cout << "Running bounding layer test case...\n";
 
    // Constructor and destructor methods
 
@@ -272,7 +259,7 @@ void BoundingLayerTest::run_test_case()
 
    // Bounding layer architecture
 
-   test_get_bounding_neurons_number();
+   test_get_neurons_number();
 
    // Variables bounds
 
@@ -283,6 +270,8 @@ void BoundingLayerTest::run_test_case()
    test_get_upper_bound();
 
    test_get_bounds();
+
+   test_get_type();
 
    // Display messages
 
@@ -307,10 +296,6 @@ void BoundingLayerTest::run_test_case()
 
    test_set_display();
 
-   // Initialization methods
-
-   test_initialize_random();
-
    // Lower and upper bounds
 
    test_calculate_outputs();
@@ -324,12 +309,12 @@ void BoundingLayerTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   message += "End of bounding layer test case.\n";
+   cout << "End of bounding layer test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,89 +1,72 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   B O U N D I N G   L A Y E R   C L A S S   H E A D E R                                                      */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   B O U N D I N G   L A Y E R   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __BOUNDINGLAYER_H__
-#define __BOUNDINGLAYER_H__
+#ifndef BOUNDINGLAYER_H
+#define BOUNDINGLAYER_H
 
 // System includes
 
 #include <cmath>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <string>
+#include <fstream>
 #include <sstream>
-
+#include <string>
 
 // OpenNN includes
 
 #include "vector.h"
 #include "matrix.h"
-
-// TinyXml includes
-
+#include "layer.h"
+#include "functions.h"
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
 /// This class represents a layer of bounding neurons. 
+
 /// A bounding layer is used to ensure that variables will never fall below or above given values. 
 
-class BoundingLayer
+class BoundingLayer : public Layer
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit BoundingLayer();
 
-   // BOUNDING NEURONS NUMBER CONSTRUCTOR
-
    explicit BoundingLayer(const size_t&);
-
-   // XML CONSTRUCTOR
 
    explicit BoundingLayer(const tinyxml2::XMLDocument&);
 
-   // COPY CONSTRUCTOR
-
    BoundingLayer(const BoundingLayer&);
 
-   // DESTRUCTOR
-
+   // Destructor
+   
    virtual ~BoundingLayer();
 
-   // ASSIGNMENT OPERATOR
-
-   BoundingLayer& operator = (const BoundingLayer&);
-
-   // EQUAL TO OPERATOR
-
-   bool operator == (const BoundingLayer&) const;
-
-   // ENUMERATIONS
+   // Enumerations
 
    /// Enumeration of available methods for bounding the output variables.
 
    enum BoundingMethod{NoBounding, Bounding};
 
-   // METHODS
+   // Check methods
 
    bool is_empty() const;
 
-   size_t get_bounding_neurons_number() const;
+   // Get methods
 
-   // Variables bounds
+   Vector<size_t> get_input_variables_dimensions() const;
+   size_t get_inputs_number() const;
+   size_t get_neurons_number() const;
 
    const BoundingMethod& get_bounding_method() const;
 
@@ -95,7 +78,7 @@ public:
    const Vector<double>& get_upper_bounds() const;
    double get_upper_bound(const size_t&) const;
 
-   Vector< Vector<double> > get_bounds();
+   Vector<Vector<double>> get_bounds();
 
    // Variables bounds
 
@@ -103,6 +86,10 @@ public:
    void set(const size_t&);
    void set(const tinyxml2::XMLDocument&);
    void set(const BoundingLayer&);
+
+   void set_inputs_number(const size_t&);
+   void set_neurons_number(const size_t&);
+
 
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
@@ -113,7 +100,7 @@ public:
    void set_upper_bounds(const Vector<double>&);
    void set_upper_bound(const size_t&, const double&);
 
-   void set_bounds(const Vector< Vector<double> >&);
+   void set_bounds(const Vector<Vector<double>>&);
 
    void set_display(const bool&);
 
@@ -121,20 +108,11 @@ public:
 
    // Pruning and growing
 
-   void prune_bounding_neuron(const size_t&);
-
-   // Initialization
-
-   void initialize_random();
+   void prune_neuron(const size_t&);
 
    // Lower and upper bounds
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
-
-   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
    // Expression methods
 
@@ -149,7 +127,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML(  );
+   //void read_XML( );
 
 protected:
 

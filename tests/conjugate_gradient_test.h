@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   C O N J U G A T E   G R A D I E N T   T E S T   C L A S S   H E A D E R                                    */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   C O N J U G A T E   G R A D I E N T   T E S T   C L A S S   H E A D E R        
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __CONJUGATEGRADIENTTEST_H__
-#define __CONJUGATEGRADIENTTEST_H__
+#ifndef CONJUGATEGRADIENTTEST_H
+#define CONJUGATEGRADIENTTEST_H
 
 // Unit testing includes
 
@@ -28,17 +24,17 @@ class ConjugateGradientTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit ConjugateGradientTest(); 
 
 
-   // DESTRUCTOR
+   
 
    virtual ~ConjugateGradientTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
@@ -86,7 +82,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   L E A R N I N G   R A T E   A L G O R I T H M   C L A S S   H E A D E R                                    */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   L E A R N I N G   R A T E   A L G O R I T H M   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __LEARNINGRATEALGORITHM_H__
-#define __LEARNINGRATEALGORITHM_H__
+#ifndef LEARNINGRATEALGORITHM_H
+#define LEARNINGRATEALGORITHM_H
 
 // System includes
 
@@ -27,47 +23,40 @@
 
 #include "neural_network.h"
 #include "loss_index.h"
-
-// TinyXml includes
-
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
 /// This class is used by many different optimization algorithms to calculate the training rate given a training direction. 
-/// It implements the golden section method and the Brent's methods. 
+
+///
+/// It implements the golden section method and the Brent's methodata_set. 
 
 class LearningRateAlgorithm
 {
 
 public:
 
-   // ENUMERATIONS
+   // Enumerations
 
    /// Available training operators for obtaining the perform_training rate.
 
    enum LearningRateMethod{Fixed, GoldenSection, BrentMethod};
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit LearningRateAlgorithm();
 
-   // GENERAL CONSTRUCTOR
-
    explicit LearningRateAlgorithm(LossIndex*);
-
-   // XML CONSTRUCTOR
 
    explicit LearningRateAlgorithm(const tinyxml2::XMLDocument&);
 
-   // DESTRUCTOR
+   // Destructor
 
    virtual ~LearningRateAlgorithm();
 
-   ///
-   /// Defines a set of three points(A, U, B) for bracketing a directional minimum.
-   ///
+   /// Defines a set of three points(A, U, B) for bracketing a directional minimum. 
 
    struct Triplet
    {
@@ -75,9 +64,9 @@ public:
 
        Triplet()
        {
-           A.set(2, 0.0);
-           U.set(2, 0.0);
-           B.set(2, 0.0);
+           A = make_pair(0.0, 0.0);
+           U = make_pair(0.0, 0.0);
+           B = make_pair(0.0, 0.0);
        }
 
        /// Destructor.
@@ -97,24 +86,26 @@ public:
           && U == other_triplet.U
           && B == other_triplet.B)
           {
-             return(true);
+             return true;
           }
           else
           {
-             return(false);
+             return false;
           }
        }
 
+
        inline double get_length() const
        {
-           return(B[0] - A[0]);
+           return(B.first - A.first);
        }
 
-       inline Vector<double> calculate_minimum() const
-       {
-           const Vector<double> losses({A[1], U[1], B[1]});
 
-           const size_t minimal_index = losses.calculate_minimal_index();
+       inline pair<double,double> minimum() const
+       {
+           const Vector<double> losses({A.second, U.second, B.second});
+
+           const size_t minimal_index = OpenNN::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;
@@ -126,13 +117,13 @@ public:
 
        inline bool has_length_zero() const
        {
-           if(A[0] == B[0])
+           if(abs(A.first - B.first) < numeric_limits<double>::min())
            {
-              return(true);
+              return true;
            }
            else
            {
-              return(false);
+              return false;
            }
        }
 
@@ -141,34 +132,34 @@ public:
 
        inline bool is_constant() const
        {
-           if(A[1] == B[1])
+           if(abs(A.second - B.second) < numeric_limits<double>::min())
            {
-              return(true);
+              return true;
            }
            else
            {
-              return(false);
+              return false;
            }
        }
 
        /// Writes a string with the values of A, U and B.
 
-       inline string object_to_string() const
+       inline string struct_to_string() const
        {
            ostringstream buffer;
 
-           buffer << "A = (" << A[0] << "," << A[1] << ")\n"
-                  << "U = (" << U[0] << "," << U[1] << ")\n"
-                  << "B = (" << B[0] << "," << B[1] << ")" << endl;
+           buffer << "A = (" << A.first << "," << A.second << ")\n"
+                  << "U = (" << U.first << "," << U.second << ")\n"
+                  << "B = (" << B.first << "," << B.second << ")" << endl;
 
-           return(buffer.str());
+           return buffer.str();
        }
 
        /// Prints the triplet points to the standard output.
 
        inline void print() const
        {
-           cout << object_to_string();
+           cout << struct_to_string();
            cout << "Lenght: " << get_length() << endl;
        }
 
@@ -180,22 +171,22 @@ public:
        {
            ostringstream buffer;
 
-           if(A[0] > U[0] || U[0] > B[0])
+           if(A.first > U.first || U.first > B.first)
            {
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
                      << "Uncorrect triplet:\n"
-                     << object_to_string();
+                     << struct_to_string();
 
               throw logic_error(buffer.str());
            }
 
-           if(A[1] < U[1] || U[1] > B[1])
+           if(A.second < U.second || U.second > B.second)
            {
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
                      << "Triplet does not satisfy minimum condition:\n"
-                     << object_to_string();
+                     << struct_to_string();
 
               throw logic_error(buffer.str());
            }
@@ -203,19 +194,16 @@ public:
 
        /// Left point of the triplet.
 
-       Vector<double> A;
+       pair<double, double> A;
 
        /// Interior point of the triplet.
 
-       Vector<double> U;
+       pair<double, double> U;
 
        /// Right point of the triplet.
 
-       Vector<double> B;
+       pair<double, double> B;
    };
-
-
-   // METHODS
 
    // Get methods
 
@@ -225,16 +213,16 @@ public:
 
    // Training operators
 
-   const LearningRateMethod& get_training_rate_method() const;
-   string write_training_rate_method() const;
+   const LearningRateMethod& get_learning_rate_method() const;
+   string write_learning_rate_method() const;
 
    // Training parameters
 
    const double& get_loss_tolerance() const;
 
-   const double& get_warning_training_rate() const;
+   const double& get_warning_learning_rate() const;
 
-   const double& get_error_training_rate() const;
+   const double& get_error_learning_rate() const;
   
    // Utilities
    
@@ -249,16 +237,16 @@ public:
 
    // Training operators
 
-   void set_training_rate_method(const LearningRateMethod&);
-   void set_training_rate_method(const string&);
+   void set_learning_rate_method(const LearningRateMethod&);
+   void set_learning_rate_method(const string&);
 
    // Training parameters
 
    void set_loss_tolerance(const double&);
 
-   void set_warning_training_rate(const double&);
+   void set_warning_learning_rate(const double&);
 
-   void set_error_training_rate(const double&);
+   void set_error_learning_rate(const double&);
 
    // Utilities
 
@@ -268,17 +256,16 @@ public:
 
    // Training rate method
 
-   double calculate_golden_section_training_rate(const Triplet&) const;
-   double calculate_Brent_method_training_rate(const Triplet&) const;
+   double calculate_golden_section_learning_rate(const Triplet&) const;
+   double calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const double&, const Vector<double>&, const double&) const;
 
-   Vector<double> calculate_fixed_directional_point(const double&, const Vector<double>&, const double&) const;
-   Vector<double> calculate_golden_section_directional_point(const double&, const Vector<double>&, const double&) const;
-   Vector<double> calculate_Brent_method_directional_point(const double&, const Vector<double>&, const double&) const;
-   Vector<double> calculate_scaled_method_directional_point(const double&, const Vector<double>&, const double&) const;
+   pair<double, double> calculate_fixed_directional_point(const double&, const Vector<double>&, const double&) const;
+   pair<double, double> calculate_golden_section_directional_point(const double&, const Vector<double>&, const double&) const;
+   pair<double, double> calculate_Brent_method_directional_point(const double&, const Vector<double>&, const double&) const;
 
-   Vector<double> calculate_directional_point(const double&, const Vector<double>&, const double&) const;
+   pair<double, double> calculate_directional_point(const double&, const Vector<double>&, const double&) const;
 
    // Serialization methods
 
@@ -293,13 +280,13 @@ protected:
 
    /// Pointer to an external loss index object.
 
-   LossIndex* loss_index_pointer;
+   LossIndex* loss_index_pointer = nullptr;
 
    // TRAINING OPERATORS
 
    /// Variable containing the actual method used to obtain a suitable perform_training rate. 
 
-   LearningRateMethod training_rate_method;
+   LearningRateMethod learning_rate_method;
 
    /// Maximum interval length for the training rate.
 
@@ -307,18 +294,17 @@ protected:
 
    /// Big training rate value at which the algorithm displays a warning. 
 
-   double warning_training_rate;
+   double warning_learning_rate;
 
    /// Big training rate value at which the algorithm throws an exception. 
 
-   double error_training_rate;
+   double error_learning_rate;
 
    // UTILITIES
 
    /// Display messages to screen.
 
    bool display;
-
 
    const double golden_ratio = 1.618;
 

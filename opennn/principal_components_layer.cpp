@@ -1,34 +1,24 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P R I N C I P A L   C O M P O N E N T S   L A Y E R   C L A S S   H E A D E R                              */
-/*                                                                                                              */
-/*   Pablo Martin                                                                                               */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   pablomartin@artelnics.com                                                                                  */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P R I N C I P A L   C O M P O N E N T S   L A Y E R   C L A S S   H E A D E R  
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "principal_components_layer.h"
 
 namespace OpenNN
 {
-// DEFAULT CONSTRUCTOR
 
 /// Default constructor.
 /// It creates a scaling layer object with no scaling neurons.
 
-PrincipalComponentsLayer::PrincipalComponentsLayer()
+PrincipalComponentsLayer::PrincipalComponentsLayer() : Layer()
 {
    set();
 }
 
-
-// INPUTS AND PRINCIPAL COMPONENTS NEURONS NUMBER CONSTRUCTOR
 
 /// Principal components neurons number constructor.
 /// This constructor creates a principal components layer layer with a given size.
@@ -36,23 +26,19 @@ PrincipalComponentsLayer::PrincipalComponentsLayer()
 /// @param new_inputs_number Number of original inputs.
 /// @param new_principal_components_number Number of principal components neurons in the layer.
 
-PrincipalComponentsLayer::PrincipalComponentsLayer(const size_t& new_inputs_number, const size_t& new_principal_components_number)
+PrincipalComponentsLayer::PrincipalComponentsLayer(const size_t& new_inputs_number, const size_t& new_principal_components_number) : Layer()
 {
     set(new_inputs_number, new_principal_components_number);
 }
 
 
-// COPY CONSTRUCTOR
-
 /// Copy constructor.
 
-PrincipalComponentsLayer::PrincipalComponentsLayer(const PrincipalComponentsLayer& new_principal_components_layer)
+PrincipalComponentsLayer::PrincipalComponentsLayer(const PrincipalComponentsLayer& new_principal_components_layer) : Layer()
 {
     set(new_principal_components_layer);
 }
 
-
-// DESTRUCTOR
 
 /// Destructor.
 
@@ -75,11 +61,11 @@ string PrincipalComponentsLayer::write_principal_components_method() const
 {
     if(principal_components_method == NoPrincipalComponents)
     {
-        return("NoPrincipalComponents");
+        return "NoPrincipalComponents";
     }
     else if(principal_components_method == PrincipalComponents)
     {
-        return("PrincipalComponents");
+        return "PrincipalComponents";
     }
     else
     {
@@ -101,11 +87,11 @@ string PrincipalComponentsLayer::write_principal_components_method_text() const
 {
     if(principal_components_method == NoPrincipalComponents)
     {
-        return("no principal components");
+        return "no principal components";
     }
     else if(principal_components_method == PrincipalComponents)
     {
-        return("principal components");
+        return "principal components";
     }
     else
     {
@@ -168,14 +154,19 @@ size_t PrincipalComponentsLayer::get_principal_components_number() const
 }
 
 
+size_t PrincipalComponentsLayer::get_neurons_number() const
+{
+    return principal_components_number;
+}
+
+
 /// Performs the principal component analysis to produce a reduced data set.
 /// @param inputs Set of inputs to the principal components layer.
 
-Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>& inputs) const
+Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>& inputs)
 {
-    const size_t inputs_number = inputs.get_columns_number();
-
-    // Control sentence(if debug)
+/*
+    const size_t inputs_number = inputs.get_columns_number();    
 
     #ifdef __OPENNN_DEBUG__
 
@@ -196,8 +187,6 @@ Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>&
     {
         return inputs;
     }
-    else
-    {
 
         const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
@@ -207,12 +196,10 @@ Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>&
 
         const Matrix<double> inputs_adjust = inputs.subtract_rows(means);
 
-        return inputs_adjust.dot(used_principal_components.calculate_transpose());
-    }
-/*
+        return dot(inputs_adjust, used_principal_components.calculate_transpose());
+
         for(size_t i = 0;  i < points_number; i++)
         {
-
             const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
             const Vector<size_t> inputs_indices(0, 1.0, inputs_number-1);
@@ -244,64 +231,25 @@ Matrix<double> PrincipalComponentsLayer::calculate_outputs(const Matrix<double>&
         }
 
         return outputs;
-    }
-
-    return Matrix<double>();
-*/
-}
-
-
-/// Returns the partial derivatives of the outputs from the principal components layer with respect to its inputs.
-/// @param inputs Inputs to the principal components layer.
-
-Vector< Matrix<double> > PrincipalComponentsLayer::calculate_Jacobian(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-
-    if(write_principal_components_method() != "NoPrincipalComponents")
-    {
-        Vector< Matrix<double> > Jacobian(points_number);
-
-        const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
-        const Vector<size_t> inputs_indices(0, 1.0, get_inputs_number()-1);
-
-        for(size_t i = 0; i < points_number; i++)
-        {
-            Jacobian[i] = principal_components.get_submatrix(principal_components_indices, inputs_indices);
-        }
-
-        return Jacobian;
-    }
-    else
-    {
-        const size_t size = inputs.size();
-
-        Vector< Matrix<double> > Jacobian(points_number);
-
-        for(size_t i = 0; i < points_number; i++)
-        {
-            Jacobian[i].set_identity(size);
-        }
-
-        return Jacobian;
-    }
+    */
+    return Tensor<double>();
 }
 
 
 /// Returns a string with the expression of the principal components process.
 
-string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
     switch(principal_components_method)
     {
         case NoPrincipalComponents:
         {
-            return(write_no_principal_components_expression(inputs_name, outputs_name));
+            return(write_no_principal_components_expression(inputs_names, outputs_names));
         }
 
         case PrincipalComponents:
         {
-            return(write_principal_components_expression(inputs_name, outputs_name));
+            return(write_principal_components_expression(inputs_names, outputs_names));
         }
     }
 
@@ -318,8 +266,8 @@ string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_n
 
 
 /// Returns a string with the expression of the principal components process when none method is used.
-/*/// @param inputs_name Name of inputs to the principal components.
-/// @param outputs_name Name of outputs from the principal components.*/
+/*/// @param inputs_names Name of inputs to the principal components.
+/// @param outputs_names Name of outputs from the principal components.*/
 
 
 string PrincipalComponentsLayer::write_no_principal_components_expression(const Vector<string>&, const Vector<string>& ) const
@@ -328,16 +276,16 @@ string PrincipalComponentsLayer::write_no_principal_components_expression(const 
 
     buffer << "";
 
-    return(buffer.str());
+    return buffer.str();
 }
 
 
 /// Returns a string with the expression of the principal components process when principal components anlysis is used.
-/// @param inputs_name Name of inputs to the principal components.
-/// @param outputs_name Name of outputs from the principal components.
+/// @param inputs_names Name of inputs to the principal components.
+/// @param outputs_names Name of outputs from the principal components.
 
 
-string PrincipalComponentsLayer::write_principal_components_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string PrincipalComponentsLayer::write_principal_components_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -348,11 +296,11 @@ string PrincipalComponentsLayer::write_principal_components_expression(const Vec
 
     for(size_t i = 0; i < principal_components_number;i ++)
     {
-        buffer << outputs_name[i] << "= (";
+        buffer << outputs_names[i] << "= (";
 
         for(size_t j = 0; j < inputs_number; j++)
         {
-            buffer << principal_components(i,j) << "*" << inputs_name[j];
+            buffer << principal_components(i,j) << "*" << inputs_names[j];
 
             if(j != inputs_number-1)
             {
@@ -363,7 +311,7 @@ string PrincipalComponentsLayer::write_principal_components_expression(const Vec
         buffer << ");\n";
     }
 
-    return(buffer.str());
+    return buffer.str();
 }
 
 
@@ -374,7 +322,7 @@ string PrincipalComponentsLayer::write_principal_components_expression(const Vec
 
 const bool& PrincipalComponentsLayer::get_display() const
 {
-    return(display);
+    return display;
 }
 
 
@@ -648,7 +596,7 @@ tinyxml2::XMLDocument* PrincipalComponentsLayer::to_XML() const
     tinyxml2::XMLText* method_text = document->NewText(write_principal_components_method().c_str());
     method_element->LinkEndChild(method_text);
 */
-    return(document);
+    return document;
 }
 
 
@@ -956,7 +904,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

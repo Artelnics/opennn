@@ -1,19 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M E A N   S Q U A R E D   E R R O R    T E S T   C L A S S   H E A D E R                                   */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M E A N   S Q U A R E D   E R R O R    T E S T   C L A S S   H E A D E R       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-
-#ifndef __MEANSQUAREDERRORTEST_H__
-#define __MEANSQUAREDERRORTEST_H__
+#ifndef MEANSQUAREDERRORTEST_H
+#define MEANSQUAREDERRORTEST_H
 
 // Unit testing includes
 
@@ -31,17 +25,9 @@ class MeanSquaredErrorTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit MeanSquaredErrorTest();
 
-
-   // DESTRUCTOR
-
    virtual ~MeanSquaredErrorTest();
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -54,17 +40,16 @@ public:
 
    // Error methods
 
-   void test_calculate_error();
+   void test_calculate_training_error();
+   void test_calculate_selection_error();
 
-   void test_calculate_error_gradient();
-
-   void test_calculate_Hessian();
+   void test_calculate_training_error_gradient();
 
    // Error terms methods 
 
-   void test_calculate_error_terms();
+   void test_calculate_training_error_terms();
 
-   void test_calculate_error_terms_Jacobian();
+   void test_calculate_training_error_terms_Jacobian();
 
    // Serialization methods
 
@@ -82,7 +67,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

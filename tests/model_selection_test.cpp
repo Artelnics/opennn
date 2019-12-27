@@ -1,22 +1,12 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M O D E L   S E L E C T I O N   T E S T   C L A S S                                                        */
-/*                                                                                                              */
-
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// Unit testing includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M O D E L   S E L E C T I O N   T E S T   C L A S S                   
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "model_selection_test.h"
-#include "incremental_order_test.h"
-
-using namespace OpenNN;
 
 
 ModelSelectionTest::ModelSelectionTest() : UnitTesting() 
@@ -31,23 +21,22 @@ ModelSelectionTest::~ModelSelectionTest()
 
 void ModelSelectionTest::test_constructor()
 {
-    message += "test_constructor\n";
+    cout << "test_constructor\n";
 
-    TrainingStrategy ts;
+    TrainingStrategy training_strategy;
 
-    ModelSelection ms1(&ts);
+    ModelSelection ms1(&training_strategy);
     assert_true(ms1.has_training_strategy(), LOG);
 
     ModelSelection ms2;
 
     assert_true(!ms2.has_training_strategy(), LOG);
-
 }
 
 
 void ModelSelectionTest::test_destructor()
 {
-    message += "test_destructor\n";
+    cout << "test_destructor\n";
 
     ModelSelection* ms = new ModelSelection;
 
@@ -57,24 +46,28 @@ void ModelSelectionTest::test_destructor()
 
 void ModelSelectionTest::test_get_training_strategy_pointer()
 {
-    message += "test_get_optimization_algorithm_pointer\n";
+    cout << "test_get_training_strategy_pointer\n";
 
-    TrainingStrategy ts;
+    TrainingStrategy training_strategy;
 
-    ModelSelection ms(&ts);
+    ModelSelection ms(&training_strategy);
 
     assert_true(ms.get_training_strategy_pointer() != nullptr, LOG);
 }
 
+
 void ModelSelectionTest::test_set_training_strategy_pointer()
 {
-    message += "test_set_training_strategy_pointer\n";
+    cout << "test_set_training_strategy_pointer\n";
 
-    TrainingStrategy ts;
+    NeuralNetwork nn;
+    DataSet ds;
+
+    TrainingStrategy training_strategy(&nn, &ds);
 
     ModelSelection ms;
 
-    ms.set_training_strategy_pointer(&ts);
+    ms.set_training_strategy_pointer(&training_strategy);
 
     assert_true(ms.get_training_strategy_pointer() != nullptr, LOG);
 }
@@ -82,22 +75,50 @@ void ModelSelectionTest::test_set_training_strategy_pointer()
 
 void ModelSelectionTest::test_set_default()
 {
-    message += "test_set_default\n";
+    cout << "test_set_default\n";
 }
 
-void ModelSelectionTest::test_perform_order_selection()
+
+void ModelSelectionTest::test_perform_neurons_selection()
 {
-    message += "test_order_selection\n";
+    cout << "test_perform_neurons_selection\n";
 
-    IncrementalOrderTest iot;
+    DataSet ds;
 
-    iot.test_perform_order_selection();
+    ds.generate_sum_data(20,2);
+
+    NeuralNetwork nn(NeuralNetwork::Approximation, {1, 2, 1});
+
+    TrainingStrategy ts(&nn, &ds);
+
+    ts.set_display(false);
+
+    ModelSelection model_selection(&ts);
+
+    model_selection.set_display(false);
+
+    IncrementalNeurons* incremental_neurons_pointer = model_selection.get_incremental_neurons_pointer();
+
+    incremental_neurons_pointer->set_maximum_selection_failures(2);
+
+    incremental_neurons_pointer->set_display(false);
+
+    ModelSelection::Results results;
+
+    results = model_selection.perform_neurons_selection();
+
+    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
+    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
+    assert_true(results.incremental_neurons_results_pointer->final_training_loss != 0.0, LOG);
+    assert_true(results.incremental_neurons_results_pointer->final_selection_error != 0.0, LOG);
+    assert_true(results.incremental_neurons_results_pointer->optimal_neurons_number >= 1 , LOG);
+
 }
 
 
 void ModelSelectionTest::test_to_XML()   
 {
-    message += "test_to_XML\n";
+    cout << "test_to_XML\n";
 
     ModelSelection ms;
 
@@ -107,14 +128,17 @@ void ModelSelectionTest::test_to_XML()
     delete document;
 }
 
+
+/// @todo
+
 void ModelSelectionTest::test_from_XML()
 {
-    message += "test_from_XML\n";
-
+    cout << "test_from_XML\n";
+/*
     ModelSelection ms1;
     ModelSelection ms2;
 
-    ms1.set_order_selection_method(ModelSelection::INCREMENTAL_ORDER);
+    ms1.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
 
     tinyxml2::XMLDocument* document = ms1.to_XML();
 
@@ -122,12 +146,14 @@ void ModelSelectionTest::test_from_XML()
 
     delete document;
 
-    assert_true(ms2.get_order_selection_method() == ModelSelection::INCREMENTAL_ORDER, LOG);
+    assert_true(ms2.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
+*/
 }
+
 
 void ModelSelectionTest::test_save()
 {
-    message += "test_save\n";
+    cout << "test_save\n";
 
     string file_name = "../data/model_selection.xml";
 
@@ -136,27 +162,30 @@ void ModelSelectionTest::test_save()
     ms.save(file_name);
 }
 
+
+/// @todo
+
 void ModelSelectionTest::test_load()
 {
-    message += "test_load\n";
+    cout << "test_load\n";
 
     string file_name = "../data/model_selection.xml";
 
     ModelSelection ms;
-
-    ms.set_order_selection_method(ModelSelection::INCREMENTAL_ORDER);
+/*
+    ms.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
 
     // Test
 
     ms.save(file_name);
     ms.load(file_name);
-
+*/
 }
 
 
 void ModelSelectionTest::run_test_case()
 {
-    message += "Running model selection test case...\n";
+    cout << "Running model selection test case...\n";
 
     // Constructor and destructor methods
 
@@ -175,7 +204,7 @@ void ModelSelectionTest::run_test_case()
 
     // Model selection methods
 
-    test_perform_order_selection();
+    test_perform_neurons_selection();
 
     // Serialization methods
 
@@ -184,5 +213,5 @@ void ModelSelectionTest::run_test_case()
     test_save();
     test_load();
 
-    message += "End of model selection test case.\n";
+    cout << "End of model selection test case.\n";
 }

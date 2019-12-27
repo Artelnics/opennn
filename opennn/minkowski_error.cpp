@@ -1,23 +1,15 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M I N K O W S K I   E R R O R   C L A S S                                                                  */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M I N K O W S K I   E R R O R   C L A S S                             
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "minkowski_error.h"
 
 namespace OpenNN
 {
-
-// DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
 /// It creates Minkowski error term not associated to any neural network and not measured on any data set.
@@ -28,8 +20,6 @@ MinkowskiError::MinkowskiError() : LossIndex()
    set_default();
 }
 
-
-// NEURAL NETWORK CONSTRUCTOR
 
 /// Neural network constructor. 
 /// It creates a Minkowski error term associated to a neural network but not measured on any data set.
@@ -43,8 +33,6 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer)
 }
 
 
-// DATA SET CONSTRUCTOR
-
 /// Data set constructor. 
 /// It creates a Minkowski error term not associated to any neural network but to be measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -56,8 +44,6 @@ MinkowskiError::MinkowskiError(DataSet* new_data_set_pointer)
    set_default();
 }
 
-
-// NEURAL NETWORK AND DATA SET CONSTRUCTOR
 
 /// Neural network and data set constructor. 
 /// It creates a Minkowski error term object associated to a neural network and measured on a data set.
@@ -71,8 +57,6 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
    set_default();
 }
 
-
-// XML CONSTRUCTOR
 
 /// XML constructor. 
 /// It creates a Minkowski error object neither associated to a neural network nor to a data set. 
@@ -88,24 +72,19 @@ MinkowskiError::MinkowskiError(const tinyxml2::XMLDocument& mean_squared_error_d
 }
 
 
-// DESTRUCTOR
-
 /// Destructor.
-/// It does not delete any pointer. 
+/// It does not delete any pointer.
 
 MinkowskiError::~MinkowskiError() 
 {
 }
 
 
-// METHODS
-
-
 /// Returns the Minkowski exponent value used to calculate the error. 
 
 double MinkowskiError::get_Minkowski_parameter() const
 {
-   return(Minkowski_parameter);
+   return(minkowski_parameter);
 }
 
 
@@ -117,7 +96,7 @@ double MinkowskiError::get_Minkowski_parameter() const
 
 void MinkowskiError::set_default()
 {
-   Minkowski_parameter = 1.5;
+   minkowski_parameter = 1.5;
 
    display = true;
 }
@@ -137,130 +116,157 @@ void MinkowskiError::set_Minkowski_parameter(const double& new_Minkowski_paramet
 
       buffer << "OpenNN Error. MinkowskiError class.\n"
              << "void set_Minkowski_parameter(const double&) method.\n"
-             << "The Minkowski parameter must be comprised between 1 and 2\n";
+             << "The Minkowski parameter must be comprised between 1 and 2.\n";
     
       throw logic_error(buffer.str());
    }
 
    // Set Minkowski parameter
   
-   Minkowski_parameter = new_Minkowski_parameter;
+   minkowski_parameter = new_Minkowski_parameter;
 }
 
 
 double MinkowskiError::calculate_training_error() const
 {
-#ifdef __OPENNN_DEBUG__
+    //Neural network
 
-check();
+     bool is_forecasting = false;
 
-#endif
-
-    // Multilayer perceptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Data set
 
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-     const size_t training_instances_number = data_set_pointer->get_instances_pointer()->get_training_instances_number();
+    const size_t training_instances_number = data_set_pointer->get_training_instances_number();
 
     const size_t batches_number = training_batches.size();
 
+    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+    const size_t inputs_number = data_set_pointer->get_input_variables_number();
+    const size_t targets_number = data_set_pointer->get_target_variables_number();
+
+    Tensor<double> inputs(batch_instances_number, inputs_number);
+    Tensor<double> targets(batch_instances_number, targets_number);
+    Tensor<double> outputs(batch_instances_number, targets_number);
+
     double training_error = 0.0;
 
-    #pragma omp parallel for reduction(+ : training_error)
+     #pragma omp parallel for reduction(+ : training_error)
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
+        targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
 
-        const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
+        outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-        training_error += outputs.calculate_minkowski_error(targets, Minkowski_parameter);
+        const double batch_error = minkowski_error(outputs, targets, minkowski_parameter);
+
+        training_error += batch_error;
     }
 
-    return  training_error/training_instances_number;
-}
-
-
-double MinkowskiError::calculate_selection_error() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Multilayer perceptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    // Data set
-
-    const Vector< Vector<size_t> > selection_batches = data_set_pointer->get_instances_pointer()->get_selection_batches(batch_size);
-
-    const size_t selection_instances_number = data_set_pointer->get_instances_pointer()->get_selection_instances_number();
-
-    const size_t batches_number = selection_batches.size();
-
-    double selection_error = 0.0;
-
-#pragma omp parallel for reduction(+ : selection_error)
-
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
-    {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(selection_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_inputs(selection_batches[static_cast<unsigned>(i)]);
-
-        const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
-
-        selection_error += outputs.calculate_minkowski_error(targets, Minkowski_parameter);
-    }
-
-    return selection_error/selection_instances_number;
+    return training_error / static_cast<double>(training_instances_number);
 }
 
 
 double MinkowskiError::calculate_training_error(const Vector<double>& parameters) const
 {
-#ifdef __OPENNN_DEBUG__
+    //Neural network
 
-check();
+     bool is_forecasting = false;
 
-#endif
-
-    // Multilayer percptron
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Data set
 
-    const Vector< Vector<size_t> > training_bathces = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
+    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t training_instances_number = data_set_pointer->get_instances_pointer()->get_training_instances_number();
+    const size_t training_instances_number = data_set_pointer->get_training_instances_number();
 
-    const size_t batches_number = training_bathces.size();
+    const size_t batches_number = training_batches.size();
+
+    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+    const size_t inputs_number = data_set_pointer->get_input_variables_number();
+    const size_t targets_number = data_set_pointer->get_target_variables_number();
+
+    Tensor<double> inputs(batch_instances_number, inputs_number);
+    Tensor<double> targets(batch_instances_number, targets_number);
+    Tensor<double> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
 
-#pragma omp parallel for reduction(+ : training_error)
+     #pragma omp parallel for reduction(+ : training_error)
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_bathces[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_bathces[static_cast<unsigned>(i)]);
+        inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
+        targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
 
-        const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
+        outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-        training_error += outputs.calculate_minkowski_error(targets, Minkowski_parameter);
+        const double batch_error = minkowski_error(outputs, targets, minkowski_parameter);
+
+        training_error += batch_error;
     }
 
-    return training_error/training_instances_number;
+    return training_error / static_cast<double>(training_instances_number);
 }
 
+
+double MinkowskiError::calculate_selection_error() const
+{
+    // Data set
+
+    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+
+        //Neural network
+
+     bool is_forecasting = false;
+
+    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
+
+    // Data set
+
+    const Vector<Vector<size_t>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+
+    const size_t batches_number = selection_batches.size();
+
+    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+    const size_t inputs_number = data_set_pointer->get_input_variables_number();
+    const size_t targets_number = data_set_pointer->get_target_variables_number();
+
+    Tensor<double> inputs(batch_instances_number, inputs_number);
+    Tensor<double> targets(batch_instances_number, targets_number);
+    Tensor<double> outputs(batch_instances_number, targets_number);
+
+    double training_error = 0.0;
+
+     #pragma omp parallel for reduction(+ : training_error)
+
+    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    {
+        inputs = data_set_pointer->get_input_data(selection_batches[static_cast<size_t>(i)]);
+        targets = data_set_pointer->get_target_data(selection_batches[static_cast<size_t>(i)]);
+
+        outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+
+        const double batch_error = minkowski_error(outputs, targets, minkowski_parameter);
+
+        training_error += batch_error;
+    }
+
+    return training_error / static_cast<double>(selection_instances_number);
+}
+
+
+/// This method calculates the Minkowski error of the given batch.
+/// Returns the Minkowski error of this batch.
+/// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
 double MinkowskiError::calculate_batch_error(const Vector<size_t>& batch_indices) const
 {
@@ -270,205 +276,43 @@ check();
 
 #endif
 
-    // Multilayer perceptron
+    // Data set
 
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+
+    return minkowski_error(outputs, targets, minkowski_parameter);
+}
+
+
+double MinkowskiError::calculate_batch_error(const Vector<size_t>& batch_indices, const Vector<double>& parameters) const
+{
+#ifdef __OPENNN_DEBUG__
+
+check();
+
+#endif
 
     // Data set
 
-    const Matrix<double> inputs = data_set_pointer->get_inputs(batch_indices);
-    const Matrix<double> targets = data_set_pointer->get_targets(batch_indices);
+    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const size_t instances_number = inputs.get_rows_number();
+    const Tensor<double> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-    const Matrix<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs);
-
-    return outputs.calculate_minkowski_error(targets, Minkowski_parameter)/instances_number;
+    return minkowski_error(outputs, targets, minkowski_parameter);
 }
 
 
-Vector<double> MinkowskiError::calculate_training_error_gradient() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-    const size_t layers_number = multilayer_perceptron_pointer->get_layers_number();
-
-    const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
-
-    // Data set
-
-    const size_t training_instances_number = data_set_pointer->get_instances_pointer()->get_training_instances_number();
-
-    const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
-
-    const size_t batches_number = training_batches.size();
-
-    // Loss index
-
-    Vector<double> training_error_gradient(parameters_number, 0.0);
-
-    #pragma omp parallel for
-
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
-    {
-        const Matrix<double> inputs = data_set_pointer->get_inputs(training_batches[static_cast<unsigned>(i)]);
-        const Matrix<double> targets = data_set_pointer->get_targets(training_batches[static_cast<unsigned>(i)]);
-
-        const MultilayerPerceptron::FirstOrderForwardPropagation first_order_forward_propagation
-                = multilayer_perceptron_pointer->calculate_first_order_forward_propagation(inputs);
-
-        const Matrix<double> output_gradient
-                = calculate_output_gradient(first_order_forward_propagation.layers_activations[layers_number-1], targets);
-
-        const Vector< Matrix<double> > layers_delta
-                = calculate_layers_delta(first_order_forward_propagation.layers_activation_derivatives, output_gradient);
-
-        const Vector<double> batch_gradient
-                = calculate_error_gradient(inputs, first_order_forward_propagation.layers_activations, layers_delta);
-
-        #pragma omp critical
-
-        training_error_gradient += batch_gradient;
-    }
-
-    return training_error_gradient/static_cast<double>(training_instances_number);
-}
-
-
-Matrix<double> MinkowskiError::calculate_output_gradient(const Matrix<double>& outputs, const Matrix<double>& targets) const
-{
-
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-//    const size_t training_instances_number = data_set_pointer->get_instances_pointer()->get_training_instances_number();
-
-    return (outputs-targets).calculate_LP_norm_gradient(Minkowski_parameter);//static_cast<double>(training_instances_number);
-
-}
-
-
-double MinkowskiError::calculate_error(const Matrix<double>& outputs, const Matrix<double>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Control sentence
-
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    return outputs.calculate_minkowski_error(targets, Minkowski_parameter);
-}
-
-
-/// Returns which would be the Minkowski error of for an hypothetical vector of parameters.
-/// It does not set that vector of parameters to the neural network.
-/// @param parameters Vector of potential parameters for the neural network associated to the Minkowski error.
-/// @todo
-
-double MinkowskiError::calculate_error(const Vector<double>& parameters) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-   // Control sentence(if debug)
-
-   #ifdef __OPENNN_DEBUG__
-
-   check();
-
-   #endif
-
-   #ifdef __OPENNN_DEBUG__
-
-   const size_t size = parameters.size();
-
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
-
-   if(size != parameters_number)
-   {
-      ostringstream buffer;
-
-      buffer << "OpenNN Exception: MeanSquaredError class.\n"
-             << "double calculate_error(const Vector<double>&) const method.\n"
-             << "Size(" << size << ") must be equal to number of parameters(" << parameters_number << ").\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   // Neural network stuff
-
-   const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
-
-   // Data set
-
-   const Instances& instances = data_set_pointer->get_instances();
-
-   const Vector<size_t> training_indices = instances.get_training_indices();
-
-   const size_t training_instances_number = training_indices.size();
-
-   const Variables& variables = data_set_pointer->get_variables();
-
-   const Vector<size_t> inputs_indices = variables.get_inputs_indices();
-   const Vector<size_t> targets_indices = variables.get_targets_indices();
-
-   double Minkowski_error = 0.0;
-/*
-   #pragma omp parallel for reduction(+ : Minkowski_error)
-
-   for(int i = 0; i < static_cast<int>(training_instances_number); i++)
-   {
-       const size_t training_index = training_indices[static_cast<size_t>(i)];
-
-      // Input vector
-
-      const Vector<double> inputs = data_set_pointer->get_instance(training_index, inputs_indices);
-
-      // Output vector
-
-      const Vector<double> outputs = multilayer_perceptron_pointer->calculate_outputs(inputs, parameters);
-
-      // Target vector
-
-      const Vector<double> targets = data_set_pointer->get_instance(training_index, targets_indices);
-
-      // Minkowski error
-
-      Minkowski_error += (outputs-targets).calculate_Lp_norm(Minkowski_parameter);
-   }
-*/
-   return Minkowski_error/static_cast<double>(training_instances_number);
-}
-
-
-/// Returns the Minkowski error function output gradient of a multilayer perceptron on a data set.
+/// Returns the Minkowski error function output gradient of a neural network on a data set.
 /// It uses the error back-propagation method.
+/// Returns gradient for training instances.
+/// @param outputs Tensor with outputs.
+/// @param targets Tensor with targets.
 
-Vector<double> MinkowskiError::calculate_output_gradient(const Vector<size_t>& instances_indices, const Vector<double>& output, const Vector<double>& target) const
+Tensor<double> MinkowskiError::calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -476,9 +320,9 @@ check();
 
 #endif
 
-    const size_t instances_number = instances_indices.size();
+    const size_t training_instances_number = data_set_pointer->get_training_instances_number();
 
-    return (output-target).calculate_Lp_norm_gradient(Minkowski_parameter)/static_cast<double>(instances_number);
+    return lp_norm_gradient(outputs-targets, minkowski_parameter)/static_cast<double>(training_instances_number);
 }
 
 
@@ -489,6 +333,8 @@ string MinkowskiError::get_error_type() const
    return "MINKOWSKI_ERROR";
 }
 
+
+/// Returns a string with the name of the Minkowski error loss type in text format.
 
 string MinkowskiError::get_error_type_text() const
 {
@@ -517,7 +363,7 @@ tinyxml2::XMLDocument* MinkowskiError::to_XML() const
       Minkowski_error_element->LinkEndChild(Minkowski_parameter_element);
 
       buffer.str("");
-      buffer << Minkowski_parameter;
+      buffer << minkowski_parameter;
 
       tinyxml2::XMLText* Minkowski_parameter_text = document->NewText(buffer.str().c_str());
       Minkowski_parameter_element->LinkEndChild(Minkowski_parameter_text);
@@ -535,9 +381,12 @@ tinyxml2::XMLDocument* MinkowskiError::to_XML() const
 //      display_element->LinkEndChild(display_text);
 //   }
 
-   return(document);
+   return document;
 }
 
+
+/// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// See the OpenNN manual for more information about the format of this document
 
 void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
@@ -554,7 +403,7 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MinkowskiParameter");
 
     buffer.str("");
-    buffer << Minkowski_parameter;
+    buffer << minkowski_parameter;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -567,7 +416,6 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Regularization
 
     write_regularization_XML(file_stream);
-
 }
 
 

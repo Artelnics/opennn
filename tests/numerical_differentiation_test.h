@@ -1,24 +1,20 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   N U M E R I C A L   D I F F E R E N T I A T I O N   T E S T   C L A S S   H E A D E R                      */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   N U M E R I C A L   D I F F E R E N T I A T I O N   T E S T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __NUMERICALDIFFERENTIATIONTEST_H__
-#define __NUMERICALDIFFERENTIATIONTEST_H__
+#ifndef NUMERICALDIFFERENTIATIONTEST_H
+#define NUMERICALDIFFERENTIATIONTEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
 
 using namespace OpenNN;
+
 
 class NumericalDifferentiationTest : public UnitTesting
 {
@@ -29,16 +25,16 @@ class NumericalDifferentiationTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit NumericalDifferentiationTest();
 
 
-   // DESTRUCTOR
+   
 
    virtual ~NumericalDifferentiationTest();
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
@@ -69,13 +65,13 @@ public:
 
    void test_calculate_forward_differences_gradient();
    void test_calculate_central_differences_gradient();
-   void test_calculate_gradient();
+   void test_calculate_training_loss_gradient();
 
-   // Hessian methods
+   // hessian methods
 
-   void test_calculate_forward_differences_Hessian();
-   void test_calculate_central_differences_Hessian();
-   void test_calculate_Hessian();
+   void test_calculate_forward_differences_hessian();
+   void test_calculate_central_differences_hessian();
+   void test_calculate_hessian();
 
    // Jacobian methods
 
@@ -83,11 +79,11 @@ public:
    void test_calculate_central_differences_Jacobian();
    void test_calculate_Jacobian();
 
-   // Hessian methods
+   // hessian methods
 
-   void test_calculate_forward_differences_Hessian_form();
-   void test_calculate_central_differences_Hessian_form();
-   void test_calculate_Hessian_form();
+   void test_calculate_forward_differences_hessian_form();
+   void test_calculate_central_differences_hessian_form();
+   void test_calculate_hessian_form();
 
    // Unit testing methods
 
@@ -97,7 +93,7 @@ private:
 
    // Constant methods
 
-   double f1(const double&) const ;
+   double f1(const double&) const;
    double f2(const Vector<double>&) const;
    Vector<double> f3(const Vector<double>&) const;
    double f7(const size_t&, const Vector<double>&, const size_t&, const Vector<double>&) const;
@@ -117,7 +113,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

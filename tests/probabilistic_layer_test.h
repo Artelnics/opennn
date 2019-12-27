@@ -1,28 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P R O B A B I L I S T I C   L A Y E R   T E S T   C L A S S   H E A D E R                                  */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   P R O B A B I L I S T I C   L A Y E R   T E S T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __PROBABILISTICLAYERTEST_H__
-#define __PROBABILISTICLAYERTEST_H__
-
-// System includes
-
-#include <iostream>
-#include <iomanip>
-#include <cstdlib>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <cmath>
+#ifndef PROBABILISTICLAYERTEST_H
+#define PROBABILISTICLAYERTEST_H
 
 // Unit testing includes
 
@@ -40,16 +25,9 @@ class ProbabilisticLayerTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit ProbabilisticLayerTest();
 
-
-   // DESTRUCTOR
-
    virtual ~ProbabilisticLayerTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -64,7 +42,7 @@ public:
 
    // Probabilistic layer
 
-   void test_count_probabilistic_neurons_number();
+   void test_get_neurons_number();
 
    // Output variables probabilistic postprocessing
 
@@ -73,24 +51,19 @@ public:
 
    void test_get_display();
 
-   // SET METHODS
+   // Set methods
 
    void test_set();
+
    void test_set_default();
 
    // Display messages
 
    void test_set_display();
 
-   // Neural network initialization methods
-
-   void test_initialize_random();
-
   // Probabilistic post-processing
 
    void test_calculate_outputs();
-   void test_calculate_Jacobian();
-   void test_calculate_Hessian();
 
    // Expression methods
 
@@ -99,7 +72,13 @@ public:
    // Serialization methods
 
    void test_to_XML();
+
    void test_from_XML();
+
+   // Activations
+
+   void test_calculate_activation_derivatives();
+
 
    // Unit testing methods
 
@@ -112,7 +91,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

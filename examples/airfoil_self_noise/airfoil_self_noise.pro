@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.artelnics.com/opennn                                                                      #
+#   www.opennn.net                                                                      #
 #                                                                                                 #
 #   A I R F O I L   S E L F   N O I S E   P R O J E C T                                           #
 #                                                                                                 #
@@ -57,7 +57,7 @@ QMAKE_LFLAGS   += -openmp
 
 !win32{
 QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
+QMAKE_LFLAGS += -fopenmp
 }
 
 #mac{
@@ -65,5 +65,3 @@ QMAKE_LFLAGS +=  -fopenmp
 #LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 #}
 
-# MPI include
-#include(../../mpi.pri)

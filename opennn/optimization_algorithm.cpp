@@ -1,25 +1,15 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S                                                    */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   O P T I M I Z A T I O N   A L G O R I T H M   C L A S S               
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "optimization_algorithm.h"
 
-
 namespace OpenNN
 {
-
-
-// DEFAULT CONSTRUCTOR
 
 /// Default constructor. 
 /// It creates a optimization algorithm object not associated to any loss index object.  
@@ -31,9 +21,6 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 }
 
 
-// GENERAL CONSTRUCTOR
-
-/// General constructor. 
 /// It creates a optimization algorithm object associated to a loss index object.
 /// @param new_loss_index_pointer Pointer to a loss index object.
 
@@ -43,8 +30,6 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
    set_default();
 }
 
-
-// XML CONSTRUCTOR
 
 /// XML constructor. 
 /// It creates a optimization algorithm object not associated to any loss index object. 
@@ -57,56 +42,12 @@ OptimizationAlgorithm::OptimizationAlgorithm(const tinyxml2::XMLDocument& docume
 }
 
 
-// DESTRUCTOR 
-
-/// Destructor
+/// Destructor.
 
 OptimizationAlgorithm::~OptimizationAlgorithm()
 { 
 }
 
-
-// ASSIGNMENT OPERATOR
-
-/// Assignment operator.
-/// It assigns to this object the members of an existing optimization algorithm object.
-/// @param other_optimization_algorithm Optimization algorithm object to be assigned.
-
-OptimizationAlgorithm& OptimizationAlgorithm::operator = (const OptimizationAlgorithm& other_optimization_algorithm)
-{
-   if(this != &other_optimization_algorithm)
-   {
-      loss_index_pointer = other_optimization_algorithm.loss_index_pointer;
-
-      display = other_optimization_algorithm.display;
-   }
-
-   return(*this);
-}
-
-
-// EQUAL TO OPERATOR
-
-/// Equal to operator.
-/// @param other_optimization_algorithm Optimization algorithm object to be compared with.
-
-bool OptimizationAlgorithm::operator == (const OptimizationAlgorithm& other_optimization_algorithm) const
-{
-   if(loss_index_pointer == other_optimization_algorithm.loss_index_pointer
-   && display == other_optimization_algorithm.display)
-   {
-      return(true);
-   }
-   else
-   {
-      return(false);
-   }
-}
-
-
-// METHODS
-
-// LossIndex* get_loss_index_pointer() const method
 
 /// Returns a pointer to the loss index object to which the optimization algorithm is
 /// associated.
@@ -132,8 +73,6 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
 }
 
 
-// bool has_loss_index() const method
-
 /// Returns true if this optimization algorithm object has an associated loss index object,
 /// and false otherwise.
 
@@ -141,27 +80,23 @@ bool OptimizationAlgorithm::has_loss_index() const
 {
     if(loss_index_pointer)
     {
-        return(true);
+        return true;
     }
     else
     {
-        return(false);
+        return false;
     }
 }
 
-
-// const bool& get_display() const method
 
 /// Returns true if messages from this class can be displayed on the screen, or false if messages from
 /// this class can't be displayed on the screen.
 
 const bool& OptimizationAlgorithm::get_display() const
 {
-   return(display);
+   return display;
 }
 
-
-// const size_t& get_display_period() const method
 
 /// Returns the number of iterations between the training showing progress.
 
@@ -209,17 +144,6 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
    set_default();
 }
 
-void OptimizationAlgorithm::set_training_batch_size(const size_t& new_training_batch_size)
-{
-    training_batch_size = new_training_batch_size;
-}
-
-
-void OptimizationAlgorithm::set_selection_batch_size(const size_t& new_selection_batch_size)
-{
-    selection_batch_size = new_selection_batch_size;
-}
-
 
 /// Sets a pointer to a loss index object to be associated to the optimization algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -247,7 +171,7 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 
 void OptimizationAlgorithm::set_display_period(const size_t& new_display_period)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__
 
@@ -274,7 +198,7 @@ void OptimizationAlgorithm::set_display_period(const size_t& new_display_period)
 
 void OptimizationAlgorithm::set_save_period(const size_t& new_save_period)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__
 
@@ -326,6 +250,8 @@ void OptimizationAlgorithm::set_default()
 
 void OptimizationAlgorithm::check() const
 {
+#ifdef __OPENNN_DEBUG__
+
    ostringstream buffer;
 
    if(!loss_index_pointer)
@@ -347,10 +273,10 @@ void OptimizationAlgorithm::check() const
 
       throw logic_error(buffer.str());
    }
+
+#endif
 }
 
-
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes a default optimization algorithm object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
@@ -379,11 +305,9 @@ tinyxml2::XMLDocument* OptimizationAlgorithm::to_XML() const
        element->LinkEndChild(text);
     }
 
-    return(document);
+    return document;
 }
 
-
-// void write_XML(tinyxml2::XMLPrinter&) const method
 
 /// Serializes the optimization algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
@@ -409,8 +333,6 @@ void OptimizationAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.CloseElement();
 }
 
-
-// void from_XML(const tinyxml2::XMLDocument&) method
 
 /// Loads a default optimization algorithm from a XML document.
 /// @param document TinyXML document containing the error term members.
@@ -448,11 +370,8 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
         }
      }
   }
-
 }
 
-
-// string object_to_string() const method
 
 /// Returns a default string representation of a optimization algorithm.
 
@@ -463,11 +382,9 @@ string OptimizationAlgorithm::object_to_string() const
    buffer << "Training strategy\n" 
           << "Display: " << display << "\n";
 
-   return(buffer.str());
+   return buffer.str();
 }
 
-
-// Matrix<string> to_string_matrix() const method
 
 /// Returns a default(empty) string matrix containing the members
 /// of the optimization algorithm object.
@@ -476,11 +393,9 @@ Matrix<string> OptimizationAlgorithm::to_string_matrix() const
 {
     Matrix<string> string_matrix;
 
-    return(string_matrix);
+    return string_matrix;
 }
 
-
-// void print() const method
 
 /// Prints to the screen the XML-type representation of the optimization algorithm object.
 
@@ -489,8 +404,6 @@ void OptimizationAlgorithm::print() const
    cout << object_to_string();
 }
 
-
-// void save(const string&) const method
 
 /// Saves to a XML-type file the members of the optimization algorithm object.
 /// @param file_name Name of optimization algorithm XML-type file. 
@@ -504,8 +417,6 @@ void OptimizationAlgorithm::save(const string& file_name) const
    delete document;
 }
 
-
-// void load(const string&) method
 
 /// Loads a gradient descent object from a XML-type file.
 /// Please mind about the file format, wich is specified in the User's Guide. 
@@ -532,58 +443,184 @@ void OptimizationAlgorithm::load(const string& file_name)
 }
 
 
-// void initialize_random() method
+/// Return a string with the stopping condition of the Results
 
-/// Default random initialization for a optimization algorithm object.
-/// It just sets a random display value.
-
-void OptimizationAlgorithm::initialize_random()
-{
-   display = true;
-}
-
-
-// string write_stopping_condition() const method
-
-/// Return a string with the stopping condition of the OptimizationAlgorithmResults
-
-string OptimizationAlgorithm::OptimizationAlgorithmResults::write_stopping_condition() const
+string OptimizationAlgorithm::Results::write_stopping_condition() const
 {
     switch(stopping_condition)
     {
     case MinimumParametersIncrementNorm:
     {
-        return("Minimum parameters increment norm");
+        return "Minimum parameters increment norm";
     }
     case MinimumLossDecrease:
     {
-        return("Minimum loss decrease");
+        return "Minimum loss decrease";
     }
     case LossGoal:
     {
-        return("Loss goal");
+        return "Loss goal";
     }
     case GradientNormGoal:
     {
-        return("Gradient norm goal");
+        return "Gradient norm goal";
     }
     case MaximumSelectionErrorIncreases:
     {
-        return("Maximum selection error increases");
+        return "Maximum selection error increases";
     }
-    case MaximumIterationsNumber:
+    case MaximumEpochsNumber:
     {
-        return("Maximum number of iterations");
+        return "Maximum number of iterations";
     }
     case MaximumTime:
     {
-        return("Maximum training time");
+        return "Maximum training time";
     }
     }
 
     return string();
 }
 
+
+/// Resizes all the training history variables.
+/// @param new_size Size of training history variables.
+
+void OptimizationAlgorithm::Results::resize_training_history(const size_t& new_size)
+{
+    training_error_history.resize(new_size);
+    selection_error_history.resize(new_size);
+}
+
+
+/// Returns a string representation of the current quasi-Newton method results structure.
+
+string OptimizationAlgorithm::Results::object_to_string() const
+{
+   ostringstream buffer;
+
+   buffer << "% Results\n";
+
+   // Loss history
+
+   if(!training_error_history.empty())
+   {
+       buffer << "% Training error history:\n"
+              << training_error_history << "\n";
+   }
+
+   // Selection loss history
+
+   if(!selection_error_history.empty())
+   {
+       buffer << "% Selection loss history:\n"
+              << selection_error_history << "\n";
+   }
+
+   return buffer.str();
+}
+
+
+/// @todo
+
+void OptimizationAlgorithm::Results::save(const string&) const
+{
+
+}
+
+
+
+Matrix<string> OptimizationAlgorithm::Results::write_final_results(const int& precision) const
+{
+   ostringstream buffer;
+
+   Vector<string> names;
+   Vector<string> values;
+
+   // Final parameters norm
+
+   names.push_back("Final parameters norm");
+
+   buffer.str("");
+   buffer << setprecision(precision) << final_parameters_norm;
+
+   values.push_back(buffer.str());
+
+   // Final loss
+
+   names.push_back("Final training error");
+
+   buffer.str("");
+   buffer << setprecision(precision) << final_training_error;
+
+   values.push_back(buffer.str());
+
+   // Final selection error
+
+//   const LossIndex* loss_index_pointer = quasi_Newton_method_pointer->get_loss_index_pointer();
+
+//   if(loss_index_pointer->has_selection())
+//   {
+       names.push_back("Final selection error");
+
+       buffer.str("");
+       buffer << setprecision(precision) << final_selection_error;
+
+       values.push_back(buffer.str());
+//    }
+
+   // Final gradient norm
+
+   names.push_back("Final gradient norm");
+
+   buffer.str("");
+   buffer << setprecision(precision) << final_gradient_norm;
+
+   values.push_back(buffer.str());
+
+   // Final training rate
+
+//   names.push_back("Final training rate");
+
+//   buffer.str("");
+//   buffer << setprecision(precision) << final_learning_rate;
+
+//   values.push_back(buffer.str());
+
+   // Epochs number
+
+   names.push_back("Epochs number");
+
+   buffer.str("");
+   buffer << epochs_number;
+
+   values.push_back(buffer.str());
+
+   // Elapsed time
+
+   names.push_back("Elapsed time");
+
+   buffer.str("");
+   buffer << write_elapsed_time(elapsed_time);
+
+   values.push_back(buffer.str());
+
+   // Stopping criteria
+
+   names.push_back("Stopping criterion");
+
+   values.push_back(write_stopping_condition());
+
+   const size_t rows_number = names.size();
+   const size_t columns_number = 2;
+
+   Matrix<string> final_results(rows_number, columns_number);
+
+   final_results.set_column(0, names, "name");
+   final_results.set_column(1, values, "value");
+
+   return(final_results);
+}
 
 }
 

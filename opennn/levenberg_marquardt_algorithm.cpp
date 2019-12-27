@@ -1,16 +1,10 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S                                      */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   L E V E N B E R G - M A R Q U A R D T   A L G O R I T H M   C L A S S 
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "levenberg_marquardt_algorithm.h"
 
@@ -36,24 +30,9 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm()
 LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(LossIndex* new_loss_index_pointer)
  : OptimizationAlgorithm(new_loss_index_pointer)
 {
-/*
-    if(!new_loss_index_pointer->is_sum_squared_terms())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LevenbergMarquardtAlgorithm class." << endl
-               << "explicit LevenbergMarquardtAlgorithm(LossIndex*) constructor." << endl
-               << "Loss index cannot be expressed as a series of sum squared terms." << endl;
-
-        throw logic_error(buffer.str());
-
-    }
-*/
    set_default();
 }
 
-
-// XML CONSTRUCTOR
 
 /// XML Constructor.
 /// Creates a Levenberg-Marquardt algorithm object, and loads its members from a XML document.
@@ -68,10 +47,8 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocu
 }
 
 
-// DESTRUCTOR
-
 /// Destructor.
-/// This destructor does not delete any object. 
+/// This destructor does not delete any object.
 
 LevenbergMarquardtAlgorithm::~LevenbergMarquardtAlgorithm()
 {
@@ -188,60 +165,11 @@ const bool& LevenbergMarquardtAlgorithm::get_apply_early_stopping() const
 }
 
 
-/// Returns true if the parameters history matrix is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_parameters_history() const
-{
-   return(reserve_parameters_history);     
-}
-
-
-/// Returns true if the parameters norm history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_parameters_norm_history() const
-{
-   return(reserve_parameters_norm_history);     
-}
-
-
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
-const bool& LevenbergMarquardtAlgorithm::get_reserve_error_history() const
+const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
 {
-   return(reserve_error_history);
-}
-
-
-/// Returns true if the gradient history vector of vectors is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_gradient_history() const
-{
-   return(reserve_gradient_history);     
-}
-
-
-/// Returns true if the gradient norm history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_gradient_norm_history() const
-{
-   return(reserve_gradient_norm_history);     
-}
-
-
-/// Returns true if the history of the Hessian approximations is to be reserved,
-/// and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_Hessian_approximation_history() const
-{
-   return(reserve_Hessian_approximation_history);
-}
-
-
-/// Returns true if the elapsed time history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_elapsed_time_history() const
-{
-   return(reserve_elapsed_time_history);     
+   return(reserve_training_error_history);
 }
 
 
@@ -253,7 +181,7 @@ const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_error_history() c
 }
 
 
-/// Returns the damping parameter for the Hessian approximation. 
+/// Returns the damping parameter for the hessian approximation. 
 
 const double& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 {
@@ -261,7 +189,7 @@ const double& LevenbergMarquardtAlgorithm::get_damping_parameter() const
 }
 
 
-/// Returns the damping parameter factor(beta in the User's Guide) for the Hessian approximation. 
+/// Returns the damping parameter factor(beta in the User's Guide) for the hessian approximation. 
 
 const double& LevenbergMarquardtAlgorithm::get_damping_parameter_factor() const
 {
@@ -285,22 +213,6 @@ const double& LevenbergMarquardtAlgorithm::get_maximum_damping_parameter() const
 }
 
 
-/// Returns true if the damping parameter history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_damping_parameter_history() const
-{
-   return(reserve_damping_parameter_history);
-}
-
-
-/// Returns a vector containing the damping parameter history over the training iterations.
-
-const Vector<double>& LevenbergMarquardtAlgorithm::get_damping_parameter_history() const
-{
-   return(damping_parameter_history);
-}
-
-
 /// Sets the following default values for the Levenberg-Marquardt algorithm:
 /// Training parameters:
 /// <ul>
@@ -310,7 +222,7 @@ const Vector<double>& LevenbergMarquardtAlgorithm::get_damping_parameter_history
 /// <ul> 
 /// <li> Loss goal: 1.0e-6.
 /// <li> Gradient norm goal: 1.0e-6.
-/// <li> Maximum training time: 1000 seconds.
+/// <li> Maximum training time: 1000 secondata_set.
 /// <li> Maximum number of iterations: 1000.
 /// </ul> 
 /// User stuff: 
@@ -328,7 +240,7 @@ void LevenbergMarquardtAlgorithm::set_default()
    error_parameters_norm = 1.0e9;
    error_gradient_norm = 1.0e9;
 
-   // STOPPING CRITERIA
+   // Stopping criteria
 
    minimum_parameters_increment_norm = 1.0e-3;
 
@@ -345,17 +257,8 @@ void LevenbergMarquardtAlgorithm::set_default()
 
    // TRAINING HISTORY
 
-   reserve_parameters_history = false;
-   reserve_parameters_norm_history = false;
-
-   reserve_error_history = false;
-   reserve_gradient_history = false;
-   reserve_gradient_norm_history = false;
+   reserve_training_error_history = false;
    reserve_selection_error_history = false;
-
-   reserve_Hessian_approximation_history = false;
-
-   reserve_elapsed_time_history = false;
 
    // UTILITIES
 
@@ -370,12 +273,10 @@ void LevenbergMarquardtAlgorithm::set_default()
 
    minimum_damping_parameter = 1.0e-6;
    maximum_damping_parameter = 1.0e6;
-
-   reserve_damping_parameter_history = false;
 }
 
 
-/// Sets a new damping parameter(lambda in the User's Guide) for the Hessian approximation. 
+/// Sets a new damping parameter(lambda in the User's Guide) for the hessian approximation. 
 /// @param new_damping_parameter Damping parameter value. 
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter(const double& new_damping_parameter)
@@ -395,7 +296,7 @@ void LevenbergMarquardtAlgorithm::set_damping_parameter(const double& new_dampin
 }
 
 
-/// Sets a new damping parameter factor(beta in the User's Guide) for the Hessian approximation. 
+/// Sets a new damping parameter factor(beta in the User's Guide) for the hessian approximation. 
 /// @param new_damping_parameter_factor Damping parameter factor value. 
 
 void LevenbergMarquardtAlgorithm::set_damping_parameter_factor(const double& new_damping_parameter_factor)
@@ -467,22 +368,13 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const double& ne
 }
 
 
-/// Makes the damping parameter history vector to be reseved or not in memory.
-/// @param new_reserve_damping_parameter_history True if the damping parameter history vector is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_damping_parameter_history(const bool& new_reserve_damping_parameter_history)
-{
-   reserve_damping_parameter_history = new_reserve_damping_parameter_history;
-}
-
-
 /// Sets a new value for the parameters vector norm at which a warning message is written to the 
 /// screen. 
 /// @param new_warning_parameters_norm Warning norm of parameters vector value. 
 
 void LevenbergMarquardtAlgorithm::set_warning_parameters_norm(const double& new_warning_parameters_norm)
 {
-   // Control sentence(if debug)
+   
 
    #ifdef __OPENNN_DEBUG__ 
 
@@ -511,8 +403,6 @@ void LevenbergMarquardtAlgorithm::set_warning_parameters_norm(const double& new_
 
 void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const double& new_warning_gradient_norm)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_warning_gradient_norm < 0.0)
@@ -540,8 +430,6 @@ void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const double& new_wa
 
 void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_parameters_norm < 0.0)
@@ -568,9 +456,7 @@ void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const double& new_er
 /// @param new_error_gradient_norm Error norm of gradient vector value. 
 
 void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const double& new_error_gradient_norm)
-{
-   // Control sentence(if debug)
-
+{  
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_error_gradient_norm < 0.0)
@@ -596,9 +482,7 @@ void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const double& new_erro
 /// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training. 
 
 void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const double& new_minimum_parameters_increment_norm)
-{
-   // Control sentence(if debug)
-
+{  
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_minimum_parameters_increment_norm < 0.0)
@@ -625,8 +509,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(const do
 
 void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const double& new_minimum_loss_increase)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_minimum_loss_increase < 0.0)
@@ -664,8 +546,6 @@ void LevenbergMarquardtAlgorithm::set_loss_goal(const double& new_loss_goal)
 
 void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const double& new_gradient_norm_goal)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_gradient_norm_goal < 0.0)
@@ -710,8 +590,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const size_t& new_ma
 
 void LevenbergMarquardtAlgorithm::set_maximum_time(const double& new_maximum_time)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
 
    if(new_maximum_time < 0.0)
@@ -751,69 +629,12 @@ void LevenbergMarquardtAlgorithm::set_apply_early_stopping(const bool& new_apply
 }
 
 
-/// Makes the parameters history vector of vectors to be reseved or not in memory.
-/// @param new_reserve_parameters_history True if the parameters history vector of vectors is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_parameters_history(const bool& new_reserve_parameters_history)
-{
-   reserve_parameters_history = new_reserve_parameters_history;     
-}
-
-
-/// Makes the parameters norm history vector to be reseved or not in memory.
-/// @param new_reserve_parameters_norm_history True if the parameters norm history vector is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_parameters_norm_history(const bool& new_reserve_parameters_norm_history)
-{
-   reserve_parameters_norm_history = new_reserve_parameters_norm_history;     
-}
-
-
 /// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_error_history True if the error history vector is to be reserved, false otherwise.
+/// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
 
-void LevenbergMarquardtAlgorithm::set_reserve_error_history(const bool& new_reserve_error_history)
+void LevenbergMarquardtAlgorithm::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
 {
-   reserve_error_history = new_reserve_error_history;
-}
-
-
-/// Makes the gradient history vector of vectors to be reseved or not in memory.
-/// @param new_reserve_gradient_history True if the gradient history matrix is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_gradient_history(const bool& new_reserve_gradient_history)
-{
-   reserve_gradient_history = new_reserve_gradient_history;    
-}
-
-
-/// Makes the gradient norm history vector to be reseved or not in memory.
-/// @param new_reserve_gradient_norm_history True if the gradient norm history matrix is to be reserved, false 
-/// otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_gradient_norm_history(const bool& new_reserve_gradient_norm_history)
-{
-   reserve_gradient_norm_history = new_reserve_gradient_norm_history;     
-}
-
-
-/// Sets the history of the Hessian approximation to be reserved or not in memory.
-/// This is a vector of matrices. 
-/// @param new_reserve_Hessian_approximation_history True if the Hessian approximation history is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_Hessian_approximation_history(const bool& new_reserve_Hessian_approximation_history)
-{
-   reserve_Hessian_approximation_history = new_reserve_Hessian_approximation_history;
-}
-
-
-/// Makes the elapsed time over the iterations to be reseved or not in memory. This is a vector.
-/// @param new_reserve_elapsed_time_history True if the elapsed time history vector is to be reserved, false 
-/// otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_elapsed_time_history(const bool& new_reserve_elapsed_time_history)
-{
-   reserve_elapsed_time_history = new_reserve_elapsed_time_history;     
+   reserve_training_error_history = new_reserve_training_error_history;
 }
 
 
@@ -833,8 +654,6 @@ void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool
 
 void LevenbergMarquardtAlgorithm::set_display_period(const size_t& new_display_period)
 {
-   // Control sentence(if debug)
-
    #ifdef __OPENNN_DEBUG__ 
      
    if(new_display_period <= 0)
@@ -900,254 +719,10 @@ void LevenbergMarquardtAlgorithm::check() const
 }
 
 
-/// Resizes all the training history variables. 
-/// @param new_size Size of training history variables. 
-
-void LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::resize_training_history(const size_t& new_size)
-{
-    // Control sentence(if debug)
-
-    #ifdef __OPENNN_DEBUG__
-
-    if(Levenberg_Marquardt_algorithm_pointer == nullptr)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: LevenbergMarquardtAlgorithmResults structure.\n"
-              << "void resize_training_history(const size_t&) method.\n"
-              << "Levenberg-Marquardt algorithm pointer is nullptr.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_parameters_history())
-    {
-        parameters_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_parameters_norm_history())
-    {
-        parameters_norm_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_error_history())
-    {
-        loss_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_selection_error_history())
-    {
-        selection_error_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_gradient_history())
-    {
-        gradient_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_gradient_norm_history())
-    {
-        gradient_norm_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_Hessian_approximation_history())
-    {
-        Hessian_approximation_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_damping_parameter_history())
-    {
-        damping_parameter_history.resize(new_size);
-    }
-
-    if(Levenberg_Marquardt_algorithm_pointer->get_reserve_elapsed_time_history())
-    {
-        elapsed_time_history.resize(new_size);
-    }
-}
-
-
-/// Returns a string representation of the current Levenberg-Marquardt algorithm results structure. 
-
-string LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::object_to_string() const
-{
-   ostringstream buffer;
-
-   // Parameters history
-
-   if(!parameters_history.empty())
-   {
-      if(!parameters_history[0].empty())
-      {
-          buffer << "% Parameters history:\n"
-                 << parameters_history << "\n"; 
-	  }
-   }
-
-   // Parameters norm history
-
-   if(!parameters_norm_history.empty())
-   {
-       buffer << "% Parameters norm history:\n"
-              << parameters_norm_history << "\n"; 
-   }
-   
-   // Loss history
-
-   if(!loss_history.empty())
-   {
-       buffer << "% Loss history:\n"
-              << loss_history << "\n";
-   }
-
-   // Selection loss history
-
-   if(!selection_error_history.empty())
-   {
-       buffer << "% Selection loss history:\n"
-              << selection_error_history << "\n";
-   }
-
-   // Gradient history 
-
-   if(!gradient_history.empty())
-   {
-      if(!gradient_history[0].empty())
-      {
-          buffer << "% Gradient history:\n"
-                 << gradient_history << "\n"; 
-	  }
-   }
-
-   // Gradient norm history
-
-   if(!gradient_norm_history.empty())
-   {
-       buffer << "% Gradient norm history:\n"
-              << gradient_norm_history << "\n"; 
-   }
-
-   // Hessian approximation history
-
-   if(!Hessian_approximation_history.empty())
-   {
-      if(!Hessian_approximation_history[0].empty())
-      {
-          buffer << "% Hessian approximation history:\n"
-                 << Hessian_approximation_history << "\n";
-	  }
-   }
-
-   // Damping parameter history
-
-   if(!damping_parameter_history.empty())
-   {
-       buffer << "% Damping parameter history:\n"
-              << damping_parameter_history << "\n"; 
-   }
-
-   // Elapsed time history
-
-   if(!elapsed_time_history.empty())
-   {
-       buffer << "% Elapsed time history:\n"
-              << elapsed_time_history << "\n"; 
-   }
-
-   return(buffer.str());
-}
-
-
-Matrix<string> LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults::write_final_results(const int& precision) const
-{
-   ostringstream buffer;
-
-   Vector<string> names;
-   Vector<string> values;
-
-   // Final parameters norm
-
-   names.push_back("Final parameters norm");
-
-   buffer.str("");
-   buffer << setprecision(precision) << final_parameters_norm;
-
-   values.push_back(buffer.str());
-
-   // Final loss
-
-   names.push_back("Final training error");
-
-   buffer.str("");
-   buffer << setprecision(precision) << final_loss;
-
-   values.push_back(buffer.str());
-
-   // Final selection error
-
-   const LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm_pointer->get_loss_index_pointer();
-
-   if(loss_index_pointer->has_selection())
-   {
-       names.push_back("Final selection error");
-
-       buffer.str("");
-       buffer << setprecision(precision) << final_selection_error;
-
-       values.push_back(buffer.str());
-    }
-
-   // Final gradient norm
-
-   names.push_back("Final gradient norm");
-
-   buffer.str("");
-   buffer << setprecision(precision) << final_gradient_norm;
-
-   values.push_back(buffer.str());
-
-   // Iterations number
-
-   names.push_back("Iterations number");
-
-   buffer.str("");
-   buffer << iterations_number;
-
-   values.push_back(buffer.str());
-
-   // Elapsed time
-
-   names.push_back("Elapsed time");
-
-   buffer.str("");
-   buffer << write_elapsed_time(elapsed_time);
-
-   values.push_back(buffer.str());
-
-   // Stopping criteria
-
-   names.push_back("Stopping criterion");
-
-   values.push_back(write_stopping_condition());
-
-   const size_t rows_number = names.size();
-   const size_t columns_number = 2;
-
-   Matrix<string> final_results(rows_number, columns_number);
-
-   final_results.set_column(0, names, "name");
-   final_results.set_column(1, values, "value");
-
-   return(final_results);
-}
-
-
 /// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
 /// Training occurs according to the training parameters.
 
-LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarquardtAlgorithm::perform_training()
+OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 {
     ostringstream buffer;
 
@@ -1163,11 +738,11 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
    if(display) cout << "Training with Levenberg-Marquardt algorithm...\n";
 
-   LevenbergMarquardtAlgorithmResults* results_pointer = new LevenbergMarquardtAlgorithmResults(this);
+   Results results;
 
-   results_pointer->resize_training_history(1+maximum_epochs_number);
+   results.resize_training_history(1+maximum_epochs_number);
 
-   const size_t selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_instances().get_selection_instances_number();
+   const size_t selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
    // Neural network stuff
 
@@ -1178,9 +753,6 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
    Vector<double> parameters = neural_network_pointer->get_parameters();
 
    double parameters_norm = 0.0;
-
-   // Data set stuff
-
 
    // Loss index stuff
 
@@ -1215,7 +787,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
    {
       // Neural network
 
-      parameters_norm = parameters.calculate_L2_norm();
+      parameters_norm = l2_norm(parameters);
 
       if(display && parameters_norm >= warning_parameters_norm)
       {
@@ -1228,7 +800,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       training_loss = terms_second_order_loss.loss;
 
-      gradient_norm = terms_second_order_loss.gradient.calculate_L2_norm();
+      gradient_norm = l2_norm(terms_second_order_loss.gradient);
 
       if(display && gradient_norm >= warning_gradient_norm)
       {
@@ -1237,9 +809,9 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       do
       {        
-         terms_second_order_loss.Hessian_approximation.sum_diagonal(damping_parameter);
+         terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
 
-         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.Hessian_approximation, terms_second_order_loss.gradient*(-1.0));
+         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
 
          const double new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
 
@@ -1257,12 +829,12 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
          }
          else
          {
-             terms_second_order_loss.Hessian_approximation.sum_diagonal(-damping_parameter);
+             terms_second_order_loss.hessian.sum_diagonal(-damping_parameter);
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
       }while(damping_parameter < maximum_damping_parameter);
 
-      parameters_increment_norm = parameters_increment.calculate_L2_norm();
+      parameters_increment_norm = l2_norm(parameters_increment);
 
       if(epoch == 0)
       {
@@ -1297,55 +869,16 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
       time(&current_time);
       elapsed_time = difftime(current_time, beginning_time);
 
-      // Training history neural network
-
-      if(reserve_parameters_history)
-      {
-         results_pointer->parameters_history[epoch] = parameters;
-      }
-
-      if(reserve_parameters_norm_history)
-      {
-         results_pointer->parameters_norm_history[epoch] = parameters_norm;
-      }
-
       // Training history loss index
 
-      if(reserve_error_history)
+      if(reserve_training_error_history)
       {
-         results_pointer->loss_history[epoch] = training_loss;
+         results.training_error_history[epoch] = training_loss;
       }
 
       if(reserve_selection_error_history)
       {
-         results_pointer->selection_error_history[epoch] = selection_error;
-      }
-
-      if(reserve_gradient_history)
-      {
-         results_pointer->gradient_history[epoch] = terms_second_order_loss.gradient;
-      }
-
-      if(reserve_gradient_norm_history)
-      {
-         results_pointer->gradient_norm_history[epoch] = gradient_norm;
-      }
-
-      if(reserve_Hessian_approximation_history)
-      {
-         results_pointer->Hessian_approximation_history[epoch] = terms_second_order_loss.Hessian_approximation; // as computed by linear algebraic equations object
-      }
-
-      // Training history optimization algorithm
-
-      if(reserve_damping_parameter_history)
-      {
-         results_pointer->damping_parameter_history[epoch] = damping_parameter;
-      }
-
-      if(reserve_elapsed_time_history)
-      {
-         results_pointer->elapsed_time_history[epoch] = elapsed_time;
+         results.selection_error_history[epoch] = selection_error;
       }
 
 	  // Stopping Criteria
@@ -1360,7 +893,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MinimumParametersIncrementNorm;
+         results.stopping_condition = MinimumParametersIncrementNorm;
       }
 
       else if(training_loss <= loss_goal)
@@ -1372,7 +905,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = LossGoal;
+         results.stopping_condition = LossGoal;
       }
 
       else if(epoch != 0 && training_loss_decrease >= minimum_loss_decrease)
@@ -1385,7 +918,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MinimumLossDecrease;
+         results.stopping_condition = MinimumLossDecrease;
       }
 
       else if(gradient_norm <= gradient_norm_goal)
@@ -1397,7 +930,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = GradientNormGoal;
+         results.stopping_condition = GradientNormGoal;
       }
 
       else if(selection_failures >= maximum_selection_error_decreases && apply_early_stopping)
@@ -1410,7 +943,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumSelectionErrorIncreases;
+         results.stopping_condition = MaximumSelectionErrorIncreases;
       }
 
       else if(epoch == maximum_epochs_number)
@@ -1422,7 +955,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumIterationsNumber;
+         results.stopping_condition = MaximumEpochsNumber;
       }
 
       else if(elapsed_time >= maximum_time)
@@ -1434,7 +967,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
          stop_training = true;
 
-         results_pointer->stopping_condition = MaximumTime;
+         results.stopping_condition = MaximumTime;
       }
 
       if(epoch != 0 && epoch % save_period == 0)
@@ -1459,22 +992,19 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
              }
           }
 
-//          neural_network_pointer->set_parameters(parameters);
+          results.resize_training_history(1+epoch);
 
-          results_pointer->resize_training_history(1+epoch);
+         results.final_parameters = parameters;
+         results.final_parameters_norm = parameters_norm;
 
-         results_pointer->final_parameters = parameters;
-         results_pointer->final_parameters_norm = parameters_norm;
+         results.final_training_error = training_loss;
+         results.final_selection_error = selection_error;
 
-         results_pointer->final_loss = training_loss;
-         results_pointer->final_selection_error = selection_error;
-
-         results_pointer->final_gradient = terms_second_order_loss.gradient;
-         results_pointer->final_gradient_norm = gradient_norm;
+         results.final_gradient_norm = gradient_norm;
    
-         results_pointer->elapsed_time = elapsed_time;
+         results.elapsed_time = elapsed_time;
 
-         results_pointer->iterations_number = epoch;
+         results.epochs_number = epoch;
 
          break;
       }
@@ -1488,7 +1018,7 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
               << "Damping parameter: " << damping_parameter << "\n"
               << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-         if(fabs(selection_error - 0) < numeric_limits<double>::epsilon())
+         if(abs(selection_error - 0) < numeric_limits<double>::epsilon())
          {
             cout << "Selection error: " << selection_error << endl;
          }
@@ -1498,16 +1028,12 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
 
       old_training_loss = training_loss;
       old_selection_error = selection_error;
-
-      // Set new parameters
-
-//      neural_network_pointer->set_parameters(parameters);
    } 
 
    if(return_minimum_selection_error_neural_network)
    {
        parameters = minimum_selection_error_parameters;
-       parameters_norm = parameters.calculate_L2_norm();
+       parameters_norm = l2_norm(parameters);
 
        neural_network_pointer->set_parameters(parameters);
 
@@ -1515,49 +1041,36 @@ LevenbergMarquardtAlgorithm::LevenbergMarquardtAlgorithmResults* LevenbergMarqua
        selection_error = minimum_selection_error;
    }
 
-   results_pointer->final_parameters = parameters;
-   results_pointer->final_parameters_norm = parameters_norm;
+   results.final_parameters = parameters;
+   results.final_parameters_norm = parameters_norm;
 
-   results_pointer->final_loss = training_loss;
-   results_pointer->final_selection_error = selection_error;
+   results.final_training_error = training_loss;
+   results.final_selection_error = selection_error;
 
-//   results_pointer->final_gradient = gradient;
-   results_pointer->final_gradient_norm = gradient_norm;
+   results.final_gradient_norm = gradient_norm;
 
-   results_pointer->elapsed_time = elapsed_time;
+   results.elapsed_time = elapsed_time;
 
-   return(results_pointer);
+   return results;
 }
 
 
 void LevenbergMarquardtAlgorithm::perform_training_void()
 {
-    LevenbergMarquardtAlgorithmResults* results = perform_training();
-
-    delete results;
+    perform_training();
 }
 
 
 void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
 {
-   reserve_parameters_history = true;
-   reserve_parameters_norm_history = true;
-
-   reserve_error_history = true;
+   reserve_training_error_history = true;
    reserve_selection_error_history = true;
-
-   reserve_gradient_history = true;
-   reserve_gradient_norm_history = true;
-   reserve_Hessian_approximation_history = true;
-
-   reserve_damping_parameter_history = true;
-   reserve_elapsed_time_history = true;
 }
 
 
 string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 {
-   return("LEVENBERG_MARQUARDT_ALGORITHM");
+   return "LEVENBERG_MARQUARDT_ALGORITHM";
 }
 
 
@@ -1642,30 +1155,13 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve parameters norm history
+   // Reserve training error history
 
-   labels.push_back("Reserve parameters norm history");
-
-   buffer.str("");
-
-   if(reserve_parameters_norm_history)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
-
-   values.push_back(buffer.str());
-
-   // Reserve loss history
-
-   labels.push_back("Reserve error history");
+   labels.push_back("Reserve training error history");
 
    buffer.str("");
 
-   if(reserve_error_history)
+   if(reserve_training_error_history)
    {
        buffer << "true";
    }
@@ -1693,47 +1189,6 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   // Reserve gradient norm history
-
-   labels.push_back("Reserve gradient norm history");
-
-   buffer.str("");
-
-   if(reserve_gradient_norm_history)
-   {
-       buffer << "true";
-   }
-   else
-   {
-       buffer << "false";
-   }
-
-   values.push_back(buffer.str());
-
-   // Reserve training direction norm history
-
-//   labels.push_back("");
-
-//   buffer.str("");
-//   buffer << reserve_training_direction_norm_history;
-
-   // Reserve training rate history
-
-//   labels.push_back("");
-
-//   buffer.str("");
-//   buffer << reserve_training_rate_history;
-
-//   values.push_back(buffer.str());
-
-   // Reserve elapsed time history
-
-//   labels.push_back("Reserve elapsed time history");
-
-//   buffer.str("");
-//   buffer << reserve_elapsed_time_history;
-
-//   values.push_back(buffer.str());
 
    const size_t rows_number = labels.size();
    const size_t columns_number = 2;
@@ -1743,7 +1198,7 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
 
-    return(string_matrix);
+    return string_matrix;
 }
 
 
@@ -1928,7 +1383,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 
    // Maximum iterations number 
 
-   element = document->NewElement("MaximumIterationsNumber");
+   element = document->NewElement("MaximumEpochsNumber");
    root_element->LinkEndChild(element);
 
    buffer.str("");
@@ -1948,35 +1403,13 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
 
-   // Reserve parameters history 
+   // Reserve training error history
 
-//   element = document->NewElement("ReserveParametersHistory");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << reserve_parameters_history;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-   // Reserve parameters norm history 
-
-   element = document->NewElement("ReserveParametersNormHistory");
+   element = document->NewElement("ReserveTrainingErrorHistory");
    root_element->LinkEndChild(element);
 
    buffer.str("");
-   buffer << reserve_parameters_norm_history;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-
-   // Reserve loss history
-
-   element = document->NewElement("ReserveErrorHistory");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << reserve_error_history;
+   buffer << reserve_training_error_history;
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
@@ -1991,61 +1424,6 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 
    text = document->NewText(buffer.str().c_str());
    element->LinkEndChild(text);
-
-   // Reserve gradient history 
-
-//   element = document->NewElement("ReserveGradientHistory");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << reserve_gradient_history;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-   // Reserve gradient norm history 
-
-   element = document->NewElement("ReserveGradientNormHistory");
-   root_element->LinkEndChild(element);
-
-   buffer.str("");
-   buffer << reserve_gradient_norm_history;
-
-   text = document->NewText(buffer.str().c_str());
-   element->LinkEndChild(text);
-
-   // Reserve Hessian approximation history
-
-//   element = document->NewElement("ReserveHessianApproximationHistory");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << reserve_Hessian_approximation_history;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-   // Reserve elapsed time history 
-
-//   element = document->NewElement("ReserveElapsedTimeHistory");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << reserve_elapsed_time_history;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-   // Reserve selection error history
-
-//   element = document->NewElement("ReserveSelectionErrorHistory");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << reserve_selection_error_history;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
 
    // Display period
 
@@ -2090,7 +1468,7 @@ tinyxml2::XMLDocument* LevenbergMarquardtAlgorithm::to_XML() const
 //   text = document->NewText(buffer.str().c_str());
 //   element->LinkEndChild(text);
 
-   return(document);
+   return document;
 }
 
 
@@ -2197,7 +1575,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     // Maximum iterations number
 
-    file_stream.OpenElement("MaximumIterationsNumber");
+    file_stream.OpenElement("MaximumEpochsNumber");
 
     buffer.str("");
     buffer << maximum_epochs_number;
@@ -2217,23 +1595,12 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     file_stream.CloseElement();
 
-    // Reserve parameters norm history
+    // Reserve training error history
 
-    file_stream.OpenElement("ReserveParametersNormHistory");
-
-    buffer.str("");
-    buffer << reserve_parameters_norm_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve loss history
-
-    file_stream.OpenElement("ReserveErrorHistory");
+    file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_error_history;
+    buffer << reserve_training_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2249,20 +1616,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
-    // Reserve gradient norm history
-
-    file_stream.OpenElement("ReserveGradientNormHistory");
-
-    buffer.str("");
-    buffer << reserve_gradient_norm_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-
-    //file_stream.CloseElement();
 }
 
 
@@ -2284,7 +1637,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
         throw logic_error(buffer.str());
     }
-
 
     // Damping parameter
 
@@ -2558,7 +1910,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    // Maximum iterations number 
 
-   const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumIterationsNumber");
+   const tinyxml2::XMLElement* maximum_epochs_number_element = root_element->FirstChildElement("MaximumEpochsNumber");
 
    if(maximum_epochs_number_element)
    {
@@ -2592,53 +1944,17 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       }
    }
 
-   // Reserve parameters history 
+   // Reserve training error history
 
-   const tinyxml2::XMLElement* reserve_parameters_history_element = root_element->FirstChildElement("ReserveParametersHistory");
+   const tinyxml2::XMLElement* reserve_training_error_history_element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
 
-   if(reserve_parameters_history_element)
+   if(reserve_training_error_history_element)
    {
-      string new_reserve_parameters_history = reserve_parameters_history_element->GetText(); 
+      const string new_reserve_training_error_history = reserve_training_error_history_element->GetText();
 
       try
       {
-         set_reserve_parameters_history(new_reserve_parameters_history != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Reserve parameters norm history 
-
-   const tinyxml2::XMLElement* reserve_parameters_norm_history_element = root_element->FirstChildElement("ReserveParametersNormHistory");
-
-   if(reserve_parameters_norm_history_element)
-   {
-      const string new_reserve_parameters_norm_history = reserve_parameters_norm_history_element->GetText();
-
-      try
-      {
-         set_reserve_parameters_norm_history(new_reserve_parameters_norm_history != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Reserve loss history
-
-   const tinyxml2::XMLElement* reserve_error_history_element = root_element->FirstChildElement("ReserveErrorHistory");
-
-   if(reserve_error_history_element)
-   {
-      const string new_reserve_error_history = reserve_error_history_element->GetText();
-
-      try
-      {
-         set_reserve_error_history(new_reserve_error_history != "0");
+         set_reserve_training_error_history(new_reserve_training_error_history != "0");
       }
       catch(const logic_error& e)
       {
@@ -2661,60 +1977,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
       catch(const logic_error& e)
       {
          cerr << e.what() << endl;
-      }
-   }
-
-   // Reserve gradient history 
-
-   const tinyxml2::XMLElement* reserve_gradient_history_element = root_element->FirstChildElement("ReserveGradientHistory");
-
-   if(reserve_gradient_history_element)
-   {
-      string new_reserve_gradient_history = reserve_gradient_history_element->GetText(); 
-
-      try
-      {
-         set_reserve_gradient_history(new_reserve_gradient_history != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Reserve gradient norm history 
-
-   const tinyxml2::XMLElement* reserve_gradient_norm_history_element = root_element->FirstChildElement("ReserveGradientNormHistory");
-
-   if(reserve_gradient_norm_history_element)
-   {
-      const string new_reserve_gradient_norm_history = reserve_gradient_norm_history_element->GetText();
-
-      try
-      {
-         set_reserve_gradient_norm_history(new_reserve_gradient_norm_history != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
-      }
-   }
-
-   // Reserve elapsed time history 
-
-   const tinyxml2::XMLElement* reserve_elapsed_time_history_element = root_element->FirstChildElement("ReserveElapsedTimeHistory");
-
-   if(reserve_elapsed_time_history_element)
-   {
-      const string new_reserve_elapsed_time_history = reserve_elapsed_time_history_element->GetText();
-
-      try
-      {
-         set_reserve_elapsed_time_history(new_reserve_elapsed_time_history != "0");
-      }
-      catch(const logic_error& e)
-      {
-         cerr << e.what() << endl;		 
       }
    }
 
@@ -2808,7 +2070,7 @@ Vector<double> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
 
-    return(x);
+    return x;
 }
 
 }

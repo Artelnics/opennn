@@ -1,19 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   M I N K O W S K I   E R R O R   T E S T   C L A S S   H E A D E R                                          */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   M I N K O W S K I   E R R O R   T E S T   C L A S S   H E A D E R     
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-
-#ifndef __MINKOWSKIERRORTEST_H__
-#define __MINKOWSKIERRORTEST_H__
+#ifndef MINKOWSKIERRORTEST_H
+#define MINKOWSKIERRORTEST_H
 
 // Unit testing includes
 
@@ -31,17 +25,9 @@ class MinkowskiErrorTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit MinkowskiErrorTest();
 
-
-   // DESTRUCTOR
-
    virtual ~MinkowskiErrorTest();
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -58,12 +44,10 @@ public:
 
    // Error methods
 
-   void test_calculate_loss();   
+   void test_calculate_training_error();
    void test_calculate_selection_error();
 
-   void test_calculate_gradient();
-
-   void test_calculate_Hessian();
+   void test_calculate_training_error_gradient();
 
    // Serialization methods
 
@@ -80,7 +64,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

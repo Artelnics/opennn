@@ -1,7 +1,7 @@
 ###################################################################################################
 #                                                                                                 #
 #   OpenNN: Open Neural Networks Library                                                          #
-#   www.artelnics.com/opennn                                                                      #
+#   www.opennn.net                                                                      #
 #                                                                                                 #
 #   Y A C H T   H Y D R O D Y N A M I C S   D E S I N G   P R O J E C T                           #
 #                                                                                                 #
@@ -57,7 +57,7 @@ QMAKE_LFLAGS   += -openmp
 
 !win32{
 QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
+QMAKE_LFLAGS += -fopenmp
 }
 
 mac{
@@ -65,5 +65,3 @@ INCLUDEPATH += /usr/local/Cellar/libiomp/20150701/include/libiomp
 LIBS += -L/usr/local/Cellar/libiomp/20150701/lib -liomp5
 }
 
-# MPI include
-#include(../../mpi.pri)

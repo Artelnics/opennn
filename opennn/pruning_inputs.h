@@ -1,18 +1,17 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   P R U N I N G   I N P U T S   C L A S S   H E A D E R                                                      */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
 
-#ifndef __PRUNINGINPUTS_H__
-#define __PRUNINGINPUTS_H__
+
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+
+//   P R U N I N G   I N P U T S   C L A S S   H E A D E R                 
+
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+
+
+#ifndef PRUNINGINPUTS_H
+#define PRUNINGINPUTS_H
 
 // System includes
 
@@ -31,20 +30,20 @@
 
 #include "training_strategy.h"
 
-#include "inputs_selection_algorithm.h"
+#include "inputs_selection.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
 namespace OpenNN
 {
 
-///
-/// This concrete class represents a pruning algorithm for the inputs selection of a neural network.
-///
+/// This concrete class represents a pruning inputs algorithm for the InputsSelection as part of the ModelSelection[1] class.
 
-class PruningInputs : public InputsSelectionAlgorithm
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+
+class PruningInputs : public InputsSelection
 {
 public:
     // DEFAULT CONSTRUCTOR
@@ -63,7 +62,7 @@ public:
 
     explicit PruningInputs(const string&);
 
-    // DESTRUCTOR
+    
 
     virtual ~PruningInputs();
 
@@ -74,11 +73,11 @@ public:
     /// This structure contains the training results for the pruning inputs method.
     ///
 
-    struct PruningInputsResults : public InputsSelectionAlgorithm::InputsSelectionResults
+    struct PruningInputsResults : public InputsSelection::Results
     {
         /// Default constructor.
 
-        explicit PruningInputsResults() : InputsSelectionAlgorithm::InputsSelectionResults()
+        explicit PruningInputsResults() : InputsSelection::Results()
         {
         }
 
@@ -90,7 +89,6 @@ public:
 
     };
 
-    // METHODS
 
     // Get methods
 
@@ -122,14 +120,14 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
-    //void read_XML(   );
+    
 
     void save(const string&) const;
     void load(const string&);
 
 private:
 
-    // STOPPING CRITERIA
+    // Stopping criteria
 
     /// Minimum number of inputs in the neural network.
 

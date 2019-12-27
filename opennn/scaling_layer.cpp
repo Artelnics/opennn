@@ -1,70 +1,60 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   S C A L I N G   L A Y E R   C L A S S                                                                      */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-// OpenNN includes
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S C A L I N G   L A Y E R   C L A S S                                 
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
 #include "scaling_layer.h"
 
 namespace OpenNN
 {
 
-// DEFAULT CONSTRUCTOR
-
 /// Default constructor. 
 /// It creates a scaling layer object with no scaling neurons. 
 
-ScalingLayer::ScalingLayer()
+ScalingLayer::ScalingLayer() : Layer()
 {   
     set();
 }
 
 
-// SCALING NEURONS NUMBER CONSTRUCTOR
-
 /// Scaling neurons number constructor.
 /// This constructor creates a scaling layer with a given size. 
 /// The members of this object are initialized with the default values. 
-/// @param new_scaling_neurons_number Number of scaling neurons in the layer. 
+/// @param new_neurons_number Number of scaling neurons in the layer.
 
-ScalingLayer::ScalingLayer(const size_t& new_scaling_neurons_number)
+ScalingLayer::ScalingLayer(const size_t& new_neurons_number) : Layer()
 {
-    set(new_scaling_neurons_number);
+    set(new_neurons_number);
 }
 
 
-// STATISTICS CONSTRUCTOR
+ScalingLayer::ScalingLayer(const Vector<size_t>& new_inputs_dimensions) : Layer()
+{
+    set(new_inputs_dimensions);
+}
 
-/// Statistics constructor.
+
+/// Descriptives constructor.
 /// This constructor creates a scaling layer with given minimums, maximums, means and standard deviations.
 /// The rest of members of this object are initialized with the default values.
-/// @param new_statistics Vector of vectors with the variables statistics.
+/// @param new_descriptives Vector of vectors with the variables descriptives.
 
-ScalingLayer::ScalingLayer(const Vector< Statistics<double> >& new_statistics)
+ScalingLayer::ScalingLayer(const Vector<Descriptives>& new_descriptives) : Layer()
 {
-    set(new_statistics);
+    set(new_descriptives);
 }
 
-
-// COPY CONSTRUCTOR
 
 /// Copy constructor. 
 
-ScalingLayer::ScalingLayer(const ScalingLayer& new_scaling_layer)
+ScalingLayer::ScalingLayer(const ScalingLayer& new_scaling_layer) : Layer()
 {
     set(new_scaling_layer);
 }
 
-
-// DESTRUCTOR
 
 /// Destructor.
 
@@ -73,96 +63,61 @@ ScalingLayer::~ScalingLayer()
 }
 
 
-// ASSIGNMENT OPERATOR
-
-// ScalingLayer& operator = (const ScalingLayer&) method
-
-/// Assignment operator.
-/// @param other_scaling_layer Object to be copied. 
-
-ScalingLayer& ScalingLayer::operator = (const ScalingLayer& other_scaling_layer)
+Vector<size_t> ScalingLayer::get_input_variables_dimensions() const
 {
-    if(this != &other_scaling_layer)
-    {
-        statistics = other_scaling_layer.statistics;
-
-        scaling_methods = other_scaling_layer.scaling_methods;
-
-        display = other_scaling_layer.display;
-    }
-
-    return(*this);
+    return inputs_dimensions;
 }
 
 
-// EQUAL TO OPERATOR
-
-// bool operator == (const ScalingLayer&) const method
-
-/// Equal to operator. 
-/// If compares this object with another object of the same class, and returns true if they are equal, and false otherwise. 
-/// @param other_scaling_layer Object to be compared with. 
-
-bool ScalingLayer::operator == (const ScalingLayer& other_scaling_layer) const
+Vector<size_t> ScalingLayer::get_outputs_dimensions() const
 {
-    if(/*statistics == other_scaling_layer.statistics
-                                                   &&*/ scaling_methods == other_scaling_layer.scaling_methods
-            && display == other_scaling_layer.display)
-    {
-        return(true);
-    }
-    else
-    {
-        return(false);
-    }
+    return inputs_dimensions;
 }
 
 
-// size_t get_scaling_neurons_number() const method
-
-/// Returns the number of unscaling neurons in this layer. 
-
-size_t ScalingLayer::get_scaling_neurons_number() const
+size_t ScalingLayer::get_inputs_number() const
 {
-    return(statistics.size());
+    return descriptives.size();
 }
 
 
-// Vector< Statistics<double> > get_statistics() const method
-
-/// Returns all the scaling layer statistics.
-/// The format is a vector of statistics structures of size the number of scaling neurons.
-
-Vector< Statistics<double> > ScalingLayer::get_statistics() const
+size_t ScalingLayer::get_neurons_number() const
 {
-    return(statistics);
+    return descriptives.size();
 }
 
 
-// Statistics<double> get_statistics(const size_t&) const method
+/// Returns all the scaling layer descriptives.
+/// The format is a vector of descriptives structures of size the number of scaling neurons.
 
-/// Returns the statistics structure of a single scaling neuron.
+Vector<Descriptives> ScalingLayer::get_descriptives() const
+{
+    return descriptives;
+}
+
+
+/// Returns the descriptives structure of a single scaling neuron.
 /// @param index Neuron index.
 
-Statistics<double> ScalingLayer::get_statistics(const size_t& index) const
+Descriptives ScalingLayer::get_descriptives(const size_t& index) const
 {
-    return(statistics[index]);
+    return(descriptives[index]);
 }
 
 
-/// Returns a single matrix with the statistics of all scaling neurons.
+/// Returns a single matrix with the descriptives of all scaling neurons.
 /// The number of rows is the number of scaling neurons.
 /// The number of columns is four(minimum, maximum, mean and standard deviation).
 
-Matrix<double> ScalingLayer::get_statistics_matrix() const
+Matrix<double> ScalingLayer::get_descriptives_matrix() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    Matrix<double> statistics_matrix(scaling_neurons_number, 4);
+    Matrix<double> statistics_matrix(neurons_number, 4);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        statistics_matrix.set_row(i, statistics[i].to_vector());
+        statistics_matrix.set_row(i, descriptives[i].to_vector());
     }
 
     return(statistics_matrix);
@@ -173,75 +128,69 @@ Matrix<double> ScalingLayer::get_statistics_matrix() const
 
 Vector<double> ScalingLayer::get_minimums() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    Vector<double> minimums(scaling_neurons_number);
+    Vector<double> minimums(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        minimums[i] = statistics[i].minimum;
+        minimums[i] = descriptives[i].minimum;
     }
 
     return(minimums);
 }
 
-// Vector<double> get_maximums() const method
 
 /// Returns a single matrix with the maximums of all scaling neurons.
 
 Vector<double> ScalingLayer::get_maximums() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    Vector<double> maximums(scaling_neurons_number);
+    Vector<double> maximums(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        maximums[i] = statistics[i].maximum;
+        maximums[i] = descriptives[i].maximum;
     }
 
     return(maximums);
 }
 
-// Vector<double> get_means() const method
 
 /// Returns a single matrix with the means of all scaling neurons.
 
 Vector<double> ScalingLayer::get_means() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    Vector<double> means(scaling_neurons_number);
+    Vector<double> means(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        means[i] = statistics[i].mean;
+        means[i] = descriptives[i].mean;
     }
 
-    return(means);
+    return means;
 }
 
-
-// Vector<double> get_standard_deviations() const method
 
 /// Returns a single matrix with the standard deviations of all scaling neurons.
 
 Vector<double> ScalingLayer::get_standard_deviations() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    Vector<double> standard_deviations(scaling_neurons_number);
+    Vector<double> standard_deviations(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        standard_deviations[i] = statistics[i].standard_deviation;
+        standard_deviations[i] = descriptives[i].standard_deviation;
     }
 
     return(standard_deviations);
 }
 
-
-// const Vector<ScalingMethod> get_scaling_methods() const method
 
 /// Returns the methods used for scaling.
 
@@ -251,32 +200,15 @@ const Vector<ScalingLayer::ScalingMethod> ScalingLayer::get_scaling_methods() co
 }
 
 
-// Vector<string> write_scaling_methods() const method
-
 /// Returns a vector of strings with the name of the method used for each scaling neuron.
 
 Vector<string> ScalingLayer::write_scaling_methods() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
+    Vector<string> scaling_methods_strings(neurons_number);
 
-    if(scaling_neurons_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "Vector<string> write_scaling_methods() const method.\n"
-               << "Size of scaling neurons must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    Vector<string> scaling_methods_strings(scaling_neurons_number);
-
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         if(scaling_methods[i] == NoScaling)
         {
@@ -309,33 +241,32 @@ Vector<string> ScalingLayer::write_scaling_methods() const
     return scaling_methods_strings;
 }
 
-// string write_scaling_methods_text() const method
 
 /// Returns a vector of strings with the name of the methods used for scaling,
 /// as paragaph text.
 
 Vector<string> ScalingLayer::write_scaling_methods_text() const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
-    if(scaling_neurons_number == 0)
+    if(neurons_number == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "Vector<string> write_scaling_methods() const method.\n"
-               << "Size of scaling neurons must be greater than 0.\n";
+               << "Neurons number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    Vector<string> scaling_methods_strings(scaling_neurons_number);
+    Vector<string> scaling_methods_strings(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         if(scaling_methods[i] == NoScaling)
         {
@@ -375,53 +306,59 @@ Vector<string> ScalingLayer::write_scaling_methods_text() const
 
 const bool& ScalingLayer::get_display() const
 {
-    return(display);
+    return display;
 }
 
-
-// void set() method
 
 /// Sets the scaling layer to be empty. 
 
 void ScalingLayer::set()
 {
-    statistics.set();
+    descriptives.set();
 
     set_default();
 }
 
-
-// void set(const size_t&) method
 
 /// Sets a new size in the scaling layer. 
 /// It also sets the members to their default values. 
 
 void ScalingLayer::set(const size_t& new_inputs_number)
 {
-    statistics.set(new_inputs_number);
+    descriptives.set(new_inputs_number);
 
-    scaling_methods.set(new_inputs_number);
+    scaling_methods.set(new_inputs_number, MinimumMaximum);
 
     set_default();
 }
 
 
-// void set(const Vector< Vector<double> >&) method
+void ScalingLayer::set(const Vector<size_t>& new_inputs_dimensions)
+{
+    descriptives.set(new_inputs_dimensions.calculate_product());
 
-/// Sets the size of the scaling layer and the statistics values. 
-/// @param new_statistics Vector of vectors containing the minimums, maximums, means and standard deviations for the scaling layer. 
+    scaling_methods.set(new_inputs_dimensions.calculate_product(), MinimumMaximum);
+
+    inputs_dimensions.set(new_inputs_dimensions);
+
+    set_default();
+}
+
+
+/// Sets the size of the scaling layer and the descriptives values.
+/// @param new_descriptives Vector of vectors containing the minimums, maximums, means and standard deviations for the scaling layer.
 /// The size of this vector must be 4. 
 /// The size of each subvector will be the size of the scaling layer. 
 
-void ScalingLayer::set(const Vector< Statistics<double> >& new_statistics)
+void ScalingLayer::set(const Vector<Descriptives>& new_descriptives)
 {
-    statistics = new_statistics;
+    descriptives = new_descriptives;
+
+    scaling_methods.set(new_descriptives.size(), MinimumMaximum);
 
     set_default();
 }
 
-
-// void set(const tinyxml2::XMLDocument&) method
 
 /// Sets the scaling layer members from a XML document. 
 /// @param new_scaling_layer_document Pointer to a TinyXML document containing the member data.
@@ -434,32 +371,46 @@ void ScalingLayer::set(const tinyxml2::XMLDocument& new_scaling_layer_document)
 }
 
 
-// void set(const ScalingLayer&) method
-
 /// Sets the members of this object to be the members of another object of the same class. 
 /// @param new_scaling_layer Object to be copied. 
 
 void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 {
-    statistics = new_scaling_layer.statistics;
+    descriptives = new_scaling_layer.descriptives;
 
     scaling_methods = new_scaling_layer.scaling_methods;
 
+    layer_type = new_scaling_layer.layer_type;
+
     display = new_scaling_layer.display;
+
+    layer_type = Scaling;
 }
 
 
 void ScalingLayer::set(const Vector<bool>& new_uses)
 {
-    const Vector<size_t> indices = new_uses.calculate_equal_to_indices(true);
+    const Vector<size_t> indices = new_uses.get_indices_equal_to(true);
 
-    statistics = statistics.get_subvector(indices);
+//    descriptives = descriptives.get_subvector(indices);
 
-    scaling_methods = scaling_methods.get_subvector(indices);
+//    scaling_methods = scaling_methods.get_subvector(indices);
 }
 
 
-// void set_default() method
+void ScalingLayer::set_inputs_number(const size_t& new_inputs_number)
+{
+    descriptives.set(new_inputs_number);
+    scaling_methods.set(new_inputs_number, MinimumMaximum);
+}
+
+
+void ScalingLayer::set_neurons_number(const size_t& new_neurons_number)
+{
+    descriptives.set(new_neurons_number);
+    scaling_methods.set(new_neurons_number, MinimumMaximum);
+}
+
 
 /// Sets the members to their default value: 
 /// <ul>
@@ -473,77 +424,70 @@ void ScalingLayer::set(const Vector<bool>& new_uses)
 
 void ScalingLayer::set_default()
 {
-    //   minimums.initialize(-1.0);
-    //   maximums.initialize(1.0);
-    //   means.initialize(0.0);
-    //   standard_deviations.initialize(1.0);
-
     set_scaling_methods(MinimumMaximum);
 
     set_display(true);
+
+    layer_type = Scaling;
 }
 
 
-// void set_statistics(const Vector< Statisitcs<double> >&) method
-
-/// Sets all the scaling layer statistics from a vector statistics structures.
+/// Sets all the scaling layer descriptives from a vector descriptives structures.
 /// The size of the vector must be equal to the number of scaling neurons in the layer.
-/// @param new_statistics Scaling layer statistics. 
+/// @param new_descriptives Scaling layer descriptives.
 
-void ScalingLayer::set_statistics(const Vector< Statistics<double> >& new_statistics)
+void ScalingLayer::set_descriptives(const Vector<Descriptives>& new_descriptives)
 {
-    // Control sentence(if debug)
-
 #ifdef __OPENNN_DEBUG__
 
-    const size_t new_statistics_size = new_statistics.size();
+    const size_t new_descriptives_size = new_descriptives.size();
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    if(new_statistics_size != scaling_neurons_number)
+    if(new_descriptives_size != neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_statistics(const Vector< Statistics<double> >&) method.\n"
-               << "Size of statistics is not equal to number of scaling neurons.\n";
+               << "void set_descriptives(const Vector<Descriptives>&) method.\n"
+               << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    // Set all statistics
+    // Set all descriptives
 
-    statistics = new_statistics;
+    descriptives = new_descriptives;
 }
 
 
-void ScalingLayer::set_statistics_eigen(const Eigen::MatrixXd& statistics_eigen)
+void ScalingLayer::set_descriptives_eigen(const Eigen::MatrixXd& descriptives_eigen)
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    Vector< Statistics<double> > statistics(scaling_neurons_number);
+    Vector<Descriptives> descriptives(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        statistics[i].set_minimum(statistics_eigen(static_cast<int>(i), 0));
-        statistics[i].set_maximum(statistics_eigen(static_cast<int>(i), 1));
-        statistics[i].set_mean(statistics_eigen(static_cast<int>(i), 2));
-        statistics[i].set_standard_deviation(statistics_eigen(static_cast<int>(i), 3));
+        descriptives[i].set_minimum(descriptives_eigen(static_cast<int>(i), 0));
+        descriptives[i].set_maximum(descriptives_eigen(static_cast<int>(i), 1));
+        descriptives[i].set_mean(descriptives_eigen(static_cast<int>(i), 2));
+        descriptives[i].set_standard_deviation(descriptives_eigen(static_cast<int>(i), 3));
     }
 
-    set_statistics(statistics);
+    set_descriptives(descriptives);
 }
 
 
-/// Sets the statistics of a single scaling neuron.
+/// Sets the descriptives of a single scaling neuron.
 /// @param i Index of neuron.
-/// @param item_statistics Statistics structure for that neuron.
+/// @param item_descriptives Descriptives structure for that neuron.
 
-void ScalingLayer::set_item_statistics(const size_t& i, const Statistics<double>& item_statistics)
+void ScalingLayer::set_item_descriptives(const size_t& i, const Descriptives& item_descriptives)
 {
-    statistics[i] = item_statistics;
+    descriptives[i] = item_descriptives;
 }
 
 
@@ -553,11 +497,9 @@ void ScalingLayer::set_item_statistics(const size_t& i, const Statistics<double>
 
 void ScalingLayer::set_minimum(const size_t& i, const double& new_minimum)
 {
-    statistics[i].set_minimum(new_minimum);
+    descriptives[i].set_minimum(new_minimum);
 }
 
-
-// void set_maximum(const size_t&, const double&) method
 
 /// Sets the maximum value of a given scaling neuron.
 /// @param i Index of scaling neuron.
@@ -565,11 +507,9 @@ void ScalingLayer::set_minimum(const size_t& i, const double& new_minimum)
 
 void ScalingLayer::set_maximum(const size_t& i, const double& new_maximum)
 {
-    statistics[i].set_maximum(new_maximum);
+    descriptives[i].set_maximum(new_maximum);
 }
 
-
-// void set_mean(const size_t&, const double&) method
 
 /// Sets the mean value of a given scaling neuron.
 /// @param i Index of scaling neuron.
@@ -577,11 +517,9 @@ void ScalingLayer::set_maximum(const size_t& i, const double& new_maximum)
 
 void ScalingLayer::set_mean(const size_t& i, const double& new_mean)
 {
-    statistics[i].set_mean(new_mean);
+    descriptives[i].set_mean(new_mean);
 }
 
-
-// void set_standard_deviation(const size_t&, const double&) method
 
 /// Sets the standard deviation value of a given scaling neuron.
 /// @param i Index of scaling neuron.
@@ -589,11 +527,9 @@ void ScalingLayer::set_mean(const size_t& i, const double& new_mean)
 
 void ScalingLayer::set_standard_deviation(const size_t& i, const double& new_standard_deviation)
 {
-    statistics[i].set_standard_deviation(new_standard_deviation);
+    descriptives[i].set_standard_deviation(new_standard_deviation);
 }
 
-
-// void set_scaling_method(const Vector<ScalingMethod>&)
 
 /// Sets the methods to be used for scaling each variable.
 /// @param new_scaling_methods New scaling methods for the variables.
@@ -602,15 +538,15 @@ void ScalingLayer::set_scaling_methods(const Vector<ScalingLayer::ScalingMethod>
 {
 #ifdef __OPENNN_DEBUG__
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    if(scaling_neurons_number == 0)
+    if(neurons_number == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "void set_scaling_methods(const Vector<ScalingMethod>&) method.\n"
-               << "Size of scaling neurons must be greater than 0.\n";
+               << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -621,34 +557,32 @@ void ScalingLayer::set_scaling_methods(const Vector<ScalingLayer::ScalingMethod>
 }
 
 
-// void set_scaling_methods(const Vector<string>&) method
-
 /// Sets the methods to be used for scaling each variable.
 /// The argument is a vector string containing the name of the methods("NoScaling", "MeanStandardDeviation" or "MinimumMaximum").
 /// @param new_scaling_methods_string New scaling methods for the variables.
 
 void ScalingLayer::set_scaling_methods(const Vector<string>& new_scaling_methods_string)
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
-    if(scaling_neurons_number == 0)
+    if(neurons_number == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "void set_scaling_methods(const Vector<string>&) method.\n"
-               << "Size of scaling neurons must be greater than 0.\n";
+               << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    Vector<ScalingMethod> new_scaling_methods(scaling_neurons_number);
+    Vector<ScalingMethod> new_scaling_methods(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         if(new_scaling_methods_string[i] == "NoScaling")
         {
@@ -688,26 +622,26 @@ void ScalingLayer::set_scaling_methods(const Vector<string>& new_scaling_methods
 
 void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
-    if(scaling_neurons_number == 0)
+    if(neurons_number == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "void set_scaling_methods(const Vector<string>&) method.\n"
-               << "Size of scaling neurons must be greater than 0.\n";
+               << "Neurons number (" << neurons_number << ")must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
 
-    Vector<ScalingMethod> new_scaling_methods(scaling_neurons_number);
+    Vector<ScalingMethod> new_scaling_methods(neurons_number);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         if(new_scaling_methods_string == "NoScaling")
         {
@@ -746,38 +680,14 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 
 void ScalingLayer::set_scaling_methods(const ScalingLayer::ScalingMethod& new_scaling_method)
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-#ifdef __OPENNN_DEBUG__
-
-    if(scaling_neurons_number == 0)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const Vector<string>&) method.\n"
-               << "Size of scaling neurons must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    if(scaling_methods.empty())
-    {
-        scaling_methods.resize(scaling_neurons_number, new_scaling_method);
-    }
-    else
-    {
-        for(size_t i = 0; i < scaling_neurons_number; i++)
-        {
-            scaling_methods[i] = new_scaling_method;
-        }
+        scaling_methods[i] = new_scaling_method;
     }
 }
 
-
-// void set_display(const bool&) method
 
 /// Sets a new display value. 
 /// If it is set to true messages from this class are to be displayed on the screen;
@@ -789,35 +699,31 @@ void ScalingLayer::set_display(const bool& new_display)
     display = new_display;
 }
 
-// void grow_scaling_neuron(const Statistics<double>&) method
 
-/// Add a scaling neuron from the scaling layer and asociate new statistics.
-/// @param new_statistics Value of the statistics of the new neuron added. The default value is an empty vector.
+/// Add a scaling neuron from the scaling layer and asociate new descriptives.
+/// @param new_descriptives Value of the descriptives of the new neuron added. The default value is an empty vector.
 
-void ScalingLayer::grow_scaling_neuron(const Statistics<double>& new_statistics)
+void ScalingLayer::grow_neuron(const Descriptives& new_descriptives)
 {
-    statistics.push_back(new_statistics);
+    descriptives.push_back(new_descriptives);
 }
 
-// void prune_scaling_neuron(const size_t&) method
 
 /// Removes a given scaling neuron from the scaling layer.
 /// @param index Index of neuron to be removed.
 
-void ScalingLayer::prune_scaling_neuron(const size_t& index)
+void ScalingLayer::prune_neuron(const size_t& index)
 {
-    // Control sentence(if debug)
-
 #ifdef __OPENNN_DEBUG__
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
-    if(index >= scaling_neurons_number)
+    if(index >= neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void prune_scaling_neuron(const size_t&) method.\n"
+               << "void prune_neuron(const size_t&) method.\n"
                << "Index of scaling neuron is equal or greater than number of scaling neurons.\n";
 
         throw logic_error(buffer.str());
@@ -825,30 +731,26 @@ void ScalingLayer::prune_scaling_neuron(const size_t& index)
 
 #endif
 
-    statistics.erase(statistics.begin() + index);
+    descriptives.erase(descriptives.begin() + static_cast<long long>(index));
 }
 
-
-// bool is_empty() const method
 
 /// Returns true if the number of scaling neurons is zero, and false otherwise. 
 
 bool ScalingLayer::is_empty() const
 {
-    const size_t inputs_number = get_scaling_neurons_number();
+    const size_t inputs_number = get_neurons_number();
 
     if(inputs_number == 0)
     {
-        return(true);
+        return true;
     }
     else
     {
-        return(false);
+        return false;
     }
 }
 
-
-// void check_range(const Vector<double>&) const method
 
 /// This method chechs whether the inputs to the scaling layer have the right size. 
 /// If not, it displays an error message and exits the program. 
@@ -858,9 +760,7 @@ bool ScalingLayer::is_empty() const
 
 void ScalingLayer::check_range(const Vector<double>& inputs) const
 {
-    const size_t inputs_number = get_scaling_neurons_number();
-
-    // Control sentence(if debug)
+    const size_t inputs_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -885,14 +785,14 @@ void ScalingLayer::check_range(const Vector<double>& inputs) const
     {
         for(size_t i = 0; i < inputs_number; i++)
         {
-            if(inputs[i] < statistics[i].minimum)
+            if(inputs[i] < descriptives[i].minimum)
             {
                 cout << "OpenNN Warning: ScalingLayer class.\n"
                           << "void check_range(const Vector<double>&) const method.\n"
                           << "Input value " << i << " is less than corresponding minimum.\n";
             }
 
-            if(inputs[i] > statistics[i].maximum)
+            if(inputs[i] > descriptives[i].maximum)
             {
                 cout << "OpenNN Warning: ScalingLayer class.\n"
                           << "void check_range(const Vector<double>&) const method.\n"
@@ -903,305 +803,215 @@ void ScalingLayer::check_range(const Vector<double>& inputs) const
 }
 
 
-// @todo Unknown scaling method sometimes
-
-/// Initializes at random the statistics of all neurons in the layer
-/// and the unscaling method.
-
-void ScalingLayer::initialize_random()
-{
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    // Statistics
-
-    for(size_t i = 0; i < scaling_neurons_number; i++)
-    {
-        statistics[i].initialize_random();
-    }
-
-    // Unscaling method
-
-    const size_t random = rand()%4;
-
-    switch(random)
-    {
-        case NoScaling:
-        {
-            set_scaling_methods(NoScaling);
-        }
-        break;
-
-        case MinimumMaximum:
-        {
-            set_scaling_methods(MinimumMaximum);
-        }
-        break;
-
-        case MeanStandardDeviation:
-        {
-            set_scaling_methods(MeanStandardDeviation);
-        }
-        break;
-
-        case StandardDeviation:
-        {
-            set_scaling_methods(StandardDeviation);
-        }
-        break;
-    }
-}
-
-
 /// Scales some values to produce some scaled values. 
 /// @param inputs Set of inputs to the scaling layer.
 
-Matrix<double> ScalingLayer::calculate_outputs(const Matrix<double>& inputs) const
-{
-    // Control sentence(if debug)
+Tensor<double> ScalingLayer::calculate_outputs(const Tensor<double>& inputs)
+{   
+    Tensor<double> outputs;
 
-#ifdef __OPENNN_DEBUG__
-
-    ostringstream buffer;
-
-    const size_t inputs_number = get_scaling_neurons_number();
-
-    const size_t size = inputs.get_columns_number();
-
-    if(size != inputs_number)
+    if(inputs.get_dimensions_number() == 2)
     {
-        buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
-               << "Size of inputs must be equal to number of scaling neurons.\n";
+        const size_t neurons_number = get_neurons_number();
 
-        throw logic_error(buffer.str());
-    }
+    #ifdef __OPENNN_DEBUG__
 
-#endif
+        ostringstream buffer;
 
-    const size_t points_number = inputs.get_rows_number();
+        const size_t columns_number = inputs.get_dimension(1);
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    Matrix<double> outputs(points_number, scaling_neurons_number);
-
-    for(size_t i = 0; i < points_number; i++)
-    {
-        for(size_t j = 0; j < scaling_neurons_number; j++)
+        if(columns_number != neurons_number)
         {
-            if(fabs(statistics[j].minimum - statistics[j].maximum) < numeric_limits<double>::min())
-            {
-                if(display)
-                {
-                    cout << "OpenNN Warning: ScalingLayer class.\n"
-                              << "Vector<double> calculate_mean_standard_deviation_outputs(const Vector<double>&) const method.\n"
-                              << "Standard deviation of variable " << i << " is zero.\n"
-                              << "Those variables won't be scaled.\n";
-                }
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+                   << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
 
-                outputs[j] = inputs[j];
-            }
-            else
+            throw logic_error(buffer.str());
+        }
+
+    #endif
+
+        const size_t points_number = inputs.get_dimension(0);
+
+        outputs.set(Vector<size_t>({points_number, neurons_number}));
+
+        for(size_t i = 0; i < points_number; i++)
+        {
+            for(size_t j = 0; j < neurons_number; j++)
             {
-                if(scaling_methods[j] == NoScaling)
+                if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<double>::min())
                 {
-                    outputs(i,j) = inputs(i,j);
-                }
-                else if(scaling_methods[j] == MinimumMaximum)
-                {
-                    outputs(i,j) = 2.0*(inputs(i,j) - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum) - 1.0;
-                }
-                else if(scaling_methods[j] == MeanStandardDeviation)
-                {
-                    outputs(i,j) = (inputs(i,j) - statistics[j].mean)/statistics[j].standard_deviation;
-                }
-                else if(scaling_methods[j] == StandardDeviation)
-                {
-                    outputs(i,j) = inputs(i,j)/statistics[j].standard_deviation;
+                    if(display)
+                    {
+                        cout << "OpenNN Warning: ScalingLayer class.\n"
+                                  << "Tensor<double> calculate_mean_standard_deviation_outputs(const Tensor<double>&) const method.\n"
+                                  << "Standard deviation of variable " << i << " is zero.\n"
+                                  << "Those variables won't be scaled.\n";
+                    }
+
+                    outputs[j] = inputs[j];
                 }
                 else
                 {
-                    ostringstream buffer;
+                    if(scaling_methods[j] == NoScaling)
+                    {
+                        outputs(i,j) = inputs(i,j);
+                    }
+                    else if(scaling_methods[j] == MinimumMaximum)
+                    {
+                        outputs(i,j) = 2.0*(inputs(i,j) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum) - 1.0;
+                    }
+                    else if(scaling_methods[j] == MeanStandardDeviation)
+                    {
+                        outputs(i,j) = (inputs(i,j) - descriptives[j].mean)/descriptives[j].standard_deviation;
+                    }
+                    else if(scaling_methods[j] == StandardDeviation)
+                    {
+                        outputs(i,j) = inputs(i,j)/descriptives[j].standard_deviation;
+                    }
+                    else
+                    {
+                        ostringstream buffer;
 
-                    buffer << "OpenNN Exception: ScalingLayer class\n"
-                           << "Vector<double> calculate_outputs(const Vector<double>&) const method.\n"
-                           << "Unknown scaling method.\n";
+                        buffer << "OpenNN Exception: ScalingLayer class\n"
+                               << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+                               << "Unknown scaling method.\n";
 
-                    throw logic_error(buffer.str());
+                        throw logic_error(buffer.str());
+                    }
+                }
+            }
+        }
+    }
+    else if(inputs.get_dimensions_number() == 4)
+    {
+        const size_t neurons_number = get_neurons_number();
+
+    #ifdef __OPENNN_DEBUG__
+
+        ostringstream buffer;
+
+        const size_t columns_number = inputs.get_dimension(1) * inputs.get_dimension(2) * inputs.get_dimension(3);
+
+        if(columns_number != neurons_number)
+        {
+            buffer << "OpenNN Exception: ScalingLayer class.\n"
+                   << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+                   << "Size of inputs (" << columns_number << ") must be equal to number of scaling neurons (" << neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+    #endif
+
+        const size_t points_number = inputs.get_dimension(0);
+
+        outputs.set(Vector<size_t>({points_number, inputs.get_dimension(1), inputs.get_dimension(2), inputs.get_dimension(3)}));
+
+        for(size_t i = 0; i < points_number; i++)
+        {
+            for(size_t j = 0; j < neurons_number; j++)
+            {
+                size_t channel_index = j%(inputs.get_dimension(1));
+                size_t row_index = (j/(inputs.get_dimension(1)))%(inputs.get_dimension(2));
+                size_t column_index = (j/(inputs.get_dimension(1) * inputs.get_dimension(2)))%(inputs.get_dimension(3));
+
+                if(abs(descriptives[j].minimum - descriptives[j].maximum) < numeric_limits<double>::min())
+                {
+                    if(display)
+                    {
+                        cout << "OpenNN Warning: ScalingLayer class.\n"
+                                  << "Tensor<double> calculate_mean_standard_deviation_outputs(const Tensor<double>&) const method.\n"
+                                  << "Standard deviation of variable " << i << " is zero.\n"
+                                  << "Those variables won't be scaled.\n";
+                    }
+
+                    outputs[j] = inputs[j];
+                }
+                else
+                {
+                    if(scaling_methods[j] == NoScaling)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index);
+                    }
+                    else if(scaling_methods[j] == MinimumMaximum)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = 2.0*(inputs(i, channel_index, row_index, column_index) - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum) - 1.0;
+                    }
+                    else if(scaling_methods[j] == MeanStandardDeviation)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = (inputs(i, channel_index, row_index, column_index) - descriptives[j].mean)/descriptives[j].standard_deviation;
+                    }
+                    else if(scaling_methods[j] == StandardDeviation)
+                    {
+                        outputs(i, channel_index, row_index, column_index) = inputs(i, channel_index, row_index, column_index)/descriptives[j].standard_deviation;
+                    }
+                    else
+                    {
+                        ostringstream buffer;
+
+                        buffer << "OpenNN Exception: ScalingLayer class\n"
+                               << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+                               << "Unknown scaling method.\n";
+
+                        throw logic_error(buffer.str());
+                    }
                 }
             }
         }
     }
 
-    return(outputs);
-}
-
-
-/// This method retuns the derivatives of the scaled inputs with respect to the raw inputs.
-/// That derivatives depend on the inputs scaling method to be used. 
-
-Matrix<double> ScalingLayer::calculate_derivatives(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    Matrix<double> derivatives(points_number, scaling_neurons_number);
-
-    for(size_t i = 0; i < points_number; i++)
-    {
-        for(size_t j = 0; j < scaling_neurons_number; j++)
-        {
-            if(statistics[j].standard_deviation < numeric_limits<double>::min())
-            {
-                if(display)
-                {
-                    cout << "OpenNN Warning: ScalingLayer class.\n"
-                              << "Vector<double> calculate_default_derivatives(const Vector<double>&) const method.\n"
-                              << "Standard deviation of input variable " << i << " is zero.\n"
-                              << "That inputs is not be scaled.\n";
-                }
-
-                derivatives[j] = 1.0;
-            }
-            else
-            {
-                if(scaling_methods[j] == MeanStandardDeviation)
-                {
-                    derivatives(i,j) = 1.0/statistics[j].standard_deviation;
-                }
-                else if(scaling_methods[j] == MinimumMaximum)
-                {
-                    derivatives(i,j) = 2.0/(statistics[j].maximum-statistics[j].minimum);
-                }
-                else if(scaling_methods[j] == StandardDeviation)
-                {
-                    derivatives(i,j) = 1.0;
-                }
-                else
-                {
-                    ostringstream buffer;
-
-                    buffer << "OpenNN Exception: ScalingLayer class.\n"
-                           << "Vector<double> calculate_derivatives(const Vector<double>&) const method.\n"
-                           << "Unknown scaling and unscaling method.\n";
-
-                    throw logic_error(buffer.str());
-                }
-            }
-        }
-    }
-
-    return(derivatives);
-}
-
-
-/// This method retuns the second derivatives of the scaled inputs with respect to the raw inputs.
-/// That second derivatives depend on the inputs scaling method to be used. 
-
-Matrix<double> ScalingLayer::calculate_second_derivatives(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    return Matrix<double>(points_number, scaling_neurons_number, 0.0);
+    return outputs;
 }
 
 
 /// Calculates the outputs from the scaling layer with the minimum and maximum method for a set of inputs.
 /// @param inputs Vector of input values to the scaling layer. The size must be equal to the number of scaling neurons. 
 
-Matrix<double> ScalingLayer::calculate_minimum_maximum_outputs(const Matrix<double>& inputs) const
+Tensor<double> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<double>& inputs) const
 {
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t points_number = inputs.get_dimension(0);
+    const size_t neurons_number = get_neurons_number();
 
-    Matrix<double> outputs(points_number, scaling_neurons_number);
+    Tensor<double> outputs(points_number, neurons_number);
 
-
-    for(size_t j = 0; j < scaling_neurons_number; j++)
+    for(size_t j = 0; j < neurons_number; j++)
     {
-        if(statistics[j].maximum-statistics[j].minimum < numeric_limits<double>::min())
+        if(abs(descriptives[j].maximum-descriptives[j].minimum) < numeric_limits<double>::min())
         {
             if(display)
             {
                 cout << "OpenNN Warning: ScalingLayer class\n"
-                          << "Vector<double> calculate_minimum_maximum_outputs(Vector<double>&) const method.\n"
-                          << "Minimum and maximum values of variable " << j << " are equal.\n"
-                          << "Those inputs won't be scaled.\n";
+                     << "Vector<double> calculate_minimum_maximum_outputs(Vector<double>&) const method.\n"
+                     << "Minimum and maximum values of variable " << j << " are equal.\n"
+                     << "Those inputs won't be scaled.\n";
             }
 
             outputs[j] = inputs[j];
         }
         else
         {
-            outputs[j] = 2.0*(inputs[j] - statistics[j].minimum)/(statistics[j].maximum-statistics[j].minimum) - 1.0;
+            outputs[j] = 2.0*(inputs[j] - descriptives[j].minimum)/(descriptives[j].maximum-descriptives[j].minimum) - 1.0;
         }
     }
 
-    return(outputs);
-}
-
-
-/// Calculates the derivatives of the outputs from the scaling layer with the minimum and maximum method.
-/// As the minimum and maximum method is a linear method, the derivatives will not depend on the inputs. 
-
-Matrix<double> ScalingLayer::calculate_minimum_maximum_derivatives(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    Matrix<double> scaled_derivatives(points_number, scaling_neurons_number);
-
-    for(size_t j = 0; j < scaling_neurons_number; j++)
-    {
-        if(statistics[j].maximum-statistics[j].minimum < numeric_limits<double>::min())
-        {
-            if(display)
-            {
-                cout << "OpenNN Warning: ScalingLayer class.\n"
-                          << "Vector<double> calculate_minimum_maximum_derivatives(const Vector<double>&) const method.\n"
-                          << "Minimum and maximum values of variable " << j << " are equal.\n"
-                          << "That inputs is not scaled.\n";
-            }
-
-            scaled_derivatives[j] = 1.0;
-        }
-        else
-        {
-            scaled_derivatives[j] = 2.0/(statistics[j].maximum-statistics[j].minimum);
-        }
-    }
-
-    return(scaled_derivatives);
-}
-
-
-/// Calculates the second derivatives of the outputs from the scaling layer with the minimum and maximum method.
-/// As the minimum and maximum method is a linear method, the second derivatives will be always zero. 
-
-Matrix<double> ScalingLayer::calculate_minimum_maximum_second_derivatives(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    const Matrix<double> scaled_second_derivatives(points_number, scaling_neurons_number, 0.0);
-
-    return(scaled_second_derivatives);
+    return outputs;
 }
 
 
 /// Calculates the outputs from the scaling layer with the mean and standard deviation method for a set of inputs.
 /// @param inputs Vector of input values to the scaling layer. The size must be equal to the number of scaling neurons. 
 
-Matrix<double> ScalingLayer::calculate_mean_standard_deviation_outputs(const Matrix<double>& inputs) const
+Tensor<double> ScalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<double>& inputs) const
 {
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t points_number = inputs.get_dimension(0);
+    const size_t neurons_number = get_neurons_number();
 
-    Matrix<double> outputs(points_number, scaling_neurons_number);
+    Tensor<double> outputs(points_number, neurons_number);
 
-    for(size_t j = 0; j < scaling_neurons_number; j++)
+    for(size_t j = 0; j < neurons_number; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(abs(descriptives[j].standard_deviation) < numeric_limits<double>::min())
         {
             if(display)
             {
@@ -1215,109 +1025,21 @@ Matrix<double> ScalingLayer::calculate_mean_standard_deviation_outputs(const Mat
         }
         else
         {
-            outputs[j] = (inputs[j] - statistics[j].mean)/statistics[j].standard_deviation;
+            outputs[j] = (inputs[j] - descriptives[j].mean)/descriptives[j].standard_deviation;
         }
     }
 
-    return(outputs);
-}
-
-
-/// Calculates the derivatives of the outputs from the scaling layer with the mean and standard deviation method.
-/// As the minimum and maximum method is a linear method, the derivatives will not depend on the inputs. 
-
-Matrix<double> ScalingLayer::calculate_mean_standard_deviation_derivatives(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    Matrix<double> derivatives(points_number, scaling_neurons_number);
-
-    for(size_t j = 0; j < scaling_neurons_number; j++)
-    {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
-        {
-            if(display)
-            {
-                cout << "OpenNN Warning: ScalingLayer class.\n"
-                          << "Vector<double> calculate_mean_standard_deviation_derivatives(const Vector<double>&) const method.\n"
-                          << "Standard deviation of input variable " << j << " is zero.\n"
-                          << "That inputs is not be scaled.\n";
-            }
-
-            derivatives[j] = 1.0;
-        }
-        else
-        {
-            derivatives[j] = 1.0/statistics[j].standard_deviation;
-        }
-    }
-
-    return(derivatives);
-}
-
-
-/// Calculates the second derivatives of the outputs from the scaling layer with the mean and standard deviation method.
-/// As the minimum and maximum method is a linear method, the second derivatives will be always zero. 
-
-Matrix<double> ScalingLayer::calculate_mean_standard_deviation_second_derivatives(const Matrix<double>& inputs) const
-{
-    const size_t points_number = inputs.get_rows_number();
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    const Matrix<double> second_derivatives(points_number, scaling_neurons_number, 0.0);
-
-    return(second_derivatives);
-}
-
-
-/// Arranges a "Jacobian" vector of matrix from each of the rows of the matrix derivatives.
-
-Vector<Matrix<double>> ScalingLayer::calculate_Jacobian(const Matrix<double>& derivatives) const
-{
-    const size_t points_number = derivatives.get_rows_number();
-
-    Vector<Matrix<double>> Jacobian(points_number);
-
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    for(size_t i = 0; i < points_number; i++)
-    {
-        Jacobian[i].set(scaling_neurons_number, scaling_neurons_number, 0.0);
-
-        Jacobian[i].set_diagonal(derivatives);
-    }
-
-    return(Jacobian);
-}
-
-
-/// Arranges a "Hessian form" vector of matrices from the vector of second derivatives. 
-
-Vector< Matrix<double> > ScalingLayer::calculate_Hessian(const Vector<double>& second_derivative) const
-{
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    Vector< Matrix<double> > Hessian(scaling_neurons_number);
-
-    for(size_t i = 0; i < scaling_neurons_number; i++)
-    {
-        Hessian[i].set(scaling_neurons_number, scaling_neurons_number, 0.0);
-
-        Hessian[i](i,i) = second_derivative[i];
-    }
-
-    return(Hessian);
+    return outputs;
 }
 
 
 /// Returns a string with the expression of the scaling process when the none method is used.
-/// @param inputs_name Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_name Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
+/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
+/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 
-string ScalingLayer::write_no_scaling_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string ScalingLayer::write_no_scaling_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-    const size_t inputs_number = get_scaling_neurons_number();
+    const size_t inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
@@ -1325,22 +1047,20 @@ string ScalingLayer::write_no_scaling_expression(const Vector<string>& inputs_na
 
     for(size_t i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name[i] << "=" << inputs_name[i] << ";\n";
+        buffer << outputs_names[i] << "=" << inputs_names[i] << ";\n";
     }
 
-    return(buffer.str());
+    return buffer.str();
 }
 
 
-// string write_minimum_maximum_expression(const Vector<string>&, const Vector<string>&) const method
-
 /// Returns a string with the expression of the scaling process with the minimum and maximum method. 
-/// @param inputs_name Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
-/// @param outputs_name Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
+/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
+/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
 
-string ScalingLayer::write_minimum_maximum_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string ScalingLayer::write_minimum_maximum_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-    const size_t inputs_number = get_scaling_neurons_number();
+    const size_t inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
@@ -1348,22 +1068,20 @@ string ScalingLayer::write_minimum_maximum_expression(const Vector<string>& inpu
 
     for(size_t i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name[i] << "=2*(" << inputs_name[i] << "-" << statistics[i].minimum << ")/(" << statistics[i].maximum << "-" << statistics[i].minimum << ")-1;\n";
+        buffer << outputs_names[i] << "=2*(" << inputs_names[i] << "-" << descriptives[i].minimum << ")/(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")-1;\n";
     }
 
-    return(buffer.str());
+    return buffer.str();
 }   
 
 
-// string write_mean_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const method
-
 /// Returns a string with the expression of the scaling process with the mean and standard deviation method. 
-/// @param inputs_name Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
-/// @param outputs_name Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
+/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
+/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons. 
 
-string ScalingLayer::write_mean_standard_deviation_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string ScalingLayer::write_mean_standard_deviation_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-    const size_t inputs_number = get_scaling_neurons_number();
+    const size_t inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
@@ -1371,22 +1089,20 @@ string ScalingLayer::write_mean_standard_deviation_expression(const Vector<strin
 
     for(size_t i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name[i] << "= (" << inputs_name[i] << "-" << statistics[i].mean << ")/" << statistics[i].standard_deviation << ";\n";
+        buffer << outputs_names[i] << "= (" << inputs_names[i] << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
     }
 
-    return(buffer.str());
+    return buffer.str();
 }
 
-
-// string write_standard_deviation_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the scaling process with the standard deviation method.
-/// @param inputs_name Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
-/// @param outputs_name Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
+/// @param inputs_names Name of inputs to the scaling layer. The size of this vector must be equal to the number of scaling neurons.
+/// @param outputs_names Name of outputs from the scaling layer. The size of this vector must be equal to the number of scaling neurons.
 
-string ScalingLayer::write_standard_deviation_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string ScalingLayer::write_standard_deviation_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-    const size_t inputs_number = get_scaling_neurons_number();
+    const size_t inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
@@ -1394,43 +1110,40 @@ string ScalingLayer::write_standard_deviation_expression(const Vector<string>& i
 
     for(size_t i = 0; i < inputs_number; i++)
     {
-        buffer << outputs_name[i] << "=" << inputs_name[i] << "/" << statistics[i].standard_deviation << ";\n";
+        buffer << outputs_names[i] << "=" << inputs_names[i] << "/" << descriptives[i].standard_deviation << ";\n";
     }
 
-    return(buffer.str());
+    return buffer.str();
 }
 
-
-
-// string write_expression(const Vector<string>&, const Vector<string>&) const method
 
 /// Returns a string with the expression of the inputs scaling process. 
 
-string ScalingLayer::write_expression(const Vector<string>& inputs_name, const Vector<string>& outputs_name) const
+string ScalingLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
 {
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         if(scaling_methods[i] == NoScaling)
         {
-            buffer << outputs_name[i] << " = " << inputs_name[i] << ";\n";
+            buffer << outputs_names[i] << " = " << inputs_names[i] << ";\n";
         }
         else if(scaling_methods[i] == MinimumMaximum)
         {
-            buffer << outputs_name[i] << " = 2*(" << inputs_name[i] << "-" << statistics[i].minimum << ")/(" << statistics[i].maximum << "-" << statistics[i].minimum << ")-1;\n";
+            buffer << outputs_names[i] << " = 2*(" << inputs_names[i] << "-" << descriptives[i].minimum << ")/(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")-1;\n";
         }
         else if(scaling_methods[i] == MeanStandardDeviation)
         {
-            buffer << outputs_name[i] << " = (" << inputs_name[i] << "-" << statistics[i].mean << ")/" << statistics[i].standard_deviation << ";\n";
+            buffer << outputs_names[i] << " = (" << inputs_names[i] << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
         }
         else if(scaling_methods[i] == StandardDeviation)
         {
-            buffer << outputs_name[i] << " = " << inputs_name[i] << "/" << statistics[i].standard_deviation << ";\n";
+            buffer << outputs_names[i] << " = " << inputs_names[i] << "/" << descriptives[i].standard_deviation << ";\n";
         }
         else
         {
@@ -1444,7 +1157,7 @@ string ScalingLayer::write_expression(const Vector<string>& inputs_name, const V
         }
     }
 
-    return(buffer.str());
+    return buffer.str();
 }
 
 
@@ -1454,27 +1167,24 @@ string ScalingLayer::object_to_string() const
 {
     ostringstream buffer;
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
     buffer << "Scaling layer\n";
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
-        buffer << "Statistics " << i+1 << "\n"
-               << "Minimum: " << statistics[i].minimum << "\n"
-               << "Maximum: " << statistics[i].maximum << "\n"
-               << "Mean: " << statistics[i].mean << "\n"
-               << "Standard deviation: " << statistics[i].standard_deviation << "\n";
+        buffer << "Descriptives " << i+1 << "\n"
+               << "Minimum: " << descriptives[i].minimum << "\n"
+               << "Maximum: " << descriptives[i].maximum << "\n"
+               << "Mean: " << descriptives[i].mean << "\n"
+               << "Standard deviation: " << descriptives[i].standard_deviation << "\n";
     }
 
     buffer << "Scaling methods: " << write_scaling_methods() << "\n";
-    //<< "Display: " << display << "\n";
 
-    return(buffer.str());
+    return buffer.str();
 }
 
-
-// tinyxml2::XMLDocument* to_XML() const method
 
 /// Serializes the scaling layer object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this element. 
@@ -1494,20 +1204,20 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
     tinyxml2::XMLElement* size_element = document->NewElement("ScalingNeuronsNumber");
     scaling_layer_element->LinkEndChild(size_element);
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
     buffer.str("");
-    buffer << scaling_neurons_number;
+    buffer << neurons_number;
 
     tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
     size_element->LinkEndChild(size_text);
 
     const Vector<string> scaling_methods_string = write_scaling_methods();
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         tinyxml2::XMLElement* scaling_neuron_element = document->NewElement("ScalingNeuron");
-        scaling_neuron_element->SetAttribute("Index",(unsigned)i+1);
+        scaling_neuron_element->SetAttribute("Index", static_cast<unsigned>(i+1));
 
         scaling_layer_element->LinkEndChild(scaling_neuron_element);
 
@@ -1517,7 +1227,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
         scaling_neuron_element->LinkEndChild(minimum_element);
 
         buffer.str("");
-        buffer << statistics[i].minimum;
+        buffer << descriptives[i].minimum;
 
         tinyxml2::XMLText* minimum_text = document->NewText(buffer.str().c_str());
         minimum_element->LinkEndChild(minimum_text);
@@ -1528,7 +1238,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
         scaling_neuron_element->LinkEndChild(maximum_element);
 
         buffer.str("");
-        buffer << statistics[i].maximum;
+        buffer << descriptives[i].maximum;
 
         tinyxml2::XMLText* maximum_text = document->NewText(buffer.str().c_str());
         maximum_element->LinkEndChild(maximum_text);
@@ -1539,7 +1249,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
         scaling_neuron_element->LinkEndChild(mean_element);
 
         buffer.str("");
-        buffer << statistics[i].mean;
+        buffer << descriptives[i].mean;
 
         tinyxml2::XMLText* mean_text = document->NewText(buffer.str().c_str());
         mean_element->LinkEndChild(mean_text);
@@ -1550,7 +1260,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
         scaling_neuron_element->LinkEndChild(standard_deviation_element);
 
         buffer.str("");
-        buffer << statistics[i].standard_deviation;
+        buffer << descriptives[i].standard_deviation;
 
         tinyxml2::XMLText* standard_deviation_text = document->NewText(buffer.str().c_str());
         standard_deviation_element->LinkEndChild(standard_deviation_text);
@@ -1586,7 +1296,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
     //   tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
     //   display_element->LinkEndChild(display_text);
 
-    return(document);
+    return document;
 }
 
 
@@ -1599,7 +1309,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
     file_stream.OpenElement("ScalingLayer");
 
@@ -1608,7 +1318,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ScalingNeuronsNumber");
 
     buffer.str("");
-    buffer << scaling_neurons_number;
+    buffer << neurons_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1618,7 +1328,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Scaling neurons
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("ScalingNeuron");
 
@@ -1629,7 +1339,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("Minimum");
 
         buffer.str("");
-        buffer << statistics[i].minimum;
+        buffer << descriptives[i].minimum;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -1640,7 +1350,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("Maximum");
 
         buffer.str("");
-        buffer << statistics[i].maximum;
+        buffer << descriptives[i].maximum;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -1651,7 +1361,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("Mean");
 
         buffer.str("");
-        buffer << statistics[i].mean;
+        buffer << descriptives[i].mean;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -1662,7 +1372,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("StandardDeviation");
 
         buffer.str("");
-        buffer << statistics[i].standard_deviation;
+        buffer << descriptives[i].standard_deviation;
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -1697,8 +1407,6 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-// void from_XML(const tinyxml2::XMLDocument&) method
-
 /// Deserializes a TinyXML document into this scaling layer object.
 /// @param document XML document containing the member data.
 
@@ -1719,9 +1427,9 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     // Scaling neurons number
 
-    const tinyxml2::XMLElement* scaling_neurons_number_element = scaling_layer_element->FirstChildElement("ScalingNeuronsNumber");
+    const tinyxml2::XMLElement* neurons_number_element = scaling_layer_element->FirstChildElement("ScalingNeuronsNumber");
 
-    if(!scaling_neurons_number_element)
+    if(!neurons_number_element)
     {
         buffer << "OpenNN Exception: ScalingLayer class.\n"
                << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
@@ -1730,15 +1438,15 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t scaling_neurons_number = static_cast<size_t>(atoi(scaling_neurons_number_element->GetText()));
+    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
 
-    set(scaling_neurons_number);
+    set(neurons_number);
 
     unsigned index = 0; // size_t does not work
 
-    const tinyxml2::XMLElement* start_element = scaling_neurons_number_element;
+    const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(size_t i = 0; i < scaling_neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         start_element = scaling_neuron_element;
@@ -1778,7 +1486,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(minimum_element->GetText())
         {
-            statistics[i].minimum = atof(minimum_element->GetText());
+            descriptives[i].minimum = atof(minimum_element->GetText());
         }
 
         // Maximum
@@ -1796,7 +1504,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(maximum_element->GetText())
         {
-            statistics[i].maximum = atof(maximum_element->GetText());
+            descriptives[i].maximum = atof(maximum_element->GetText());
         }
 
         // Mean
@@ -1814,7 +1522,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(mean_element->GetText())
         {
-            statistics[i].mean = atof(mean_element->GetText());
+            descriptives[i].mean = atof(mean_element->GetText());
         }
 
         // Standard deviation
@@ -1832,7 +1540,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         if(standard_deviation_element->GetText())
         {
-            statistics[i].standard_deviation = atof(standard_deviation_element->GetText());
+            descriptives[i].standard_deviation = atof(standard_deviation_element->GetText());
         }
 
         // Scaling method
@@ -1868,7 +1576,6 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
         else
         {
-
             scaling_methods[i] = NoScaling;
 
 //            buffer << "OpenNN Exception: ScalingLayer class.\n"
@@ -1916,365 +1623,6 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-}
-
-
-/// Serializes the scaling layer object into a PMML document.
-/// @param element XML element to append the scaling layer object.
-/// @param inputs_names Names of the inputs variables.
-/// @todo
-
-void ScalingLayer::to_PMML(tinyxml2::XMLElement* element, const Vector<string>& inputs_names) const
-{
-/*
-    tinyxml2::XMLDocument* pmml_document = element->GetDocument();
-
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    stringstream double_precision_stream;
-
-    // Check scaling neurons number error
-
-    if(scaling_neurons_number != inputs_names.size())
-    {
-        return;
-    }
-
-    if(scaling_methods.contains(NoScaling))
-    {
-        return;
-    }
-
-    const Vector<double> inputs_to_scale_range_begin(scaling_neurons_number,0.0f);
-    const Vector<double> inputs_to_scale_range_end(scaling_neurons_number,1.0f);
-
-    const Vector<double> scaled_outputs_range_begin = calculate_outputs(inputs_to_scale_range_begin);
-    const Vector<double> scaled_outputs_range_end = calculate_outputs(inputs_to_scale_range_end);
-
-
-    for(size_t i = 0; i < scaling_neurons_number; i++)
-    {
-        const string current_input_display_name(inputs_names[i]);
-        const string current_input_name(current_input_display_name + "*");
-
-        tinyxml2::XMLElement* derived_field = pmml_document->NewElement("DerivedField");
-        element->LinkEndChild(derived_field);
-
-        derived_field->SetAttribute("displayName",current_input_display_name.c_str());
-        derived_field->SetAttribute("name",current_input_name.c_str());
-        derived_field->SetAttribute("dataType","double");
-        derived_field->SetAttribute("optype","continuous");
-
-
-        tinyxml2::XMLElement* norm_continuous = pmml_document->NewElement("NormContinuous");
-        derived_field->LinkEndChild(norm_continuous);
-
-        norm_continuous->SetAttribute("field",current_input_display_name.c_str());
-
-
-        tinyxml2::XMLElement* linear_norm_begin = pmml_document->NewElement("LinearNorm");
-        norm_continuous->LinkEndChild(linear_norm_begin);
-
-        linear_norm_begin->SetAttribute("orig", "0.0");
-
-        double_precision_stream.str(string());
-        double_precision_stream << setprecision(15) << scaled_outputs_range_begin[i];
-
-        linear_norm_begin->SetAttribute("norm",double_precision_stream.str().c_str());
-
-
-        tinyxml2::XMLElement* linear_norm_end = pmml_document->NewElement("LinearNorm");
-        norm_continuous->LinkEndChild(linear_norm_end);
-
-        linear_norm_end->SetAttribute("orig", "1.0");
-
-        double_precision_stream.str(string());
-        double_precision_stream << setprecision(15) << scaled_outputs_range_end[i];
-
-        linear_norm_end->SetAttribute("norm",double_precision_stream.str().c_str());
-    }
-*/
-}
-
-
-/// Serializes the scaling layer object into a PMML document.
-/// @param file_stream XML file where the scaling layer object will be serialized.
-/// @param inputs_names Names of the inputs variables.
-/// @todo
-
-void ScalingLayer::write_PMML(tinyxml2::XMLPrinter& file_stream, const Vector<string>& inputs_names) const
-{
-/*
-    const size_t scaling_neurons_number = get_scaling_neurons_number();
-
-    stringstream double_precision_stream;
-
-    // Check scaling neurons number error
-
-    if(scaling_neurons_number != inputs_names.size())
-    {
-        return;
-    }
-
-    if(scaling_methods.contains(NoScaling))
-    {
-        return;
-    }
-
-    const Vector<double> inputs_to_scale_range_begin(scaling_neurons_number,0.0f);
-    const Vector<double> inputs_to_scale_range_end(scaling_neurons_number,1.0f);
-
-    const Vector<double> scaled_outputs_range_begin = calculate_outputs(inputs_to_scale_range_begin);
-    const Vector<double> scaled_outputs_range_end = calculate_outputs(inputs_to_scale_range_end);
-
-
-    for(size_t i = 0; i < scaling_neurons_number; i++)
-    {
-        const string current_input_display_name(inputs_names[i]);
-        const string current_input_name(current_input_display_name + "*");
-
-        file_stream.OpenElement("DerivedField");
-
-        file_stream.PushAttribute("displayName",current_input_display_name.c_str());
-        file_stream.PushAttribute("name",current_input_name.c_str());
-        file_stream.PushAttribute("dataType","double");
-        file_stream.PushAttribute("optype","continuous");
-
-
-        file_stream.OpenElement("NormContinuous");
-
-        file_stream.PushAttribute("field",current_input_display_name.c_str());
-
-        // Normalization range begin
-
-        file_stream.OpenElement("LinearNorm");
-
-        file_stream.PushAttribute("orig", "0.0");
-
-        double_precision_stream.str(string());
-        double_precision_stream << setprecision(15) << scaled_outputs_range_begin[i];
-
-        file_stream.PushAttribute("norm",double_precision_stream.str().c_str());
-
-        file_stream.CloseElement();
-
-        // Normalization range end
-
-        file_stream.OpenElement("LinearNorm");
-
-        file_stream.PushAttribute("orig", "1.0");
-
-        double_precision_stream.str(string());
-        double_precision_stream << setprecision(15) << scaled_outputs_range_end[i];
-
-        file_stream.PushAttribute("norm",double_precision_stream.str().c_str());
-
-        file_stream.CloseElement();
-
-        // Close NormContinuous
-        file_stream.CloseElement();
-
-        // Close DerivedField
-        file_stream.CloseElement();
-    }
-*/
-}
-
-
-/// Deserializes a PMML document into this scaling layer object.
-
-void ScalingLayer::from_PMML(const tinyxml2::XMLElement* element, const Vector<string>& inputs_names)
-{
-    stringstream buffer;
-
-    const tinyxml2::XMLElement* derived_field = element->FirstChildElement("DerivedField");
-
-    ScalingMethod new_scaling_method = NoScaling;
-
-    int i = 0;
-    while(derived_field)
-    {
-        string derived_field_name;
-
-        const tinyxml2::XMLAttribute* attribute_display_name = derived_field->FindAttribute("displayName");
-
-        if(!attribute_display_name)
-        {
-            const tinyxml2::XMLAttribute* attribute_name = derived_field->FindAttribute("name");
-
-            if(!attribute_name)
-            {
-                buffer << "OpenNN Exception: ScalingLayer class.\n"
-                       << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                       << "Attribute \"name\" in DerivedField element is nullptr.\n";
-
-                throw logic_error(buffer.str());
-            }
-
-            derived_field_name = string(attribute_name->Value());
-        }
-        else
-        {
-            derived_field_name = string(attribute_display_name->Value());
-        }
-
-        if( ! derived_field->FindAttribute("optype"))
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                   << "Attribute \"optype\" in DerivedField element is nullptr.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        //not supported
-
-        if( string(derived_field->FindAttribute("optype")->Value()) != "continuous")
-        {
-            break;
-        }
-
-        const tinyxml2::XMLElement* norm_continuous = derived_field->FirstChildElement("NormContinuous");
-
-        if(!norm_continuous)
-        {
-            break;
-        }
-
-        const tinyxml2::XMLAttribute* norm_continuous_field = norm_continuous->FindAttribute("field");
-
-        if(!norm_continuous_field)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                   << "Attribute \"field\" in NormContinuous_field element is nullptr.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(!inputs_names.contains(string(norm_continuous_field->Value())))
-        {
-            derived_field = derived_field->NextSiblingElement("DerivedField");
-            continue;
-        }
-
-        const tinyxml2::XMLElement* linear_norm_begin = norm_continuous->FirstChildElement("LinearNorm");
-        const tinyxml2::XMLElement* linear_norm_end = norm_continuous->LastChildElement("LinearNorm");
-
-        if(!linear_norm_begin || !linear_norm_end)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                   << "LinearNorm in NormContinuous element is nullptr.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        const tinyxml2::XMLAttribute* attribute_orig_begin = linear_norm_begin->FindAttribute("orig");
-        const tinyxml2::XMLAttribute* attribute_orig_end = linear_norm_end->FindAttribute("orig");
-
-        if(!attribute_orig_begin || !attribute_orig_end)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                   << "Attribute \"orig\" in LinearNorm element is nullptr.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        const tinyxml2::XMLAttribute* attribute_norm_begin = linear_norm_begin->FindAttribute("norm");
-        const tinyxml2::XMLAttribute* attribute_norm_end = linear_norm_end->FindAttribute("norm");
-
-        if(!attribute_norm_begin || !attribute_norm_end)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                   << "Attribute \"norm\" in LinearNorm element is nullptr.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        const string string_orig_begin(attribute_orig_begin->Value());
-        const string string_orig_end(attribute_orig_end->Value());
-        const string string_normalization_range_begin(attribute_norm_begin->Value());
-        const string string_normalization_range_end(attribute_norm_end->Value());
-
-        if(string_orig_begin == ""
-          || string_orig_end == ""
-          || string_normalization_range_begin == ""
-          || string_normalization_range_end == "" )
-        {
-            break;
-        }
-
-        double orig_begin = atof(string_orig_begin.c_str());
-        double orig_end = atof(string_orig_end.c_str());
-        double normalization_range_begin = atof(string_normalization_range_begin.c_str());
-        double normalization_range_end = atof(string_normalization_range_end.c_str());
-
-        if(orig_begin > orig_end)
-        {
-            double swap = orig_begin;
-            orig_begin = orig_end;
-            orig_end = swap;
-
-            swap = normalization_range_begin;
-            normalization_range_begin = normalization_range_end;
-            normalization_range_end = swap;
-        }
-
-        if(orig_begin == orig_end)
-        {
-            buffer << "OpenNN Exception: ScalingLayer class.\n"
-                   << "void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&) method.\n"
-                   << "Attributes \"orig\" in LinearNorm elements are equals.\n";
-
-            throw logic_error(buffer.str());
-        }
-
-        if(normalization_range_begin != normalization_range_end)
-        {
-            // Set data mean and standard deviation
-
-            const double new_data_standard_deviation = (orig_begin - orig_end) /(normalization_range_begin - normalization_range_end);
-            const double new_data_mean = orig_begin - normalization_range_begin * new_data_standard_deviation;
-
-            set_mean(static_cast<unsigned>(i),new_data_mean);
-            set_standard_deviation(static_cast<unsigned>(i),new_data_standard_deviation);
-
-
-            const double new_min = ((2 * normalization_range_end * orig_begin) + (2 * orig_begin) -(2 * normalization_range_begin * orig_end) -(2 * orig_end)) /(2 *(normalization_range_end - normalization_range_begin));
-            double new_max;
-
-            if((normalization_range_begin + 1) != 0)
-            {
-                new_max = ((2 *(orig_begin - new_min)) /(normalization_range_begin + 1) ) + new_min;
-            }
-            else
-            {
-                new_max = ((2 *(orig_end - new_min)) /(normalization_range_end + 1) ) + new_min;
-            }
-
-
-            if(fabs(new_min - get_statistics().at(i).minimum) < 1e-5 && fabs(new_max - get_statistics().at(i).maximum) < 1e-5)
-            {
-                if(new_scaling_method == NoScaling)
-                {
-                    new_scaling_method = MinimumMaximum;
-                }
-            }
-            else
-            {
-                new_scaling_method = MeanStandardDeviation;
-            }
-        }
-
-        derived_field = derived_field->NextSiblingElement("DerivedField");
-
-        i++;
-    }
-
-    set_scaling_methods(new_scaling_method);
 }
 
 }

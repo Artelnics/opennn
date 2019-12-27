@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   S C A L I N G   L A Y E R   C L A S S   H E A D E R                                                        */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S C A L I N G   L A Y E R   C L A S S   H E A D E R                   
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __SCALINGLAYER_H__
-#define __SCALINGLAYER_H__
+#ifndef SCALINGLAYER_H
+#define SCALINGLAYER_H
 
 // System includes
 
@@ -26,8 +22,10 @@
 
 #include "vector.h"
 #include "matrix.h"
+#include "layer.h"
+#include "statistics.h"
 
-// TinyXml includes
+
 
 #include "tinyxml2.h"
 
@@ -35,58 +33,49 @@ namespace OpenNN
 {
 
 /// This class represents a layer of scaling neurons.
+
+///
 /// Scaling layers are included in the definition of a neural network. 
 /// They are used to normalize variables so they are in an appropriate range for computer processing.  
 
-class ScalingLayer
+class ScalingLayer : public Layer
 {
 
 public:
 
-   // DEFAULT CONSTRUCTOR
+   // Constructors
 
    explicit ScalingLayer();
 
-   // INPUTS NUMBER CONSTRUCTOR
-
    explicit ScalingLayer(const size_t&);
+   explicit ScalingLayer(const Vector<size_t>&);
 
-   // STATISTICS CONSTRUCTOR
-
-   explicit ScalingLayer(const Vector< Statistics<double> >&);
-
-   // COPY CONSTRUCTOR
+   explicit ScalingLayer(const Vector<Descriptives>&);
 
    ScalingLayer(const ScalingLayer&);
 
-   // DESTRUCTOR
+   // Destructors
 
    virtual ~ScalingLayer();
-
-   // ASSIGNMENT OPERATOR
-
-   ScalingLayer& operator = (const ScalingLayer&);
-
-   // EQUAL TO OPERATOR
-
-   bool operator == (const ScalingLayer&) const;
-
-   // ENUMERATIONS
 
    /// Enumeration of available methods for scaling the input variables.  
    
    enum ScalingMethod{NoScaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation};
 
-   // GET METHODS
+   // Get methods
 
-   size_t get_scaling_neurons_number() const;
+   Vector<size_t> get_input_variables_dimensions() const;
+   Vector<size_t> get_outputs_dimensions() const;
 
-   // Inputs statistics
+   size_t get_inputs_number() const;
+   size_t get_neurons_number() const;
 
-   Vector< Statistics<double> > get_statistics() const;
-   Statistics<double> get_statistics(const size_t&) const;
+   // Inputs descriptives
 
-   Matrix<double> get_statistics_matrix() const;
+   Vector<Descriptives> get_descriptives() const;
+   Descriptives get_descriptives(const size_t&) const;
+
+   Matrix<double> get_descriptives_matrix() const;
 
    Vector<double> get_minimums() const;
    Vector<double> get_maximums() const;
@@ -104,23 +93,27 @@ public:
 
    const bool& get_display() const;
 
-   // SET METHODS
+   // Set methods
 
    void set();
    void set(const size_t&);
-   void set(const Vector< Statistics<double> >&);
+   void set(const Vector<size_t>&);
+   void set(const Vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
    void set(const Vector<bool>&);
 
-   virtual void set_default();
+   void set_inputs_number(const size_t&);
+   void set_neurons_number(const size_t&);
 
-   // Statistics
+   void set_default();
 
-   void set_statistics(const Vector< Statistics<double> >&);
-   void set_statistics_eigen(const Eigen::MatrixXd&);
-   void set_item_statistics(const size_t&, const Statistics<double>&);
+   // Descriptives
+
+   void set_descriptives(const Vector<Descriptives>&);
+   void set_descriptives_eigen(const Eigen::MatrixXd&);
+   void set_item_descriptives(const size_t&, const Descriptives&);
 
    void set_minimum(const size_t&, const double&);
    void set_maximum(const size_t&, const double&);
@@ -142,34 +135,21 @@ public:
 
    // Pruning and growing
 
-   void grow_scaling_neuron(const Statistics<double>& new_statistics = Statistics<double>());
+   void grow_neuron(const Descriptives& new_descriptives = Descriptives());
 
-   void prune_scaling_neuron(const size_t&);
+   void prune_neuron(const size_t&);
 
    // Check methods
 
    bool is_empty() const;
 
-   // Inputs scaling function
-
-   void initialize_random();
-
    void check_range(const Vector<double>&) const;
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_second_derivatives(const Matrix<double>&) const;
+   Tensor<double> calculate_outputs(const Tensor<double>&);
 
-   Matrix<double> calculate_minimum_maximum_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_minimum_maximum_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_minimum_maximum_second_derivatives(const Matrix<double>&) const;
+   Tensor<double> calculate_minimum_maximum_outputs(const Tensor<double>&) const;
 
-   Matrix<double> calculate_mean_standard_deviation_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_mean_standard_deviation_derivatives(const Matrix<double>&) const;
-   Matrix<double> calculate_mean_standard_deviation_second_derivatives(const Matrix<double>&) const;
-
-   Vector<Matrix<double>> calculate_Jacobian(const Matrix<double>&) const;
-   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
+   Tensor<double> calculate_mean_standard_deviation_outputs(const Tensor<double>&) const;
 
    // Expression methods
 
@@ -192,21 +172,13 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   // PMML Methods
-
-   void to_PMML(tinyxml2::XMLElement*, const Vector<string>&) const;
-   void write_PMML(tinyxml2::XMLPrinter&, const Vector<string>&) const;
-
-
-   void from_PMML(const tinyxml2::XMLElement*, const Vector<string>&);
-
 protected:
 
-   // MEMBERS
+   Vector<size_t> inputs_dimensions;
 
-   /// Statistics of input variables.
+   /// Descriptives of input variables.
 
-   Vector< Statistics<double> > statistics;
+   Vector<Descriptives> descriptives;
 
    /// Vector of scaling methods for each variable.
 

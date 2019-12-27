@@ -1,24 +1,19 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   T R A I N I N G   R A T E   A L G O R I T H M   T E S T   C L A S S   H E A D E R                          */
-/*                                                                                                              */ 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   L E A R N I N G   R A T E   A L G O R I T H M   T E S T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __TRAININGRATEALGORITHMTEST_H__
-#define __TRAININGRATEALGORITHMTEST_H__
+#ifndef LEARNINGRATEALGORITHMTEST_H
+#define LEARNINGRATEALGORITHMTEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
 
 using namespace OpenNN;
-
 
 class LearningRateAlgorithmTest : public UnitTesting 
 {
@@ -29,17 +24,9 @@ class LearningRateAlgorithmTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit LearningRateAlgorithmTest(); 
 
-
-   // DESTRUCTOR
-
    virtual ~LearningRateAlgorithmTest();
-
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -52,22 +39,16 @@ public:
 
    // Training operators
 
-   void test_get_training_rate_method();
-   void test_get_training_rate_method_name();
+   void test_get_learning_rate_method();
+   void test_get_learning_rate_method_name();
 
    // Training parameters
 
    void test_get_loss_tolerance();
 
-   void test_get_warning_training_rate();
+   void test_get_warning_learning_rate();
 
-   void test_get_error_training_rate();
-
-   // Stopping criteria
-
-   // Reserve training history
-
-   // Training history
+   void test_get_error_learning_rate();
 
    // Utilities
 
@@ -82,15 +63,15 @@ public:
 
    // Training operators
 
-   void test_set_training_rate_method();
+   void test_set_learning_rate_method();
 
    // Training parameters
 
    void test_set_loss_tolerance();
 
-   void test_set_warning_training_rate();
+   void test_set_warning_learning_rate();
 
-   void test_set_error_training_rate();
+   void test_set_error_learning_rate();
 
     // Utilities
 
@@ -121,7 +102,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

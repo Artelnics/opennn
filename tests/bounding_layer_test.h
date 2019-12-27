@@ -1,17 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   B O U N D I N G   L A Y E R   T E S T   C L A S S   H E A D E R                                            */
-/*                                                                                                              */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   B O U N D I N G   L A Y E R   T E S T   C L A S S   H E A D E R       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-#ifndef __BOUNDINGLAYERTEST_H__
-#define __BOUNDINGLAYERTEST_H__
+#ifndef BOUNDINGLAYERTEST_H
+#define BOUNDINGLAYERTEST_H
 
 // Unit testing includes
 
@@ -26,17 +22,11 @@ class BoundingLayerTest : public UnitTesting
 #define TOSTRING(x) STRING(x)
 #define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
 
-public:
-
-   // GENERAL CONSTRUCTOR
+public: 
 
    explicit BoundingLayerTest();
 
-   // DESTRUCTOR
-
    virtual ~BoundingLayerTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -51,7 +41,7 @@ public:
 
    // Architecture
 
-   void test_get_bounding_neurons_number();
+   void test_get_neurons_number();
    
    // Variables bounds
 
@@ -62,12 +52,13 @@ public:
    void test_get_upper_bound();
 
    void test_get_bounds();
+   void test_get_type();
 
    // Display messages
 
    void test_get_display();
 
-   // SET METHODS
+   // Set methods
 
    void test_set();
    void test_set_default();
@@ -86,16 +77,10 @@ public:
 
    void test_set_display();
 
-   // Initialization methods
-
-   void test_initialize_random();
-
    // Output methods
 
    void test_calculate_outputs();
    void test_calculate_derivatives();
-   void test_calculate_second_derivatives();
-
 
    // Expression methods
 
@@ -111,13 +96,10 @@ public:
    void run_test_case();
 };
 
-
 #endif
 
-
-
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

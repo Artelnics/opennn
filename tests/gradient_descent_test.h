@@ -1,18 +1,14 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   G R A D I E N T   D E S C E N T   T E S T   C L A S S   H E A D E R                                        */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   G R A D I E N T   D E S C E N T   T E S T   C L A S S   H E A D E R   
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
 
-#ifndef __GRADIENTDESCENTTEST_H__
-#define __GRADIENTDESCENTTEST_H__
+#ifndef GRADIENTDESCENTTEST_H
+#define GRADIENTDESCENTTEST_H
 
 // Unit testing includes
 
@@ -30,16 +26,16 @@ class GradientDescentTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
+   
 
    explicit GradientDescentTest();
 
-   // DESTRUCTOR
+   
 
    virtual ~GradientDescentTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
@@ -76,7 +72,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

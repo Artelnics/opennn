@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   N E U R A L   N E T W O R K   T E S T   C L A S S   H E A D E R                                            */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   N E U R A L   N E T W O R K   T E S T   C L A S S   H E A D E R       
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __NEURALNETWORKTEST_H__
-#define __NEURALNETWORKTEST_H__
+#ifndef NEURALNETWORKTEST_H
+#define NEURALNETWORKTEST_H
 
 // Unit testing includes
 
@@ -30,16 +25,9 @@ class NeuralNetworkTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
-   explicit NeuralNetworkTest();
-
-
-   // DESTRUCTOR
+   explicit NeuralNetworkTest();   
 
    virtual ~NeuralNetworkTest();
-
-   // METHODS
 
    // Constructor and destructor methods
 
@@ -50,44 +38,25 @@ public:
 
    void test_assignment_operator();
 
-   // Get methods
-
-   void test_get_inputs_pointer();
-   void test_get_outputs_pointer();
-
-   void test_get_multilayer_perceptron_pointer();
-   void test_get_scaling_layer_pointer();
-   void test_get_unscaling_layer_pointer();   
-   void test_get_bounding_layer_pointer();
-   void test_get_probabilistic_layer_pointer();
-
-   // Display warning 
-
   // Parameters methods
 
    void test_get_parameters_number();
    void test_get_parameters();   
 
+   void test_get_trainable_layers_parameters_number();
+
    // Display messages
 
    void test_get_display();
 
-   // SET METHODS
+   // Set methods
 
    void test_set();
    void test_set_default();
 
-   // Multilayer perceptron architecture
+   // Architecture
 
    void test_set_network();
-
-   // Variables
-
-   void test_set_variables();
-
-   // Variables statistics
-
-   void test_set_variables_statistics();
 
    // Parameters
 
@@ -97,15 +66,6 @@ public:
 
    void test_set_display_inputs_warning();
    void test_set_display();
-
-   // Growing and pruning
-
-   void test_prune_input();
-   void test_prune_output();
-
-   // Neural network initialization methods
-
-   void test_initialize_random();
 
    // Parameters initialization methods
 
@@ -119,13 +79,8 @@ public:
 
    // Output 
 
+   void test_calculate_trainable_outputs();
    void test_calculate_outputs();
-
-   void test_calculate_Jacobian();
-   void test_calculate_Jacobian_data();
-
-   void test_calculate_parameters_Jacobian();
-   void test_calculate_parameters_Jacobian_data();
 
    // Expression methods
 
@@ -134,10 +89,7 @@ public:
    void test_write_expression();
    void test_save_expression();
 
-   // Hinton diagram methods
-
-   void test_get_Hinton_diagram_XML();   
-   void test_save_Hinton_diagram();
+   void test_add_layer();
 
    // Serialization methods
 
@@ -149,18 +101,20 @@ public:
    void test_save();
    void test_load();
 
+   // Forward propagation
+
+   void test_calculate_forward_propagation();
+
    // Unit testing methods
 
    void run_test_case();
 };
 
-
 #endif
 
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

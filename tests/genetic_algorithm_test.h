@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   G E N E T I C   A L G O R I T H M   T E S T   C L A S S   H E A D E R                                      */
-/*                                                                                                              */
-/*   Fernando Gomez                                                                                             */
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   fernandogomez@artelnics.com                                                                                */
-/*                                                                                                              */
-/****************************************************************************************************************/
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   G E N E T I C   A L G O R I T H M   T E S T   C L A S S   H E A D E R 
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com                                           
 
-#ifndef __GENETICALGORITHMTEST_H__
-#define __GENETICALGORITHMTEST_H__
+#ifndef GENETICALGORITHMTEST_H
+#define GENETICALGORITHMTEST_H
 
 // Unit testing includes
 
@@ -35,12 +30,12 @@ public:
    explicit GeneticAlgorithmTest();
 
 
-   // DESTRUCTOR
+   
 
    virtual ~GeneticAlgorithmTest();
 
 
-   // METHODS
+   
 
    // Constructor and destructor methods
 
@@ -69,9 +64,9 @@ public:
 
    void test_perform_mutation();
 
-   // Order selection methods
+   // Inputs selection methods
 
-   void test_perform_order_selection();
+   void test_perform_inputs_selection();
 
    // Serialization methods
 

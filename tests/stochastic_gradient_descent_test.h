@@ -1,18 +1,13 @@
-/****************************************************************************************************************/
-/*                                                                                                              */
-/*   OpenNN: Open Neural Networks Library                                                                       */
-/*   www.opennn.net                                                                                             */
-/*                                                                                                              */
-/*   S T O C H A S T I C   G R A D I E N T   D E S C E N T   T E S T   C L A S S   H E A D E R                  */
-/*                                                                                                              */
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S T O C H A S T I C   G R A D I E N T   D E S C E N T   T E S T   C L A S S   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
 
-/*   Artificial Intelligence Techniques SL                                                                      */
-/*   artelnics@artelnics.com                                                                                    */
-/*                                                                                                              */
-/****************************************************************************************************************/
-
-#ifndef __STOCHASTICGRADIENTDESCENTTEST_H__
-#define __STOCHASTICGRADIENTDESCENTTEST_H__
+#ifndef STOCHASTICGRADIENTDESCENTTEST_H
+#define STOCHASTICGRADIENTDESCENTTEST_H
 
 // Unit testing includes
 
@@ -30,16 +25,9 @@ class StochasticGradientDescentTest : public UnitTesting
 
 public:
 
-   // GENERAL CONSTRUCTOR
-
    explicit StochasticGradientDescentTest();
 
-   // DESTRUCTOR
-
-   virtual ~StochasticGradientDescentTest();
-
-
-   // METHODS
+   virtual ~StochasticGradientDescentTest();  
 
    // Constructor and destructor methods
 
@@ -76,7 +64,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2018 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
