@@ -442,7 +442,46 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
     }
     else if(layer_type == LayerType::Probabilistic)
     {
-        //const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+        const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+        // Current layer's values
+
+        const size_t images_number = next_layer_delta.get_dimension(0);
+        const size_t channels_number = activations_derivatives.get_dimension(1);
+        const size_t output_rows_number = get_outputs_rows_number();
+        const size_t output_columns_number = get_outputs_columns_number();
+
+        // Next layer's values
+
+        const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
+        const Matrix<double> next_layers_weights = probabilistic_layer->get_synaptic_weights();
+
+        hidden_delta.set({images_number, channels_number, output_rows_number, output_columns_number}, 0.0);
+
+        const size_t size = hidden_delta.size();
+
+        #pragma omp parallel for
+
+        for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
+        {
+            size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+            size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+            size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
+            size_t column_index = tensor_index%output_columns_number;
+
+            double sum = 0.0;
+
+            for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
+            {
+                const double delta_element = next_layer_delta(image_index, sum_index);
+
+                const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+
+                sum += delta_element*weight;
+            }
+
+            hidden_delta(image_index, channel_index, row_index, column_index) += sum;
+        }
     }
 
     return hidden_delta;
