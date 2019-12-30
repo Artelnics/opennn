@@ -568,7 +568,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    Vector<double> squared_errors;
 
-   double error;
+//   double error;
 
    // Test 
 

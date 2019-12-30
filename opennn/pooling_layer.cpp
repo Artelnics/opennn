@@ -444,6 +444,7 @@ Tensor<double> PoolingLayer::calculate_max_pooling_delta(const Layer*,
 }
 
 
+/// @todo
 Vector<double> PoolingLayer::calculate_error_gradient(const Tensor<double>& ,
                                                       const Layer::FirstOrderActivations& forward_propagation,
                                                       const Tensor<double>& layer_deltas)

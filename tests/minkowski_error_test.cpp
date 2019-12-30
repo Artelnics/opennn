@@ -127,8 +127,6 @@ void MinkowskiErrorTest::test_calculate_training_error_gradient()
    size_t outputs_number;
    size_t hidden_neurons;
 
-   ScalingLayer* scaling_layer = new ScalingLayer;
-
    RecurrentLayer* recurrent_layer = new RecurrentLayer;
 
    LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
