@@ -126,7 +126,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    size_t outputs_number;
    size_t hidden_neurons;
 
-   ScalingLayer* scaling_layer = new ScalingLayer();
+//   ScalingLayer* scaling_layer = new ScalingLayer();
 
    RecurrentLayer* recurrent_layer = new RecurrentLayer();
 

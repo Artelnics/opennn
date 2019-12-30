@@ -3827,7 +3827,7 @@ Matrix<T> Matrix<T>::add_columns(const size_t& columns_to_add) const
         new_header[j] = header[j];
     }
 
-    for(int i = 0; i < rows_number; i++)
+    for(size_t i = 0; i < rows_number; i++)
     {
         for(size_t j = 0; j < columns_number; j++)
         {
@@ -3857,7 +3857,7 @@ Matrix<T> Matrix<T>::add_columns_first(const size_t& columns_to_add) const
         new_header[columns_to_add+j] = header[j];
     }
 
-    for(int i = 0; i < rows_number; i++)
+    for(size_t i = 0; i < rows_number; i++)
     {
         for(size_t j = 0; j < columns_number; j++)
         {

@@ -208,7 +208,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const size_t inputs_number = data_set_pointer->get_input_columns_number();
+//    const size_t inputs_number = data_set_pointer->get_input_columns_number();
 
     const Vector<size_t> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
 
