@@ -162,10 +162,8 @@ public:
        void set_use(const VariableUse&);
        void set_use(const string&);
 
-       void set_type(const ColumnType&);
        void set_type(const string&);
 
-       void set_categories_uses(const Vector<VariableUse>&);
        void set_categories_uses(const Vector<string>&);
 
        bool is_used();
@@ -395,11 +393,12 @@ public:
 
    void set_default_columns_names();
 
+   void set_column_name(const size_t&, const string&);
+
    void set_columns_uses(const Vector<string>&);
    void set_columns_uses(const Vector<VariableUse>&);
    void set_columns_unused();
    void set_input_columns_unused();
-
 
    void set_column_use(const size_t&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
@@ -425,10 +424,6 @@ public:
    void set_data(const Matrix<double>&);
 
    void set_instance(const size_t&, const Vector<double>&);
-
-   // Batch set methods
-
-//   void set_shufffle_batches_instances(const bool&);
 
    // Members set methods
 
