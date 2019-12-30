@@ -62,7 +62,7 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        cout<<"Pablo";
+        cout<<"Hello Blank Application";
 
         cout << "Bye Blank Application" << endl;
 
