@@ -162,6 +162,7 @@ size_t PrincipalComponentsLayer::get_neurons_number() const
 
 /// Performs the principal component analysis to produce a reduced data set.
 /// @param inputs Set of inputs to the principal components layer.
+/// @todo
 
 Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>& inputs)
 {
