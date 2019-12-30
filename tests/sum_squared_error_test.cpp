@@ -327,7 +327,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 }
 
    // Test convolutional
-{
+
    instances_number = 5;
    inputs_number = 75;
    outputs_number = 1;
@@ -362,14 +362,14 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_2->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(convolutional_layer_2->get_outputs_dimensions().calculate_product(), outputs_number);
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);
    neural_network.add_layer(pooling_layer_1);
    neural_network.add_layer(convolutional_layer_2);
-   //neural_network.add_layer(pooling_layer_2);
-   //neural_network.add_layer(perceptron_layer);
+   neural_network.add_layer(pooling_layer_2);
+   neural_network.add_layer(perceptron_layer);
    neural_network.add_layer(probabilistic_layer);
 
    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
@@ -378,7 +378,6 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    assert_true(numerical_gradient - gradient < 1e-3 &&
                gradient - numerical_gradient < 1e-3, LOG);
-}
 }
 
 
@@ -569,7 +568,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    Vector<double> squared_errors;
 
-//   double error;
+   double error;
 
    // Test 
 
