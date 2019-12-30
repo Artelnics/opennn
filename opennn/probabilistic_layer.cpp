@@ -615,8 +615,18 @@ Tensor<double> ProbabilisticLayer::calculate_combinations(const Tensor<double>& 
 
 Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& inputs)
 {
+    const size_t output_rows_number = inputs.get_dimension(0);
+    const size_t output_columns_number = get_neurons_number();
 
-    const Tensor<double> combinations = linear_combinations(inputs, synaptic_weights, biases);
+    Tensor<double> combinations(Vector<size_t>({output_rows_number, output_columns_number}));
+
+    const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+
+    if(inputs_dimensions_number == 2) combinations = linear_combinations(inputs, synaptic_weights, biases);
+    else {
+        const Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+        combinations = linear_combinations(reshaped_inputs, synaptic_weights, biases);
+    }
 
     switch(activation_function)
     {
@@ -679,18 +689,25 @@ Tensor<double> ProbabilisticLayer::calculate_outputs(const Tensor<double>& input
 
  const size_t inputs_dimensions_number = inputs.get_dimensions_number();
 
- if(inputs_dimensions_number != 2)
+ if(inputs_dimensions_number > 4)
  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
            << "Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const method.\n"
-           << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
+           << "Inputs dimensions number (" << inputs_dimensions_number << ") must not be greater than 4.\n";
 
     throw logic_error(buffer.str());
  }
 
-const size_t inputs_columns_number = inputs.get_dimension(1);
+#endif
+
+Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+cout << "Reshaped inputs dimensions: " << reshaped_inputs.get_dimension(0) << " & " << reshaped_inputs.get_dimension(1) << endl;
+
+#ifdef __OPENNN_DEBUG__
+
+const size_t inputs_columns_number = reshaped_inputs.get_dimension(1);
 
 const size_t inputs_number = get_inputs_number();
 
@@ -707,7 +724,7 @@ if(inputs_columns_number != inputs_number)
 
 #endif
 
-    Tensor<double> combinations(linear_combinations(inputs,synaptic_weights,biases));
+    Tensor<double> combinations(linear_combinations(reshaped_inputs,synaptic_weights,biases));
 
     switch(activation_function)
     {
