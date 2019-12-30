@@ -142,6 +142,8 @@ const bool& DataSet::get_display() const
 }
 
 
+// Columns methods
+
 /// Column default constructor
 
 DataSet::Column::Column()
@@ -171,7 +173,8 @@ DataSet::Column::~Column()
 {}
 
 
-///
+/// Sets the column use.
+/// @param new_column_use Column use.
 
 void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
@@ -179,6 +182,9 @@ void DataSet::Column::set_use(const VariableUse& new_column_use)
     categories_uses.initialize(new_column_use);
 }
 
+
+/// Sets the column use.
+/// @param new_column_use Column use in string format.
 
 void DataSet::Column::set_use(const string& new_column_use)
 {
@@ -255,6 +261,9 @@ void DataSet::Column::set_type(const string& new_column_type)
 }
 
 
+/// Sets the new categories uses.
+/// @param new_categories_uses Vector which contains the categories uses of the columns of the data set.
+
 void DataSet::Column::set_categories_uses(const Vector<VariableUse>& new_categories_uses)
 {
     const size_t new_categories_uses_number = new_categories_uses.size();
@@ -293,7 +302,8 @@ void DataSet::Column::set_categories_uses(const Vector<VariableUse>& new_categor
     }
 }
 
-
+/// Sets the new categories uses.
+/// @param new_categories_uses String vector which contains the categories uses of the columns of the data set.
 
 void DataSet::Column::set_categories_uses(const Vector<string>& new_categories_uses)
 {
@@ -542,11 +552,15 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
+/// Returns the number of categories contained in the data set.
+
 size_t DataSet::Column::get_categories_number() const
 {
     return categories.size();
 }
 
+
+/// Returns the name of the used variables in the dataset.
 
 Vector<string> DataSet::Column::get_used_variables_names() const
 {
@@ -622,7 +636,6 @@ void DataSet::transform_columns_time_series()
 
             new_column_index++;
         }
-
 
 
         if(lag_index > 0 && column_index == columns_number - 1)

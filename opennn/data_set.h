@@ -51,8 +51,9 @@ namespace OpenNN
 /// It basically consists of a data Matrix separated by columns.
 /// These columns can take different categories depending on the data hosted in them.
 ///
-/// With OpenNN DataSet class you can edit the data to prepare your model, such as eliminating missing values,
-/// calculating correlations between variables (inputs and targets), not using certain variables or instances, etc \dots.
+/// With OpenNN DataSet class you can edit the data to prepare your model, such as remove missing values,
+/// calculate correlations between variables (inputs and targets), select particular variables or instances,
+/// transform human date into timestamp,... .
 
 class DataSet
 {
@@ -800,9 +801,15 @@ private:
 
    bool has_columns_names = false;
 
+   /// Dimensions of the tensor input.
+
    Vector<size_t> inputs_dimensions;
 
+   /// Dimensions of the tensor target.
+
    Vector<size_t> targets_dimensions;
+
+   /// Vector which contains the columns of the dataset.
 
    Vector<Column> columns;
 
@@ -810,7 +817,11 @@ private:
 
    bool has_rows_labels = false;
 
+   /// Vector which contains the labels of the rows.
+
    Vector<string> rows_labels;
+
+   /// Greenwich Mean Time, to transform human date into timpestamp.
 
    int gmt = 0;
 
