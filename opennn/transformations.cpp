@@ -1065,9 +1065,6 @@ void scale_columns_logarithmic(Matrix<double>& matrix,
 {
 
     const size_t rows_number = matrix.get_rows_number();
-    const size_t columns_number = matrix.get_columns_number();
-
-    
 
     const size_t columns_indices_size = columns_indices.size();
 

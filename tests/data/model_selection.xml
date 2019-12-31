@@ -1,0 +1,28 @@
+<ModelSelection>
+   <InputsSelection Type="GROWING_INPUTS">
+      <TrialsNumber>1</TrialsNumber>
+      <Tolerance>0</Tolerance>
+      <SelectionErrorGoal>0</SelectionErrorGoal>
+      <MaximumSelectionFailures>3</MaximumSelectionFailures>
+      <MinimumInputsNumber>1</MinimumInputsNumber>
+      <MaximumInputsNumber>100</MaximumInputsNumber>
+      <MinimumCorrelation>0</MinimumCorrelation>
+      <MaximumCorrelation>1</MaximumCorrelation>
+      <MaximumEpochsNumber>1000</MaximumEpochsNumber>
+      <MaximumTime>10000</MaximumTime>
+      <ReserveTrainingErrorHistory>1</ReserveTrainingErrorHistory>
+      <ReserveSelectionErrorHistory>1</ReserveSelectionErrorHistory>
+   </InputsSelection>
+   <NeuronsSelection Type="INCREMENTAL_NEURONS">
+      <MinimumOrder>1</MinimumOrder>
+      <MaximumOrder>0</MaximumOrder>
+      <Step>1</Step>
+      <TrialsNumber>1</TrialsNumber>
+      <Tolerance>0</Tolerance>
+      <SelectionErrorGoal>0</SelectionErrorGoal>
+      <MaximumSelectionFailures>10</MaximumSelectionFailures>
+      <MaximumTime>10000</MaximumTime>
+      <ReserveTrainingErrorHistory>1</ReserveTrainingErrorHistory>
+      <ReserveSelectionErrorHistory>1</ReserveSelectionErrorHistory>
+   </NeuronsSelection>
+</ModelSelection>
