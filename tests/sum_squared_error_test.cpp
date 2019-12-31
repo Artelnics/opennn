@@ -327,7 +327,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 }
 
    // Test convolutional
-
+{
    instances_number = 5;
    inputs_number = 75;
    outputs_number = 1;
@@ -378,6 +378,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    assert_true(numerical_gradient - gradient < 1e-3 &&
                gradient - numerical_gradient < 1e-3, LOG);
+}
 }
 
 
@@ -568,7 +569,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    Vector<double> squared_errors;
 
-   double error;
+//   double error;
 
    // Test 
 

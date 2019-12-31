@@ -18,7 +18,7 @@ TensorTest::~TensorTest()
 {
 }
 
-
+/// @todo tensor test
 void TensorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -195,7 +195,7 @@ void TensorTest::test_division_operator()
    assert_true(c == d, LOG);
 }
 
-/*
+
 void VectorTest::test_sum_assignment_operator()
 {
    cout << "test_sum_assignment_operator\n";
