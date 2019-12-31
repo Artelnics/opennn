@@ -31,8 +31,7 @@ namespace OpenNN {
 
 /// This abstract class represents the concept of layer of neurons in OpenNN.
 
-///
-/// A layer is composed by a set of internal parameters sharing the same inputs.
+/// Layer is a group of neurons having connections to the same inputs and sending outputs to the same destinations.
 /// Also is used to store information about the layers of the different architectures of NeuralNetworks.
 
 class Layer
@@ -45,6 +44,8 @@ public:
     /// This enumeration represents the possible types of layers.
 
     enum LayerType{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
+
+    /// This structure represents the first order activaions of layers.
 
     struct FirstOrderActivations
     {

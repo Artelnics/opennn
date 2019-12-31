@@ -29,8 +29,9 @@
 namespace OpenNN
 {
 
-/// This concrete class represents a Levenberg-Marquardt Algorithm training algorithm[1] for the sum squared error loss index for a neural network.
+/// Levenberg-Marquardt Algorithm will always compute the approximate Hessian matrix, which has dimensions n-by-n.
 
+/// This concrete class represents a Levenberg-Marquardt Algorithm training algorithm[1], use to minimize loss function.
 ///
 /// \cite 1  Neural Designer "5 Algorithms to Train a Neural Network." \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 

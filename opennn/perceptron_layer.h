@@ -33,8 +33,10 @@ namespace OpenNN
 
 /// This class represents a layer of perceptrons.
 
+/// PerceptronLayer is a single-layer network with a hard-limit trabsfer function.
+/// This network is often trained with the perceptron learning rule.
 ///
-/// Layers of perceptrons will be used to construct multilayer perceptrons. 
+/// Layers of perceptrons will be used to construct multilayer perceptrons, such as an approximation problems .
 
 class PerceptronLayer : public Layer
 {
@@ -188,7 +190,12 @@ protected:
 
    // MEMBERS
 
+   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
+   /// and passed through the neuron's trabsfer function to generate the neuron's output.
+
    Vector<double> biases;
+
+   /// This matrix containing conection strengths from a layer's inputs to its neurons.
 
    Matrix<double> synaptic_weights;
 
