@@ -28,10 +28,12 @@
 namespace OpenNN
 {
 
-/// This class is used by many different optimization algorithms to calculate the training rate given a training direction. 
+/// A learning rate that is adjusted according to an algorithm during training to minimize training time.
 
 ///
-/// It implements the golden section method and the Brent's methodata_set. 
+/// This class is used by many different optimization algorithms to calculate the training rate given a training direction.
+///
+/// It implements the golden section method and the Brent's method.
 
 class LearningRateAlgorithm
 {

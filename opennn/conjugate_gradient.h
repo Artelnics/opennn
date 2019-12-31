@@ -34,8 +34,12 @@
 namespace OpenNN
 {
 
-/// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
 
+
+/// In the conjugate gradient algorithms a search is performed along conjugate directions, which produces generally faster convergence than a search along the steepest descent directions.
+
+/// This concrete class represents a conjugate gradient training algorithm, based on solving sparse systems.
+///
 /// \cite 1 \ref https://www.neuraldesigner.com/blog/5_algorithms_to_train_a_neural_network
 ///
 /// \cite 2 D.P. O'Leary "The Block Conjugate Gradient Algorithm and Related Methods."

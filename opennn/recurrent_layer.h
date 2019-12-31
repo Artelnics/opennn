@@ -207,9 +207,14 @@ protected:
 
    size_t timesteps = 1;
 
+   /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
+   /// and passed through the neuron's trabsfer function to generate the neuron's output.
+
    Vector<double> biases;
 
    Matrix<double> input_weights;
+
+   /// This matrix containing conection strengths from a recurrent layer inputs to its neurons.
 
    Matrix<double> recurrent_weights;
 
