@@ -172,7 +172,7 @@ DataSet::Column::~Column()
 
 
 /// Sets the use of the column and of the categories.
-/// @param new_column_use New use ofthe column.
+/// @param new_column_use New use of the column.
 
 void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
@@ -180,6 +180,9 @@ void DataSet::Column::set_use(const VariableUse& new_column_use)
     categories_uses.initialize(new_column_use);
 }
 
+
+/// Sets the use of the column and of the categories.
+/// @param new_column_use New use of the column in string format.
 
 void DataSet::Column::set_use(const string& new_column_use)
 {
@@ -246,6 +249,9 @@ void DataSet::Column::set_type(const string& new_column_type)
     }
 }
 
+
+/// Sets the categories uses in the data set.
+/// @param new_categories_uses String vector that contains the new categories of the data set.
 
 void DataSet::Column::set_categories_uses(const Vector<string>& new_categories_uses)
 {
@@ -494,11 +500,15 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
+/// Returns the number of categories.
+
 size_t DataSet::Column::get_categories_number() const
 {
     return categories.size();
 }
 
+
+/// Returns a string vector that contains the names of the used variables in the data set.
 
 Vector<string> DataSet::Column::get_used_variables_names() const
 {
@@ -522,6 +532,8 @@ Vector<string> DataSet::Column::get_used_variables_names() const
     return used_variables_names;
 }
 
+
+/// This method transforms the columns into time series.
 
 void DataSet::transform_columns_time_series()
 {
@@ -658,6 +670,10 @@ Vector<size_t> DataSet::get_instances_uses_numbers() const
     return count;
 }
 
+
+/// Returns a vector with the uses of the instances in percentages of the data set.
+/// Uses: training, selection, testing and unused instances.
+/// Note that the vector size is four.
 
 Vector<double> DataSet::get_instances_uses_percentages() const
 {
