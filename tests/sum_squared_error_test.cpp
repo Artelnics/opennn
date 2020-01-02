@@ -376,8 +376,7 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    gradient = sum_squared_error.calculate_training_error_gradient();
 
-   assert_true(numerical_gradient - gradient < 1e-3 &&
-               gradient - numerical_gradient < 1e-3, LOG);
+   assert_true(absolute_value(numerical_gradient - gradient) < 1e-3, LOG);
 }
 }
 
