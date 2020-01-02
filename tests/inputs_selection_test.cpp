@@ -52,7 +52,10 @@ void InputsSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    TrainingStrategy training_strategy;
+    NeuralNetwork nn;
+    DataSet ds;
+
+    TrainingStrategy training_strategy(&nn,&ds);
 
     GrowingInputs gi(&training_strategy);
 
