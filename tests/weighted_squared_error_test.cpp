@@ -167,16 +167,16 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    size_t outputs_number;
    size_t hidden_neurons;
 
-   ScalingLayer scaling_layer;
+   ScalingLayer* scaling_layer = new ScalingLayer();
 
-   RecurrentLayer recurrent_layer;
+   RecurrentLayer* recurrent_layer = new RecurrentLayer();
 
-   LongShortTermMemoryLayer long_short_term_memory_layer;
+   LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer();
 
-   PerceptronLayer hidden_perceptron_layer;
-   PerceptronLayer output_perceptron_layer;
+   PerceptronLayer* hidden_perceptron_layer = new PerceptronLayer();
+   PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
-   ProbabilisticLayer probabilistic_layer;
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
 
    // Test trivial
 {
@@ -188,8 +188,8 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.initialize_data(0.0);
 
-   hidden_perceptron_layer.set(inputs_number, outputs_number);
-   neural_network.add_layer(&hidden_perceptron_layer);
+   hidden_perceptron_layer->set(inputs_number, outputs_number);
+   neural_network.add_layer(hidden_perceptron_layer);
 
    neural_network.initialize_parameters(0.0);
 
@@ -238,13 +238,13 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set_training();
 
-   hidden_perceptron_layer.set(inputs_number, hidden_neurons);
-   output_perceptron_layer.set(hidden_neurons, outputs_number);
-   probabilistic_layer.set(outputs_number, outputs_number);
+   hidden_perceptron_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
+   probabilistic_layer->set(outputs_number, outputs_number);
 
-   neural_network.add_layer(&hidden_perceptron_layer);
-   neural_network.add_layer(&output_perceptron_layer);
-   neural_network.add_layer(&probabilistic_layer);
+   neural_network.add_layer(hidden_perceptron_layer);
+   neural_network.add_layer(output_perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
 
    neural_network.randomize_parameters_normal();
 
@@ -292,11 +292,11 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set_training();
 
-   long_short_term_memory_layer.set(inputs_number, hidden_neurons);
-   output_perceptron_layer.set(hidden_neurons, outputs_number);
+   long_short_term_memory_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
 
-   neural_network.add_layer(&long_short_term_memory_layer);
-   neural_network.add_layer(&output_perceptron_layer);
+   neural_network.add_layer(long_short_term_memory_layer);
+   neural_network.add_layer(output_perceptron_layer);
 
    neural_network.randomize_parameters_normal();
 
@@ -344,11 +344,11 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
 
    data_set.set_training();
 
-   recurrent_layer.set(inputs_number, hidden_neurons);
-   output_perceptron_layer.set(hidden_neurons, outputs_number);
+   recurrent_layer->set(inputs_number, hidden_neurons);
+   output_perceptron_layer->set(hidden_neurons, outputs_number);
 
-   neural_network.add_layer(&recurrent_layer);
-   neural_network.add_layer(&output_perceptron_layer);
+   neural_network.add_layer(recurrent_layer);
+   neural_network.add_layer(output_perceptron_layer);
 
    neural_network.randomize_parameters_normal();
 
@@ -357,6 +357,79 @@ void WeightedSquaredErrorTest::test_calculate_training_error_gradient()
    numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
 
    assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+
+   // Test convolutional
+{
+   instances_number = 5;
+   inputs_number = 75;
+   outputs_number = 1;
+
+   data_set.set(instances_number, inputs_number, outputs_number);
+
+   Matrix<double> inputs(instances_number,inputs_number);
+   inputs.randomize_normal();
+
+   Vector<double> outputs(instances_number, outputs_number);
+   outputs[0] = 1.0;
+   outputs[1] = 0.0;
+   for(size_t i = 2; i < instances_number; i++)
+   {
+        if((static_cast<int>(inputs.calculate_row_sum(i))%2) == 0.0)
+        {
+            outputs[i] = 0.0;
+        }
+        else
+        {
+            outputs[i] = 1.0;
+        }
+   }
+   const Matrix<double> data = inputs.append_column(outputs);
+
+   data_set.set_data(data);
+   data_set.set_input_variables_dimensions(Vector<size_t>({3,5,5}));
+   data_set.set_target_variables_dimensions(Vector<size_t>({1}));
+   data_set.set_training();
+
+   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,5,5}, {2,2,2});
+   convolutional_layer_1->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+   Tensor<double> filters_1({2,3,2,2}, 0);
+   filters_1.randomize_normal();
+   convolutional_layer_1->set_synaptic_weights(filters_1);
+   Vector<double> biases_1(2, 0);
+   biases_1.randomize_normal();
+   convolutional_layer_1->set_biases(biases_1);
+
+   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2});
+
+   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
+   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+   Tensor<double> filters_2({1,2,2,2}, 0);
+   filters_2.randomize_normal();
+   convolutional_layer_2->set_synaptic_weights(filters_2);
+   Vector<double> biases_2(1, 0);
+   biases_2.randomize_normal();
+   convolutional_layer_2->set_biases(biases_2);
+
+   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+
+   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_2->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
+
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
+
+   neural_network.set();
+   neural_network.add_layer(convolutional_layer_1);
+   neural_network.add_layer(pooling_layer_1);
+   neural_network.add_layer(convolutional_layer_2);
+   neural_network.add_layer(pooling_layer_2);
+   neural_network.add_layer(perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
+
+   numerical_error_gradient = wse.calculate_training_error_gradient_numerical_differentiation();
+
+   error_gradient = wse.calculate_training_error_gradient();
+
+   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
 }
 
