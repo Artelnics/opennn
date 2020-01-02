@@ -7115,7 +7115,6 @@ void DataSet::delete_unused_instances()
     }
 
     data = data.delete_rows(index);
-
 }
 
 

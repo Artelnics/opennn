@@ -2959,10 +2959,16 @@ template <class T> Vector<T> Vector<T>::operator/(const T&scalar) const
 
   Vector<T> cocient(this_size);
 
-  transform(this->begin(), this->end(), cocient.begin(),
-                 bind2nd(divides<T>(), scalar));
+//  transform(this->begin(), this->end(), cocient.begin(), bind2nd(divides<T>(), scalar));
 
-  return(cocient);
+  #pragma omp parallel for
+
+  for(size_t i = 0; i < this_size; i++)
+  {
+      cocient[i] = (*this)[i]/scalar;
+  }
+
+  return cocient;
 }
 
 
@@ -2973,8 +2979,6 @@ template <class T>
 Vector<T> Vector<T>::operator/(const Vector<T>&other_vector) const
 {
   const size_t this_size = this->size();
-
-
 
 #ifdef __OPENNN_DEBUG__
 
