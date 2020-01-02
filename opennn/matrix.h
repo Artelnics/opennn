@@ -3140,7 +3140,7 @@ void Matrix<T>::set_column(const size_t& column_index, const Vector<T>& new_colu
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "set_column(const size_t&, const Vector<T>&).\n"
-             << "index (" << column_index << ") must be less than number of columns(" << columns_number << ").\n";
+             << "Index (" << column_index << ") must be less than number of columns(" << columns_number << ").\n";
 
       throw logic_error(buffer.str());
    }
@@ -3153,7 +3153,7 @@ void Matrix<T>::set_column(const size_t& column_index, const Vector<T>& new_colu
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "set_column(const size_t&, const Vector<T>&).\n"
-             << "Size must be equal to number of rows.\n";
+             << "Size("<<size<<") must be equal to number of rows("<<rows_number<<").\n";
 
       throw logic_error(buffer.str());
    }
@@ -3215,7 +3215,7 @@ void Matrix<T>::set_column(const size_t& column_index, const T& value, const str
 
       buffer << "OpenNN Exception: Matrix Template.\n"
              << "set_column(const size_t&, const T&).\n"
-             << "Index must be less than number of columns.\n";
+             << "Index("<<column_index<<") must be less than number of columns("<<columns_number<<").\n";
 
       throw logic_error(buffer.str());
    }
