@@ -455,6 +455,7 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
     const size_t next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
     const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
     const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
+
     const Tensor<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     Tensor<double> hidden_delta({images_number, filters_number, output_rows_number, output_columns_number}, 0.0);
@@ -476,17 +477,19 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
         {
             for(size_t j = 0; j < next_layers_output_rows; j++)
             {
-                if(static_cast<int>(row_index) - static_cast<int>(j*next_layers_row_stride) >= 0
-                && row_index - j*next_layers_row_stride < next_layers_filter_rows)
+                const int weights_row_index = row_index - j*next_layers_row_stride;
+
+                if(weights_row_index >= 0 && static_cast<size_t>(weights_row_index) < next_layers_filter_rows)
                 {
                     for(size_t k = 0; k < next_layers_output_columns; k++)
                     {
+                        const int weights_column_index = column_index - k*next_layers_column_stride;
+
                         const double delta_element = next_layer_delta(image_index, i, j, k);
 
-                        if(static_cast<int>(column_index) - static_cast<int>(k*next_layers_column_stride) >= 0
-                        && column_index - k*next_layers_column_stride < next_layers_filter_columns)
+                        if(weights_column_index >= 0 && static_cast<size_t>(weights_column_index) < next_layers_filter_columns)
                         {
-                            const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
+                            const double weight = next_layers_weights(i, channel_index, weights_row_index, weights_column_index);
 
                             sum += delta_element * weight;
                         }
@@ -568,8 +571,9 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
                 hidden_delta(image_index, channel_index, row_index, column_index) += sum;
             }
 
-            return (hidden_delta*activations_derivatives)/(next_layers_pool_rows*next_layers_pool_columns);
+            return hidden_delta*activations_derivatives/(next_layers_pool_rows*next_layers_pool_columns);
         }
+
 
         case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
         {
@@ -679,13 +683,15 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabil
 
 
 Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>& previous_layers_outputs,
-                                                         const Layer::FirstOrderActivations& ,
-                                                         const Tensor<double>& layer_deltas)
+                                                            const Layer::FirstOrderActivations& ,
+                                                            const Tensor<double>& layer_deltas)
 {
     Tensor<double> layers_inputs;
 
-    switch (get_padding_option()) {
+    const PaddingOption padding_option = get_padding_option();
 
+    switch (padding_option)
+    {
         case OpenNN::ConvolutionalLayer::PaddingOption::NoPadding:
         {
             layers_inputs = previous_layers_outputs;
@@ -694,12 +700,22 @@ Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>
 
         case OpenNN::ConvolutionalLayer::PaddingOption::Same:
         {
-            layers_inputs.set(Vector<size_t>({previous_layers_outputs.get_dimension(0), previous_layers_outputs.get_dimension(1),
-                                              previous_layers_outputs.get_dimension(2) + get_padding_height(), previous_layers_outputs.get_dimension(3) + get_padding_width()}));
+            const size_t new_dimension_1 = previous_layers_outputs.get_dimension(0);
+            const size_t new_dimension_2 = previous_layers_outputs.get_dimension(1);
+            const size_t new_dimension_3 = previous_layers_outputs.get_dimension(2) + get_padding_height();
+            const size_t new_dimension_4 = previous_layers_outputs.get_dimension(3) + get_padding_width();
 
-            for(size_t image_number = 0; image_number < previous_layers_outputs.get_dimension(0); image_number++)
+            layers_inputs.set({new_dimension_1, new_dimension_2, new_dimension_3, new_dimension_4});
+
+            Tensor<double> input_image({new_dimension_2, new_dimension_3, new_dimension_4});
+
+            #pragma omp parallel for private(input_image)
+
+            for(size_t image_number = 0; image_number < new_dimension_1; image_number++)
             {
-                layers_inputs.set_tensor(image_number, insert_padding(previous_layers_outputs.get_tensor(image_number)));
+                input_image = insert_padding(previous_layers_outputs.get_tensor(image_number));
+
+                layers_inputs.set_tensor(image_number, input_image);
             }
         }
         break;
@@ -707,28 +723,43 @@ Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>
 
     const size_t parameters_number = get_parameters_number();
 
-    const size_t synaptic_weights_number = get_synaptic_weights().size();
+    const size_t synaptic_weights_number = synaptic_weights.size();
 
     Vector<double> layer_error_gradient(parameters_number, 0.0);
 
+    // Current layer's values
+
+    const size_t filters_number = get_filters_number();
+    const size_t filters_channels_number = get_filters_channels_number();
+    const size_t filters_rows_number = get_filters_rows_number();
+    const size_t filters_columns_number = get_filters_columns_number();
+    const size_t output_rows_number = get_outputs_rows_number();
+    const size_t output_columns_number = get_outputs_columns_number();
+    const size_t images_number = layer_deltas.get_dimension(0);
+
     // Synaptic weights
+
+    #pragma omp parallel for
 
     for(size_t index = 0; index < synaptic_weights_number; index++)
     {
-        size_t filter_index = index%get_filters_number();
-        size_t channel_index = (index/get_filters_number())%(get_filters_channels_number());
-        size_t row_index = (index/(get_filters_number() * get_filters_channels_number()))%(get_filters_rows_number());
-        size_t column_index = (index/(get_filters_number() * get_filters_channels_number() * get_filters_rows_number()))%(get_filters_columns_number());
+        const size_t filter_index = index%filters_number;
+        const size_t channel_index = (index/filters_number)%(filters_channels_number);
+        const size_t row_index = (index/(filters_number*filters_channels_number))%(filters_rows_number);
+        const size_t column_index = (index/(filters_number*filters_channels_number*filters_rows_number))%(filters_columns_number);
 
         double sum = 0.0;
 
-        for(size_t i = 0; i < layer_deltas.get_dimension(0); i++)
+        for(size_t i = 0; i < images_number; i++)
         {
-            for(size_t j = 0; j < get_outputs_rows_number(); j++)
+            for(size_t j = 0; j < output_rows_number; j++)
             {
-                for(size_t k = 0; k < get_outputs_columns_number(); k++)
+                for(size_t k = 0; k < output_columns_number; k++)
                 {
-                    sum += layer_deltas(i, filter_index, j, k) * layers_inputs(i, channel_index, j * row_stride + row_index, k * column_stride + column_index);
+                    const double delta_element = layer_deltas(i, filter_index, j, k);
+                    const double input_element = layers_inputs(i, channel_index, j*row_stride + row_index, k*column_stride + column_index);
+
+                    sum += delta_element*input_element;
                 }
             }
         }
@@ -738,19 +769,23 @@ Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>
 
     // Biases
 
+    #pragma omp parallel for
+
     for(size_t index = synaptic_weights_number; index < parameters_number; index++)
     {
         size_t bias_index = index - synaptic_weights_number;
 
         double sum = 0.0;
 
-        for(size_t i = 0; i < layer_deltas.get_dimension(0); i++)
+        for(size_t i = 0; i < images_number; i++)
         {
-            for(size_t j = 0; j < get_outputs_rows_number(); j++)
+            for(size_t j = 0; j < output_rows_number; j++)
             {
-                for(size_t k = 0; k < get_outputs_columns_number(); k++)
+                for(size_t k = 0; k < output_columns_number; k++)
                 {
-                    sum += layer_deltas(i, bias_index, j, k);
+                    const double delta_element= layer_deltas(i, bias_index, j, k);
+
+                    sum += delta_element;
                 }
             }
         }
