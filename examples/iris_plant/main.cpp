@@ -79,10 +79,6 @@ int main(void)
 
         training_strategy.set_display(false);
 
-        ModelSelection model_selection(&training_strategy);
-
-        model_selection.perform_inputs_selection();
-
         // Testing analysis
 
         data_set.unscale_inputs_minimum_maximum(inputs_descriptives);

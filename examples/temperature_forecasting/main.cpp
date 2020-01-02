@@ -43,8 +43,6 @@ int main(void)
         data_set.set_steps_ahead_number(1);
         data_set.transform_time_series();
 
-        cout << "Correlations" << endl;
-
         // Missing values
 
         data_set.impute_missing_values_mean();
@@ -66,20 +64,18 @@ int main(void)
 
         NeuralNetwork neural_network(NeuralNetwork::Forecasting, {inputs_number, hidden_perceptrons_number, outputs_number});
 
-//        neural_network.set(NeuralNetwork::Forecasting, {inputs_number, hidden_perceptrons_number, outputs_number});
-
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
         scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
-
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
         unscaling_layer_pointer->set_descriptives(targets_descriptives);
         unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
-        // Training strategy object
+        // Training strategy
 
-        TrainingStrategy training_strategy;
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
         quasi_Newton_method_pointer->set_maximum_epochs_number(10000);
         quasi_Newton_method_pointer->set_maximum_time(250);
@@ -95,6 +91,7 @@ int main(void)
         cout << "Testing" << endl;
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
+
         TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
         Vector< Vector<double> > error_autocorrelation = testing_analysis.calculate_error_autocorrelation();
         Vector< Vector<double> > error_crosscorrelation = testing_analysis.calculate_inputs_errors_cross_correlation();

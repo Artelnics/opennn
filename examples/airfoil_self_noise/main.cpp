@@ -31,8 +31,6 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        ///@todo Does not work in linux
-
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
@@ -96,7 +94,10 @@ int main(void)
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 
+        cout << "End" << endl;
+
         return 0;
+
     }
     catch(exception& e)
     {

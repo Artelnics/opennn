@@ -7086,6 +7086,7 @@ void DataSet::transform_association()
 void DataSet::delete_unused_instances()
 {
     Vector<size_t> index(get_unused_instances_number());
+
     size_t j = 0;
 
     for (size_t i = 0; i < get_instances_number(); i++)
@@ -7098,7 +7099,6 @@ void DataSet::delete_unused_instances()
     }
 
     data = data.delete_rows(index);
-
 
 }
 
@@ -7137,6 +7137,7 @@ void DataSet::fill_time_series(const size_t& period )
     }
 
     time_series_data = new_data;
+
     data = new_data;
 }
 
