@@ -705,9 +705,9 @@ Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>
             const size_t new_dimension_3 = previous_layers_outputs.get_dimension(2) + get_padding_height();
             const size_t new_dimension_4 = previous_layers_outputs.get_dimension(3) + get_padding_width();
 
-            layers_inputs.set({new_dimension_1, new_dimension_2, new_dimension_3, new_dimension_4});
+            layers_inputs.set(Vector<size_t>({new_dimension_1, new_dimension_2, new_dimension_3, new_dimension_4}));
 
-            Tensor<double> input_image({new_dimension_2, new_dimension_3, new_dimension_4});
+            Tensor<double> input_image(Vector<size_t>({new_dimension_2, new_dimension_3, new_dimension_4}));
 
             #pragma omp parallel for private(input_image)
 

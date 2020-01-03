@@ -30,7 +30,7 @@ int main(void)
         // Data set
 
         //DataSet data_set("../data/mnist_debug.csv", ',', false);
-        DataSet data_set("/home/arte2019/Desktop/neural-designer/opennn/examples/mnist/data/mnist_train.csv", ',', false);
+        DataSet data_set("C:\\artelnics\\opennn\\examples\\mnist\\data\\mnist_train.csv", ',', false);
 
         data_set.set_input();
         data_set.set_column_use(0, OpenNN::DataSet::VariableUse::Target);
