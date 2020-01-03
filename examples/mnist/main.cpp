@@ -35,7 +35,7 @@ int main(void)
         data_set.set_input();
         data_set.set_column_use(0, OpenNN::DataSet::VariableUse::Target);
         data_set.numeric_to_categorical(0);
-        data_set.set_batch_instances_number(16);
+        data_set.set_batch_instances_number(128);
 
         const Vector<size_t> inputs_dimensions({1, 28, 28});
         const Vector<size_t> targets_dimensions({10});
@@ -66,45 +66,24 @@ int main(void)
         neural_network.add_layer(convolutional_layer_1);
 
         const Vector<size_t> convolutional_layer_1_outputs_dimensions = convolutional_layer_1->get_outputs_dimensions();
-/*
-        // Pooling layer 1
-
-        PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_1_outputs_dimensions);
-        neural_network.add_layer(pooling_layer_1);
-
-        const Vector<size_t> pooling_layer_1_outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
 
         // Convolutional layer 2
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(pooling_layer_1_outputs_dimensions, {4, 5, 5});
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1_outputs_dimensions, {8, 3, 3});
         neural_network.add_layer(convolutional_layer_2);
 
         const Vector<size_t> convolutional_layer_2_outputs_dimensions = convolutional_layer_2->get_outputs_dimensions();
 
-        // Pooling layer 2
+        // Pooling layer
 
-        PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_2_outputs_dimensions);
-        neural_network.add_layer(pooling_layer_2);
+        PoolingLayer* pooling_layer = new PoolingLayer(convolutional_layer_2_outputs_dimensions);
+        neural_network.add_layer(pooling_layer);
 
-        const Vector<size_t> pooling_layer_2_outputs_dimensions = pooling_layer_2->get_outputs_dimensions();
-*/
-        // Convolutional layer 3
-
-        ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(convolutional_layer_1_outputs_dimensions, {8, 3, 3});
-        neural_network.add_layer(convolutional_layer_3);
-
-        const Vector<size_t> convolutional_layer_3_outputs_dimensions = convolutional_layer_3->get_outputs_dimensions();
-
-        // Pooling layer 3
-
-        PoolingLayer* pooling_layer_3 = new PoolingLayer(convolutional_layer_3_outputs_dimensions);
-        neural_network.add_layer(pooling_layer_3);
-
-        const Vector<size_t> pooling_layer_3_outputs_dimensions = pooling_layer_3->get_outputs_dimensions();
+        const Vector<size_t> pooling_layer_outputs_dimensions = pooling_layer->get_outputs_dimensions();
 
         // Perceptron layer
 
-        PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3_outputs_dimensions.calculate_product(), 16);
+        PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_outputs_dimensions.calculate_product(), 16);
         neural_network.add_layer(perceptron_layer);
 
         const size_t perceptron_layer_outputs = perceptron_layer->get_neurons_number();
