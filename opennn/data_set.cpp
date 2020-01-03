@@ -533,7 +533,7 @@ Vector<string> DataSet::Column::get_used_variables_names() const
 }
 
 
-/// This method transforms the columns into time series.
+/// This method transforms the columns into time series for forecasting problems.
 
 void DataSet::transform_columns_time_series()
 {
@@ -1394,6 +1394,8 @@ void DataSet::split_instances_sequential(const double& training_instances_ratio,
 }
 
 
+/// Sets the number of batches.
+
 void DataSet::set_batch_instances_number(const size_t& new_batch_instances_number)
 {
     batch_instances_number = new_batch_instances_number;
@@ -1439,6 +1441,8 @@ void DataSet::set_k_fold_cross_validation_instances_uses(const size_t& k, const 
 }
 
 
+/// This method sets the n columns of the dataset by default,
+/// i.e. until column n-1 are Input and column n is Target.
 
 void DataSet::set_default_columns_uses()
 {
@@ -1468,6 +1472,9 @@ void DataSet::set_default_columns_uses()
 }
 
 
+/// This method puts the names of the columns in the dataset.
+/// This is used when the dataset does not have a header,
+/// the default names are: column_0, column_1, ..., column_n.
 
 void DataSet::set_default_columns_names()
 {
@@ -1529,6 +1536,8 @@ DataSet::VariableUse DataSet::get_column_use(const size_t & index) const
     return columns[index].column_use;
 }
 
+
+/// Returns the uses of each columns of the data set.
 
 Vector<DataSet::VariableUse> DataSet::get_columns_uses() const
 {
@@ -1862,6 +1871,8 @@ Vector<string> DataSet::get_columns_names() const
 }
 
 
+/// Returns a string vector that contains the names of the columns whose uses are Input.
+
 Vector<string> DataSet::get_input_columns_names() const
 {
     const size_t input_columns_number = get_input_columns_number();
@@ -1882,6 +1893,8 @@ Vector<string> DataSet::get_input_columns_names() const
     return input_columns_names;
 }
 
+
+/// Returns a string vector which contains the names of the columns whose uses are Target.
 
 Vector<string> DataSet::get_target_columns_names() const
 {
@@ -1905,6 +1918,8 @@ Vector<string> DataSet::get_target_columns_names() const
 }
 
 
+/// Returns a string vector which contains the names of the columns used whether Input, Target or Time.
+
 Vector<string> DataSet::get_used_columns_names() const
 {
     const size_t columns_number = get_columns_number();
@@ -1926,6 +1941,9 @@ Vector<string> DataSet::get_used_columns_names() const
     return names;
 }
 
+
+/// Returns the number of columns whose uses are Input.
+
 size_t DataSet::get_input_columns_number() const
 {
     size_t input_columns_number = 0;
@@ -1941,6 +1959,8 @@ size_t DataSet::get_input_columns_number() const
     return input_columns_number;
 }
 
+
+/// Returns the number of columns whose uses are Target.
 
 size_t DataSet::get_target_columns_number() const
 {
@@ -1958,6 +1978,8 @@ size_t DataSet::get_target_columns_number() const
 }
 
 
+/// Returns the number of columns whose uses are Time
+
 size_t DataSet::get_time_columns_number() const
 {
     size_t time_columns_number = 0;
@@ -1973,6 +1995,8 @@ size_t DataSet::get_time_columns_number() const
     return time_columns_number;
 }
 
+
+/// Returns the number of columns that are not used.
 
 size_t DataSet::get_unused_columns_number() const
 {
@@ -1990,6 +2014,8 @@ size_t DataSet::get_unused_columns_number() const
 }
 
 
+/// Returns the number of columns that are used.
+
 size_t DataSet::get_used_columns_number() const
 {
     size_t used_columns_number = 0;
@@ -2006,11 +2032,15 @@ size_t DataSet::get_used_columns_number() const
 }
 
 
+/// Returns the columns of the data set.
+
 Vector<DataSet::Column> DataSet::get_columns() const
 {
     return columns;
 }
 
+
+/// Returns the used columns of the data set.
 
 Vector<DataSet::Column> DataSet::get_used_columns() const
 {
@@ -2020,11 +2050,15 @@ Vector<DataSet::Column> DataSet::get_used_columns() const
 }
 
 
+/// Returns the number of columns in the data set.
+
 size_t DataSet::get_columns_number() const
 {
     return columns.size();
 }
 
+
+/// Returns the number of variables in the data set.
 
 size_t DataSet::get_variables_number() const
 {
@@ -2047,6 +2081,8 @@ size_t DataSet::get_variables_number() const
 
 
 /// Returns the number of input variables of the data set.
+/// Note that the number of variables does not have to equal the number of columns in the data set,
+/// because OpenNN recognizes the categorical columns, separating these categories into variables of the data set.
 
 size_t DataSet::get_input_variables_number() const
 {
@@ -2270,6 +2306,10 @@ Vector<size_t> DataSet::get_target_variables_indices() const
 }
 
 
+/// Sets the uses of the data set columns.
+/// @param new_columns_uses String vector that contains the new uses to be set,
+/// note that this vector needs to be the size of the number of columns in the data set.
+
 void DataSet::set_columns_uses(const Vector<string>& new_columns_uses)
 {
     const size_t new_columns_uses_size = new_columns_uses.size();
@@ -2294,6 +2334,10 @@ void DataSet::set_columns_uses(const Vector<string>& new_columns_uses)
     targets_dimensions.set(1, get_target_variables_number());
 }
 
+
+/// Sets the uses of the data set columns.
+/// @param new_columns_uses DataSet::VariableUse vector that contains the new uses to be set,
+/// note that this vector needs to be the size of the number of columns in the data set.
 
 void DataSet::set_columns_uses(const Vector<VariableUse>& new_columns_uses)
 {
@@ -2320,6 +2364,8 @@ void DataSet::set_columns_uses(const Vector<VariableUse>& new_columns_uses)
 }
 
 
+/// Sets all columns in the dataset as unused columns.
+
 void DataSet::set_columns_unused()
 {
     const size_t columns_number = get_columns_number();
@@ -2330,6 +2376,8 @@ void DataSet::set_columns_unused()
     }
 }
 
+
+/// Sets all input columns in the dataset as unused columns.
 
 void DataSet::set_input_columns_unused()
 {
@@ -2351,6 +2399,10 @@ void DataSet::set_column_use(const size_t& index, const VariableUse& new_use)
    columns[index].column_use = new_use;
 }
 
+
+/// Sets the use of a single column.
+/// @param name Name of column.
+/// @param new_use Use for that column.
 
 void DataSet::set_column_use(const string& name, const VariableUse& new_use)
 {
@@ -3305,6 +3357,9 @@ Tensor<double> DataSet::get_instance_target_data(const size_t & instance_index) 
 }
 
 
+/// Returns the index of the column with the given name.
+/// @param column_name Name of the column to be found.
+
 size_t DataSet::get_column_index(const string& column_name) const
 {
     const size_t columns_number = get_columns_number();
@@ -3327,6 +3382,10 @@ size_t DataSet::get_column_index(const string& column_name) const
 
 }
 
+
+/// Returns the indices of a variable in the data set.
+/// Note that the number of variables does not have to equal the number of columns in the data set,
+/// because OpenNN recognizes the categorical columns, separating these categories into variables of the data set.
 
 Vector<size_t> DataSet::get_variable_indices(const size_t& column_index) const
 {
@@ -3362,6 +3421,19 @@ Vector<size_t> DataSet::get_variable_indices(const size_t& column_index) const
 }
 
 
+/// Returns the data from the data set of the given variables indices.
+/// @param variables_indices Variable indices.
+
+Matrix<double> DataSet::get_column_data(const Vector<size_t>& variables_indices) const
+{
+    return data.get_submatrix_columns(variables_indices);
+}
+
+
+/// Returns the data from the data set column with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_index Index of the column.
+
 Matrix<double> DataSet::get_column_data(const size_t& column_index) const
 {
     const Vector<size_t> variable_indices = get_variable_indices(column_index);
@@ -3370,11 +3442,9 @@ Matrix<double> DataSet::get_column_data(const size_t& column_index) const
 }
 
 
-Matrix<double> DataSet::get_column_data(const Vector<size_t>& variables_indices) const
-{
-    return data.get_submatrix_columns(variables_indices);
-}
-
+/// Returns the data from the data set column with a given name,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_name Name of the column.
 
 Matrix<double> DataSet::get_column_data(const string& column_name) const
 {
@@ -4806,11 +4876,17 @@ Vector<double> DataSet::calculate_testing_targets_mean() const
 }
 
 
+/// Returns the value of the gmt that has the data set, by default it is 0.
+/// This is recommended to use in forecasting problems.
+
 int DataSet::get_gmt() const
 {
     return gmt;
 }
 
+
+/// Sets the value of the gmt, by default it is 0.
+/// This is recommended to use in forecasting problems.
 
 void DataSet::set_gmt(int& new_gmt)
 {
@@ -4818,9 +4894,10 @@ void DataSet::set_gmt(int& new_gmt)
 }
 
 
-/// Calculates the linear correlations between all outputs and all inputs.
-/// It returns a matrix with number of rows the targets number and number of columns the inputs number.
-/// Each element contains the linear correlation between a single target and a single output.
+/// Calculates the correlations between all outputs and all inputs.
+/// It returns a matrix with the data stored in CorrelationsResults format, where the number of rows is the input number
+/// and number of columns is the target number.
+/// Each element contains the correlation between a single input and a single target.
 
 Matrix<CorrelationResults> DataSet::calculate_input_target_columns_correlations() const
 {
@@ -4904,6 +4981,11 @@ Matrix<CorrelationResults> DataSet::calculate_input_target_columns_correlations(
 }
 
 
+/// Calculates the correlations between all outputs and all inputs.
+/// It returns a matrix with the number of rows is the input number
+/// and number of columns is the target number.
+/// Each element contains the correlation between a single input and a single target.
+
 Matrix<double> DataSet::calculate_input_target_columns_correlations_double() const
 {
     Matrix<CorrelationResults> correlations = calculate_input_target_columns_correlations();
@@ -4923,6 +5005,7 @@ Matrix<double> DataSet::calculate_input_target_columns_correlations_double() con
 
     return correlations_double;
 }
+
 
 /// Calculates the linear correlations between all outputs and all inputs.
 /// It returns a matrixXd with number of rows the targets number and number of columns the inputs number.
@@ -4944,6 +5027,14 @@ Eigen::MatrixXd DataSet::calculate_input_target_columns_correlations_eigen() con
     return Eigen::MatrixXd();
 }
 
+
+/// Print on screen the information about the missing values in the data set.
+/// <ul>
+/// <li> Total number of missing values.
+/// <li> Number of variables with missing values.
+/// <li> Number of instances with missing values.
+/// </ul>
+/// @todo implement with indices of variables and instances?
 
 void DataSet::print_missing_values_information() const
 {
@@ -5020,7 +5111,7 @@ void DataSet::print_top_input_target_columns_correlations(const size_t& number) 
 }
 
 
-/// Calculate the correlation between each variable in the data set.
+/// Calculate the correlation between each input in the data set.
 /// Returns a matrix with the correlation values between variables in the data set.
 
 Matrix<double> DataSet::calculate_inputs_correlations() const
