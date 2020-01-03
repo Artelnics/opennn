@@ -371,21 +371,28 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
 
             double sum = 0.0;
 
+            int weights_row_index;
+            int weights_column_index;
+            double delta_element;
+            double weight;
+
             for(size_t i = 0; i < next_layers_filters_number; i++)
             {
                 for(size_t j = 0; j < next_layers_output_rows; j++)
                 {
-                    if(static_cast<int>(row_index) - static_cast<int>(j*next_layers_row_stride) >= 0
-                    && row_index - j*next_layers_row_stride < next_layers_filter_rows)
+                    weights_row_index = row_index - j*next_layers_row_stride;
+
+                    if(weights_row_index >= 0 && weights_row_index < next_layers_filter_rows)
                     {
                         for(size_t k = 0; k < next_layers_output_columns; k++)
                         {
-                            const double delta_element = next_layer_delta(image_index, i, j, k);
+                            weights_column_index = column_index - k*next_layers_column_stride;
 
-                            if(static_cast<int>(column_index) - static_cast<int>(k*next_layers_column_stride) >= 0
-                            && column_index - k*next_layers_column_stride < next_layers_filter_columns)
+                            delta_element = next_layer_delta(image_index, i, j, k);
+
+                            if(weights_column_index >= 0 && weights_column_index < next_layers_filter_columns)
                             {
-                                const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
+                                weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
 
                                 sum += delta_element*weight;
                             }
@@ -428,11 +435,14 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
 
             double sum = 0.0;
 
+            double delta_element;
+            double weight;
+
             for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
             {
-                const double delta_element = next_layer_delta(image_index, sum_index);
+                delta_element = next_layer_delta(image_index, sum_index);
 
-                const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+                weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
 
                 sum += delta_element*weight;
             }
@@ -471,11 +481,14 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
 
             double sum = 0.0;
 
+            double delta_element;
+            double weight;
+
             for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
             {
-                const double delta_element = next_layer_delta(image_index, sum_index);
+                delta_element = next_layer_delta(image_index, sum_index);
 
-                const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+                weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
 
                 sum += delta_element*weight;
             }

@@ -473,23 +473,28 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
 
         double sum = 0.0;
 
+        int weights_row_index;
+        int weights_column_index;
+        double delta_element;
+        double weight;
+
         for(size_t i = 0; i < next_layers_filters_number; i++)
         {
             for(size_t j = 0; j < next_layers_output_rows; j++)
             {
-                const int weights_row_index = row_index - j*next_layers_row_stride;
+                weights_row_index = row_index - j*next_layers_row_stride;
 
-                if(weights_row_index >= 0 && static_cast<size_t>(weights_row_index) < next_layers_filter_rows)
+                if(weights_row_index >= 0 && weights_row_index < next_layers_filter_rows)
                 {
                     for(size_t k = 0; k < next_layers_output_columns; k++)
                     {
-                        const int weights_column_index = column_index - k*next_layers_column_stride;
+                        weights_column_index = column_index - k*next_layers_column_stride;
 
-                        const double delta_element = next_layer_delta(image_index, i, j, k);
+                        delta_element = next_layer_delta(image_index, i, j, k);
 
-                        if(weights_column_index >= 0 && static_cast<size_t>(weights_column_index) < next_layers_filter_columns)
+                        if(weights_column_index >= 0 && weights_column_index < next_layers_filter_columns)
                         {
-                            const double weight = next_layers_weights(i, channel_index, weights_row_index, weights_column_index);
+                            weight = next_layers_weights(i, channel_index, weights_row_index, weights_column_index);
 
                             sum += delta_element * weight;
                         }
@@ -550,17 +555,23 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
 
                 double sum = 0.0;
 
+                int weights_row_index;
+                int weights_column_index;
+                double delta_element;
+
                 for(size_t i = 0; i < next_layers_output_rows; i++)
                 {
-                    if(static_cast<int>(row_index) - static_cast<int>(i*next_layers_row_stride) >= 0
-                    && row_index - i*next_layers_row_stride < next_layers_pool_rows)
+                    weights_row_index = row_index - i*next_layers_row_stride;
+
+                    if(weights_row_index >= 0 && weights_row_index < next_layers_pool_rows)
                     {
                         for(size_t j = 0; j < next_layers_output_columns; j++)
                         {
-                            const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+                            weights_column_index = column_index - j*next_layers_column_stride;
 
-                            if(static_cast<int>(column_index) - static_cast<int>(j*next_layers_column_stride) >= 0
-                            && column_index - j*next_layers_column_stride < next_layers_pool_columns)
+                            delta_element = next_layer_delta(image_index, channel_index, i, j);
+
+                            if(weights_column_index >= 0 && weights_column_index < next_layers_pool_columns)
                             {
                                 sum += delta_element;
                             }
@@ -616,11 +627,14 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronL
 
         double sum = 0.0;
 
+        double delta_element;
+        double weight;
+
         for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
-            const double delta_element = next_layer_delta(image_index, sum_index);
+            delta_element = next_layer_delta(image_index, sum_index);
 
-            const double weight = next_layers_weights(channel_index + row_index*filters_number + column_index*filters_number*output_rows_number, sum_index);
+            weight = next_layers_weights(channel_index + row_index*filters_number + column_index*filters_number*output_rows_number, sum_index);
 
             sum += delta_element*weight;
         }
@@ -666,11 +680,14 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabil
 
         double sum = 0.0;
 
+        double delta_element;
+        double weight;
+
         for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
         {
-            const double delta_element = next_layer_delta(image_index, sum_index);
+            delta_element = next_layer_delta(image_index, sum_index);
 
-            const double weight = next_layers_weights(channel_index + row_index*filters_number + column_index*filters_number*output_rows_number, sum_index);
+            weight = next_layers_weights(channel_index + row_index*filters_number + column_index*filters_number*output_rows_number, sum_index);
 
             sum += delta_element*weight;
         }
@@ -750,14 +767,17 @@ Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>
 
         double sum = 0.0;
 
+        double delta_element;
+        double input_element;
+
         for(size_t i = 0; i < images_number; i++)
         {
             for(size_t j = 0; j < output_rows_number; j++)
             {
                 for(size_t k = 0; k < output_columns_number; k++)
                 {
-                    const double delta_element = layer_deltas(i, filter_index, j, k);
-                    const double input_element = layers_inputs(i, channel_index, j*row_stride + row_index, k*column_stride + column_index);
+                    delta_element = layer_deltas(i, filter_index, j, k);
+                    input_element = layers_inputs(i, channel_index, j*row_stride + row_index, k*column_stride + column_index);
 
                     sum += delta_element*input_element;
                 }
@@ -777,13 +797,15 @@ Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>
 
         double sum = 0.0;
 
+        double delta_element;
+
         for(size_t i = 0; i < images_number; i++)
         {
             for(size_t j = 0; j < output_rows_number; j++)
             {
                 for(size_t k = 0; k < output_columns_number; k++)
                 {
-                    const double delta_element= layer_deltas(i, bias_index, j, k);
+                    delta_element= layer_deltas(i, bias_index, j, k);
 
                     sum += delta_element;
                 }
@@ -873,9 +895,10 @@ Matrix<double> ConvolutionalLayer::calculate_image_convolution(const Tensor<doub
                     {
                         const size_t column = column_index * column_stride + window_column;
 
-                        convolutions(row_index, column_index)
-                                += image(channel_index, row, column)
-                                * filter(channel_index, window_row, window_column);
+                        const double image_element = image(channel_index, row, column);
+                        const double filter_element = filter(channel_index, window_row, window_column);
+
+                        convolutions(row_index, column_index) += image_element*filter_element;
                     }
                 }
             }
