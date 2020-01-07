@@ -40,7 +40,7 @@ void InputsSelectionTest::test_constructor()
 
 void InputsSelectionTest::test_destructor()
 {
-    cout << "tes_destructor\n";
+    cout << "test_destructor\n";
 
     GrowingInputs* gi = new GrowingInputs;
 
@@ -52,7 +52,10 @@ void InputsSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    TrainingStrategy training_strategy;
+    NeuralNetwork nn;
+    DataSet ds;
+
+    TrainingStrategy training_strategy(&nn, &ds);
 
     GrowingInputs gi(&training_strategy);
 
