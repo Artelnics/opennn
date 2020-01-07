@@ -1,6 +1,6 @@
 <div align="center">
   <img src="http://www.opennn.net/images/opennn_git_logo.svg">
-<\div>
+</div>
 
 OpenNN is a software library written in C++ for advanced analytics. It implements neural networks, the most successful machine learning method. 
 
