@@ -461,7 +461,7 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
     const size_t next_delta_dimension_1 = next_layer_delta.get_dimension(1);
     const size_t next_delta_dimension_2 = next_layer_delta.get_dimension(2);
 
-    Tensor<double> hidden_delta({images_number, filters_number, output_rows_number, output_columns_number});
+    Tensor<double> hidden_delta(Vector<size_t>({images_number, filters_number, output_rows_number, output_columns_number}));
 
     const size_t size = hidden_delta.size();
 
