@@ -1,4 +1,8 @@
-# OpenNN
+<div align="center">
+  <img src="http://www.opennn.net/images/opennn_git_logo.svg">
+</div>
+
+
 
 OpenNN is a software library written in C++ for advanced analytics. It implements neural networks, the most successful machine learning method. 
 
@@ -6,7 +10,7 @@ The main advantage of OpenNN is its high performance.
 
 This library outstands in terms of execution speed and memory allocation. It is constantly optimized and parallelized in order to maximize its efficiency.
 
-Some typical applications of OpenNN are business intelligence (customer segmentation, churn prevention...), health care (early diagnosis, microarray analysis...) and engineering (performance optimization, predictive maitenance...).
+Some typical applications of OpenNN are business intelligence (customer segmentation, churn prevention...), health care (early diagnosis, microarray analysis,...) and engineering (performance optimization, predictive maitenance...).
 
 The documentation is composed by tutorials and examples to offer a complete overview about the library. 
 
