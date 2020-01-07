@@ -29,8 +29,8 @@ int main(void)
 
         // Data set
 
-        //DataSet data_set("../data/mnist_debug.csv", ',', false);
-        DataSet data_set("C:\\artelnics\\opennn\\examples\\mnist\\data\\mnist_train.csv", ',', false);
+        DataSet data_set("../data/mnist_debug.csv", ',', false);
+        //DataSet data_set("C:\\artelnics\\opennn\\examples\\mnist\\data\\mnist_train.csv", ',', false);
 
         data_set.set_input();
         data_set.set_column_use(0, OpenNN::DataSet::VariableUse::Target);
@@ -42,8 +42,8 @@ int main(void)
         data_set.set_input_variables_dimensions(inputs_dimensions);
         data_set.set_target_variables_dimensions(targets_dimensions);
 
-        const size_t total_instances = 60000;
-        data_set.set_instances_uses((Vector<string>(total_instances, "Training").assemble(Vector<string>(60000 - total_instances, "Unused"))));
+        //const size_t total_instances = 1000;
+        //data_set.set_instances_uses((Vector<string>(total_instances, "Training").assemble(Vector<string>(60000 - total_instances, "Unused"))));
         data_set.split_instances_random(0.75, 0, 0.25);
 
         // Neural network
