@@ -496,7 +496,7 @@ inline const T& Tensor<T>::operator()(const size_t& index_0 , const size_t& inde
 
 #endif
 
-    return (*this)[index_2 * dimensions[0] * dimensions[1] + index_1 * dimensions[0] + index_0];
+    return (*this)[index_0 + dimensions[0]*(index_1 + index_2*dimensions[1])];
 }
 
 
@@ -520,7 +520,7 @@ inline const T& Tensor<T>::operator()(const size_t& index_0 , const size_t& inde
 
 #endif
 
-    return (*this)[index_3 * dimensions[0] * dimensions[1] * dimensions[2] + index_2 *dimensions[0] * dimensions[1] + index_1 * dimensions[0] + index_0];
+    return (*this)[index_0 + dimensions[0]*(index_1 + dimensions[1]*(index_2 + index_3*dimensions[2]))];
 }
 
 
@@ -590,7 +590,7 @@ T& Tensor<T>::operator()(const size_t& index_0 , const size_t& index_1, const si
 
 #endif
 
-    return (*this)[index_2 * (dimensions[0] * dimensions[1]) + index_1 * dimensions[0] + index_0];
+    return (*this)[index_0 + dimensions[0]*(index_1 + index_2*dimensions[1])];
 }
 
 
@@ -614,7 +614,7 @@ T& Tensor<T>::operator()(const size_t& index_0 , const size_t& index_1, const si
 
 #endif
 
-    return (*this)[index_3 * dimensions[0] * dimensions[1] * dimensions[2] + index_2 *dimensions[0] * dimensions[1] + index_1 * dimensions[0] + index_0];
+    return (*this)[index_0 + dimensions[0]*(index_1 + dimensions[1]*(index_2 + index_3*dimensions[2]))];
 }
 
 
