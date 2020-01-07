@@ -487,13 +487,15 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
             {
                 weights_row_index = row_index - j*next_layers_row_stride;
 
-                if(weights_row_index >= 0 && weights_row_index < next_layers_filter_rows)
+//                if(weights_row_index >= 0 && weights_row_index < next_layers_filter_rows)
+                if(0 <= weights_row_index < next_layers_filter_rows)
                 {
                     for(size_t k = 0; k < next_layers_output_columns; k++)
                     {
                         weights_column_index = column_index - k*next_layers_column_stride;
 
-                        if(weights_column_index >= 0 && weights_column_index < next_layers_filter_columns)
+//                        if(weights_column_index >= 0 && weights_column_index < next_layers_filter_columns)
+                        if(0 <= weights_column_index < weights_column_index < next_layers_filter_columns)
                         {
                             //delta_element = next_layer_delta(image_index, i, j, k);
 
