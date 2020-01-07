@@ -29,8 +29,7 @@ int main(void)
 
         // Data set
 
-        DataSet data_set("../data/mnist_debug.csv", ',', false);
-        //DataSet data_set("C:\\artelnics\\opennn\\examples\\mnist\\data\\mnist_train.csv", ',', false);
+        DataSet data_set("../data/mnist_train.csv", ',', false);
 
         data_set.set_input();
         data_set.set_column_use(0, OpenNN::DataSet::VariableUse::Target);
@@ -42,9 +41,7 @@ int main(void)
         data_set.set_input_variables_dimensions(inputs_dimensions);
         data_set.set_target_variables_dimensions(targets_dimensions);
 
-        //const size_t total_instances = 1000;
-        //data_set.set_instances_uses((Vector<string>(total_instances, "Training").assemble(Vector<string>(60000 - total_instances, "Unused"))));
-        data_set.split_instances_random(0.75, 0, 0.25);
+        data_set.set_training();
 
         // Neural network
 
@@ -62,14 +59,14 @@ int main(void)
 
         // Convolutional layer 1
 
-        ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer(scaling_layer_outputs_dimensions, {4, 3, 3});
+        ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer(scaling_layer_outputs_dimensions, {16, 3, 3});
         neural_network.add_layer(convolutional_layer_1);
 
         const Vector<size_t> convolutional_layer_1_outputs_dimensions = convolutional_layer_1->get_outputs_dimensions();
 
         // Convolutional layer 2
 
-        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1_outputs_dimensions, {8, 3, 3});
+        ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1_outputs_dimensions, {32, 3, 3});
         neural_network.add_layer(convolutional_layer_2);
 
         const Vector<size_t> convolutional_layer_2_outputs_dimensions = convolutional_layer_2->get_outputs_dimensions();

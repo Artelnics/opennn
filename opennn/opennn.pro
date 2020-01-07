@@ -24,24 +24,26 @@ CONFIG(debug, debug|release) {
 
 # OpenMP library
 
-#win32:!win32-g++{
-#QMAKE_CXXFLAGS += -openmp
-#QMAKE_LFLAGS   += -openmp
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -openmp
+QMAKE_LFLAGS   += -openmp
 
 #QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
 #QMAKE_LFLAGS += -fopenmp -pthread -lgomp
 #LIBS += -fopenmp -pthread -lgomp
-#}else:!macx{
+}else:!macx{
 #QMAKE_CXXFLAGS+= -fopenmp -lgomp
 #QMAKE_LFLAGS += -fopenmp -lgomp
-#}
+
+QMAKE_CXXFLAGS+= -fopenmp
+QMAKE_LFLAGS +=  -fopenmp
+
+}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
 #}
 
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
 
 # Eigen library
 
