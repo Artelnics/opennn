@@ -457,6 +457,9 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
     const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
 
     const Tensor<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+    const size_t weights_dimension_0 = next_layers_weights.get_dimension(0);
+    const size_t weights_dimension_1 = next_layers_weights.get_dimension(1);
+    const size_t weights_dimension_2 = next_layers_weights.get_dimension(2);
 
     const size_t next_delta_dimension_1 = next_layer_delta.get_dimension(1);
     const size_t next_delta_dimension_2 = next_layer_delta.get_dimension(2);
@@ -488,22 +491,22 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
                 weights_row_index = row_index - j*next_layers_row_stride;
 
                 if(0 <= weights_row_index && weights_row_index < next_layers_filter_rows)
-//                if(0 <= weights_row_index < next_layers_filter_rows)
                 {
                     for(size_t k = 0; k < next_layers_output_columns; k++)
                     {
                         weights_column_index = column_index - k*next_layers_column_stride;
 
-//                        if(0 <= weights_column_index < weights_column_index < next_layers_filter_columns)
                         if(0 <= weights_column_index && weights_column_index < next_layers_filter_columns)
                         {
                             //delta_element = next_layer_delta(image_index, i, j, k);
+
+                            //weight = next_layers_weights(i, channel_index, weights_row_index, weights_column_index);
 
                             // Performance optimization changes
 
                             delta_element = next_layer_delta[image_index + images_number*(i + next_delta_dimension_1*(j + k*next_delta_dimension_2))];
 
-                            weight = next_layers_weights(i, channel_index, weights_row_index, weights_column_index);
+                            weight = next_layers_weights[i + weights_dimension_0*(channel_index + weights_dimension_1*(weights_row_index + weights_column_index*weights_dimension_2))];
 
                             sum += delta_element * weight;
                         }
