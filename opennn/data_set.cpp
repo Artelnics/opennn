@@ -6463,7 +6463,7 @@ tinyxml2::XMLDocument* DataSet::to_XML() const
 
    // Missing values label
    {
-      element = document->NewElement("missing_values_label");
+      element = document->NewElement("MissingValuesLabel");
       data_file_element->LinkEndChild(element);
 
       text = document->NewText(missing_values_label.c_str());
@@ -6561,7 +6561,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values label
     {
-        file_stream.OpenElement("missing_values_label");
+        file_stream.OpenElement("MissingValuesLabel");
 
         file_stream.PushText(missing_values_label.c_str());
 
@@ -6633,7 +6633,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
         {
             file_stream.OpenElement("Column");
 
-            file_stream.PushAttribute("Item", to_string(i).c_str());
+            file_stream.PushAttribute("Item", to_string(i+1).c_str());
 
             columns[i].write_XML(file_stream);
 
@@ -6676,9 +6676,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Close instances
-
-
-    // Close DataSet
 
     file_stream.CloseElement();
 }
@@ -6904,15 +6901,36 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         throw logic_error(buffer.str());
     }
 
+    size_t new_columns_number = 0;
+
     if(columns_number_element->GetText())
     {
-        const size_t new_columns_number = static_cast<size_t>(atoi(columns_number_element->GetText()));
+        new_columns_number = static_cast<size_t>(atoi(columns_number_element->GetText()));
 
         set_columns_number(new_columns_number);
     }
 
-    // Read and set columns..
-/*
+    // Columns
+
+    if(new_columns_number > 0)
+    {
+        for(size_t i = 0; i < new_columns_number; i++)
+        {
+            const tinyxml2::XMLElement* column_element = columns_element->FirstChildElement("Column");
+
+            if(columns_element->Attribute("Item") != std::to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Column item number (" << i+1 << ") does not match (" << columns_element->Attribute("Item") << ").\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            columns[i].from_XML(column_element);
+        }
+    }
+
     // Instances
 
     const tinyxml2::XMLElement* instances_element = data_set_element->FirstChildElement("Instances");
@@ -6944,10 +6962,8 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         const size_t new_instances_number = static_cast<size_t>(atoi(instances_number_element->GetText()));
 
         instances_uses.set(new_instances_number);
-
-        set_instances_number(new_instances_number); // ?
     }
-*/
+
     // Display
 
 //    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
