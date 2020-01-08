@@ -82,7 +82,7 @@ public:
 
    FirstOrderLoss calculate_first_order_loss() const;
 
-   FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+   FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
    // Error terms methods
 

@@ -74,7 +74,7 @@ public:
    // Gradient methods
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
-   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
    // Terms methods
 

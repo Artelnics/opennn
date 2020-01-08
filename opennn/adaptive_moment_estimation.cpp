@@ -774,7 +774,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            loss_index_pointer->calculate_batch_first_order_loss(batch, first_order_loss);
 
-           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
+           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(batch);
 
            learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
 

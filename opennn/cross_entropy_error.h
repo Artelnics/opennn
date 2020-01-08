@@ -70,7 +70,7 @@ public:
 
    // Gradient methods
 
-   FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+   FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 

@@ -207,7 +207,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
+LossIndex::FirstOrderLoss SumSquaredError::calculate_batch_first_order_loss(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -223,20 +223,17 @@ check();
 
     FirstOrderLoss first_order_loss(parameters_number);
 
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
-
     const Vector<Layer::FirstOrderActivations> forward_propagation
-            = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+            = neural_network_pointer->calculate_trainable_forward_propagation(batch.inputs);
 
     const Tensor<double> output_gradient
-            = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
+            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
 
     const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Vector<double> batch_error_gradient = calculate_error_gradient(inputs, forward_propagation, layers_delta);
+    const Vector<double> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
-    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, targets);
+    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
 
     first_order_loss.loss = batch_error;
     first_order_loss.gradient += batch_error_gradient;
