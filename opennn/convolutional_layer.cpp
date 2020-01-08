@@ -546,6 +546,8 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
 }
 
 
+/// @todo case MaxPooling
+
 Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
                                                                   const Tensor<double>&,
                                                                   const Tensor<double>& activations_derivatives,
