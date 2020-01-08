@@ -7161,6 +7161,14 @@ void DataSet::save_data() const
 }
 
 
+/// Saves to the data file the values of the data matrix in binary format.
+
+void DataSet::save_data_binary(const string& binary_data_file_name) const
+{
+    data.save_binary(binary_data_file_name);
+}
+
+
 /// Arranges an input-target matrix from a time series matrix, according to the number of lags.
 
 void DataSet::transform_time_series()
