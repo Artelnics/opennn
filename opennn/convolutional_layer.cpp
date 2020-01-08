@@ -484,7 +484,7 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
         double delta_element;
         double weight;
 
-        for(size_t i = 0; i < next_layers_filters_number; i++)
+        /*for(size_t i = 0; i < next_layers_filters_number; i++)
         {
             for(size_t j = 0; j < next_layers_output_rows; j++)
             {
@@ -503,6 +503,32 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
                     //weight = next_layers_weights(i, channel_index, weights_row_index, weights_column_index);
 
                     // Performance optimization changes
+
+                    delta_element = next_layer_delta[image_index + images_number*(i + next_delta_dimension_1*(j + k*next_delta_dimension_2))];
+
+                    weight = next_layers_weights[i + weights_dimension_0*(channel_index + weights_dimension_1*(weights_row_index + weights_column_index*weights_dimension_2))];
+
+                    sum += delta_element * weight;
+                }
+            }
+        }*/
+
+        // Performance improvement
+
+        const size_t lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
+        const size_t upper_row_index = row_index/next_layers_row_stride + 1;
+        const size_t lower_column_index = (column_index - next_layers_filter_columns)/next_layers_column_stride + 1;
+        const size_t upper_column_index = column_index/next_layers_column_stride + 1;
+
+        for(size_t i = 0; i < next_layers_filters_number; i++)
+        {
+            for(size_t j = lower_row_index; j < upper_row_index; j++)
+            {
+                weights_row_index = row_index - j*next_layers_row_stride;
+
+                for(size_t k = lower_column_index; k < upper_column_index; k++)
+                {
+                    weights_column_index = column_index - k*next_layers_column_stride;
 
                     delta_element = next_layer_delta[image_index + images_number*(i + next_delta_dimension_1*(j + k*next_delta_dimension_2))];
 
