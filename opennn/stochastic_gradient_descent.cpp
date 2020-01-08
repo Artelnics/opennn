@@ -769,6 +769,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    double parameters_norm = 0.0;
 
+   NeuralNetwork::TrainableForwardPropagation trainable_forward_propagation(batch_instances_number, neural_network_pointer);
+
    // Loss index stuff
 
    LossIndex::FirstOrderLoss first_order_loss(parameters_number);
@@ -829,6 +831,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            data.get_tensor(training_batches[iteration], input_variables_indices, input_data_dimensions, batch.input_data);
            data.get_tensor(training_batches[iteration], target_variables_indices, target_data_dimensions, batch.target_data);
 
+           // Neural network
+
+           neural_network_pointer->calculate_trainable_forward_propagation(batch, trainable_forward_propagation);
+
+/*
            //Loss
 
            first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(batch);
@@ -871,7 +878,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             }
 
             learning_rate_iteration++;
-
+*/
        }
 
        gradient_norm = l2_norm(first_order_loss.gradient);

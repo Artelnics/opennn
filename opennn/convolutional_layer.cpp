@@ -516,9 +516,10 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
         // Performance improvement
 
         const size_t lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
-        const size_t upper_row_index = std::min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+        const size_t upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+
         const size_t lower_column_index = (column_index - next_layers_filter_columns)/next_layers_column_stride + 1;
-        const size_t upper_column_index = std::min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+        const size_t upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
 
         for(size_t i = 0; i < next_layers_filters_number; i++)
         {
@@ -918,10 +919,11 @@ Matrix<double> ConvolutionalLayer::calculate_image_convolution(const Tensor<doub
 
     #endif
 
-    const size_t image_channels_number = image.get_dimension(0);
     const size_t filter_channels_number = filter.get_dimension(0);
 
     #ifdef __OPENNN_DEBUG__
+
+        const size_t image_channels_number = image.get_dimension(0);
 
         if(image_channels_number != filter_channels_number)
         {
