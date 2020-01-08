@@ -576,6 +576,9 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
             const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
             const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
 
+            const size_t next_delta_dimension_1 = next_layer_delta.get_dimension(1);
+            const size_t next_delta_dimension_2 = next_layer_delta.get_dimension(2);
+
             Tensor<double> hidden_delta({images_number, filters_number, output_rows_number, output_columns_number}, 0.0);
 
             const size_t size = hidden_delta.size();
@@ -591,11 +594,9 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
 
                 double sum = 0.0;
 
-                int weights_row_index;
-                int weights_column_index;
                 double delta_element;
 
-                for(size_t i = 0; i < next_layers_output_rows; i++)
+                /*for(size_t i = 0; i < next_layers_output_rows; i++)
                 {
                     weights_row_index = row_index - i*next_layers_row_stride;
 
@@ -613,6 +614,24 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
                             }
                         }
                     }
+                }*/
+
+                // Performance improvement
+
+                const size_t lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
+                const size_t upper_row_index = std::min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+                const size_t lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
+                const size_t upper_column_index = std::min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+
+                for(size_t i = lower_row_index; i < upper_row_index; i++)
+                {
+                    for(size_t j = lower_column_index; j < upper_column_index; j++)
+                    {
+                        //delta_element = next_layer_delta(image_index, channel_index, i, j);
+                        delta_element = next_layer_delta[image_index + images_number*(channel_index + next_delta_dimension_1*(i + j*next_delta_dimension_2))];
+
+                        sum += delta_element;
+                    }
                 }
 
                 hidden_delta(image_index, channel_index, row_index, column_index) += sum;
@@ -620,7 +639,6 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
 
             return hidden_delta*activations_derivatives/(next_layers_pool_rows*next_layers_pool_columns);
         }
-
 
         case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
         {
@@ -681,8 +699,6 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronL
     return hidden_delta*activations_derivatives;
 }
 
-
-/// @todo
 
 Tensor<double> ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
                                                                      const Tensor<double>&,
