@@ -38,7 +38,6 @@ RecurrentLayer::RecurrentLayer(const size_t& new_inputs_number, const size_t& ne
 }
  
 
-
 /// Copy constructor. 
 /// It creates a copy of an existing neuron layer object.
 /// @param other_neuron_layer neuron layer object to be copied.
@@ -848,51 +847,27 @@ Vector<double> RecurrentLayer::calculate_activations(const Vector<double>& combi
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Vector<double>();
@@ -903,51 +878,27 @@ Tensor<double> RecurrentLayer::calculate_activations(const Tensor<double>& combi
 {
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -956,7 +907,6 @@ Tensor<double> RecurrentLayer::calculate_activations(const Tensor<double>& combi
 
 Tensor<double> RecurrentLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const size_t neurons_number = get_neurons_number();
@@ -978,50 +928,27 @@ Tensor<double> RecurrentLayer::calculate_activations_derivatives(const Tensor<do
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return  linear_derivatives(combinations);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combinations);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combinations);
-        }
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
+
+        case Logistic: return logistic_derivatives(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
+
+        case Threshold: return threshold_derivatives(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
+
+        case SoftPlus: return soft_plus_derivatives(combinations);
+
+        case SoftSign: return soft_sign_derivatives(combinations);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 
     return Tensor<double> ();
@@ -1082,7 +1009,6 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs)
 
 Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& parameters)
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const size_t inputs_number = get_inputs_number();

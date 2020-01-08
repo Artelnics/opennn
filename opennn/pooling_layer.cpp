@@ -230,18 +230,11 @@ Tensor<double> PoolingLayer::calculate_activations_derivatives(const Tensor<doub
 {
     switch(pooling_method)
     {
-        case NoPooling:
-        {
-            return calculate_no_pooling_activations_derivatives(inputs);
-        }
-        case AveragePooling:
-        {
-            return calculate_average_pooling_activations_derivatives(inputs);
-        }
-        case MaxPooling:
-        {
-            return calculate_max_pooling_activations_derivatives(inputs);
-        }
+        case NoPooling: return calculate_no_pooling_activations_derivatives(inputs);
+
+        case AveragePooling: return calculate_average_pooling_activations_derivatives(inputs);
+
+        case MaxPooling: return calculate_max_pooling_activations_derivatives(inputs);
     }
 
     return Tensor<double>();

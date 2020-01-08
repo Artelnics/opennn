@@ -1326,7 +1326,6 @@ Tensor<double> LongShortTermMemoryLayer::calculate_activations_states(const Tens
 }
 
 
-
 Tensor<double> LongShortTermMemoryLayer::calculate_activations(const Tensor<double>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
@@ -1350,50 +1349,27 @@ Tensor<double> LongShortTermMemoryLayer::calculate_activations(const Tensor<doub
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Linear: return linear(combinations);
+
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -1423,51 +1399,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_activations(const Vector<doub
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Vector<double>();
@@ -1497,51 +1449,27 @@ Tensor<double> LongShortTermMemoryLayer::calculate_recurrent_activations(const T
 
     switch(recurrent_activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -1571,51 +1499,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_recurrent_activations(const V
 
     switch(recurrent_activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Vector<double>();
@@ -1624,7 +1528,6 @@ Vector<double> LongShortTermMemoryLayer::calculate_recurrent_activations(const V
 
 Tensor<double> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const size_t neurons_number = get_neurons_number();
@@ -1646,54 +1549,32 @@ Tensor<double> LongShortTermMemoryLayer::calculate_activations_derivatives(const
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combinations);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combinations);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combinations);
-        }
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
+
+        case Logistic: return logistic_derivatives(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
+
+        case Threshold: return threshold_derivatives(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
+
+        case SoftPlus: return soft_plus_derivatives(combinations);
+
+        case SoftSign: return soft_sign_derivatives(combinations);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 
     return Tensor<double>();
 }
+
 
 
 
@@ -1720,51 +1601,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_activations_derivatives(const
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combination);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combination);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combination);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combination);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combination);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combination);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combination);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combination);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combination);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combination);
-        }
+        case Linear: return linear_derivatives(combination);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combination);
-        }
+        case Logistic: return logistic_derivatives(combination);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combination);
+
+        case Threshold: return threshold_derivatives(combination);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combination);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combination);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combination);
+
+        case SoftPlus: return soft_plus_derivatives(combination);
+
+        case SoftSign: return soft_sign_derivatives(combination);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combination);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combination);
     }
 
     return Vector<double>();
@@ -1793,51 +1650,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_recurrent_activations_derivat
 
     switch(recurrent_activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combination);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combination);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combination);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combination);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combination);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combination);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combination);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combination);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combination);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combination);
-        }
+        case Linear: return linear_derivatives(combination);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combination);
-        }
+        case Logistic: return logistic_derivatives(combination);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combination);
+
+        case Threshold: return threshold_derivatives(combination);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combination);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combination);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combination);
+
+        case SoftPlus: return soft_plus_derivatives(combination);
+
+        case SoftSign: return soft_sign_derivatives(combination);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combination);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combination);
     }
 
     return Vector<double>();
