@@ -610,14 +610,14 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Vect
 }
 
 
-void NeuralNetwork::set(const Vector<size_t>& inputs_dimensions,
+void NeuralNetwork::set(const Vector<size_t>& input_variables_dimensions,
                         const size_t& blocks_number,
                         const Vector<size_t>& filters_dimensions,
                         const size_t& outputs_number)
 {
     layers_pointers.set();
 
-    ScalingLayer* scaling_layer = new ScalingLayer(inputs_dimensions);
+    ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
     this->add_layer(scaling_layer);
 
     Vector<size_t> outputs_dimensions = scaling_layer->get_outputs_dimensions();

@@ -191,9 +191,9 @@ Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>&
 
         const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-        const Vector<size_t> inputs_indices(0, 1.0, inputs_number-1);
+        const Vector<size_t> input_variables_indices(0, 1.0, inputs_number-1);
 
-        const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, inputs_indices);
+        const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
         const Matrix<double> inputs_adjust = inputs.subtract_rows(means);
 
@@ -203,9 +203,9 @@ Tensor<double> PrincipalComponentsLayer::calculate_outputs(const Tensor<double>&
         {
             const Vector<size_t> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-            const Vector<size_t> inputs_indices(0, 1.0, inputs_number-1);
+            const Vector<size_t> input_variables_indices(0, 1.0, inputs_number-1);
 
-            const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, inputs_indices);
+            const Matrix<double> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
             // Data adjust
 

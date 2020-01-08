@@ -2187,9 +2187,9 @@ Matrix<double> TestingAnalysis::calculate_cumulative_gain(const Tensor<double>& 
 
     const Matrix<double> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-    const Vector<size_t> targets_indices(1,1);
+    const Vector<size_t> target_variables_indices(1,1);
 
-    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(targets_indices);
+    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
 
     const size_t points_number = 21;
     const double percentage_increment = 0.05;
@@ -2255,9 +2255,9 @@ Matrix<double> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor<
 
     const Matrix<double> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-    const Vector<size_t> targets_indices(1,1);
+    const Vector<size_t> target_variables_indices(1,1);
 
-    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(targets_indices);
+    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
 
     const size_t points_number = 21;
     const double percentage_increment = 0.05;

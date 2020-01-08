@@ -953,7 +953,7 @@ size_t ConvolutionalLayer::get_outputs_rows_number() const
 
     const size_t padding_height = get_padding_height();
 
-    return (inputs_dimensions[1] - filters_rows_number + padding_height)/row_stride + 1;
+    return (input_variables_dimensions[1] - filters_rows_number + padding_height)/row_stride + 1;
 }
 
 
@@ -965,7 +965,7 @@ size_t ConvolutionalLayer::get_outputs_columns_number() const
 
     const size_t padding_width = get_padding_width();
 
-    return (inputs_dimensions[2] - filters_columns_number + padding_width)/column_stride + 1;
+    return (input_variables_dimensions[2] - filters_columns_number + padding_width)/column_stride + 1;
 }
 
 
@@ -1052,7 +1052,7 @@ size_t ConvolutionalLayer::get_padding_width() const
 
         case Same:
         {
-            return column_stride*(inputs_dimensions[2] - 1) - inputs_dimensions[2] + get_filters_columns_number();
+            return column_stride*(input_variables_dimensions[2] - 1) - input_variables_dimensions[2] + get_filters_columns_number();
         }
     }
 
@@ -1073,7 +1073,7 @@ size_t ConvolutionalLayer::get_padding_height() const
 
         case Same:
         {
-            return row_stride*(inputs_dimensions[1] - 1) - inputs_dimensions[1] + get_filters_rows_number();
+            return row_stride*(input_variables_dimensions[1] - 1) - input_variables_dimensions[1] + get_filters_rows_number();
         }
     }
 
@@ -1153,7 +1153,7 @@ void ConvolutionalLayer::set(const Vector<size_t>& new_inputs_dimensions, const 
 
     #endif
 
-    inputs_dimensions.set(new_inputs_dimensions);
+    input_variables_dimensions.set(new_inputs_dimensions);
 
     const size_t filters_number = new_filters_dimensions[0];
     const size_t filters_channels_number = new_inputs_dimensions[0];
@@ -1349,7 +1349,7 @@ Tensor<double> ConvolutionalLayer::extract_synaptic_weights(const Vector<double>
 
 size_t ConvolutionalLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[0];
+    return input_variables_dimensions[0];
 }
 
 
@@ -1357,7 +1357,7 @@ size_t ConvolutionalLayer::get_inputs_channels_number() const
 
 size_t ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[1];
+    return input_variables_dimensions[1];
 }
 
 
@@ -1365,7 +1365,7 @@ size_t ConvolutionalLayer::get_inputs_rows_number() const
 
 size_t ConvolutionalLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[2];
+    return input_variables_dimensions[2];
 }
 
 

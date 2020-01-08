@@ -203,7 +203,7 @@ protected:
 
    size_t column_stride = 1;
 
-   Vector<size_t> inputs_dimensions;
+   Vector<size_t> input_variables_dimensions;
 
    PaddingOption padding_option = NoPadding;
 

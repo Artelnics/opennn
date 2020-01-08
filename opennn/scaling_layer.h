@@ -174,7 +174,7 @@ public:
 
 protected:
 
-   Vector<size_t> inputs_dimensions;
+   Vector<size_t> input_variables_dimensions;
 
    /// Descriptives of input variables.
 

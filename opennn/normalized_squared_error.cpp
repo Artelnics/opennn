@@ -100,7 +100,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
     const size_t training_instances_number = training_indices.size();    
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Vector<double> training_targets_mean = data_set_pointer->calculate_training_targets_mean();
 
@@ -116,7 +116,7 @@ void NormalizedSquaredError::set_normalization_coefficient()
 
        // Target vector
 
-       const Vector<double> targets = data_set_pointer->get_instance_data(training_index, targets_indices);
+       const Vector<double> targets = data_set_pointer->get_instance_data(training_index, target_variables_indices);
 
        // Normalization coefficient
 
@@ -153,7 +153,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
     
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Vector<double> selection_targets_mean = data_set_pointer->calculate_selection_targets_mean();
 
@@ -169,7 +169,7 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
        // Target vector
 
-       const Vector<double> targets = data_set_pointer->get_instance_data(selection_index, targets_indices);
+       const Vector<double> targets = data_set_pointer->get_instance_data(selection_index, target_variables_indices);
 
        // Normalization coefficient
 
