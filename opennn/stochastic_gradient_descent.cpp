@@ -748,8 +748,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-   const Vector<size_t>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const Vector<size_t>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t> input_data_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t> target_data_dimensions = data_set_pointer->get_target_variables_dimensions();
 
    const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
@@ -826,8 +826,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        {
            // Data set
 
-           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
-           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
+           data.get_tensor(training_batches[iteration], input_variables_indices, input_data_dimensions, batch.input_data);
+           data.get_tensor(training_batches[iteration], target_variables_indices, target_data_dimensions, batch.target_data);
 
            //Loss
 
@@ -871,6 +871,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             }
 
             learning_rate_iteration++;
+
        }
 
        gradient_norm = l2_norm(first_order_loss.gradient);

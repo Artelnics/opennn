@@ -279,7 +279,7 @@ public:
 
        // First layer
 
-       trainable_layers_pointers[0]->calculate_first_order_activations(batch.inputs,
+       trainable_layers_pointers[0]->calculate_first_order_activations(batch.input_data,
                                      trainable_forward_propagation.first_order_activations[0]);
 
        // Rest of layers

@@ -224,16 +224,16 @@ check();
     FirstOrderLoss first_order_loss(parameters_number);
 
     const Vector<Layer::FirstOrderActivations> forward_propagation
-            = neural_network_pointer->calculate_trainable_forward_propagation(batch.inputs);
+            = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
 
     const Tensor<double> output_gradient
-            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
+            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.target_data);
 
     const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Vector<double> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
+    const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data, forward_propagation, layers_delta);
 
-    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
+    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.target_data);
 
     first_order_loss.loss = batch_error;
     first_order_loss.gradient += batch_error_gradient;
