@@ -162,15 +162,99 @@ public:
    Tensor<double> calculate_activations(const Tensor<double>&) const;
    Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
 
-   void calculate_activations(const Tensor<double>&, Tensor<double>&) const
+   void calculate_activations(const Tensor<double>& combinations, Tensor<double>& activations) const
    {
+        #ifdef __OPENNN_DEBUG__
 
+        const size_t neurons_number = get_neurons_number();
+
+        const size_t combinations_columns_number = combinations.get_dimension(1);
+
+        if(combinations_columns_number != neurons_number)
+        {
+           ostringstream buffer;
+
+           buffer << "OpenNN Exception: PerceptronLayer class.\n"
+                  << "void calculate_activations(const Tensor<double>&, Tensor<double>&) const method.\n"
+                  << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
+
+           throw logic_error(buffer.str());
+        }
+
+        #endif
+
+        switch(activation_function)
+        {
+            case Linear: linear(combinations, activations); break;
+
+            case Logistic: logistic(combinations, activations); break;
+
+            case HyperbolicTangent: hyperbolic_tangent(combinations, activations); break;
+
+            case Threshold: threshold(combinations, activations); break;
+
+            case SymmetricThreshold: symmetric_threshold(combinations, activations); break;
+
+            case RectifiedLinear: rectified_linear(combinations, activations); break;
+
+            case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); break;
+
+            case SoftPlus: soft_plus(combinations, activations); break;
+
+            case SoftSign: soft_sign(combinations, activations); break;
+
+            case HardSigmoid: hard_sigmoid(combinations, activations); break;
+
+            case ExponentialLinear: exponential_linear(combinations, activations); break;
+        }
    }
 
 
-   void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const
+   void calculate_activations_derivatives(const Tensor<double>& combinations, Tensor<double>& activations_derivatives) const
    {
+        #ifdef __OPENNN_DEBUG__
 
+        const size_t neurons_number = get_neurons_number();
+
+        const size_t combinations_columns_number = combinations.get_dimension(1);
+
+        if(combinations_columns_number != neurons_number)
+        {
+           ostringstream buffer;
+
+           buffer << "OpenNN Exception: PerceptronLayer class.\n"
+                  << "void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const method.\n"
+                  << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
+
+           throw logic_error(buffer.str());
+        }
+
+        #endif
+
+        switch(activation_function)
+        {
+            case Linear: linear_derivatives(combinations, activations_derivatives); break;
+
+            case Logistic: logistic_derivatives(combinations, activations_derivatives); break;
+
+            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations_derivatives); break;
+
+            case Threshold: threshold_derivatives(combinations, activations_derivatives); break;
+
+            case SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations_derivatives); break;
+
+            case RectifiedLinear: rectified_linear_derivatives(combinations, activations_derivatives); break;
+
+            case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations_derivatives); break;
+
+            case SoftPlus: soft_plus_derivatives(combinations, activations_derivatives); break;
+
+            case SoftSign: soft_sign_derivatives(combinations, activations_derivatives); break;
+
+            case HardSigmoid: hard_sigmoid_derivatives(combinations, activations_derivatives); break;
+
+            case ExponentialLinear: exponential_linear_derivatives(combinations, activations_derivatives); break;
+        }
    }
 
    // Perceptron layer outputs
