@@ -1345,7 +1345,7 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     const Vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
 
-    const Vector<size_t> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const size_t target_index = data_set_pointer->get_target_variables_indices()[0];
 
@@ -1366,7 +1366,7 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
         const size_t current_selection_instance_index = positives_instances_indices[i];
         const Vector<double> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
         const double targets = current_selection_instance[target_index];
-        const Vector<double> current_inputs_selection_instance = current_selection_instance.get_subvector(inputs_indices);
+        const Vector<double> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
 
         data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
         neural_network_pointer->randomize_parameters_normal();

@@ -65,13 +65,13 @@ ScalingLayer::~ScalingLayer()
 
 Vector<size_t> ScalingLayer::get_input_variables_dimensions() const
 {
-    return inputs_dimensions;
+    return input_variables_dimensions;
 }
 
 
 Vector<size_t> ScalingLayer::get_outputs_dimensions() const
 {
-    return inputs_dimensions;
+    return input_variables_dimensions;
 }
 
 
@@ -339,7 +339,7 @@ void ScalingLayer::set(const Vector<size_t>& new_inputs_dimensions)
 
     scaling_methods.set(new_inputs_dimensions.calculate_product(), MinimumMaximum);
 
-    inputs_dimensions.set(new_inputs_dimensions);
+    input_variables_dimensions.set(new_inputs_dimensions);
 
     set_default();
 }

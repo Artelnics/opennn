@@ -24,7 +24,7 @@ PoolingLayer::PoolingLayer() : Layer()
 
 PoolingLayer::PoolingLayer(const Vector<size_t>& new_inputs_dimensions) : Layer()
 {
-    inputs_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_inputs_dimensions;
 
     set_default();
 }
@@ -37,7 +37,7 @@ PoolingLayer::PoolingLayer(const Vector<size_t>& new_inputs_dimensions) : Layer(
 
 PoolingLayer::PoolingLayer(const Vector<size_t>& new_inputs_dimensions, const Vector<size_t>& pool_dimensions) : Layer()
 {
-    inputs_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_inputs_dimensions;
 
     pool_rows_number = pool_dimensions[0];
 
@@ -568,7 +568,7 @@ Vector<size_t> PoolingLayer::get_inputs_indices(const size_t& neuron) const
     {
         for(size_t j = column_index; j < column_index + pool_columns_number; j++)
         {
-            indices.push_back(i*inputs_dimensions[2] + j );
+            indices.push_back(i*input_variables_dimensions[2] + j );
         }
     }
 
@@ -595,7 +595,7 @@ Vector<size_t> PoolingLayer::get_outputs_dimensions() const
 {
     Vector<size_t> outputs_dimensions(3);
 
-    outputs_dimensions[0] = inputs_dimensions[0];
+    outputs_dimensions[0] = input_variables_dimensions[0];
     outputs_dimensions[1] = get_outputs_rows_number();
     outputs_dimensions[2] = get_outputs_columns_number();
 
@@ -606,7 +606,7 @@ Vector<size_t> PoolingLayer::get_outputs_dimensions() const
 
 size_t PoolingLayer::get_inputs_number() const
 {
-    return inputs_dimensions.calculate_product();
+    return input_variables_dimensions.calculate_product();
 }
 
 
@@ -614,7 +614,7 @@ size_t PoolingLayer::get_inputs_number() const
 
 size_t PoolingLayer::get_inputs_channels_number() const
 {
-    return inputs_dimensions[0];
+    return input_variables_dimensions[0];
 }
 
 
@@ -622,7 +622,7 @@ size_t PoolingLayer::get_inputs_channels_number() const
 
 size_t PoolingLayer::get_inputs_rows_number() const
 {
-    return inputs_dimensions[1];
+    return input_variables_dimensions[1];
 }
 
 
@@ -630,7 +630,7 @@ size_t PoolingLayer::get_inputs_rows_number() const
 
 size_t PoolingLayer::get_inputs_columns_number() const
 {
-    return inputs_dimensions[2];
+    return input_variables_dimensions[2];
 }
 
 
@@ -638,7 +638,7 @@ size_t PoolingLayer::get_inputs_columns_number() const
 
 size_t PoolingLayer::get_outputs_rows_number() const
 {
-    return (inputs_dimensions[1] - pool_rows_number)/row_stride + 1;
+    return (input_variables_dimensions[1] - pool_rows_number)/row_stride + 1;
 }
 
 
@@ -646,7 +646,7 @@ size_t PoolingLayer::get_outputs_rows_number() const
 
 size_t PoolingLayer::get_outputs_columns_number() const
 {
-    return (inputs_dimensions[2] - pool_columns_number)/column_stride + 1;
+    return (input_variables_dimensions[2] - pool_columns_number)/column_stride + 1;
 }
 
 
@@ -719,7 +719,7 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 
 void PoolingLayer::set_inputs_dimensions(const Vector<size_t>& new_inputs_dimensions)
 {
-    inputs_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_inputs_dimensions;
 }
 
 

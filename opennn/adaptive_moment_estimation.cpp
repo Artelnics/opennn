@@ -681,11 +681,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-   const Vector<size_t> inputs_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const Vector<size_t> targets_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
-   const Vector<size_t> inputs_indices = data_set_pointer->get_input_variables_indices();
-   const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+   const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
 
@@ -695,7 +695,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters(parameters_number);
+   Vector<double> parameters = neural_network_pointer->get_parameters();
    Vector<double> parameters_increment(parameters_number);
 
    double parameters_norm = 0.0;
@@ -751,8 +751,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        const size_t batches_number = training_batches.size();
 
-       parameters = neural_network_pointer->get_parameters();
-
        parameters_norm = l2_norm(parameters);
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
@@ -765,14 +763,12 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Data set
 
-           data.get_tensor(training_batches[iteration], inputs_indices, inputs_dimensions, batch.inputs);
-           data.get_tensor(training_batches[iteration], targets_indices, targets_dimensions, batch.targets);
+           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
+           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
 
            // Neural network
 
            neural_network_pointer->calculate_trainable_forward_propagation(batch, trainable_forward_propagation);
-
-           parameters = neural_network_pointer->get_parameters();
 
            // Loss index
 
@@ -798,8 +794,9 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Update parameters
 
-           neural_network_pointer->set_parameters(parameters - gradient_exponential_decay*learning_rate/(square_root(square_gradient_exponential_decay)+ epsilon));
+           parameters -= gradient_exponential_decay*learning_rate/(square_root(square_gradient_exponential_decay)+ epsilon);
 
+           neural_network_pointer->set_parameters(parameters);
         }
 
        // Gradient
@@ -815,7 +812,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        if(epoch == 0)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -824,7 +821,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        else if(selection_error <= minimum_selection_error)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
 
        // Elapsed time

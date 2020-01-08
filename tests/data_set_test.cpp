@@ -1002,7 +1002,7 @@ void DataSetTest::test_calculate_target_columns_distribution()
 
     Vector<size_t> target_indices({3});
 
-    Vector<size_t> inputs_indices({0, 1, 2});
+    Vector<size_t> input_variables_indices({0, 1, 2});
 
     DataSet data_set;
 
@@ -2619,10 +2619,10 @@ void DataSetTest::test_calculate_testing_targets_mean()
 
     DataSet data_set;
     data_set.set_data(matrix);
-    vector<size_t> targets_indices({2});
+    vector<size_t> target_variables_indices({2});
     vector<size_t> testing_indices({2, 3});
 
-    data_set.set_target_variables_indices(targets_indices);
+    data_set.set_target_variables_indices(target_variables_indices);
 
     data_set.set_testing(testing_indices);
 
@@ -2643,9 +2643,9 @@ void DataSetTest::test_calculate_input_target_correlations()
 
     DataSet data_set;
     data_set.set_data(matrix);
-    Vector<size_t> inputs_indices({0, 1});
+    Vector<size_t> input_variables_indices({0, 1});
 
-    data_set.set_input_variables_indices(inputs_indices);
+    data_set.set_input_variables_indices(input_variables_indices);
 
     Matrix<double> correlations_targets = data_set.calculate_inputs_targets_correlations();
 
@@ -2668,11 +2668,11 @@ void DataSetTest::test_calculate_total_input_correlations()
 
     DataSet data_set;
     data_set.set_data(matrix);
-    Vector<size_t> inputs_indices({0, 1});
-    Vector<size_t> targets_indices({2});
+    Vector<size_t> input_variables_indices({0, 1});
+    Vector<size_t> target_variables_indices({2});
     Vector<double> solution({1, 1});
 
-    data_set.set_input_variables_indices(inputs_indices);
+    data_set.set_input_variables_indices(input_variables_indices);
 
     Vector<double> correlations_inputs = data_set.calculate_total_input_correlations();
 
@@ -2768,14 +2768,14 @@ void DataSetTest::test_calculate_training_negatives()
     DataSet data_set;
     data_set.set_data(matrix);
     Vector<size_t> training_indices({0,1});
-    Vector<size_t> inputs_indices({0, 1});
+    Vector<size_t> input_variables_indices({0, 1});
     Vector<size_t> target_indices({2});
     size_t target_index = 2;
 
     data_set.set_testing();
     data_set.set_training(training_indices);
 
-    data_set.set_input_variables_indices(inputs_indices);
+    data_set.set_input_variables_indices(input_variables_indices);
     data_set.set_target_variables_indices(target_indices);
 
     size_t training_negatives = data_set.calculate_training_negatives(target_index);
@@ -2798,14 +2798,14 @@ void DataSetTest::test_calculate_selection_negatives()
     DataSet data_set;
     data_set.set_data(matrix);
     Vector<size_t> selection_indices({0,1});
-    Vector<size_t> inputs_indices({0, 1});
+    Vector<size_t> input_variables_indices({0, 1});
     Vector<size_t> target_indices({2});
     size_t target_index = 2;
 
     data_set.set_testing();
     data_set.set_selection(selection_indices);
 
-    data_set.set_input_variables_indices(inputs_indices);
+    data_set.set_input_variables_indices(input_variables_indices);
     data_set.set_target_variables_indices(target_indices);
 
     size_t selection_negatives = data_set.calculate_training_negatives(target_index);

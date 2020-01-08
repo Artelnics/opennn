@@ -750,9 +750,10 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+   Vector<double> parameters = neural_network_pointer->get_parameters();
+
    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters(parameters_number);
    Vector<double> parameters_increment(parameters_number);
    Vector<double> last_increment(parameters_number,0.0);
 
@@ -805,8 +806,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        const size_t batches_number = training_batches.size();
 
-       parameters = neural_network_pointer->get_parameters();
-
        parameters_norm = l2_norm(parameters);
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
@@ -825,8 +824,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             initial_decay > 0.0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
-            parameters = neural_network_pointer->get_parameters();
-
             parameters_increment = first_order_loss.gradient*(-learning_rate);
 
             if(momentum > 0.0 && !nesterov)
@@ -835,7 +832,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 last_increment = parameters_increment;
 
-                neural_network_pointer->set_parameters(parameters + parameters_increment);
+                parameters += parameters_increment;
+
+                neural_network_pointer->set_parameters(parameters);
             }
             else if(momentum > 0.0 && nesterov )
             {
@@ -845,11 +844,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
 
-                neural_network_pointer->set_parameters(parameters + nesterov_increment);
+                parameters += nesterov_increment;
+
+                neural_network_pointer->set_parameters(parameters);
             }
             else
             {
-                neural_network_pointer->set_parameters(parameters + parameters_increment);
+                parameters += parameters_increment;
+
+                neural_network_pointer->set_parameters(parameters);
             }
 
             learning_rate_iteration++;
@@ -866,7 +869,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        if(epoch == 0)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -875,7 +878,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        else if(selection_error <= minimum_selection_error)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
 
        // Elapsed time

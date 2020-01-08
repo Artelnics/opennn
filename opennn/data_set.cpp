@@ -1465,9 +1465,9 @@ void DataSet::set_default_columns_uses()
        const size_t inputs_number = get_input_variables_number();
        const size_t targets_number = get_target_variables_number();
 
-       inputs_dimensions.set(Vector<size_t>({inputs_number}));
+       input_variables_dimensions.set(Vector<size_t>({inputs_number}));
 
-       targets_dimensions.set(Vector<size_t>({targets_number}));
+       target_variables_dimensions.set(Vector<size_t>({targets_number}));
    }
 }
 
@@ -1730,17 +1730,17 @@ Vector<string> DataSet::get_target_variables_names() const
 
 /// Returns the dimensions of the input variables.
 
-Vector<size_t> DataSet::get_input_variables_dimensions() const
+const Vector<size_t>& DataSet::get_input_variables_dimensions() const
 {
-    return inputs_dimensions;
+    return input_variables_dimensions;
 }
 
 
 /// Returns the dimesions of the target variables.
 
-Vector<size_t> DataSet::get_target_variables_dimensions() const
+const Vector<size_t>& DataSet::get_target_variables_dimensions() const
 {
-    return targets_dimensions;
+    return target_variables_dimensions;
 }
 
 
@@ -2222,7 +2222,7 @@ Vector<size_t> DataSet::get_input_variables_indices() const
 
     const Vector<size_t> input_columns_indices = get_input_columns_indices();
 
-    Vector<size_t> inputs_indices(inputs_number);
+    Vector<size_t> input_variables_indices(inputs_number);
 
     size_t input_index = 0;
     size_t input_variable_index = 0;
@@ -2233,7 +2233,7 @@ Vector<size_t> DataSet::get_input_variables_indices() const
 
         if(current_categories_number == 0 && columns[i].column_use == Input)
         {
-            inputs_indices[input_index] = input_variable_index;
+            input_variables_indices[input_index] = input_variable_index;
             input_index++;
             input_variable_index++;
         }
@@ -2243,7 +2243,7 @@ Vector<size_t> DataSet::get_input_variables_indices() const
             {
                 if(columns[i].categories_uses[j] == Input)
                 {
-                    inputs_indices[input_index] = input_variable_index;
+                    input_variables_indices[input_index] = input_variable_index;
                     input_index++;
                 }
 
@@ -2256,7 +2256,7 @@ Vector<size_t> DataSet::get_input_variables_indices() const
         }
     }
 
-    return inputs_indices;
+    return input_variables_indices;
 }
 
 
@@ -2268,7 +2268,7 @@ Vector<size_t> DataSet::get_target_variables_indices() const
 
     const Vector<size_t> target_columns_indices = get_target_columns_indices();
 
-    Vector<size_t> targets_indices(targets_number);
+    Vector<size_t> target_variables_indices(targets_number);
 
     size_t target_index = 0;
     size_t target_variable_index = 0;
@@ -2279,7 +2279,7 @@ Vector<size_t> DataSet::get_target_variables_indices() const
 
         if(current_categories_number == 0 && columns[i].column_use == Target)
         {
-            targets_indices[target_index] = i;
+            target_variables_indices[target_index] = i;
             target_index++;
             target_variable_index++;
         }
@@ -2289,7 +2289,7 @@ Vector<size_t> DataSet::get_target_variables_indices() const
             {
                 if(columns[i].categories_uses[j] == Target)
                 {
-                    targets_indices[target_index] = target_variable_index;
+                    target_variables_indices[target_index] = target_variable_index;
                     target_index++;
                 }
 
@@ -2302,7 +2302,7 @@ Vector<size_t> DataSet::get_target_variables_indices() const
         }
     }
 
-    return targets_indices;
+    return target_variables_indices;
 }
 
 
@@ -2330,8 +2330,8 @@ void DataSet::set_columns_uses(const Vector<string>& new_columns_uses)
         columns[i].set_use(new_columns_uses[i]);
     }
 
-    inputs_dimensions.set(1, get_input_variables_number());
-    targets_dimensions.set(1, get_target_variables_number());
+    input_variables_dimensions.set(1, get_input_variables_number());
+    target_variables_dimensions.set(1, get_target_variables_number());
 }
 
 
@@ -2359,8 +2359,8 @@ void DataSet::set_columns_uses(const Vector<VariableUse>& new_columns_uses)
         columns[i].set_use(new_columns_uses[i]);
     }
 
-    inputs_dimensions.set(1, get_input_variables_number());
-    targets_dimensions.set(1, get_target_variables_number());
+    input_variables_dimensions.set(1, get_input_variables_number());
+    target_variables_dimensions.set(1, get_target_variables_number());
 }
 
 
@@ -2596,7 +2596,7 @@ void DataSet::set_columns_number(const size_t& new_variables_number)
 
 void DataSet::set_input_variables_dimensions(const Vector<size_t>& new_inputs_dimensions)
 {
-    inputs_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_inputs_dimensions;
 }
 
 
@@ -2604,7 +2604,7 @@ void DataSet::set_input_variables_dimensions(const Vector<size_t>& new_inputs_di
 
 void DataSet::set_target_variables_dimensions(const Vector<size_t>& new_targets_dimensions)
 {
-    targets_dimensions = new_targets_dimensions;
+    target_variables_dimensions = new_targets_dimensions;
 }
 
 
@@ -2950,9 +2950,9 @@ Matrix<double> DataSet::get_input_data() const
 
    const Vector<size_t> indices(0, 1,instances_number-1);
 
-   const Vector<size_t> inputs_indices = get_input_variables_indices();
+   const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-   return(data.get_submatrix(indices, inputs_indices));
+   return(data.get_submatrix(indices, input_variables_indices));
 }
 
 
@@ -2981,9 +2981,9 @@ Matrix<double> DataSet::get_target_data() const
    const size_t instances_number = get_instances_number();
    const Vector<size_t> indices(0, 1, instances_number-1);
 
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-   return(data.get_submatrix(indices, targets_indices));
+   return(data.get_submatrix(indices, target_variables_indices));
 }
 
 
@@ -3009,11 +3009,11 @@ Eigen::MatrixXd DataSet::get_target_data_eigen() const
 
 Tensor<double> DataSet::get_input_data(const Vector<size_t>& instances_indices) const
 {
-    const Vector<size_t> inputs_dimensions = get_input_variables_dimensions();
+    const Vector<size_t>& input_variables_dimensions = get_input_variables_dimensions();
 
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    return data.get_tensor(instances_indices, inputs_indices, inputs_dimensions);
+    return data.get_tensor(instances_indices, input_variables_indices, input_variables_dimensions);
 }
 
 
@@ -3023,11 +3023,11 @@ Tensor<double> DataSet::get_input_data(const Vector<size_t>& instances_indices) 
 
 Tensor<double> DataSet::get_target_data(const Vector<size_t>& instances_indices) const
 {
-    const Vector<size_t> targets_dimensions = get_target_variables_dimensions();
+    const Vector<size_t>& target_variables_dimensions = get_target_variables_dimensions();
 
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    return data.get_tensor(instances_indices, targets_indices, targets_dimensions);
+    return data.get_tensor(instances_indices, target_variables_indices, target_variables_dimensions);
 }
 
 
@@ -3037,10 +3037,10 @@ Tensor<double> DataSet::get_target_data(const Vector<size_t>& instances_indices)
 
 Matrix<float> DataSet::get_input_data_float(const Vector<size_t>& instances_indices) const
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
     const size_t instances_number = instances_indices.size();
-    const size_t inputs_number = inputs_indices.size();
+    const size_t inputs_number = input_variables_indices.size();
 
     Matrix<float> inputs_float(instances_number, inputs_number);
 
@@ -3053,7 +3053,7 @@ Matrix<float> DataSet::get_input_data_float(const Vector<size_t>& instances_indi
 
        for(size_t j = 0; j < inputs_number; j++)
        {
-          input_index = inputs_indices[j];
+          input_index = input_variables_indices[j];
           inputs_float(i,j) = static_cast<float>(data(instance_index,input_index));
        }
     }
@@ -3068,11 +3068,11 @@ Matrix<float> DataSet::get_input_data_float(const Vector<size_t>& instances_indi
 
 Matrix<float> DataSet::get_target_data_float(const Vector<size_t>& instances_indices) const
 {
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
     const size_t instances_number = instances_indices.size();
 
-    const size_t targets_number = targets_indices.size();
+    const size_t targets_number = target_variables_indices.size();
 
     Matrix<float> targets_float(instances_number, targets_number);
 
@@ -3085,7 +3085,7 @@ Matrix<float> DataSet::get_target_data_float(const Vector<size_t>& instances_ind
 
        for(size_t j = 0; j < targets_number; j++)
        {
-          target_index = targets_indices[j];
+          target_index = target_variables_indices[j];
 
           targets_float(i,j) = static_cast<float>(data(instance_index,target_index));
        }
@@ -3103,11 +3103,11 @@ Tensor<double> DataSet::get_training_input_data() const
 {
     const Vector<size_t> training_indices = get_training_instances_indices();
 
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    const Vector<size_t> inputs_dimensions = get_input_variables_dimensions();
+    const Vector<size_t>& input_variables_dimensions = get_input_variables_dimensions();
 
-    return data.get_tensor(training_indices, inputs_indices, inputs_dimensions);
+    return data.get_tensor(training_indices, input_variables_indices, input_variables_dimensions);
 }
 
 
@@ -3136,9 +3136,9 @@ Tensor<double> DataSet::get_training_target_data() const
 {
    const Vector<size_t> training_indices = get_training_instances_indices();
 
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t>& target_variables_indices = get_target_variables_indices();
 
-   return data.get_tensor(training_indices, targets_indices, get_target_variables_dimensions());
+   return data.get_tensor(training_indices, target_variables_indices, get_target_variables_dimensions());
 }
 
 
@@ -3166,9 +3166,9 @@ Tensor<double> DataSet::get_selection_input_data() const
 {
    const Vector<size_t> selection_indices = get_selection_instances_indices();
 
-   const Vector<size_t> inputs_indices = get_input_variables_indices();
+   const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-   return data.get_tensor(selection_indices, inputs_indices, get_input_variables_dimensions());
+   return data.get_tensor(selection_indices, input_variables_indices, get_input_variables_dimensions());
 }
 
 
@@ -3196,9 +3196,9 @@ Tensor<double> DataSet::get_selection_target_data() const
 {
    const Vector<size_t> selection_indices = get_selection_instances_indices();
 
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-   return data.get_tensor(selection_indices, targets_indices, get_target_variables_dimensions());
+   return data.get_tensor(selection_indices, target_variables_indices, get_target_variables_dimensions());
 }
 
 
@@ -3224,11 +3224,11 @@ Eigen::MatrixXd DataSet::get_selection_target_data_eigen() const
 
 Tensor<double> DataSet::get_testing_input_data() const
 {
-   const Vector<size_t> inputs_indices = get_input_variables_indices();
+   const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
    const Vector<size_t> testing_indices = get_testing_instances_indices();
 
-   return data.get_tensor(testing_indices, inputs_indices, get_input_variables_dimensions());
+   return data.get_tensor(testing_indices, input_variables_indices, get_input_variables_dimensions());
 }
 
 
@@ -3254,11 +3254,11 @@ Eigen::MatrixXd DataSet::get_testing_input_data_eigen() const
 
 Tensor<double> DataSet::get_testing_target_data() const
 {
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
    const Vector<size_t> testing_indices = get_testing_instances_indices();
 
-   return data.get_tensor(testing_indices, targets_indices, get_target_variables_dimensions());
+   return data.get_tensor(testing_indices, target_variables_indices, get_target_variables_dimensions());
 }
 
 
@@ -3338,10 +3338,10 @@ Vector<double> DataSet::get_instance_data(const size_t& instance_index, const Ve
 
 Tensor<double> DataSet::get_instance_input_data(const size_t & instance_index) const
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
     const Vector<size_t> inputs_dimension = get_input_variables_dimensions();
 
-    return data.get_tensor(Vector<size_t>({instance_index}),inputs_indices,inputs_dimension);
+    return data.get_tensor(Vector<size_t>({instance_index}),input_variables_indices,inputs_dimension);
 }
 
 
@@ -3350,10 +3350,10 @@ Tensor<double> DataSet::get_instance_input_data(const size_t & instance_index) c
 
 Tensor<double> DataSet::get_instance_target_data(const size_t & instance_index) const
 {
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
     const Vector<size_t> targets_dimension = get_target_variables_dimensions();
 
-    return data.get_tensor(Vector<size_t>({instance_index}),targets_indices,targets_dimension);
+    return data.get_tensor(Vector<size_t>({instance_index}),target_variables_indices,targets_dimension);
 }
 
 
@@ -3737,8 +3737,8 @@ void DataSet::set(const size_t& new_instances_number,
        }
    }
 
-   inputs_dimensions.set(Vector<size_t>({new_inputs_number}));
-   targets_dimensions.set(Vector<size_t>({new_targets_number}));
+   input_variables_dimensions.set(Vector<size_t>({new_inputs_number}));
+   target_variables_dimensions.set(Vector<size_t>({new_targets_number}));
 
    instances_uses.set(new_instances_number);
    split_instances_random();
@@ -4193,8 +4193,8 @@ Vector<size_t> DataSet::unuse_repeated_instances()
 Vector<size_t> DataSet::unuse_non_significant_input_columns()
 {
 /*
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
-    const size_t inputs_number = inputs_indices.size();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
+    const size_t inputs_number = input_variables_indices.size();
 
     const size_t target_index = get_target_variables_indices()[0];
 
@@ -4215,7 +4215,7 @@ Vector<size_t> DataSet::unuse_non_significant_input_columns()
     {
         positives = 0;
 
-        current_input_index = inputs_indices[i];
+        current_input_index = input_variables_indices[i];
 
         if(!is_binary_variable(current_input_index)) continue;
 
@@ -4778,9 +4778,9 @@ Vector<Descriptives> DataSet::calculate_input_variables_descriptives() const
 {
     const Vector<size_t> used_indices = get_used_instances_indices();
 
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    return descriptives_missing_values(data, used_indices, inputs_indices);
+    return descriptives_missing_values(data, used_indices, input_variables_indices);
 }
 
 
@@ -4797,9 +4797,9 @@ Vector<Descriptives> DataSet::calculate_target_variables_descriptives() const
 {
    const Vector<size_t> used_indices = get_used_instances_indices();
 
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-   return descriptives_missing_values(data, used_indices, targets_indices);
+   return descriptives_missing_values(data, used_indices, target_variables_indices);
 }
 
 
@@ -4846,9 +4846,9 @@ Vector<double> DataSet::calculate_training_targets_mean() const
 {
     const Vector<size_t> training_indices = get_training_instances_indices();
 
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    return mean_missing_values(data, training_indices, targets_indices);
+    return mean_missing_values(data, training_indices, target_variables_indices);
 }
 
 
@@ -4858,9 +4858,9 @@ Vector<double> DataSet::calculate_selection_targets_mean() const
 {
     const Vector<size_t> selection_indices = get_selection_instances_indices();
 
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    return mean_missing_values(data, selection_indices, targets_indices);
+    return mean_missing_values(data, selection_indices, target_variables_indices);
 }
 
 
@@ -4870,9 +4870,9 @@ Vector<double> DataSet::calculate_testing_targets_mean() const
 {
    const Vector<size_t> testing_indices = get_testing_instances_indices();
 
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-   return mean_missing_values(data, testing_indices, targets_indices);
+   return mean_missing_values(data, testing_indices, target_variables_indices);
 }
 
 
@@ -5262,7 +5262,7 @@ void DataSet::print_top_inputs_correlations(const size_t& number) const
 
 Matrix<double> DataSet::calculate_covariance_matrix() const
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
     const Vector<size_t> used_instances_indices = get_used_instances_indices();
 
     const size_t inputs_number = get_input_variables_number();
@@ -5271,13 +5271,13 @@ Matrix<double> DataSet::calculate_covariance_matrix() const
 
     for(int i = 0; i < static_cast<int>(inputs_number); i++)
     {
-        const size_t first_input_index = inputs_indices[static_cast<size_t>(i)];
+        const size_t first_input_index = input_variables_indices[static_cast<size_t>(i)];
 
         const Vector<double> first_inputs = data.get_column(first_input_index, used_instances_indices);
 
         for(size_t j = static_cast<size_t>(i); j < inputs_number; j++)
         {
-            const size_t second_input_index = inputs_indices[j];
+            const size_t second_input_index = input_variables_indices[j];
 
             const Vector<double> second_inputs = data.get_column(second_input_index, used_instances_indices);
 
@@ -5558,7 +5558,7 @@ void DataSet::subtract_inputs_mean()
 {
     Vector<Descriptives> input_statistics = calculate_input_variables_descriptives();
 
-    Vector<size_t> inputs_indices = get_input_variables_indices();
+    Vector<size_t> input_variables_indices = get_input_variables_indices();
     Vector<size_t> used_instances_indices = get_used_instances_indices();
 
     size_t input_index;
@@ -5566,9 +5566,9 @@ void DataSet::subtract_inputs_mean()
 
     double input_mean;
 
-    for(size_t i = 0; i < inputs_indices.size(); i++)
+    for(size_t i = 0; i < input_variables_indices.size(); i++)
     {
-        input_index = inputs_indices[i];
+        input_index = input_variables_indices[i];
 
         input_mean = input_statistics[i].mean;
 
@@ -5667,9 +5667,9 @@ void DataSet::scale_data_minimum_maximum(const Vector<Descriptives>& data_descri
 
 void DataSet::scale_inputs_mean_standard_deviation(const Vector<Descriptives>& inputs_descriptives)
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    scale_columns_mean_standard_deviation(data, inputs_descriptives, inputs_indices);
+    scale_columns_mean_standard_deviation(data, inputs_descriptives, input_variables_indices);
 }
 
 
@@ -5799,9 +5799,9 @@ Descriptives DataSet::scale_input_standard_deviation(const size_t& input_index)
 
 void DataSet::scale_inputs_minimum_maximum(const Vector<Descriptives>& inputs_descriptives)
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    scale_columns_minimum_maximum(data, inputs_descriptives, inputs_indices);
+    scale_columns_minimum_maximum(data, inputs_descriptives, input_variables_indices);
 }
 
 
@@ -5979,7 +5979,7 @@ void DataSet::scale_inputs(const string& scaling_unscaling_method, const Vector<
 
 void DataSet::scale_inputs(const Vector<string>& scaling_unscaling_methods, const Vector<Descriptives>& inputs_descriptives)
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
    for(size_t i = 0; i < scaling_unscaling_methods.size(); i++)
    {
@@ -5993,19 +5993,19 @@ void DataSet::scale_inputs(const Vector<string>& scaling_unscaling_methods, cons
 
           case MinimumMaximum:
           {
-             scale_input_minimum_maximum(inputs_descriptives[i], inputs_indices[i]);
+             scale_input_minimum_maximum(inputs_descriptives[i], input_variables_indices[i]);
           }
           break;
 
           case MeanStandardDeviation:
           {
-              scale_input_mean_standard_deviation(inputs_descriptives[i], inputs_indices[i]);
+              scale_input_mean_standard_deviation(inputs_descriptives[i], input_variables_indices[i]);
           }
           break;
 
           case StandardDeviation:
           {
-               scale_input_standard_deviation(inputs_descriptives[i], inputs_indices[i]);
+               scale_input_standard_deviation(inputs_descriptives[i], input_variables_indices[i]);
           }
           break;
 
@@ -6031,9 +6031,9 @@ void DataSet::scale_inputs(const Vector<string>& scaling_unscaling_methods, cons
 
 void DataSet::scale_targets_mean_standard_deviation(const Vector<Descriptives>& targets_descriptives)
 {
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    scale_columns_mean_standard_deviation(data, targets_descriptives, targets_indices);
+    scale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
 }
 
 
@@ -6088,9 +6088,9 @@ void DataSet::scale_targets_minimum_maximum(const Vector<Descriptives>& targets_
 
     #endif
 
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    scale_columns_minimum_maximum(data, targets_descriptives, targets_indices);
+    scale_columns_minimum_maximum(data, targets_descriptives, target_variables_indices);
 }
 
 
@@ -6154,9 +6154,9 @@ void DataSet::scale_targets_logarithmic(const Vector<Descriptives>& targets_desc
 
     #endif
 
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    scale_columns_logarithmic(data, targets_descriptives, targets_indices);
+    scale_columns_logarithmic(data, targets_descriptives, target_variables_indices);
 }
 
 
@@ -6292,9 +6292,9 @@ void DataSet::unscale_data_minimum_maximum(const Vector<Descriptives>& data_desc
 
 void DataSet::unscale_inputs_mean_standard_deviation(const Vector<Descriptives>& data_descriptives)
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    unscale_columns_mean_standard_deviation(data, data_descriptives, inputs_indices);
+    unscale_columns_mean_standard_deviation(data, data_descriptives, input_variables_indices);
 }
 
 
@@ -6305,9 +6305,9 @@ void DataSet::unscale_inputs_mean_standard_deviation(const Vector<Descriptives>&
 
 void DataSet::unscale_inputs_minimum_maximum(const Vector<Descriptives>& data_descriptives)
 {
-    const Vector<size_t> inputs_indices = get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = get_input_variables_indices();
 
-    unscale_columns_minimum_maximum(data, data_descriptives, inputs_indices);
+    unscale_columns_minimum_maximum(data, data_descriptives, input_variables_indices);
 }
 
 
@@ -6318,9 +6318,9 @@ void DataSet::unscale_inputs_minimum_maximum(const Vector<Descriptives>& data_de
 
 void DataSet::unscale_targets_mean_standard_deviation(const Vector<Descriptives>& targets_descriptives)
 {
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    unscale_columns_mean_standard_deviation(data, targets_descriptives, targets_indices);
+    unscale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
 }
 
 
@@ -6331,9 +6331,9 @@ void DataSet::unscale_targets_mean_standard_deviation(const Vector<Descriptives>
 
 void DataSet::unscale_targets_minimum_maximum(const Vector<Descriptives>& data_descriptives)
 {
-    const Vector<size_t> targets_indices = get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
-    unscale_columns_minimum_maximum(data, data_descriptives, targets_indices);
+    unscale_columns_minimum_maximum(data, data_descriptives, target_variables_indices);
 }
 
 
@@ -7191,9 +7191,9 @@ void DataSet::transform_time_series()
     const size_t inputs_number = get_input_variables_number();
     const size_t targets_number = get_target_variables_number();
 
-    inputs_dimensions.set(Vector<size_t>({inputs_number}));
+    input_variables_dimensions.set(Vector<size_t>({inputs_number}));
 
-    targets_dimensions.set(Vector<size_t>({targets_number}));
+    target_variables_dimensions.set(Vector<size_t>({targets_number}));
 }
 
 
@@ -7290,7 +7290,7 @@ Vector<size_t> DataSet::calculate_target_distribution() const
 {
    const size_t instances_number = get_instances_number();
    const size_t targets_number = get_target_variables_number();
-   const Vector<size_t> targets_indices = get_target_variables_indices();
+   const Vector<size_t> target_variables_indices = get_target_variables_indices();
 
    Vector<size_t> class_distribution;
 
@@ -7298,7 +7298,7 @@ Vector<size_t> DataSet::calculate_target_distribution() const
    {
       class_distribution.set(2, 0);
 
-      size_t target_index = targets_indices[0];
+      size_t target_index = target_variables_indices[0];
 
       size_t positives = 0;
       size_t negatives = 0;
@@ -7331,9 +7331,9 @@ Vector<size_t> DataSet::calculate_target_distribution() const
           {
              for(size_t j = 0; j < targets_number; j++)
              {
-                 if(data(i,targets_indices[j]) == static_cast<double>(NAN)) continue;
+                 if(data(i,target_variables_indices[j]) == static_cast<double>(NAN)) continue;
 
-                 if(data(i,targets_indices[j]) > 0.5) class_distribution[j]++;
+                 if(data(i,target_variables_indices[j]) > 0.5) class_distribution[j]++;
              }
           }
       }

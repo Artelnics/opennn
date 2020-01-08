@@ -279,8 +279,8 @@ public:
    VariableUse get_variable_use(const size_t&) const;
    Vector<VariableUse> get_variables_uses() const;
 
-   Vector<size_t> get_input_variables_dimensions() const;
-   Vector<size_t> get_target_variables_dimensions() const;
+   const Vector<size_t>& get_input_variables_dimensions() const;
+   const Vector<size_t>& get_target_variables_dimensions() const;
 
    // Batches get methods
 
@@ -821,9 +821,9 @@ private:
 
    bool has_columns_names = false;
 
-   Vector<size_t> inputs_dimensions;
+   Vector<size_t> input_variables_dimensions;
 
-   Vector<size_t> targets_dimensions;
+   Vector<size_t> target_variables_dimensions;
 
    Vector<Column> columns;
 

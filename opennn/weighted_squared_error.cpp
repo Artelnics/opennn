@@ -228,9 +228,9 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
     
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const size_t negatives = data_set_pointer->calculate_training_negatives(targets_indices[0]);
+    const size_t negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
 
     training_normalization_coefficient = negatives*negatives_weight*0.5;
 }
@@ -248,9 +248,9 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 
 #endif
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const size_t negatives = data_set_pointer->calculate_selection_negatives(targets_indices[0]);
+    const size_t negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
 
     selection_normalization_coefficient = negatives*negatives_weight*0.5;
 }
