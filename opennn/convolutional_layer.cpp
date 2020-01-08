@@ -479,8 +479,8 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
 
         double sum = 0.0;
 
-        int weights_row_index;
-        int weights_column_index;
+        size_t weights_row_index;
+        size_t weights_column_index;
         double delta_element;
         double weight;
 
@@ -516,9 +516,9 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
         // Performance improvement
 
         const size_t lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
-        const size_t upper_row_index = row_index/next_layers_row_stride + 1;
+        const size_t upper_row_index = std::min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
         const size_t lower_column_index = (column_index - next_layers_filter_columns)/next_layers_column_stride + 1;
-        const size_t upper_column_index = column_index/next_layers_column_stride + 1;
+        const size_t upper_column_index = std::min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
 
         for(size_t i = 0; i < next_layers_filters_number; i++)
         {
