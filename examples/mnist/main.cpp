@@ -36,10 +36,10 @@ int main(void)
         data_set.numeric_to_categorical(0);
         data_set.set_batch_instances_number(128);
 
-        const Vector<size_t> inputs_dimensions({1, 28, 28});
-        const Vector<size_t> targets_dimensions({10});
-        data_set.set_input_variables_dimensions(inputs_dimensions);
-        data_set.set_target_variables_dimensions(targets_dimensions);
+        const Vector<size_t> input_variables_dimensions({1, 28, 28});
+        const Vector<size_t> target_variables_dimensions({10});
+        data_set.set_input_variables_dimensions(input_variables_dimensions);
+        data_set.set_target_variables_dimensions(target_variables_dimensions);
 
         data_set.set_training();
 
@@ -51,7 +51,7 @@ int main(void)
 
         // Scaling layer
 
-        ScalingLayer* scaling_layer = new ScalingLayer(inputs_dimensions);
+        ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
         scaling_layer->set_scaling_methods(OpenNN::ScalingLayer::ScalingMethod::MinimumMaximum);
         neural_network.add_layer(scaling_layer);
 
