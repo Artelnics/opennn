@@ -120,23 +120,41 @@ public:
 
     Tensor<double> calculate_outputs(const Tensor<double>&);
 
+    void calculate_activations(const Tensor<double>&,  Tensor<double>&) {}
+
     Tensor<double> calculate_no_pooling_outputs(const Tensor<double>&) const;
 
     Tensor<double> calculate_max_pooling_outputs(const Tensor<double>&) const;
 
-    Tensor<double> calculate_average_pooling_outputs(const Tensor<double>&) const;
-
-    FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+    Tensor<double> calculate_average_pooling_outputs(const Tensor<double>&) const;    
 
     // Activations derivatives
 
     Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
+
+    void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const
+    {
+
+    }
 
     Tensor<double> calculate_no_pooling_activations_derivatives(const Tensor<double>&) const;
 
     Tensor<double> calculate_average_pooling_activations_derivatives(const Tensor<double>&) const;
 
     Tensor<double> calculate_max_pooling_activations_derivatives(const Tensor<double>&) const;
+
+    // First order activations
+
+    FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+
+    void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
+    {
+        calculate_activations(inputs, first_order_activations.activations);
+
+        calculate_activations_derivatives(first_order_activations.activations, first_order_activations.activations_derivatives);
+
+    }
+
 
     // Delta methods
 

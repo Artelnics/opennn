@@ -958,23 +958,13 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
     const size_t rows_number_1 = matrix_1.get_dimension(0);
     const size_t columns_number_1 = matrix_1.get_dimension(1);
 
-    const size_t rows_number_2 = matrix_2.get_rows_number();
     const size_t columns_number_2 =matrix_2.get_columns_number();
-
-//    const size_t size = vector.size();
 
    #ifdef __OPENNN_DEBUG__
 
    ostringstream buffer;
 
-   if(false)
-   {
-     buffer << "OpenNN Exception: Metrics functions.\n"
-            << "Matrix<double> calculate_p_norm_gradient(const double&) const method.\n"
-            << "p value must be greater than zero.\n";
-
-     throw logic_error(buffer.str());
-   }
+   const size_t rows_number_2 = matrix_2.get_rows_number();
 
    if(rows_number_2 != columns_number_1)
    {

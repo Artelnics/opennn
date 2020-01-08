@@ -162,6 +162,17 @@ public:
    Tensor<double> calculate_activations(const Tensor<double>&) const;
    Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
 
+   void calculate_activations(const Tensor<double>&, Tensor<double>&) const
+   {
+
+   }
+
+
+   void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const
+   {
+
+   }
+
    // Perceptron layer outputs
 
    Tensor<double> calculate_outputs(const Tensor<double>&);
@@ -169,6 +180,25 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+
+   void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
+   {
+       Tensor<double> combinations;
+
+       if(inputs.get_dimensions_number() != 2)
+       {
+           combinations = calculate_combinations(inputs.to_2d_tensor());
+       }
+       else
+       {
+           combinations = calculate_combinations(inputs);
+       }
+
+       calculate_activations(combinations, first_order_activations.activations);
+
+       calculate_activations_derivatives(combinations, first_order_activations.activations_derivatives);
+   }
+
 
    // Delta methods
 

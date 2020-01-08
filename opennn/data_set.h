@@ -116,7 +116,6 @@ public:
 
    // Structs
 
-
    /// This structure represents the columns of the DataSet.
 
    struct Column
@@ -173,6 +172,31 @@ public:
        void write_XML(tinyxml2::XMLPrinter&) const;
    };
 
+
+   struct Batch
+   {
+       /// Default constructor.
+
+       Batch() {}
+
+       Batch(const DataSet* data_set_pointer)
+       {
+           const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+           const size_t input_variables_number = data_set_pointer->get_input_variables_number();
+           const size_t target_variables_number = data_set_pointer->get_target_variables_number();
+
+           inputs.set(batch_instances_number, input_variables_number);
+           targets.set(batch_instances_number, target_variables_number);
+       }
+
+       /// Destructor.
+
+       virtual ~Batch() {}
+
+       Tensor<double> inputs;
+       Tensor<double> targets;
+   };
+
    // Instances get methods
 
    inline size_t get_instances_number() const {return instances_uses.size();}
@@ -196,6 +220,8 @@ public:
 
    Vector<size_t> get_instances_uses_numbers() const;
    Vector<double> get_instances_uses_percentages() const;
+
+   size_t get_batch_instances_number() const {return batch_instances_number;}
 
    // Columns get methods
 

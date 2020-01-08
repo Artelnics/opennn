@@ -75,6 +75,38 @@ public:
 
    virtual ~NeuralNetwork();
 
+   struct TrainableForwardPropagation
+   {
+       /// Default constructor.
+
+       TrainableForwardPropagation() {}
+
+       TrainableForwardPropagation(const size_t& batch_instances_number, const NeuralNetwork* neural_network_pointer)
+       {
+           const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+           const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           first_order_activations.set(trainable_layers_number);
+
+           for(size_t i = 0; i < trainable_layers_number; i++)
+           {
+               const size_t layer_neurons_number = trainable_layers_pointers[i]->get_neurons_number();
+
+               first_order_activations[i].activations.set(batch_instances_number, layer_neurons_number);
+               first_order_activations[i].activations_derivatives.set(batch_instances_number, layer_neurons_number);
+           }
+       }
+
+       /// Destructor.
+
+       virtual ~TrainableForwardPropagation() {}
+
+       Vector<Layer::FirstOrderActivations> first_order_activations;
+
+   };
+
+
    // APPENDING LAYERS
 
    void add_layer(Layer*);
@@ -235,9 +267,29 @@ public:
    void save_expression_python(const string&);
    void save_expression_R(const string&);
 
-   /// Calculate de Forward Propagation in Neural Network   
+   /// Calculate de forward propagation in the neural network
 
    Vector<Layer::FirstOrderActivations> calculate_trainable_forward_propagation(const Tensor<double>&) const;
+
+   void calculate_trainable_forward_propagation(const DataSet::Batch& batch, TrainableForwardPropagation& trainable_forward_propagation) const
+   {
+       const size_t trainable_layers_number = get_trainable_layers_number();
+
+       Vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       // First layer
+
+       trainable_layers_pointers[0]->calculate_first_order_activations(batch.inputs,
+                                     trainable_forward_propagation.first_order_activations[0]);
+
+       // Rest of layers
+
+       for(size_t i = 1; i < trainable_layers_number; i++)
+       {
+            trainable_layers_pointers[i]->calculate_first_order_activations(trainable_forward_propagation.first_order_activations[i-1].activations,
+                                          trainable_forward_propagation.first_order_activations[i]);
+       }
+   }
 
 protected:
 

@@ -1087,10 +1087,19 @@ Layer::FirstOrderActivations PerceptronLayer::calculate_first_order_activations(
 {
     FirstOrderActivations first_order_activations;
 
-    const Tensor<double> combinations = calculate_combinations(inputs.to_2d_tensor());
+    Tensor<double> combinations;
+
+    if(inputs.get_dimensions_number() != 2)
+    {
+        combinations = calculate_combinations(inputs.to_2d_tensor());
+    }
+    else
+    {
+        combinations = calculate_combinations(inputs);
+    }
 
     first_order_activations.activations = calculate_activations(combinations);
-///@todo, Linux bad_alloc
+
     first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
 
     return first_order_activations;
