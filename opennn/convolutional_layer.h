@@ -143,12 +143,31 @@ public:
 
     Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
 
+    void calculate_activations(const Tensor<double>&, Tensor<double>&) const
+    {
+
+    }
+
+    void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const
+    {
+
+    }
+
    // Outputs
 
    Tensor<double> calculate_outputs(const Tensor<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
 
    FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+
+   void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
+   {
+       const Tensor<double> combinations = calculate_convolutions(inputs);
+
+       calculate_activations(combinations, first_order_activations.activations);
+
+       calculate_activations_derivatives(combinations, first_order_activations.activations_derivatives);
+   }
 
    // Delta methods
 

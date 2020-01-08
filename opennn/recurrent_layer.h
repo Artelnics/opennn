@@ -188,6 +188,15 @@ public:
 
    Layer::FirstOrderActivations calculate_first_order_activations(const Tensor<double>& inputs);
 
+   void calculate_first_order_activations(const Tensor<double>& inputs, Layer::FirstOrderActivations& first_order_activations)
+   {
+       const Tensor<double> combinations = calculate_combinations(inputs);
+
+//       first_order_activations.activations = calculate_activations(combinations);
+
+//       first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+   }
+
    // Gradient
 
    Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);

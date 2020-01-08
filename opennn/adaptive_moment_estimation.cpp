@@ -675,9 +675,19 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    //
+   const Matrix<double>& data = data_set_pointer->get_data();
 
    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+
+   const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+   const Vector<size_t> inputs_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t> targets_dimensions = data_set_pointer->get_input_variables_dimensions();
+
+   const Vector<size_t> inputs_indices = data_set_pointer->get_input_variables_indices();
+   const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+
+   DataSet::Batch batch(data_set_pointer);
 
    // Neural network stuff
 
@@ -689,6 +699,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Vector<double> parameters_increment(parameters_number);
 
    double parameters_norm = 0.0;
+
+   NeuralNetwork::TrainableForwardPropagation trainable_forward_propagation(batch_instances_number, neural_network_pointer);
 
    // Loss index stuff
 
@@ -751,11 +763,24 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        {
            iteration_count++;
 
-           learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
+           // Data set
+
+           data.get_tensor(training_batches[iteration], inputs_indices, inputs_dimensions, batch.inputs);
+           data.get_tensor(training_batches[iteration], targets_indices, targets_dimensions, batch.targets);
+
+           // Neural network
+
+           neural_network_pointer->calculate_trainable_forward_propagation(batch, trainable_forward_propagation);
+
+           parameters = neural_network_pointer->get_parameters();
+
+           // Loss index
+
+           loss_index_pointer->calculate_batch_first_order_loss(batch, first_order_loss);
 
            first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
 
-           parameters = neural_network_pointer->get_parameters();
+           learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
 
            // Loss
 

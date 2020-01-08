@@ -242,6 +242,7 @@ public:
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const {return Matrix<double>();}
 
    virtual FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const {return FirstOrderLoss();}
+   virtual void calculate_batch_first_order_loss(const DataSet::Batch&, FirstOrderLoss&) const {}
 
    virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}

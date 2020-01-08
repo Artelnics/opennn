@@ -106,6 +106,8 @@ public:
 
     virtual FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
 
+    virtual void calculate_first_order_activations(const Tensor<double>&, FirstOrderActivations&) {}
+
     // Deltas
 
     virtual Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;

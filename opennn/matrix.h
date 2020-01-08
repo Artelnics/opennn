@@ -157,6 +157,7 @@ public:
     Matrix<T> get_submatrix(const Vector<size_t>&, const Vector<size_t>&) const;
 
     Tensor<T> get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&) const;
+    void get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&, Tensor<T>&) const;
 
     Matrix<T> get_submatrix_rows(const Vector<size_t>&) const;
     Matrix<T> get_submatrix_columns(const Vector<size_t>&) const;
@@ -2474,6 +2475,53 @@ Tensor<T> Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
    }
 
    return tensor;
+}
+
+
+template <class T>
+void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
+                           const Vector<size_t>& columns_indices,
+                           const Vector<size_t>& columns_dimensions,
+                           Tensor<T>& tensor) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(columns_indices.size() != columns_dimensions.calculate_product())
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "Tensor<T> get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&) const method.\n"
+              << "Size of columns indices(" << columns_indices.size() << ") must be equal to product of columns dimensions(" << columns_dimensions.calculate_product() << ").\n";
+
+       throw logic_error(buffer.str());
+    }
+
+#endif
+
+   const size_t rows_number = rows_indices.size();
+   const size_t columns_number = columns_indices.size();
+
+   const Vector<size_t> dimensions = Vector<size_t>(1, rows_number).assemble(columns_dimensions);
+
+   size_t row_index;
+   size_t column_index;
+
+   size_t tensor_index = 0;
+
+   for(size_t j = 0; j < columns_number; j++)
+   {
+       column_index = columns_indices[j];
+
+      for(size_t i = 0; i < rows_number; i++)
+      {
+         row_index = rows_indices[i];
+
+         tensor[tensor_index] = (*this)(row_index, column_index);
+
+         tensor_index++;
+      }
+   }
 }
 
 
