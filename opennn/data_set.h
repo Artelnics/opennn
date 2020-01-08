@@ -185,16 +185,19 @@ public:
            const size_t input_variables_number = data_set_pointer->get_input_variables_number();
            const size_t target_variables_number = data_set_pointer->get_target_variables_number();
 
-           inputs.set(batch_instances_number, input_variables_number);
-           targets.set(batch_instances_number, target_variables_number);
+           const Vector<size_t> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+           const Vector<size_t> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+
+           input_data.set(input_variables_dimensions.insert_element(0, batch_instances_number));
+           target_data.set(target_variables_dimensions.insert_element(0, batch_instances_number));
        }
 
        /// Destructor.
 
        virtual ~Batch() {}
 
-       Tensor<double> inputs;
-       Tensor<double> targets;
+       Tensor<double> input_data;
+       Tensor<double> target_data;
    };
 
    // Instances get methods
@@ -716,6 +719,8 @@ public:
    void print_data_file_preview() const;
 
    void save_data() const;
+
+   void save_data_binary(const string&) const;
 
    // Data load methods
 
