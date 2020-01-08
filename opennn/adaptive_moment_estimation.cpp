@@ -663,7 +663,7 @@ void AdaptiveMomentEstimation::set_display_period(const size_t& new_display_peri
 
 OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 {
-    Results results;
+   Results results;
 
    check();
 

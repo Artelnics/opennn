@@ -62,12 +62,17 @@ public:
 
         void print() const
         {
+            cout << "Combinations:" << endl;
+            cout << combinations << endl;
+
             cout << "Activations:" << endl;
             cout << activations << endl;
 
             cout << "Activation derivatives:" << endl;
             cout << activations_derivatives << endl;
         }
+
+        Tensor<double> combinations;
 
         Tensor<double> activations;
 
