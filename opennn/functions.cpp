@@ -1686,25 +1686,56 @@ Matrix<double> absolute_value(const Matrix<double>& matrix)
 
 void hard_sigmoid(const Tensor<double>& x, Tensor<double>& y)
 {
+    const size_t n = x.size();
 
+     for(size_t i = 0; i < n; i++)
+     {
+         if(x[i] < -2.5)
+         {
+            y[i] = 0;
+         }
+         else if(x[i] > 2.5)
+         {
+             y[i] = 1;
+         }
+         else
+         {
+             y[i] = 0.2 * x[i] + 0.5;
+         }
+     }
 }
 
 
 void hyperbolic_tangent(const Tensor<double>& x, Tensor<double>& y)
 {
+    const size_t n = x.size();
 
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = tanh(x[i]);
+    }
 }
 
 
 void logistic(const Tensor<double>& x, Tensor<double>& y)
 {
+    const size_t n = x.size();
 
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = 1.0 / (1.0 + exp(-x[i]));
+    }
 }
 
 
 void linear(const Tensor<double>& x, Tensor<double>& y)
 {
+    const size_t n = x.size();
 
+    for(size_t i = 0; i < n; i++)
+    {
+        y[i] = x[i];
+    }
 }
 
 
