@@ -640,8 +640,6 @@ void PerceptronLayer::randomize_parameters_normal()
 
 void PerceptronLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
 {
-
-
     biases.randomize_normal(mean, standard_deviation);
 
     synaptic_weights.randomize_normal(mean, standard_deviation);

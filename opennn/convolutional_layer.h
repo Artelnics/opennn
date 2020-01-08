@@ -137,6 +137,67 @@ public:
     Tensor<double> calculate_convolutions(const Tensor<double>&) const;
     Tensor<double> calculate_convolutions(const Tensor<double>&, const Vector<double>&) const;
 
+    void calculate_convolutions(const Tensor<double>& input_data, Tensor<double>& convolutions) const
+    {
+
+        // Inputs
+
+        const size_t images_number = input_data.get_dimension(0);
+        //const size_t channels_number =
+
+        // Filters
+
+        const size_t filters_number = get_filters_number();
+
+        // Outputs
+
+        const size_t outputs_rows_number = get_outputs_rows_number();
+        const size_t outputs_columns_number = get_outputs_columns_number();
+/*
+        #pragma omp parallel for private(image, convolution)
+
+        for(size_t image_index = 0; image_index < images_number; image_index++)
+        {
+            //if(padding_option == Same) image = insert_padding(image);
+
+            for(size_t filter_index = 0; filter_index < filters_number; filter_index++)
+            {
+//                convolution = calculate_image_convolution(image, synaptic_weights.get_tensor(filter_index)) + biases[filter_index];
+
+//                convolutions.set_matrix(image_index, filter_index, convolution);
+
+                for(size_t channel_index = 0; channel_index < filter_channels_number; channel_index++)
+                {
+                    for(size_t row_index = 0; row_index < outputs_rows_number; row_index++)
+                    {
+                        for(size_t column_index = 0; column_index < outputs_columns_number; column_index++)
+                        {
+                            double sum = 0.0;
+
+                            for(size_t filter_row = 0; filter_row < filter_rows_number; filter_row++)
+                            {
+                                const size_t row = row_index * row_stride + filter_row;
+
+                                for(size_t filter_column = 0; filter_column < filter_columns_number; filter_column++)
+                                {
+                                    const size_t column = column_index * column_stride + filter_column;
+
+                                    //const double image_element = image(channel_index, row, column);
+                                    //const double filter_element = filter(channel_index, filter_row, filter_column);
+
+                                    sum += image_element*filter_element;
+                                }
+                            }
+
+                            convolutions(image_index, filter_index, output_row_index, output_column_index) = sum;
+                        }
+                    }
+                }
+            }
+        }
+        */
+    }
+
     // Activation
 
     Tensor<double> calculate_activations(const Tensor<double>&) const;
@@ -162,11 +223,11 @@ public:
 
    void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
    {
-       const Tensor<double> combinations = calculate_convolutions(inputs);
+       calculate_convolutions(inputs, first_order_activations.combinations);
 
-       calculate_activations(combinations, first_order_activations.activations);
+       calculate_activations(first_order_activations.combinations, first_order_activations.activations);
 
-       calculate_activations_derivatives(combinations, first_order_activations.activations_derivatives);
+       calculate_activations_derivatives(first_order_activations.combinations, first_order_activations.activations_derivatives);
    }
 
    // Delta methods
