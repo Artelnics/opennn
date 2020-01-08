@@ -106,7 +106,7 @@ public:
    Vector<double> calculate_training_error_gradient() const;
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
-   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
