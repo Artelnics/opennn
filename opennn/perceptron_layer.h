@@ -153,6 +153,39 @@ public:
 
    Tensor<double> calculate_combinations(const Tensor<double>&) const;
 
+   void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& combinations) const
+   {
+
+//       const size_t batch_instances_number = inputs.get_dimension(0);
+
+       const size_t inputs_number = get_inputs_number();
+       const size_t neurons_number = get_neurons_number();
+
+       double sum;
+
+//       #pragma omp parallel for
+
+//       for(size_t i = 0; i < batch_instances_number; i++)
+       {
+         for(size_t j = 0; j < neurons_number; j++)
+         {
+/*
+            sum = 0.0;
+
+//           for(size_t k = 0; k < inputs_number; k++)
+//           {
+//                sum += inputs(i,k)*synaptic_weights(k,j);
+//           }
+
+           sum += biases[j];
+
+           combinations(i,j) = sum;
+*/
+         }
+       }
+
+   }
+
    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
 
    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
@@ -160,6 +193,7 @@ public:
    // Perceptron layer activations
 
    Tensor<double> calculate_activations(const Tensor<double>&) const;
+
    Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
 
    void calculate_activations(const Tensor<double>& combinations, Tensor<double>& activations) const
@@ -267,22 +301,12 @@ public:
 
    void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
    {
-       Tensor<double> combinations;
+       calculate_combinations(inputs, first_order_activations.combinations);
 
-       if(inputs.get_dimensions_number() != 2)
-       {
-           combinations = calculate_combinations(inputs.to_2d_tensor());
-       }
-       else
-       {
-           combinations = calculate_combinations(inputs);
-       }
+       calculate_activations(first_order_activations.combinations, first_order_activations.activations);
 
-       calculate_activations(combinations, first_order_activations.activations);
-
-       calculate_activations_derivatives(combinations, first_order_activations.activations_derivatives);
+       calculate_activations_derivatives(first_order_activations.combinations, first_order_activations.activations_derivatives);
    }
-
 
    // Delta methods
 
