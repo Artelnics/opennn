@@ -690,7 +690,7 @@ Tensor<double> PerceptronLayer::calculate_activations(const Tensor<double>& comb
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Matrix<double> calculate_activations(const Matrix<double>&) const method.\n"
+              << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -740,7 +740,7 @@ Tensor<double> PerceptronLayer::calculate_activations_derivatives(const Tensor<d
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Matrix<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());

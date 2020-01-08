@@ -1683,4 +1683,160 @@ Matrix<double> absolute_value(const Matrix<double>& matrix)
     return absolute_value;
 }
 
+
+void hard_sigmoid(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void hyperbolic_tangent(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void logistic(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void linear(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void threshold(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void symmetric_threshold(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void rectified_linear(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void scaled_exponential_linear(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void soft_plus(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void soft_sign(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void exponential_linear(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void logistic_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void threshold_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void symmetric_threshold_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void hyperbolic_tangent_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void rectified_linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void scaled_exponential_linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void soft_plus_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void soft_sign_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void hard_sigmoid_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void exponential_linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void softmax_derivatives(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void binary(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void competitive(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
+
+void softmax(const Tensor<double>& x, Tensor<double>& y)
+{
+
+}
+
 }
