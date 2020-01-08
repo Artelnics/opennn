@@ -717,6 +717,8 @@ public:
 
    void save_data() const;
 
+   void save_data_binary(const string&) const;
+
    // Data load methods
 
    void read_csv();
