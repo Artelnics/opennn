@@ -2502,7 +2502,8 @@ void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
    const size_t rows_number = rows_indices.size();
    const size_t columns_number = columns_indices.size();
 
-   const Vector<size_t> dimensions = Vector<size_t>(1, rows_number).assemble(columns_dimensions);
+   const Vector<size_t> new_dimensions = Vector<size_t>(1, rows_number).assemble(columns_dimensions);
+   tensor.set(new_dimensions);
 
    size_t row_index;
    size_t column_index;
