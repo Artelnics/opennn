@@ -251,6 +251,10 @@ namespace OpenNN
     void soft_plus(const Tensor<double>&, Tensor<double>&);
     void soft_sign(const Tensor<double>&, Tensor<double>&);
     void exponential_linear(const Tensor<double>&, Tensor<double>&);
+    void softmax(const Tensor<double>&, Tensor<double>&);
+    void binary(const Tensor<double>&, Tensor<double>&);
+    void competitive(const Tensor<double>&, Tensor<double>&);
+
     void logistic_derivatives(const Tensor<double>&, Tensor<double>&);
     void threshold_derivatives(const Tensor<double>&, Tensor<double>&);
     void symmetric_threshold_derivatives(const Tensor<double>&, Tensor<double>&);
@@ -263,6 +267,7 @@ namespace OpenNN
     void hard_sigmoid_derivatives(const Tensor<double>&, Tensor<double>&);
     void exponential_linear_derivatives(const Tensor<double>&, Tensor<double>&);
     void softmax_derivatives(const Tensor<double>&, Tensor<double>&);
+
 
 }
 
