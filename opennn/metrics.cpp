@@ -1007,6 +1007,57 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
 }
 
 
+
+void linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, const Vector<double>& vector, Tensor<double>& new_matrix)
+{
+    const size_t rows_number_1 = matrix_1.get_dimension(0);
+    const size_t columns_number_1 = matrix_1.get_dimension(1);
+
+    const size_t columns_number_2 =matrix_2.get_columns_number();
+
+   #ifdef __OPENNN_DEBUG__
+
+   ostringstream buffer;
+
+   const size_t rows_number_2 = matrix_2.get_rows_number();
+
+   if(rows_number_2 != columns_number_1)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Metrics functions.\n"
+             << "void linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&, Tensor<double>&) method.\n"
+             << "The number of rows of matrix 2 (" << rows_number_2 << ") must be equal to the number of columns of matrix 1 (" << columns_number_1 << ").\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   double sum;
+
+#pragma omp parallel for
+
+   for(size_t i = 0; i < rows_number_1; i++)
+   {
+     for(size_t j = 0; j < columns_number_2; j++)
+     {
+        sum = 0.0;
+
+       for(size_t k = 0; k < columns_number_1; k++)
+       {
+            sum += matrix_1(i,k)*matrix_2(k,j);
+       }
+
+       sum += vector[j];
+
+       new_matrix(i,j) = sum;
+     }
+   }
+}
+
+
+
 /// Returns the distance between the elements of this vector and the elements of
 /// another vector.
 /// @param other_vector Other vector.

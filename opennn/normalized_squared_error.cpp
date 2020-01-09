@@ -479,7 +479,7 @@ check();
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
         const Vector<Layer::ForwardPropagation> forward_propagation
-                = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+                = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Vector<double> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
@@ -524,7 +524,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::FirstOrderLoss NormalizedSquaredError::calculate_batch_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::FirstOrderLoss NormalizedSquaredError::calculate_first_order_loss(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -538,7 +538,7 @@ check();
 
     FirstOrderLoss first_order_loss(this);
 
-    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.input_data);
 
     const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.target_data);
 
@@ -714,7 +714,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Vector<double> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -857,7 +857,7 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

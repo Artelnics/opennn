@@ -1169,17 +1169,17 @@ Tensor<double> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                       const Tensor<double>& next_layer_delta) const
 {
 
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
     Matrix<double> synaptic_weights_transpose;
 
-    if(layer_type == LayerType::Perceptron)
+    if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -1191,22 +1191,22 @@ Tensor<double> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
 
 
-Layer::ForwardPropagation RecurrentLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    ForwardPropagation layers_forward_propagation;
+    ForwardPropagation layers;
 
     const Tensor<double> combinations = calculate_combinations(inputs);
 
-    layers_forward_propagation.activations = calculate_activations(combinations);
+    layers.activations = calculate_activations(combinations);
 
-    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return layers_forward_propagation;
+    return layers;
 }
 
 
 Vector<double> RecurrentLayer::calculate_error_gradient(const Tensor<double> & inputs,
-                                                        const Layer::ForwardPropagation& layers_forward_propagation,
+                                                        const Layer::ForwardPropagation& layers,
                                                         const Tensor<double> & deltas)
 {
     const size_t input_weights_number = get_input_weights_number();
@@ -1218,22 +1218,22 @@ Vector<double> RecurrentLayer::calculate_error_gradient(const Tensor<double> & i
 
     // Input weights
 
-    error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,layers_forward_propagation,deltas));
+    error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,layers,deltas));
 
     // Recurent weights
 
-    error_gradient.embed(input_weights_number, calculate_recurrent_weights_error_gradient(inputs,layers_forward_propagation,deltas));
+    error_gradient.embed(input_weights_number, calculate_recurrent_weights_error_gradient(inputs,layers,deltas));
 
     // Biases
 
-    error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,layers_forward_propagation,deltas));
+    error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,layers,deltas));
 
     return error_gradient;
 }
 
 
 Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<double> & inputs,
-                                                                      const Layer::ForwardPropagation& layers_forward_propagation,
+                                                                      const Layer::ForwardPropagation& layers,
                                                                       const Tensor<double> & deltas)
 {
     const size_t instances_number = inputs.get_dimension(0);
@@ -1263,7 +1263,7 @@ Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tens
         }
         else
         {
-            const Vector<double> previous_activation_derivatives = layers_forward_propagation.activations_derivatives.get_row(instance-1);
+            const Vector<double> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
 
             combinations_weights_derivatives = dot(combinations_weights_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
         }
@@ -1348,7 +1348,7 @@ Vector<double> RecurrentLayer::calculate_recurrent_weights_error_gradient(const 
 
 
 Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<double> & inputs,
-                                                               const Layer::ForwardPropagation& layers_forward_propagation,
+                                                               const Layer::ForwardPropagation& layers,
                                                                const Tensor<double> & deltas)
 {
     const size_t instances_number = inputs.get_dimension(0);
@@ -1374,7 +1374,7 @@ Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<doub
         }
         else
         {
-            const Vector<double> previous_activation_derivatives = layers_forward_propagation.activations_derivatives.get_row(instance-1);
+            const Vector<double> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
 
             combinations_biases_derivatives = dot(combinations_biases_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
         }
@@ -1495,7 +1495,7 @@ string RecurrentLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

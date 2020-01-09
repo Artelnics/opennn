@@ -43,7 +43,7 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
-    enum LayerType{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
+    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
 
     /// This structure represents the first order activaions of layers.
 
@@ -109,9 +109,9 @@ public:
 
     virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-    virtual ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
+    virtual ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
-    virtual void calculate_first_order_activations(const Tensor<double>&, ForwardPropagation&) {}
+    virtual void calculate_forward_propagation(const Tensor<double>&, ForwardPropagation&) {}
 
     // Deltas
 
@@ -136,7 +136,7 @@ public:
 
     // Layer type
 
-    LayerType get_type() const;
+    Type get_type() const;
 
     string get_type_string() const;
 
@@ -144,7 +144,7 @@ protected:
 
         /// Layer type object.
 
-        LayerType layer_type = Perceptron;
+        Type layer_type = Perceptron;
 };
 }
 

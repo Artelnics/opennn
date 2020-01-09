@@ -163,7 +163,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
 //   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
-//                                                       neural_network.calculate_trainable_forward_propagation(inputs),
+//                                                       neural_network.calculate_forward_propagation(inputs),
 //                                                       mean_squared_error.calculate_output_gradient(outputs,targets)));
 
    gradient = dot(terms_Jacobian.calculate_transpose(), terms);

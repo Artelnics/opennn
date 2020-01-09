@@ -121,7 +121,7 @@ Tensor<double> ConvolutionalLayer::calculate_activations(const Tensor<double>& c
 /// Returns the result of applying the convolutional layer's filters and biases to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double> ConvolutionalLayer::calculate_convolutions(const Tensor<double>& inputs) const
+Tensor<double> ConvolutionalLayer::calculate_combinations(const Tensor<double>& inputs) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -197,7 +197,7 @@ Tensor<double> ConvolutionalLayer::calculate_convolutions(const Tensor<double>& 
 /// @param inputs The batch of images.
 /// @param parameters The parameters.
 
-Tensor<double> ConvolutionalLayer::calculate_convolutions(const Tensor<double>& inputs, const Vector<double>& parameters) const
+Tensor<double> ConvolutionalLayer::calculate_combinations(const Tensor<double>& inputs, const Vector<double>& parameters) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -364,7 +364,7 @@ Tensor<double> ConvolutionalLayer::calculate_activations_derivatives(const Tenso
 
 Tensor<double> ConvolutionalLayer::calculate_outputs(const Tensor<double>& inputs)
 {
-    return calculate_activations(calculate_convolutions(inputs));
+    return calculate_activations(calculate_combinations(inputs));
 }
 
 
@@ -374,21 +374,21 @@ Tensor<double> ConvolutionalLayer::calculate_outputs(const Tensor<double>& input
 
 Tensor<double> ConvolutionalLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& parameters)
 {
-    return calculate_activations(calculate_convolutions(inputs, parameters));
+    return calculate_activations(calculate_combinations(inputs, parameters));
 }
 
 
-Layer::ForwardPropagation ConvolutionalLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    ForwardPropagation layers_forward_propagation;
+    ForwardPropagation layers;
 
-    const Tensor<double> combinations = calculate_convolutions(inputs);
+    const Tensor<double> combinations = calculate_combinations(inputs);
 
-    layers_forward_propagation.activations = calculate_activations(combinations);
+    layers.activations = calculate_activations(combinations);
 
-    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return layers_forward_propagation;
+    return layers;
 }
 
 
@@ -403,27 +403,27 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_poin
                                                           const Tensor<double>& activations_derivatives,
                                                           const Tensor<double>& next_layer_delta) const
 {
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
-    if(layer_type == LayerType::Convolutional)
+    if(layer_type == Convolutional)
     {   
         ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
         return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
     }
-    else if(layer_type == LayerType::Pooling)
+    else if(layer_type == Pooling)
     {
         PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
         return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
     }
-    else if(layer_type == LayerType::Perceptron)
+    else if(layer_type == Perceptron)
     {
         PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -1418,7 +1418,7 @@ size_t ConvolutionalLayer::get_inputs_columns_number() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

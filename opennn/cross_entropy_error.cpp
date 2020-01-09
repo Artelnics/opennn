@@ -132,7 +132,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::FirstOrderLoss CrossEntropyError::calculate_batch_first_order_loss(const DataSet::Batch& batch) const
+LossIndex::FirstOrderLoss CrossEntropyError::calculate_first_order_loss(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -152,7 +152,7 @@ check();
 
     FirstOrderLoss first_order_loss(this);
 
-    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.input_data);
 
     const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.target_data);
 
@@ -328,7 +328,7 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

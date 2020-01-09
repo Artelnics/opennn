@@ -1045,7 +1045,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
     for(size_t i = 0; i < trainable_layers_number; i++)
     {
-        const Layer::LayerType layer_type = trainable_layers_pointers[i]->get_type();
+        const Layer::Type layer_type = trainable_layers_pointers[i]->get_type();
 
         if(layer_type == Layer::Convolutional)
         {
@@ -1291,7 +1291,7 @@ Vector<double> LossIndex::calculate_batch_error_gradient(const Vector<size_t>& b
     const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
     const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
     const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.get_last().activations, targets);
 
@@ -1361,7 +1361,7 @@ Vector<double> LossIndex::calculate_training_error_gradient_numerical_differenti
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

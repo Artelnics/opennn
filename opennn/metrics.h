@@ -88,6 +88,8 @@ namespace OpenNN
 
      Tensor<double> linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&);
 
+     void linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&, Tensor<double>&);
+
      // Vector distances
 
      double euclidean_distance(const Vector<double>&, const Vector<double>&);

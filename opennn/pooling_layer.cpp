@@ -211,15 +211,15 @@ Tensor<double> PoolingLayer::calculate_max_pooling_outputs(const Tensor<double>&
 }
 
 
-Layer::ForwardPropagation PoolingLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    ForwardPropagation layers_forward_propagation;
+    ForwardPropagation layers;
 
-    layers_forward_propagation.activations = calculate_outputs(inputs);
+    layers.activations = calculate_outputs(inputs);
 
-    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(layers_forward_propagation.activations);
+    layers.activations_derivatives = calculate_activations_derivatives(layers.activations);
 
-    return layers_forward_propagation;
+    return layers;
 }
 
 
@@ -323,11 +323,11 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
                                                              const Tensor<double>& activations_derivatives,
                                                              const Tensor<double>& next_layer_delta) const
 {    
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
     Tensor<double> hidden_delta;
 
-    if(layer_type == LayerType::Convolutional)
+    if(layer_type == Convolutional)
     {
         const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
@@ -397,7 +397,7 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
             hidden_delta(image_index, channel_index, row_index, column_index) += sum;
         }
     }
-    else if(layer_type == LayerType::Perceptron)
+    else if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
@@ -443,7 +443,7 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
             hidden_delta(image_index, channel_index, row_index, column_index) += sum;
         }
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -774,7 +774,7 @@ void PoolingLayer::set_default()
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

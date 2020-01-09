@@ -765,16 +765,16 @@ if(inputs_columns_number != inputs_number)
 }
 
 
-Layer::ForwardPropagation ProbabilisticLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    ForwardPropagation layers_forward_propagation;
+    ForwardPropagation layers;
 
     const Tensor<double> combinations = calculate_combinations(inputs);
 
-    layers_forward_propagation.activations = calculate_activations(combinations);
-    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers.activations = calculate_activations(combinations);
+    layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return layers_forward_propagation;
+    return layers;
 }
 
 
@@ -1262,7 +1262,7 @@ string ProbabilisticLayer::write_expression(const Vector<string>& inputs_names, 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

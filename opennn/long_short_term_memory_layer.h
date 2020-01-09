@@ -218,7 +218,7 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>& );
    Tensor<double> calculate_outputs(const Tensor<double>&, const Matrix<double>&, const Tensor<double>&, const Tensor<double>&);
 
-   ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
    Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
@@ -290,7 +290,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

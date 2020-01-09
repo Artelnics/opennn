@@ -68,7 +68,48 @@ public:
 
    // Gradient methods
 
-   FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
+   FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
+
+   void calculate_first_order_loss(const DataSet::Batch& batch,
+                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                         FirstOrderLoss& first_order_loss) const
+   {
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+        // Data set
+
+        const size_t batch_instances_number = batch.input_data.get_dimension(0);
+
+        // Neural network
+
+        const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        // Loss index
+
+        calculate_output_gradient(forward_propagation.layers[layers_number-1].activations,
+                                  batch.target_data);
+
+        calculate_layers_delta(forward_propagation, first_order_loss);
+/*
+        const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data, forward_propagation, layers_delta);
+
+        first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.target_data);
+
+        first_order_loss.gradient = batch_error_gradient/static_cast<double>(batch_instances_number);
+
+        // Regularization
+
+        if(regularization_method != RegularizationMethod::NoRegularization)
+        {
+            first_order_loss.loss += regularization_weight*calculate_regularization();
+            first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+        }
+*/
+   }
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
@@ -82,6 +123,7 @@ public:
 
         output_gradient = (targets/outputs)*(-1.0) + (targets*(-1.0) + 1.0)/(outputs*(-1.0) + 1.0);
    }
+
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -100,7 +142,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

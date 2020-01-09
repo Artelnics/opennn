@@ -769,7 +769,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    double parameters_norm = 0.0;
 
-   NeuralNetwork::TrainableForwardPropagation trainable_forward_propagation(batch_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
    // Loss index stuff
 
@@ -833,12 +833,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            // Neural network
 
-           neural_network_pointer->calculate_trainable_forward_propagation(batch, trainable_forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
            //Loss
 
-           loss_index_pointer->calculate_batch_first_order_loss(batch, trainable_forward_propagation, first_order_loss);
-/*
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+
            loss += first_order_loss.loss;
 
            // Gradient
@@ -854,8 +854,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 last_increment = parameters_increment;
 
                 parameters += parameters_increment;
-
-                neural_network_pointer->set_parameters(parameters);
             }
             else if(momentum > 0.0 && nesterov )
             {
@@ -866,18 +864,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
 
                 parameters += nesterov_increment;
-
-                neural_network_pointer->set_parameters(parameters);
             }
             else
             {
                 parameters += parameters_increment;
-
-                neural_network_pointer->set_parameters(parameters);
             }
 
+            neural_network_pointer->set_parameters(parameters);
+
             learning_rate_iteration++;
-*/
        }
 
        gradient_norm = l2_norm(first_order_loss.gradient);
@@ -1918,7 +1913,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

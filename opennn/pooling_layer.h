@@ -145,16 +145,14 @@ public:
 
     // First order activations
 
-    ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
+    ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
-    void calculate_first_order_activations(const Tensor<double>& inputs, ForwardPropagation& layers_forward_propagation)
+    void calculate_forward_propagation(const Tensor<double>& inputs, ForwardPropagation& forward_propagation)
     {
-        calculate_activations(inputs, layers_forward_propagation.activations);
+        calculate_activations(inputs, forward_propagation.activations);
 
-        calculate_activations_derivatives(layers_forward_propagation.activations, layers_forward_propagation.activations_derivatives);
-
+        calculate_activations_derivatives(forward_propagation.activations, forward_propagation.activations_derivatives);
     }
-
 
     // Delta methods
 

@@ -155,35 +155,7 @@ public:
 
    void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& combinations) const
    {
-
-//       const size_t batch_instances_number = inputs.get_dimension(0);
-
-       const size_t inputs_number = get_inputs_number();
-       const size_t neurons_number = get_neurons_number();
-
-       double sum;
-
-//       #pragma omp parallel for
-
-//       for(size_t i = 0; i < batch_instances_number; i++)
-       {
-         for(size_t j = 0; j < neurons_number; j++)
-         {
-/*
-            sum = 0.0;
-
-//           for(size_t k = 0; k < inputs_number; k++)
-//           {
-//                sum += inputs(i,k)*synaptic_weights(k,j);
-//           }
-
-           sum += biases[j];
-
-           combinations(i,j) = sum;
-*/
-         }
-       }
-
+       linear_combinations(inputs, synaptic_weights, biases, combinations);
    }
 
    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
@@ -219,27 +191,27 @@ public:
 
         switch(activation_function)
         {
-            case Linear: linear(combinations, activations); break;
+            case Linear: linear(combinations, activations); return;
 
-            case Logistic: logistic(combinations, activations); break;
+            case Logistic: logistic(combinations, activations); return;
 
-            case HyperbolicTangent: hyperbolic_tangent(combinations, activations); break;
+            case HyperbolicTangent: hyperbolic_tangent(combinations, activations); return;
 
-            case Threshold: threshold(combinations, activations); break;
+            case Threshold: threshold(combinations, activations); return;
 
-            case SymmetricThreshold: symmetric_threshold(combinations, activations); break;
+            case SymmetricThreshold: symmetric_threshold(combinations, activations); return;
 
-            case RectifiedLinear: rectified_linear(combinations, activations); break;
+            case RectifiedLinear: rectified_linear(combinations, activations); return;
 
-            case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); break;
+            case ScaledExponentialLinear: scaled_exponential_linear(combinations, activations); return;
 
-            case SoftPlus: soft_plus(combinations, activations); break;
+            case SoftPlus: soft_plus(combinations, activations); return;
 
-            case SoftSign: soft_sign(combinations, activations); break;
+            case SoftSign: soft_sign(combinations, activations); return;
 
-            case HardSigmoid: hard_sigmoid(combinations, activations); break;
+            case HardSigmoid: hard_sigmoid(combinations, activations); return;
 
-            case ExponentialLinear: exponential_linear(combinations, activations); break;
+            case ExponentialLinear: exponential_linear(combinations, activations); return;
         }
    }
 
@@ -267,27 +239,27 @@ public:
 
         switch(activation_function)
         {
-            case Linear: linear_derivatives(combinations, activations_derivatives); break;
+            case Linear: linear_derivatives(combinations, activations_derivatives); return;
 
-            case Logistic: logistic_derivatives(combinations, activations_derivatives); break;
+            case Logistic: logistic_derivatives(combinations, activations_derivatives); return;
 
-            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations_derivatives); break;
+            case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations, activations_derivatives); return;
 
-            case Threshold: threshold_derivatives(combinations, activations_derivatives); break;
+            case Threshold: threshold_derivatives(combinations, activations_derivatives); return;
 
-            case SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations_derivatives); break;
+            case SymmetricThreshold: symmetric_threshold_derivatives(combinations, activations_derivatives); return;
 
-            case RectifiedLinear: rectified_linear_derivatives(combinations, activations_derivatives); break;
+            case RectifiedLinear: rectified_linear_derivatives(combinations, activations_derivatives); return;
 
-            case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations_derivatives); break;
+            case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations, activations_derivatives); return;
 
-            case SoftPlus: soft_plus_derivatives(combinations, activations_derivatives); break;
+            case SoftPlus: soft_plus_derivatives(combinations, activations_derivatives); return;
 
-            case SoftSign: soft_sign_derivatives(combinations, activations_derivatives); break;
+            case SoftSign: soft_sign_derivatives(combinations, activations_derivatives); return;
 
-            case HardSigmoid: hard_sigmoid_derivatives(combinations, activations_derivatives); break;
+            case HardSigmoid: hard_sigmoid_derivatives(combinations, activations_derivatives); return;
 
-            case ExponentialLinear: exponential_linear_derivatives(combinations, activations_derivatives); break;
+            case ExponentialLinear: exponential_linear_derivatives(combinations, activations_derivatives); return;
         }
    }
 
@@ -297,15 +269,15 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
 
-   ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
-   void calculate_first_order_activations(const Tensor<double>& inputs, ForwardPropagation& layers_forward_propagation)
+   void calculate_forward_propagation(const Tensor<double>& inputs, ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(inputs, layers_forward_propagation.combinations);
+       calculate_combinations(inputs, forward_propagation.combinations);
 
-       calculate_activations(layers_forward_propagation.combinations, layers_forward_propagation.activations);
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(layers_forward_propagation.combinations, layers_forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
    // Delta methods
@@ -352,7 +324,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
