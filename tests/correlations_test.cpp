@@ -109,7 +109,7 @@ void CorrelationsTest::test_linear_correlation_missing_values()
     target[0] = 1;
     target[1] = 2;
     target[2] = 3;
-    target[3] = static_cast<double>NAN;
+    target[3] = static_cast<double>(NAN);
     target[4] = 5;
 
     double linear_correlation = linear_correlation_missing_values(vector, target);
