@@ -841,8 +841,6 @@ private:
    int gmt = 0;
 
    Vector<Vector<string>> data_file_preview;
-
-//   bool shuffle_batches_instances = false;
 };
 
 }
