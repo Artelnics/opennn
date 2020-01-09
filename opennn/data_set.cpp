@@ -6689,6 +6689,79 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Missing values
+
+    file_stream.OpenElement("MissingValues");
+
+    // Missing values method
+
+    {
+        file_stream.OpenElement("MissingValuesMethod");
+
+        if(missing_values_method == Mean)
+        {
+            file_stream.PushText("Mean");
+        }
+        else if(missing_values_method == Median)
+        {
+            file_stream.PushText("Median");
+        }
+        else
+        {
+            file_stream.PushText("Unuse");
+        }
+
+        file_stream.CloseElement();
+    }
+
+    // Missing values number
+
+    const size_t missing_values_number = data.count_nan();
+
+    {
+        file_stream.OpenElement("MissingValuesNumber");
+
+        buffer.str("");
+        buffer << missing_values_number;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    if(missing_values_number > 0)
+    {
+        // Columns missing values number
+
+        {
+            file_stream.OpenElement("ColumnsMissingValuesNumber");
+
+            buffer.str("");
+            buffer << data.count_nan_columns();
+
+            file_stream.PushText(buffer.str().c_str());
+
+            file_stream.CloseElement();
+        }
+
+        // Rows missing values number
+
+        {
+            file_stream.OpenElement("RowsMissingValuesNumber");
+
+            buffer.str("");
+            buffer << data.count_rows_with_nan();
+
+            file_stream.PushText(buffer.str().c_str());
+
+            file_stream.CloseElement();
+        }
+    }
+
+    // Missing values
+
+    file_stream.CloseElement();
+
     // Preview data
 
     file_stream.OpenElement("PreviewData");

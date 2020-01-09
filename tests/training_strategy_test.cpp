@@ -34,7 +34,7 @@ void TrainingStrategyTest::test_constructor()
 
    // Test
 
-   TrainingStrategy ts2;
+   TrainingStrategy ts2(&neural_network, &data_set);
 
    assert_true(ts2.has_loss_index() == true, LOG);
 }
@@ -44,7 +44,10 @@ void TrainingStrategyTest::test_destructor()
 {
    cout << "test_destructor\n";
 
-   TrainingStrategy* ts = new TrainingStrategy();
+   NeuralNetwork nn;
+   DataSet ds;
+
+   TrainingStrategy* ts = new TrainingStrategy(&nn, &ds);
 
    delete ts;
 }
