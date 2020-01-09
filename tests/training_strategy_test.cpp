@@ -44,7 +44,10 @@ void TrainingStrategyTest::test_destructor()
 {
    cout << "test_destructor\n";
 
-   TrainingStrategy* ts = new TrainingStrategy();
+   NeuralNetwork nn;
+   DataSet ds;
+
+   TrainingStrategy* ts = new TrainingStrategy(&nn, &ds);
 
    delete ts;
 }
