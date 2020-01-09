@@ -157,7 +157,7 @@ public:
 
         // Convolution loops
 
-        #pragma omp parallel for
+//        #pragma omp parallel for
 
         for(size_t image_index = 0; image_index < images_number; image_index++)
         {
