@@ -91,6 +91,7 @@ public:
        explicit FirstOrderLoss() {}
 
        explicit FirstOrderLoss(const LossIndex*);
+
        virtual ~FirstOrderLoss();
 
        Tensor<double> output_gradient;
@@ -100,8 +101,6 @@ public:
        double loss;
 
        Vector<double> gradient;
-
-
 
    };
 
@@ -234,6 +233,9 @@ public:
 
    virtual Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const = 0;
 
+   virtual void calculate_output_gradient(const Tensor<double>&, const Tensor<double>&, Tensor<double>&) const = 0;
+
+
    virtual Vector<double> calculate_batch_error_gradient(const Vector<size_t>&) const;
 
    Vector<double> calculate_training_error_gradient() const;
@@ -275,6 +277,7 @@ public:
    // Serialization methods
 
    tinyxml2::XMLDocument* to_XML() const;
+
    void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;

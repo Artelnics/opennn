@@ -93,6 +93,18 @@ public:
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
+   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        output_gradient = (outputs-targets)*2.0;
+   }
+
+
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
 private:

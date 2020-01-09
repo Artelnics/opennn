@@ -65,13 +65,7 @@ public:
 
    WeightedSquaredError(const WeightedSquaredError&);
 
-   
-
-   virtual ~WeightedSquaredError();
-
-   // STRUCTURES
-
-   
+   virtual ~WeightedSquaredError(); 
 
    // Get methods
 
@@ -109,6 +103,17 @@ public:
    LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+
+   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        output_gradient = (outputs-targets)*((targets-1.0)*(-1.0)*negatives_weight + targets*positives_weight);
+   }
 
    // Error terms methods
 

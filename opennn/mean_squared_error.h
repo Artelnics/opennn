@@ -118,7 +118,6 @@ public:
            first_order_loss.loss += regularization_weight*calculate_regularization();
            first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
        }
-
    }
 
    // Error terms methods
@@ -130,6 +129,19 @@ public:
    string get_error_type_text() const;
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+
+   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const size_t instances_number = data_set_pointer->get_training_instances_number();
+
+        output_gradient = (outputs-targets)*2.0/static_cast<double>(instances_number);
+   }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 

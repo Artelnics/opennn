@@ -1019,9 +1019,83 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
 LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 {    
+    // Data set
+
+    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+    // Neural network
+
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+    const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const size_t outputs_number = neural_network_pointer->get_outputs_number();
+
+    const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+    // First order loss
+
+    output_gradient.set(batch_instances_number, outputs_number);
+
+    layers_delta.set(trainable_layers_number);
+
+    for(size_t i = 0; i < trainable_layers_number; i++)
+    {
+        const Layer::LayerType layer_type = trainable_layers_pointers[i]->get_type();
+
+        if(layer_type == Layer::Convolutional)
+        {
+            ConvolutionalLayer* layer_pointer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_channels_number = layer_pointer->get_filters_number();
+            const size_t output_rows_number = layer_pointer->get_outputs_rows_number();
+            const size_t output_columns_number = layer_pointer->get_outputs_columns_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+        }
+        else if(layer_type == Layer::Pooling)
+        {
+            PoolingLayer* layer_pointer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_channels_number = layer_pointer->get_inputs_channels_number();
+            const size_t output_rows_number = layer_pointer->get_outputs_rows_number();
+            const size_t output_columns_number = layer_pointer->get_outputs_columns_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+        }
+        else if(layer_type == Layer::Perceptron)
+        {
+            PerceptronLayer* layer_pointer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_columns_number = layer_pointer->get_neurons_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_columns_number}));
+        }
+        else if(layer_type == Layer::Recurrent)
+        {
+            /// @todo add
+        }
+        else if(layer_type == Layer::LongShortTermMemory)
+        {
+            /// @todo add
+        }
+        else if(layer_type == Layer::Probabilistic)
+        {
+            ProbabilisticLayer* layer_pointer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_columns_number = layer_pointer->get_neurons_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_columns_number}));
+        }
+        else
+        {
+            /// @todo add exception
+        }
+    }
 
     loss = 0.0;
 
