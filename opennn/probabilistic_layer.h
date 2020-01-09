@@ -147,7 +147,7 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
 
-   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
 
    // Deltas
 
@@ -155,7 +155,7 @@ public:
 
    // Gradient methods
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
    // Activations
 

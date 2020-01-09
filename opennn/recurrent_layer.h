@@ -186,24 +186,24 @@ public:
 
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
-   Layer::FirstOrderActivations calculate_first_order_activations(const Tensor<double>& inputs);
+   Layer::ForwardPropagation calculate_first_order_activations(const Tensor<double>& inputs);
 
-   void calculate_first_order_activations(const Tensor<double>& inputs, Layer::FirstOrderActivations& first_order_activations)
+   void calculate_first_order_activations(const Tensor<double>& inputs, Layer::ForwardPropagation& layers_forward_propagation)
    {
        const Tensor<double> combinations = calculate_combinations(inputs);
 
-//       first_order_activations.activations = calculate_activations(combinations);
+//       layers_forward_propagation.activations = calculate_activations(combinations);
 
-//       first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+//       layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
    }
 
    // Gradient
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
-   Vector<double> calculate_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
-   Vector<double> calculate_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+   Vector<double> calculate_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+   Vector<double> calculate_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
    // Expression methods
 

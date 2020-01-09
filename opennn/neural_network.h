@@ -87,7 +87,7 @@ public:
 
            const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-           first_order_activations.set(trainable_layers_number);
+           layers_forward_propagation.set(trainable_layers_number);
 
            for(size_t i = 0; i < trainable_layers_number; i++)
            {
@@ -99,9 +99,9 @@ public:
                    const size_t outputs_rows_number = convolutional_layer->get_outputs_rows_number();
                    const size_t outputs_columns_number = convolutional_layer->get_outputs_columns_number();
 
-                   first_order_activations[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   first_order_activations[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   first_order_activations[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers_forward_propagation[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers_forward_propagation[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers_forward_propagation[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
                {
@@ -111,9 +111,9 @@ public:
                    const size_t outputs_rows_number = pooling_layer->get_outputs_rows_number();
                    const size_t outputs_columns_number = pooling_layer->get_outputs_columns_number();
 
-                   first_order_activations[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   first_order_activations[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   first_order_activations[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers_forward_propagation[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers_forward_propagation[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers_forward_propagation[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Perceptron)
                {
@@ -121,9 +121,9 @@ public:
 
                    const size_t neurons_number = perceptron_layer->get_neurons_number();
 
-                   first_order_activations[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
-                   first_order_activations[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
-                   first_order_activations[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers_forward_propagation[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers_forward_propagation[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers_forward_propagation[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number}));
                }
            }
        }
@@ -132,7 +132,7 @@ public:
 
        virtual ~TrainableForwardPropagation() {}
 
-       Vector<Layer::FirstOrderActivations> first_order_activations;
+       Vector<Layer::ForwardPropagation> layers_forward_propagation;
    };
 
 
@@ -298,7 +298,7 @@ public:
 
    /// Calculate de forward propagation in the neural network
 
-   Vector<Layer::FirstOrderActivations> calculate_trainable_forward_propagation(const Tensor<double>&) const;
+   Vector<Layer::ForwardPropagation> calculate_trainable_forward_propagation(const Tensor<double>&) const;
 
    void calculate_trainable_forward_propagation(const DataSet::Batch& batch, TrainableForwardPropagation& trainable_forward_propagation) const
    {
@@ -309,7 +309,7 @@ public:
        // First layer
 
        trainable_layers_pointers[0]->calculate_first_order_activations(batch.input_data,
-                                     trainable_forward_propagation.first_order_activations[0]);
+                                     trainable_forward_propagation.layers_forward_propagation[0]);
 
        // Rest of layers
 
@@ -317,8 +317,8 @@ public:
        {
            cout << trainable_layers_pointers[i]->get_type_string() << endl;
 
-            trainable_layers_pointers[i]->calculate_first_order_activations(trainable_forward_propagation.first_order_activations[i-1].activations,
-                                          trainable_forward_propagation.first_order_activations[i]);
+            trainable_layers_pointers[i]->calculate_first_order_activations(trainable_forward_propagation.layers_forward_propagation[i-1].activations,
+                                          trainable_forward_propagation.layers_forward_propagation[i]);
        }
 
    }

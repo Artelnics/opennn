@@ -47,16 +47,16 @@ public:
 
     /// This structure represents the first order activaions of layers.
 
-    struct FirstOrderActivations
+    struct ForwardPropagation
     {
         /// Default constructor.
 
-        explicit FirstOrderActivations()
+        explicit ForwardPropagation()
         {
         }
 
 
-        virtual ~FirstOrderActivations()
+        virtual ~ForwardPropagation()
         {
         }
 
@@ -107,11 +107,11 @@ public:
     virtual Tensor<double> calculate_outputs(const Tensor<double>&);
     virtual Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
 
-    virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+    virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-    virtual FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+    virtual ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
 
-    virtual void calculate_first_order_activations(const Tensor<double>&, FirstOrderActivations&) {}
+    virtual void calculate_first_order_activations(const Tensor<double>&, ForwardPropagation&) {}
 
     // Deltas
 

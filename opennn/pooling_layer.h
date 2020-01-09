@@ -145,13 +145,13 @@ public:
 
     // First order activations
 
-    FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+    ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
 
-    void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
+    void calculate_first_order_activations(const Tensor<double>& inputs, ForwardPropagation& layers_forward_propagation)
     {
-        calculate_activations(inputs, first_order_activations.activations);
+        calculate_activations(inputs, layers_forward_propagation.activations);
 
-        calculate_activations_derivatives(first_order_activations.activations, first_order_activations.activations_derivatives);
+        calculate_activations_derivatives(layers_forward_propagation.activations, layers_forward_propagation.activations_derivatives);
 
     }
 
@@ -168,7 +168,7 @@ public:
 
     // Gradient methods
 
-    Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+    Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
 protected:
 

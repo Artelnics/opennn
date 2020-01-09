@@ -148,13 +148,11 @@ check();
 
     const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
-
     // Loss index
 
-    FirstOrderLoss first_order_loss(parameters_number);
+    FirstOrderLoss first_order_loss(this);
 
-    const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
 
     const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.target_data);
 

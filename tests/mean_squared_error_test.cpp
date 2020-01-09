@@ -409,7 +409,7 @@ void MeanSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
    targets = data_set.get_training_target_data();
    outputs = neural_network.calculate_outputs(inputs);
 
-   Vector<Layer::FirstOrderActivations> forward_propagation = neural_network.calculate_trainable_forward_propagation(inputs);
+   Vector<Layer::ForwardPropagation> forward_propagation = neural_network.calculate_trainable_forward_propagation(inputs);
 
    output_gradient = mean_squared_error.calculate_output_gradient(outputs, targets);
 
