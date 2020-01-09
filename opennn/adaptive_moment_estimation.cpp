@@ -700,7 +700,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    double parameters_norm = 0.0;
 
-   NeuralNetwork::TrainableForwardPropagation trainable_forward_propagation(batch_instances_number, neural_network_pointer);
+   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
    // Loss index stuff
 
@@ -768,11 +768,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Neural network
 
-           neural_network_pointer->calculate_trainable_forward_propagation(batch, trainable_forward_propagation);
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
            // Loss index
 
-           loss_index_pointer->calculate_batch_first_order_loss(batch, trainable_forward_propagation, first_order_loss);
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
            learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
 
@@ -1844,7 +1844,7 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

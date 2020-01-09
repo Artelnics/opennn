@@ -100,7 +100,12 @@ public:
    Vector<double> calculate_training_error_gradient() const;
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
-   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
+   LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
+
+   void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const
+   {
+
+   }
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
@@ -114,6 +119,7 @@ public:
 
         output_gradient = (outputs-targets)*((targets-1.0)*(-1.0)*negatives_weight + targets*positives_weight);
    }
+
 
    // Error terms methods
 
@@ -159,7 +165,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

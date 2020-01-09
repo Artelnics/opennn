@@ -14,7 +14,7 @@ namespace OpenNN {
 /// It creates a layer object with zero parameters.
 /// It also initializes the rest of class members to their default values.
 
-Layer::LayerType Layer::get_type () const
+Layer::Type Layer::get_type () const
 {
     return layer_type;
 }
@@ -182,12 +182,12 @@ Vector<double> Layer::calculate_error_gradient(const Tensor<double>&,
 }
 
 
-Layer::ForwardPropagation Layer::calculate_first_order_activations(const Tensor<double>&)
+Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<double>&)
  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_first_order_activations(const Tensor<double>&) method.\n"
+           << "calculate_forward_propagation(const Tensor<double>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

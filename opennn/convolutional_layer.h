@@ -134,10 +134,10 @@ public:
 
     Matrix<double> calculate_image_convolution(const Tensor<double>&, const Tensor<double>&) const;
 
-    Tensor<double> calculate_convolutions(const Tensor<double>&) const;
-    Tensor<double> calculate_convolutions(const Tensor<double>&, const Vector<double>&) const;
+    Tensor<double> calculate_combinations(const Tensor<double>&) const;
+    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
 
-    void calculate_convolutions(const Tensor<double>& input_data, Tensor<double>& convolutions) const
+    void calculate_combinations(const Tensor<double>& input_data, Tensor<double>& convolutions) const
     {
         // Inputs
 
@@ -215,15 +215,15 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
 
-   ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
-   void calculate_first_order_activations(const Tensor<double>& inputs, ForwardPropagation& layers_forward_propagation)
+   void calculate_forward_propagation(const Tensor<double>& inputs, ForwardPropagation& forward_propagation)
    {
-       calculate_convolutions(inputs, layers_forward_propagation.combinations);
+       calculate_combinations(inputs, forward_propagation.combinations);
 
-       calculate_activations(layers_forward_propagation.combinations, layers_forward_propagation.activations);
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations_derivatives(layers_forward_propagation.combinations, layers_forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
    // Delta methods
@@ -272,7 +272,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

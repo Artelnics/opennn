@@ -112,7 +112,7 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
-    const Layer::LayerType layer_type = layer_pointer->get_type();
+    const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))
     {
@@ -136,7 +136,7 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 /// LSTM and Recurrent layers can only be added at the beginning.
 /// @param layer_type Type of new layer to be added.
 
-bool NeuralNetwork::check_layer_type(const Layer::LayerType layer_type)
+bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
 {
     const size_t layers_number = layers_pointers.size();
 
@@ -146,7 +146,7 @@ bool NeuralNetwork::check_layer_type(const Layer::LayerType layer_type)
     }
     else if(layers_number == 1 && (layer_type == Layer::Recurrent || layer_type == Layer::LongShortTermMemory))
     {
-        const Layer::LayerType first_layer_type = layers_pointers[0]->get_type();
+        const Layer::Type first_layer_type = layers_pointers[0]->get_type();
 
         if(first_layer_type != Layer::Scaling)
         {
@@ -1296,7 +1296,7 @@ Tensor<double> NeuralNetwork::calculate_trainable_outputs(const Tensor<double>& 
 
     Tensor<double> outputs;
 
-    if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::LayerType::Pooling)
+    if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
     {
         outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
     }
@@ -1304,7 +1304,7 @@ Tensor<double> NeuralNetwork::calculate_trainable_outputs(const Tensor<double>& 
 
     for(size_t i = 1; i < trainable_layers_number; i++)
     {
-        if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::LayerType::Pooling)
+        if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
         {
             outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
         }
@@ -3452,7 +3452,7 @@ void NeuralNetwork::save_data(const string& file_name) const
 }
 
 
-Vector<Layer::ForwardPropagation> NeuralNetwork::calculate_trainable_forward_propagation(const Tensor<double>& inputs) const
+Vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(const Tensor<double>& inputs) const
 {
     const size_t trainable_layers_number = get_trainable_layers_number();
 
@@ -3462,13 +3462,13 @@ Vector<Layer::ForwardPropagation> NeuralNetwork::calculate_trainable_forward_pro
 
     // First layer
 
-    forward_propagation[0] = trainable_layers_pointers[0]->calculate_first_order_activations(inputs);
+    forward_propagation[0] = trainable_layers_pointers[0]->calculate_forward_propagation(inputs);
 
     // Rest of layers
 
     for(size_t i = 1; i < trainable_layers_number; i++)
     {
-        forward_propagation[i] = trainable_layers_pointers[i]->calculate_first_order_activations(forward_propagation[i-1].activations);
+        forward_propagation[i] = trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation[i-1].activations);
     }
 
     return forward_propagation;
@@ -3492,7 +3492,7 @@ Layer* NeuralNetwork::get_layer_pointer(const size_t& index) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -509,10 +509,10 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     convolutional_layer.set_synaptic_weights(filters);
     convolutional_layer.set_biases({-1,1});
 
-    convolutions = convolutional_layer.calculate_convolutions(images);
+    convolutions = convolutional_layer.calculate_combinations(images);
 
     alt_convolutions.set(Vector<size_t>({2,2,2,2}));
-    convolutional_layer.calculate_convolutions(images, alt_convolutions);
+    convolutional_layer.calculate_combinations(images, alt_convolutions);
 
     result.set(Vector<size_t>({2,2,2,2}));
     result(0,0,0,0) = -1;
@@ -644,10 +644,10 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     convolutional_layer.set_synaptic_weights(filters);
     convolutional_layer.set_biases({-1,0,1});
 
-    convolutions = convolutional_layer.calculate_convolutions(images);
+    convolutions = convolutional_layer.calculate_combinations(images);
 
     alt_convolutions.set(Vector<size_t>({2,3,4,4}));
-    convolutional_layer.calculate_convolutions(images, alt_convolutions);
+    convolutional_layer.calculate_combinations(images, alt_convolutions);
 
     result.set(Vector<size_t>({2,3,4,4}));
     result(0,0,0,0) = 71;

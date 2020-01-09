@@ -1015,9 +1015,9 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, 
 }
 
 
-Layer::ForwardPropagation PerceptronLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    ForwardPropagation layers_forward_propagation;
+    ForwardPropagation layers;
 
     Tensor<double> combinations;
 
@@ -1030,11 +1030,11 @@ Layer::ForwardPropagation PerceptronLayer::calculate_first_order_activations(con
         combinations = calculate_combinations(inputs);
     }
 
-    layers_forward_propagation.activations = calculate_activations(combinations);
+    layers.activations = calculate_activations(combinations);
 
-    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return layers_forward_propagation;
+    return layers;
 }
 
 
@@ -1049,17 +1049,17 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
                                                        const Tensor<double>& activations_derivatives,
                                                        const Tensor<double>& next_layer_delta) const
 {
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
     Matrix<double> synaptic_weights_transpose;
 
-    if(layer_type == LayerType::Perceptron)
+    if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -1203,7 +1203,7 @@ string PerceptronLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

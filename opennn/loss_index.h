@@ -247,9 +247,9 @@ public:
    virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const {return Vector<double>();}
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const {return Matrix<double>();}
 
-   virtual FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const {return FirstOrderLoss();}
+   virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;//{return FirstOrderLoss();}
 
-   virtual void calculate_batch_first_order_loss(const DataSet::Batch&, const NeuralNetwork::TrainableForwardPropagation&, FirstOrderLoss&) const {}
+   virtual void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
 
    virtual FirstOrderLoss calculate_first_order_loss() const {return FirstOrderLoss();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
@@ -268,7 +268,85 @@ public:
 
    Vector<Tensor<double>> calculate_layers_delta(const Vector<Layer::ForwardPropagation>&, const Tensor<double>&) const;
 
+   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
+   {
+       const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+      const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+      if(trainable_layers_number == 0) return;
+
+      // Output layer
+
+      first_order_loss.layers_delta[trainable_layers_number-1] = trainable_layers_pointers[trainable_layers_number-1]
+              ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
+              first_order_loss.output_gradient);
+
+      // Hidden layers
+
+      for(int i = static_cast<int>(trainable_layers_number)-2; i >= 0; i--)
+      {
+          Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<size_t>(i+1)];
+
+          first_order_loss.layers_delta[static_cast<size_t>(i)]
+                  = trainable_layers_pointers[static_cast<size_t>(i)]
+                  ->calculate_hidden_delta(previous_layer_pointer,
+                                           forward_propagation.layers[static_cast<size_t>(i)].activations,
+                                           forward_propagation.layers[static_cast<size_t>(i)].activations_derivatives,
+                                           first_order_loss.layers_delta[static_cast<size_t>(i+1)]);
+      }
+
+
+   }
+
    Vector<double> calculate_error_gradient(const Tensor<double>&, const Vector<Layer::ForwardPropagation>&, const Vector<Tensor<double>>&) const;
+
+   void calculate_error_gradient(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
+   {
+       const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+       #ifdef __OPENNN_DEBUG__
+
+       check();
+
+       // Hidden errors size
+
+       const size_t layers_delta_size = first_order_loss.layers_delta.size();
+
+       if(layers_delta_size != trainable_layers_number)
+       {
+          ostringstream buffer;
+
+         buffer << "OpenNN Exception: LossIndex class.\n"
+                << "void calculate_error_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) method.\n"
+                << "Size of layers delta(" << layers_delta_size << ") must be equal to number of layers(" << trainable_layers_number << ").\n";
+
+         throw logic_error(buffer.str());
+       }
+
+       #endif
+
+       const size_t parameters_number = neural_network_pointer->get_trainable_parameters_number();
+
+       const Vector<size_t> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+
+       const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+       Vector<double> error_gradient(parameters_number,0.0);
+
+       size_t index = 0;
+
+//       first_order_loss.error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
+
+       index += trainable_layers_parameters_number[0];
+
+       for(size_t i = 1; i < trainable_layers_number; i++)
+       {
+//         error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
+
+         index += trainable_layers_parameters_number[i];
+       }
+   }
 
    Matrix<double> calculate_layer_error_terms_Jacobian(const Tensor<double>&, const Tensor<double>&) const;
 
@@ -325,7 +403,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

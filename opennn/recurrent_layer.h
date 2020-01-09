@@ -186,15 +186,15 @@ public:
 
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
-   Layer::ForwardPropagation calculate_first_order_activations(const Tensor<double>& inputs);
+   Layer::ForwardPropagation calculate_forward_propagation(const Tensor<double>& inputs);
 
-   void calculate_first_order_activations(const Tensor<double>& inputs, Layer::ForwardPropagation& layers_forward_propagation)
+   void calculate_forward_propagation(const Tensor<double>& inputs, Layer::ForwardPropagation& layers)
    {
        const Tensor<double> combinations = calculate_combinations(inputs);
 
-//       layers_forward_propagation.activations = calculate_activations(combinations);
+//       layers.activations = calculate_activations(combinations);
 
-//       layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
+//       layers.activations_derivatives = calculate_activations_derivatives(combinations);
    }
 
    // Gradient
@@ -243,7 +243,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

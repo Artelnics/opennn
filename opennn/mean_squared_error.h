@@ -79,10 +79,10 @@ public:
 
    FirstOrderLoss calculate_first_order_loss() const;
 
-   FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
+   FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_batch_first_order_loss(const DataSet::Batch& batch,
-                                         const NeuralNetwork::TrainableForwardPropagation& trainable_forward_propagation,
+   void calculate_first_order_loss(const DataSet::Batch& batch,
+                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                                          FirstOrderLoss& first_order_loss) const
    {
        // Data set
@@ -95,17 +95,17 @@ public:
 
        // Loss index
 
-       const Tensor<double> output_gradient = calculate_output_gradient(trainable_forward_propagation.layers_forward_propagation[layers_number-1].activations,
+       const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.layers[layers_number-1].activations,
                                                                         batch.target_data);
 
-       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(trainable_forward_propagation.layers_forward_propagation,
+       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation.layers,
                                                                           output_gradient);
 
        const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data,
-                                                                            trainable_forward_propagation.layers_forward_propagation,
+                                                                            forward_propagation.layers,
                                                                             layers_delta);
 
-       const double batch_error = sum_squared_error(trainable_forward_propagation.layers_forward_propagation[layers_number-1].activations,
+       const double batch_error = sum_squared_error(forward_propagation.layers[layers_number-1].activations,
                                                     batch.target_data);
 
        first_order_loss.loss = batch_error / static_cast<double>(batch_instances_number);
@@ -158,7 +158,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

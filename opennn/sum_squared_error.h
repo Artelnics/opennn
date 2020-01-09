@@ -74,7 +74,13 @@ public:
    // Gradient methods
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
-   LossIndex::FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
+
+   LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
+
+   void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const
+   {
+
+   }
 
    // Terms methods
 
@@ -120,7 +126,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
