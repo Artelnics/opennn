@@ -467,6 +467,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
         for(size_t i = 0; i < categories.size(); i++)
         {
             file_stream.PushText(categories[i].c_str());
+
+            if(i != categories.size()-1)
+            {
+                file_stream.PushText(" ");
+            }
         }
 
         file_stream.CloseElement();
@@ -492,6 +497,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             else
             {
                 file_stream.PushText("Unused");
+            }
+
+            if(i != categories_uses.size()-1)
+            {
+                file_stream.PushText(" ");
             }
         }
 
@@ -6676,6 +6686,42 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     }
 
     // Close instances
+
+    file_stream.CloseElement();
+
+    // Preview data
+
+    file_stream.OpenElement("PreviewData");
+
+    file_stream.OpenElement("PreviewSize");
+
+    buffer.str("");
+    buffer << data_file_preview.size();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    for(size_t i = 0; i < data_file_preview.size(); i++)
+    {
+        file_stream.OpenElement("Row");
+
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+        for(size_t j = 0; j < data_file_preview[i].size(); j++)
+        {
+            file_stream.PushText(data_file_preview[i][j].c_str());
+
+            if(j != data_file_preview[i].size()-1)
+            {
+                file_stream.PushText(" ");
+            }
+        }
+
+        file_stream.CloseElement();
+    }
+
+    // Close preview data
 
     file_stream.CloseElement();
 }
