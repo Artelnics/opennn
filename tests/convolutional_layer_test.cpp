@@ -460,6 +460,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     Tensor<double> images;
     Tensor<double> filters;
     Tensor<double> convolutions;
+    Tensor<double> alt_convolutions;
     Tensor<double> result;
 
     // Test
@@ -510,6 +511,9 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     convolutions = convolutional_layer.calculate_convolutions(images);
 
+    alt_convolutions.set(Vector<size_t>({2,2,2,2}));
+    convolutional_layer.calculate_convolutions(images, alt_convolutions);
+
     result.set(Vector<size_t>({2,2,2,2}));
     result(0,0,0,0) = -1;
     result(0,0,0,1) = -1;
@@ -529,6 +533,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     result(1,1,1,1) = 1;
 
     assert_true(convolutions == result, LOG);
+    assert_true(alt_convolutions == result, LOG);
 
     // Test
 
@@ -641,6 +646,9 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     convolutions = convolutional_layer.calculate_convolutions(images);
 
+    alt_convolutions.set(Vector<size_t>({2,3,4,4}));
+    convolutional_layer.calculate_convolutions(images, alt_convolutions);
+
     result.set(Vector<size_t>({2,3,4,4}));
     result(0,0,0,0) = 71;
     result(0,0,0,1) = 80;
@@ -740,6 +748,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     result(1,2,3,3) = -782;
 
     assert_true(convolutions == result, LOG);
+    assert_true(alt_convolutions == result, LOG);
 }
 
 

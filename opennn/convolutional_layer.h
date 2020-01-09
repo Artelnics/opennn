@@ -139,63 +139,59 @@ public:
 
     void calculate_convolutions(const Tensor<double>& input_data, Tensor<double>& convolutions) const
     {
-
         // Inputs
 
         const size_t images_number = input_data.get_dimension(0);
-        //const size_t channels_number =
+        const size_t channels_number = get_inputs_channels_number();
 
         // Filters
 
         const size_t filters_number = get_filters_number();
+        const size_t filters_rows_number = get_filters_rows_number();
+        const size_t filters_columns_number = get_filters_columns_number();
 
         // Outputs
 
         const size_t outputs_rows_number = get_outputs_rows_number();
         const size_t outputs_columns_number = get_outputs_columns_number();
-/*
-        #pragma omp parallel for private(image, convolution)
+
+        // Convolution loops
+
+        #pragma omp parallel for
 
         for(size_t image_index = 0; image_index < images_number; image_index++)
         {
-            //if(padding_option == Same) image = insert_padding(image);
-
             for(size_t filter_index = 0; filter_index < filters_number; filter_index++)
             {
-//                convolution = calculate_image_convolution(image, synaptic_weights.get_tensor(filter_index)) + biases[filter_index];
-
-//                convolutions.set_matrix(image_index, filter_index, convolution);
-
-                for(size_t channel_index = 0; channel_index < filter_channels_number; channel_index++)
+                for(size_t output_row_index = 0; output_row_index < outputs_rows_number; output_row_index++)
                 {
-                    for(size_t row_index = 0; row_index < outputs_rows_number; row_index++)
+                    for(size_t output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
                     {
-                        for(size_t column_index = 0; column_index < outputs_columns_number; column_index++)
+                        double sum = 0.0;
+
+                        for(size_t channel_index = 0; channel_index < channels_number; channel_index++)
                         {
-                            double sum = 0.0;
-
-                            for(size_t filter_row = 0; filter_row < filter_rows_number; filter_row++)
+                            for(size_t filter_row_index = 0; filter_row_index < filters_rows_number; filter_row_index++)
                             {
-                                const size_t row = row_index * row_stride + filter_row;
+                                const size_t row = output_row_index*row_stride + filter_row_index;
 
-                                for(size_t filter_column = 0; filter_column < filter_columns_number; filter_column++)
+                                for(size_t filter_column_index = 0; filter_column_index < filters_columns_number; filter_column_index++)
                                 {
-                                    const size_t column = column_index * column_stride + filter_column;
+                                    const size_t column = output_column_index*column_stride + filter_column_index;
 
-                                    //const double image_element = image(channel_index, row, column);
-                                    //const double filter_element = filter(channel_index, filter_row, filter_column);
+                                    const double image_element = input_data(image_index, channel_index, row, column);
+                                    const double filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
 
                                     sum += image_element*filter_element;
                                 }
                             }
-
-                            convolutions(image_index, filter_index, output_row_index, output_column_index) = sum;
                         }
+
+                        convolutions(image_index, filter_index, output_row_index, output_column_index) = sum + biases[filter_index];
                     }
                 }
             }
         }
-        */
     }
 
     // Activation
