@@ -81,32 +81,29 @@ public:
 
    FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_batch_first_order_loss(const DataSet::Batch&, const NeuralNetwork::TrainableForwardPropagation&, FirstOrderLoss&) const
+   void calculate_batch_first_order_loss(const DataSet::Batch& batch,
+                                         const NeuralNetwork::TrainableForwardPropagation& trainable_forward_propagation,
+                                         FirstOrderLoss& first_order_loss) const
    {
        // Data set
-/*
+
        const size_t batch_instances_number = batch.input_data.get_dimension(0);
 
        // Neural network
 
        const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       const size_t parameters_number = neural_network_pointer->get_parameters_number();
-
        // Loss index
 
-       FirstOrderLoss first_order_loss(parameters_number);
-
-       const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
-
-       const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.target_data);
-
-       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation,
+       const Tensor<double> output_gradient = calculate_output_gradient(trainable_forward_propagation.first_order_activations[layers_number-1].activations,
+                                                                        batch.target_data);
+/*
+       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(trainable_forward_propagation,
                                                                           output_gradient);
 
-       const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data, forward_propagation, layers_delta);
+       const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data, trainable_forward_propagation, layers_delta);
 
-       const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.target_data);
+       const double batch_error = sum_squared_error(trainable_forward_propagation[layers_number-1].activations, batch.target_data);
 
        first_order_loss.loss = batch_error / static_cast<double>(batch_instances_number);
        first_order_loss.gradient = batch_error_gradient;
