@@ -949,16 +949,16 @@ Matrix<double> ConvolutionalLayer::calculate_image_convolution(const Tensor<doub
     const size_t outputs_rows_number = (image_rows_number - filter_rows_number)/row_stride + 1;
     const size_t outputs_columns_number = (image_columns_number - filter_columns_number)/column_stride + 1;
 
-    Matrix<double> convolutions(outputs_rows_number, outputs_columns_number, 0.0);
+    Matrix<double> convolutions(outputs_rows_number, outputs_columns_number);
 
-    for(size_t channel_index = 0; channel_index < filter_channels_number; channel_index++)
+    for(size_t row_index = 0; row_index < outputs_rows_number; row_index++)
     {
-        for(size_t row_index = 0; row_index < outputs_rows_number; row_index++)
+        for(size_t column_index = 0; column_index < outputs_columns_number; column_index++)
         {
-            for(size_t column_index = 0; column_index < outputs_columns_number; column_index++)
-            {
-                double sum = 0.0;
+            double sum = 0.0;
 
+            for(size_t channel_index = 0; channel_index < filter_channels_number; channel_index++)
+            {
                 for(size_t filter_row = 0; filter_row < filter_rows_number; filter_row++)
                 {
                     const size_t row = row_index * row_stride + filter_row;
@@ -973,9 +973,9 @@ Matrix<double> ConvolutionalLayer::calculate_image_convolution(const Tensor<doub
                         sum += image_element*filter_element;
                     }
                 }
-
-                convolutions(row_index, column_index) = sum;
             }
+
+            convolutions(row_index, column_index) = sum;
         }
     }
 
