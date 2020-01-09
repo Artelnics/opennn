@@ -6716,41 +6716,46 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Missing values number
 
+    const size_t missing_values_number = data.count_nan();
+
     {
         file_stream.OpenElement("MissingValuesNumber");
 
         buffer.str("");
-        buffer << data.count_nan();
+        buffer << missing_values_number;
 
         file_stream.PushText(buffer.str().c_str());
 
         file_stream.CloseElement();
     }
 
-    // Columns missing values number
-
+    if(missing_values_number > 0)
     {
-        file_stream.OpenElement("ColumnsMissingValuesNumber");
+        // Columns missing values number
 
-        buffer.str("");
-        buffer << data.count_nan_columns();
+        {
+            file_stream.OpenElement("ColumnsMissingValuesNumber");
 
-        file_stream.PushText(buffer.str().c_str());
+            buffer.str("");
+            buffer << data.count_nan_columns();
 
-        file_stream.CloseElement();
-    }
+            file_stream.PushText(buffer.str().c_str());
 
-    // Rows missing values number
+            file_stream.CloseElement();
+        }
 
-    {
-        file_stream.OpenElement("RowsMissingValuesNumber");
+        // Rows missing values number
 
-        buffer.str("");
-        buffer << data.count_nan_rows().calculate_sum();
+        {
+            file_stream.OpenElement("RowsMissingValuesNumber");
 
-        file_stream.PushText(buffer.str().c_str());
+            buffer.str("");
+            buffer << data.count_rows_with_nan();
 
-        file_stream.CloseElement();
+            file_stream.PushText(buffer.str().c_str());
+
+            file_stream.CloseElement();
+        }
     }
 
     // Missing values
