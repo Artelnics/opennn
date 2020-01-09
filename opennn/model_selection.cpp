@@ -127,7 +127,7 @@ bool ModelSelection::has_training_strategy() const
 
 /// Returns the type of algorithm for the order selection.
 
-const ModelSelection::OrderSelectionMethod& ModelSelection::get_neurons_selection_method() const
+const ModelSelection::NeuronsSelectionMethod& ModelSelection::get_neurons_selection_method() const
 {
     return neurons_selection_method;
 }
@@ -243,7 +243,7 @@ void ModelSelection::set_display(const bool& new_display)
 /// Sets a new method for selecting the order which have more impact on the targets.
 /// @param new_neurons_selection_method Method for selecting the order(NO_NEURONS_SELECTION, INCREMENTAL_NEURONS, GOLDEN_SECTION, SIMULATED_ANNEALING).
 
-void ModelSelection::set_neurons_selection_method(const ModelSelection::OrderSelectionMethod& new_neurons_selection_method)
+void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsSelectionMethod& new_neurons_selection_method)
 {
     destruct_neurons_selection();
 
