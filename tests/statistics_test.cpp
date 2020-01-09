@@ -337,7 +337,7 @@ void StatisticsTest::test_calculate_mean()
 
    vector1.set(5);
    vector1[0] = 1.0;
-   vector1[1] = static_cast<double>NAN;
+   vector1[1] = static_cast<double>(NAN);
    vector1[2] = 2.0;
    vector1[3] = 3.0;
    vector1[4] = 4.0;
