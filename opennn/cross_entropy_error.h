@@ -49,8 +49,6 @@ public:
 
    explicit CrossEntropyError(DataSet*);
 
-   
-
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
 
    // XML CONSTRUCTOR
@@ -74,6 +72,17 @@ public:
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
+   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        output_gradient = (targets/outputs)*(-1.0) + (targets*(-1.0) + 1.0)/(outputs*(-1.0) + 1.0);
+   }
+
    string get_error_type() const;
    string get_error_type_text() const;
 
@@ -83,7 +92,6 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-
 };
 
 }
