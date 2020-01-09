@@ -772,7 +772,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Loss index
 
-           loss_index_pointer->calculate_batch_first_order_loss(batch, first_order_loss);
+           loss_index_pointer->calculate_batch_first_order_loss(batch, trainable_forward_propagation, first_order_loss);
 
            first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(batch);
 
