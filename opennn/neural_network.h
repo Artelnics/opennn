@@ -107,13 +107,13 @@ public:
                {
                    const PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
 
-                   //const size_t outputs_channels_number = convolutional_layer->get_filters_number();
-                   //const size_t outputs_rows_number = convolutional_layer->get_outputs_rows_number();
-                   //const size_t outputs_columns_number = convolutional_layer->get_outputs_columns_number();
+                   const size_t outputs_channels_number = pooling_layer->get_inputs_channels_number();
+                   const size_t outputs_rows_number = pooling_layer->get_outputs_rows_number();
+                   const size_t outputs_columns_number = pooling_layer->get_outputs_columns_number();
 
-                   //first_order_activations[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   //first_order_activations[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-                   //first_order_activations[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   first_order_activations[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   first_order_activations[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   first_order_activations[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Perceptron)
                {

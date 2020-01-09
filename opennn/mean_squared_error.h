@@ -81,7 +81,7 @@ public:
 
    FirstOrderLoss calculate_batch_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_batch_first_order_loss(const DataSet::Batch&, FirstOrderLoss&) const
+   void calculate_batch_first_order_loss(const DataSet::Batch&, const NeuralNetwork::TrainableForwardPropagation&, FirstOrderLoss&) const
    {
        // Data set
 /*
