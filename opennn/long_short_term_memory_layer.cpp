@@ -2051,7 +2051,7 @@ Tensor<double> LongShortTermMemoryLayer::calculate_outputs(const Tensor<double>&
 }
 
 
-Layer::FirstOrderActivations LongShortTermMemoryLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_first_order_activations(const Tensor<double>& inputs)
 {
     const size_t instances_number = inputs.get_dimension(0);
     const size_t neurons_number = get_neurons_number();
@@ -2132,12 +2132,12 @@ Layer::FirstOrderActivations LongShortTermMemoryLayer::calculate_first_order_act
         hidden_states_index++;
     }
 
-    Layer::FirstOrderActivations first_order_activations;
+    Layer::ForwardPropagation layers_forward_propagation;
 
-    first_order_activations.activations = activations;
-    first_order_activations.activations_derivatives = activations_derivatives;
+    layers_forward_propagation.activations = activations;
+    layers_forward_propagation.activations_derivatives = activations_derivatives;
 
-    return first_order_activations;
+    return layers_forward_propagation;
 }
 
 
@@ -2174,7 +2174,7 @@ Tensor<double> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_laye
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<double> &  inputs,
-                                                                  const Layer::FirstOrderActivations& first_order_activations,
+                                                                  const Layer::ForwardPropagation& layers_forward_propagation,
                                                                   const Tensor<double> & deltas)
 {
     const size_t parameters_number = get_parameters_number();
@@ -2197,51 +2197,51 @@ Vector<double> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<d
     {
         // Forget weights
 
-        error_gradient.embed(0, calculate_forget_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(0, calculate_forget_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Input weights
 
-        error_gradient.embed(weights_number, calculate_input_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(weights_number, calculate_input_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // State weights
 
-        error_gradient.embed(2*weights_number, calculate_state_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(2*weights_number, calculate_state_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Output weights
 
-        error_gradient.embed(3*weights_number, calculate_output_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(3*weights_number, calculate_output_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Forget recurrent weights
 
-        error_gradient.embed(4*weights_number, calculate_forget_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number, calculate_forget_recurrent_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Input recurrent weights
 
-        error_gradient.embed(4*weights_number+recurrent_weights_number, calculate_input_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+recurrent_weights_number, calculate_input_recurrent_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // State recurrent weights
 
-        error_gradient.embed(4*weights_number+2*recurrent_weights_number, calculate_state_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+2*recurrent_weights_number, calculate_state_recurrent_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Output recurrent weights
 
-        error_gradient.embed(4*weights_number+3*recurrent_weights_number, calculate_output_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+3*recurrent_weights_number, calculate_output_recurrent_weights_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Forget biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number, calculate_forget_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number, calculate_forget_biases_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Input biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+biases_number, calculate_input_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number+biases_number, calculate_input_biases_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // State biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+2*biases_number, calculate_state_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number+2*biases_number, calculate_state_biases_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
 
         // Output biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+3*biases_number, calculate_output_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number+3*biases_number, calculate_output_biases_error_gradient(inputs,layers_forward_propagation,deltas,activations_states));
     }
 
     return error_gradient;
@@ -2249,7 +2249,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<d
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_forget_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                 const Layer::FirstOrderActivations& first_order_activations,
+                                                                                 const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                  const Tensor<double>& deltas,
                                                                                  const Tensor<double>& activations_states)
  {
@@ -2274,11 +2274,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_weights_error_gradient
      const Matrix<double> output_activations = activations_states.get_matrix(3);
      const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-     const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-     const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-     const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-     const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-     const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+     const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+     const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+     const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+     const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+     const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
      size_t column_index = 0;
      size_t input_index = 0;
@@ -2356,7 +2356,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_weights_error_gradient
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -2381,11 +2381,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_weights_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t input_index = 0;
@@ -2462,7 +2462,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_weights_error_gradient(
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_state_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -2487,11 +2487,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_weights_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t input_index = 0;
@@ -2568,7 +2568,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_weights_error_gradient(
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_output_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                 const Layer::FirstOrderActivations& first_order_activations,
+                                                                                 const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                  const Tensor<double>& deltas,
                                                                                  const Tensor<double>& activations_states)
  {
@@ -2593,11 +2593,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_weights_error_gradient
      const Matrix<double> output_activations = activations_states.get_matrix(3);
      const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-     const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-     const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-     const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-     const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-     const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+     const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+     const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+     const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+     const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+     const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
      size_t column_index = 0;
      size_t input_index = 0;
@@ -2674,7 +2674,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_weights_error_gradient
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                           const Layer::FirstOrderActivations& first_order_activations,
+                                                                                           const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                            const Tensor<double>& deltas,
                                                                                            const Tensor<double>& activations_states)
 {
@@ -2699,11 +2699,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_erro
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
     const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t activation_index = 0;
@@ -2774,7 +2774,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_erro
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_input_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                          const Layer::FirstOrderActivations& first_order_activations,
+                                                                                          const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                           const Tensor<double>& deltas,
                                                                                           const Tensor<double>& activations_states)
 {
@@ -2799,11 +2799,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_recurrent_weights_error
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
    const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
    size_t column_index = 0;
    size_t activation_index = 0;
@@ -2873,7 +2873,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_recurrent_weights_error
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_state_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                          const Layer::FirstOrderActivations& first_order_activations,
+                                                                                          const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                           const Tensor<double>& deltas,
                                                                                           const Tensor<double>& activations_states)
 {
@@ -2898,11 +2898,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_recurrent_weights_error
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
    const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
    size_t column_index = 0;
    size_t activation_index = 0;
@@ -2972,7 +2972,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_recurrent_weights_error
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_output_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                           const Layer::FirstOrderActivations& first_order_activations,
+                                                                                           const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                            const Tensor<double>& deltas,
                                                                                            const Tensor<double>& activations_states)
  {
@@ -2997,11 +2997,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_recurrent_weights_erro
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
     const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t activation_index = 0;
@@ -3071,7 +3071,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_recurrent_weights_erro
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -3095,11 +3095,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
     for(size_t instance = 0; instance < instances_number; instance++)
     {
@@ -3157,7 +3157,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tensor<double>& inputs,
-                                                                               const Layer::FirstOrderActivations& first_order_activations,
+                                                                               const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                const Tensor<double>& deltas,
                                                                                const Tensor<double>& activations_states)
 {
@@ -3181,11 +3181,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(c
    const Matrix<double> output_activations = activations_states.get_matrix(3);
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
    for(size_t instance = 0; instance < instances_number; instance++)
    {
@@ -3244,7 +3244,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(c
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(const Tensor<double>& inputs,
-                                                                               const Layer::FirstOrderActivations& first_order_activations,
+                                                                               const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                const Tensor<double>& deltas,
                                                                                const Tensor<double>& activations_states)
 {
@@ -3268,11 +3268,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(c
    const Matrix<double> output_activations = activations_states.get_matrix(3);
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
    for(size_t instance = 0; instance < instances_number; instance++)
    {
@@ -3330,7 +3330,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(c
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers_forward_propagation,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -3354,11 +3354,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_biases_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers_forward_propagation.activations_derivatives.get_matrix(4);
 
     for(size_t instance = 0; instance < instances_number; instance++)
     {

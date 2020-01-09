@@ -215,15 +215,15 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
 
-   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
 
-   void calculate_first_order_activations(const Tensor<double>& inputs, FirstOrderActivations& first_order_activations)
+   void calculate_first_order_activations(const Tensor<double>& inputs, ForwardPropagation& layers_forward_propagation)
    {
-       calculate_convolutions(inputs, first_order_activations.combinations);
+       calculate_convolutions(inputs, layers_forward_propagation.combinations);
 
-       calculate_activations(first_order_activations.combinations, first_order_activations.activations);
+       calculate_activations(layers_forward_propagation.combinations, layers_forward_propagation.activations);
 
-       calculate_activations_derivatives(first_order_activations.combinations, first_order_activations.activations_derivatives);
+       calculate_activations_derivatives(layers_forward_propagation.combinations, layers_forward_propagation.activations_derivatives);
    }
 
    // Delta methods
@@ -239,7 +239,7 @@ public:
 
    // Gradient methods
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
    // Padding methods
 

@@ -765,16 +765,16 @@ if(inputs_columns_number != inputs_number)
 }
 
 
-Layer::FirstOrderActivations ProbabilisticLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation ProbabilisticLayer::calculate_first_order_activations(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation layers_forward_propagation;
 
     const Tensor<double> combinations = calculate_combinations(inputs);
 
-    first_order_activations.activations = calculate_activations(combinations);
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers_forward_propagation.activations = calculate_activations(combinations);
+    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return first_order_activations;
+    return layers_forward_propagation;
 }
 
 
@@ -802,7 +802,7 @@ Tensor<double> ProbabilisticLayer::calculate_output_delta(const Tensor<double>& 
 /// @param layer_inputs Tensor with layers inputs.
 
 Vector<double> ProbabilisticLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
-                                                            const Layer::FirstOrderActivations&,
+                                                            const Layer::ForwardPropagation&,
                                                             const Tensor<double>& layer_deltas)
 {
     Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();

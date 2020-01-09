@@ -1015,9 +1015,9 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, 
 }
 
 
-Layer::FirstOrderActivations PerceptronLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation PerceptronLayer::calculate_first_order_activations(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation layers_forward_propagation;
 
     Tensor<double> combinations;
 
@@ -1030,11 +1030,11 @@ Layer::FirstOrderActivations PerceptronLayer::calculate_first_order_activations(
         combinations = calculate_combinations(inputs);
     }
 
-    first_order_activations.activations = calculate_activations(combinations);
+    layers_forward_propagation.activations = calculate_activations(combinations);
 
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return first_order_activations;
+    return layers_forward_propagation;
 }
 
 
@@ -1078,7 +1078,7 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
 /// @param layer_inputs Tensor with layers inputs.
 
 Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
-                                                         const Layer::FirstOrderActivations& ,
+                                                         const Layer::ForwardPropagation& ,
                                                          const Tensor<double>& layer_deltas)
 {
     Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();

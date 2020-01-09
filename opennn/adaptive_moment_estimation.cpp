@@ -704,7 +704,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    // Loss index stuff
 
-   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
+   LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
    double training_error = 0.0;
 
@@ -1842,7 +1842,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.

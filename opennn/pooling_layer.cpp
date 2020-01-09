@@ -211,15 +211,15 @@ Tensor<double> PoolingLayer::calculate_max_pooling_outputs(const Tensor<double>&
 }
 
 
-Layer::FirstOrderActivations PoolingLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation PoolingLayer::calculate_first_order_activations(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation layers_forward_propagation;
 
-    first_order_activations.activations = calculate_outputs(inputs);
+    layers_forward_propagation.activations = calculate_outputs(inputs);
 
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(first_order_activations.activations);
+    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(layers_forward_propagation.activations);
 
-    return first_order_activations;
+    return layers_forward_propagation;
 }
 
 
@@ -525,7 +525,7 @@ Tensor<double> PoolingLayer::calculate_max_pooling_delta(const Layer*,
 
 
 Vector<double> PoolingLayer::calculate_error_gradient(const Tensor<double>& ,
-                                                      const Layer::FirstOrderActivations& ,
+                                                      const Layer::ForwardPropagation& ,
                                                       const Tensor<double>& )
 {
     return Vector<double>();

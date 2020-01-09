@@ -95,15 +95,18 @@ public:
 
        // Loss index
 
-       const Tensor<double> output_gradient = calculate_output_gradient(trainable_forward_propagation.first_order_activations[layers_number-1].activations,
+       const Tensor<double> output_gradient = calculate_output_gradient(trainable_forward_propagation.layers_forward_propagation[layers_number-1].activations,
                                                                         batch.target_data);
-/*
-       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(trainable_forward_propagation,
+
+       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(trainable_forward_propagation.layers_forward_propagation,
                                                                           output_gradient);
 
-       const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data, trainable_forward_propagation, layers_delta);
+       const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data,
+                                                                            trainable_forward_propagation.layers_forward_propagation,
+                                                                            layers_delta);
 
-       const double batch_error = sum_squared_error(trainable_forward_propagation[layers_number-1].activations, batch.target_data);
+       const double batch_error = sum_squared_error(trainable_forward_propagation.layers_forward_propagation[layers_number-1].activations,
+                                                    batch.target_data);
 
        first_order_loss.loss = batch_error / static_cast<double>(batch_instances_number);
        first_order_loss.gradient = batch_error_gradient;
@@ -115,7 +118,7 @@ public:
            first_order_loss.loss += regularization_weight*calculate_regularization();
            first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
        }
-*/
+
    }
 
    // Error terms methods

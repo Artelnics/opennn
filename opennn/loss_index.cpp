@@ -401,7 +401,7 @@ void LossIndex::check() const
 /// @param layers_delta Vector of tensors with layers delta.
 
 Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
-                                                   const Vector<Layer::FirstOrderActivations>& forward_propagation,
+                                                   const Vector<Layer::ForwardPropagation>& forward_propagation,
                                                    const Vector<Tensor<double>>& layers_delta) const
 {
     const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -462,7 +462,7 @@ Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
 /// @param layers_delta Vector of tensors with layers delta.
 
 Matrix<double> LossIndex::calculate_error_terms_Jacobian(const Tensor<double>& inputs,
-                                                         const Vector<Layer::FirstOrderActivations>& forward_propagation,
+                                                         const Vector<Layer::ForwardPropagation>& forward_propagation,
                                                          const Vector<Tensor<double>>& layers_delta) const
 {  
    #ifdef __OPENNN_DEBUG__
@@ -1017,11 +1017,15 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 /// Set of loss value and gradient vector of the peformance function.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-LossIndex::FirstOrderLoss::FirstOrderLoss(const size_t& new_parameters_number)
+LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 {    
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
     loss = 0.0;
 
-    gradient.set(new_parameters_number, 0.0);
+    gradient.set(parameters_number, 0.0);
 }
 
 
@@ -1032,18 +1036,7 @@ LossIndex::FirstOrderLoss::~FirstOrderLoss()
 }
 
 
-/// Set of loss value and gradient vector of the peformance function.
-/// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
-
-void LossIndex::FirstOrderLoss::set_parameters_number(const size_t& new_parameters_number)
-{
-    loss = 0.0;
-
-    gradient.set(new_parameters_number, 0.0);
-}
-
-
-Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::FirstOrderActivations>& forward_propagation,
+Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::ForwardPropagation>& forward_propagation,
                                                          const Tensor<double>& output_gradient) const
 {
     const size_t forward_propagation_size = forward_propagation.size();
@@ -1224,7 +1217,7 @@ Vector<double> LossIndex::calculate_batch_error_gradient(const Vector<size_t>& b
     const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
     const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
     const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.get_last().activations, targets);
 

@@ -346,7 +346,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
 
-        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
         const Tensor<double> output_gradient
                 = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
@@ -392,7 +392,7 @@ check();
 
     const size_t batches_number = training_batches.size();
 
-    FirstOrderLoss first_order_loss(parameters_number);
+    FirstOrderLoss first_order_loss(this);
 
      #pragma omp parallel for
 
@@ -401,7 +401,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
         const Vector<double> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -454,11 +454,9 @@ check();
 
     const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    FirstOrderLoss first_order_loss(this);
 
-    FirstOrderLoss first_order_loss(parameters_number);
-
-    const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(batch.input_data);
 
     const Tensor<double> output_gradient
             = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.target_data)/training_normalization_coefficient;
@@ -582,7 +580,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
 
         const Vector<double> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);

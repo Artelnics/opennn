@@ -218,28 +218,28 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>& );
    Tensor<double> calculate_outputs(const Tensor<double>&, const Matrix<double>&, const Tensor<double>&, const Tensor<double>&);
 
-   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_first_order_activations(const Tensor<double>&);
 
    Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-   Vector<double> calculate_forget_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_forget_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_state_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_output_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
 
-   Vector<double> calculate_forget_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_forget_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_input_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_state_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_output_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
 
-   Vector<double> calculate_forget_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_forget_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_input_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_state_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_output_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
 
    // Expression methods
 

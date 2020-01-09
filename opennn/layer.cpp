@@ -169,20 +169,20 @@ Tensor<double> Layer::calculate_outputs(const Tensor<double> &, const Vector<dou
 
 
 Vector<double> Layer::calculate_error_gradient(const Tensor<double>&,
-                                               const Layer::FirstOrderActivations&,
+                                               const Layer::ForwardPropagation&,
                                                const Tensor<double>&)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&) method.\n"
+           << "calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Layer::FirstOrderActivations Layer::calculate_first_order_activations(const Tensor<double>&)
+Layer::ForwardPropagation Layer::calculate_first_order_activations(const Tensor<double>&)
  {
     ostringstream buffer;
 

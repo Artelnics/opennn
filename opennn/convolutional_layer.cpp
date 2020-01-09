@@ -378,17 +378,17 @@ Tensor<double> ConvolutionalLayer::calculate_outputs(const Tensor<double>& input
 }
 
 
-Layer::FirstOrderActivations ConvolutionalLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation ConvolutionalLayer::calculate_first_order_activations(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation layers_forward_propagation;
 
     const Tensor<double> combinations = calculate_convolutions(inputs);
 
-    first_order_activations.activations = calculate_activations(combinations);
+    layers_forward_propagation.activations = calculate_activations(combinations);
 
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers_forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return first_order_activations;
+    return layers_forward_propagation;
 }
 
 
@@ -755,7 +755,7 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabil
 
 
 Vector<double> ConvolutionalLayer::calculate_error_gradient(const Tensor<double>& previous_layers_outputs,
-                                                            const Layer::FirstOrderActivations& ,
+                                                            const Layer::ForwardPropagation& ,
                                                             const Tensor<double>& layer_deltas)
 {
     Tensor<double> layers_inputs;

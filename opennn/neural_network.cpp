@@ -3452,13 +3452,13 @@ void NeuralNetwork::save_data(const string& file_name) const
 }
 
 
-Vector<Layer::FirstOrderActivations> NeuralNetwork::calculate_trainable_forward_propagation(const Tensor<double>& inputs) const
+Vector<Layer::ForwardPropagation> NeuralNetwork::calculate_trainable_forward_propagation(const Tensor<double>& inputs) const
 {
     const size_t trainable_layers_number = get_trainable_layers_number();
 
     Vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    Vector<Layer::FirstOrderActivations> forward_propagation(trainable_layers_number);
+    Vector<Layer::ForwardPropagation> forward_propagation(trainable_layers_number);
 
     // First layer
 

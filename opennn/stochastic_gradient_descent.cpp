@@ -773,7 +773,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    // Loss index stuff
 
-   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
+   LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
    double training_error = 0.0;
 
@@ -837,7 +837,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            //Loss
 
-           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(batch);
+           loss_index_pointer->calculate_batch_first_order_loss(batch, trainable_forward_propagation, first_order_loss);
 /*
            loss += first_order_loss.loss;
 

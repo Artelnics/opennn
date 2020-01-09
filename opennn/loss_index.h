@@ -90,15 +90,19 @@ public:
 
        explicit FirstOrderLoss() {}
 
-       explicit FirstOrderLoss(const size_t& new_parameters_number);
-
-       void set_parameters_number(const size_t& new_parameters_number);
-
+       explicit FirstOrderLoss(const LossIndex*);
        virtual ~FirstOrderLoss();
+
+       Tensor<double> output_gradient;
+
+       Vector<Tensor<double>> layers_delta;
 
        double loss;
 
        Vector<double> gradient;
+
+
+
    };
 
 
@@ -260,13 +264,13 @@ public:
 
    // Delta methods
 
-   Vector<Tensor<double>> calculate_layers_delta(const Vector<Layer::FirstOrderActivations>&, const Tensor<double>&) const;
+   Vector<Tensor<double>> calculate_layers_delta(const Vector<Layer::ForwardPropagation>&, const Tensor<double>&) const;
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Vector<Layer::FirstOrderActivations>&, const Vector<Tensor<double>>&) const;
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Vector<Layer::ForwardPropagation>&, const Vector<Tensor<double>>&) const;
 
    Matrix<double> calculate_layer_error_terms_Jacobian(const Tensor<double>&, const Tensor<double>&) const;
 
-   Matrix<double> calculate_error_terms_Jacobian(const Tensor<double>&, const Vector<Layer::FirstOrderActivations>&, const Vector<Tensor<double>>&) const;
+   Matrix<double> calculate_error_terms_Jacobian(const Tensor<double>&, const Vector<Layer::ForwardPropagation>&, const Vector<Tensor<double>>&) const;
 
    // Serialization methods
 
