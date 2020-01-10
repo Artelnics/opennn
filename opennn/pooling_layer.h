@@ -102,7 +102,7 @@ public:
      void set_inputs_number(const size_t&) {}
      void set_neurons_number(const size_t&) {}
 
-     void set_inputs_dimensions(const Vector<size_t>&);
+     void set_input_variables_dimensions(const Vector<size_t>&);
 
     void set_padding_width(const size_t&);
 
