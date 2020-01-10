@@ -13,7 +13,7 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++11
+CONFIG += c++11
 
 CONFIG(debug, debug|release) {
     DEFINES += __OPENNN_DEBUG__
@@ -145,3 +145,15 @@ SOURCES += \
     testing_analysis.cpp \
     response_optimization.cpp \
     unit_testing.cpp
+
+#Add-ons available under Commercial Licenses
+
+#DEFINES += __OPENNN_CUDA__
+
+contains(DEFINES, __OPENNN_CUDA__){
+
+    include(../../arte/opennn_cuda/cuda_config.pri)
+
+    include(../../arte/opennn_cuda/cuda_path.pri)
+
+}

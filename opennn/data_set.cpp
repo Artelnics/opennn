@@ -6886,7 +6886,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Has columns names
 
-    const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsName");
+    const tinyxml2::XMLElement* columns_names_element = data_file_element->FirstChildElement("ColumnsNames");
 
     if(columns_names_element)
     {
@@ -6904,7 +6904,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Rows label
 
-    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabel");
+    const tinyxml2::XMLElement* rows_label_element = data_file_element->FirstChildElement("RowsLabels");
 
     if(rows_label_element)
     {
@@ -8527,10 +8527,15 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
+    cout << "1" << endl;
+
     if(!has_time_variables() && !has_categorical_variables())
     {
+        cout << "if" << endl;
         read_csv_2_simple();
+        cout << "2" << endl;
         read_csv_3_simple();
+        cout << "3" << endl;
     }
     else
     {
@@ -8817,7 +8822,7 @@ void DataSet::read_csv_3_simple()
         {
             getline(file, line);
 
-            trim(line);
+//            trim(line);
 
             if(line.empty()) continue;
 
