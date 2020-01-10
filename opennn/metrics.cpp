@@ -228,7 +228,7 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
   {
       const Matrix<double> i_matrix = tensor_2.get_matrix(i);
 
-      const Matrix<double> i_row = tensor_1_matrix.get_submatrix_rows({i} );
+      const Matrix<double> i_row = tensor_1_matrix.get_submatrix_rows({i});
 
       Matrix<double> dot_product = dot(i_row, i_matrix);
 
@@ -260,11 +260,11 @@ Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
         {
             const Matrix<double> i_matrix = tensor.get_matrix(i);
 
-            const Matrix<double> i_row = matrix.get_submatrix_rows({i} );
+            const Matrix<double> i_row = matrix.get_submatrix_rows({i});
 
             Matrix<double> dot_product = dot(i_row, i_matrix);
 
-            outputs.set_row(i, dot_product.to_vector() );
+            outputs.set_row(i, dot_product.to_vector());
         }
 
         return outputs;
@@ -1377,11 +1377,11 @@ double sum_squared_error(const Tensor<double>& x, const Tensor<double>& y)
 
     double sum_squared_error = 0.0;
 
-    double error;
+    #pragma omp parallel for reduction(+ : sum_squared_error)
 
     for(size_t i = 0; i < size; i++)
     {
-        error = x[i]-y[i];
+        const double error = y[i] - x[i];
 
         sum_squared_error += error*error;
     }

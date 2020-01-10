@@ -1408,7 +1408,17 @@ void DataSet::split_instances_sequential(const double& training_instances_ratio,
 
 void DataSet::set_batch_instances_number(const size_t& new_batch_instances_number)
 {
-    batch_instances_number = new_batch_instances_number;
+    const size_t training_instances_number = get_training_instances_number();
+
+    if(new_batch_instances_number > training_instances_number)
+    {
+        batch_instances_number = training_instances_number;
+
+    }
+    else
+    {
+        batch_instances_number = new_batch_instances_number;
+    }
 }
 
 

@@ -271,7 +271,7 @@ string PrincipalComponentsLayer::write_expression(const Vector<string>& inputs_n
 /// @param outputs_names Name of outputs from the principal components.*/
 
 
-string PrincipalComponentsLayer::write_no_principal_components_expression(const Vector<string>&, const Vector<string>& ) const
+string PrincipalComponentsLayer::write_no_principal_components_expression(const Vector<string>&, const Vector<string>&) const
 {
     ostringstream buffer;
 

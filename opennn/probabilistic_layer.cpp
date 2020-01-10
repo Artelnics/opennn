@@ -767,14 +767,14 @@ if(inputs_columns_number != inputs_number)
 
 Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    ForwardPropagation layers;
+    ForwardPropagation forward_propagation;
 
     const Tensor<double> combinations = calculate_combinations(inputs);
 
-    layers.activations = calculate_activations(combinations);
-    layers.activations_derivatives = calculate_activations_derivatives(combinations);
+    forward_propagation.activations = calculate_activations(combinations);
+    forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return layers;
+    return forward_propagation;
 }
 
 

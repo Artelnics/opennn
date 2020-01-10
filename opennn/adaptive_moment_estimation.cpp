@@ -763,8 +763,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Data set
 
-           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.input_data);
-           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.target_data);
+           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
+           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
 
            // Neural network
 

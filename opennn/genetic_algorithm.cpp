@@ -1653,7 +1653,7 @@ size_t GeneticAlgorithm::get_optimal_individual_index() const
         if((abs(optimum_error-current_error) < tolerance &&
              current_inputs.count_equal_to(true) > optimal_inputs.count_equal_to(true)) ||
            (abs(optimum_error-current_error) >= tolerance &&
-             current_error < optimum_error)   )
+             current_error < optimum_error)  )
         {
             optimal_inputs = current_inputs;
             optimum_error = current_error;

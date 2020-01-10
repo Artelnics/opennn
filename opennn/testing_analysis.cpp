@@ -1353,7 +1353,7 @@ double TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<do
     if(outputs_number != 1)
     {
        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-              << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>& ) const.\n"
+              << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>&) const.\n"
               << "Number of outputs must be one.\n";
 
        throw logic_error(buffer.str());
@@ -1398,7 +1398,7 @@ double TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<do
             ostringstream buffer;
 
             buffer << "OpenNN Exception: TestingAnalysis class.\n"
-                   << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>& ) const method.\n"
+                   << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>&) const method.\n"
                    << "Target is neither a positive nor a negative.\n";
 
             throw logic_error(buffer.str());

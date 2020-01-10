@@ -4002,7 +4002,7 @@ Vector<size_t> Vector<T>::count_unique() const
         unique_count[i] = count_equal_to(unique[i]);
     }
 
-    return(unique_count);
+    return unique_count;
 }
 
 

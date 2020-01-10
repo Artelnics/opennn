@@ -1684,6 +1684,8 @@ void hard_sigmoid(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
      for(size_t i = 0; i < n; i++)
      {
          if(x[i] < -2.5)
@@ -1706,6 +1708,8 @@ void hyperbolic_tangent(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         y[i] = tanh(x[i]);
@@ -1716,6 +1720,8 @@ void hyperbolic_tangent(const Tensor<double>& x, Tensor<double>& y)
 void logistic(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1728,6 +1734,8 @@ void linear(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         y[i] = x[i];
@@ -1739,9 +1747,12 @@ void threshold(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
-     for(size_t i = 0; i < n; i++)
-         y[i] = x[i] < 0 ? -1.0 : 1.0;
+    #pragma omp parallel for
 
+    for(size_t i = 0; i < n; i++)
+    {
+         y[i] = x[i] < 0 ? -1.0 : 1.0;
+    }
 }
 
 
@@ -1749,14 +1760,20 @@ void symmetric_threshold(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
      for(size_t i = 0; i < n; i++)
+     {
          y[i] = x[i] < 0 ? -1.0 : 1.0;
+     }
 }
 
 
 void rectified_linear(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1772,6 +1789,8 @@ void scaled_exponential_linear(const Tensor<double>& x, Tensor<double>& y)
     const double lambda = 1.0507;
     const double alpha = 1.67326;
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         x[i] < 0.0 ? y[i] = lambda * alpha * (exp(x[i]) - 1) : y[i] = lambda * x[i];
@@ -1783,6 +1802,8 @@ void soft_plus(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         y[i] = log(1.0 + exp(x[i]));
@@ -1793,6 +1814,8 @@ void soft_plus(const Tensor<double>& x, Tensor<double>& y)
 void soft_sign(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1807,6 +1830,8 @@ void exponential_linear(const Tensor<double>& x, Tensor<double>& y)
 
     const double alpha = 1.0;
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         x[i] < 0.0 ? y[i] = alpha * (exp(x[i]) - 1) : y[i] = x[i];
@@ -1818,6 +1843,8 @@ void logistic_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         const double exponential = exp(-x[i]);
@@ -1827,19 +1854,19 @@ void logistic_derivatives(const Tensor<double>& x, Tensor<double>& y)
 }
 
 
-void threshold_derivatives(const Tensor<double>& x, Tensor<double>& y)
+void threshold_derivatives(const Tensor<double>&, Tensor<double>& y)
 {
     y.initialize(0.0);
 }
 
 
-void symmetric_threshold_derivatives(const Tensor<double>& x, Tensor<double>& y)
+void symmetric_threshold_derivatives(const Tensor<double>&, Tensor<double>& y)
 {
     y.initialize(0.0);
 }
 
 
-void linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
+void linear_derivatives(const Tensor<double>&, Tensor<double>& y)
 {
     y.initialize(1.0);
 }
@@ -1848,6 +1875,8 @@ void linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
 void hyperbolic_tangent_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1861,6 +1890,8 @@ void hyperbolic_tangent_derivatives(const Tensor<double>& x, Tensor<double>& y)
 void rectified_linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1876,6 +1907,8 @@ void scaled_exponential_linear_derivatives(const Tensor<double>& x, Tensor<doubl
     const double lambda =1.0507;
     const double alpha =1.67326;
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         x[i] < 0.0 ? y[i] = lambda * alpha * exp(x[i]) : y[i] = lambda;
@@ -1886,6 +1919,8 @@ void scaled_exponential_linear_derivatives(const Tensor<double>& x, Tensor<doubl
 void soft_plus_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1898,6 +1933,8 @@ void soft_sign_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
        x[i] < 0.0 ? y[i] = 1.0 / pow(1.0 - x[i], 2) : y[i] = 1.0 / pow(1.0 + x[i], 2);
@@ -1908,6 +1945,8 @@ void soft_sign_derivatives(const Tensor<double>& x, Tensor<double>& y)
 void hard_sigmoid_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i++)
     {
@@ -1922,6 +1961,8 @@ void exponential_linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
 
     const double alpha = 1.0;
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         x[i] < 0.0 ? y[i] = alpha * exp(x[i]) : y[i] = 1.0;
@@ -1929,11 +1970,30 @@ void exponential_linear_derivatives(const Tensor<double>& x, Tensor<double>& y)
 }
 
 
+/// @todo Fails
+
 void softmax_derivatives(const Tensor<double>& x, Tensor<double>& y)
 {
+#ifdef __OPENNN_DEBUG__
+
+    if(x.get_dimension(0) != y.get_dimension(0))
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Functions.\n"
+              << "void softmax_derivatives(const Tensor<double>&, Tensor<double>&) method.\n"
+              << "Number of rows in x must be equal to number of rows in d.\n";
+
+       throw logic_error(buffer.str());
+    }
+
+#endif
+
     const size_t n = x.get_dimension(0);
 
     const size_t columns_number = x.get_dimension(1);
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < n; i ++)
     {
@@ -1961,6 +2021,8 @@ void binary(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t n = x.size();
 
+    #pragma omp parallel for
+
     for(size_t i = 0; i < n; i++)
     {
         x[i] < 0.5 ? y[i] = false : y [i] = true;
@@ -1971,7 +2033,8 @@ void binary(const Tensor<double>& x, Tensor<double>& y)
 void competitive(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t rows_number = x.get_dimension(0);
-    const size_t columns_number = x.get_dimension(1);
+
+    #pragma omp parallel for
 
     for(size_t i = 0; i < rows_number; i++)
     {
@@ -1986,6 +2049,8 @@ void softmax(const Tensor<double>& x, Tensor<double>& y)
 {
     const size_t rows_number = x.get_dimension(0);
     const size_t columns_number = x.get_dimension(1);
+
+    #pragma omp parallel for
 
   for(size_t j = 0; j < rows_number; j++)
   {

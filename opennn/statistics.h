@@ -233,7 +233,7 @@ struct Histogram
      double mean_missing_values(const Vector<double>&);
      Vector<double> mean_missing_values(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
      Vector<double> columns_mean(const Matrix<double>&);
-     Vector<double> rows_means(const Matrix<double>&, const Vector<size_t>& );
+     Vector<double> rows_means(const Matrix<double>&, const Vector<size_t>&);
 
      // Median
      double median(const Vector<double>&);

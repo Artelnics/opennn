@@ -1825,7 +1825,7 @@ Tensor<double> LongShortTermMemoryLayer::calculate_outputs(const Tensor<double>&
        throw logic_error(buffer.str());
     }
 
-    if(parameters.size() != get_parameters_number() )
+    if(parameters.size() != get_parameters_number())
     {
         ostringstream buffer;
 

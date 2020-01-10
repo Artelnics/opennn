@@ -66,22 +66,23 @@ int main(void)
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
 
-        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+//        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
 
-        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
+//        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
 
-        quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(0.0);
+//        quasi_Newton_method_pointer->set_minimum_parameters_increment_norm(0.0);
 
-        quasi_Newton_method_pointer->perform_training();
+        training_strategy.perform_training();
 
         training_strategy.set_display(false);
 
         // Testing analysis
 
-        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 

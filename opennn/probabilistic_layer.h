@@ -25,9 +25,6 @@
 #include "functions.h"
 #include "layer.h"
 #include "metrics.h"
-
-
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -152,6 +149,16 @@ public:
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&, const Matrix<double>&) const;
 
    ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
+
+   void calculate_forward_propagation(const Tensor<double>& inputs, ForwardPropagation& forward_propagation)
+   {
+       calculate_combinations(inputs, forward_propagation.combinations);
+
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+   }
+
 
    // Deltas
 

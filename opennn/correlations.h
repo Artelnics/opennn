@@ -192,7 +192,7 @@ struct CorrelationResults
 
     Matrix<size_t> contingency_table(const Vector<string>&, const Vector<string>&);
     Matrix<size_t> contingency_table(Matrix<string>&);
-    Matrix<size_t> contingency_table(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>& );
+    Matrix<size_t> contingency_table(const Matrix<double>&, const Vector<size_t>&, const Vector<size_t>&);
 
     double chi_square_test(const Matrix<double>&);
 
@@ -205,7 +205,7 @@ struct CorrelationResults
     //One way ANOVA
 
     double one_way_anova(const Matrix<double>&, const Vector<double>&);
-    double one_way_anova(const Matrix<double>& ,const size_t&, const Vector<size_t>& );
+    double one_way_anova(const Matrix<double>& ,const size_t&, const Vector<size_t>&);
 
     double one_way_anova_correlation(const Matrix<double>&, const Vector<double>&);
     double one_way_anova_correlation_missing_values(const Matrix<double>&, const Vector<double>&);
@@ -215,7 +215,7 @@ struct CorrelationResults
     double f_snedecor_critical_point(const Matrix<double>&);
     double f_snedecor_critical_point_missing_values(const Matrix<double>&);
 
-    double one_way_anova_correlation(const Matrix<double>& ,const size_t& , const Vector<size_t>& );
+    double one_way_anova_correlation(const Matrix<double>& ,const size_t& , const Vector<size_t>&);
 
     pair<Vector<double>, Vector<double>> filter_missing_values(const Vector<double>&, const Vector<double>&);
 
