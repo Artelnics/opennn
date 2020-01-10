@@ -20,11 +20,11 @@ PoolingLayer::PoolingLayer() : Layer()
 
 /// Input size setter constructor.
 /// After setting new dimensions for the input, it creates an empty PoolingLayer object.
-/// @param new_inputs_dimensions A vector containing the new number of channels, rows and columns for the input.
+/// @param new_input_variables_dimensions A vector containing the new number of channels, rows and columns for the input.
 
-PoolingLayer::PoolingLayer(const Vector<size_t>& new_inputs_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const Vector<size_t>& new_input_variables_dimensions) : Layer()
 {
-    input_variables_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_input_variables_dimensions;
 
     set_default();
 }
@@ -32,12 +32,12 @@ PoolingLayer::PoolingLayer(const Vector<size_t>& new_inputs_dimensions) : Layer(
 
 /// Input size setter constructor.
 /// After setting new dimensions for the input, it creates an empty PoolingLayer object.
-/// @param new_inputs_dimensions A vector containing the desired number of rows and columns for the input.
+/// @param new_input_variables_dimensions A vector containing the desired number of rows and columns for the input.
 /// @param pool_dimensions A vector containing the desired number of rows and columns for the pool.
 
-PoolingLayer::PoolingLayer(const Vector<size_t>& new_inputs_dimensions, const Vector<size_t>& pool_dimensions) : Layer()
+PoolingLayer::PoolingLayer(const Vector<size_t>& new_input_variables_dimensions, const Vector<size_t>& pool_dimensions) : Layer()
 {
-    input_variables_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_input_variables_dimensions;
 
     pool_rows_number = pool_dimensions[0];
 
@@ -61,15 +61,15 @@ Tensor<double> PoolingLayer::calculate_outputs(const Tensor<double>& inputs)
 {
     #ifdef __OPENNN_DEBUG__
 
-        const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+        const size_t input_variables_dimensions_number = inputs.get_dimensions_number();
 
-        if(inputs_dimensions_number != 4)
+        if(input_variables_dimensions_number != 4)
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
                   << "Tensor<double> calculate_outputs(const Tensor<double>&) method.\n"
-                  << "Number of inputs dimensions (" << inputs_dimensions_number << ") must be 4 (batch, filters, rows, columns).\n";
+                  << "Number of inputs dimensions (" << input_variables_dimensions_number << ") must be 4 (batch, filters, rows, columns).\n";
 
             throw logic_error(buffer.str());
         }
@@ -220,6 +220,14 @@ Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tens
     layers.activations_derivatives = calculate_activations_derivatives(layers.activations);
 
     return layers;
+
+    ForwardPropagation first_order_activations;
+
+    first_order_activations.activations = calculate_outputs(inputs);
+
+    first_order_activations.activations_derivatives = calculate_activations_derivatives(first_order_activations.activations);
+
+    return first_order_activations;
 }
 
 
@@ -230,11 +238,18 @@ Tensor<double> PoolingLayer::calculate_activations_derivatives(const Tensor<doub
 {
     switch(pooling_method)
     {
-        case NoPooling: return calculate_no_pooling_activations_derivatives(inputs);
-
-        case AveragePooling: return calculate_average_pooling_activations_derivatives(inputs);
-
-        case MaxPooling: return calculate_max_pooling_activations_derivatives(inputs);
+        case NoPooling:
+        {
+            return calculate_no_pooling_activations_derivatives(inputs);
+        }
+        case AveragePooling:
+        {
+            return calculate_average_pooling_activations_derivatives(inputs);
+        }
+        case MaxPooling:
+        {
+            return calculate_max_pooling_activations_derivatives(inputs);
+        }
     }
 
     return Tensor<double>();
@@ -364,28 +379,21 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
 
             double sum = 0.0;
 
-            int weights_row_index;
-            int weights_column_index;
-            double delta_element;
-            double weight;
-
             for(size_t i = 0; i < next_layers_filters_number; i++)
             {
                 for(size_t j = 0; j < next_layers_output_rows; j++)
                 {
-                    weights_row_index = row_index - j*next_layers_row_stride;
-
-                    if(weights_row_index >= 0 && weights_row_index < next_layers_filter_rows)
+                    if(static_cast<int>(row_index) - static_cast<int>(j*next_layers_row_stride) >= 0
+                    && row_index - j*next_layers_row_stride < next_layers_filter_rows)
                     {
                         for(size_t k = 0; k < next_layers_output_columns; k++)
                         {
-                            weights_column_index = column_index - k*next_layers_column_stride;
+                            const double delta_element = next_layer_delta(image_index, i, j, k);
 
-                            delta_element = next_layer_delta(image_index, i, j, k);
-
-                            if(weights_column_index >= 0 && weights_column_index < next_layers_filter_columns)
+                            if(static_cast<int>(column_index) - static_cast<int>(k*next_layers_column_stride) >= 0
+                            && column_index - k*next_layers_column_stride < next_layers_filter_columns)
                             {
-                                weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
+                                const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
 
                                 sum += delta_element*weight;
                             }
@@ -428,14 +436,11 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
 
             double sum = 0.0;
 
-            double delta_element;
-            double weight;
-
             for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
             {
-                delta_element = next_layer_delta(image_index, sum_index);
+                const double delta_element = next_layer_delta(image_index, sum_index);
 
-                weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+                const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
 
                 sum += delta_element*weight;
             }
@@ -445,49 +450,7 @@ Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_p
     }
     else if(layer_type == Probabilistic)
     {
-        const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-        // Current layer's values
-
-        const size_t images_number = next_layer_delta.get_dimension(0);
-        const size_t channels_number = activations_derivatives.get_dimension(1);
-        const size_t output_rows_number = get_outputs_rows_number();
-        const size_t output_columns_number = get_outputs_columns_number();
-
-        // Next layer's values
-
-        const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
-        const Matrix<double> next_layers_weights = probabilistic_layer->get_synaptic_weights();
-
-        hidden_delta.set({images_number, channels_number, output_rows_number, output_columns_number}, 0.0);
-
-        const size_t size = hidden_delta.size();
-
-        #pragma omp parallel for
-
-        for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
-        {
-            size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-            size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-            size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
-            size_t column_index = tensor_index%output_columns_number;
-
-            double sum = 0.0;
-
-            double delta_element;
-            double weight;
-
-            for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
-            {
-                delta_element = next_layer_delta(image_index, sum_index);
-
-                weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
-
-                sum += delta_element*weight;
-            }
-
-            hidden_delta(image_index, channel_index, row_index, column_index) += sum;
-        }
+        //const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
     }
 
     return hidden_delta;
@@ -525,8 +488,8 @@ Tensor<double> PoolingLayer::calculate_max_pooling_delta(const Layer*,
 
 
 Vector<double> PoolingLayer::calculate_error_gradient(const Tensor<double>& ,
-                                                      const Layer::ForwardPropagation& ,
-                                                      const Tensor<double>& )
+                                                      const Layer::ForwardPropagation& forward_propagation,
+                                                      const Tensor<double>& layer_deltas)
 {
     return Vector<double>();
 }
@@ -710,9 +673,9 @@ PoolingLayer::PoolingMethod PoolingLayer::get_pooling_method() const
 /// Sets the number of rows of the layer's input.
 /// @param new_input_rows_number The desired rows number.
 
-void PoolingLayer::set_inputs_dimensions(const Vector<size_t>& new_inputs_dimensions)
+void PoolingLayer::set_input_variables_dimensions(const Vector<size_t>& new_input_variables_dimensions)
 {
-    input_variables_dimensions = new_inputs_dimensions;
+    input_variables_dimensions = new_input_variables_dimensions;
 }
 
 
