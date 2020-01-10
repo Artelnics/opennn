@@ -188,16 +188,27 @@ public:
            const Vector<size_t> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
            const Vector<size_t> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
 
-           input_data.set(input_variables_dimensions.insert_element(0, batch_instances_number));
-           target_data.set(target_variables_dimensions.insert_element(0, batch_instances_number));
+           inputs.set(input_variables_dimensions.insert_element(0, batch_instances_number));
+           targets.set(target_variables_dimensions.insert_element(0, batch_instances_number));
        }
 
        /// Destructor.
 
        virtual ~Batch() {}
 
-       Tensor<double> input_data;
-       Tensor<double> target_data;
+       void print()
+       {
+           cout << "Batch structure" << endl;
+
+           cout << "Inputs:" << endl;
+           cout << inputs << endl;
+
+           cout << "Targets:" << endl;
+           cout << targets << endl;
+       }
+
+       Tensor<double> inputs;
+       Tensor<double> targets;
    };
 
    // Instances get methods
@@ -445,8 +456,8 @@ public:
    void set_target();
    void set_variables_unused();
 
-   void set_input_variables_dimensions(const Vector<size_t>& );
-   void set_target_variables_dimensions(const Vector<size_t>& );
+   void set_input_variables_dimensions(const Vector<size_t>&);
+   void set_target_variables_dimensions(const Vector<size_t>&);
 
    // Data set methods
 
@@ -806,7 +817,7 @@ private:
 
    /// Number of batch instances. It is used to optimized the training strategy.
 
-   size_t batch_instances_number = 1000;
+   size_t batch_instances_number = 32;
 
    // Variables
 

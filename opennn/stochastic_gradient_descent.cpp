@@ -34,8 +34,6 @@ StochasticGradientDescent::StochasticGradientDescent(LossIndex* new_loss_index_p
 }
 
 
-// XML CONSTRUCTOR
-
 /// XML constructor.
 /// It creates a gradient descent optimization algorithm not associated to any loss index object.
 /// It also loads the class members from a XML document.
@@ -292,8 +290,6 @@ void StochasticGradientDescent::set_initial_learning_rate(const double& new_lear
 
 void StochasticGradientDescent::set_initial_decay(const double& new_dacay)
 {
-   
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_dacay < 0.0)
@@ -436,8 +432,6 @@ void StochasticGradientDescent::set_warning_gradient_norm(const double& new_warn
 
 void StochasticGradientDescent::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
-   
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_error_parameters_norm < 0.0)
@@ -742,6 +736,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+   data_set_pointer->set_batch_instances_number(32);
+
    const Matrix<double>& data = data_set_pointer->get_data();
 
    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
@@ -828,16 +824,27 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        {
            // Data set
 
-           data.get_tensor(training_batches[iteration], input_variables_indices, input_data_dimensions, batch.input_data);
-           data.get_tensor(training_batches[iteration], target_variables_indices, target_data_dimensions, batch.target_data);
+           data.get_tensor(training_batches[iteration], input_variables_indices, input_data_dimensions, batch.inputs);
+           data.get_tensor(training_batches[iteration], target_variables_indices, target_data_dimensions, batch.targets);
+
+//           batch.print();
 
            // Neural network
 
            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
+           system("pause");
+
+/*
+//           forward_propagation.print();
+
            //Loss
 
            loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+
+//           first_order_loss.print();
+
+//           system("pause");
 
            loss += first_order_loss.loss;
 
@@ -855,7 +862,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 parameters += parameters_increment;
             }
-            else if(momentum > 0.0 && nesterov )
+            else if(momentum > 0.0 && nesterov)
             {
                 parameters_increment += last_increment*momentum;
 
@@ -873,6 +880,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->set_parameters(parameters);
 
             learning_rate_iteration++;
+*/
        }
 
        gradient_norm = l2_norm(first_order_loss.gradient);

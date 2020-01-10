@@ -82,7 +82,7 @@ public:
 
         // Data set
 
-        const size_t batch_instances_number = batch.input_data.get_dimension(0);
+        const size_t batch_instances_number = batch.inputs.get_dimension(0);
 
         // Neural network
 
@@ -91,13 +91,13 @@ public:
         // Loss index
 
         calculate_output_gradient(forward_propagation.layers[layers_number-1].activations,
-                                  batch.target_data);
+                                  batch.targets);
 
         calculate_layers_delta(forward_propagation, first_order_loss);
 /*
-        const Vector<double> batch_error_gradient = calculate_error_gradient(batch.input_data, forward_propagation, layers_delta);
+        const Vector<double> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
-        first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.target_data);
+        first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets);
 
         first_order_loss.gradient = batch_error_gradient/static_cast<double>(batch_instances_number);
 

@@ -137,11 +137,11 @@ public:
     Tensor<double> calculate_combinations(const Tensor<double>&) const;
     Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
 
-    void calculate_combinations(const Tensor<double>& input_data, Tensor<double>& convolutions) const
+    void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& convolutions) const
     {
         // Inputs
 
-        const size_t images_number = input_data.get_dimension(0);
+        const size_t images_number = inputs.get_dimension(0);
         const size_t channels_number = get_inputs_channels_number();
 
         // Filters
@@ -179,7 +179,7 @@ public:
                                 {
                                     const size_t column = output_column_index*column_stride + filter_column_index;
 
-                                    const double image_element = input_data(image_index, channel_index, row, column);
+                                    const double image_element = inputs(image_index, channel_index, row, column);
                                     const double filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
 
                                     sum += image_element*filter_element;

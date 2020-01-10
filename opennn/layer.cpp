@@ -84,7 +84,7 @@ void Layer::initialize_parameters(const double&)
 }
 
 
-void Layer::randomize_parameters_uniform(const double& , const double& )
+void Layer::randomize_parameters_uniform(const double& , const double&)
 {
     ostringstream buffer;
 
@@ -101,7 +101,7 @@ void Layer::randomize_parameters_normal(const double&, const double&)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "randomize_parameters_normal(const double& , const double& ) method.\n"
+           << "randomize_parameters_normal(const double& , const double&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
@@ -161,7 +161,7 @@ Tensor<double> Layer::calculate_outputs(const Tensor<double> &, const Vector<dou
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<double> &, const Vector<double> & ) method.\n"
+           << "calculate_outputs(const Tensor<double> &, const Vector<double> &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

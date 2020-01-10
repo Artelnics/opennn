@@ -701,7 +701,7 @@ void NeuralNetwork::set_inputs_number(const size_t& new_inputs_number)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void set_inputs_number(const size_t& ) method.\n"
+               << "void set_inputs_number(const size_t&) method.\n"
                << "The number of inputs(" << new_inputs_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());

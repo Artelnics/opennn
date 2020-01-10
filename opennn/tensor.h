@@ -965,7 +965,7 @@ void Tensor<T>::add_matrix(const Matrix<T>& a_matrix)
     {
         this->insert(this->end(), a_matrix.begin(), a_matrix.end());
 
-        dimensions = Vector<size_t>({ dimensions[0], dimensions[1], 2} );
+        dimensions = Vector<size_t>({ dimensions[0], dimensions[1], 2});
 
     }
     else if(order == 3)

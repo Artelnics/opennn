@@ -2478,6 +2478,9 @@ Tensor<T> Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
 }
 
 
+
+/// @todo Test method
+
 template <class T>
 void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
                            const Vector<size_t>& columns_indices,
@@ -2491,7 +2494,7 @@ void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Matrix Template.\n"
-              << "Tensor<T> get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&) const method.\n"
+              << "void get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&, Tensor<T>&) const method.\n"
               << "Size of columns indices(" << columns_indices.size() << ") must be equal to product of columns dimensions(" << columns_dimensions.calculate_product() << ").\n";
 
        throw logic_error(buffer.str());
@@ -2508,7 +2511,7 @@ void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
    size_t row_index;
    size_t column_index;
 
-   size_t tensor_index = 0;
+   #pragma omp parallel for
 
    for(size_t j = 0; j < columns_number; j++)
    {
@@ -2518,9 +2521,7 @@ void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
       {
          row_index = rows_indices[i];
 
-         tensor[tensor_index] = (*this)(row_index, column_index);
-
-         tensor_index++;
+         tensor[rows_number*j+i] = (*this)(row_index, column_index);
       }
    }
 }
@@ -3803,7 +3804,7 @@ Matrix<T> Matrix<T>::insert_matrix(const size_t& position, const Matrix<T>& othe
            ostringstream buffer;
 
            buffer << "OpenNN Exception: Matrix Template.\n"
-                  << "insert_matrix(const size_t& , const Matrix<T>& ) const.\n"
+                  << "insert_matrix(const size_t& , const Matrix<T>&) const.\n"
                   << "Position (" << position << ") must be less or equal than number of columns (" << columns_number << ").\n";
 
            throw logic_error(buffer.str());
@@ -3816,7 +3817,7 @@ Matrix<T> Matrix<T>::insert_matrix(const size_t& position, const Matrix<T>& othe
           ostringstream buffer;
 
           buffer << "OpenNN Exception: Matrix Template.\n"
-                 << "insert_matrix(const size_t& , const Matrix<T>& ) const.\n"
+                 << "insert_matrix(const size_t& , const Matrix<T>&) const.\n"
                  << "Size(" << size << ") must be equal to number of rows(" << rows_number << ").\n";
 
           throw logic_error(buffer.str());

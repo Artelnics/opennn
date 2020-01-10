@@ -153,7 +153,7 @@ public:
 
                    layers[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
                    layers[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
-                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number, neurons_number}));
                }
                else
                {
@@ -165,6 +165,18 @@ public:
        /// Destructor.
 
        virtual ~ForwardPropagation() {}
+
+       void print()
+       {
+           const size_t layers_number = layers.size();
+
+           for(size_t i = 0; i < layers_number; i++)
+           {
+               cout << "Layer " << i+1 << endl;
+
+               layers[i].print();
+           }
+       }
 
        Vector<Layer::ForwardPropagation> layers;
    };
@@ -306,7 +318,7 @@ public:
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
-   // virtual void read_XML(  );
+   // virtual void read_XML( );
 
    void print() const;
    void print_summary() const;
@@ -336,14 +348,17 @@ public:
 
    void calculate_forward_propagation(const DataSet::Batch& batch, ForwardPropagation& forward_propagation) const
    {
+
        const size_t trainable_layers_number = get_trainable_layers_number();
 
-       Vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+       const Vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
 
        // First layer
 
-       trainable_layers_pointers[0]->calculate_forward_propagation(batch.input_data,
+       trainable_layers_pointers[0]->calculate_forward_propagation(batch.inputs,
                                      forward_propagation.layers[0]);
+
+       forward_propagation.layers[0].print();
 
        // Rest of layers
 
@@ -352,7 +367,6 @@ public:
             trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation.layers[i-1].activations,
                                           forward_propagation.layers[i]);
        }
-
    }
 
 protected:

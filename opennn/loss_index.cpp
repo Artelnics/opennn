@@ -1014,7 +1014,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
 
 /// Default constructor.
-/// Set of loss value and gradient vector of the peformance function.
+/// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
 LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
@@ -1039,7 +1039,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
     // First order loss
 
-    output_gradient.set(batch_instances_number, outputs_number);
+    output_gradient.set(Vector<size_t>({batch_instances_number, outputs_number}));
 
     layers_delta.set(trainable_layers_number);
 
@@ -1071,9 +1071,9 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
         {
             PerceptronLayer* layer_pointer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
 
-            const size_t output_columns_number = layer_pointer->get_neurons_number();
+            const size_t neurons_number = layer_pointer->get_neurons_number();
 
-            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_columns_number}));
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, neurons_number}));
         }
         else if(layer_type == Layer::Recurrent)
         {
@@ -1099,6 +1099,8 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
     loss = 0.0;
 
+    error_gradient.set(parameters_number, 0.0);
+    regularization_gradient.set(parameters_number, 0.0);
     gradient.set(parameters_number, 0.0);
 }
 
@@ -1128,7 +1130,7 @@ Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::For
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Vector<Matrix<double>> calculate_layers_delta(const Vector<Matrix<double>>&, const Matrix<double>&) method.\n"
+             << "Vector<Tensor<double>> calculate_layers_delta(const Vector<Matrix<double>>&, const Matrix<double>&) method.\n"
              << "Size of forward propagation activation derivative vector ("<< forward_propagation_size << ") must be equal to number of layers (" << trainable_layers_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -1192,9 +1194,9 @@ check();
 
     #pragma omp parallel for reduction(+ : training_error)
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(size_t i = 0; i < batches_number; i++)
     {
-        const double batch_error = calculate_batch_error(training_batches[static_cast<unsigned>(i)]);
+        const double batch_error = calculate_batch_error(training_batches[i]);
 
         training_error += batch_error;
     }

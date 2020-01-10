@@ -236,7 +236,7 @@ void MetricsTest::test_direct()
     matrix_2 = {{1,3}};
     result = direct(matrix_1,matrix_2);
 
-    //assert_true(result.get_columns_number() == )
+    //assert_true(result.get_columns_number() ==)
     assert_true(result(0,1) == 3, LOG);
 
 }

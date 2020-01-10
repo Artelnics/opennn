@@ -215,7 +215,7 @@ public:
    void update_hidden_states(const Vector<double>&);
 
    Tensor<double> calculate_outputs(const Tensor<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>& );
+   Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Matrix<double>&, const Tensor<double>&, const Tensor<double>&);
 
    ForwardPropagation calculate_forward_propagation(const Tensor<double>&);

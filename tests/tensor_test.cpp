@@ -1724,7 +1724,7 @@ void VectorTest::test_count_NAN()
 
 //    Vector<size_t> vector(size);
 
-//    for(size_t i = 0 ; i < size ; i++ )
+//    for(size_t i = 0 ; i < size ; i++)
 //    {
 //        vector[i] = i;
 //    }

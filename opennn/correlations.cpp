@@ -2332,7 +2332,7 @@ CorrelationResults karl_pearson_correlations(const Matrix<double>& x, const Matr
 
     Matrix<size_t> contingency_table(x.get_columns_number(),y.get_columns_number());
 
-    for(size_t i = 0; i < x.get_columns_number(); i ++ )
+    for(size_t i = 0; i < x.get_columns_number(); i ++)
     {
         for(size_t j = 0; j < y.get_columns_number(); j ++)
         {
@@ -2382,7 +2382,7 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>& ) method.\n"
+              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
               << "Number of columns("<< x.get_columns_number() <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2393,7 +2393,7 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>& ) method.\n"
+              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
               << "Number of columns("<< y.get_columns_number() <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -2404,7 +2404,7 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>& ) method.\n"
+              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
               << "Number of rows of the two variables must be equal\t"<< x.get_rows_number() <<"!=" << y.get_rows_number() << ".\n";
 
        throw logic_error(buffer.str());
@@ -2452,7 +2452,7 @@ CorrelationResults karl_pearson_correlations_missing_values(const Matrix<double>
 
     Matrix<size_t> contingency_table(new_x.get_columns_number(),new_y.get_columns_number());
 
-    for(size_t i = 0; i < new_x.get_columns_number(); i ++ )
+    for(size_t i = 0; i < new_x.get_columns_number(); i ++)
     {
         for(size_t j = 0; j < new_y.get_columns_number(); j ++)
         {
@@ -2500,7 +2500,7 @@ CorrelationResults one_way_anova_correlations(const Matrix<double>& matrix, cons
     if(matrix.get_rows_number() != vector.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "one_way_anova_correlation(const Matrix<double>&, const Vector<double>& ) method.\n"
+             << "one_way_anova_correlation(const Matrix<double>&, const Vector<double>&) method.\n"
              << "Rows of the matrix (" << matrix.get_rows_number() << ") must be equal to size of vector (" << vector.size() << ").\n";
 
       throw logic_error(buffer.str());
@@ -3118,7 +3118,7 @@ double karl_pearson_correlation(const Matrix<double>& x, const Matrix<double>& y
 
     Matrix<size_t> contingency_table(x.get_columns_number(),y.get_columns_number());
 
-    for(size_t i = 0; i < x.get_columns_number(); i ++ )
+    for(size_t i = 0; i < x.get_columns_number(); i ++)
     {
         for(size_t j = 0; j < y.get_columns_number(); j ++)
         {
@@ -3164,7 +3164,7 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>& ) method.\n"
+              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
               << "Number of columns("<< x.get_columns_number() <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -3175,7 +3175,7 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>& ) method.\n"
+              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
               << "Number of columns("<< y.get_columns_number() <<") must be greater than zero.\n";
 
        throw logic_error(buffer.str());
@@ -3186,7 +3186,7 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Correlation class."
-              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>& ) method.\n"
+              << "double karl_pearson_correlation_missing_values(const Matrix<double>&, const Matrix<double>&) method.\n"
               << "Number of rows of the two variables must be equal\t"<< x.get_rows_number() <<"!=" << y.get_rows_number() << ".\n";
 
        throw logic_error(buffer.str());
@@ -3234,7 +3234,7 @@ double karl_pearson_correlation_missing_values(const Matrix<double>& x, const Ma
 
     Matrix<size_t> contingency_table(new_x.get_columns_number(),new_y.get_columns_number());
 
-    for(size_t i = 0; i < new_x.get_columns_number(); i ++ )
+    for(size_t i = 0; i < new_x.get_columns_number(); i ++)
     {
         for(size_t j = 0; j < new_y.get_columns_number(); j ++)
         {
@@ -3379,7 +3379,7 @@ double one_way_anova_correlation(const Matrix<double>& matrix, const Vector<doub
     if(matrix.get_rows_number() != vector.size())
     {
       buffer << "OpenNN Exception: Correlations.\n"
-             << "one_way_anova_correlation(const Matrix<double>&, const Vector<double>& ) method.\n"
+             << "one_way_anova_correlation(const Matrix<double>&, const Vector<double>&) method.\n"
              << "Rows of the matrix (" << matrix.get_rows_number() << ") must be equal to size of vector (" << vector.size() << ").\n";
 
       throw logic_error(buffer.str());

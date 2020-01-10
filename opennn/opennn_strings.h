@@ -50,7 +50,7 @@ namespace OpenNN
     bool is_mixed(const Vector<string>&);
 
     void replace(string& source, const string& find, const string& replace);
-    void replace_substring(Vector<string>&, const string& , const string& );
+    void replace_substring(Vector<string>&, const string& , const string&);
 }
 
 #endif // OPENNNSTRINGS_H

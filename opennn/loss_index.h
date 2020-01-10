@@ -81,7 +81,7 @@ public:
    /// A loss index composed of several terms, this structure represent the First Order for this function.
 
    ///
-   /// Set of loss value and gradient vector of the peformance function.
+   /// Set of loss value and gradient vector of the loss index.
    /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
    struct FirstOrderLoss
@@ -94,21 +94,43 @@ public:
 
        virtual ~FirstOrderLoss();
 
+       void print()
+       {
+           cout << "Output gradient:" << endl;
+           cout << output_gradient << endl;
+
+           cout << "Layers delta:" << endl;
+           cout << layers_delta << endl;
+
+           cout << "Loss:" << endl;
+           cout << loss << endl;
+
+           cout << "Error gradient:" << endl;
+           cout << error_gradient << endl;
+
+           cout << "Regularization gradient:" << endl;
+           cout << regularization_gradient << endl;
+
+           cout << "Gradient:" << endl;
+           cout << gradient << endl;
+       }
+
        Tensor<double> output_gradient;
 
        Vector<Tensor<double>> layers_delta;
 
        double loss;
 
+       Vector<double> error_gradient;
+       Vector<double> regularization_gradient;
        Vector<double> gradient;
-
    };
 
 
-   /// This structure represents the Second Order in the loss function.
+   /// This structure contains second order information about the loss function (loss, gradient and Hessian).
 
    ///
-   /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the peformance function.
+   /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
    /// A method returning this structure might be implemented more efficiently than the loss, gradient and <i>Hessian</i> methods separately.
 
    struct SecondOrderLoss
@@ -326,23 +348,19 @@ public:
 
        #endif
 
-       const size_t parameters_number = neural_network_pointer->get_trainable_parameters_number();
-
        const Vector<size_t> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-       Vector<double> error_gradient(parameters_number,0.0);
-
        size_t index = 0;
 
-//       first_order_loss.error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
+       first_order_loss.error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs, forward_propagation.layers[0], first_order_loss.layers_delta[0]));
 
        index += trainable_layers_parameters_number[0];
 
        for(size_t i = 1; i < trainable_layers_number; i++)
        {
-//         error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
+         first_order_loss.error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation.layers[i-1].activations, forward_propagation.layers[i-1], first_order_loss.layers_delta[i]));
 
          index += trainable_layers_parameters_number[i];
        }

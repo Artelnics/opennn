@@ -11,21 +11,17 @@
 
 // System includes
 
-#include <string>
-#include <sstream>
-
+#include <cmath>
 #include <iostream>
 #include <fstream>
 #include <limits>
-#include <cmath>
+#include <string>
+#include <sstream>
 
 // OpenNN includes
 
 #include "loss_index.h"
 #include "data_set.h"
-
-
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -106,14 +102,45 @@ public:
         output_gradient = (outputs-targets)*2.0 / normalization_coefficient;
    }
 
-
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
 
    LossIndex::FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
-   void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const
+   void calculate_first_order_loss(const DataSet::Batch& batch,
+                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                   FirstOrderLoss& first_order_loss) const
    {
+    #ifdef __OPENNN_DEBUG__
 
+    check();
+
+    #endif
+
+    // Neural network
+
+    const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    // Loss index
+
+    first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets) / normalization_coefficient;
+
+    calculate_output_gradient(forward_propagation.layers[layers_number-1].activations, batch.targets, first_order_loss.output_gradient);
+
+    calculate_layers_delta(forward_propagation, first_order_loss);
+
+    calculate_error_gradient(batch, forward_propagation, first_order_loss);
+
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::NoRegularization)
+    {
+        first_order_loss.loss += regularization_weight*calculate_regularization();
+        first_order_loss.regularization_gradient = calculate_regularization_gradient()*regularization_weight;
+    }
+
+    first_order_loss.gradient += first_order_loss.error_gradient;
+    first_order_loss.gradient += first_order_loss.regularization_gradient;
    }
 
    // Error terms methods

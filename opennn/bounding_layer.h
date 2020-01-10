@@ -127,7 +127,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
-   //void read_XML( );
+   //void read_XML();
 
 protected:
 

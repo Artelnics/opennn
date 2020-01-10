@@ -2129,7 +2129,7 @@ void DataSetTest::test_read_airline_passengers_csv()
         assert_true(data_set.get_column_type(0) == DataSet::DateTime, LOG);
         assert_true(data_set.get_column_type(0) == DataSet::Numeric, LOG);
     }
-    catch (exception& )
+    catch (exception&)
     {
         assert_true(true, LOG);
         cout << "Exception, date below 1970" << endl;
