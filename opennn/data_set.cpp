@@ -8532,7 +8532,7 @@ void DataSet::read_csv()
 /*
 
         // Fill time series
-cout << "hello" << endl;
+
         const size_t period = static_cast<size_t>(data(1, time_index) - data(0,time_index));
 
         if(static_cast<size_t>((data(data.get_rows_number() - 1, time_index) - data(0,time_index))/period) + 1 == data.get_rows_number())
@@ -8546,7 +8546,7 @@ cout << "hello" << endl;
 
 
          scrub_missing_values();
-cout<<"hello"<<endl;
+
         // Transform time series
 
         transform_time_series();
@@ -8591,7 +8591,7 @@ void DataSet::read_csv_1()
     const char separator_char = get_separator_char();
 
     size_t lines_number = 3;
-
+/// @todo if has columns names, 4 lines and save the last one
     data_file_preview.set(lines_number);
 
     string line;
@@ -8671,11 +8671,13 @@ void DataSet::read_csv_1()
 
     for(size_t i = 0; i < columns_number; i++)
     {
-        if(is_date_time_string(data_file_preview[1][i]))
+        if((is_date_time_string(data_file_preview[1][i]) && data_file_preview[1][i] != missing_values_label)
+        || (is_date_time_string(data_file_preview[2][i]) && data_file_preview[2][i] != missing_values_label))
         {
             columns[i].type = DateTime;
         }
-        else if(is_numeric_string(data_file_preview[1][i]))
+        else if((is_numeric_string(data_file_preview[1][i]) && data_file_preview[1][i] != missing_values_label)
+             || (is_numeric_string(data_file_preview[2][i]) && data_file_preview[2][i] != missing_values_label))
         {
             columns[i].type = Numeric;
         }
