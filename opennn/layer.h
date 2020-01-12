@@ -117,10 +117,18 @@ public:
 
     virtual Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
+    virtual void calculate_output_delta(const Tensor<double>&, const Tensor<double>&, Tensor<double>&) const;
+
     virtual Tensor<double> calculate_hidden_delta(Layer*,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&) const;
+
+    virtual void calculate_hidden_delta(Layer*,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        Tensor<double>&) const;
 
     // Get neurons number
 

@@ -99,7 +99,11 @@ public:
 
         #endif
 
-        output_gradient = (outputs-targets)*2.0 / normalization_coefficient;
+        output_gradient = outputs;
+
+        output_gradient -= targets;
+
+        output_gradient *= 2.0 / normalization_coefficient;
    }
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
@@ -129,7 +133,6 @@ public:
     calculate_layers_delta(forward_propagation, first_order_loss);
 
     calculate_error_gradient(batch, forward_propagation, first_order_loss);
-
 
     // Regularization
 

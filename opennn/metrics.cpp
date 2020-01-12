@@ -135,6 +135,22 @@ Tensor<double> dot(const Tensor<double>& tensor, const Matrix<double>& matrix)
 }
 
 
+void dot(const Tensor<double>& tensor, const Matrix<double>& matrix, Tensor<double>& product)
+{
+    const size_t rows_number = tensor.get_dimension(0);
+    const size_t columns_number = tensor.get_dimension(1);
+
+    const size_t other_rows_number = matrix.get_rows_number();
+    const size_t other_columns_number = matrix.get_columns_number();
+
+    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)tensor.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
+    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
+    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
+
+    product_eigen = this_eigen*other_eigen;
+}
+
+
 Tensor<double> dot_2d_2d(const Tensor<double>& tensor_1, const Tensor<double>& tensor_2)
 {
 #ifdef __OPENNN_DEBUG__

@@ -161,6 +161,11 @@ public:
 
    Tensor<double> calculate_combinations(const Tensor<double>&);
 
+   void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& combinations)
+   {
+   }
+
+
    Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&) const;
 
    Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>&, const Matrix<double>&) const;
@@ -188,13 +193,13 @@ public:
 
    Layer::ForwardPropagation calculate_forward_propagation(const Tensor<double>& inputs);
 
-   void calculate_forward_propagation(const Tensor<double>& inputs, Layer::ForwardPropagation& layers)
+   void calculate_forward_propagation(const Tensor<double>& inputs, Layer::ForwardPropagation& forward_propagation)
    {
-       const Tensor<double> combinations = calculate_combinations(inputs);
+       calculate_combinations(inputs, forward_propagation.combinations);
 
-//       layers.activations = calculate_activations(combinations);
+       //calculate_activations(combinations, forward_propagation.activations);
 
-//       layers.activations_derivatives = calculate_activations_derivatives(combinations);
+       //calculate_activations_derivatives(combinations, layers.activations_derivatives);
    }
 
    // Gradient
