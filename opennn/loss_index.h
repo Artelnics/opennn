@@ -269,7 +269,7 @@ public:
    virtual Vector<double> calculate_batch_error_terms(const Vector<size_t>&) const {return Vector<double>();}
    virtual Matrix<double> calculate_batch_error_terms_Jacobian(const Vector<size_t>&) const {return Matrix<double>();}
 
-   virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;//{return FirstOrderLoss();}
+   virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;
 
    virtual void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
 
@@ -300,9 +300,10 @@ public:
 
       // Output layer
 
-      first_order_loss.layers_delta[trainable_layers_number-1] = trainable_layers_pointers[trainable_layers_number-1]
-              ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
-              first_order_loss.output_gradient);
+      trainable_layers_pointers[trainable_layers_number-1]
+      ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
+                               first_order_loss.output_gradient,
+                               first_order_loss.layers_delta[trainable_layers_number-1]);
 
       // Hidden layers
 
@@ -310,15 +311,13 @@ public:
       {
           Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<size_t>(i+1)];
 
-          first_order_loss.layers_delta[static_cast<size_t>(i)]
-                  = trainable_layers_pointers[static_cast<size_t>(i)]
-                  ->calculate_hidden_delta(previous_layer_pointer,
-                                           forward_propagation.layers[static_cast<size_t>(i)].activations,
-                                           forward_propagation.layers[static_cast<size_t>(i)].activations_derivatives,
-                                           first_order_loss.layers_delta[static_cast<size_t>(i+1)]);
+          trainable_layers_pointers[static_cast<size_t>(i)]
+          ->calculate_hidden_delta(previous_layer_pointer,
+                                   forward_propagation.layers[static_cast<size_t>(i)].activations,
+                                   forward_propagation.layers[static_cast<size_t>(i)].activations_derivatives,
+                                   first_order_loss.layers_delta[static_cast<size_t>(i+1)],
+                                   first_order_loss.layers_delta[static_cast<size_t>(i)]);
       }
-
-
    }
 
    Vector<double> calculate_error_gradient(const Tensor<double>&, const Vector<Layer::ForwardPropagation>&, const Vector<Tensor<double>>&) const;
@@ -354,13 +353,17 @@ public:
 
        size_t index = 0;
 
-       first_order_loss.error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs, forward_propagation.layers[0], first_order_loss.layers_delta[0]));
+       first_order_loss.error_gradient.embed(index,
+               trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs, forward_propagation.layers[0],
+               first_order_loss.layers_delta[0]));
 
        index += trainable_layers_parameters_number[0];
 
        for(size_t i = 1; i < trainable_layers_number; i++)
        {
-         first_order_loss.error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation.layers[i-1].activations, forward_propagation.layers[i-1], first_order_loss.layers_delta[i]));
+         first_order_loss.error_gradient.embed(index,
+                trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation.layers[i-1].activations, forward_propagation.layers[i-1],
+                first_order_loss.layers_delta[i]));
 
          index += trainable_layers_parameters_number[i];
        }

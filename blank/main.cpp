@@ -83,7 +83,7 @@ int main(void)
         const Vector<size_t> targets_indices = data_set.get_target_columns_indices();
 
         const Vector< Vector<size_t> > training_batches = data_set.get_training_batches();
-
+/*
         DataSet::CudaBatch cuda_batch(&data_set);
 
         for(size_t epoch = 1; epoch < epochs_number; epoch++)
@@ -102,9 +102,8 @@ int main(void)
                 // NeuralNetwork
 
             }
-
         }
-
+*/
         cout << "Bye Blank Application" << endl;
 
         return 0;

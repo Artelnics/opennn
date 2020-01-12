@@ -1075,15 +1075,15 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 /// @param layer_deltas Tensor with layers delta.
-/// @param layer_inputs Tensor with layers inputs.
+/// @param inputs Tensor with layers inputs.
 
-Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
+Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& inputs,
                                                          const Layer::ForwardPropagation& ,
-                                                         const Tensor<double>& layer_deltas)
+                                                         const Tensor<double>& deltas)
 {
-    Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();
+    Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
 
-    Tensor<double> reshaped_deltas = layer_deltas.to_2d_tensor();
+    Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
 
     const size_t inputs_number = get_inputs_number();
     const size_t neurons_number = get_neurons_number();

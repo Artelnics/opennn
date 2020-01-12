@@ -34,6 +34,7 @@ namespace OpenNN
      Matrix<double> dot(const Matrix<double>&, const Tensor<double>&);
 
      Tensor<double> dot(const Tensor<double>&, const Matrix<double>&);
+     void dot(const Tensor<double>&, const Matrix<double>&, Tensor<double>&);
 
      Tensor<double> dot_2d_2d(const Tensor<double>&, const Tensor<double>&);
 
