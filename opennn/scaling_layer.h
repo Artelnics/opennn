@@ -187,6 +187,11 @@ protected:
    /// Display warning messages to screen. 
 
    bool display;
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/scaling_layer_cuda.h"
+#endif
+
 };
 
 }
