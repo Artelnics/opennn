@@ -24,18 +24,14 @@ CONFIG(debug, debug|release) {
 
 # OpenMP library
 
-#win32:!win32-g++{
-#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
-#QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-#LIBS += -fopenmp -pthread -lgomp
-#}else:!macx{
-#QMAKE_CXXFLAGS+= -fopenmp -lgomp
-#QMAKE_LFLAGS += -fopenmp -lgomp
-#}
-
-QMAKE_CXXFLAGS+= -openmp -lgomp
-QMAKE_LFLAGS += -openmp -lgomp
-
+win32:!win32-g++{
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+QMAKE_LFLAGS += -fopenmp -pthread -lgomp
+LIBS += -fopenmp -pthread -lgomp
+}else:!macx{
+QMAKE_CXXFLAGS+= -fopenmp -lgomp
+QMAKE_LFLAGS += -fopenmp -lgomp
+}
 
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
@@ -156,8 +152,8 @@ SOURCES += \
 
 contains(DEFINES, __OPENNN_CUDA__){
 
-    include(../../artelnics/opennn_cuda/cuda_config.pri)
+    include(../../arte/opennn_cuda/cuda_config.pri)
 
-    include(../../artelnics/opennn_cuda/cuda_path.pri)
+    include(../../arte/opennn_cuda/cuda_path.pri)
 
 }
