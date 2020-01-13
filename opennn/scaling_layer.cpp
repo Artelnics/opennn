@@ -1277,25 +1277,6 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
         scaling_method_element->LinkEndChild(scaling_method_text);
     }
 
-    // Scaling method
-
-//    tinyxml2::XMLElement* method_element = document->NewElement("ScalingMethod");
-//    scaling_layer_element->LinkEndChild(method_element);
-
-//    tinyxml2::XMLText* method_text = document->NewText(write_scaling_method().c_str());
-//    method_element->LinkEndChild(method_text);
-
-    // Display warnings
-
-    //   tinyxml2::XMLElement* display_element = document->NewElement("Display");
-    //   scaling_layer_element->LinkEndChild(display_element);
-
-    //   buffer.str("");
-    //   buffer << display;
-
-    //   tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-    //   display_element->LinkEndChild(display_text);
-
     return document;
 }
 
@@ -1310,6 +1291,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     ostringstream buffer;
 
     const size_t neurons_number = get_neurons_number();
+
+    // Scaling layer
 
     file_stream.OpenElement("ScalingLayer");
 
@@ -1330,6 +1313,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(size_t i = 0; i < neurons_number; i++)
     {
+        // Scaling neuron
+
         file_stream.OpenElement("ScalingNeuron");
 
         file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
@@ -1376,8 +1361,6 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.PushText(buffer.str().c_str());
 
-//        file_stream.CloseElement();
-
         file_stream.CloseElement();
 
         // Scaling Method
@@ -1391,17 +1374,12 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
+        // Scaling neuron (end tag)
+
         file_stream.CloseElement();
     }
 
-    // Scaling method
-
-//    file_stream.OpenElement("ScalingMethod");
-
-//    file_stream.PushText(write_scaling_method().c_str());
-
-//    file_stream.CloseElement();
-
+    // Scaling layer (end tag)
 
     file_stream.CloseElement();
 }

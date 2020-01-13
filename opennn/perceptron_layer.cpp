@@ -1181,6 +1181,60 @@ string PerceptronLayer::object_to_string() const
 }
 
 
+void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Perceptron layer
+
+    file_stream.OpenElement("PerceptronLayer");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs number
+
+    file_stream.OpenElement("OutputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Activation function
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+    buffer << get_parameters();
+
+    file_stream.CloseElement();
+
+    // Peceptron layer (end tag)
+
+    file_stream.OpenElement("PerceptronLayer");
+
+}
+
+
 string PerceptronLayer::write_activation_function_expression() const
 {
     switch(activation_function)

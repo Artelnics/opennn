@@ -148,12 +148,24 @@ public:
 
     string get_type_string() const;
 
+    // Serialization methods
+
+    virtual void write_XML(tinyxml2::XMLPrinter&) const {}
+
 protected:
 
         /// Layer type object.
 
         Type layer_type = Perceptron;
+
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
+#endif
 };
+
+
+
 }
 
 #endif // __LAYER_H

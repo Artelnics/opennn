@@ -313,19 +313,34 @@ Tensor<double> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                     const Tensor<double>& activations_derivatives,
                                                     const Tensor<double>& next_layer_delta) const
 {
-    switch (pooling_method)
+    if(pooling_method == NoPooling) return next_layer_delta;
+    else
     {
-        case NoPooling:
+        const Type layer_type = next_layer_pointer->get_type();
+
+        if(layer_type == Convolutional)
         {
-            return next_layer_delta;
+            ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
+
+            return calculate_hidden_delta_convolutional(convolutional_layer, activations, activations_derivatives, next_layer_delta);
         }
-        case AveragePooling:
+        else if(layer_type == Pooling)
         {
-            return calculate_average_pooling_delta(next_layer_pointer, activations, activations_derivatives, next_layer_delta);
+            PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
+
+            return calculate_hidden_delta_pooling(pooling_layer, activations, activations_derivatives, next_layer_delta);
         }
-        case MaxPooling:
+        else if(layer_type == Perceptron)
         {
-            return calculate_max_pooling_delta(next_layer_pointer, activations, activations_derivatives, next_layer_delta);
+            PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+
+            return calculate_hidden_delta_perceptron(perceptron_layer, activations, activations_derivatives, next_layer_delta);
+        }
+        else if(layer_type == Probabilistic)
+        {
+            ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+            return calculate_hidden_delta_probabilistic(probabilistic_layer, activations, activations_derivatives, next_layer_delta);
         }
     }
 
@@ -333,157 +348,246 @@ Tensor<double> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 }
 
 
-Tensor<double> PoolingLayer::calculate_average_pooling_delta(Layer* next_layer_pointer,
-                                                             const Tensor<double>&,
-                                                             const Tensor<double>& activations_derivatives,
-                                                             const Tensor<double>& next_layer_delta) const
-{    
-    const Type layer_type = next_layer_pointer->get_type();
+Tensor<double> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
+                                                                  const Tensor<double>&,
+                                                                  const Tensor<double>&,
+                                                                  const Tensor<double>& next_layer_delta) const
+{
+    // Current layer's values
 
-    Tensor<double> hidden_delta;
+    const size_t images_number = next_layer_delta.get_dimension(0);
+    const size_t channels_number = get_inputs_channels_number();
+    const size_t output_rows_number = get_outputs_rows_number();
+    const size_t output_columns_number = get_outputs_columns_number();
 
-    if(layer_type == Convolutional)
+    // Next layer's values
+
+    const size_t next_layers_filters_number = next_layer_pointer->get_filters_number();
+    const size_t next_layers_filter_rows = next_layer_pointer->get_filters_rows_number();
+    const size_t next_layers_filter_columns = next_layer_pointer->get_filters_columns_number();
+    const size_t next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
+    const size_t next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
+    const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
+    const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
+    const Tensor<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+
+    Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
+
+    const size_t size = hidden_delta.size();
+
+    #pragma omp parallel for
+
+    for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
     {
-        const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
+        const size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        const size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        const size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
+        const size_t column_index = tensor_index%output_columns_number;
 
-        // Current layer's values
+        double sum = 0.0;
 
-        const size_t images_number = next_layer_delta.get_dimension(0);
-        const size_t channels_number = activations_derivatives.get_dimension(1);
-        const size_t output_rows_number = get_outputs_rows_number();
-        const size_t output_columns_number = get_outputs_columns_number();
-
-        // Next layer's values
-
-        const size_t next_layers_filters_number = convolutional_layer->get_filters_number();
-        const size_t next_layers_filter_rows = convolutional_layer->get_filters_rows_number();
-        const size_t next_layers_filter_columns = convolutional_layer->get_filters_columns_number();
-        const size_t next_layers_output_rows = convolutional_layer->get_outputs_rows_number();
-        const size_t next_layers_output_columns = convolutional_layer->get_outputs_columns_number();
-        const size_t next_layers_row_stride = convolutional_layer->get_row_stride();
-        const size_t next_layers_column_stride = convolutional_layer->get_column_stride();
-        const Tensor<double> next_layers_weights = convolutional_layer->get_synaptic_weights();
-
-        hidden_delta.set({images_number, channels_number, output_rows_number, output_columns_number}, 0.0);
-
-        const size_t size = hidden_delta.size();
-
-        #pragma omp parallel for
-
-        for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
+        for(size_t i = 0; i < next_layers_filters_number; i++)
         {
-            const size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-            const size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-            const size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
-            const size_t column_index = tensor_index%output_columns_number;
-
-            double sum = 0.0;
-
-            for(size_t i = 0; i < next_layers_filters_number; i++)
+            for(size_t j = 0; j < next_layers_output_rows; j++)
             {
-                for(size_t j = 0; j < next_layers_output_rows; j++)
+                if(static_cast<int>(row_index) - static_cast<int>(j*next_layers_row_stride) >= 0
+                && row_index - j*next_layers_row_stride < next_layers_filter_rows)
                 {
-                    if(static_cast<int>(row_index) - static_cast<int>(j*next_layers_row_stride) >= 0
-                    && row_index - j*next_layers_row_stride < next_layers_filter_rows)
+                    for(size_t k = 0; k < next_layers_output_columns; k++)
                     {
-                        for(size_t k = 0; k < next_layers_output_columns; k++)
+                        const double delta_element = next_layer_delta(image_index, i, j, k);
+
+                        if(static_cast<int>(column_index) - static_cast<int>(k*next_layers_column_stride) >= 0
+                        && column_index - k*next_layers_column_stride < next_layers_filter_columns)
                         {
-                            const double delta_element = next_layer_delta(image_index, i, j, k);
+                            const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
 
-                            if(static_cast<int>(column_index) - static_cast<int>(k*next_layers_column_stride) >= 0
-                            && column_index - k*next_layers_column_stride < next_layers_filter_columns)
-                            {
-                                const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
-
-                                sum += delta_element*weight;
-                            }
+                            sum += delta_element*weight;
                         }
                     }
                 }
             }
-
-            hidden_delta(image_index, channel_index, row_index, column_index) += sum;
         }
-    }
-    else if(layer_type == Perceptron)
-    {
-        const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-        // Current layer's values
-
-        const size_t images_number = next_layer_delta.get_dimension(0);
-        const size_t channels_number = activations_derivatives.get_dimension(1);
-        const size_t output_rows_number = get_outputs_rows_number();
-        const size_t output_columns_number = get_outputs_columns_number();
-
-        // Next layer's values
-
-        const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
-        const Matrix<double> next_layers_weights = perceptron_layer->get_synaptic_weights();
-
-        hidden_delta.set({images_number, channels_number, output_rows_number, output_columns_number}, 0.0);
-
-        const size_t size = hidden_delta.size();
-
-        #pragma omp parallel for
-
-        for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
-        {
-            size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
-            size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
-            size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
-            size_t column_index = tensor_index%output_columns_number;
-
-            double sum = 0.0;
-
-            for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
-            {
-                const double delta_element = next_layer_delta(image_index, sum_index);
-
-                const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
-
-                sum += delta_element*weight;
-            }
-
-            hidden_delta(image_index, channel_index, row_index, column_index) += sum;
-        }
-    }
-    else if(layer_type == Probabilistic)
-    {
-        //const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+        hidden_delta(image_index, channel_index, row_index, column_index) = sum;
     }
 
     return hidden_delta;
 }
 
 
-/// @todo
-
-Tensor<double> PoolingLayer::calculate_max_pooling_delta(const Layer*,
-                                                         const Tensor<double>& activations,
-                                                         const Tensor<double>& activations_derivatives,
-                                                         const Tensor<double>& next_layer_delta) const
+Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
+                                                            const Tensor<double>&,
+                                                            const Tensor<double>& activations_derivatives,
+                                                            const Tensor<double>& next_layer_delta) const
 {
-    const size_t neurons_number = get_neurons_number();
-    const size_t samples_number = next_layer_delta.get_dimension(0);
-
-    Tensor<double> layer_delta({samples_number, neurons_number}, 0.0);
-
-    for(size_t sample = 0; sample < samples_number; sample++)
+    switch(next_layer_pointer->get_pooling_method())
     {
-        for(size_t neuron = 0; neuron < neurons_number; neuron ++)
+        case OpenNN::PoolingLayer::PoolingMethod::NoPooling:
         {
-            const Vector<size_t> indices = get_inputs_indices(neuron);
+            return next_layer_delta;
+        }
 
-                //const Matrix<double> submatrix = activations.get_matrix({sample} , indices);
+        case OpenNN::PoolingLayer::PoolingMethod::AveragePooling:
+        {
+            // Current layer's values
 
-                //const Vector<size_t> max_indices = maximal_indices(submatrix);
+            const size_t images_number = next_layer_delta.get_dimension(0);
+            const size_t channels_number = get_inputs_channels_number();
+            const size_t output_rows_number = get_outputs_rows_number();
+            const size_t output_columns_number = get_outputs_columns_number();
 
-                //layer_delta(sample, indices[max_indices[1]]) += next_layer_delta(sample, neuron);
+            // Next layer's values
+
+            const size_t next_layers_pool_rows = next_layer_pointer->get_pool_rows_number();
+            const size_t next_layers_pool_columns = next_layer_pointer->get_pool_columns_number();
+            const size_t next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
+            const size_t next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
+            const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
+            const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
+
+            Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
+
+            const size_t size = hidden_delta.size();
+
+            #pragma omp parallel for
+
+            for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
+            {
+                const size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+                const size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+                const size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
+                const size_t column_index = tensor_index%output_columns_number;
+
+                double sum = 0.0;
+
+                for(size_t i = 0; i < next_layers_output_rows; i++)
+                {
+                    if(static_cast<int>(row_index) - static_cast<int>(i*next_layers_row_stride) >= 0
+                    && row_index - i*next_layers_row_stride < next_layers_pool_rows)
+                    {
+                        for(size_t j = 0; j < next_layers_output_columns; j++)
+                        {
+                            const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+
+                            if(static_cast<int>(column_index) - static_cast<int>(j*next_layers_column_stride) >= 0
+                            && column_index - j*next_layers_column_stride < next_layers_pool_columns)
+                            {
+                                sum += delta_element;
+                            }
+                        }
+                    }
+                }
+
+                hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+            }
+
+            return (hidden_delta*activations_derivatives)/(next_layers_pool_rows*next_layers_pool_columns);
+        }
+
+        case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
+        {
+            return Tensor<double>({next_layer_delta.get_dimension(0), get_inputs_channels_number(), get_outputs_rows_number(), get_outputs_columns_number()}, 0.0);
         }
     }
 
-    return layer_delta * activations_derivatives;
+    return Tensor<double>();
+}
+
+
+Tensor<double> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* next_layer_pointer,
+                                                               const Tensor<double>&,
+                                                               const Tensor<double>&,
+                                                               const Tensor<double>& next_layer_delta) const
+{
+    // Current layer's values
+
+    const size_t images_number = next_layer_delta.get_dimension(0);
+    const size_t channels_number = get_inputs_channels_number();
+    const size_t output_rows_number = get_outputs_rows_number();
+    const size_t output_columns_number = get_outputs_columns_number();
+
+    // Next layer's values
+
+    const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
+    const Matrix<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+
+    Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
+
+    const size_t size = hidden_delta.size();
+
+    #pragma omp parallel for
+
+    for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
+    {
+        size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
+        size_t column_index = tensor_index%output_columns_number;
+
+        double sum = 0.0;
+
+        for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
+        {
+            const double delta_element = next_layer_delta(image_index, sum_index);
+
+            const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+
+            sum += delta_element*weight;
+        }
+
+        hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+    }
+
+    return hidden_delta;
+}
+
+
+Tensor<double> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
+                                                                  const Tensor<double>&,
+                                                                  const Tensor<double>&,
+                                                                  const Tensor<double>& next_layer_delta) const
+{
+    // Current layer's values
+
+    const size_t images_number = next_layer_delta.get_dimension(0);
+    const size_t channels_number = get_inputs_channels_number();
+    const size_t output_rows_number = get_outputs_rows_number();
+    const size_t output_columns_number = get_outputs_columns_number();
+
+    // Next layer's values
+
+    const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
+    const Matrix<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+
+    Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
+
+    const size_t size = hidden_delta.size();
+
+    #pragma omp parallel for
+
+    for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
+    {
+        const size_t image_index = tensor_index/(channels_number*output_rows_number*output_columns_number);
+        const size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%channels_number;
+        const size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
+        const size_t column_index = tensor_index%output_columns_number;
+
+        double sum = 0.0;
+
+        for(size_t sum_index = 0; sum_index < next_layers_output_columns; sum_index++)
+        {
+            const double delta_element = next_layer_delta(image_index, sum_index);
+
+            const double weight = next_layers_weights(channel_index + row_index*channels_number + column_index*channels_number*output_rows_number, sum_index);
+
+            sum += delta_element*weight;
+        }
+
+        hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+    }
+
+    return hidden_delta;
 }
 
 
