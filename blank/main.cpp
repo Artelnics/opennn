@@ -59,6 +59,38 @@ int main(void)
     try
     {
         cout << "Hello Blank Application" << endl;
+        cout << "Hello Blank Application" << endl;
+
+double sum;
+
+Matrix<double> a(10000,10000);a.randomize_normal();
+Matrix<double> b(10000,10000);b.randomize_normal();
+
+Matrix<double> c = dot(a,b);
+
+cout << c.calculate_sum() << endl;
+
+/*
+
+#pragma omp parallel for private(sum)
+        for(size_t i = 0; i < 1000000; i++)
+        {
+            for(size_t j = 0; j < 1000000; j++)
+                {
+                    for(size_t k = 0; k < 1000000; k++)
+                    {
+                        sum = tanh(j)*tanh(k);
+                    }
+                }
+        }
+
+        cout << sum << endl;
+
+        cout << "Bye bye" << endl;
+
+*/
+
+
 
         return 0;
 

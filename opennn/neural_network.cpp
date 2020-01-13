@@ -1545,21 +1545,88 @@ tinyxml2::XMLDocument* NeuralNetwork::to_XML() const
 
 void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
+    ostringstream buffer;
+
     file_stream.OpenElement("NeuralNetwork");
 
     // Inputs
 
-//    if(inputs_pointer)
-//    {
-//        inputs_pointer->write_XML(file_stream);
-//    }
+    file_stream.OpenElement("Inputs");
 
-    // Outputs
+    // Inputs number
 
-//    if(outputs_pointer)
-//    {
-//        outputs_pointer->write_XML(file_stream);
-//    }
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Inputs names
+
+    for(size_t i = 0; i < inputs_names.size(); i++)
+    {
+        file_stream.OpenElement("Input");
+
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+
+        file_stream.PushText(inputs_names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    // Inputs (end tag)
+
+    file_stream.CloseElement();
+
+
+    // Layers
+
+    for(size_t i = 0; i < layers_pointers.size(); i++)
+    {
+//        layers_pointers[i]->write_XML();
+    }
+
+
+
+
+
+
+    // Ouputs
+
+    file_stream.OpenElement("Outputs");
+
+    // Outputs number
+
+    file_stream.OpenElement("OutputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs names
+
+    for(size_t i = 0; i < outputs_names.size(); i++)
+    {
+        file_stream.OpenElement("Output");
+
+        file_stream.PushAttribute("Index", to_string(i+1).c_str());
+
+        file_stream.PushText(outputs_names[i].c_str());
+
+        file_stream.CloseElement();
+    }
+
+    //Outputs (end tag)
+
+    file_stream.CloseElement();
+
+    // Neural network (end tag)
 
     file_stream.CloseElement();
 }
