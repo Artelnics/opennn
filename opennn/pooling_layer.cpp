@@ -350,13 +350,13 @@ Tensor<double> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
 Tensor<double> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
                                                                   const Tensor<double>&,
-                                                                  const Tensor<double>& activations_derivatives,
+                                                                  const Tensor<double>&,
                                                                   const Tensor<double>& next_layer_delta) const
 {
     // Current layer's values
 
     const size_t images_number = next_layer_delta.get_dimension(0);
-    const size_t channels_number = activations_derivatives.get_dimension(1);
+    const size_t channels_number = get_inputs_channels_number();
     const size_t output_rows_number = get_outputs_rows_number();
     const size_t output_columns_number = get_outputs_columns_number();
 
@@ -433,7 +433,7 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
             // Current layer's values
 
             const size_t images_number = next_layer_delta.get_dimension(0);
-            const size_t channels_number = activations_derivatives.get_dimension(1);
+            const size_t channels_number = get_inputs_channels_number();
             const size_t output_rows_number = get_outputs_rows_number();
             const size_t output_columns_number = get_outputs_columns_number();
 
@@ -487,7 +487,7 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
 
         case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
         {
-            return Tensor<double>({next_layer_delta.get_dimension(0), activations_derivatives.get_dimension(1), get_outputs_rows_number(), get_outputs_columns_number()}, 0.0);
+            return Tensor<double>({next_layer_delta.get_dimension(0), get_inputs_channels_number(), get_outputs_rows_number(), get_outputs_columns_number()}, 0.0);
         }
     }
 
@@ -497,13 +497,13 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
 
 Tensor<double> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* next_layer_pointer,
                                                                const Tensor<double>&,
-                                                               const Tensor<double>& activations_derivatives,
+                                                               const Tensor<double>&,
                                                                const Tensor<double>& next_layer_delta) const
 {
     // Current layer's values
 
     const size_t images_number = next_layer_delta.get_dimension(0);
-    const size_t channels_number = activations_derivatives.get_dimension(1);
+    const size_t channels_number = get_inputs_channels_number();
     const size_t output_rows_number = get_outputs_rows_number();
     const size_t output_columns_number = get_outputs_columns_number();
 
@@ -545,13 +545,13 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* 
 
 Tensor<double> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
                                                                   const Tensor<double>&,
-                                                                  const Tensor<double>& activations_derivatives,
+                                                                  const Tensor<double>&,
                                                                   const Tensor<double>& next_layer_delta) const
 {
     // Current layer's values
 
     const size_t images_number = next_layer_delta.get_dimension(0);
-    const size_t channels_number = activations_derivatives.get_dimension(1);
+    const size_t channels_number = get_inputs_channels_number();
     const size_t output_rows_number = get_outputs_rows_number();
     const size_t output_columns_number = get_outputs_columns_number();
 
