@@ -60,6 +60,19 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
+        double error = 0.0;
+
+#pragma omp parallel for (+ : error)
+
+        for(size_t i = 0; i < 100000000; i++)
+        {
+            for(size_t j = 0; j < 100000000; j++)
+
+            error += tanh(i)*tanh(j);
+        }
+
+        cout << error << endl;
+
         cout << "Bye Blank Application" << endl;
 
         return 0;
