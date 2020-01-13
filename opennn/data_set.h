@@ -41,7 +41,7 @@
 #include "../eigen/Eigen"
 
 #ifdef __OPENNN_CUDA__
-    #include "../../arte/opennn_cuda/opennn_cuda/kernels.h"
+    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
 #endif
 
 using namespace std;
@@ -858,9 +858,7 @@ private:
    Vector<Vector<string>> data_file_preview;
 
 #ifdef __OPENNN_CUDA__
-
-    #include "../../arte/opennn_cuda/opennn_cuda/data_set_cuda.h"
-
+    #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"
 #endif
 
 };
