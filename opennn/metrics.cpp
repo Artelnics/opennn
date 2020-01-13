@@ -105,32 +105,11 @@ Matrix<double> dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_
 
     Matrix<double> product(rows_number_1, columns_number_2);
 
-//    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
-//    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
-//    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
+    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-//    product_eigen = this_eigen*other_eigen;
-
-
-//    double sum;
-
- #pragma omp parallel for
-
-    for(size_t i = 0; i < rows_number_1; i++)
-    {
-      for(size_t j = 0; j < columns_number_2; j++)
-      {
-         double sum = 0.0;
-
-        for(size_t k = 0; k < columns_number_1; k++)
-        {
-             sum += matrix_1(i,k)*matrix_2(k,j);
-        }
-
-        product(i,j) = sum;
-      }
-    }
-
+    product_eigen = eigen_1*eigen_2;
 
     return product;
 }

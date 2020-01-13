@@ -1235,8 +1235,6 @@ Vector<double> ConjugateGradient::calculate_gradient_descent_training_direction(
 
 OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 {
-   
-
    check();
 
    // Start training
