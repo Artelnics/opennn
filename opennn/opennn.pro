@@ -152,8 +152,8 @@ SOURCES += \
 
 contains(DEFINES, __OPENNN_CUDA__){
 
-    include(../../arte/opennn_cuda/cuda_config.pri)
+    include(../../artelnics/opennn_cuda/cuda_config.pri)
 
-    include(../../arte/opennn_cuda/cuda_path.pri)
+    include(../../artelnics/opennn_cuda/cuda_path.pri)
 
 }

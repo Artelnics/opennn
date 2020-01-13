@@ -145,7 +145,15 @@ protected:
         /// Layer type object.
 
         Type layer_type = Perceptron;
+
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
+#endif
 };
+
+
+
 }
 
 #endif // __LAYER_H

@@ -28,6 +28,12 @@
 #include "metrics.h"
 #include "probabilistic_layer.h"
 
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
+    #include "cuda_runtime_api.h"
+#endif
+
 namespace OpenNN
 {
 
@@ -316,6 +322,11 @@ protected:
    /// Display messages to screen. 
 
    bool display;
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
+#endif
+
 };
 
 }
