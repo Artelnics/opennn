@@ -140,6 +140,10 @@ public:
 
     string get_type_string() const;
 
+    // Serialization methods
+
+    virtual void write_XML(tinyxml2::XMLPrinter&) const {}
+
 protected:
 
         /// Layer type object.

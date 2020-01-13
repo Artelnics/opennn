@@ -302,6 +302,10 @@ public:
 
    string object_to_string() const;
 
+   // Serialization methods
+
+   void write_XML(tinyxml2::XMLPrinter&) const;
+
 protected:
 
    // MEMBERS
