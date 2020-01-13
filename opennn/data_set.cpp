@@ -6519,6 +6519,8 @@ tinyxml2::XMLDocument* DataSet::to_XML() const
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
+    // @todo inputs_dimensions, targets_dimensions
+
     ostringstream buffer;
 
     file_stream.OpenElement("DataSet");

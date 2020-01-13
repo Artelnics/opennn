@@ -1181,6 +1181,23 @@ string PerceptronLayer::object_to_string() const
 }
 
 
+void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    // Perceptron layer
+
+    file_stream.OpenElement("PerceptronLayer");
+
+
+
+    // Peceptron layer (end tag)
+
+    file_stream.OpenElement("PerceptronLayer");
+
+
+
+}
+
+
 string PerceptronLayer::write_activation_function_expression() const
 {
     switch(activation_function)

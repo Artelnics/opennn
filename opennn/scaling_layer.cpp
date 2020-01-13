@@ -1311,6 +1311,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     const size_t neurons_number = get_neurons_number();
 
+    // Scaling layer
+
     file_stream.OpenElement("ScalingLayer");
 
     // Scaling neurons number
@@ -1330,6 +1332,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     for(size_t i = 0; i < neurons_number; i++)
     {
+        // Scaling neuron
+
         file_stream.OpenElement("ScalingNeuron");
 
         file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
@@ -1376,8 +1380,6 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.PushText(buffer.str().c_str());
 
-//        file_stream.CloseElement();
-
         file_stream.CloseElement();
 
         // Scaling Method
@@ -1391,17 +1393,12 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
         file_stream.CloseElement();
 
+        // Scaling neuron (end tag)
+
         file_stream.CloseElement();
     }
 
-    // Scaling method
-
-//    file_stream.OpenElement("ScalingMethod");
-
-//    file_stream.PushText(write_scaling_method().c_str());
-
-//    file_stream.CloseElement();
-
+    // Scaling layer (end tag)
 
     file_stream.CloseElement();
 }
