@@ -97,19 +97,40 @@ Vector<double> dot(const Matrix<double>& matrix, const Vector<double>& vector)
 
 Matrix<double> dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_2)
 {
-    const size_t rows_number = matrix_1.get_rows_number();
-    const size_t columns_number = matrix_1.get_columns_number();
+    const size_t rows_number_1 = matrix_1.get_rows_number();
+    const size_t columns_number_1 = matrix_1.get_columns_number();
 
-    const size_t other_rows_number = matrix_2.get_rows_number();
-    const size_t other_columns_number = matrix_2.get_columns_number();
+    const size_t rows_number_2 = matrix_2.get_rows_number();
+    const size_t columns_number_2 = matrix_2.get_columns_number();
 
-    Matrix<double> product(rows_number, other_columns_number);
+    Matrix<double> product(rows_number_1, columns_number_2);
 
-    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)matrix_1.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix_2.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
+//    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+//    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+//    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-    product_eigen = this_eigen*other_eigen;
+//    product_eigen = this_eigen*other_eigen;
+
+
+//    double sum;
+
+ #pragma omp parallel for
+
+    for(size_t i = 0; i < rows_number_1; i++)
+    {
+      for(size_t j = 0; j < columns_number_2; j++)
+      {
+         double sum = 0.0;
+
+        for(size_t k = 0; k < columns_number_1; k++)
+        {
+             sum += matrix_1(i,k)*matrix_2(k,j);
+        }
+
+        product(i,j) = sum;
+      }
+    }
+
 
     return product;
 }
@@ -985,6 +1006,8 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
    Tensor<double> new_matrix(new_rows_number, new_columns_number);
 
    double sum;
+
+#pragma omp parallel for private(sum)
 
    for(size_t i = 0; i < rows_number_1; i++)
    {
