@@ -160,9 +160,10 @@ public:
 
     Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
-    Tensor<double> calculate_average_pooling_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
-
-    Tensor<double> calculate_max_pooling_delta(const Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+    Tensor<double> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+    Tensor<double> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+    Tensor<double> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+    Tensor<double> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
     // Gradient methods
 
