@@ -707,6 +707,7 @@ Tensor<double> RecurrentLayer::calculate_combinations(const Tensor<double>& inpu
     return outputs;
 }
 
+
 Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inputs, const Vector<double>& parameters) const
 {    
     #ifdef __OPENNN_DEBUG__

@@ -353,7 +353,6 @@ public:
 
    void calculate_forward_propagation(const DataSet::Batch& batch, ForwardPropagation& forward_propagation) const
    {
-
        const size_t trainable_layers_number = get_trainable_layers_number();
 
        const Vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
