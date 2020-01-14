@@ -1581,18 +1581,12 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-
     // Layers
 
     for(size_t i = 0; i < layers_pointers.size(); i++)
     {
-//        layers_pointers[i]->write_XML();
+        layers_pointers[i]->write_XML(file_stream);
     }
-
-
-
-
-
 
     // Ouputs
 
