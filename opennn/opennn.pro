@@ -10,6 +10,8 @@ QT = # Do not use qt
 
 TARGET = opennn
 
+#TARGET = artelnics
+
 TEMPLATE = lib
 
 CONFIG += staticlib
@@ -19,8 +21,9 @@ CONFIG(debug, debug|release) {
     DEFINES += __OPENNN_DEBUG__
 }
 
-#DEFINES += __Cpp11__
+#DESTDIR = "D:/"
 
+#DEFINES += __Cpp11__
 
 # OpenMP library
 
@@ -36,7 +39,6 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 #macx{
 #INCLUDEPATH += /usr/local/opt/libiomp/include/libiomp
 #}
-
 
 # Eigen library
 
@@ -146,14 +148,4 @@ SOURCES += \
     response_optimization.cpp \
     unit_testing.cpp
 
-#Add-ons available under Commercial Licenses
 
-#DEFINES += __OPENNN_CUDA__
-
-contains(DEFINES, __OPENNN_CUDA__){
-
-    include(../../arte/opennn_cuda/cuda_config.pri)
-
-    include(../../arte/opennn_cuda/cuda_path.pri)
-
-}
