@@ -8632,15 +8632,10 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    cout << "1" << endl;
-
     if(!has_time_variables() && !has_categorical_variables())
     {
-        cout << "if" << endl;
         read_csv_2_simple();
-        cout << "2" << endl;
         read_csv_3_simple();
-        cout << "3" << endl;
     }
     else
     {
