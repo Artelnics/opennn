@@ -59,51 +59,7 @@ int main(void)
     try
     {
         cout << "Hello Blank Application" << endl;
-
-        const size_t instances_number = 10;
-        const size_t inputs_number = 5;
-        const size_t targets_number = 1;
-        const size_t batch_instances_number = 5;
-        const size_t neurons_number = 1000;
-        const size_t epochs_number = 100;
-
-        // Data Set
-
-        cout << "Loading data..." << endl;
-
-        DataSet data_set;
-
-        data_set.generate_Rosenbrock_data(instances_number, inputs_number+targets_number);
-
-        data_set.set_training();
-
-        data_set.set_batch_instances_number(batch_instances_number);
-
-        const Vector<size_t> inputs_indices = data_set.get_input_columns_indices();
-        const Vector<size_t> targets_indices = data_set.get_target_columns_indices();
-
-        const Vector< Vector<size_t> > training_batches = data_set.get_training_batches();
-/*
-        DataSet::CudaBatch cuda_batch(&data_set);
-
-        for(size_t epoch = 1; epoch < epochs_number; epoch++)
-        {
-
-            for(size_t interation = 0; interation < training_batches.size(); interation++)
-            {
-                // DataSet
-
-                cuda_batch.copy_host(data_set.get_data(), training_batches[interation], inputs_indices, targets_indices);
-
-                cuda_batch.copy_device();
-
-                cuda_batch.print();
-
-                // NeuralNetwork
-
-            }
-        }
-*/
+		// your code here
         cout << "Bye Blank Application" << endl;
 
         return 0;
