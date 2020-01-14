@@ -18,6 +18,7 @@
 #include <limits>
 #include <cmath>
 #include <ctime>
+#include <cstdlib>
 
 // OpenNN includes
 
@@ -119,6 +120,7 @@ public:
 
        inline bool has_length_zero() const
        {
+           /*
            if(abs(A.first - B.first) < numeric_limits<double>::min())
            {
               return true;
@@ -127,6 +129,8 @@ public:
            {
               return false;
            }
+           */
+           return false;
        }
 
        /// Returns true if the interval(A,B) is constant,
@@ -134,14 +138,15 @@ public:
 
        inline bool is_constant() const
        {
-           if(abs(A.second - B.second) < numeric_limits<double>::min())
+           /*if(abs(A.second - B.second) < numeric_limits<double>::min())
            {
               return true;
            }
            else
            {
               return false;
-           }
+           }*/
+           return false;
        }
 
        /// Writes a string with the values of A, U and B.
