@@ -78,8 +78,8 @@ public:
 
    // Parameters
 
-   Vector<double> get_biases() const;
-   Matrix<double> get_synaptic_weights() const;
+   const Vector<double>& get_biases() const;
+   const Matrix<double>& get_synaptic_weights() const;
 
    Vector<double> get_biases(const Vector<double>&) const;
    Matrix<double> get_synaptic_weights(const Vector<double>&) const;
@@ -312,11 +312,19 @@ public:
 
        Matrix<double> synaptic_weights_transpose;
 
+       hidden_delta = activations_derivatives;
+
+
        if(layer_type == Perceptron)
        {
            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-           synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+           //synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+
+           const Matrix<double>& synaptic_weights = perceptron_layer->get_synaptic_weights();
+
+           dot_transpose(next_layer_delta, synaptic_weights, hidden_delta);
+
        }
        else if(layer_type == Probabilistic)
        {
@@ -329,9 +337,10 @@ public:
            /// @todo Throw exception.
        }
 
-       hidden_delta = activations_derivatives;
 
-       dot(next_layer_delta, synaptic_weights_transpose, hidden_delta);
+       //       dot(next_layer_delta, synaptic_weights_transpose, hidden_delta);
+       //dot_transpose(next_layer_delta, synaptic_weights_transpose, hidden_delta);
+
    }
 
 
