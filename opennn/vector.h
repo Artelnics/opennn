@@ -4779,7 +4779,6 @@ Matrix<T> Vector<T>::to_matrix(const size_t &rows_number,
                                const size_t &columns_number) const
 {
 
-
 #ifdef __OPENNN_DEBUG__
 
   const size_t this_size = this->size();
@@ -4790,7 +4789,7 @@ Matrix<T> Vector<T>::to_matrix(const size_t &rows_number,
     buffer << "OpenNN Exception: Vector Template.\n"
            << "Matrix<T> to_matrix(const size_t&, const size_t&) method.\n"
            << "The number of rows(" << rows_number
-           << ") times the number of colums(" << columns_number
+           << ") times the number of columns(" << columns_number
            << ") must be equal to the size of the vector(" << this_size
            << ").\n";
 
