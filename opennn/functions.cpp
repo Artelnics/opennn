@@ -1732,14 +1732,7 @@ void logistic(const Tensor<double>& x, Tensor<double>& y)
 
 void linear(const Tensor<double>& x, Tensor<double>& y)
 {
-    const size_t n = x.size();
-
-    #pragma omp parallel for
-
-    for(size_t i = 0; i < n; i++)
-    {
-        y[i] = x[i];
-    }
+    y = x;
 }
 
 

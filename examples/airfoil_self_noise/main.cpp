@@ -43,6 +43,8 @@ int main(void)
         const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
+        data_set.set_batch_instances_number(100);
+
         // Neural network
 
         const size_t inputs_number = data_set.get_input_variables_number();
@@ -66,7 +68,8 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+
+        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 //        training_strategy.get_quasi_Newton_method_pointer()->set_loss_goal(1.0e-3);
 

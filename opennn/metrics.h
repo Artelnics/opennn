@@ -30,6 +30,7 @@ namespace OpenNN
      Vector<double> dot(const Matrix<double>&, const Vector<double>&);
 
      Matrix<double> dot(const Matrix<double>&, const Matrix<double>&);
+     void dot(const Matrix<double>&, const Matrix<double>&, Matrix<double>&);
 
      Matrix<double> dot(const Matrix<double>&, const Tensor<double>&);
 
