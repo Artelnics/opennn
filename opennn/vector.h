@@ -395,7 +395,6 @@ public:
   Vector<int> string_to_int() const;
   Vector<double> string_to_double() const;
   Vector<size_t> string_to_size_t() const;
-  Vector<double> string_to_double() const;
   Vector<time_t> string_to_time_t() const;
 
   Vector<Vector<T>> split(const size_t&) const;
@@ -4447,27 +4446,27 @@ Vector<size_t> Vector<T>::string_to_size_t() const
 }
 
 
-template <class T>
-Vector<double> Vector<T>::string_to_double() const
-{
-  const size_t this_size = this->size();
+//template <class T>
+//Vector<double> Vector<T>::string_to_double() const
+//{
+//  const size_t this_size = this->size();
 
-  Vector<double> double_vector(this_size);
+//  Vector<double> double_vector(this_size);
 
-  for(size_t i = 0; i < this_size; i++)
-  {
-      try
-      {
-          double_vector[i] = static_cast<size_t>(stod((*this)[i]));
-      }
-      catch(const logic_error&)
-      {
-         double_vector[i] = 999999;
-      }
-   }
+//  for(size_t i = 0; i < this_size; i++)
+//  {
+//      try
+//      {
+//          double_vector[i] = static_cast<size_t>(stod((*this)[i]));
+//      }
+//      catch(const logic_error&)
+//      {
+//         double_vector[i] = 999999;
+//      }
+//   }
 
-  return double_vector;
-}
+//  return double_vector;
+//}
 
 
 /// Returns a new vector with the elements of this string vector casted to time_t.
