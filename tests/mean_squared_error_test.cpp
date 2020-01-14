@@ -266,13 +266,16 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    data_set.randomize_data_normal();
    data_set.set_training();
 
+   const double parameters_minimum = -10;
+   const double parameters_maximum = 10;
+
    ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,5,5}, {2,2,2});
    convolutional_layer_1->set_padding_option(OpenNN::ConvolutionalLayer::Same);
    Tensor<double> filters_1({2,3,2,2}, 0);
-   filters_1.randomize_normal();
+   filters_1.randomize_uniform(parameters_minimum, parameters_maximum);
    convolutional_layer_1->set_synaptic_weights(filters_1);
    Vector<double> biases_1(2, 0);
-   biases_1.randomize_normal();
+   biases_1.randomize_uniform(parameters_minimum, parameters_maximum);
    convolutional_layer_1->set_biases(biases_1);
 
    PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2});
@@ -280,17 +283,20 @@ void MeanSquaredErrorTest::test_calculate_training_error_gradient()
    ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
    convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
    Tensor<double> filters_2({1,2,2,2}, 0);
-   filters_2.randomize_normal();
+   filters_2.randomize_uniform(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_synaptic_weights(filters_2);
    Vector<double> biases_2(1, 0);
-   biases_2.randomize_normal();
+   biases_2.randomize_uniform(parameters_minimum, parameters_maximum);
    convolutional_layer_2->set_biases(biases_2);
 
    PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
 
-   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_2->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
+   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_2->get_outputs_dimensions().calculate_product(), 3, PerceptronLayer::Linear);
+   perceptron_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
+   probabilistic_layer->randomize_parameters_uniform(parameters_minimum, parameters_maximum);
 
    neural_network.set();
    neural_network.add_layer(convolutional_layer_1);
