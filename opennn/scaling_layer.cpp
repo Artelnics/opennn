@@ -1277,25 +1277,6 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
         scaling_method_element->LinkEndChild(scaling_method_text);
     }
 
-    // Scaling method
-
-//    tinyxml2::XMLElement* method_element = document->NewElement("ScalingMethod");
-//    scaling_layer_element->LinkEndChild(method_element);
-
-//    tinyxml2::XMLText* method_text = document->NewText(write_scaling_method().c_str());
-//    method_element->LinkEndChild(method_text);
-
-    // Display warnings
-
-    //   tinyxml2::XMLElement* display_element = document->NewElement("Display");
-    //   scaling_layer_element->LinkEndChild(display_element);
-
-    //   buffer.str("");
-    //   buffer << display;
-
-    //   tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-    //   display_element->LinkEndChild(display_text);
-
     return document;
 }
 

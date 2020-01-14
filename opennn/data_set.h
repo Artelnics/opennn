@@ -186,8 +186,8 @@ public:
        Batch(const DataSet* data_set_pointer)
        {
            const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
-           const size_t input_variables_number = data_set_pointer->get_input_variables_number();
-           const size_t target_variables_number = data_set_pointer->get_target_variables_number();
+           //const size_t input_variables_number = data_set_pointer->get_input_variables_number();
+           //const size_t target_variables_number = data_set_pointer->get_target_variables_number();
 
            const Vector<size_t> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
            const Vector<size_t> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();

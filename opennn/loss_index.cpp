@@ -1043,6 +1043,8 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
     layers_delta.set(trainable_layers_number);
 
+    layers_error_gradient.set(trainable_layers_number);
+
     for(size_t i = 0; i < trainable_layers_number; i++)
     {
         const Layer::Type layer_type = trainable_layers_pointers[i]->get_type();
@@ -1095,6 +1097,8 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
         {
             /// @todo add exception
         }
+
+        layers_error_gradient[i].set(trainable_layers_pointers[i]->get_parameters_number());
     }
 
     loss = 0.0;

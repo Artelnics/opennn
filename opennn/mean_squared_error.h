@@ -82,8 +82,8 @@ public:
    FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
 
    void calculate_first_order_loss(const DataSet::Batch& batch,
-                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                         FirstOrderLoss& first_order_loss) const
+                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                   FirstOrderLoss& first_order_loss) const
    {
        // Data set
 
@@ -95,28 +95,25 @@ public:
 
        // Loss index
 
-       const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.layers[layers_number-1].activations,
-                                                                        batch.targets);
+       first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets)/ static_cast<double>(batch_instances_number);
 
-       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation.layers,
-                                                                          output_gradient);
+       calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
-       const Vector<double> batch_error_gradient = calculate_error_gradient(batch.inputs,
-                                                                            forward_propagation.layers,
-                                                                            layers_delta);
+       calculate_layers_delta(forward_propagation, first_order_loss);
 
-       const double batch_error = sum_squared_error(forward_propagation.layers[layers_number-1].activations,
-                                                    batch.targets);
+       calculate_error_gradient(batch, forward_propagation, first_order_loss);
 
-       first_order_loss.loss = batch_error / static_cast<double>(batch_instances_number);
-       first_order_loss.gradient = batch_error_gradient;
+       first_order_loss.gradient = first_order_loss.error_gradient;
 
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
            first_order_loss.loss += regularization_weight*calculate_regularization();
-           first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+
+           first_order_loss.regularization_gradient = calculate_regularization_gradient();
+
+           first_order_loss.gradient += first_order_loss.regularization_gradient*regularization_weight;
        }
    }
 
@@ -130,7 +127,9 @@ public:
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
-   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  FirstOrderLoss& first_order_loss) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -140,7 +139,13 @@ public:
 
         const size_t instances_number = data_set_pointer->get_training_instances_number();
 
-        output_gradient = (outputs-targets)*2.0/static_cast<double>(instances_number);
+        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        first_order_loss.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
+
+        first_order_loss.output_gradient -= batch.targets;
+
+        first_order_loss.output_gradient *= 2.0/static_cast<double>(instances_number);
    }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
