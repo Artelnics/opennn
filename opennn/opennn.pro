@@ -148,12 +148,4 @@ SOURCES += \
     response_optimization.cpp \
     unit_testing.cpp
 
-#Add-ons available under Commercial Licenses
 
-#DEFINES += __OPENNN_CUDA__
-#contains(DEFINES, __OPENNN_CUDA__){
-
-#    include(../../../artelnics/opennn_cuda/cuda_config.pri)
-#    include(../../../artelnics/opennn_cuda/cuda_path.pri)
-
-#}

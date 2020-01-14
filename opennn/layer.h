@@ -117,10 +117,18 @@ public:
 
     virtual Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
+    virtual void calculate_output_delta(const Tensor<double>&, const Tensor<double>&, Tensor<double>&) const;
+
     virtual Tensor<double> calculate_hidden_delta(Layer*,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&) const;
+
+    virtual void calculate_hidden_delta(Layer*,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        Tensor<double>&) const;
 
     // Get neurons number
 
@@ -139,6 +147,10 @@ public:
     Type get_type() const;
 
     string get_type_string() const;
+
+    // Serialization methods
+
+    virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
 protected:
 
