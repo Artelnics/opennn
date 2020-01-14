@@ -321,9 +321,9 @@ public:
 
    virtual tinyxml2::XMLDocument* to_XML() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const;
    
 protected:
 

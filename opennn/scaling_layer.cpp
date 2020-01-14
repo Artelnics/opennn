@@ -1536,11 +1536,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         string new_method = scaling_method_element->GetText();
 
-        if(new_method == "NoScaling")
-        {
-            scaling_methods[i] = NoScaling;
-        }
-        else if(new_method == "MinimumMaximum")
+        if(new_method == "MinimumMaximum")
         {
             scaling_methods[i] = MinimumMaximum;
         }
@@ -1555,35 +1551,11 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         else
         {
             scaling_methods[i] = NoScaling;
-
-//            buffer << "OpenNN Exception: ScalingLayer class.\n"
-//                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
-//                   << "Unknown scaling method element " << i+1 << " (" << new_method << ").\n";
-
-//            throw logic_error(buffer.str());
         }
     }
 
-    // Scaling method
-//    {
-//        const tinyxml2::XMLElement* scaling_method_element = scaling_layer_element->FirstChildElement("ScalingMethod");
-
-//        if(scaling_method_element)
-//        {
-//            string new_method = scaling_method_element->GetText();
-
-//            try
-//            {
-//                set_scaling_method(new_method);
-//            }
-//            catch(const logic_error& e)
-//            {
-//                cerr << e.what() << endl;
-//            }
-//        }
-//    }
-
     // Display
+
     {
         const tinyxml2::XMLElement* display_element = scaling_layer_element->FirstChildElement("Display");
 
