@@ -6812,8 +6812,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// @todo
-
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -7095,23 +7093,72 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         instances_uses.set(new_instances_number);
     }
 
+    // Instances uses
+
+    const tinyxml2::XMLElement* instances_uses_element = instances_element->FirstChildElement("InstancesUses");
+
+    if(!instances_uses_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Instances uses element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(instances_uses_element->GetText())
+    {
+        set_instances_uses(get_tokens(instances_uses_element->GetText(), ' '));
+    }
+
+    // Missing values
+
+    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+
+    if(!missing_values_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Missing values method
+
+    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+
+    if(!missing_values_method_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values method element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(missing_values_method_element->GetText())
+    {
+        set_missing_values_method(missing_values_method_element->GetText());
+    }
+
     // Display
 
-//    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
-//    if(display_element)
-//    {
-//        const string new_display_string = display_element->GetText();
+    if(display_element)
+    {
+        const string new_display_string = display_element->GetText();
 
-//        try
-//        {
-//            set_display(new_display_string != "0");
-//        }
-//        catch(const logic_error& e)
-//        {
-//            cerr << e.what() << endl;
-//        }
-//    }
+        try
+        {
+            set_display(new_display_string != "0");
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
 }
 
 

@@ -41,7 +41,7 @@
 #include "../eigen/Eigen"
 
 #ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
+    #include "D:/artelnics/opennn_cuda/opennn_cuda/kernels.h"
 #endif
 
 using namespace std;
