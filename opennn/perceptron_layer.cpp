@@ -95,9 +95,9 @@ size_t PerceptronLayer::get_parameters_number() const
 /// The format is a vector of real values. 
 /// The size of this vector is the number of neurons in the layer.
 
-Vector<double> PerceptronLayer::get_biases() const
+const Vector<double>& PerceptronLayer::get_biases() const
 {   
-   return(biases);
+   return biases;
 }
 
 
@@ -106,7 +106,7 @@ Vector<double> PerceptronLayer::get_biases() const
 /// The number of rows is the number of neurons in the layer. 
 /// The number of columns is the number of inputs to the layer. 
 
-Matrix<double> PerceptronLayer::get_synaptic_weights() const
+const Matrix<double>& PerceptronLayer::get_synaptic_weights() const
 {
    return synaptic_weights;
 }

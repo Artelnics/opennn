@@ -11,7 +11,7 @@
       <LossGoal>-1.79769e+308</LossGoal>
       <GradientNormGoal>0</GradientNormGoal>
       <MaximumSelectionErrorIncreases>1000000</MaximumSelectionErrorIncreases>
-      <MaximumEpochsNumber>100</MaximumEpochsNumber>
+      <MaximumEpochsNumber>10</MaximumEpochsNumber>
       <MaximumTime>1000</MaximumTime>
       <ReserveTrainingErrorHistory>1</ReserveTrainingErrorHistory>
       <ReserveSelectionErrorHistory>0</ReserveSelectionErrorHistory>
