@@ -1035,13 +1035,48 @@ void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
+    // Probabilistic layer
+
     file_stream.OpenElement("ProbabilisticLayer");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Neurons number
+
+    file_stream.OpenElement("NeuronsNumber");
+
+    buffer.str("");
+    buffer << get_neurons_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     // Activation function
 
     file_stream.OpenElement("ActivationFunction");
 
     file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+    buffer << get_parameters();
+
+    file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
 
@@ -1056,6 +1091,8 @@ void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Probabilistic layer (end tag)
+
     file_stream.CloseElement();
 }
 
@@ -1066,6 +1103,8 @@ void ProbabilisticLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
+
+    // Probabilistic layer
 
     const tinyxml2::XMLElement* probabilistic_layer_element = document.FirstChildElement("ProbabilisticLayer");
 
@@ -1078,68 +1117,113 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    // Activation function
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = document.FirstChildElement("InputsNumber");
+
+    if(!inputs_number_element)
     {
-        const tinyxml2::XMLElement* element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Inputs number element is nullptr.\n";
 
-        if(element)
-        {
-            const char* text = element->GetText();
+        throw logic_error(buffer.str());
+    }
 
-            if(text)
-            {
-                try
-                {
-                    string new_activation_function(text);
+    if(inputs_number_element->GetText())
+    {
+        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
+    }
 
-                    set_activation_function(new_activation_function);
-                }
-                catch(const logic_error& e)
-                {
-                    cerr << e.what() << endl;
-                }
-            }
-        }
+    // Neurons number
+
+    const tinyxml2::XMLElement* neurons_number_element = document.FirstChildElement("NeuronsNumber");
+
+    if(!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Neurons number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(neurons_number_element->GetText())
+    {
+        set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
+    }
+
+    // Activation function
+
+    const tinyxml2::XMLElement* activation_function_element = probabilistic_layer_element->FirstChildElement("ActivationFunction");
+
+    if(!activation_function_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Activation function element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(activation_function_element->GetText())
+    {
+        set_activation_function(activation_function_element->GetText());
+    }
+
+    // Parameters
+
+    const tinyxml2::XMLElement* parameters_element = probabilistic_layer_element->FirstChildElement("Parameters");
+
+    if(!parameters_element)
+    {
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Parameters element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+
+        set_parameters(to_double_vector(parameters_string, ' '));
     }
 
     // Decision threshold
+
+    const tinyxml2::XMLElement* decision_threshold_element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
+
+    if(!decision_threshold_element)
     {
-        const tinyxml2::XMLElement* element = probabilistic_layer_element->FirstChildElement("DecisionThreshold");
+        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Decision threshold element is nullptr.\n";
 
-        if(element)
-        {
-            const char* text = element->GetText();
+        throw logic_error(buffer.str());
+    }
 
-            if(text)
-            {
-                try
-                {
-                    set_decision_threshold(atof(text));
-                }
-                catch(const logic_error& e)
-                {
-                    cerr << e.what() << endl;
-                }
-            }
-        }
+    if(decision_threshold_element->GetText())
+    {
+        set_decision_threshold(atof(decision_threshold_element->GetText()));
     }
 
     // Display
+
+    const tinyxml2::XMLElement* display_element = probabilistic_layer_element->FirstChildElement("Display");
+
+    if(display_element)
     {
-        const tinyxml2::XMLElement* display_element = probabilistic_layer_element->FirstChildElement("Display");
+        string new_display_string = display_element->GetText();
 
-        if(display_element)
+        try
         {
-            string new_display_string = display_element->GetText();
-
-            try
-            {
-                set_display(new_display_string != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            set_display(new_display_string != "0");
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
         }
     }
 }

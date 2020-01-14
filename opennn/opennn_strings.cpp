@@ -108,6 +108,36 @@ Vector<string> get_tokens(const string& str, const char& separator)
 }
 
 
+/// Returns a new vector with the elements of this string vector casted to double.
+
+Vector<double> to_double_vector(const string& str, const char& separator)
+{
+    const Vector<string> tokens = get_tokens(str, separator);
+
+  const size_t tokens_size = tokens.size();
+
+  Vector<double> double_vector(tokens_size);
+
+  for(size_t i = 0; i < tokens_size; i++)
+  {
+      try
+      {
+          stringstream buffer;
+
+          buffer << tokens[i];
+
+          double_vector[i] = stod(buffer.str());
+      }
+      catch(const logic_error&)
+      {
+         double_vector[i] = nan("");
+      }
+   }
+
+  return double_vector;
+}
+
+
 /// Returns true if the string passed as argument represents a number, and false otherwise.
 /// @param str String to be checked.
 
