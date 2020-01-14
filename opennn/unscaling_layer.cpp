@@ -879,6 +879,8 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     const size_t neurons_number = get_neurons_number();
 
+    // Unscaling layer
+
     file_stream.OpenElement("UnscalingLayer");
 
     // Unscaling neurons number
@@ -956,6 +958,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Unscaling layer (end tag)
 
     file_stream.CloseElement();
 }
@@ -1098,23 +1101,23 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         {
             descriptives[i].standard_deviation = atof(standard_deviation_element->GetText());
         }
-    }
 
-    // Unscaling method
+        // Unscaling method
 
-    const tinyxml2::XMLElement* unscaling_method_element = root_element->FirstChildElement("UnscalingMethod");
+        const tinyxml2::XMLElement* unscaling_method_element = root_element->FirstChildElement("UnscalingMethod");
 
-    if(unscaling_method_element)
-    {
-        const string new_method = unscaling_method_element->GetText();
-
-        try
+        if(unscaling_method_element)
         {
-            set_unscaling_method(new_method);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
+            const string new_method = unscaling_method_element->GetText();
+
+            try
+            {
+                set_unscaling_method(new_method);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
         }
     }
 
