@@ -1213,11 +1213,10 @@ RegressionResults exponential_regression(const Vector<double>& x, const Vector<d
 
 RegressionResults exponential_regression_missing_values(const Vector<double>& x, const Vector<double>& y)
 {
-    size_t n = y.size();
-
   #ifdef __OPENNN_DEBUG__
 
     const size_t x_size = x.size();
+    size_t n = y.size();
 
     ostringstream buffer;
 
