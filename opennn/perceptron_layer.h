@@ -161,7 +161,9 @@ public:
 
    void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& combinations) const
    {
-       linear_combinations(inputs, synaptic_weights, biases, combinations);
+       dot(inputs, synaptic_weights, combinations);
+
+       combinations += biases;
    }
 
    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
@@ -297,6 +299,7 @@ public:
        output_delta *= output_gradient;
    }
 
+
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
@@ -320,6 +323,10 @@ public:
            const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
            synaptic_weights_transpose = probabilistic_layer->get_synaptic_weights_transpose();
+       }
+       else
+       {
+           /// @todo Throw exception.
        }
 
        hidden_delta = activations_derivatives;

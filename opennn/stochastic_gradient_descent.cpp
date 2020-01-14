@@ -736,7 +736,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   data_set_pointer->set_batch_instances_number(32);
 
    const Matrix<double>& data = data_set_pointer->get_data();
 
@@ -834,6 +833,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
 //           forward_propagation.print();
+//           system("pause");
 
            //Loss
 
