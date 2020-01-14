@@ -97,6 +97,9 @@ public:
     void operator -= (const Tensor<T>&);
     void operator *= (const Tensor<T>&);
 
+    void operator += (const Vector<T>&);
+
+
     // Get methods
 
     size_t get_dimensions_number() const;
@@ -797,6 +800,24 @@ void Tensor<T>::operator *= (const Tensor<T>& other)
     for(size_t i = 0; i < this->size(); i++)
     {
         (*this)[i] *= other[i];
+    }
+}
+
+
+template <class T>
+void Tensor<T>::operator += (const Vector<T>& other)
+{
+    const size_t rows_number = dimensions[0];
+    const size_t columns_number = dimensions[1];
+
+//   #pragma omp parallel for
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < columns_number; j++)
+        {
+            (*this)(i,j) += other[j];
+        }
     }
 }
 
