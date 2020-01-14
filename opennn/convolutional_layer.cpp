@@ -382,8 +382,6 @@ Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(cons
 {
     ForwardPropagation layers;
 
-    ForwardPropagation first_order_activations;
-
     const Tensor<double> combinations = calculate_combinations(inputs);
 
     layers.activations = calculate_activations(combinations);
@@ -391,12 +389,6 @@ Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(cons
     layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
     return layers;
-
-    first_order_activations.activations = calculate_activations(combinations);
-
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
-
-    return first_order_activations;
 }
 
 
@@ -511,7 +503,7 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolut
 
 
 Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
-                                                                  const Tensor<double>&,
+                                                                  const Tensor<double>& activations,
                                                                   const Tensor<double>& activations_derivatives,
                                                                   const Tensor<double>& next_layer_delta) const
 {
@@ -581,7 +573,90 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer* 
 
         case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
         {
-            return Tensor<double>({next_layer_delta.get_dimension(0), get_filters_number(), get_outputs_rows_number(), get_outputs_columns_number()}, 0.0);
+            // Current layer's values
+
+            const size_t images_number = next_layer_delta.get_dimension(0);
+            const size_t filters_number = get_filters_number();
+            const size_t output_rows_number = get_outputs_rows_number();
+            const size_t output_columns_number = get_outputs_columns_number();
+
+            // Next layer's values
+
+            const size_t next_layers_pool_rows = next_layer_pointer->get_pool_rows_number();
+            const size_t next_layers_pool_columns = next_layer_pointer->get_pool_columns_number();
+            const size_t next_layers_output_rows = next_layer_pointer->get_outputs_rows_number();
+            const size_t next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
+            const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
+            const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
+
+            Tensor<double> hidden_delta(Vector<size_t>({images_number, filters_number, output_rows_number, output_columns_number}));
+
+            const size_t size = hidden_delta.size();
+
+            #pragma omp parallel for
+
+            for(size_t tensor_index = 0; tensor_index < size; tensor_index++)
+            {
+                const size_t image_index = tensor_index/(filters_number*output_rows_number*output_columns_number);
+                const size_t channel_index = (tensor_index/(output_rows_number*output_columns_number))%filters_number;
+                const size_t row_index = (tensor_index/output_columns_number)%output_rows_number;
+                const size_t column_index = tensor_index%output_columns_number;
+
+                double sum = 0.0;
+
+                for(size_t i = 0; i < next_layers_output_rows; i++)
+                {
+                    if(static_cast<int>(row_index) - static_cast<int>(i*next_layers_row_stride) >= 0
+                    && row_index - i*next_layers_row_stride < next_layers_pool_rows)
+                    {
+                        for(size_t j = 0; j < next_layers_output_columns; j++)
+                        {
+                            const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+
+                            if(static_cast<int>(column_index) - static_cast<int>(j*next_layers_column_stride) >= 0
+                            && column_index - j*next_layers_column_stride < next_layers_pool_columns)
+                            {
+                                Matrix<double> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
+
+                                for(size_t submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
+                                {
+                                    for(size_t submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
+                                    {
+                                        activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
+                                                activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
+                                    }
+                                }
+
+                                Matrix<double> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
+
+                                double max_value = activations_current_submatrix(0,0);
+
+                                for(size_t submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
+                                {
+                                    for(size_t submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
+                                    {
+                                        if(activations_current_submatrix(submatrix_row_index, submatrix_column_index) > max_value)
+                                        {
+                                            max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
+
+                                            multiply_not_multiply = Matrix<double>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
+                                            multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
+                                        }
+                                    }
+                                }
+
+                                const double derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, column_index - j*next_layers_column_stride);
+
+                                sum += delta_element*derivative;
+                            }
+                        }
+                    }
+                }
+
+                hidden_delta(image_index, channel_index, row_index, column_index) = sum;
+            }
+
+            return hidden_delta*activations_derivatives;
         }
     }
     return Tensor<double>();
@@ -635,8 +710,6 @@ Tensor<double> ConvolutionalLayer::calculate_hidden_delta_perceptron(PerceptronL
     return hidden_delta*activations_derivatives;
 }
 
-
-/// @todo
 
 Tensor<double> ConvolutionalLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
                                                                      const Tensor<double>&,
