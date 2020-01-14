@@ -152,6 +152,7 @@ public:
     void randomize_normal(const double & = 0.0, const double & = 1.0);
 
     T calculate_sum() const;
+    Tensor<T> calculate_transpose() const;
 
     Tensor<T> divide(const Vector<T>&, const size_t&) const;
 
@@ -1510,6 +1511,26 @@ T Tensor<T>::calculate_sum() const
    }
 
    return sum;
+}
+
+
+template <class T>
+Tensor<T> Tensor<T>::calculate_transpose() const
+{
+    const size_t rows_number = dimensions[0];
+    const size_t columns_number = dimensions[1];
+
+    Matrix<T> transpose(columns_number, rows_number);
+
+    for(size_t i = 0; i < columns_number; i++)
+    {
+       for(size_t j = 0; j < rows_number; j++)
+       {
+          transpose(i,j) = (*this)(j,i);
+       }
+    }
+
+    return(transpose);
 }
 
 
