@@ -292,18 +292,18 @@ public:
 
    void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
    {
-       const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-      const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+        const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-      if(trainable_layers_number == 0) return;
+        if(trainable_layers_number == 0) return;
 
-      // Output layer
+        // Output layer
 
-      trainable_layers_pointers[trainable_layers_number-1]
-      ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
-                               first_order_loss.output_gradient,
-                               first_order_loss.layers_delta[trainable_layers_number-1]);
+        trainable_layers_pointers[trainable_layers_number-1]
+        ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
+                                 first_order_loss.output_gradient,
+                                 first_order_loss.layers_delta[trainable_layers_number-1]);
 
       // Hidden layers
 
@@ -353,19 +353,22 @@ public:
 
        size_t index = 0;
 
-//       trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs, forward_propagation.layers[0], first_order_loss.layers_delta[0]);
+       trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs, forward_propagation.layers[0], first_order_loss.layers_delta[0], first_order_loss.layers_error_gradient[0]);
 
-       first_order_loss.error_gradient.embed(index, first_order_loss.layers_error_gradient);
+       first_order_loss.error_gradient.embed(index, first_order_loss.layers_error_gradient[0]);
 
        index += trainable_layers_parameters_number[0];
 
        for(size_t i = 1; i < trainable_layers_number; i++)
        {
-         first_order_loss.error_gradient.embed(index,
-                trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation.layers[i-1].activations, forward_propagation.layers[i-1],
-                first_order_loss.layers_delta[i]));
+           trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation.layers[i-1].activations,
+                   forward_propagation.layers[i-1],
+                   first_order_loss.layers_delta[i],
+                   first_order_loss.layers_error_gradient[i]);
 
-         index += trainable_layers_parameters_number[i];
+           first_order_loss.error_gradient.embed(index, first_order_loss.layers_error_gradient[i]);
+
+           index += trainable_layers_parameters_number[i];
        }
    }
 
