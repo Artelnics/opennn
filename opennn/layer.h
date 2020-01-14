@@ -109,6 +109,8 @@ public:
 
     virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
+    virtual void calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, Vector<double>&) {}
+
     virtual ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
     virtual void calculate_forward_propagation(const Tensor<double>&, ForwardPropagation&) {}
@@ -117,10 +119,18 @@ public:
 
     virtual Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
+    virtual void calculate_output_delta(const Tensor<double>&, const Tensor<double>&, Tensor<double>&) const;
+
     virtual Tensor<double> calculate_hidden_delta(Layer*,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&) const;
+
+    virtual void calculate_hidden_delta(Layer*,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        Tensor<double>&) const;
 
     // Get neurons number
 

@@ -91,7 +91,9 @@ public:
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
-   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  FirstOrderLoss& first_order_loss) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -99,8 +101,15 @@ public:
 
         #endif
 
-        output_gradient = (outputs-targets)*2.0 / normalization_coefficient;
+        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        first_order_loss.output_gradient = forward_propagation.layers[trainable_layers_number-1].activations;
+
+        first_order_loss.output_gradient -= batch.targets;
+
+        first_order_loss.output_gradient *= 2.0 / normalization_coefficient;
    }
+
 
    LossIndex::FirstOrderLoss calculate_first_order_loss() const;
 
@@ -124,12 +133,11 @@ public:
 
     first_order_loss.loss = sum_squared_error(forward_propagation.layers[layers_number-1].activations, batch.targets) / normalization_coefficient;
 
-    calculate_output_gradient(forward_propagation.layers[layers_number-1].activations, batch.targets, first_order_loss.output_gradient);
+    calculate_output_gradient(batch, forward_propagation, first_order_loss);
 
     calculate_layers_delta(forward_propagation, first_order_loss);
 
     calculate_error_gradient(batch, forward_propagation, first_order_loss);
-
 
     // Regularization
 

@@ -109,7 +109,9 @@ public:
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
 
-   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                  FirstOrderLoss& first_order_loss) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -117,7 +119,10 @@ public:
 
         #endif
 
-        output_gradient = (outputs-targets)*((targets-1.0)*(-1.0)*negatives_weight + targets*positives_weight);
+        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+        first_order_loss.output_gradient = (forward_propagation.layers[trainable_layers_number-1].activations-batch.targets)
+                *((batch.targets-1.0)*(-1.0)*negatives_weight + batch.targets*positives_weight);
    }
 
 

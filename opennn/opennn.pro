@@ -21,7 +21,6 @@ CONFIG(debug, debug|release) {
 
 #DEFINES += __Cpp11__
 
-
 # OpenMP library
 
 win32:!win32-g++{

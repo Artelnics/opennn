@@ -91,6 +91,10 @@ public:
     Tensor<T> operator * (const Tensor<T>&) const;
     Tensor<T> operator / (const Tensor<T>&) const;
 
+    void operator *= (const T&);
+
+    void operator += (const Tensor<T>&);
+    void operator -= (const Tensor<T>&);
     void operator *= (const Tensor<T>&);
 
     // Get methods
@@ -751,6 +755,36 @@ Tensor<T> Tensor<T>::operator / (const Tensor<T>& other) const
     }
 
     return output;
+}
+
+
+template <class T>
+void Tensor<T>::operator *= (const T& value)
+{
+    for(size_t i = 0; i < this->size(); i++)
+    {
+        (*this)[i] *= value;
+    }
+}
+
+
+template <class T>
+void Tensor<T>::operator += (const Tensor<T>& other)
+{
+    for(size_t i = 0; i < this->size(); i++)
+    {
+        (*this)[i] += other[i];
+    }
+}
+
+
+template <class T>
+void Tensor<T>::operator -= (const Tensor<T>& other)
+{
+    for(size_t i = 0; i < this->size(); i++)
+    {
+        (*this)[i] -= other[i];
+    }
 }
 
 
