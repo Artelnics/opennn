@@ -48,10 +48,10 @@ int main(void)
         // Neural network
 
         const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_perceptrons_number = 10;
+        const size_t hidden_neurons_number = 100;
         const size_t outputs_number = data_set.get_target_variables_number();
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_perceptrons_number, outputs_number});
+        NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
@@ -70,7 +70,7 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(100);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 

@@ -98,8 +98,8 @@ public:
 
    // Parameters
 
-   Vector<double> get_biases() const;
-   Matrix<double> get_synaptic_weights() const;
+   const Vector<double>& get_biases() const;
+   const Matrix<double>& get_synaptic_weights() const;
 
    Vector<double> get_biases(const Vector<double>&) const;
    Matrix<double> get_synaptic_weights(const Vector<double>&) const;

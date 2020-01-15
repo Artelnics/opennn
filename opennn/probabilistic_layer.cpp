@@ -170,7 +170,7 @@ const bool& ProbabilisticLayer::get_display() const
 
 /// Returns the biases of the layer.
 
-Vector<double> ProbabilisticLayer::get_biases() const
+const Vector<double>& ProbabilisticLayer::get_biases() const
 {
     return biases;
 }
@@ -178,7 +178,7 @@ Vector<double> ProbabilisticLayer::get_biases() const
 
 /// Returns the synaptic weights of the layer.
 
-Matrix<double> ProbabilisticLayer::get_synaptic_weights() const
+const Matrix<double>& ProbabilisticLayer::get_synaptic_weights() const
 {
     return synaptic_weights;
 }
