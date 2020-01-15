@@ -109,9 +109,9 @@ Tensor<double> PoolingLayer::calculate_average_pooling_outputs(const Tensor<doub
 
     const size_t inputs_columns_number = inputs.get_dimension(3);
 
-    const size_t outputs_rows_number = (inputs_rows_number - pool_rows_number)/(row_stride) + 1;
+    const size_t outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
-    const size_t outputs_columns_number = (inputs_columns_number - pool_columns_number)/(column_stride) + 1;
+    const size_t outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
     Tensor<double> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
@@ -127,17 +127,17 @@ Tensor<double> PoolingLayer::calculate_average_pooling_outputs(const Tensor<doub
 
                     for(size_t window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
-                        const size_t row = row_index * row_stride + window_row;
+                        const size_t row = row_index*row_stride + window_row;
 
                         for(size_t window_column = 0; window_column < pool_columns_number; window_column ++)
                         {
-                            const size_t column = column_index * column_stride + window_column;
+                            const size_t column = column_index*column_stride + window_column;
 
                             outputs(image_index, channel_index, row_index, column_index) += inputs(image_index, channel_index, row, column);
                         }
                     }
 
-                    outputs(image_index, channel_index, row_index, column_index) /= pool_rows_number * pool_columns_number;
+                    outputs(image_index, channel_index, row_index, column_index) /= pool_rows_number*pool_columns_number;
                 }
             }
         }
@@ -169,9 +169,9 @@ Tensor<double> PoolingLayer::calculate_max_pooling_outputs(const Tensor<double>&
 
     const size_t inputs_columns_number = inputs.get_dimension(3);
 
-    const size_t outputs_rows_number = (inputs_rows_number - pool_rows_number)/(row_stride) + 1;
+    const size_t outputs_rows_number = (inputs_rows_number - pool_rows_number)/row_stride + 1;
 
-    const size_t outputs_columns_number = (inputs_columns_number - pool_columns_number)/(column_stride) + 1;
+    const size_t outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
     Tensor<double> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
@@ -184,15 +184,15 @@ Tensor<double> PoolingLayer::calculate_max_pooling_outputs(const Tensor<double>&
                 for(size_t column_index = 0; column_index < outputs_columns_number; column_index ++)
                 {
                     outputs(image_index, channel_index, row_index, column_index) =
-                            inputs(image_index, channel_index, row_index * row_stride, column_index * column_stride);
+                            inputs(image_index, channel_index, row_index*row_stride, column_index*column_stride);
 
                     for(size_t window_row = 0; window_row < pool_rows_number; window_row ++)
                     {
-                        const size_t row = row_index * row_stride + window_row;
+                        const size_t row = row_index*row_stride + window_row;
 
                         for(size_t window_column = 0; window_column < pool_columns_number; window_column ++)
                         {
-                            const size_t column = column_index * column_stride + window_column;
+                            const size_t column = column_index*column_stride + window_column;
 
                             if(inputs(image_index, channel_index, row, column) > outputs(image_index, channel_index, row_index, column_index))
                             {
@@ -339,7 +339,10 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalL
     const size_t next_layers_output_columns = next_layer_pointer->get_outputs_columns_number();
     const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
     const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
+
     const Tensor<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+
+    // Hidden delta calculation
 
     Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
 
@@ -356,25 +359,22 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalL
 
         double sum = 0.0;
 
+        const size_t lower_row_index = (row_index - next_layers_filter_rows)/next_layers_row_stride + 1;
+        const size_t upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+        const size_t lower_column_index = (column_index - next_layers_filter_columns)/next_layers_column_stride + 1;
+        const size_t upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+
         for(size_t i = 0; i < next_layers_filters_number; i++)
         {
-            for(size_t j = 0; j < next_layers_output_rows; j++)
+            for(size_t j = lower_row_index; j < upper_row_index; j++)
             {
-                if(static_cast<int>(row_index) - static_cast<int>(j*next_layers_row_stride) >= 0
-                && row_index - j*next_layers_row_stride < next_layers_filter_rows)
+                for(size_t k = lower_column_index; k < upper_column_index; k++)
                 {
-                    for(size_t k = 0; k < next_layers_output_columns; k++)
-                    {
-                        const double delta_element = next_layer_delta(image_index, i, j, k);
+                    const double delta_element = next_layer_delta(image_index, i, j, k);
 
-                        if(static_cast<int>(column_index) - static_cast<int>(k*next_layers_column_stride) >= 0
-                        && column_index - k*next_layers_column_stride < next_layers_filter_columns)
-                        {
-                            const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
+                    const double weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
 
-                            sum += delta_element*weight;
-                        }
-                    }
+                    sum += delta_element*weight;
                 }
             }
         }
@@ -416,6 +416,8 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
             const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
             const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
 
+            // Hidden delta calculation
+
             Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
 
             const size_t size = hidden_delta.size();
@@ -431,21 +433,18 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
 
                 double sum = 0.0;
 
-                for(size_t i = 0; i < next_layers_output_rows; i++)
-                {
-                    if(static_cast<int>(row_index) - static_cast<int>(i*next_layers_row_stride) >= 0
-                    && row_index - i*next_layers_row_stride < next_layers_pool_rows)
-                    {
-                        for(size_t j = 0; j < next_layers_output_columns; j++)
-                        {
-                            const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+                const size_t lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
+                const size_t upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+                const size_t lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
+                const size_t upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
 
-                            if(static_cast<int>(column_index) - static_cast<int>(j*next_layers_column_stride) >= 0
-                            && column_index - j*next_layers_column_stride < next_layers_pool_columns)
-                            {
-                                sum += delta_element;
-                            }
-                        }
+                for(size_t i = lower_row_index; i < upper_row_index; i++)
+                {
+                    for(size_t j = lower_column_index; j < upper_column_index; j++)
+                    {
+                        const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+
+                        sum += delta_element;
                     }
                 }
 
@@ -473,6 +472,8 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
             const size_t next_layers_row_stride = next_layer_pointer->get_row_stride();
             const size_t next_layers_column_stride = next_layer_pointer->get_column_stride();
 
+            // Hidden delta calculation
+
             Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
 
             const size_t size = hidden_delta.size();
@@ -488,52 +489,49 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
 
                 double sum = 0.0;
 
-                for(size_t i = 0; i < next_layers_output_rows; i++)
+                const size_t lower_row_index = (row_index - next_layers_pool_rows)/next_layers_row_stride + 1;
+                const size_t upper_row_index = min(row_index/next_layers_row_stride + 1, next_layers_output_rows);
+                const size_t lower_column_index = (column_index - next_layers_pool_columns)/next_layers_column_stride + 1;
+                const size_t upper_column_index = min(column_index/next_layers_column_stride + 1, next_layers_output_columns);
+
+                for(size_t i = lower_row_index; i < upper_row_index; i++)
                 {
-                    if(static_cast<int>(row_index) - static_cast<int>(i*next_layers_row_stride) >= 0
-                    && row_index - i*next_layers_row_stride < next_layers_pool_rows)
+                    for(size_t j = lower_column_index; j < upper_column_index; j++)
                     {
-                        for(size_t j = 0; j < next_layers_output_columns; j++)
+                        Matrix<double> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
+
+                        for(size_t submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                         {
-                            if(static_cast<int>(column_index) - static_cast<int>(j*next_layers_column_stride) >= 0
-                            && column_index - j*next_layers_column_stride < next_layers_pool_columns)
+                            for(size_t submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                             {
-                                Matrix<double> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
-
-                                for(size_t submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
-                                {
-                                    for(size_t submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
-                                    {
-                                        activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
-                                                activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
-                                    }
-                                }
-
-                                Matrix<double> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
-
-                                double max_value = activations_current_submatrix(0,0);
-
-                                for(size_t submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
-                                {
-                                    for(size_t submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
-                                    {
-                                        if(activations_current_submatrix(submatrix_row_index, submatrix_column_index) > max_value)
-                                        {
-                                            max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
-
-                                            multiply_not_multiply = Matrix<double>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
-                                            multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
-                                        }
-                                    }
-                                }
-
-                                const double delta_element = next_layer_delta(image_index, channel_index, i, j);
-
-                                const double derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, column_index - j*next_layers_column_stride);
-
-                                sum += delta_element*derivative;
+                                activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
+                                        activations(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
                             }
                         }
+
+                        Matrix<double> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
+
+                        double max_value = activations_current_submatrix(0,0);
+
+                        for(size_t submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
+                        {
+                            for(size_t submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
+                            {
+                                if(activations_current_submatrix(submatrix_row_index, submatrix_column_index) > max_value)
+                                {
+                                    max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
+
+                                    multiply_not_multiply = Matrix<double>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
+                                    multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
+                                }
+                            }
+                        }
+
+                        const double delta_element = next_layer_delta(image_index, channel_index, i, j);
+
+                        const double max_derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, column_index - j*next_layers_column_stride);
+
+                        sum += delta_element*max_derivative;
                     }
                 }
 
@@ -563,7 +561,10 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* 
     // Next layer's values
 
     const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
+
     const Matrix<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+
+    // Hidden delta calculation
 
     Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
 
@@ -611,7 +612,10 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticL
     // Next layer's values
 
     const size_t next_layers_output_columns = next_layer_delta.get_dimension(1);
+
     const Matrix<double> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+
+    // Hidden delta calculation
 
     Tensor<double> hidden_delta(Vector<size_t>({images_number, channels_number, output_rows_number, output_columns_number}));
 
