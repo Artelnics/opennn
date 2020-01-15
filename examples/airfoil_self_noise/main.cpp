@@ -33,7 +33,7 @@ int main(void)
 
         // Data set
 
-        DataSet data_set("D:/data/100_100000.csv", ',', false);
+        DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
 
         const Vector<string> inputs_names = data_set.get_input_variables_names();
         const Vector<string> targets_names = data_set.get_target_variables_names();
@@ -68,10 +68,6 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
-
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
         // Testing analysis
@@ -99,7 +95,6 @@ int main(void)
         cout << "End" << endl;
 
         return 0;
-
     }
     catch(exception& e)
     {
