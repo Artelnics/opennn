@@ -78,8 +78,8 @@ public:
 
    // Parameters
 
-   Vector<double> get_biases() const;
-   Matrix<double> get_synaptic_weights() const;
+   const Vector<double>& get_biases() const;
+   const Matrix<double>& get_synaptic_weights() const;
 
    Vector<double> get_biases(const Vector<double>&) const;
    Matrix<double> get_synaptic_weights(const Vector<double>&) const;
@@ -310,28 +310,28 @@ public:
    {
        const Type layer_type = next_layer_pointer->get_type();
 
-       Matrix<double> synaptic_weights_transpose;
-
        if(layer_type == Perceptron)
        {
            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-           synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+           //synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+
+           const Matrix<double>& synaptic_weights = perceptron_layer->get_synaptic_weights();
+
+           dot_transpose(next_layer_delta, synaptic_weights, hidden_delta);
+
+           hidden_delta *= activations_derivatives;
        }
        else if(layer_type == Probabilistic)
        {
            const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-           synaptic_weights_transpose = probabilistic_layer->get_synaptic_weights_transpose();
        }
        else
        {
            /// @todo Throw exception.
        }
 
-       hidden_delta = activations_derivatives;
 
-       dot(next_layer_delta, synaptic_weights_transpose, hidden_delta);
    }
 
 
@@ -344,9 +344,9 @@ public:
                                  const Tensor<double>& deltas,
                                  Vector<double>& error_gradient)
    {
-       Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+       //Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
 
-       Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
+       //Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
 
        const size_t inputs_number = get_inputs_number();
        const size_t neurons_number = get_neurons_number();
@@ -359,11 +359,11 @@ public:
 
        // Synaptic weights
 
-       error_gradient.embed(0, dot(reshaped_inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
+       error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), deltas).to_vector());
 
        // Biases
 
-       error_gradient.embed(synaptic_weights_number, reshaped_deltas.to_matrix().calculate_columns_sum());
+       error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
    }
 
 
