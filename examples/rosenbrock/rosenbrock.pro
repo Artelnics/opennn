@@ -1,14 +1,10 @@
-###################################################################################################
-#                                                                                                 #
-#   OpenNN: Open Neural Networks Library                                                          #
-#   www.opennn.net                                                                      #
-#                                                                                                 #
-#   A I R F O I L   S E L F   N O I S E   P R O J E C T                                           #
-#                                                                                                 #
-#   Artificial Intelligence Techniques SL (Artelnics)                                             #
-#   artelnics@artelnics.com                                                                       #
-#                                                                                                 #
-###################################################################################################
+#   OpenNN: Open Neural Networks Library
+#   www.opennn.net
+#
+#   R O S E N B R O C K   P R O J E C T
+#
+#   Artificial Intelligence Techniques SL (Artelnics)
+#   artelnics@artelnics.com
 
 TEMPLATE = app
 CONFIG += console
