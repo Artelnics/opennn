@@ -85,7 +85,7 @@ DataSet::DataSet(const size_t& new_instances_number, const size_t& new_inputs_nu
 
 DataSet::DataSet(const tinyxml2::XMLDocument& data_set_document)
 {
-   set_default();
+//   set_default();
 
    from_XML(data_set_document);
 }
@@ -7144,7 +7144,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Preview data
 
-    const tinyxml2::XMLElement* preview_data_element = missing_values_element->FirstChildElement("PreviewData");
+    const tinyxml2::XMLElement* preview_data_element = data_set_element->FirstChildElement("PreviewData");
 
     if(!preview_data_element)
     {
@@ -7157,7 +7157,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Preview size
 
-    const tinyxml2::XMLElement* preview_size_element = missing_values_element->FirstChildElement("PreviewSize");
+    const tinyxml2::XMLElement* preview_size_element = preview_data_element->FirstChildElement("PreviewSize");
 
     if(!preview_size_element)
     {
@@ -7172,16 +7172,16 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     if(preview_size_element->GetText())
     {
-        new_preview_size = static_cast<size_t>(atoi(preview_data_element->GetText()));
+        new_preview_size = static_cast<size_t>(atoi(preview_size_element->GetText()));
 
-        data_file_preview.set();
+        if(new_preview_size > 0) data_file_preview.set(new_preview_size);
     }
 
     // Preview data
 
     for(size_t i = 0; i < new_preview_size; i++)
     {
-        const tinyxml2::XMLElement* row_element = columns_element->FirstChildElement("Row");
+        const tinyxml2::XMLElement* row_element = preview_data_element->FirstChildElement("Row");
 
         if(row_element->Attribute("Item") != std::to_string(i+1))
         {
@@ -7200,6 +7200,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Display
 
+    /*
     const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
     if(display_element)
@@ -7215,6 +7216,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
             cerr << e.what() << endl;
         }
     }
+    */
 }
 
 
