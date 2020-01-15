@@ -25,3 +25,4 @@ SUBDIRS += leukemia
 SUBDIRS += pollution_forecasting
 SUBDIRS += temperature_forecasting
 SUBDIRS += mnist
+SUBDIRS += rosenbrock
