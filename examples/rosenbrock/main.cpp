@@ -35,7 +35,7 @@ int main(void)
 
         DataSet data_set;
 
-        data_set.generate_Rosenbrock_data(1000000, 1000);
+        data_set.generate_Rosenbrock_data(10000, 100);
 
         const Vector<string> inputs_names = data_set.get_input_variables_names();
         const Vector<string> targets_names = data_set.get_target_variables_names();
@@ -50,7 +50,7 @@ int main(void)
         // Neural network
 
         const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_neurons_number = 1000;
+        const size_t hidden_neurons_number = 100;
         const size_t outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
@@ -72,7 +72,7 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
