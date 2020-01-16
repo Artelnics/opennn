@@ -139,7 +139,6 @@ Tensor<double> hyperbolic_tangent(const Tensor<double>& x)
     return y;
 }
 
-
 Vector<double> hyperbolic_tangent(const Vector<double>& x)
 {
     const size_t size = x.size();

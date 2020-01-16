@@ -55,7 +55,6 @@ public:
         {
         }
 
-
         virtual ~ForwardPropagation()
         {
         }
