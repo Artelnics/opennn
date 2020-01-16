@@ -30,6 +30,41 @@ int main(void)
         cout << "OpenNN. Rosenbrock Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
+/*
+        int n = 1000;
+
+        Matrix<double> m1(n,n);
+        m1.randomize_normal();
+
+        Matrix<double> m2(n,n);
+        m2.randomize_normal();
+
+        Matrix<double> m3(n,n);
+
+        Eigen::MatrixXd e1(n,n);
+        e1.setRandom();
+        Eigen::MatrixXd e2(n,n);
+        e2.setRandom();
+
+        Eigen::MatrixXd e3(n,n);
+
+        time_t beginning_time, current_time;
+        time(&beginning_time);
+        double elapsed_time = 0.0;
+
+        dot(m1,m2,m3);
+
+//        e3 = e1*e2;
+
+        time(&current_time);
+        elapsed_time = difftime(current_time, beginning_time);
+
+        cout << m3.calculate_sum() << endl;
+        cout << e3.rows() << endl;
+
+        cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
+*/
+/*
 
         // Data set
 
@@ -77,8 +112,8 @@ int main(void)
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
-        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
-
+//        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
+*/
         cout << "End" << endl;
 
         return 0;

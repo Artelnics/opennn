@@ -271,4 +271,4 @@ namespace OpenNN
 
 }
 
-#endif // __FUNCTIONS_H
+#endif // FUNCTIONS_H

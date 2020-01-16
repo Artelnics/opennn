@@ -133,6 +133,7 @@ void dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_2, Matrix<
 
 Tensor<double> dot(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2)
 {
+
     const size_t rows_number_1 = matrix_1.get_dimension(0);
     const size_t columns_number_1 = matrix_1.get_dimension(1);
 
@@ -148,6 +149,14 @@ Tensor<double> dot(const Tensor<double>& matrix_1, const Matrix<double>& matrix_
     product_eigen = eigen_1*eigen_2;
 
     return product;
+
+/*
+    Eigen::MatrixXd eigen_1 = tensor_to_eigen(matrix_1);
+    Eigen::MatrixXd eigen_2 = matrix_to_eigen(matrix_2);
+
+    return eigen_to_tensor(eigen_1*eigen_2);
+*/
+
 }
 
 
@@ -1916,4 +1925,75 @@ Matrix<double> l1_norm_hessian(const Vector<double>& vector)
   return Matrix<double>(x_size, x_size, 0);
 }
 
+
+Eigen::MatrixXd matrix_to_eigen(const Matrix<double>& matrix)
+{
+    const size_t rows_number = matrix.get_rows_number();
+    const size_t columns_number = matrix.get_columns_number();
+
+    Eigen::MatrixXd eigen(rows_number, columns_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < rows_number; j++)
+        {
+           eigen(i,j) = matrix(i,j);
+        }
+    }
 }
+
+
+Eigen::MatrixXd tensor_to_eigen(const Tensor<double>& matrix)
+{
+    const size_t rows_number = matrix.get_dimension(0);
+    const size_t columns_number = matrix.get_dimension(1);
+
+    Eigen::MatrixXd eigen(rows_number, columns_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < rows_number; j++)
+        {
+           eigen(i,j) = matrix(i,j);
+        }
+    }
+}
+
+
+Matrix<double> eigen_to_matrix(const Eigen::MatrixXd& eigen)
+{
+    const size_t rows_number = eigen.rows();
+    const size_t columns_number = eigen.cols();
+
+    Matrix<double> matrix(rows_number, columns_number);
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < rows_number; j++)
+        {
+           matrix(i,j) = eigen(i,j);
+        }
+    }
+}
+
+
+Tensor<double> eigen_to_tensor(const Eigen::MatrixXd& eigen)
+{
+    const size_t rows_number = eigen.rows();
+    const size_t columns_number = eigen.cols();
+
+    Tensor<double> matrix(Vector<size_t>(rows_number, columns_number));
+
+    for(size_t i = 0; i < rows_number; i++)
+    {
+        for(size_t j = 0; j < rows_number; j++)
+        {
+           matrix(i,j) = eigen(i,j);
+        }
+    }
+}
+
+
+}
+
+
