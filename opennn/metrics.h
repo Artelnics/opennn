@@ -141,6 +141,15 @@ namespace OpenNN
      Vector<double> error_rows(const Tensor<double>&, const Tensor<double>&);
 
      Vector<double> weighted_error_rows(const Tensor<double>&, const Tensor<double>&, const double&, const double&);
+
+     Eigen::MatrixXd matrix_to_eigen(const Matrix<double>&);
+     Eigen::MatrixXd tensor_to_eigen(const Tensor<double>&);
+
+
+     Matrix<double> eigen_to_matrix(const Eigen::MatrixXd& eigen);
+     Tensor<double> eigen_to_tensor(const Eigen::MatrixXd& eigen);
+
+
 }
 
-#endif // __FUNCTIONS_H
+#endif // METRICS_H

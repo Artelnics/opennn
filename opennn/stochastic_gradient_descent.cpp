@@ -736,7 +736,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-
    const Matrix<double>& data = data_set_pointer->get_data();
 
    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
