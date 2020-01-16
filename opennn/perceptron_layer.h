@@ -314,11 +314,11 @@ public:
        {
            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
-           //synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+           const Matrix<double> synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
 
-           const Matrix<double>& synaptic_weights = perceptron_layer->get_synaptic_weights();
+           //const Matrix<double>& synaptic_weights = perceptron_layer->get_synaptic_weights();
 
-           dot_transpose(next_layer_delta, synaptic_weights, hidden_delta);
+           dot(next_layer_delta, synaptic_weights_transpose, hidden_delta);
 
            hidden_delta *= activations_derivatives;
        }
@@ -358,6 +358,7 @@ public:
        Vector<double> layer_error_gradient(parameters_number, 0.0);
 
        // Synaptic weights
+
 
        error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), deltas).to_vector());
 

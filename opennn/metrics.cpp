@@ -131,55 +131,55 @@ void dot(const Matrix<double>& matrix_1, const Matrix<double>& matrix_2, Matrix<
 }
 
 
-Tensor<double> dot(const Tensor<double>& tensor, const Matrix<double>& matrix)
+Tensor<double> dot(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2)
 {
-    const size_t rows_number = tensor.get_dimension(0);
-    const size_t columns_number = tensor.get_dimension(1);
+    const size_t rows_number_1 = matrix_1.get_dimension(0);
+    const size_t columns_number_1 = matrix_1.get_dimension(1);
 
-    const size_t other_rows_number = matrix.get_rows_number();
-    const size_t other_columns_number = matrix.get_columns_number();
+    const size_t rows_number_2 = matrix_2.get_rows_number();
+    const size_t columns_number_2 = matrix_2.get_columns_number();
 
-    Tensor<double> product(rows_number, other_columns_number);
+    Tensor<double> product(rows_number_1, columns_number_2);
 
-    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)tensor.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
+    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-    product_eigen = this_eigen*other_eigen;
+    product_eigen = eigen_1*eigen_2;
 
     return product;
 }
 
 
-void dot(const Tensor<double>& tensor, const Matrix<double>& matrix, Tensor<double>& product)
+void dot(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, Tensor<double>& product)
 {
-    const size_t rows_number = tensor.get_dimension(0);
-    const size_t columns_number = tensor.get_dimension(1);
+    const size_t rows_number_1 = matrix_1.get_dimension(0);
+    const size_t columns_number_1 = matrix_1.get_dimension(1);
 
-    const size_t other_rows_number = matrix.get_rows_number();
-    const size_t other_columns_number = matrix.get_columns_number();
+    const size_t rows_number_2 = matrix_2.get_rows_number();
+    const size_t columns_number_2 = matrix_2.get_columns_number();
 
-    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)tensor.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
+    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_2.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-    product_eigen = this_eigen*other_eigen;
+    product_eigen = eigen_1*eigen_2;
 }
 
 
-void dot_transpose(const Tensor<double>& tensor, const Matrix<double>& matrix, Tensor<double>& product)
+void dot(const Tensor<double>& matrix_1, const Tensor<double>& matrix_2, Tensor<double>& product)
 {
-    const size_t rows_number = tensor.get_dimension(0);
-    const size_t columns_number = tensor.get_dimension(1);
+    const size_t rows_number_1 = matrix_1.get_dimension(0);
+    const size_t columns_number_1 = matrix_1.get_dimension(1);
 
-    const size_t other_rows_number = matrix.get_rows_number();
-    const size_t other_columns_number = matrix.get_columns_number();
+    const size_t rows_number_2 = matrix_2.get_dimension(0);
+    const size_t columns_number_2 = matrix_2.get_dimension(1);
 
-    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)tensor.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)matrix.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
-    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
+    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)matrix_1.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_1));
+    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)matrix_1.data(), static_cast<int>(rows_number_2), static_cast<int>(columns_number_2));
+    Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number_1), static_cast<int>(columns_number_2));
 
-    product_eigen = this_eigen*other_eigen.transpose();
+    product_eigen = eigen_1*eigen_2;
 }
 
 
@@ -222,11 +222,11 @@ Tensor<double> dot_2d_2d(const Tensor<double>& tensor_1, const Tensor<double>& t
 
     Tensor<double> product(rows_number, other_columns_number);
 
-    const Eigen::Map<Eigen::MatrixXd> this_eigen((double*)tensor_1.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
-    const Eigen::Map<Eigen::MatrixXd> other_eigen((double*)tensor_2.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
+    const Eigen::Map<Eigen::MatrixXd> eigen_1((double*)tensor_1.data(), static_cast<int>(rows_number), static_cast<int>(columns_number));
+    const Eigen::Map<Eigen::MatrixXd> eigen_2((double*)tensor_2.data(), static_cast<int>(other_rows_number), static_cast<int>(other_columns_number));
     Eigen::Map<Eigen::MatrixXd> product_eigen(product.data(), static_cast<int>(rows_number), static_cast<int>(other_columns_number));
 
-    product_eigen = this_eigen*other_eigen;
+    product_eigen = eigen_1*eigen_2;
 
     return product;
 }
@@ -278,7 +278,7 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
 
       const Matrix<double> i_row = tensor_1_matrix.get_submatrix_rows({i});
 
-      Matrix<double> dot_product = dot(i_row, i_matrix);
+      const Matrix<double> dot_product = dot(i_row, i_matrix);
 
       for(size_t k = 0; k < dimensions_2[1]; k++)
       {
@@ -292,6 +292,7 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
 
 Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
 {
+/*
     const size_t order = tensor.get_dimensions_number();
 
     if(order == 2)
@@ -300,6 +301,7 @@ Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
     }
     else if(order > 2)
     {
+
         const size_t n = tensor.get_dimensions()[2];
 
         Matrix<double> outputs(n, matrix.get_columns_number());
@@ -317,8 +319,9 @@ Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
 
         return outputs;
     }
-
+*/
     return Matrix<double>();
+
 }
 
 
@@ -1027,35 +1030,12 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
 
    #endif
 
-   const size_t new_rows_number = rows_number_1;
-   const size_t new_columns_number = columns_number_2;
+   Tensor<double> new_matrix = dot(matrix_1, matrix_2);
 
-   Tensor<double> new_matrix(new_rows_number, new_columns_number);
-
-   double sum;
-
-#pragma omp parallel for private(sum)
-
-   for(size_t i = 0; i < rows_number_1; i++)
-   {
-     for(size_t j = 0; j < columns_number_2; j++)
-     {
-        sum = 0.0;
-
-       for(size_t k = 0; k < columns_number_1; k++)
-       {
-            sum += matrix_1(i,k)*matrix_2(k,j);            
-       }
-
-       sum += vector[j];
-
-       new_matrix(i,j) = sum;
-     }
-   }
+   new_matrix += vector;
 
    return new_matrix;
 }
-
 
 
 void linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, const Vector<double>& vector, Tensor<double>& new_matrix)

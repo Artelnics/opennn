@@ -14,7 +14,7 @@ mac{
     CONFIG-=app_bundle
 }
 
-TARGET = airfoil_self_noise
+TARGET = rosenbrock
 
 DESTDIR = "$$PWD/bin"
 

@@ -6672,7 +6672,7 @@ Matrix<T> Matrix<T>::calculate_transpose() const
       }
    }
 
-   return(transpose);
+   return transpose;
 }
 
 
