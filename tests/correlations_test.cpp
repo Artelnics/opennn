@@ -681,7 +681,7 @@ void CorrelationsTest::test_covariance()
 
 void CorrelationsTest::test_covariance_missing_values()
 {
-    cout << "test_covariance_mising_values\n";
+    cout << "test_covariance_missing_values\n";
 
     size_t size = 100;
     Vector<double> x(size);
