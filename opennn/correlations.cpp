@@ -141,7 +141,7 @@ double rank_linear_correlation(const Vector<double>& x, const Vector<double>& y)
 /// Takes into account possible missing values.
 /// @param x Vector containing input values.
 /// @param y Vector for computing the linear correlation with the x vector.
-/// @param mising Vector with the missing instances idices.
+/// @param missing Vector with the missing instances idices.
 
 double rank_linear_correlation_missing_values(const Vector<double>& x, const Vector<double>& y)
 {
