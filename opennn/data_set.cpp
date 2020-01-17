@@ -6809,6 +6809,10 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close preview data
 
     file_stream.CloseElement();
+
+    // Close data set
+
+    file_stream.CloseElement();
 }
 
 
