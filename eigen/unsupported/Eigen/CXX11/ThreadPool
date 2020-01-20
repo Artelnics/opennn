@@ -12,7 +12,7 @@
 
 #include "../../../Eigen/Core"
 
-#include <Eigen/src/Core/util/DisableStupidWarnings.h>
+//#include <Eigen/src/Core/util/DisableStupidWarnings.h>
 
 /** \defgroup CXX11_ThreadPool_Module C++11 ThreadPool Module
   *
@@ -59,7 +59,7 @@
 
 #endif
 
-#include <Eigen/src/Core/util/ReenableStupidWarnings.h>
+//#include <Eigen/src/Core/util/ReenableStupidWarnings.h>
 
 #endif // EIGEN_CXX11_THREADPOOL_MODULE
 
