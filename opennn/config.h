@@ -1,5 +1,7 @@
 typedef float type;
 
+#include "omp.h"
+
 /*
 class Device
 {

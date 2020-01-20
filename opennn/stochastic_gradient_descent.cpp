@@ -804,9 +804,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-    int n = 16;//omp_get_max_threads();
+    int n = omp_get_max_threads();
 
-    NonBlockingThreadPool simple_thread_pool(n);
+    cout << "Threads: " << n << endl;
+
+    SimpleThreadPool simple_thread_pool(n);
+
+    //simple_thread_pool.Schedule()
 
     ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
 
