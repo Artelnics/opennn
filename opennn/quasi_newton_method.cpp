@@ -155,11 +155,11 @@ const double& QuasiNewtonMethod::get_error_learning_rate() const
    return(error_learning_rate);
 }
 
-// const size_t& get_epochs_number() const method
+// const int& get_epochs_number() const method
 
 /// ...
 
-const size_t& QuasiNewtonMethod::get_epochs_number() const
+const int& QuasiNewtonMethod::get_epochs_number() const
 {
    return(epochs_number);
 }
@@ -207,7 +207,7 @@ const double& QuasiNewtonMethod::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& QuasiNewtonMethod::get_maximum_selection_error_decreases() const
+const int& QuasiNewtonMethod::get_maximum_selection_error_decreases() const
 {
    return(maximum_selection_error_decreases);
 }
@@ -215,7 +215,7 @@ const size_t& QuasiNewtonMethod::get_maximum_selection_error_decreases() const
 
 /// Returns the maximum number of epochs for training.
 
-const size_t& QuasiNewtonMethod::get_maximum_epochs_number() const
+const int& QuasiNewtonMethod::get_maximum_epochs_number() const
 {
    return(maximum_epochs_number);
 }
@@ -362,7 +362,7 @@ void QuasiNewtonMethod::set_default()
    minimum_parameters_increment_norm = 0.0;
 
    minimum_loss_decrease = 0.0;
-   loss_goal = -numeric_limits<double>::max();
+   loss_goal = -999999;
    gradient_norm_goal = 0.0;
    maximum_selection_error_decreases = 1000000;
 
@@ -670,7 +670,7 @@ void QuasiNewtonMethod::set_gradient_norm_goal(const double& new_gradient_norm_g
 /// Sets a new maximum number of selection failures. 
 /// @param new_maximum_selection_error_decreases Maximum number of epochs in which the selection evalutation decreases.
 
-void QuasiNewtonMethod::set_maximum_selection_error_increases(const size_t& new_maximum_selection_error_decreases)
+void QuasiNewtonMethod::set_maximum_selection_error_increases(const int& new_maximum_selection_error_decreases)
 {
    // Set maximum selection error increases
 
@@ -681,7 +681,7 @@ void QuasiNewtonMethod::set_maximum_selection_error_increases(const size_t& new_
 /// Sets a new maximum number of epochs number.
 /// @param new_maximum_epochs_number Maximum number of epochs in which the selection evalutation decreases.
 
-void QuasiNewtonMethod::set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
+void QuasiNewtonMethod::set_maximum_epochs_number(const int& new_maximum_epochs_number)
 {
    maximum_epochs_number = new_maximum_epochs_number;
 }
@@ -757,7 +757,7 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
 /// @param new_display_period
 /// Number of epochs between the training showing progress.
 
-void QuasiNewtonMethod::set_display_period(const size_t& new_display_period)
+void QuasiNewtonMethod::set_display_period(const int& new_display_period)
 {
    
 
@@ -768,7 +768,7 @@ void QuasiNewtonMethod::set_display_period(const size_t& new_display_period)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "void set_display_period(const size_t&) method.\n"
+             << "void set_display_period(const int&) method.\n"
              << "Display period must be greater than 0.\n";
 
       throw logic_error(buffer.str());	  
@@ -787,10 +787,10 @@ void QuasiNewtonMethod::set_display_period(const size_t& new_display_period)
 /// @param gradient Gradient at the current point. 
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
-Matrix<double> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
-const Vector<double>& old_parameters, const Vector<double>& parameters, 
-const Vector<double>& old_gradient, const Vector<double>& gradient,
-const Matrix<double>& old_inverse_hessian) const
+Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
+const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, 
+const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient,
+const Tensor<type, 2>& old_inverse_hessian) const
 {
    switch(inverse_hessian_approximation_method)
    {
@@ -808,7 +808,7 @@ const Matrix<double>& old_inverse_hessian) const
    ostringstream buffer;
 
    buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-          << "Vector<double> calculate_inverse_hessian_approximation(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+          << "Tensor<type, 1> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
           << "Unknown inverse hessian approximation method.\n";
 
    throw logic_error(buffer.str());
@@ -819,19 +819,20 @@ const Matrix<double>& old_inverse_hessian) const
 /// @param gradient Gradient vector. 
 /// @param inverse_hessian_approximation Inverse hessian approximation matrix. 
 
-Vector<double> QuasiNewtonMethod::calculate_training_direction(const Vector<double>& gradient, const Matrix<double>& inverse_hessian_approximation) const
+Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<type, 1>& gradient, const Tensor<type, 2>& inverse_hessian_approximation) const
 {
+/*
    return normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
+*/
+    return Tensor<type, 1>();
 }
 
 
 /// Returns the gradient descent training direction, which is the negative of the normalized gradient. 
 /// @param gradient Gradient vector.
 
-Vector<double> QuasiNewtonMethod::calculate_gradient_descent_training_direction(const Vector<double>& gradient) const
-{
-    
-
+Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient) const
+{   
     #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
@@ -839,7 +840,7 @@ Vector<double> QuasiNewtonMethod::calculate_gradient_descent_training_direction(
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-              << "Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -852,13 +853,13 @@ Vector<double> QuasiNewtonMethod::calculate_gradient_descent_training_direction(
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const size_t gradient_size = gradient.size();
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int gradient_size = gradient.size();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
 
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-              << "Vector<double> calculate_gradient_descent_training_direction(const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -866,7 +867,7 @@ Vector<double> QuasiNewtonMethod::calculate_gradient_descent_training_direction(
 
     #endif
 
-    return normalized(gradient)*(-1.0);
+    return normalized(gradient)*static_cast<type>(-1.0);
 }
 
 
@@ -878,26 +879,24 @@ Vector<double> QuasiNewtonMethod::calculate_gradient_descent_training_direction(
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-Matrix<double> QuasiNewtonMethod::calculate_DFP_inverse_hessian(
-const Vector<double>& old_parameters, const Vector<double>& parameters, const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix<double>& old_inverse_hessian) const
+Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(
+const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 2>& old_inverse_hessian) const
 {
    ostringstream buffer;
-
-   
 
    #ifdef __OPENNN_DEBUG__ 
 
    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   const size_t old_parameters_size = old_parameters.size();
-   const size_t parameters_size = parameters.size();
+   const int old_parameters_size = old_parameters.size();
+   const int parameters_size = parameters.size();
 
    if(old_parameters_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Size of old parameters vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());
@@ -905,19 +904,19 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
    else if(parameters_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Size of parameters vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());
    }
 
-   const size_t old_gradient_size = old_gradient.size();
-   const size_t gradient_size = gradient.size();
+   const int old_gradient_size = old_gradient.size();
+   const int gradient_size = gradient.size();
     
    if(old_gradient_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Size of old gradient vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());
@@ -925,19 +924,19 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
    else if(gradient_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Size of gradient vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());
    }
 
-   const size_t rows_number = old_inverse_hessian.get_rows_number();
-   const size_t columns_number = old_inverse_hessian.get_columns_number();
+   const int rows_number = old_inverse_hessian.dimension(0);
+   const int columns_number = old_inverse_hessian.dimension(1);
 
    if(rows_number != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Number of rows in old inverse hessian must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());
@@ -945,7 +944,7 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
    else if(columns_number != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Number of columns in old inverse hessian must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());
@@ -955,14 +954,13 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
 
    // Parameters difference Vector
    
-   const Vector<double> parameters_difference = parameters - old_parameters;
+   const Tensor<type, 1> parameters_difference = parameters - old_parameters;
    
-   
-
-   if(absolute_value(parameters_difference) < numeric_limits<double>::min())
+ /*
+   if(absolute_value(parameters_difference) < 1.0e-99)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Parameters difference vector is zero.\n";
 
       throw logic_error(buffer.str());	  
@@ -970,12 +968,12 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
 
    // Gradient difference Vector
    
-   const Vector<double> gradient_difference = gradient - old_gradient;
+   const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
    if(absolute_value(gradient_difference) < 1.0e-50)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Gradient difference vector is zero.\n";
 
       throw logic_error(buffer.str());	  
@@ -984,7 +982,7 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
    if(absolute_value(old_inverse_hessian) < 1.0e-50)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Old inverse hessian matrix is zero.\n";
 
       throw logic_error(buffer.str());	  
@@ -995,7 +993,7 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
    if(abs(parameters_dot_gradient) < 1.0e-50)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Denominator of first term is zero.\n";
 
       throw logic_error(buffer.str());	  
@@ -1003,22 +1001,22 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
    else if(abs(dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)) < 1.0e-50)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_DFP_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Denominator of second term is zero.\n";
 
       throw logic_error(buffer.str());	  
    }
-
-   Matrix<double> inverse_hessian_approximation = old_inverse_hessian;
-
-   const Vector<double> hessian_dot_gradient_difference = dot(old_inverse_hessian, gradient_difference);
+*/
+   Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
+/*
+   const Tensor<type, 1> hessian_dot_gradient_difference = dot(old_inverse_hessian, gradient_difference);
 
    inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
 
    inverse_hessian_approximation -= direct(hessian_dot_gradient_difference, hessian_dot_gradient_difference)
             /dot(gradient_difference, hessian_dot_gradient_difference);
-
-   return(inverse_hessian_approximation);
+*/
+   return inverse_hessian_approximation;
 }
 
 
@@ -1030,28 +1028,25 @@ const Vector<double>& old_parameters, const Vector<double>& parameters, const Ve
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-Matrix<double> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
-const Vector<double>& old_parameters, const Vector<double>& parameters,
-const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix<double>& old_inverse_hessian) const
+Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
+const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters,
+const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 2>& old_inverse_hessian) const
 {
-
-   
-
    #ifdef __OPENNN_DEBUG__ 
 
    ostringstream buffer;
 
    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   const size_t old_parameters_size = old_parameters.size();
-   const size_t parameters_size = parameters.size();
+   const int old_parameters_size = old_parameters.size();
+   const int parameters_size = parameters.size();
     
    if(old_parameters_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Size of old parameters vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());	  
@@ -1059,43 +1054,43 @@ const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix
    else if(parameters_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Size of parameters vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());	  
    }
 
-   const size_t old_gradient_size = old_gradient.size();
+   const int old_gradient_size = old_gradient.size();
 
    if(old_gradient_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method." 
+             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method." 
              << endl
              << "Size of old gradient vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());	  
    }
 
-   const size_t gradient_size = gradient.size();
+   const int gradient_size = gradient.size();
 
    if(gradient_size != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method." 
+             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method." 
              << endl
              << "Size of gradient vector must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());	  
    }
 
-   const size_t rows_number = old_inverse_hessian.get_rows_number();
-   const size_t columns_number = old_inverse_hessian.get_columns_number();
+   const int rows_number = old_inverse_hessian.dimension(0);
+   const int columns_number = old_inverse_hessian.dimension(1);
 
    if(rows_number != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Number of rows in old inverse hessian must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());	  
@@ -1104,7 +1099,7 @@ const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix
    if(columns_number != parameters_number)
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
              << "Number of columns in old inverse hessian must be equal to number of parameters.\n";
 
       throw logic_error(buffer.str());	  
@@ -1114,14 +1109,14 @@ const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix
 
    // Parameters difference Vector
    
-   const Vector<double> parameters_difference = parameters - old_parameters;
+   const Tensor<type, 1> parameters_difference = parameters - old_parameters;
 
 //   if(absolute_value(parameters_difference) < 1.0e-50)
 //   {
 //       ostringstream buffer;
 
 //      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-//             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
 //             << "Parameters difference vector is zero.\n";
 
 //      throw logic_error(buffer.str());
@@ -1129,14 +1124,14 @@ const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix
 
    // Gradient difference Vector
    
-   const Vector<double> gradient_difference = gradient - old_gradient;
+   const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
-//   if(absolute_value(gradient_difference) < numeric_limits<double>::min())
+//   if(absolute_value(gradient_difference) < 1.0e-99)
 //   {
 //       ostringstream buffer;
 
 //      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-//             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
 //             << "Gradient difference vector is zero.\n";
 
 //      throw logic_error(buffer.str());
@@ -1147,32 +1142,32 @@ const Vector<double>& old_gradient, const Vector<double>& gradient, const Matrix
 //       ostringstream buffer;
 
 //      buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-//             << "Matrix<double> calculate_BFGS_inverse_hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
+//             << "Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
 //             << "Old inverse hessian matrix is zero.\n";
    
 //	  throw logic_error(buffer.str());
 //   }
 
    // BGFS Vector
-
+/*
    const double parameters_dot_gradient = dot(parameters_difference, gradient_difference);
-   const Vector<double> hessian_dot_gradient = dot(old_inverse_hessian, gradient_difference);
+   const Tensor<type, 1> hessian_dot_gradient = dot(old_inverse_hessian, gradient_difference);
    const double gradient_dot_hessian_dot_gradient = dot(gradient_difference, hessian_dot_gradient);
 
-   const Vector<double> BFGS = parameters_difference/parameters_dot_gradient
+   const Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient
    - hessian_dot_gradient/gradient_dot_hessian_dot_gradient;
-
+*/
    // Calculate inverse hessian approximation
 
-   Matrix<double> inverse_hessian_approximation = old_inverse_hessian;
-
+   Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
+/*
    inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
 
    inverse_hessian_approximation -= direct(hessian_dot_gradient, hessian_dot_gradient)
    /gradient_dot_hessian_dot_gradient;
 
    inverse_hessian_approximation += direct(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient);
-
+*/
    return inverse_hessian_approximation;
 }
 
@@ -1204,19 +1199,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    // Data set
 
-   const size_t selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
+   const int selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters(parameters_number);
-   Vector<double> old_parameters(parameters_number);
+   Tensor<type, 1> parameters(parameters_number);
+   Tensor<type, 1> old_parameters(parameters_number);
    double parameters_norm;
 
-   Vector<double> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
    double parameters_increment_norm;
 
    // Loss index stuff
@@ -1229,19 +1224,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    double regularization = 0.0;
    double regularization_weight = loss_index_pointer->get_regularization_weight();
 
-   Vector<double> gradient(parameters_number);
-   Vector<double> old_gradient(parameters_number);
+   Tensor<type, 1> gradient(parameters_number);
+   Tensor<type, 1> old_gradient(parameters_number);
    double gradient_norm;
 
-   Matrix<double> inverse_hessian(parameters_number, parameters_number);
-   Matrix<double> old_inverse_hessian;
+   Tensor<type, 2> inverse_hessian(parameters_number, parameters_number);
+   Tensor<type, 2> old_inverse_hessian;
 
    double selection_error = 0.0;
    double old_selection_error = 0.0;
 
    // Optimization algorithm stuff
 
-   Vector<double> training_direction(parameters_number);
+   Tensor<type, 1> training_direction(parameters_number);
 
    double training_slope;
 
@@ -1253,21 +1248,21 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    pair<double,double> directional_point(2, 0.0);
 
-   Vector<double> minimum_selection_error_parameters;
+   Tensor<type, 1> minimum_selection_error_parameters;
 
    double minimum_selection_error = 0.0;
 
    bool stop_training = false;
 
-   size_t selection_failures = 0;
+   int selection_failures = 0;
 
    time_t beginning_time, current_time;
    time(&beginning_time);
    double elapsed_time;
 
    // Main loop 
-
-   for(size_t epoch = 0; epoch <= maximum_epochs_number; epoch++)
+/*
+   for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
        // Neural network
 
@@ -1330,8 +1325,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        }
 
        if(epoch == 0
-       || absolute_value(old_parameters - parameters) < numeric_limits<double>::min()
-       || absolute_value(old_gradient - gradient) < numeric_limits<double>::min())
+       || absolute_value(old_parameters - parameters) < 1.0e-99
+       || absolute_value(old_gradient - gradient) < 1.0e-99)
        {
            inverse_hessian.initialize_identity();
        }
@@ -1386,7 +1381,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        // Reset training direction when training rate is 0
 
        if(epoch != 0
-       && abs(learning_rate) < numeric_limits<double>::min())
+       && abs(learning_rate) < 1.0e-99)
        {
            training_direction = calculate_gradient_descent_training_direction(gradient);
 
@@ -1580,7 +1575,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        training_loss = loss_index_pointer->calculate_training_loss();
        selection_error = minimum_selection_error;
    }
-
+*/
    return results;
 }
 
@@ -2076,12 +2071,12 @@ string QuasiNewtonMethod::object_to_string() const
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<string> QuasiNewtonMethod::to_string_matrix() const
+Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
     ostringstream buffer;
 
-    Vector<string> labels;
-    Vector<string> values;
+    vector<string> labels;
+    vector<string> values;
 
     // Inverse hessian approximation method
 
@@ -2205,14 +2200,14 @@ Matrix<string> QuasiNewtonMethod::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const size_t rows_number = labels.size();
-   const size_t columns_number = 2;
+   const int rows_number = labels.size();
+   const int columns_number = 2;
 
-   Matrix<string> string_matrix(rows_number, columns_number);
-
+   Tensor<string, 2> string_matrix(rows_number, columns_number);
+/*
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-
+*/
     return string_matrix;
 }
 
@@ -2520,7 +2515,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_selection_error_decreases = static_cast<size_t>(atoi(element->GetText()));
+          const int new_maximum_selection_error_decreases = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -2539,7 +2534,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-           const size_t new_maximum_epochs_number = static_cast<size_t>(atoi(element->GetText()));
+           const int new_maximum_epochs_number = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -2634,7 +2629,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_display_period = static_cast<size_t>(atoi(element->GetText()));
+          const int new_display_period = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -2653,7 +2648,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
+          const int new_save_period = static_cast<int>(atoi(element->GetText()));
 
           try
           {

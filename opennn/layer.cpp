@@ -108,19 +108,19 @@ void Layer::randomize_parameters_normal(const double&, const double&)
 }
 
 
-void Layer::set_parameters(const Vector<double>&)
+void Layer::set_parameters(const Tensor<type, 1>&)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_parameters(const Vector<double>&) method.\n"
+           << "set_parameters(const Tensor<type, 1>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-size_t Layer::get_parameters_number() const
+int Layer::get_parameters_number() const
 {
     ostringstream buffer;
 
@@ -132,7 +132,7 @@ size_t Layer::get_parameters_number() const
 }
 
 
-Vector<double> Layer::get_parameters() const
+Tensor<type, 1> Layer::get_parameters() const
 {
     ostringstream buffer;
 
@@ -144,84 +144,84 @@ Vector<double> Layer::get_parameters() const
 }
 
 
-Tensor<double> Layer::calculate_outputs(const Tensor<double> &)
+Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<double> &) method.\n"
+           << "calculate_outputs(const Tensor<type, 2> &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Tensor<double> Layer::calculate_outputs(const Tensor<double> &, const Vector<double> &)
+Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &, const Tensor<type, 1> &)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<double> &, const Vector<double> &) method.\n"
+           << "calculate_outputs(const Tensor<type, 2> &, const Tensor<type, 1> &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Vector<double> Layer::calculate_error_gradient(const Tensor<double>&,
+Tensor<type, 1> Layer::calculate_error_gradient(const Tensor<type, 2>&,
                                                const Layer::ForwardPropagation&,
-                                               const Tensor<double>&)
+                                               const Tensor<type, 2>&)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&) method.\n"
+           << "calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<double>&)
+Layer::ForwardPropagation Layer::calculate_forward_propagation(const Tensor<type, 2>&)
  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_forward_propagation(const Tensor<double>&) method.\n"
+           << "calculate_forward_propagation(const Tensor<type, 2>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
  }
 
 
-Tensor<double> Layer::calculate_output_delta(const Tensor<double> &, const Tensor<double> &) const
+Tensor<type, 2> Layer::calculate_output_delta(const Tensor<type, 2> &, const Tensor<type, 2> &) const
  {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_output_delta(const Tensor<double> &, const Tensor<double> &) const method.\n"
+           << "calculate_output_delta(const Tensor<type, 2> &, const Tensor<type, 2> &) const method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Tensor<double> Layer::calculate_hidden_delta(Layer *,
-                                             const Tensor<double> &,
-                                             const Tensor<double> &,
-                                             const Tensor<double> &) const
+Tensor<type, 2> Layer::calculate_hidden_delta(Layer *,
+                                             const Tensor<type, 2> &,
+                                             const Tensor<type, 2> &,
+                                             const Tensor<type, 2> &) const
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_hidden_delta(Layer *, const Tensor<double> &, const Tensor<double> &, const Tensor<double> &) const method.\n"
+           << "calculate_hidden_delta(Layer *, const Tensor<type, 2> &, const Tensor<type, 2> &, const Tensor<type, 2> &) const method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-Vector<size_t> Layer::get_input_variables_dimensions() const
+vector<int> Layer::get_input_variables_dimensions() const
 {
     ostringstream buffer;
 
@@ -233,7 +233,7 @@ Vector<size_t> Layer::get_input_variables_dimensions() const
 }
 
 
-size_t Layer::get_inputs_number() const
+int Layer::get_inputs_number() const
 {
     ostringstream buffer;
 
@@ -245,7 +245,7 @@ size_t Layer::get_inputs_number() const
 }
 
 
-size_t Layer::get_neurons_number() const
+int Layer::get_neurons_number() const
 {
     ostringstream buffer;
 
@@ -257,24 +257,24 @@ size_t Layer::get_neurons_number() const
 }
 
 
-void Layer::set_inputs_number(const size_t &)
+void Layer::set_inputs_number(const int &)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_inputs_number(const size_t &) method.\n"
+           << "set_inputs_number(const int &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-void Layer::set_neurons_number(const size_t &)
+void Layer::set_neurons_number(const int &)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_neurons_number(const size_t &) method.\n"
+           << "set_neurons_number(const int &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

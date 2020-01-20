@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <limits>
+#include <limits.h>
 #include <cmath>
 #include <ctime>
 
@@ -27,6 +28,7 @@
 
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
+#include "config.h"
 
 
 namespace OpenNN
@@ -80,9 +82,9 @@ public:
    const double& get_minimum_loss_increase() const;
    const double& get_loss_goal() const;
    const double& get_gradient_norm_goal() const;
-   const size_t& get_maximum_selection_error_decreases() const;
+   const int& get_maximum_selection_error_decreases() const;
 
-   const size_t& get_maximum_epochs_number() const;
+   const int& get_maximum_epochs_number() const;
    const double& get_maximum_time() const;
 
    const bool& get_return_minimum_selection_error_neural_network() const;
@@ -115,7 +117,7 @@ public:
    void set_error_gradient_norm(const double&);
    void set_error_learning_rate(const double&);
 
-   void set_maximum_epochs_number(const size_t&);
+   void set_maximum_epochs_number(const int&);
 
    // Stopping criteria
 
@@ -124,7 +126,7 @@ public:
    void set_minimum_loss_decrease(const double&);
    void set_loss_goal(const double&);
    void set_gradient_norm_goal(const double&);
-   void set_maximum_selection_error_increases(const size_t&);
+   void set_maximum_selection_error_increases(const int&);
 
    void set_maximum_time(const double&);
 
@@ -138,11 +140,11 @@ public:
 
    // Utilities
 
-   void set_display_period(const size_t&);
+   void set_display_period(const int&);
 
    // Training methods
 
-   Vector<double> calculate_training_direction(const Vector<double>&) const;
+   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const;
 
    Results perform_training();
 
@@ -152,7 +154,7 @@ public:
 
    // Serialization methods
 
-   Matrix<string> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const;
 
    tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
@@ -214,19 +216,19 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_error_decreases;
+   int maximum_selection_error_decreases;
 
    /// Initial batch size
 
-   size_t training_initial_batch_size;
+   int training_initial_batch_size;
 
    /// Maximum training batch size
 
-   size_t training_maximum_batch_size;
+   int training_maximum_batch_size;
 
    /// Maximum epochs number
 
-   size_t maximum_epochs_number;
+   int maximum_epochs_number;
 
    /// Maximum training time. It is used as a stopping criterion.
 

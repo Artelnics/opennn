@@ -24,15 +24,8 @@
 
 // OpenNN includes
 
-//#include "opennn.h"
-
-#include "vector.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "statistics.h"
-
-
-
+#include "config.h"
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -45,13 +38,13 @@ public:
 
     struct Results
     {
-      Vector<Vector<size_t>> clusters;
+      vector<vector<int>> clusters;
     };
 
 
-    Results calculate_k_means(const Matrix<double>&, const size_t&) const;
+    Results calculate_k_means(const Tensor<type, 2>&, const int&) const;
 
-    size_t calculate_sample_index_proportional_probability(const Vector<double>&) const;
+    int calculate_sample_index_proportional_probability(const Tensor<type, 1>&) const;
 };
 
 }

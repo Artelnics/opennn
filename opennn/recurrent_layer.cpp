@@ -30,7 +30,7 @@ RecurrentLayer::RecurrentLayer() : Layer()
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
 
-RecurrentLayer::RecurrentLayer(const size_t& new_inputs_number, const size_t& new_neurons_number) : Layer()
+RecurrentLayer::RecurrentLayer(const int& new_inputs_number, const int& new_neurons_number) : Layer()
 {
    set(new_inputs_number, new_neurons_number);
 
@@ -56,23 +56,23 @@ RecurrentLayer::~RecurrentLayer()
 }
 
 
-Vector<size_t> RecurrentLayer::get_input_variables_dimensions() const
+vector<int> RecurrentLayer::get_input_variables_dimensions() const
 {
-    return Vector<size_t>();
+    return vector<int>();
 }
 
 
 /// Returns the number of inputs to the layer.
 
-size_t RecurrentLayer::get_inputs_number() const
+int RecurrentLayer::get_inputs_number() const
 {
-    return input_weights.get_rows_number();
+    return input_weights.dimension(0);
 }
 
 
 /// Returns the size of the neurons vector.
 
-size_t RecurrentLayer::get_neurons_number() const
+int RecurrentLayer::get_neurons_number() const
 {
    return biases.size();
 }
@@ -80,7 +80,7 @@ size_t RecurrentLayer::get_neurons_number() const
 
 /// Returns the hidden states of the layer.
 
-Vector<double> RecurrentLayer::get_hidden_states() const
+Tensor<type, 1> RecurrentLayer::get_hidden_states() const
 {
    return hidden_states;
 }
@@ -88,16 +88,16 @@ Vector<double> RecurrentLayer::get_hidden_states() const
 
 /// Returns the number of parameters (biases and weights) of the layer.
 
-size_t RecurrentLayer::get_parameters_number() const
+int RecurrentLayer::get_parameters_number() const
 {
-    const size_t neurons_number = get_neurons_number();
-    const size_t inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
 
     return  neurons_number * (1 + inputs_number + neurons_number);
 }
 
 
-size_t RecurrentLayer::get_timesteps() const
+int RecurrentLayer::get_timesteps() const
 {
    return timesteps;
 }
@@ -107,7 +107,7 @@ size_t RecurrentLayer::get_timesteps() const
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
 
-Vector<double> RecurrentLayer::get_biases() const
+Tensor<type, 1> RecurrentLayer::get_biases() const
 {
    return biases;
 }
@@ -118,7 +118,7 @@ Vector<double> RecurrentLayer::get_biases() const
 /// The number of rows is the number of neurons in the layer.
 /// The number of columns is the number of inputs to the layer.
 
-Matrix<double> RecurrentLayer::get_input_weights() const
+Tensor<type, 2> RecurrentLayer::get_input_weights() const
 {
    return input_weights;
 }
@@ -129,25 +129,25 @@ Matrix<double> RecurrentLayer::get_input_weights() const
 /// The number of rows is the number of neurons in the layer.
 /// The number of columns is the number of neurons to the layer.
 
-Matrix<double> RecurrentLayer::get_recurrent_weights() const
+Tensor<type, 2> RecurrentLayer::get_recurrent_weights() const
 {
    return recurrent_weights;
 }
 
 
-size_t RecurrentLayer::get_biases_number() const
+int RecurrentLayer::get_biases_number() const
 {
     return biases.size();
 }
 
 
-size_t RecurrentLayer::get_input_weights_number() const
+int RecurrentLayer::get_input_weights_number() const
 {
     return input_weights.size();
 }
 
 
-size_t RecurrentLayer::get_recurrent_weights_number() const
+int RecurrentLayer::get_recurrent_weights_number() const
 {
     return recurrent_weights.size();
 }
@@ -157,13 +157,16 @@ size_t RecurrentLayer::get_recurrent_weights_number() const
 /// The format is a vector of real values. 
 /// The size is the number of parameters in the layer. 
 
-Vector<double> RecurrentLayer::get_parameters() const
+Tensor<type, 1> RecurrentLayer::get_parameters() const
 {
-    Matrix<double> input_weights = get_input_weights();
-    Matrix<double> recurrent_weights = get_recurrent_weights();
-    Vector<double> biases = get_biases();
+/*
+    Tensor<type, 2> input_weights = get_input_weights();
+    Tensor<type, 2> recurrent_weights = get_recurrent_weights();
+    Tensor<type, 1> biases = get_biases();
 
     return input_weights.to_vector().assemble(recurrent_weights.to_vector()).assemble(biases);
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -179,11 +182,14 @@ const RecurrentLayer::ActivationFunction& RecurrentLayer::get_activation_functio
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
 
-Vector<double> RecurrentLayer::get_biases(const Vector<double>& parameters) const
+Tensor<type, 1> RecurrentLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
-    const size_t biases_number = biases.size();
+/*
+    const int biases_number = biases.size();
 
     return parameters.get_last(biases_number);
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -192,14 +198,18 @@ Vector<double> RecurrentLayer::get_biases(const Vector<double>& parameters) cons
 /// The number of rows is the number of inputs in the layer.
 /// The number of columns is the number of neurons to the layer.
 
-Matrix<double> RecurrentLayer::get_input_weights(const Vector<double>& parameters) const
+Tensor<type, 2> RecurrentLayer::get_input_weights(const Tensor<type, 1>& parameters) const
 {
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+/*
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t input_weights_number = input_weights.size();
+    const int input_weights_number = input_weights.size();
 
     return parameters.get_first(input_weights_number).to_matrix(inputs_number, neurons_number);
+*/
+    return Tensor<type, 2>();
+
 }
 
 
@@ -208,26 +218,36 @@ Matrix<double> RecurrentLayer::get_input_weights(const Vector<double>& parameter
 /// The number of rows is the number of neurons in the layer.
 /// The number of columns is the number of neurons to the layer.
 
-Matrix<double> RecurrentLayer::get_recurrent_weights(const Vector<double>& parameters) const
+Tensor<type, 2> RecurrentLayer::get_recurrent_weights(const Tensor<type, 1>& parameters) const
 {
-    const size_t neurons_number = get_neurons_number();
+/*
+    const int neurons_number = get_neurons_number();
 
-    const size_t weights_number = input_weights.size();
-    const size_t recurrent_weights_number = recurrent_weights.size();
+    const int weights_number = input_weights.size();
+    const int recurrent_weights_number = recurrent_weights.size();
 
     return parameters.get_subvector(weights_number, weights_number + recurrent_weights_number - 1 ).to_matrix(neurons_number, neurons_number);
+*/
+    return Tensor<type, 2>();
 }
 
 
-Matrix<double> RecurrentLayer::get_input_weights_transpose() const
+Tensor<type, 2> RecurrentLayer::get_input_weights_transpose() const
 {
+/*
     return input_weights.calculate_transpose();
+*/
+    return Tensor<type, 2>();
 }
 
 
-Matrix<double> RecurrentLayer::get_recurrent_weights_transpose() const
+Tensor<type, 2> RecurrentLayer::get_recurrent_weights_transpose() const
 {
+/*
     return recurrent_weights.calculate_transpose();
+*/
+    return Tensor<type, 2>();
+
 }
 
 
@@ -321,9 +341,9 @@ void RecurrentLayer::set()
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of neuron.
 
-void RecurrentLayer::set(const size_t& new_inputs_number, const size_t& new_neurons_number)
+void RecurrentLayer::set(const int& new_inputs_number, const int& new_neurons_number)
 {
-
+/*
     biases.set(new_neurons_number);
 
     input_weights.set(new_inputs_number, new_neurons_number);
@@ -331,7 +351,7 @@ void RecurrentLayer::set(const size_t& new_inputs_number, const size_t& new_neur
     recurrent_weights.set(new_neurons_number, new_neurons_number);
 
     hidden_states.set(new_neurons_number, 0.0); // memory
-
+*/
     set_default();
 }
 
@@ -366,25 +386,26 @@ void RecurrentLayer::set_default()
 /// The new synaptic weights are initialized at random. 
 /// @param new_inputs_number Number of layer inputs.
 
-void RecurrentLayer::set_inputs_number(const size_t& new_inputs_number)
+void RecurrentLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const size_t neurons_number = get_neurons_number();
-
+    const int neurons_number = get_neurons_number();
+/*
     input_weights.set(new_inputs_number, neurons_number);
-
+*/
 }
 
 
-void RecurrentLayer::set_input_shape(const Vector<size_t>& size)
+void RecurrentLayer::set_input_shape(const vector<int>& size)
 {
     if(size.empty() || size.size() > 1)
     {
 //        throw exception(string("EXCEPTION: The new size is incompatible."));
     }
 
-    const size_t new_size = size.get_first();
+    const int new_size = size[0];
 
     set_inputs_number(new_size);
+
 }
 
 
@@ -392,74 +413,82 @@ void RecurrentLayer::set_input_shape(const Vector<size_t>& size)
 /// All the parameters are also initialized at random.
 /// @param new_neurons_number New number of neurons in the layer.
 
-void RecurrentLayer::set_neurons_number(const size_t& new_neurons_number)
+void RecurrentLayer::set_neurons_number(const int& new_neurons_number)
 {    
-    const size_t inputs_number = get_inputs_number();
-
+    const int inputs_number = get_inputs_number();
+/*
     biases.set(new_neurons_number);
 
     input_weights.set(inputs_number, new_neurons_number);
 
     recurrent_weights.set(new_neurons_number, new_neurons_number);
+*/
 }
 
 
-void RecurrentLayer::set_timesteps(const size_t & new_timesteps)
+void RecurrentLayer::set_timesteps(const int & new_timesteps)
 {
     timesteps = new_timesteps;
 }
 
 
-void RecurrentLayer::set_biases(const Vector<double>& new_biases)
+void RecurrentLayer::set_biases(const Tensor<type, 1>& new_biases)
 {
+/*
     biases.set(new_biases);
+*/
 }
 
 
-void RecurrentLayer::set_input_weights(const Matrix<double>& new_input_weights)
+void RecurrentLayer::set_input_weights(const Tensor<type, 2>& new_input_weights)
 {
+/*
     input_weights.set(new_input_weights);
+*/
 }
 
-void RecurrentLayer::set_recurrent_weights(const Matrix<double>& new_recurrent_weights)
+void RecurrentLayer::set_recurrent_weights(const Tensor<type, 2>& new_recurrent_weights)
 {
+/*
     recurrent_weights.set(new_recurrent_weights);
+*/
 }
 
 
 /// Sets the parameters of this layer. 
 /// @param new_parameters Parameters vector for that layer. 
 
-void RecurrentLayer::set_parameters(const Vector<double>& new_parameters)
+void RecurrentLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const size_t parameters_number = get_parameters_number();
+    const int parameters_number = get_parameters_number();
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
-    const size_t new_parameters_size = new_parameters.size();
+    const int new_parameters_size = new_parameters.size();
 
    if(new_parameters_size != parameters_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "void set_parameters(const Vector<double>&) method.\n"
+             << "void set_parameters(const Tensor<type, 1>&) method.\n"
              << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
 	  throw logic_error(buffer.str());
    }
 
    #endif
-
+/*
    input_weights = new_parameters.get_subvector(0, inputs_number * neurons_number -1) .to_matrix(inputs_number, neurons_number);
 
    recurrent_weights = new_parameters.get_subvector(inputs_number * neurons_number,inputs_number * neurons_number + neurons_number * neurons_number -1) .to_matrix(neurons_number, neurons_number);
 
    biases = new_parameters.get_last(neurons_number);
+*/
 }
 
 
@@ -551,7 +580,7 @@ void RecurrentLayer::set_display(const bool& new_display)
 
 void RecurrentLayer::initialize_hidden_states(const double& value)
 {
-    hidden_states.initialize(value);
+    hidden_states.setConstant(value);
 }
 
 
@@ -560,7 +589,7 @@ void RecurrentLayer::initialize_hidden_states(const double& value)
 
 void RecurrentLayer::initialize_biases(const double& value)
 {
-    biases.initialize(value);
+    biases.setConstant(value);
 }
 
 /// Initializes the input weights of all the neurons in the layer of neurons neuron with a given value.
@@ -568,7 +597,7 @@ void RecurrentLayer::initialize_biases(const double& value)
 
 void RecurrentLayer::initialize_input_weights(const double& value)
 {
-    input_weights.initialize(value);
+    input_weights.setConstant(value);
 }
 
 
@@ -577,13 +606,13 @@ void RecurrentLayer::initialize_input_weights(const double& value)
 
 void RecurrentLayer::initialize_recurrent_weights(const double& value)
 {
-    recurrent_weights.initialize(value);
+    recurrent_weights.setConstant(value);
 }
 
 
 void RecurrentLayer::initialize_input_weights_Glorot(const double& minimum,const double& maximum)
 {
-     input_weights.randomize_uniform(minimum, maximum);
+     input_weights.setRandom();
 }
 
 
@@ -592,13 +621,13 @@ void RecurrentLayer::initialize_input_weights_Glorot(const double& minimum,const
 
 void RecurrentLayer::initialize_parameters(const double& value)
 {
-    biases.initialize(value);
+    biases.setConstant(value);
 
-    input_weights.initialize(value);
+    input_weights.setConstant(value);
 
-    recurrent_weights.initialize(value);
+    recurrent_weights.setConstant(value);
 
-    hidden_states.initialize(0.0);
+    hidden_states.setZero();
 }
 
 
@@ -609,11 +638,11 @@ void RecurrentLayer::initialize_parameters(const double& value)
 
 void RecurrentLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
 {
-    biases.randomize_uniform(minimum, maximum);
+    biases.setRandom();
 
-    input_weights.randomize_uniform(minimum, maximum);
+    input_weights.setRandom();
 
-    recurrent_weights.randomize_uniform(minimum, maximum);
+    recurrent_weights.setRandom();
 }
 
 
@@ -624,11 +653,11 @@ void RecurrentLayer::randomize_parameters_uniform(const double& minimum, const d
 
 void RecurrentLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
 {
-     biases.randomize_normal(mean, standard_deviation);
+     biases.setRandom();
 
-     input_weights.randomize_normal(mean, standard_deviation);
+     input_weights.setRandom();
 
-     recurrent_weights.randomize_normal(mean, standard_deviation);
+     recurrent_weights.setRandom();
 }
 
 
@@ -636,68 +665,74 @@ void RecurrentLayer::randomize_parameters_normal(const double& mean, const doubl
 
 double RecurrentLayer::calculate_parameters_norm() const
 {
+/*
     return(l2_norm(get_parameters()));
+*/
+    return 0.0;
 }
 
 
-Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inputs) const
+Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&) const method.\n"
               << "Size of layer inputs (" << inputs.size() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
-
+/*
     return dot(inputs, input_weights) + biases + dot(hidden_states, recurrent_weights);
+*/
+
+    return Tensor<type, 1>();
 }
 
 
-Tensor<double> RecurrentLayer::calculate_combinations(const Tensor<double>& inputs)
+Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& inputs)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    const size_t inputs_columns_number = inputs.get_dimension(1);
+    const int inputs_columns_number = inputs.dimension(1);
 
     if(inputs_columns_number != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Tensor<double> calculate_combinations(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const method.\n"
               << "Number of columns("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs("<<inputs_number<<").\n";
 
        throw logic_error(buffer.str());
     }
     #endif
 
-    const size_t instances_number = inputs.get_dimension(0);
+    const int instances_number = inputs.dimension(0);
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
+/*
+    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
 
-    Tensor<double> outputs(Vector<size_t>({instances_number, neurons_number}));
-
-    for(size_t i = 0; i < instances_number; i++)
+    for(int i = 0; i < instances_number; i++)
     {
-        if(i%timesteps == 0) hidden_states.initialize(0.0);
+        if(i%timesteps == 0) hidden_states.setZero();
 
-        const Vector<double> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.get_row(i);
 
-        const Vector<double> combinations = calculate_combinations(current_inputs);
+        const Tensor<type, 1> combinations = calculate_combinations(current_inputs);
 
-        const Vector<double> activations = calculate_activations(combinations);
+        const Tensor<type, 1> activations = calculate_activations(combinations);
 
         hidden_states = activations;
 
@@ -705,21 +740,24 @@ Tensor<double> RecurrentLayer::calculate_combinations(const Tensor<double>& inpu
       }
 
     return outputs;
+*/
+    return Tensor<type, 2>();
 }
 
 
-Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inputs, const Vector<double>& parameters) const
+Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs, const Tensor<type, 1>& parameters) const
 {    
+/*
     #ifdef __OPENNN_DEBUG__
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of layer inputs (" << inputs.size() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -730,7 +768,7 @@ Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inpu
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of layer parameters (" << parameters.size() << ") must be equal to number of layer parameters (" << get_parameters_number() << ").\n";
 
        throw logic_error(buffer.str());
@@ -738,78 +776,79 @@ Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inpu
 
     #endif
 
-    const Matrix<double> new_input_weights = get_input_weights(parameters);
-    const Matrix<double> new_recurent_weights = get_recurrent_weights(parameters);
-    const Vector<double> new_biases = get_biases(parameters);
+    const Tensor<type, 2> new_input_weights = get_input_weights(parameters);
+    const Tensor<type, 2> new_recurent_weights = get_recurrent_weights(parameters);
+    const Tensor<type, 1> new_biases = get_biases(parameters);
 
     return dot(inputs, new_input_weights) + new_biases + dot(hidden_states,new_recurent_weights);
+*/
+    return Tensor<type, 1>();
 }
 
 
-Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inputs, const Vector<double>& new_biases, const Matrix<double>& new_input_weights, const Matrix<double>& new_recurrent_weights) const
+Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_input_weights, const Tensor<type, 2>& new_recurrent_weights) const
 {
 
     #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
     if(new_biases.size() != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
               << "Size of biases must be equal to number of neurons.\n";
 
        throw logic_error(buffer.str());
     }
-
 
     if(inputs.size() != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
               << "Size of layer inputs (" << inputs.size() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
        throw logic_error(buffer.str());
     }
 
-    if(new_input_weights.get_rows_number() != inputs_number)
+    if(new_input_weights.dimension(0) != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
-              << "Rows number of input weights  (" << new_input_weights.get_rows_number() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
+              << "Rows number of input weights  (" << new_input_weights.dimension(0) << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
        throw logic_error(buffer.str());
     }
 
 
-    if(new_input_weights.get_columns_number() != neurons_number)
+    if(new_input_weights.dimension(1) != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
-              << "Columns number of weight  (" << new_input_weights.get_columns_number() << ") must be equal to number of neurons number (" << neurons_number << ").\n";
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
+              << "Columns number of weight  (" << new_input_weights.dimension(1) << ") must be equal to number of neurons number (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
     }
 
 
-    if(new_recurrent_weights.get_columns_number() != neurons_number  || new_recurrent_weights.get_rows_number() != neurons_number )
+    if(new_recurrent_weights.dimension(1) != neurons_number  || new_recurrent_weights.dimension(0) != neurons_number )
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
-              << "Columns number of recurrent weight  (" <<new_recurrent_weights.get_columns_number()  << ") must be equal to number of neurons number (" << neurons_number << ").\n"
-              << "Rows number of recurrent weight  (" <<new_recurrent_weights.get_rows_number()  << ") must be equal to number of neurons number (" << neurons_number << ").\n";
+              << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
+              << "Columns number of recurrent weight  (" <<new_recurrent_weights.dimension(1)  << ") must be equal to number of neurons number (" << neurons_number << ").\n"
+              << "Rows number of recurrent weight  (" <<new_recurrent_weights.dimension(0)  << ") must be equal to number of neurons number (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
     }
@@ -817,35 +856,35 @@ Vector<double> RecurrentLayer::calculate_combinations(const Vector<double>& inpu
 
     #endif
 
-    Vector<double> combinations(get_neurons_number());
-
+    Tensor<type, 1> combinations(get_neurons_number());
+/*
     combinations = dot(inputs, new_input_weights) + new_biases + dot(hidden_states, new_recurrent_weights);
-
+*/
     return combinations ;
 }
 
 
-Vector<double> RecurrentLayer::calculate_activations(const Vector<double>& combinations) const
+Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t combinations_number = combinations.size();
+    const int combinations_number = combinations.size();
 
     if(combinations_number != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Vector<double> calculate_activations(const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_activations(const Tensor<type, 1>&) const method.\n"
               << "Size of combinations (" << combinations_number <<") must be equal to number of neurons("<< neurons_number <<") .\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
-
+/*
     switch(activation_function)
     {
         case Linear: return linear(combinations);
@@ -870,13 +909,14 @@ Vector<double> RecurrentLayer::calculate_activations(const Vector<double>& combi
 
         case ExponentialLinear: return exponential_linear(combinations);
     }
-
-    return Vector<double>();
+*/
+    return Tensor<type, 1>();
 }
 
 
-Tensor<double> RecurrentLayer::calculate_activations(const Tensor<double>& combinations) const
+Tensor<type, 2> RecurrentLayer::calculate_activations(const Tensor<type, 2>& combinations) const
 {
+/*
     switch(activation_function)
     {
         case Linear: return linear(combinations);
@@ -901,32 +941,32 @@ Tensor<double> RecurrentLayer::calculate_activations(const Tensor<double>& combi
 
         case ExponentialLinear: return exponential_linear(combinations);
     }
-
-    return Tensor<double>();
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> RecurrentLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
+Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t combinations_number = combinations.get_dimension(1);
+    const int combinations_number = combinations.dimension(1);
 
     if(combinations_number != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Matrix<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
               << "Number of combinations (" << combinations_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
-
+/*
     switch(activation_function)
     {
         case Linear: return linear_derivatives(combinations);
@@ -951,53 +991,55 @@ Tensor<double> RecurrentLayer::calculate_activations_derivatives(const Tensor<do
 
         case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
-
-    return Tensor<double> ();
+*/
+    return Tensor<type, 2> ();
 }
 
-void RecurrentLayer::update_hidden_states(const Vector<double>& inputs)
+void RecurrentLayer::update_hidden_states(const Tensor<type, 1>& inputs)
 {
-    const Vector<double> combinations = calculate_combinations(inputs);
+/*
+    const Tensor<type, 1> combinations = calculate_combinations(inputs);
 
     hidden_states = calculate_activations(combinations);
+*/
 }
 
 
-Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs)
+Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    const size_t inputs_columns_number = inputs.get_dimension(1);
+    const int inputs_columns_number = inputs.dimension(1);
 
     if(inputs_columns_number != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
               << "Number of columns("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs("<<inputs_number<<").\n";
 
        throw logic_error(buffer.str());
     }
     #endif
 
-    const size_t instances_number = inputs.get_dimension(0);
+    const int instances_number = inputs.dimension(0);
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
+/*
+    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
 
-    Tensor<double> outputs(Vector<size_t>({instances_number, neurons_number}));
-
-    for(size_t i = 0; i < instances_number; i++)
+    for(int i = 0; i < instances_number; i++)
     {
-        if(i%timesteps == 0) hidden_states.initialize(0.0);
+        if(i%timesteps == 0) hidden_states.setZero();
 
-        const Vector<double> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.get_row(i);
 
-        const Vector<double> combinations = calculate_combinations(current_inputs);
+        const Tensor<type, 1> combinations = calculate_combinations(current_inputs);
 
-        const Vector<double> activations = calculate_activations(combinations);
+        const Tensor<type, 1> activations = calculate_activations(combinations);
 
         outputs.set_row(i, activations);
 
@@ -1005,23 +1047,25 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs)
       }
 
     return outputs;
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& parameters)
+Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    const size_t inputs_columns_number = inputs.get_dimension(1);
+    const int inputs_columns_number = inputs.dimension(1);
 
     if(inputs_columns_number != inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
               << "Number of columns("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs("<<inputs_number<<").\n";
 
        throw logic_error(buffer.str());
@@ -1032,28 +1076,28 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs, c
        ostringstream buffer;
 
        buffer << "OpenNN Exception: RecurrentLayer class.\n"
-              << "Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const method.\n"
               << "Size of layer parameters (" << parameters.size() << ") must be equal to number of layer parameters (" << get_parameters_number() << ").\n";
 
        throw logic_error(buffer.str());
     }
     #endif
 
-    const size_t instances_number = inputs.get_dimension(0);
+    const int instances_number = inputs.dimension(0);
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
+/*
+    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
 
-    Tensor<double> outputs(Vector<size_t>({instances_number, neurons_number}));
-
-    for(size_t i = 0; i < instances_number; i++)
+    for(int i = 0; i < instances_number; i++)
     {
-        if(i%timesteps == 0) hidden_states.initialize(0.0);
+        if(i%timesteps == 0) hidden_states.setZero();
 
-        const Vector<double> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.get_row(i);
 
-        const Vector<double> combinations = calculate_combinations(current_inputs, parameters);
+        const Tensor<type, 1> combinations = calculate_combinations(current_inputs, parameters);
 
-        const Vector<double> activations = calculate_activations(combinations);
+        const Tensor<type, 1> activations = calculate_activations(combinations);
 
         hidden_states = activations;
 
@@ -1061,27 +1105,29 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs, c
       }
 
     return outputs;
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs,
-                                                 const Vector<double>& new_biases,
-                                                 const Matrix<double>& new_input_weights,
-                                                 const Matrix<double>& new_recurrent_weights)
+Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
+                                                 const Tensor<type, 1>& new_biases,
+                                                 const Tensor<type, 2>& new_input_weights,
+                                                 const Tensor<type, 2>& new_recurrent_weights)
 { 
-   const size_t inputs_number = get_inputs_number();
-   const size_t neurons_number = get_neurons_number();
+   const int inputs_number = get_inputs_number();
+   const int neurons_number = get_neurons_number();
 
    #ifdef __OPENNN_DEBUG__
 
-   const size_t inputs_columns_number = inputs.get_dimension(1);
+   const int inputs_columns_number = inputs.dimension(1);
 
    if(inputs_columns_number != inputs_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+             << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
              << "Number of columns("<<inputs_columns_number<<") of inputs matrix must be equal to number of inputs("<<inputs_number<<").\n";
 
       throw logic_error(buffer.str());
@@ -1092,62 +1138,62 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs,
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
+             << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
              << "Size of biases must be equal to number of neurons.\n";
 
       throw logic_error(buffer.str());
    }
 
-   if(new_input_weights.get_rows_number() != inputs_number)
+   if(new_input_weights.dimension(0) != inputs_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
-             << "Rows number of weight  (" << new_input_weights.get_rows_number() << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
+             << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
+             << "Rows number of weight  (" << new_input_weights.dimension(0) << ") must be equal to number of layer inputs (" << inputs_number << ").\n";
 
       throw logic_error(buffer.str());
    }
 
 
-   if(new_input_weights.get_columns_number() != neurons_number)
+   if(new_input_weights.dimension(1) != neurons_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
-             << "Columns number of weight  (" << new_input_weights.get_columns_number() << ") must be equal to number of neurons number (" << neurons_number << ").\n";
+             << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
+             << "Columns number of weight  (" << new_input_weights.dimension(1) << ") must be equal to number of neurons number (" << neurons_number << ").\n";
 
       throw logic_error(buffer.str());
    }
 
 
-   if(new_recurrent_weights.get_columns_number() != neurons_number  || new_recurrent_weights.get_rows_number() != neurons_number )
+   if(new_recurrent_weights.dimension(1) != neurons_number  || new_recurrent_weights.dimension(0) != neurons_number )
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "Vector<double> calculate_combinations(const Vector<double>&, const Vector<double>&, const Matrix<double>& , const Matrix<double>&) const method.\n"
-             << "Columns number of recurrent weight  (" <<new_recurrent_weights.get_columns_number()  << ") must be equal to number of neurons number (" << neurons_number << ").\n"
-             << "Rows number of recurrent weight  (" <<new_recurrent_weights.get_rows_number()  << ") must be equal to number of neurons number (" << neurons_number << ").\n";
+             << "Tensor<type, 1> calculate_combinations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>& , const Tensor<type, 2>&) const method.\n"
+             << "Columns number of recurrent weight  (" <<new_recurrent_weights.dimension(1)  << ") must be equal to number of neurons number (" << neurons_number << ").\n"
+             << "Rows number of recurrent weight  (" <<new_recurrent_weights.dimension(0)  << ") must be equal to number of neurons number (" << neurons_number << ").\n";
 
       throw logic_error(buffer.str());
    }
    #endif
 
-    const size_t instances_number = inputs.get_dimension(0);
+    const int instances_number = inputs.dimension(0);
+/*
+    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
 
-    Tensor<double> outputs(Vector<size_t>({instances_number, neurons_number}));
-
-    for(size_t i = 0; i < instances_number; i++)
+    for(int i = 0; i < instances_number; i++)
     {
-        if(i%timesteps == 0) hidden_states.initialize(0.0);
+        if(i%timesteps == 0) hidden_states.setZero();
 
-        const Vector<double> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.get_row(i);
 
-        const Vector<double> combinations = calculate_combinations(current_inputs, new_biases, new_input_weights, new_recurrent_weights);
+        const Tensor<type, 1> combinations = calculate_combinations(current_inputs, new_biases, new_input_weights, new_recurrent_weights);
 
-        const Vector<double> activations = calculate_activations(combinations);
+        const Tensor<type, 1> activations = calculate_activations(combinations);
 
         hidden_states = activations;
 
@@ -1155,24 +1201,26 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs,
       }
 
     return outputs;
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> RecurrentLayer::calculate_output_delta(const Tensor<double>& activations_derivatives, const Tensor<double>& output_gradient) const
+Tensor<type, 2> RecurrentLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
 {
     return activations_derivatives*output_gradient;
 }
 
 
-Tensor<double> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                                      const Tensor<double>&,
-                                                      const Tensor<double>& activations_derivatives,
-                                                      const Tensor<double>& next_layer_delta) const
+Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
+                                                      const Tensor<type, 2>&,
+                                                      const Tensor<type, 2>& activations_derivatives,
+                                                      const Tensor<type, 2>& next_layer_delta) const
 {
 
     const Type layer_type = next_layer_pointer->get_type();
-
-    Matrix<double> synaptic_weights_transpose;
+/*
+    MatrixXd synaptic_weights_transpose;
 
     if(layer_type == Perceptron)
     {
@@ -1188,15 +1236,17 @@ Tensor<double> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
     }
 
     return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
+*/
+    return Tensor<type, 2>();
 }
 
 
 
-Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Tensor<double>& inputs)
+Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
 
-    const Tensor<double> combinations = calculate_combinations(inputs);
+    const Tensor<type, 2> combinations = calculate_combinations(inputs);
 
     layers.activations = calculate_activations(combinations);
 
@@ -1206,17 +1256,17 @@ Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Te
 }
 
 
-Vector<double> RecurrentLayer::calculate_error_gradient(const Tensor<double> & inputs,
+Tensor<type, 1> RecurrentLayer::calculate_error_gradient(const Tensor<type, 2> & inputs,
                                                         const Layer::ForwardPropagation& layers,
-                                                        const Tensor<double> & deltas)
+                                                        const Tensor<type, 2> & deltas)
 {
-    const size_t input_weights_number = get_input_weights_number();
-    const size_t recurrent_weights_number = get_recurrent_weights_number();
+    const int input_weights_number = get_input_weights_number();
+    const int recurrent_weights_number = get_recurrent_weights_number();
 
-    const size_t parameters_number = get_parameters_number();
+    const int parameters_number = get_parameters_number();
 
-    Vector<double> error_gradient(parameters_number, 0.0);
-
+    Tensor<type, 1> error_gradient(parameters_number);
+/*
     // Input weights
 
     error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,layers,deltas));
@@ -1230,41 +1280,43 @@ Vector<double> RecurrentLayer::calculate_error_gradient(const Tensor<double> & i
     error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,layers,deltas));
 
     return error_gradient;
+*/
+    return Tensor<type, 1>();
 }
 
 
-Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<double> & inputs,
+Tensor<type, 1> RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2> & inputs,
                                                                       const Layer::ForwardPropagation& layers,
-                                                                      const Tensor<double> & deltas)
+                                                                      const Tensor<type, 2> & deltas)
 {
-    const size_t instances_number = inputs.get_dimension(0);
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int instances_number = inputs.dimension(0);
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t parameters_number = inputs_number*neurons_number;
+    const int parameters_number = inputs_number*neurons_number;
 
     // Derivatives of combinations with respect to input weights
 
-    Matrix<double> combinations_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> combinations_weights_derivatives(parameters_number, neurons_number);
 
-    size_t column_index = 0;
-    size_t input_index = 0;
+    int column_index = 0;
+    int input_index = 0;
 
-    Vector<double> input_weights_gradient(parameters_number, 0.0);
-
-    for(size_t instance = 0; instance < instances_number; instance++)
+    Tensor<type, 1> input_weights_gradient(parameters_number);
+/*
+    for(int instance = 0; instance < instances_number; instance++)
     {
-        const Vector<double> current_inputs = inputs.get_row(instance);
+        const Tensor<type, 1> current_inputs = inputs.get_row(instance);
 
-        const Matrix<double> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
+        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
         if(instance%timesteps == 0)
         {
-            combinations_weights_derivatives.initialize(0.0);
+            combinations_weights_derivatives.setZero();
         }
         else
         {
-            const Vector<double> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
+            const Tensor<type, 1> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
 
             combinations_weights_derivatives = dot(combinations_weights_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
         }
@@ -1272,7 +1324,7 @@ Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tens
         column_index = 0;
         input_index = 0;
 
-        for(size_t i = 0; i < parameters_number; i++)
+        for(int i = 0; i < parameters_number; i++)
         {
             combinations_weights_derivatives(i, column_index) += current_inputs[input_index];
 
@@ -1287,46 +1339,46 @@ Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tens
 
         input_weights_gradient += dot(combinations_weights_derivatives, current_layer_deltas).to_vector();
     }
-
+*/
     return input_weights_gradient;
 }
 
 
-Vector<double> RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<double> &,
+Tensor<type, 1> RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<type, 2> &,
                                                                           const Layer::ForwardPropagation& forward_propagation,
-                                                                          const Tensor<double> & deltas)
+                                                                          const Tensor<type, 2> & deltas)
 {
-    const size_t instances_number = deltas.get_dimension(0);
-    const size_t neurons_number = get_neurons_number();
+    const int instances_number = deltas.dimension(0);
+    const int neurons_number = get_neurons_number();
 
-    const size_t parameters_number = neurons_number*neurons_number;
+    const int parameters_number = neurons_number*neurons_number;
 
     // Derivatives of combinations with respect to recurrent weights
 
-    Matrix<double> combinations_recurrent_weights_derivatives(parameters_number, neurons_number,  0.0);
+    Tensor<type, 2> combinations_recurrent_weights_derivatives(parameters_number, neurons_number);
 
-    Vector<double> recurrent_weights_gradient(parameters_number, 0.0);
-
-    for(size_t instance = 0; instance < instances_number-1; instance++)
+    Tensor<type, 1> recurrent_weights_gradient(parameters_number);
+/*
+    for(int instance = 0; instance < instances_number-1; instance++)
     {
-        Vector<double> current_activations = forward_propagation.activations.get_row(instance);
+        Tensor<type, 1> current_activations = forward_propagation.activations.get_row(instance);
 
-        const Matrix<double> next_layer_deltas = deltas.get_row(instance+1).to_column_matrix();
+        const Tensor<type, 2> next_layer_deltas = deltas.get_row(instance+1).to_column_matrix();
 
         if((instance+1)%timesteps == 0)
         {
-            combinations_recurrent_weights_derivatives.initialize(0.0);
+            combinations_recurrent_weights_derivatives.setZero();
         }
         else
         {
-            const Vector<double> activation_derivatives = forward_propagation.activations_derivatives.get_row(instance);
+            const Tensor<type, 1> activation_derivatives = forward_propagation.activations_derivatives.get_row(instance);
 
             combinations_recurrent_weights_derivatives = dot(combinations_recurrent_weights_derivatives.multiply_rows(activation_derivatives), recurrent_weights);
 
-            size_t column_index = 0;
-            size_t activation_index = 0;
+            int column_index = 0;
+            int activation_index = 0;
 
-            for(size_t i = 0; i < parameters_number; i++)
+            for(int i = 0; i < parameters_number; i++)
             {
                 combinations_recurrent_weights_derivatives(i, column_index) += current_activations[activation_index];
 
@@ -1342,40 +1394,40 @@ Vector<double> RecurrentLayer::calculate_recurrent_weights_error_gradient(const 
 
         recurrent_weights_gradient += dot(combinations_recurrent_weights_derivatives, next_layer_deltas).to_vector();
     }
-
+*/
     return recurrent_weights_gradient;
 }
 
 
 
-Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<double> & inputs,
+Tensor<type, 1> RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2> & inputs,
                                                                const Layer::ForwardPropagation& layers,
-                                                               const Tensor<double> & deltas)
+                                                               const Tensor<type, 2> & deltas)
 {
-    const size_t instances_number = inputs.get_dimension(0);
-    const size_t neurons_number = get_neurons_number();
+    const int instances_number = inputs.dimension(0);
+    const int neurons_number = get_neurons_number();
 
-    const size_t biases_number = get_biases_number();
+    const int biases_number = get_biases_number();
 
     // Derivatives of combinations with respect to biases
 
-    Matrix<double> combinations_biases_derivatives(biases_number, neurons_number,  0.0);
+    Tensor<type, 2> combinations_biases_derivatives(biases_number, neurons_number);
 
-    Vector<double> biases_gradient(biases_number, 0.0);
-
-    for(size_t instance = 0; instance < instances_number; instance++)
+    Tensor<type, 1> biases_gradient(biases_number);
+/*
+    for(int instance = 0; instance < instances_number; instance++)
     {
-        const Vector<double> current_inputs = inputs.get_row(instance);
+        const Tensor<type, 1> current_inputs = inputs.get_row(instance);
 
-        const Matrix<double> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
+        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
         if(instance%timesteps == 0)
         {
-            combinations_biases_derivatives.initialize(0.0);
+            combinations_biases_derivatives.setZero();
         }
         else
         {
-            const Vector<double> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
+            const Tensor<type, 1> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
 
             combinations_biases_derivatives = dot(combinations_biases_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
         }
@@ -1384,7 +1436,7 @@ Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<doub
 
         biases_gradient += dot(combinations_biases_derivatives, current_layer_deltas).to_vector();
     }
-
+*/
     return biases_gradient;
 }
 
@@ -1394,34 +1446,34 @@ Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<doub
 /// @param inputs_names Vector of strings with the name of the layer inputs. 
 /// @param outputs_names Vector of strings with the name of the layer outputs. 
 
-string RecurrentLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string RecurrentLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {  
    #ifdef __OPENNN_DEBUG__ 
 
-   const size_t neurons_number = get_neurons_number();
+   const int neurons_number = get_neurons_number();
 
-   const size_t inputs_number = get_inputs_number(); 
-   const size_t inputs_name_size = inputs_names.size();
+   const int inputs_number = get_inputs_number(); 
+   const int inputs_name_size = inputs_names.size();
 
    if(inputs_name_size != inputs_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
              << "Size of inputs name must be equal to number of layer inputs.\n";
 
 	  throw logic_error(buffer.str());
    }
 
-   const size_t outputs_name_size = outputs_names.size();
+   const int outputs_name_size = outputs_names.size();
 
    if(outputs_name_size != neurons_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
              << "Size of outputs name must be equal to number of neurons.\n";
 
 	  throw logic_error(buffer.str());
@@ -1430,19 +1482,19 @@ string RecurrentLayer::write_expression(const Vector<string>& inputs_names, cons
    #endif
 
    ostringstream buffer;
-
-   for(size_t j = 0; j < outputs_names.size(); j++)
+/*
+   for(int j = 0; j < outputs_names.size(); j++)
    {
        buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
 
-       for(size_t i = 0; i < inputs_names.size() - 1; i++)
+       for(int i = 0; i < inputs_names.size() - 1; i++)
        {
            buffer << " (" << inputs_names[i] << "*" << input_weights.get_column(j)[i] << ")+";
        }
 
        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << input_weights.get_column(j)[inputs_names.size() - 1] << "));\n";
 
-       for(size_t i = 0; i < outputs_names.size() - 1; i++)
+       for(int i = 0; i < outputs_names.size() - 1; i++)
        {
            buffer << " (hidden_states_" << std::to_string(i+1) << "*" << recurrent_weights.get_column(j)[i] << ")+";
        }
@@ -1450,15 +1502,15 @@ string RecurrentLayer::write_expression(const Vector<string>& inputs_names, cons
        buffer << " (hidden_states_" << std::to_string(outputs_names.size()) << "*" << recurrent_weights.get_column(j)[outputs_names.size() - 1] << "));\n";
 
    }
-
+*/
    return buffer.str();
 }
 
 
 string RecurrentLayer::object_to_string() const
 {
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
     ostringstream buffer;
 

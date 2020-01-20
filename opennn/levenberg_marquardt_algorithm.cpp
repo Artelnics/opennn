@@ -127,7 +127,7 @@ const double& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases() const
+const int& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases() const
 {
    return(maximum_selection_error_decreases);
 }
@@ -135,7 +135,7 @@ const size_t& LevenbergMarquardtAlgorithm::get_maximum_selection_error_decreases
 
 /// Returns the maximum number of iterations for training.
 
-const size_t& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
+const int& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 {
    return(maximum_epochs_number);
 }
@@ -570,7 +570,7 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const double& new_gradi
 /// Sets a new maximum number of selection failures. 
 /// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const size_t& new_maximum_selection_error_decreases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const int& new_maximum_selection_error_decreases)
 {
    maximum_selection_error_decreases = new_maximum_selection_error_decreases;
 }
@@ -579,7 +579,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(const si
 /// Sets a maximum number of iterations for training.
 /// @param new_maximum_epochs_number Maximum number of iterations for training.
 
-void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
+void LevenbergMarquardtAlgorithm::set_maximum_epochs_number(const int& new_maximum_epochs_number)
 {
    maximum_epochs_number = new_maximum_epochs_number;
 }
@@ -652,7 +652,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool
 /// @param new_display_period
 /// Number of iterations between the training showing progress. 
 
-void LevenbergMarquardtAlgorithm::set_display_period(const size_t& new_display_period)
+void LevenbergMarquardtAlgorithm::set_display_period(const int& new_display_period)
 {
    #ifdef __OPENNN_DEBUG__ 
      
@@ -742,15 +742,15 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    results.resize_training_history(1+maximum_epochs_number);
 
-   const size_t selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
+   const int selection_instances_number = loss_index_pointer->get_data_set_pointer()->get_selection_instances_number();
 
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
    double parameters_norm = 0.0;
 
@@ -763,16 +763,16 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    double selection_error = 0.0;
    double old_selection_error = 0.0;
 
-   size_t selection_failures = 0;
+   int selection_failures = 0;
 
    double gradient_norm = 0.0;
 
    // Training strategy stuff
 
-   Vector<double> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
    double parameters_increment_norm;
 
-   Vector<double> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 0.0;
 
    bool stop_training = false;
@@ -782,8 +782,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    double elapsed_time = 0.0;
 
    // Main loop
-
-   for(size_t epoch = 0; epoch <= maximum_epochs_number; epoch++)
+/*
+   for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network
 
@@ -1050,7 +1050,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
    results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
-
+*/
    return results;
 }
 
@@ -1076,12 +1076,12 @@ string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
+Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
     ostringstream buffer;
 
-    Vector<string> labels;
-    Vector<string> values;
+    vector<string> labels;
+    vector<string> values;
 
     // Damping parameter factor
 
@@ -1190,14 +1190,14 @@ Matrix<string> LevenbergMarquardtAlgorithm::to_string_matrix() const
    values.push_back(buffer.str());
 
 
-   const size_t rows_number = labels.size();
-   const size_t columns_number = 2;
+   const int rows_number = labels.size();
+   const int columns_number = 2;
 
-   Matrix<string> string_matrix(rows_number, columns_number);
-
+   Tensor<string, 2> string_matrix(rows_number, columns_number);
+/*
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-
+*/
     return string_matrix;
 }
 
@@ -1896,7 +1896,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(maximum_selection_error_decreases_element)
    {
-      const size_t new_maximum_selection_error_decreases = static_cast<size_t>(atoi(maximum_selection_error_decreases_element->GetText()));
+      const int new_maximum_selection_error_decreases = static_cast<int>(atoi(maximum_selection_error_decreases_element->GetText()));
 
       try
       {
@@ -1914,7 +1914,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(maximum_epochs_number_element)
    {
-      const size_t new_maximum_epochs_number = static_cast<size_t>(atoi(maximum_epochs_number_element->GetText()));
+      const int new_maximum_epochs_number = static_cast<int>(atoi(maximum_epochs_number_element->GetText()));
 
       try
       {
@@ -1986,7 +1986,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(display_period_element)
    {
-      const size_t new_display_period = static_cast<size_t>(atoi(display_period_element->GetText()));
+      const int new_display_period = static_cast<int>(atoi(display_period_element->GetText()));
 
       try
       {
@@ -2004,7 +2004,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
        if(element)
        {
-          const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
+          const int new_save_period = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -2058,18 +2058,18 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
-Vector<double> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Matrix<double>& A, const Vector<double>& b) const
+Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b) const
 {
-    const size_t n = A.get_rows_number();
+    const int n = A.dimension(0);
 
-    Vector<double> x(n);
-
-    const Eigen::Map<Eigen::MatrixXd> A_eigen((double*)A.data(), static_cast<Eigen::Index>(n), static_cast<Eigen::Index>(n));
-    const Eigen::Map<Eigen::VectorXd> b_eigen((double*)b.data(), static_cast<Eigen::Index>(n));
-    Eigen::Map<Eigen::VectorXd> x_eigen(x.data(), static_cast<Eigen::Index>(n));
+    Tensor<type, 1> x(n);
+/*
+    const Map<MatrixXd> A_eigen((double*)A.data(), static_cast<Index>(n), static_cast<Index>(n));
+    const Map<VectorXd> b_eigen((double*)b.data(), static_cast<Index>(n));
+    Map<VectorXd> x_eigen(x.data(), static_cast<Index>(n));
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-
+*/
     return x;
 }
 

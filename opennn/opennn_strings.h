@@ -14,19 +14,22 @@
 #include <math.h>
 #include <regex>
 
-// OpenNN includes
+// Eigen includes
 
-#include "vector.h"
+#include "config.h"
+#include "../eigen/Eigen/Eigen"
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
+using namespace Eigen;
 
 namespace OpenNN
 {
-    size_t count_tokens(const string&, const char&);
+    int count_tokens(const string&, const char&);
 
-    Vector<string> get_tokens(const string&, const char&);
+    vector<string> get_tokens(const string&, const char&);
 
-    Vector<double> to_double_vector(const string&, const char&);
+    Tensor<type, 1> to_double_vector(const string&, const char&);
 
 //    inline bool is_digit_string(const char str) {return std::isdigit(str);}
     bool is_numeric_string(const string&);
@@ -43,16 +46,16 @@ namespace OpenNN
 
     string prepend(const string&, const string&);
 
-    bool has_numbers(const Vector<string>&);
-    bool has_strings(const Vector<string>&);
+    bool has_numbers(const vector<string>&);
+    bool has_strings(const vector<string>&);
 
-    bool is_numeric_string_vector(const Vector<string>&);
+    bool is_numeric_string_vector(const vector<string>&);
 
-    bool is_not_numeric(const Vector<string>&);
-    bool is_mixed(const Vector<string>&);
+    bool is_not_numeric(const vector<string>&);
+    bool is_mixed(const vector<string>&);
 
     void replace(string& source, const string& find, const string& replace);
-    void replace_substring(Vector<string>&, const string& , const string&);
+    void replace_substring(vector<string>&, const string& , const string&);
 }
 
 #endif // OPENNNSTRINGS_H

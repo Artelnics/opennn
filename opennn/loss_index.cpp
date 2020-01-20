@@ -346,7 +346,9 @@ void LossIndex::check() const
       throw logic_error(buffer.str());
    }
 
-  if(neural_network_pointer->get_trainable_layers_number() == 0)
+   const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+  if(trainable_layers_number == 0)
   {
         buffer << "OpenNN Exception: LossIndex class.\n"
             << "void check() const method.\n"
@@ -354,9 +356,6 @@ void LossIndex::check() const
 
         throw logic_error(buffer.str());
   }
-
-  const size_t inputs_number = neural_network_pointer->get_inputs_number();
-  const size_t outputs_number = neural_network_pointer->get_outputs_number();
 
   // Data set stuff
 
@@ -369,8 +368,13 @@ void LossIndex::check() const
      throw logic_error(buffer.str());
   }
 
-  const size_t data_set_inputs_number = data_set_pointer->get_input_variables_number();
-  const size_t targets_number = data_set_pointer->get_target_variables_number();
+  const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+  const int inputs_number = trainable_layers_pointers[0]->get_inputs_number();
+  const int outputs_number = trainable_layers_pointers[trainable_layers_number-1]->get_neurons_number();
+
+  const int data_set_inputs_number = data_set_pointer->get_input_variables_number();
+  const int targets_number = data_set_pointer->get_target_variables_number();
 
   if(data_set_inputs_number != inputs_number)
   {
@@ -397,14 +401,14 @@ void LossIndex::check() const
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 /// @param inputs Tensor with inputs.
-/// @param layers_activations Vector of tensors with layers activations.
-/// @param layers_delta Vector of tensors with layers delta.
+/// @param layers_activations vector of tensors with layers activations.
+/// @param layers_delta vector of tensors with layers delta.
 
-Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
-                                                   const Vector<Layer::ForwardPropagation>& forward_propagation,
-                                                   const Vector<Tensor<double>>& layers_delta) const
+Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& inputs,
+                                                   const vector<Layer::ForwardPropagation>& forward_propagation,
+                                                   const vector<Tensor<type, 2>>& layers_delta) const
 {
-    const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -412,14 +416,14 @@ Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
 
     // Hidden errors size
 
-    const size_t layers_delta_size = layers_delta.size();
+    const int layers_delta_size = layers_delta.size();
 
     if(layers_delta_size != trainable_layers_number)
     {
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Vector<Vector<double>> calculate_layers_error_gradient(const Vector<Vector<double>>&, const Vector<double>&) method.\n"
+             << "vector<Tensor<type, 1>> calculate_layers_error_gradient(const vector<Tensor<type, 1>>&, const Tensor<type, 1>&) method.\n"
              << "Size of layers delta(" << layers_delta_size << ") must be equal to number of layers(" << trainable_layers_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -427,24 +431,25 @@ Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
 
     #endif
 
-    const size_t parameters_number = neural_network_pointer->get_trainable_parameters_number();
+    const int parameters_number = neural_network_pointer->get_trainable_parameters_number();
 
-    const Vector<size_t> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+    const vector<int> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-    const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+    const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-    Vector<double> error_gradient(parameters_number,0.0);
+    Tensor<type, 1> error_gradient(parameters_number);
 
-    size_t index = 0;
-
+    int index = 0;
+/*
     error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
-
+*/
     index += trainable_layers_parameters_number[0];
 
-    for(size_t i = 1; i < trainable_layers_number; i++)
+    for(int i = 1; i < trainable_layers_number; i++)
     {
+/*
       error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
-
+*/
       index += trainable_layers_parameters_number[i];
     }
 
@@ -458,12 +463,12 @@ Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
 /// The Jacobian elements are the partial derivatives of a single term with respect to a single parameter.
 /// The number of rows in the Jacobian matrix are the number of parameters, and the number of columns the number of terms composing the objective.
 /// @param inputs Tensor with inputs.
-/// @param layers_activations Vector of tensors with layers activations.
-/// @param layers_delta Vector of tensors with layers delta.
+/// @param layers_activations vector of tensors with layers activations.
+/// @param layers_delta vector of tensors with layers delta.
 
-Matrix<double> LossIndex::calculate_error_terms_Jacobian(const Tensor<double>& inputs,
-                                                         const Vector<Layer::ForwardPropagation>& forward_propagation,
-                                                         const Vector<Tensor<double>>& layers_delta) const
+Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>& inputs,
+                                                         const vector<Layer::ForwardPropagation>& forward_propagation,
+                                                         const vector<Tensor<type, 2>>& layers_delta) const
 {  
    #ifdef __OPENNN_DEBUG__
 
@@ -471,20 +476,20 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(const Tensor<double>& i
 
    #endif
 
-   const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+   const int layers_number = neural_network_pointer->get_trainable_layers_number();
 
    #ifdef __OPENNN_DEBUG__
 
    // Hidden errors size
 
-   const size_t layers_delta_size = layers_delta.size();
+   const int layers_delta_size = layers_delta.size();
 
    if(layers_delta_size != layers_number)
    {
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Matrix<double> calculate_layers_error_Jacobian(const Vector<Vector<double>>&, const Vector<double>&) method.\n"
+             << "Tensor<type, 2> calculate_layers_error_Jacobian(const vector<Tensor<type, 1>>&, const Tensor<type, 1>&) method.\n"
              << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers(" << layers_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -492,23 +497,24 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(const Tensor<double>& i
 
    #endif
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
-   const size_t instances_number = data_set_pointer->get_instances_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
+   const int instances_number = data_set_pointer->get_instances_number();
 
-   const Vector<size_t> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
+   const vector<int> layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
-   Matrix<double> error_Jacobian(instances_number, parameters_number);
+   Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
 
-   size_t index = 0;
-
+   int index = 0;
+/*
    error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
-
+*/
    index += layers_parameters_number[0];
 
-   for(size_t i = 1; i < layers_number; i++)
+   for(int i = 1; i < layers_number; i++)
    {
+/*
       error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
-
+*/
       index += layers_parameters_number[i];
    }
 
@@ -524,28 +530,28 @@ Matrix<double> LossIndex::calculate_error_terms_Jacobian(const Tensor<double>& i
 /// @param layer_deltas Tensor with layers delta.
 /// @param layer_inputs Tensor with layers inputs.
 
-Matrix<double> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<double>& layer_deltas,
-                                                               const Tensor<double>& layer_inputs) const
+Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas,
+                                                               const Tensor<type, 2>& layer_inputs) const
 {
-    const size_t instances_number = layer_inputs.get_dimension(0);
-    const size_t inputs_number = layer_inputs.get_dimension(1);
-    const size_t neurons_number = layer_deltas.get_dimension(1);
+    const int instances_number = layer_inputs.dimension(0);
+    const int inputs_number = layer_inputs.dimension(1);
+    const int neurons_number = layer_deltas.dimension(1);
 
-    const size_t synaptic_weights_number = neurons_number*inputs_number;
+    const int synaptic_weights_number = neurons_number*inputs_number;
 
-    Matrix<double> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number), 0.0);
+    Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
 
-    size_t parameter;
+    int parameter;
 
-    for(size_t instance = 0; instance < instances_number; instance++)
+    for(int instance = 0; instance < instances_number; instance++)
     {
         parameter = 0;
 
-        for(size_t perceptron = 0; perceptron < neurons_number; perceptron++)
+        for(int perceptron = 0; perceptron < neurons_number; perceptron++)
         {
             const double layer_delta = layer_deltas(instance, perceptron);
 
-            for(size_t input = 0; input < inputs_number; input++)
+            for(int input = 0; input < inputs_number; input++)
             {
                 layer_error_Jacobian(instance, parameter) = layer_delta*layer_inputs(instance, input);
 
@@ -580,9 +586,9 @@ double LossIndex::calculate_training_loss() const
 /// It calculates training loss, obtaining the term of error and the regularization if it had it.
 /// Note that the error term can be obtained by different methodata_set.
 /// Returns the training loss.
-/// @param parameters Vector with the parameters to get the training loss term.
+/// @param parameters vector with the parameters to get the training loss term.
 
-double LossIndex::calculate_training_loss(const Vector<double>& parameters) const
+double LossIndex::calculate_training_loss(const Tensor<type, 1>& parameters) const
 {
     if(regularization_method == NoRegularization)
     {
@@ -597,9 +603,9 @@ double LossIndex::calculate_training_loss(const Vector<double>& parameters) cons
 
 /// Returns the value of the loss function at some step along some direction.
 
-double LossIndex::calculate_training_loss(const Vector<double>& direction, const double& rate) const
+double LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const type& rate) const
 {    
-    const Vector<double> parameters = neural_network_pointer->get_parameters();
+    const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
     return calculate_training_loss(parameters + direction*rate);
 }
@@ -610,7 +616,7 @@ double LossIndex::calculate_training_loss(const Vector<double>& direction, const
 /// That gradient is the vector of partial derivatives of the loss index with respect to the parameters.
 /// Returns the training loss.
 
-Vector<double> LossIndex::calculate_training_loss_gradient() const
+Tensor<type, 1> LossIndex::calculate_training_loss_gradient() const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -690,7 +696,7 @@ double LossIndex::calculate_regularization() const
     check();
 
     #endif
-
+/*
     switch(regularization_method)
     {
        case L1:
@@ -706,17 +712,18 @@ double LossIndex::calculate_regularization() const
             return 0.0;
        }
     }
-
+*/
     return 0.0;
 }
 
 
 /// It calculates the regularization term using through the use of parameters.
 /// Returns the regularization evaluation, according to the respective regularization type used in the loss index expression.
-/// @param parameters Vector with the parameters to get the regularization term.
+/// @param parameters vector with the parameters to get the regularization term.
 
-double LossIndex::calculate_regularization(const Vector<double>& parameters) const
+double LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
+/*
     switch(regularization_method)
     {
        case L1:
@@ -732,7 +739,7 @@ double LossIndex::calculate_regularization(const Vector<double>& parameters) con
             return 0.0;
        }
     }
-
+*/
     return 0.0;
 }
 
@@ -742,14 +749,14 @@ double LossIndex::calculate_regularization(const Vector<double>& parameters) con
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters.
 
-Vector<double> LossIndex::calculate_regularization_gradient() const
+Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
 {
     #ifdef __OPENNN_DEBUG__
 
     check();
 
     #endif
-
+/*
     switch(regularization_method)
     {
        case L1:
@@ -762,11 +769,11 @@ Vector<double> LossIndex::calculate_regularization_gradient() const
        }
        case NoRegularization:
        {
-            return Vector<double>(neural_network_pointer->get_parameters_number(), 0.0);
+            return Tensor<type, 1>(neural_network_pointer->get_parameters_number(), 0.0);
        }
     }
-
-    return Vector<double>();
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -774,10 +781,11 @@ Vector<double> LossIndex::calculate_regularization_gradient() const
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters
-/// @param parameters Vector with the parameters to get the regularization term.
+/// @param parameters vector with the parameters to get the regularization term.
 
-Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>& parameters) const
+Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters) const
 {
+/*
     switch(regularization_method)
     {
        case L1:
@@ -790,11 +798,11 @@ Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>
        }
        case NoRegularization:
        {
-            return Vector<double>(parameters.size(), 0.0);
+            return Tensor<type, 1>(parameters.size(), 0.0);
        }
     }
-
-    return Vector<double>();
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -803,14 +811,14 @@ Vector<double> LossIndex::calculate_regularization_gradient(const Vector<double>
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
 
-Matrix<double> LossIndex::calculate_regularization_hessian() const
+Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
 {
     #ifdef __OPENNN_DEBUG__
 
     check();
 
     #endif
-
+/*
     switch(regularization_method)
     {
        case L1:
@@ -823,13 +831,13 @@ Matrix<double> LossIndex::calculate_regularization_hessian() const
        }
        case NoRegularization:
        {
-            const size_t parameters_number = neural_network_pointer->get_parameters_number();
+            const int parameters_number = neural_network_pointer->get_parameters_number();
 
-            return Matrix<double>(parameters_number,parameters_number,0.0);
+            return Tensor<type, 2>(parameters_number,parameters_number,0.0);
        }
     }
-
-    return Matrix<double>();
+*/
+    return Tensor<type, 2>();
 }
 
 
@@ -837,10 +845,11 @@ Matrix<double> LossIndex::calculate_regularization_hessian() const
 /// Returns the Hessian of the regularization, according to the regularization type.
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
-/// @param parameters Vector with the parameters to get the regularization term.
+/// @param parameters vector with the parameters to get the regularization term.
 
-Matrix<double> LossIndex::calculate_regularization_hessian(const Vector<double>& parameters) const
+Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters) const
 {
+/*
     switch(regularization_method)
     {
        case L1:
@@ -853,13 +862,13 @@ Matrix<double> LossIndex::calculate_regularization_hessian(const Vector<double>&
        }
        case NoRegularization:
        {
-            const size_t parameters_number = parameters.size();
+            const int parameters_number = parameters.size();
 
-            return Matrix<double>(parameters_number,parameters_number,0.0);
+            return Tensor<type, 2>(parameters_number,parameters_number,0.0);
        }
     }
-
-    return Matrix<double>();
+*/
+    return Tensor<type, 2>();
 }
 
 
@@ -1018,34 +1027,34 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
 LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
-{    
+{
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-    const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+    const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t outputs_number = neural_network_pointer->get_outputs_number();
+    const int outputs_number = neural_network_pointer->get_outputs_number();
 
-    const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+    const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
     // First order loss
 
-    output_gradient.set(Vector<size_t>({batch_instances_number, outputs_number}));
+    output_gradient = Tensor<type, 2>(batch_instances_number, outputs_number);
 
-    layers_delta.set(trainable_layers_number);
+    layers_delta.resize(trainable_layers_number);
 
-    layers_error_gradient.set(trainable_layers_number);
+    layers_error_gradient.resize(trainable_layers_number);
 
-    for(size_t i = 0; i < trainable_layers_number; i++)
+    for(int i = 0; i < trainable_layers_number; i++)
     {
         const Layer::Type layer_type = trainable_layers_pointers[i]->get_type();
 
@@ -1053,29 +1062,32 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
         {
             ConvolutionalLayer* layer_pointer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
 
-            const size_t output_channels_number = layer_pointer->get_filters_number();
-            const size_t output_rows_number = layer_pointer->get_outputs_rows_number();
-            const size_t output_columns_number = layer_pointer->get_outputs_columns_number();
-
-            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+            const int output_channels_number = layer_pointer->get_filters_number();
+            const int output_rows_number = layer_pointer->get_outputs_rows_number();
+            const int output_columns_number = layer_pointer->get_outputs_columns_number();
+/*
+            layers_delta[i].resize(vector<int>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+*/
         }
         else if(layer_type == Layer::Pooling)
         {
             PoolingLayer* layer_pointer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
 
-            const size_t output_channels_number = layer_pointer->get_inputs_channels_number();
-            const size_t output_rows_number = layer_pointer->get_outputs_rows_number();
-            const size_t output_columns_number = layer_pointer->get_outputs_columns_number();
-
-            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+            const int output_channels_number = layer_pointer->get_inputs_channels_number();
+            const int output_rows_number = layer_pointer->get_outputs_rows_number();
+            const int output_columns_number = layer_pointer->get_outputs_columns_number();
+/*
+            layers_delta[i].resize(vector<int>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+*/
         }
         else if(layer_type == Layer::Perceptron)
         {
             PerceptronLayer* layer_pointer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
 
-            const size_t neurons_number = layer_pointer->get_neurons_number();
+            const int neurons_number = layer_pointer->get_neurons_number();
 
-            layers_delta[i].set(Vector<size_t>({batch_instances_number, neurons_number}));
+            layers_delta[i] = Tensor<type, 2>(batch_instances_number, neurons_number);
+            layers_delta[i].setRandom();
         }
         else if(layer_type == Layer::Recurrent)
         {
@@ -1089,23 +1101,28 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
         {
             ProbabilisticLayer* layer_pointer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
 
-            const size_t output_columns_number = layer_pointer->get_neurons_number();
+            const int output_columns_number = layer_pointer->get_neurons_number();
 
-            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_columns_number}));
+            layers_delta[i] = Tensor<type, 2>(batch_instances_number, output_columns_number);
         }
         else
         {
             /// @todo add exception
         }
 
-        layers_error_gradient[i].set(trainable_layers_pointers[i]->get_parameters_number());
+        layers_error_gradient[i] = Tensor<type, 1>(trainable_layers_pointers[i]->get_parameters_number());
+        layers_error_gradient[i].setRandom();
     }
 
     loss = 0.0;
 
-    error_gradient.set(parameters_number, 0.0);
-    regularization_gradient.set(parameters_number, 0.0);
-    gradient.set(parameters_number, 0.0);
+    error_gradient = Tensor<type, 1>(parameters_number);
+    regularization_gradient = Tensor<type, 1>(parameters_number);
+    gradient = Tensor<type, 1>(parameters_number);
+
+    error_gradient.setRandom();
+    regularization_gradient.setRandom();
+    gradient.setRandom();
 }
 
 
@@ -1116,10 +1133,10 @@ LossIndex::FirstOrderLoss::~FirstOrderLoss()
 }
 
 
-Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::ForwardPropagation>& forward_propagation,
-                                                         const Tensor<double>& output_gradient) const
+vector<Tensor<type, 2>> LossIndex::calculate_layers_delta(const vector<Layer::ForwardPropagation>& forward_propagation,
+                                                         const Tensor<type, 2>& output_gradient) const
 {
-    const size_t forward_propagation_size = forward_propagation.size();
+    const int forward_propagation_size = forward_propagation.size();
 
    // Neural network stuff
 
@@ -1127,14 +1144,14 @@ Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::For
 
     check();
 
-   const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+   const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
    if(forward_propagation_size != trainable_layers_number)
    {
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Vector<Tensor<double>> calculate_layers_delta(const Vector<Matrix<double>>&, const Matrix<double>&) method.\n"
+             << "vector<Tensor<type, 2>> calculate_layers_delta(const vector<Tensor<type, 2>>&, const Tensor<type, 2>&) method.\n"
              << "Size of forward propagation activation derivative vector ("<< forward_propagation_size << ") must be equal to number of layers (" << trainable_layers_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -1142,9 +1159,9 @@ Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::For
 
    #endif
 
-   const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+   const vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-   Vector<Tensor<double>> layers_delta(forward_propagation_size);
+   vector<Tensor<type, 2>> layers_delta(forward_propagation_size);
 
    if(forward_propagation_size == 0) return layers_delta;
 
@@ -1157,13 +1174,13 @@ Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::For
 
    for(int i = static_cast<int>(forward_propagation_size)-2; i >= 0; i--)
    {
-       Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<size_t>(i+1)];
+       Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<int>(i+1)];
 
-       layers_delta[static_cast<size_t>(i)] = trainable_layers_pointers[static_cast<size_t>(i)]
+       layers_delta[static_cast<int>(i)] = trainable_layers_pointers[static_cast<int>(i)]
                ->calculate_hidden_delta(previous_layer_pointer,
-                                        forward_propagation[static_cast<size_t>(i)].activations,
-                                        forward_propagation[static_cast<size_t>(i)].activations_derivatives,
-                                        layers_delta[static_cast<size_t>(i+1)]);
+                                        forward_propagation[static_cast<int>(i)].activations,
+                                        forward_propagation[static_cast<int>(i)].activations_derivatives,
+                                        layers_delta[static_cast<int>(i+1)]);
    }
 
    return layers_delta;
@@ -1190,15 +1207,15 @@ check();
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
     double training_error = 0.0;
 
     #pragma omp parallel for reduction(+ : training_error)
 
-    for(size_t i = 0; i < batches_number; i++)
+    for(int i = 0; i < batches_number; i++)
     {
         const double batch_error = calculate_batch_error(training_batches[i]);
 
@@ -1209,7 +1226,7 @@ check();
 }
 
 
-double LossIndex::calculate_training_error(const Vector<double>& parameters) const
+double LossIndex::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1225,9 +1242,9 @@ check();
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
     double training_error = 0.0;
 
@@ -1263,9 +1280,9 @@ check();
 
     // Data set
 
-    const Vector<Vector<size_t>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const vector<vector<int>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
-    const size_t batches_number = selection_batches.size();
+    const int batches_number = selection_batches.size();
 
     double selection_error = 0.0;
 
@@ -1286,7 +1303,7 @@ check();
 /// Returns the value of the error term gradient.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-Vector<double> LossIndex::calculate_batch_error_gradient(const Vector<size_t>& batch_indices) const
+Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const vector<int>& batch_indices) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1294,14 +1311,16 @@ Vector<double> LossIndex::calculate_batch_error_gradient(const Vector<size_t>& b
 
     #endif
 
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
+    const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
-    const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.get_last().activations, targets);
+    const size_t size = forward_propagation.size();
 
-    const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[size-1].activations, targets);
+
+    const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
     return calculate_error_gradient(inputs, forward_propagation, layers_delta);
 }
@@ -1311,7 +1330,7 @@ Vector<double> LossIndex::calculate_batch_error_gradient(const Vector<size_t>& b
 /// It is used for optimization of parameters during training.
 /// Returns the value of the error term gradient.
 
-Vector<double> LossIndex::calculate_training_error_gradient() const
+Tensor<type, 1> LossIndex::calculate_training_error_gradient() const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1321,26 +1340,26 @@ check();
 
     // Neural network
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
      bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
     // Data set
 
-    const Vector<Vector<size_t>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const size_t batches_number = training_batches.size();
+    const int batches_number = training_batches.size();
 
     // Loss index
 
-    Vector<double> training_error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> training_error_gradient(parameters_number);
 
     #pragma omp parallel for
 
     for(int i = 0; i < static_cast<int>(batches_number); i++)
     {
-        const Vector<double> batch_gradient = calculate_batch_error_gradient(training_batches[static_cast<unsigned>(i)]);
+        const Tensor<type, 1> batch_gradient = calculate_batch_error_gradient(training_batches[static_cast<unsigned>(i)]);
 
         #pragma omp critical
 
@@ -1352,15 +1371,17 @@ check();
 
 
 
-Vector<double> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
+Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
 {
     NumericalDifferentiation numerical_differentiation;
 
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
-    const Vector<double> parameters = neural_network_pointer->get_parameters();
-
+    const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+/*
     return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error, parameters);
+*/
+    return Tensor<type, 1>();
 }
 
 

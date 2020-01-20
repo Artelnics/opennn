@@ -7,8 +7,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                             
 
-
-
 #ifndef PrincipalComponentsLayer_H
 #define PrincipalComponentsLayer_H
 
@@ -23,12 +21,9 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
+#include "config.h"
 #include "metrics.h"
 #include "layer.h"
-
-
 
 #include "tinyxml2.h"
 
@@ -51,7 +46,7 @@ public:
 
    // INPUTS AND PRINCIPAL COMPONENTS NUMBER CONSTRUCTOR
 
-   explicit PrincipalComponentsLayer(const size_t&, const size_t&);
+   explicit PrincipalComponentsLayer(const int&, const int&);
 
    // COPY CONSTRUCTOR
 
@@ -76,14 +71,14 @@ public:
 
    // Get methods
 
-   Matrix<double> get_principal_components() const;
-   Vector<double> get_means() const;
+   Tensor<type, 2> get_principal_components() const;
+   Tensor<type, 1> get_means() const;
 
-   Vector<double> get_explained_variance() const;
+   Tensor<type, 1> get_explained_variance() const;
 
-   size_t get_inputs_number() const;
-   size_t get_principal_components_number() const;
-   size_t get_neurons_number() const;
+   int get_inputs_number() const;
+   int get_principal_components_number() const;
+   int get_neurons_number() const;
 
 
    // Inputs principal components function
@@ -95,19 +90,19 @@ public:
    // Set methods
 
    void set();
-   void set(const size_t&, const size_t&);
+   void set(const int&, const int&);
    void set(const PrincipalComponentsLayer&);
 
-   void set_inputs_number(const size_t&);
-   void set_principal_components_number(const size_t&);
+   void set_inputs_number(const int&);
+   void set_principal_components_number(const int&);
 
-   void set_principal_component(const size_t&, const Vector<double>&);
-   void set_principal_components(const Matrix<double>&);
+   void set_principal_component(const int&, const Tensor<type, 1>&);
+   void set_principal_components(const Tensor<type, 2>&);
 
-   void set_means(const Vector<double>&);
-   void set_means(const size_t&, const double&);
+   void set_means(const Tensor<type, 1>&);
+   void set_means(const int&, const double&);
 
-   void set_explained_variance(const Vector<double>&);
+   void set_explained_variance(const Tensor<type, 1>&);
 
    virtual void set_default();
 
@@ -122,14 +117,14 @@ public:
 
    // Inputs principal components function
 
-   Tensor<double> calculate_outputs(const Tensor<double>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    // Expression methods
 
-   string write_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_expression(const vector<string>&, const vector<string>&) const;
 
-   string write_no_principal_components_expression(const Vector<string>&, const Vector<string>&) const;
-   string write_principal_components_expression(const Vector<string>&, const Vector<string>&) const;
+   string write_no_principal_components_expression(const vector<string>&, const vector<string>&) const;
+   string write_principal_components_expression(const vector<string>&, const vector<string>&) const;
 
    // Serialization methods
 
@@ -145,24 +140,24 @@ protected:
 
    /// Inputs number
 
-   size_t inputs_number;
+   int inputs_number;
 
    /// Principal components number
 
-   size_t principal_components_number;
+   int principal_components_number;
 
    /// Means of the input variables
 
-   Vector<double> means;
+   Tensor<type, 1> means;
 
    /// Contains all the principal components getd in rows and sorted
    /// according to their relative explained variance.
 
-   Matrix<double> principal_components;
+   Tensor<type, 2> principal_components;
 
    /// Explained variances for every of the principal components
 
-   Vector<double> explained_variance;
+   Tensor<type, 1> explained_variance;
 
    /// Principal components layer method
 

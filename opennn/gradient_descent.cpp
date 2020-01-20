@@ -164,7 +164,7 @@ const double& GradientDescent::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process. 
 
-const size_t& GradientDescent::get_maximum_selection_error_decreases() const
+const int& GradientDescent::get_maximum_selection_error_decreases() const
 {
    return maximum_selection_error_decreases;
 }
@@ -172,7 +172,7 @@ const size_t& GradientDescent::get_maximum_selection_error_decreases() const
 
 /// Returns the maximum number of iterations for training.
 
-const size_t& GradientDescent::get_maximum_epochs_number() const
+const int& GradientDescent::get_maximum_epochs_number() const
 {
    return maximum_epochs_number;
 }
@@ -247,7 +247,8 @@ void GradientDescent::set_default()
    minimum_parameters_increment_norm = 0.0;
 
    minimum_loss_decrease = 0.0;
-   loss_goal = -numeric_limits<double>::max();
+
+   loss_goal = -999999;
    gradient_norm_goal = 0.0;
    maximum_selection_error_decreases = 1000000;
 
@@ -466,7 +467,7 @@ void GradientDescent::set_error_learning_rate(const double& new_error_learning_r
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
-void GradientDescent::set_maximum_epochs_number(const size_t& new_maximum_epochs_number)
+void GradientDescent::set_maximum_epochs_number(const int& new_maximum_epochs_number)
 {
    
 
@@ -589,7 +590,7 @@ void GradientDescent::set_gradient_norm_goal(const double& new_gradient_norm_goa
 /// Sets a new maximum number of selection failures. 
 /// @param new_maximum_selection_error_decreases Maximum number of iterations in which the selection evalutation decreases.
 
-void GradientDescent::set_maximum_selection_error_increases(const size_t& new_maximum_selection_error_decreases)
+void GradientDescent::set_maximum_selection_error_increases(const int& new_maximum_selection_error_decreases)
 {
    maximum_selection_error_decreases = new_maximum_selection_error_decreases;
 }
@@ -664,7 +665,7 @@ void GradientDescent::set_reserve_selection_error_history(const bool& new_reserv
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void GradientDescent::set_display_period(const size_t& new_display_period)
+void GradientDescent::set_display_period(const int& new_display_period)
 {
    
 
@@ -691,7 +692,7 @@ void GradientDescent::set_display_period(const size_t& new_display_period)
 /// which is the negative of the normalized gradient.
 /// @param gradient Performance function gradient.
 
-Vector<double> GradientDescent::calculate_training_direction(const Vector<double>& gradient) const
+Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient) const
 {
     
 
@@ -702,7 +703,7 @@ Vector<double> GradientDescent::calculate_training_direction(const Vector<double
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: GradientDescent class.\n"
-              << "Vector<double> calculate_training_direction(const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -710,14 +711,14 @@ Vector<double> GradientDescent::calculate_training_direction(const Vector<double
 
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-    const size_t gradient_size = gradient.size();
+    const int gradient_size = gradient.size();
 
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: GradientDescent class.\n"
-              << "Vector<double> calculate_training_direction(const Vector<double>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -725,7 +726,7 @@ Vector<double> GradientDescent::calculate_training_direction(const Vector<double
 
     #endif
 
-   return normalized(gradient)*(-1.0);
+   return normalized(gradient)*static_cast<type>(-1.0);
 }
 
 
@@ -752,21 +753,21 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Vector<size_t> training_indices = data_set_pointer->get_training_instances_indices();
-   const Vector<size_t> selection_indices = data_set_pointer->get_selection_instances_indices();
+   const vector<int> training_indices = data_set_pointer->get_training_instances_indices();
+   const vector<int> selection_indices = data_set_pointer->get_selection_instances_indices();
 
-   const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+   const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   const size_t parameters_number = neural_network_pointer->get_parameters_number();
+   const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters(parameters_number);
+   Tensor<type, 1> parameters(parameters_number);
    double parameters_norm = 0.0;
 
-   Vector<double> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
    double parameters_increment_norm = 0.0;
 
    // Loss index stuff
@@ -776,16 +777,16 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       
    double training_loss = 0.0;
    double old_training_loss = 0.0;
-   double training_loss_decrease = -numeric_limits<double>::max();
+   double training_loss_decrease = -999999;
 
-   Vector<double> gradient(parameters_number);
+   Tensor<type, 1> gradient(parameters_number);
    double gradient_norm = 0.0;
 
    // Optimization algorithm stuff 
 
-   size_t selection_failures = 0;
+   int selection_failures = 0;
 
-   Vector<double> training_direction(parameters_number);
+   Tensor<type, 1> training_direction(parameters_number);
 
    const double first_learning_rate = 0.01;
 
@@ -795,8 +796,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    pair<double,double> directional_point(2, 0.0);
 
-   Vector<double> minimum_selection_error_parameters(parameters_number);
-   double minimum_selection_error = numeric_limits<double>::max();
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
+   double minimum_selection_error = 999999;
 
    bool stop_training = false;
 
@@ -807,8 +808,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    results.resize_training_history(maximum_epochs_number+1);
 
    // Main loop
-
-   for(size_t epoch = 0; epoch <= maximum_epochs_number; epoch++)
+/*
+   for(int epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
       // Neural network stuff
 
@@ -1091,7 +1092,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
-
+*/
    return results;
 }
 
@@ -1110,12 +1111,12 @@ string GradientDescent::write_optimization_algorithm_type() const
 
 /// Writes as matrix of strings the most representative atributes.
 
-Matrix<string> GradientDescent::to_string_matrix() const
+Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
     ostringstream buffer;
 
-    Vector<string> labels;
-    Vector<string> values;
+    vector<string> labels;
+    vector<string> values;
 
    // Training rate method
 
@@ -1233,14 +1234,14 @@ Matrix<string> GradientDescent::to_string_matrix() const
    values.push_back(buffer.str());
 
 
-   const size_t rows_number = labels.size();
-   const size_t columns_number = 2;
+   const int rows_number = labels.size();
+   const int columns_number = 2;
 
-   Matrix<string> string_matrix(rows_number, columns_number);
-
+   Tensor<string, 2> string_matrix(rows_number, columns_number);
+/*
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-
+*/
     return string_matrix;
 }
 
@@ -1911,7 +1912,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_selection_error_decreases = static_cast<size_t>(atoi(element->GetText()));
+          const int new_maximum_selection_error_decreases = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -1930,7 +1931,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_maximum_epochs_number = static_cast<size_t>(atoi(element->GetText()));
+          const int new_maximum_epochs_number = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -2025,7 +2026,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const size_t new_display_period = static_cast<size_t>(atoi(element->GetText()));
+          const int new_display_period = static_cast<int>(atoi(element->GetText()));
 
           try
           {
@@ -2044,7 +2045,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-           const size_t new_save_period = static_cast<size_t>(atoi(element->GetText()));
+           const int new_save_period = static_cast<int>(atoi(element->GetText()));
 
            try
            {

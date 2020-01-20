@@ -1,14 +1,10 @@
-
-
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
-
+//
 //   P R U N I N G   I N P U T S   C L A S S   H E A D E R                 
-
+//
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
-
 
 #ifndef PRUNINGINPUTS_H
 #define PRUNINGINPUTS_H
@@ -25,14 +21,9 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-
+#include "config.h"
 #include "training_strategy.h"
-
 #include "inputs_selection.h"
-
-
 
 #include "tinyxml2.h"
 
@@ -92,21 +83,21 @@ public:
 
     // Get methods
 
-    const size_t& get_minimum_inputs_number() const;
+    const int& get_minimum_inputs_number() const;
 
-    const size_t& get_maximum_inputs_number() const;
+    const int& get_maximum_inputs_number() const;
 
-    const size_t& get_maximum_selection_failures() const;
+    const int& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_minimum_inputs_number(const size_t&);
+    void set_minimum_inputs_number(const int&);
 
-    void set_maximum_inputs_number(const size_t&);
+    void set_maximum_inputs_number(const int&);
 
-    void set_maximum_selection_failures(const size_t&);
+    void set_maximum_selection_failures(const int&);
 
     // Order selection methods
 
@@ -114,7 +105,7 @@ public:
 
     // Serialization methods
 
-    Matrix<string> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -131,15 +122,15 @@ private:
 
     /// Minimum number of inputs in the neural network.
 
-    size_t minimum_inputs_number;
+    int minimum_inputs_number;
 
     /// Maximum number of inputs in the neural network.
 
-    size_t maximum_inputs_number;
+    int maximum_inputs_number;
 
     /// Maximum number of iterations at which the selection error increases.
 
-    size_t maximum_selection_failures;
+    int maximum_selection_failures;
 };
 
 }

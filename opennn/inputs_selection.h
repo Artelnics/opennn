@@ -21,10 +21,8 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-
 #include "training_strategy.h"
+#include "config.h"
 
 #include "tinyxml2.h"
 
@@ -79,19 +77,19 @@ public:
 
        /// Inputs of the different neural networks.
 
-       Vector<Vector<bool>> inputs_data;
+       vector<vector<bool>> inputs_data;
        
        /// Performance of the different neural networks.
 
-       Vector<double> loss_data;
+       Tensor<type, 1> loss_data;
 
        /// Selection loss of the different neural networks.
 
-       Vector<double> selection_error_data;
+       Tensor<type, 1> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection error.
 
-       Vector<double> minimal_parameters;
+       Tensor<type, 1> minimal_parameters;
 
        /// Value of minimum selection error.
 
@@ -103,15 +101,15 @@ public:
 
        /// Inputs of the neural network with minimum selection error.
 
-       Vector<size_t> optimal_inputs_indices;
+       vector<int> optimal_inputs_indices;
 
        /// Inputs of the neural network with minimum selection error.
 
-       Vector<bool> optimal_inputs;
+       vector<bool> optimal_inputs;
 
        /// Number of iterations to perform the inputs selection.
 
-       size_t iterations_number;
+       int iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -130,7 +128,7 @@ public:
 
     bool has_training_strategy() const;
 
-    const size_t& get_trials_number() const;
+    const int& get_trials_number() const;
 
     const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
@@ -139,7 +137,7 @@ public:
     const bool& get_display() const;
 
     const double& get_selection_error_goal() const;
-    const size_t& get_maximum_iterations_number() const;
+    const int& get_maximum_iterations_number() const;
     const double& get_maximum_time() const;
     const double& get_maximum_correlation() const;
     const double& get_minimum_correlation() const;
@@ -153,7 +151,7 @@ public:
 
     void set_default();
 
-    void set_trials_number(const size_t&);
+    void set_trials_number(const int&);
 
     void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
@@ -162,7 +160,7 @@ public:
     void set_display(const bool&);
 
     void set_selection_error_goal(const double&);
-    void set_maximum_iterations_number(const size_t&);
+    void set_maximum_iterations_number(const int&);
     void set_maximum_time(const double&);
     void set_maximum_correlation(const double&);
     void set_minimum_correlation(const double&);
@@ -170,11 +168,11 @@ public:
 
     // Performances calculation methods
 
-    Vector<double> calculate_losses(const Vector<bool>&);
+    Tensor<type, 1> calculate_losses(const vector<bool>&);
 
-    Vector<double> perform_mean_model_evaluation(const Vector<bool>&);
+    Tensor<type, 1> perform_mean_model_evaluation(const vector<bool>&);
 
-    Vector<double> get_parameters_inputs(const Vector<bool>&) const;
+    Tensor<type, 1> get_parameters_inputs(const vector<bool>&) const;
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -185,7 +183,7 @@ public:
     void delete_parameters_history();
     void check() const;
 
-    size_t get_input_index(const Vector<DataSet::VariableUse>, const size_t);
+    int get_input_index(const vector<DataSet::VariableUse>, const int);
 
     /// Performs the inputs selection for a neural network.
 
@@ -203,23 +201,23 @@ protected:
 
     /// Inputs of all the neural networks trained.
 
-    Vector<Vector<bool>> inputs_history;
+    vector<vector<bool>> inputs_history;
 
     /// Selection loss of all the neural networks trained.
 
-    Vector<double> selection_error_history;
+    Tensor<type, 1> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
-    Vector<double> training_error_history;
+    Tensor<type, 1> training_error_history;
 
     /// Parameters of all the neural network trained.
 
-    Vector<Vector<double>> parameters_history;
+    vector<Tensor<type, 1>> parameters_history;
 
     /// Number of trials for each neural network.
 
-    size_t trials_number;
+    int trials_number;
 
     // Inputs selection results
 
@@ -251,7 +249,7 @@ protected:
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 
-    size_t maximum_epochs_number;
+    int maximum_epochs_number;
 
     /// Maximum value for the correlations.
 

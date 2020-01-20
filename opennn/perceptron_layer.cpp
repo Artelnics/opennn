@@ -30,7 +30,7 @@ PerceptronLayer::PerceptronLayer() : Layer()
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of perceptrons in the layer.
 
-PerceptronLayer::PerceptronLayer(const size_t& new_inputs_number, const size_t& new_neurons_number,
+PerceptronLayer::PerceptronLayer(const int& new_inputs_number, const int& new_neurons_number,
                                  const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
 {
    set(new_inputs_number, new_neurons_number, new_activation_function);
@@ -59,33 +59,45 @@ PerceptronLayer::~PerceptronLayer()
 }
 
 
-Vector<size_t> PerceptronLayer::get_input_variables_dimensions() const
+vector<int> PerceptronLayer::get_input_variables_dimensions() const
 {
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    return Vector<size_t>({inputs_number});
+    return vector<int>({inputs_number});
 }
 
 
 /// Returns the number of inputs to the layer.
 
-size_t PerceptronLayer::get_inputs_number() const
+int PerceptronLayer::get_inputs_number() const
 {
-    return synaptic_weights.get_rows_number();
+    return synaptic_weights.dimension(0);
+
 }
 
 
 /// Returns the number of neurons in the layer.
 
-size_t PerceptronLayer::get_neurons_number() const
+int PerceptronLayer::get_neurons_number() const
 {
     return biases.size();
 }
 
 
+int PerceptronLayer::get_biases_number() const
+{
+    return biases.size();
+}
+
+
+int PerceptronLayer::get_synaptic_weights_number() const
+{
+    return synaptic_weights.size();
+}
+
 /// Returns the number of parameters(biases and synaptic weights) of the layer.
 
-size_t PerceptronLayer::get_parameters_number() const
+int PerceptronLayer::get_parameters_number() const
 {
     return biases.size() + synaptic_weights.size();
 }
@@ -95,7 +107,7 @@ size_t PerceptronLayer::get_parameters_number() const
 /// The format is a vector of real values. 
 /// The size of this vector is the number of neurons in the layer.
 
-const Vector<double>& PerceptronLayer::get_biases() const
+const Tensor<type, 2>& PerceptronLayer::get_biases() const
 {   
    return biases;
 }
@@ -106,34 +118,41 @@ const Vector<double>& PerceptronLayer::get_biases() const
 /// The number of rows is the number of neurons in the layer. 
 /// The number of columns is the number of inputs to the layer. 
 
-const Matrix<double>& PerceptronLayer::get_synaptic_weights() const
+const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
 {
    return synaptic_weights;
 }
 
 
-Matrix<double> PerceptronLayer::get_synaptic_weights(const Vector<double>& parameters) const
+Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t synaptic_weights_number = synaptic_weights.size();
-
+    const int synaptic_weights_number = synaptic_weights.size();
+/*
     return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
+*/
+    return Tensor<type, 2>();
 }
 
 
-Matrix<double> PerceptronLayer::get_synaptic_weights_transpose() const
+Tensor<type, 2> PerceptronLayer::get_synaptic_weights_transpose() const
 {
-    return synaptic_weights.calculate_transpose();
+/*
+    return synaptic_weights.transpose();
+*/
+    return Tensor<type, 2>();
 }
 
 
-Vector<double> PerceptronLayer::get_biases(const Vector<double>& parameters) const
+Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) const
 {
-    const size_t biases_number = biases.size();
-
+    const int biases_number = biases.size();
+/*
     return parameters.get_last(biases_number);
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -141,9 +160,11 @@ Vector<double> PerceptronLayer::get_biases(const Vector<double>& parameters) con
 /// The format is a vector of real values. 
 /// The size is the number of parameters in the layer. 
 
-Vector<double> PerceptronLayer::get_parameters() const
+Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
-    return synaptic_weights.to_vector().assemble(biases);
+//    return synaptic_weights.to_vector().assemble(biases);
+
+    return Tensor<type, 1>();
 }
 
 
@@ -237,9 +258,9 @@ const bool& PerceptronLayer::get_display() const
 
 void PerceptronLayer::set()
 {
-    biases.set();
+    biases.resize(0, 0);
 
-    synaptic_weights.set();
+    synaptic_weights.resize(0, 0);
 
    set_default();
 }
@@ -250,17 +271,17 @@ void PerceptronLayer::set()
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of perceptron neurons.
 
-void PerceptronLayer::set(const size_t& new_inputs_number, const size_t& new_neurons_number,
+void PerceptronLayer::set(const int& new_inputs_number, const int& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
 {
-    biases.set(new_neurons_number);
+    biases = Tensor<type, 2>(1, new_neurons_number);
 
-    biases.randomize_normal();
+    biases.setRandom();
 
-    synaptic_weights.set(new_inputs_number, new_neurons_number);
+    synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    synaptic_weights.randomize_normal();
-   
+    synaptic_weights.setRandom();
+
     activation_function = new_activation_function;
 
     set_default();
@@ -303,13 +324,14 @@ void PerceptronLayer::set_default()
 /// The new synaptic weights are initialized at random. 
 /// @param new_inputs_number Number of layer inputs.
  
-void PerceptronLayer::set_inputs_number(const size_t& new_inputs_number)
+void PerceptronLayer::set_inputs_number(const int& new_inputs_number)
 {
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    biases.set(neurons_number);
+    biases.resize(1, neurons_number);
 
-    synaptic_weights.set(new_inputs_number, neurons_number);
+    synaptic_weights.resize(new_inputs_number, neurons_number);
+
 }
 
 
@@ -317,20 +339,20 @@ void PerceptronLayer::set_inputs_number(const size_t& new_inputs_number)
 /// All the parameters are also initialized at random.
 /// @param new_neurons_number New number of neurons in the layer.
 
-void PerceptronLayer::set_neurons_number(const size_t& new_neurons_number)
+void PerceptronLayer::set_neurons_number(const int& new_neurons_number)
 {    
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
-    biases.set(new_neurons_number);
+    biases.resize(1, new_neurons_number);
 
-    synaptic_weights.set(inputs_number, new_neurons_number);
+    synaptic_weights.resize(inputs_number, new_neurons_number);
 }
 
 
 /// Sets the biases of all perceptrons in the layer from a single vector.
 /// @param new_biases New set of biases in the layer. 
 
-void PerceptronLayer::set_biases(const Vector<double>& new_biases)
+void PerceptronLayer::set_biases(const Tensor<type, 2>& new_biases)
 {
     biases = new_biases;
 }
@@ -342,7 +364,7 @@ void PerceptronLayer::set_biases(const Vector<double>& new_biases)
 /// The number of columns is the number of inputs to the corresponding layer. 
 /// @param new_synaptic_weights New set of synaptic weights in that layer. 
 
-void PerceptronLayer::set_synaptic_weights(const Matrix<double>& new_synaptic_weights)
+void PerceptronLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
 {
     synaptic_weights = new_synaptic_weights;
 }
@@ -351,23 +373,23 @@ void PerceptronLayer::set_synaptic_weights(const Matrix<double>& new_synaptic_we
 /// Sets the parameters of this layer. 
 /// @param new_parameters Parameters vector for that layer. 
 
-void PerceptronLayer::set_parameters(const Vector<double>& new_parameters)
+void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const size_t neurons_number = get_neurons_number();
-    const size_t inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
 
-    const size_t parameters_number = get_parameters_number();
+    const int parameters_number = get_parameters_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
-    const size_t new_parameters_size = new_parameters.size();
+    const int new_parameters_size = new_parameters.size();
 
    if(new_parameters_size != parameters_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "void set_parameters(const Vector<double>&) method.\n"
+             << "void set_parameters(const Tensor<type, 1>&) method.\n"
              << "Size of new parameters (" << new_parameters_size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
 	  throw logic_error(buffer.str());
@@ -375,9 +397,11 @@ void PerceptronLayer::set_parameters(const Vector<double>& new_parameters)
 
    #endif
 
+/*
    synaptic_weights = new_parameters.get_subvector(0, inputs_number*neurons_number-1).to_matrix(inputs_number, neurons_number);
 
    biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
+*/
 }
 
 
@@ -468,7 +492,7 @@ void PerceptronLayer::set_display(const bool& new_display)
 
 void PerceptronLayer::grow_input()
 {
-    const size_t new_inputs_number = get_inputs_number() + 1;
+    const int new_inputs_number = get_inputs_number() + 1;
 
     set_inputs_number(new_inputs_number);
 }
@@ -478,7 +502,7 @@ void PerceptronLayer::grow_input()
 
 void PerceptronLayer::grow_perceptron()
 {
-    const size_t new_neurons_number = get_neurons_number() + 1;
+    const int new_neurons_number = get_neurons_number() + 1;
 
     set_neurons_number(new_neurons_number);
 }
@@ -487,9 +511,9 @@ void PerceptronLayer::grow_perceptron()
 /// Makes the perceptron layer to have perceptrons_added more perceptrons.
 /// @param neurons_added Number of perceptrons to be added.
 
-void PerceptronLayer::grow_perceptrons(const size_t& neurons_added)
+void PerceptronLayer::grow_perceptrons(const int& neurons_added)
 {
-    const size_t new_neurons_number = get_neurons_number() + neurons_added;
+    const int new_neurons_number = get_neurons_number() + neurons_added;
 
     set_neurons_number(new_neurons_number);
 }
@@ -498,53 +522,56 @@ void PerceptronLayer::grow_perceptrons(const size_t& neurons_added)
 /// This method removes a given input from the layer of perceptrons.
 /// @param index Index of input to be pruned.
 
-void PerceptronLayer::prune_input(const size_t& index)
+void PerceptronLayer::prune_input(const int& index)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t inputs_number = get_inputs_number();
+    const int inputs_number = get_inputs_number();
 
     if(index >= inputs_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void prune_input(const size_t&) method.\n"
+              << "void prune_input(const int&) method.\n"
               << "Index of input is equal or greater than number of inputs.\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif    
-
+/*
     synaptic_weights = synaptic_weights.delete_row(index);
+*/
 }
 
 
 /// This method removes a given perceptron from the layer.
 /// @param index Index of perceptron to be pruned.
 
-void PerceptronLayer::prune_neuron(const size_t& index)
+void PerceptronLayer::prune_neuron(const int& index)
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
     if(index >= neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void prune_neuron(const size_t&) method.\n"
+              << "void prune_neuron(const int&) method.\n"
               << "Index of perceptron is equal or greater than number of perceptrons.\n";
 
        throw logic_error(buffer.str());
     }
 
     #endif
-
+/*
     biases = biases.delete_index(index);
+
     synaptic_weights = synaptic_weights.delete_column(index);
+*/
 }
 
 
@@ -553,7 +580,9 @@ void PerceptronLayer::prune_neuron(const size_t& index)
 
 void PerceptronLayer::initialize_biases(const double& value)
 {
-    biases.initialize(value);
+/*
+    biases.setConstant(value);
+*/
 }
 
 
@@ -562,7 +591,9 @@ void PerceptronLayer::initialize_biases(const double& value)
 
 void PerceptronLayer::initialize_synaptic_weights(const double& value) 
 {
-    synaptic_weights.initialize(value);
+/*
+    synaptic_weights.setConstant(value);
+*/
 }
 
 
@@ -570,20 +601,20 @@ void PerceptronLayer::initialize_synaptic_weights(const double& value)
 
 void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 {
-    size_t fan_in;
-    size_t fan_out;
+    int fan_in;
+    int fan_out;
 
     double scale = 1.0;
     double limit;
 
-    fan_in = synaptic_weights.get_rows_number();
-    fan_out = synaptic_weights.get_columns_number();
+    fan_in = synaptic_weights.dimension(0);
+    fan_out = synaptic_weights.dimension(1);
 
     scale /= ((fan_in + fan_out) / 2.0);
     limit = sqrt(3.0 * scale);
-
-    synaptic_weights.randomize_uniform(-limit, limit);
-
+/*
+    synaptic_weights.setRandom(-limit, limit);
+*/
 }
 
 
@@ -592,9 +623,11 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 
 void PerceptronLayer::initialize_parameters(const double& value)
 {
-    biases.initialize(value);
+/*
+    biases.setConstant(value);
 
-    synaptic_weights.initialize(value);
+    synaptic_weights.setConstant(value);
+*/
 }
 
 
@@ -603,9 +636,11 @@ void PerceptronLayer::initialize_parameters(const double& value)
 
 void PerceptronLayer::randomize_parameters_uniform()
 {
-   biases.randomize_uniform(-1.0, 1.0);
+/*
+   biases.setRandom(-1.0, 1.0);
 
-   synaptic_weights.randomize_uniform(-1.0, 1.0);
+   synaptic_weights.setRandom(-1.0, 1.0);
+*/
 }
 
 
@@ -616,9 +651,11 @@ void PerceptronLayer::randomize_parameters_uniform()
 
 void PerceptronLayer::randomize_parameters_uniform(const double& minimum, const double& maximum)
 {
-    biases.randomize_uniform(minimum, maximum);
+/*
+    biases.setRandom(minimum, maximum);
 
-    synaptic_weights.randomize_uniform(minimum, maximum);
+    synaptic_weights.setRandom(minimum, maximum);
+*/
 }
 
 
@@ -627,9 +664,11 @@ void PerceptronLayer::randomize_parameters_uniform(const double& minimum, const 
 
 void PerceptronLayer::randomize_parameters_normal()
 {
-    biases.randomize_normal();
+/*
+    biases.setRandom();
 
-    synaptic_weights.randomize_normal();
+    synaptic_weights.setRandom();
+*/
 }
 
 
@@ -640,9 +679,9 @@ void PerceptronLayer::randomize_parameters_normal()
 
 void PerceptronLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
 {
-    biases.randomize_normal(mean, standard_deviation);
+    biases.setRandom();
 
-    synaptic_weights.randomize_normal(mean, standard_deviation);
+    synaptic_weights.setRandom();
 }
 
 
@@ -650,45 +689,57 @@ void PerceptronLayer::randomize_parameters_normal(const double& mean, const doub
 
 double PerceptronLayer::calculate_parameters_norm() const
 {
+/*
    return l2_norm(get_parameters());
+*/
+    return 0.0;
 }
 
 
-Tensor<double> PerceptronLayer::calculate_combinations(const Tensor<double>& inputs) const
+Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
 {
+/*
     return linear_combinations(inputs, synaptic_weights, biases);
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_combinations(const Tensor<double>& inputs, const Vector<double>& parameters) const
+Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters) const
 {
-    const Matrix<double> new_synaptic_weights = get_synaptic_weights(parameters);
-    const Vector<double> new_biases = get_biases(parameters);
+/*
+    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
+    const Tensor<type, 1> new_biases = get_biases(parameters);
 
     return calculate_combinations(inputs, new_biases, new_synaptic_weights);
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_combinations(const Tensor<double>& inputs, const Vector<double>& new_biases, const Matrix<double>& new_synaptic_weights) const
+Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
 {
+/*
     return linear_combinations(inputs, new_synaptic_weights, new_biases);
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_activations(const Tensor<double>& combinations) const
+Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t combinations_columns_number = combinations.get_dimension(1);
+    const int combinations_columns_number = combinations.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -698,6 +749,7 @@ Tensor<double> PerceptronLayer::calculate_activations(const Tensor<double>& comb
 
     switch(activation_function)
     {
+/*
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -719,26 +771,27 @@ Tensor<double> PerceptronLayer::calculate_activations(const Tensor<double>& comb
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
+*/
     }
 
-    return Tensor<double>();
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
+Tensor<type, 2> PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
 
-    const size_t neurons_number = get_neurons_number();
+    const int neurons_number = get_neurons_number();
 
-    const size_t combinations_columns_number = combinations.get_dimension(1);
+    const int combinations_columns_number = combinations.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -748,6 +801,7 @@ Tensor<double> PerceptronLayer::calculate_activations_derivatives(const Tensor<d
 
     switch(activation_function)
     {
+/*
         case Linear: return linear_derivatives(combinations);
 
         case Logistic: return logistic_derivatives(combinations);
@@ -769,15 +823,16 @@ Tensor<double> PerceptronLayer::calculate_activations_derivatives(const Tensor<d
         case HardSigmoid: return hard_sigmoid_derivatives(combinations);
 
         case ExponentialLinear: return exponential_linear_derivatives(combinations);
+*/
     }
 
-    return Tensor<double>();
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs)
+Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
-    const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+    const int inputs_dimensions_number = inputs.rank();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -786,28 +841,28 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs)
     ostringstream buffer;
 
     buffer << "OpenNN Exception: PerceptronLayer class.\n"
-           << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
            << "Number of dimensions (" << inputs_dimensions_number << ") must be less than or equal to 4.\n";
 
     throw logic_error(buffer.str());
     }
 
     #endif
-
-    Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+/*
+    Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
    #ifdef __OPENNN_DEBUG__
 
-   const size_t inputs_number = get_inputs_number();
+   const int inputs_number = get_inputs_number();
 
-   const size_t inputs_columns_number = reshaped_inputs.get_dimension(1);
+   const int inputs_columns_number = reshaped_inputs.dimension(1);
 
    if(inputs_columns_number != inputs_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+             << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
              << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -815,7 +870,7 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs)
 
    #endif
 
-    Tensor<double> outputs = linear_combinations(reshaped_inputs, synaptic_weights, biases);
+    Tensor<type, 2> outputs = linear_combinations(reshaped_inputs, synaptic_weights, biases);
 
     switch(activation_function)
     {
@@ -888,21 +943,26 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs)
     }
 
     return outputs;
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& parameters)
+Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
-    const Matrix<double> synaptic_weights = get_synaptic_weights(parameters);
-    const Vector<double> biases = get_biases(parameters);
+/*
+    const Tensor<type, 2> synaptic_weights = get_synaptic_weights(parameters);
+    const Tensor<type, 1> biases = get_biases(parameters);
 
     return calculate_outputs(inputs, biases, synaptic_weights);
+*/
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& new_biases, const Matrix<double>& new_synaptic_weights) const
+Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
 {
-    const size_t inputs_dimensions_number = inputs.get_dimensions_number();
+    const int inputs_dimensions_number = inputs.rank();
 
     #ifdef __OPENNN_DEBUG__
 
@@ -911,28 +971,28 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: PerceptronLayer class.\n"
-           << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+           << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
            << "Number of dimensions (" << inputs_dimensions_number << ") must be less than or equal to 4.\n";
 
     throw logic_error(buffer.str());
     }
 
     #endif
-
-    Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+/*
+    Tensor<type, 2> reshaped_inputs = inputs.to_2d_tensor();
 
    #ifdef __OPENNN_DEBUG__
 
-   const size_t inputs_number = get_inputs_number();
+   const int inputs_number = get_inputs_number();
 
-   const size_t inputs_columns_number = reshaped_inputs.get_dimension(1);
+   const int inputs_columns_number = reshaped_inputs.dimension(1);
 
    if(inputs_columns_number != inputs_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "Tensor<double> calculate_outputs(const Tensor<double>&) const method.\n"
+             << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
              << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -940,7 +1000,7 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, 
 
    #endif
 
-   Tensor<double> outputs(linear_combinations(reshaped_inputs, new_synaptic_weights, new_biases));
+   Tensor<type, 2> outputs(linear_combinations(reshaped_inputs, new_synaptic_weights, new_biases));
 
    switch(activation_function)
    {
@@ -1012,16 +1072,18 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, 
    }
 
    return outputs;
+*/
+    return Tensor<type, 2>();
 }
 
 
-Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<double>& inputs)
+Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
-    ForwardPropagation layers;
+    ForwardPropagation forward_propagation;
+/*
+    Tensor<type, 2> combinations;
 
-    Tensor<double> combinations;
-
-    if(inputs.get_dimensions_number() != 2)
+    if(inputs.rank() != 2)
     {
         combinations = calculate_combinations(inputs.to_2d_tensor());
     }
@@ -1033,25 +1095,26 @@ Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const T
     layers.activations = calculate_activations(combinations);
 
     layers.activations_derivatives = calculate_activations_derivatives(combinations);
-
-    return layers;
+*/
+    return forward_propagation;
 }
 
 
-Tensor<double> PerceptronLayer::calculate_output_delta(const Tensor<double>& activations_derivatives, const Tensor<double>& output_gradient) const
+Tensor<type, 2> PerceptronLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
 {
     return activations_derivatives*output_gradient;
 }
 
 
-Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                                       const Tensor<double>&,
-                                                       const Tensor<double>& activations_derivatives,
-                                                       const Tensor<double>& next_layer_delta) const
+Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
+                                                       const Tensor<type, 2>&,
+                                                       const Tensor<type, 2>& activations_derivatives,
+                                                       const Tensor<type, 2>& next_layer_delta) const
 {
+
     const Type layer_type = next_layer_pointer->get_type();
 
-    Matrix<double> synaptic_weights_transpose;
+    Tensor<type, 2> synaptic_weights_transpose;
 
     if(layer_type == Perceptron)
     {
@@ -1064,9 +1127,13 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
         synaptic_weights_transpose = probabilistic_layer->get_synaptic_weights_transpose();
-    }
+    }        
 
+
+/*
     return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
+*/
+    return Tensor<type, 2>();
 }
 
 
@@ -1077,67 +1144,64 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
 /// @param layer_deltas Tensor with layers delta.
 /// @param inputs Tensor with layers inputs.
 
-Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& inputs,
+Tensor<type, 1> PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                          const Layer::ForwardPropagation& ,
-                                                         const Tensor<double>& deltas)
+                                                         const Tensor<type, 2>& deltas)
 {
-    Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
-    Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
+    const int parameters_number = get_parameters_number();
 
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int synaptic_weights_number = neurons_number*inputs_number;
 
-    const size_t parameters_number = get_parameters_number();
-
-    const size_t synaptic_weights_number = neurons_number*inputs_number;
-
-    Vector<double> layer_error_gradient(parameters_number, 0.0);
+    Tensor<type, 1> layer_error_gradient(parameters_number);
 
     // Synaptic weights
-
+/*
     layer_error_gradient.embed(0, dot(reshaped_inputs.to_matrix().calculate_transpose(), reshaped_deltas).to_vector());
 
     // Biases
 
     layer_error_gradient.embed(synaptic_weights_number, reshaped_deltas.to_matrix().calculate_columns_sum());
-
+*/
     return layer_error_gradient;
+
 }
 
 
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.
-/// @param inputs_names Vector of strings with the name of the layer inputs. 
-/// @param outputs_names Vector of strings with the name of the layer outputs. 
+/// @param inputs_names vector of strings with the name of the layer inputs. 
+/// @param outputs_names vector of strings with the name of the layer outputs. 
 
-string PerceptronLayer::write_expression(const Vector<string>& inputs_names, const Vector<string>& outputs_names) const
+string PerceptronLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
 {
    #ifdef __OPENNN_DEBUG__ 
 
-   const size_t neurons_number = get_neurons_number();
+   const int neurons_number = get_neurons_number();
 
-   const size_t inputs_number = get_inputs_number(); 
-   const size_t inputs_name_size = inputs_names.size();
+   const int inputs_number = get_inputs_number(); 
+   const int inputs_name_size = inputs_names.size();
 
    if(inputs_name_size != inputs_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
              << "Size of inputs name must be equal to number of layer inputs.\n";
 
 	  throw logic_error(buffer.str());
    }
 
-   const size_t outputs_name_size = outputs_names.size();
+   const int outputs_name_size = outputs_names.size();
 
    if(outputs_name_size != neurons_number)
    {
       ostringstream buffer;
 
       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-             << "string write_expression(const Vector<string>&, const Vector<string>&) const method.\n"
+             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
              << "Size of outputs name must be equal to number of perceptrons.\n";
 
 	  throw logic_error(buffer.str());
@@ -1147,16 +1211,19 @@ string PerceptronLayer::write_expression(const Vector<string>& inputs_names, con
 
    ostringstream buffer;
 
-   for(size_t j = 0; j < outputs_names.size(); j++)
+   for(int j = 0; j < outputs_names.size(); j++)
    {
+/*
        buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
 
-       for(size_t i = 0; i < inputs_names.size() - 1; i++)
+       for(int i = 0; i < inputs_names.size() - 1; i++)
        {
+
            buffer << " (" << inputs_names[i] << "*" << synaptic_weights.get_column(j)[i] << ")+";
        }
 
        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights.get_column(j)[inputs_names.size() - 1] << "));\n";
+*/
    }
 
    return buffer.str();
@@ -1165,8 +1232,8 @@ string PerceptronLayer::write_expression(const Vector<string>& inputs_names, con
 
 string PerceptronLayer::object_to_string() const
 {
-    const size_t inputs_number = get_inputs_number();
-    const size_t neurons_number = get_neurons_number();
+    const int inputs_number = get_inputs_number();
+    const int neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
@@ -1268,8 +1335,8 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
     if(parameters_element->GetText())
     {
         const string parameters_string = parameters_element->GetText();
-
-        set_parameters(to_double_vector(parameters_string, ' '));
+//@todo
+//        set_parameters(to_double_vector(parameters_string, ' '));
     }
 }
 

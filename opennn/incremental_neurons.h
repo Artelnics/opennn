@@ -21,11 +21,10 @@
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
 #include "training_strategy.h"
 #include "neurons_selection.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 namespace OpenNN
 {
@@ -72,17 +71,17 @@ public:
 
     // Get methods
 
-    const size_t& get_step() const;
+    const int& get_step() const;
 
-    const size_t& get_maximum_selection_failures() const;
+    const int& get_maximum_selection_failures() const;
 
     // Set methods
 
     void set_default();
 
-    void set_step(const size_t&);
+    void set_step(const int&);
 
-    void set_maximum_selection_failures(const size_t&);
+    void set_maximum_selection_failures(const int&);
 
     // Order selection methods
 
@@ -90,7 +89,7 @@ public:
 
     // Serialization methods
 
-    Matrix<string> to_string_matrix() const;
+    Tensor<string, 2> to_string_matrix() const;
 
     tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
@@ -104,11 +103,11 @@ private:
 
    /// Number of neurons added at each iteration.
 
-   size_t step;
+   int step;
 
    /// Maximum number of iterations at which the selection error increases.
 
-   size_t maximum_selection_failures;
+   int maximum_selection_failures;
 
 };
 

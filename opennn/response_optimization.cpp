@@ -23,12 +23,12 @@ ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network_poi
 {
     neural_network_pointer = new_neural_network_pointer;
 
-    const size_t inputs_number = neural_network_pointer->get_inputs_number();
-    const size_t outputs_number = neural_network_pointer->get_outputs_number();
-
+    const int inputs_number = neural_network_pointer->get_inputs_number();
+    const int outputs_number = neural_network_pointer->get_outputs_number();
+/*
     inputs_conditions.set(inputs_number, Between);
     outputs_conditions.set(outputs_number, Minimum);
-
+*/
     inputs_minimums = neural_network_pointer->get_scaling_layer_pointer()->get_minimums();
     inputs_maximums = neural_network_pointer->get_scaling_layer_pointer()->get_maximums();
 
@@ -44,64 +44,64 @@ ResponseOptimization::~ResponseOptimization()
 }
 
 
-void ResponseOptimization::set_evaluations_number(const size_t& new_evaluations_number)
+void ResponseOptimization::set_evaluations_number(const int& new_evaluations_number)
 {
     evaluations_number = new_evaluations_number;
 }
 
 
-Vector<ResponseOptimization::Condition> ResponseOptimization::get_inputs_conditions()
+vector<ResponseOptimization::Condition> ResponseOptimization::get_inputs_conditions()
 {
     return inputs_conditions;
 }
 
 
-Vector<ResponseOptimization::Condition> ResponseOptimization::get_outputs_conditions()
+vector<ResponseOptimization::Condition> ResponseOptimization::get_outputs_conditions()
 {
     return outputs_conditions;
 }
 
 
-Vector<double> ResponseOptimization::get_inputs_minimums()
+Tensor<type, 1> ResponseOptimization::get_inputs_minimums()
 {
     return inputs_minimums;
 }
 
 
-Vector<double> ResponseOptimization::get_inputs_maximums()
+Tensor<type, 1> ResponseOptimization::get_inputs_maximums()
 {
     return inputs_maximums;
 }
 
 
-Vector<double> ResponseOptimization::get_outputs_minimums()
+Tensor<type, 1> ResponseOptimization::get_outputs_minimums()
 {
     return outputs_minimums;
 }
 
 
-Vector<double> ResponseOptimization::get_outputs_maximums()
+Tensor<type, 1> ResponseOptimization::get_outputs_maximums()
 {
     return outputs_maximums;
 }
 
-void ResponseOptimization::set_input_condition(const string& name, const ResponseOptimization::Condition& condition, const Vector<double>& values)
+void ResponseOptimization::set_input_condition(const string& name, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
 {
-    const size_t index = neural_network_pointer->get_input_index(name);
+    const int index = neural_network_pointer->get_input_index(name);
 
     set_input_condition(index, condition, values);
 }
 
 
-void ResponseOptimization::set_output_condition(const string& name, const ResponseOptimization::Condition& condition, const Vector<double>& values)
+void ResponseOptimization::set_output_condition(const string& name, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
 {
-    const size_t index = neural_network_pointer->get_output_index(name);
+    const int index = neural_network_pointer->get_output_index(name);
 
     set_output_condition(index, condition, values);
 }
 
 
-void ResponseOptimization::set_input_condition(const size_t& index, const ResponseOptimization::Condition& condition, const Vector<double>& values)
+void ResponseOptimization::set_input_condition(const int& index, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
 {
     inputs_conditions[index] = condition;
 
@@ -200,7 +200,7 @@ void ResponseOptimization::set_input_condition(const size_t& index, const Respon
 }
 
 
-void ResponseOptimization::set_output_condition(const size_t& index, const ResponseOptimization::Condition& condition, const Vector<double>& values)
+void ResponseOptimization::set_output_condition(const int& index, const ResponseOptimization::Condition& condition, const Tensor<type, 1>& values)
 {
     outputs_conditions[index] = condition;
 
@@ -299,18 +299,18 @@ void ResponseOptimization::set_output_condition(const size_t& index, const Respo
 }
 
 
-void ResponseOptimization::set_inputs_outputs_conditions(const Vector<string>& names, const Vector<string>& conditions_string, const Vector<double>& values)
+void ResponseOptimization::set_inputs_outputs_conditions(const vector<string>& names, const vector<string>& conditions_string, const Tensor<type, 1>& values)
 {
-    Vector<Condition> conditions = get_conditions(conditions_string);
-    Vector<Vector<double>> values_conditions = get_values_conditions(conditions, values);
+    vector<Condition> conditions = get_conditions(conditions_string);
+    vector<Tensor<type, 1>> values_conditions = get_values_conditions(conditions, values);
 
-    const size_t variables_number = conditions_string.size();
+    const int variables_number = conditions_string.size();
 
-    const Vector<string> inputs_names = neural_network_pointer->get_inputs_names();
+    const vector<string> inputs_names = neural_network_pointer->get_inputs_names();
 
-    size_t index;
-
-    for(size_t i = 0; i < variables_number; i ++)
+    int index;
+/*
+    for(int i = 0; i < variables_number; i ++)
     {
         if(inputs_names.contains(names[i]))
         {
@@ -325,16 +325,17 @@ void ResponseOptimization::set_inputs_outputs_conditions(const Vector<string>& n
             set_output_condition(index, conditions[i], values_conditions[i]);
         }
     }
+*/
 }
 
 
-Vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(const Vector<string>& conditions_string) const
+vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(const vector<string>& conditions_string) const
 {
-    const size_t conditions_size = conditions_string.size();
+    const int conditions_size = conditions_string.size();
 
-    Vector<Condition> conditions(conditions_size);
+    vector<Condition> conditions(conditions_size);
 
-    for(size_t i = 0; i < conditions_size; i++)
+    for(int i = 0; i < conditions_size; i++)
     {
         if(conditions_string[i] == "Minimize")
         {
@@ -368,19 +369,19 @@ Vector<ResponseOptimization::Condition> ResponseOptimization::get_conditions(con
 }
 
 
-Vector<Vector<double>> ResponseOptimization::get_values_conditions(const Vector<ResponseOptimization::Condition>& conditions, const Vector<double>& values) const
+vector<Tensor<type, 1>> ResponseOptimization::get_values_conditions(const vector<ResponseOptimization::Condition>& conditions, const Tensor<type, 1>& values) const
 {
-    const size_t conditions_size = conditions.size();
+    const int conditions_size = conditions.size();
 
-    Vector<Vector<double>> values_conditions(conditions_size);
+    vector<Tensor<type, 1>> values_conditions(conditions_size);
 
-    size_t index = 0;
+    int index = 0;
 
     ostringstream buffer;
 
-    for(size_t i = 0; i < conditions_size; i++)
+    for(int i = 0; i < conditions_size; i++)
     {
-        Vector<double> current_values;
+        Tensor<type, 1> current_values;
 
         const Condition current_condition = conditions[i];
 
@@ -388,14 +389,14 @@ Vector<Vector<double>> ResponseOptimization::get_values_conditions(const Vector<
         {
             case Minimum:
 
-                values_conditions[i] = Vector<double>();
+                values_conditions[i] = Tensor<type, 1>();
 
                 index++;
             break;
 
             case Maximum:
 
-                values_conditions[i] = Vector<double>();
+                values_conditions[i] = Tensor<type, 1>();
 
                 index++;
             break;
@@ -449,15 +450,15 @@ Vector<Vector<double>> ResponseOptimization::get_values_conditions(const Vector<
 }
 
 
-Tensor<double> ResponseOptimization::calculate_inputs() const
+Tensor<type, 2> ResponseOptimization::calculate_inputs() const
 {
-    const size_t inputs_number = neural_network_pointer->get_inputs_number();
+    const int inputs_number = neural_network_pointer->get_inputs_number();
 
-    Tensor<double> inputs(evaluations_number, inputs_number);
+    Tensor<type, 2> inputs(evaluations_number, inputs_number);
 
-    for(size_t i = 0; i < evaluations_number; i++)
+    for(int i = 0; i < evaluations_number; i++)
     {
-        for(size_t j = 0; j < inputs_number; j++)
+        for(int j = 0; j < inputs_number; j++)
         {
             inputs(i,j) = calculate_random_uniform(inputs_minimums[j], inputs_maximums[j]);
         }
@@ -467,19 +468,22 @@ Tensor<double> ResponseOptimization::calculate_inputs() const
 }
 
 
-Matrix<double> ResponseOptimization::calculate_envelope(const Tensor<double>& inputs, const Tensor<double>& outputs) const
+Tensor<type, 2> ResponseOptimization::calculate_envelope(const Tensor<type, 2>& inputs, const Tensor<type, 2>& outputs) const
 {
-    const size_t inputs_number = neural_network_pointer->get_inputs_number();
-    const size_t outputs_number = neural_network_pointer->get_outputs_number();
+    const int inputs_number = neural_network_pointer->get_inputs_number();
+    const int outputs_number = neural_network_pointer->get_outputs_number();
+/*
+    Tensor<type, 2> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
 
-    Matrix<double> envelope = (inputs.to_matrix()).assemble_columns((outputs.to_matrix()));
-
-    for(size_t i = 0; i < outputs_number; i++)
+    for(int i = 0; i < outputs_number; i++)
     {
         envelope = envelope.filter_column_minimum_maximum(inputs_number+i, outputs_minimums[i], outputs_maximums[i]);
     }
 
     return envelope;
+*/
+
+    return Tensor<type, 2>();
 }
 
 
@@ -487,22 +491,22 @@ ResponseOptimization::Results* ResponseOptimization::perform_optimization() cons
 {
     Results* results = new Results(neural_network_pointer);
 
-    const Tensor<double> inputs = calculate_inputs();
+    const Tensor<type, 2> inputs = calculate_inputs();
 
-    const Tensor<double> outputs = neural_network_pointer->calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_outputs(inputs);
 
-    const Matrix<double> envelope = calculate_envelope(inputs, outputs);
+    const Tensor<type, 2> envelope = calculate_envelope(inputs, outputs);
 
-    const size_t samples_number = envelope.get_rows_number();
+    const int samples_number = envelope.dimension(0);
 
-    const size_t inputs_number = neural_network_pointer->get_inputs_number();
-    const size_t outputs_number = neural_network_pointer->get_outputs_number();
+    const int inputs_number = neural_network_pointer->get_inputs_number();
+    const int outputs_number = neural_network_pointer->get_outputs_number();
 
-    Vector<double> objective(samples_number, 0.0);
+    Tensor<type, 1> objective(samples_number);
 
-    for(size_t i = 0; i < samples_number; i++)
+    for(int i = 0; i < samples_number; i++)
     {
-        for(size_t j = 0; j < inputs_number; j++)
+        for(int j = 0; j < inputs_number; j++)
         {
             if(inputs_conditions[j] == Minimum)
             {
@@ -514,7 +518,7 @@ ResponseOptimization::Results* ResponseOptimization::perform_optimization() cons
             }
         }
 
-        for(size_t j = 0; j < outputs_number; j++)
+        for(int j = 0; j < outputs_number; j++)
         {
             if(outputs_conditions[j] == Minimum)
             {
@@ -527,12 +531,12 @@ ResponseOptimization::Results* ResponseOptimization::perform_optimization() cons
         }
     }
 
-    const size_t optimal_index = minimal_index(objective);
-
+    const int optimal_index = minimal_index(objective);
+/*
     results->optimal_variables = envelope.get_row(optimal_index);
 
     results->optimum_objective = objective[optimal_index];
-
+*/
     return results;
 }
 

@@ -9,266 +9,270 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#ifndef EIGEN_USE_THREADS
+#define EIGEN_USE_THREADS
+#endif
+
 // System includes
 
 #include <math.h>
+#include <vector>
 
 // OpenNN includes
 
-#include "vector.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "statistics.h"
 #include "metrics.h"
+#include "config.h"
+
+#include <../eigen/unsupported/Eigen/CXX11/Tensor>
+#include <../eigen/unsupported/Eigen/CXX11/ThreadPool>
 
 using namespace std;
+using namespace Eigen;
 
 namespace OpenNN
 {
-
     double random_uniform(const double & = -1.0, const double & = 1.0);
 
     double random_normal(const double & = 0.0, const double & = 1.0);
 
-    size_t factorial(const size_t&);
+    int factorial(const int&);
 
-    Vector<double> exponential(const Vector<double>&);
+    Tensor<type, 1> exponential(const Tensor<type, 1>&);
 
-    Vector<double> logarithm(const Vector<double>&);
+    Tensor<type, 1> logarithm(const Tensor<type, 1>&);
 
-    Vector<double> power(const Vector<double>&, const double&);
+    Tensor<type, 1> power(const Tensor<type, 1>&, const double&);
 
-    Tensor<double> competitive(const Tensor<double>&);
+    Tensor<type, 2> competitive(const Tensor<type, 2>&);
 
-    Vector<bool> binary(const Vector<double>&);
+    vector<bool> binary(const Tensor<type, 1>&);
 
-    Vector<double> square_root(const Vector<double>&);
+    Tensor<type, 1> square_root(const Tensor<type, 1>&);
 
-    Vector<double> cumulative(const Vector<double>&);
+    Tensor<type, 1> cumulative(const Tensor<type, 1>&);
 
-    Vector<double> lower_bounded(const Vector<double>&, const double &);
+    Tensor<type, 1> lower_bounded(const Tensor<type, 1>&, const double &);
 
-    Vector<double> lower_bounded(const Vector<double>&, const Vector<double>&);
+    Tensor<type, 1> lower_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Vector<double> upper_bounded(const Vector<double>&, const double &);
+    Tensor<type, 1> upper_bounded(const Tensor<type, 1>&, const double &);
 
-    Vector<double> upper_bounded(const Vector<double>&, const Vector<double>&);
+    Tensor<type, 1> upper_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Vector<double> lower_upper_bounded(const Vector<double>&, const double &, const double &);
+    Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>&, const double &, const double &);
 
-    Vector<double> lower_upper_bounded(const Vector<double>&, const Vector<double>&, const Vector<double>&);
+    Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Matrix<double> lower_bounded(const Matrix<double>&, const double&);
-    Matrix<double> upper_bounded(const Matrix<double>&, const double&);
+    Tensor<type, 2> lower_bounded(const Tensor<type, 2>&, const double&);
+    Tensor<type, 2> upper_bounded(const Tensor<type, 2>&, const double&);
 
-    Matrix<double> lower_upper_bounded(const Matrix<double>&, const Vector<double>&, const Vector<double>&);
-    Tensor<double> lower_upper_bounded(const Tensor<double>&, const Vector<double>&, const Vector<double>&);
+    Tensor<type, 2> lower_upper_bounded(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    Tensor<type, 2> lower_upper_bounded(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    Vector<double> logistic_function(const Vector<double>&, const double&, const double&);
+    Tensor<type, 1> logistic_function(const Tensor<type, 1>&, const double&, const double&);
 
-    Vector<double> hard_sigmoid(const Vector<double>&);
+    Tensor<type, 1> hard_sigmoid(const Tensor<type, 1>&);
 
-    Vector<double> hyperbolic_tangent(const Vector<double>&);
+    Tensor<type, 1> hyperbolic_tangent(const Tensor<type, 1>&);
 
-    Vector<double> logistic(const Vector<double>&);
+    Tensor<type, 1> logistic(const Tensor<type, 1>&);
 
-    Vector<double> linear(const Vector<double>&);
+    Tensor<type, 1> linear(const Tensor<type, 1>&);
 
-    Vector<double> threshold(const Vector<double>&);
+    Tensor<type, 1> threshold(const Tensor<type, 1>&);
 
-    Vector<double> symmetric_threshold(const Vector<double>&);
+    Tensor<type, 1> symmetric_threshold(const Tensor<type, 1>&);
 
-    Vector<double> rectified_linear(const Vector<double>&);
+    Tensor<type, 1> rectified_linear(const Tensor<type, 1>&);
 
-    Vector<double> scaled_exponential_linear(const Vector<double>&);
+    Tensor<type, 1> scaled_exponential_linear(const Tensor<type, 1>&);
 
-    Vector<double> soft_plus(const Vector<double>&);
+    Tensor<type, 1> soft_plus(const Tensor<type, 1>&);
 
-    Vector<double> soft_sign(const Vector<double>&);
+    Tensor<type, 1> soft_sign(const Tensor<type, 1>&);
 
-    Vector<double> exponential_linear(const Vector<double>&);
+    Tensor<type, 1> exponential_linear(const Tensor<type, 1>&);
 
-    Vector<double> logistic_derivatives(const Vector<double>&);
+    Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> threshold_derivatives(const Vector<double>&);
+    Tensor<type, 1> threshold_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> symmetric_threshold_derivatives(const Vector<double>&);
+    Tensor<type, 1> symmetric_threshold_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> linear_derivatives(const Vector<double>&);
+    Tensor<type, 1> linear_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> hyperbolic_tangent_derivatives(const Vector<double>&);
+    Tensor<type, 1> hyperbolic_tangent_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> rectified_linear_derivatives(const Vector<double>&);
+    Tensor<type, 1> rectified_linear_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> scaled_exponential_linear_derivatives(const Vector<double>&);
+    Tensor<type, 1> scaled_exponential_linear_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> soft_plus_derivatives(const Vector<double>&);
+    Tensor<type, 1> soft_plus_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> soft_sign_derivatives(const Vector<double>&);
+    Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> hard_sigmoid_derivatives(const Vector<double>&);
+    Tensor<type, 1> hard_sigmoid_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> exponential_linear_derivatives(const Vector<double>&);
+    Tensor<type, 1> exponential_linear_derivatives(const Tensor<type, 1>&);
 
-    Vector<double> softmax_derivatives(const Vector<double>&);
+    Tensor<type, 1> softmax_derivatives(const Tensor<type, 1>&);
 
     // SINE FUNCTIONS
 
-    Vector<double> sine(const Vector<double>&);
+    Tensor<type, 1> sine(const Tensor<type, 1>&);
 
-    Matrix<double> sine(const Matrix<double>&);
+    Tensor<type, 2> sine(const Tensor<type, 2>&);
 
 
     // COSINE FUNCTIONS
 
-    Vector<double> cosine(const Vector<double>&);
+    Tensor<type, 1> cosine(const Tensor<type, 1>&);
 
-    Matrix<double> cosine(const Matrix<double>&);
+    Tensor<type, 2> cosine(const Tensor<type, 2>&);
 
     // LINEAR
 
-    Tensor<double> linear(const Tensor<double>&);
+    Tensor<type, 2> linear(const Tensor<type, 2>&);
 
     // HYPERBOLIC TANGENT
 
-    Tensor<double> hyperbolic_tangent(const Tensor<double>&);
+    Tensor<type, 2> hyperbolic_tangent(const Tensor<type, 2>&);
 
     // LOGISTIC
 
-    Tensor<double> logistic(const Tensor<double>&);
-    Tensor<double> logistic_second_derivatives(const Tensor<double>&);
+    Tensor<type, 2> logistic(const Tensor<type, 2>&);
+    Tensor<type, 2> logistic_second_derivatives(const Tensor<type, 2>&);
 
     // BINARY
 
-    Tensor<double> binary(const Tensor<double>&);
+    Tensor<type, 2> binary(const Tensor<type, 2>&);
 
     // THRESHOLD
 
-    Tensor<double> threshold(const Tensor<double>&);
+    Tensor<type, 2> threshold(const Tensor<type, 2>&);
 
     // SYMMETRIC THRESHOLD
 
-    Tensor<double> symmetric_threshold(const Tensor<double>&);
+    Tensor<type, 2> symmetric_threshold(const Tensor<type, 2>&);
 
     // RECTIFIED LINEAR
 
-    Tensor<double> rectified_linear(const Tensor<double>&);
+    Tensor<type, 2> rectified_linear(const Tensor<type, 2>&);
 
     // SCALED EXPONENTIAL LINEAR
 
-    Tensor<double> scaled_exponential_linear(const Tensor<double>&);
+    Tensor<type, 2> scaled_exponential_linear(const Tensor<type, 2>&);
 
     // SOFT PLUS
 
-    Tensor<double> soft_plus(const Tensor<double>&);
+    Tensor<type, 2> soft_plus(const Tensor<type, 2>&);
 
     // SOFT SIGN
 
-    Tensor<double> soft_sign(const Tensor<double>&);
+    Tensor<type, 2> soft_sign(const Tensor<type, 2>&);
 
     // HARD SIGMOID
 
-    Tensor<double> hard_sigmoid(const Tensor<double>&);
+    Tensor<type, 2> hard_sigmoid(const Tensor<type, 2>&);
 
     // EXPONENTIAL LINEAR
 
-    Tensor<double> exponential_linear(const Tensor<double>&);
+    Tensor<type, 2> exponential_linear(const Tensor<type, 2>&);
 
     // SOFTMAX
 
-    Tensor<double> softmax(const Tensor<double>&);
+    Tensor<type, 2> softmax(const Tensor<type, 2>&);
 
-    Tensor<double> softmax_rows(const Tensor<double>&);
+    Tensor<type, 2> softmax_rows(const Tensor<type, 2>&);
 
-    Matrix<double> softmax_columns(const Matrix<double>&);
+    Tensor<type, 2> softmax_columns(const Tensor<type, 2>&);
 
     // LINEAR DERIVATIVES
 
-    Tensor<double> linear_derivatives(const Tensor<double>&);
+    Tensor<type, 2> linear_derivatives(const Tensor<type, 2>&);
 
     // HYPERBOLIC TANGENT DERIVATIVES
 
-    Tensor<double> hyperbolic_tangent_derivatives(const Tensor<double>&);
+    Tensor<type, 2> hyperbolic_tangent_derivatives(const Tensor<type, 2>&);
 
     // LOGISTIC DERIVATIVES
 
-    Tensor<double> logistic_derivatives(const Tensor<double>&);
+    Tensor<type, 2> logistic_derivatives(const Tensor<type, 2>&);
 
     // THRESHOLD DERIVATIVES
 
-    Tensor<double> threshold_derivatives(const Tensor<double>&);
+    Tensor<type, 2> threshold_derivatives(const Tensor<type, 2>&);
 
     // SYMMETRIC THRESHOLD DERIVATIVES
 
-    Tensor<double> symmetric_threshold_derivatives(const Tensor<double>&);
+    Tensor<type, 2> symmetric_threshold_derivatives(const Tensor<type, 2>&);
 
     // RECTIFIED LINEAR DERIVATIVES
 
-    Tensor<double> rectified_linear_derivatives(const Tensor<double>&);
+    Tensor<type, 2> rectified_linear_derivatives(const Tensor<type, 2>&);
 
     // SCALED EXPONENTIAL LINEAR DERIVATIVES
 
-    Tensor<double> scaled_exponential_linear_derivatives(const Tensor<double>&);
+    Tensor<type, 2> scaled_exponential_linear_derivatives(const Tensor<type, 2>&);
 
     //SOFT PLUS DERIVATIVES
 
-    Tensor<double> soft_plus_derivatives(const Tensor<double>&);
+    Tensor<type, 2> soft_plus_derivatives(const Tensor<type, 2>&);
 
     // SOFT SIGN DERIVATIVES
 
-    Tensor<double> soft_sign_derivatives(const Tensor<double>&);
+    Tensor<type, 2> soft_sign_derivatives(const Tensor<type, 2>&);
 
     // HARD SIGMOID DERIVATIVES
 
-    Tensor<double> hard_sigmoid_derivatives(const Tensor<double>&);
+    Tensor<type, 2> hard_sigmoid_derivatives(const Tensor<type, 2>&);
 
     // EXPONENTIAL LINEAR DERIVATIVES
 
-    Tensor<double> exponential_linear_derivatives(const Tensor<double>&);
+    Tensor<type, 2> exponential_linear_derivatives(const Tensor<type, 2>&);
 
     // SOFTMAX DERIVATIVES
 
-    Tensor<double> softmax_derivatives(const Tensor<double>&);
+    Tensor<type, 2> softmax_derivatives(const Tensor<type, 2>&);
 
-    Vector<double> sign(const Vector<double>&);
+    Tensor<type, 1> sign(const Tensor<type, 1>&);
 
-    Vector<double> normalized(const Vector<double>&);
+    Tensor<type, 1> normalized(const Tensor<type, 1>&);
 
-    Vector<double> absolute_value(const Vector<double>&);
+    Tensor<type, 1> absolute_value(const Tensor<type, 1>&);
 
-    Matrix<double> normalized_columns(const Matrix<double>&);
+    Tensor<type, 2> normalized_columns(const Tensor<type, 2>&);
 
-    Matrix<double> absolute_value(const Matrix<double>&);
+    Tensor<type, 2> absolute_value(const Tensor<type, 2>&);
 
-    void hard_sigmoid(const Tensor<double>&, Tensor<double>&);
-    void hyperbolic_tangent(const Tensor<double>&, Tensor<double>&);
-    void logistic(const Tensor<double>&, Tensor<double>&);
-    void linear(const Tensor<double>&, Tensor<double>&);
-    void threshold(const Tensor<double>&, Tensor<double>&);
-    void symmetric_threshold(const Tensor<double>&, Tensor<double>&);
-    void rectified_linear(const Tensor<double>&, Tensor<double>&);
-    void scaled_exponential_linear(const Tensor<double>&, Tensor<double>&);
-    void soft_plus(const Tensor<double>&, Tensor<double>&);
-    void soft_sign(const Tensor<double>&, Tensor<double>&);
-    void exponential_linear(const Tensor<double>&, Tensor<double>&);
-    void softmax(const Tensor<double>&, Tensor<double>&);
-    void binary(const Tensor<double>&, Tensor<double>&);
-    void competitive(const Tensor<double>&, Tensor<double>&);
+    void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>&, Tensor<type, 2>&);
+    void logistic(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void threshold(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void softmax(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void binary(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void competitive(const Tensor<type, 2>&, Tensor<type, 2>&);
 
-    void logistic_derivatives(const Tensor<double>&, Tensor<double>&);
-    void threshold_derivatives(const Tensor<double>&, Tensor<double>&);
-    void symmetric_threshold_derivatives(const Tensor<double>&, Tensor<double>&);
-    void linear_derivatives(const Tensor<double>&, Tensor<double>&);
-    void hyperbolic_tangent_derivatives(const Tensor<double>&, Tensor<double>&);
-    void rectified_linear_derivatives(const Tensor<double>&, Tensor<double>&);
-    void scaled_exponential_linear_derivatives(const Tensor<double>&, Tensor<double>&);
-    void soft_plus_derivatives(const Tensor<double>&, Tensor<double>&);
-    void soft_sign_derivatives(const Tensor<double>&, Tensor<double>&);
-    void hard_sigmoid_derivatives(const Tensor<double>&, Tensor<double>&);
-    void exponential_linear_derivatives(const Tensor<double>&, Tensor<double>&);
-    void softmax_derivatives(const Tensor<double>&, Tensor<double>&);
-
-
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void hyperbolic_tangent_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>&, Tensor<type, 2>&);
+    void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
+    void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&);
 }
 
 #endif // FUNCTIONS_H
