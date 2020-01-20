@@ -27,8 +27,6 @@
 
 #include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
 
-
-
 //#include "../eigen/Eigen/Eigen"
 
 using namespace OpenNN;
@@ -38,6 +36,7 @@ using namespace Eigen;
 
 int main(void)
 {
+
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
@@ -57,47 +56,39 @@ int main(void)
 
         system("pause");
 */
-/*
-
         int n = omp_get_max_threads();
-
 
         SimpleThreadPool simple_thread_pool(n);
 
         ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
 
-        Tensor<double, 2> inputs(100000, 100000);
+//        Eigen::TensorDevice<> tensor_device(&simple_thread_pool, n);
+
+        Tensor<float, 2> inputs(1000, 1000);
         inputs.setRandom();
 
-        Tensor<double, 2> deltas(100000, 100000);
+        Tensor<float, 2> deltas(1000, 1000);
         deltas.setRandom();
 
-        Tensor<double, 2> derivatives(100000, 100000);
+        Tensor<float, 2> derivatives(1000, 1000);
 
         const Eigen::array<IndexPair<int>, 1> dimensions = {IndexPair<int>(1, 0)};
 
         derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions);
 
-        cout << derivatives.dimension(0) << endl;
-        cout << derivatives.dimension(1) << endl;
-        system("pause");
-*/
-/*
-        Tensor<double, 2> c(1000, 1000);
-        const Eigen::array<IndexPair<int>, 1> product_dimensions = {IndexPair<int>(1, 0)};
-
-
         time_t beginning_time, current_time;
         time(&beginning_time);
         double elapsed_time = 0.0;
 
-        for(int i = 0; i < 10000; i++)
+        for(int i = 0; i < 1000; i++)
         {
+            cout << i << endl;
 
-//            cout << i << endl;
+            derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions);
+
 //            c.device(thread_pool_device) = a.contract(b, product_dimensions);
 
-            c.device(thread_pool_device) = a;
+//            c.device(thread_pool_device) = a;
 
             //c.setConstant(1.0);
 
@@ -106,12 +97,12 @@ int main(void)
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        cout << c.dimension(0) << endl;
+        cout << derivatives.dimension(0) << endl;
 
         cout << elapsed_time << endl;
 
         system("pause");
-*/
+
 /*
         Eigen::Tensor<int, 2> a(1, 2);
         a.setValues({{0, 1}});
