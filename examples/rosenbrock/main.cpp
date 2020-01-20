@@ -52,12 +52,40 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 /*
-        int n = 16;//omp_get_max_threads();
+        MatrixXf a(1000, 1000);
+        MatrixXf b(1000, 1000);
+        MatrixXf c(1000, 1000);
 
-        SimpleThreadPool simple_thread_pool(n);
+        for(size_t iii = 2; iii < 10; iii++)
+        {
 
-        ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
+        int n = iii+1;//omp_get_max_threads();
 
+        omp_set_num_threads(n);
+        Eigen::setNbThreads(n);
+
+        time_t beginning_time, current_time;
+        time(&beginning_time);
+        double elapsed_time = 0.0;
+
+        for(int i = 0; i < 1000; i++)
+        {
+            //cout << i << endl;
+
+            c = a*b;
+        }
+
+        time(&current_time);
+        elapsed_time = difftime(current_time, beginning_time);
+
+        cout << iii << " = " <<  elapsed_time << endl;
+
+        }
+
+        cout << c.rows() << endl;
+        cout << c.cols() << endl;
+*/
+/*
         Tensor<type, 2> inputs(1000, 1000);
         inputs.setRandom();
 
@@ -65,6 +93,15 @@ int main(void)
         deltas.setRandom();
 
         Tensor<type, 2> derivatives(1000, 1000);
+
+//        for(size_t iii = 2; iii < 10; iii++)
+        {
+
+            int n = 16;//iii+1;//omp_get_max_threads();
+
+            NonBlockingThreadPool simple_thread_pool(n);
+
+            ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
 
         const Eigen::array<IndexPair<int>, 1> dimensions = {IndexPair<int>(1, 0)};
 
@@ -74,7 +111,7 @@ int main(void)
         time(&beginning_time);
         double elapsed_time = 0.0;
 
-        for(int i = 0; i < 100; i++)
+        for(int i = 0; i < 1000; i++)
         {
             //cout << i << endl;
 
@@ -91,12 +128,12 @@ int main(void)
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        cout << derivatives.dimension(0) << endl;
-
         cout << elapsed_time << endl;
-*/
-//        system("pause");
+    }
 
+        cout << derivatives.dimension(0) << endl;
+//        system("pause");
+*/
 /*
         Eigen::Tensor<int, 2> a(1, 2);
         a.setValues({{0, 1}});
@@ -115,7 +152,7 @@ int main(void)
 
         DataSet data_set;
 
-        data_set.generate_Rosenbrock_data(1000, 101);
+        data_set.generate_Rosenbrock_data(1000000, 1001);
 
 //        const vector<string> inputs_names = data_set.get_input_variables_names();
 //        const vector<string> targets_names = data_set.get_target_variables_names();
@@ -123,14 +160,14 @@ int main(void)
 //        const vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 //        const vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
-        data_set.set_batch_instances_number(100);
+        data_set.set_batch_instances_number(1000);
 
         data_set.set_training();
 
         // Neural network
 
         const int inputs_number = data_set.get_input_variables_number();
-        const int hidden_neurons_number = 100;
+        const int hidden_neurons_number = 1000;
         const int outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});

@@ -806,7 +806,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     int n = 16;//omp_get_max_threads();
 
-    SimpleThreadPool simple_thread_pool(n);
+    NonBlockingThreadPool simple_thread_pool(n);
 
     ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
 
@@ -830,7 +830,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            // Data set
 
-            batch.fill(training_batches[iteration], input_variables_indices, target_variables_indices);
+//            batch.fill(training_batches[iteration], input_variables_indices, target_variables_indices);
 
 //            batch.print();system("pause");
 
@@ -880,6 +880,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->set_parameters(parameters);
 
             learning_rate_iteration++;
+
        }
 
        gradient_norm = l2_norm(thread_pool_device, first_order_loss.gradient);
@@ -962,7 +963,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(stop_training)
         {
-
            if(display)
            {
               cout << "Parameters norm: " << parameters_norm << "\n"
