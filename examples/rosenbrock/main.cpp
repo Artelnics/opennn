@@ -52,74 +52,7 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 /*
-        Tensor<float, 1> in1(Eigen::array<int, 1>({2}));
-
-        Tensor<float, 1> in2(Eigen::array<int, 1>({2}));
-
-        Tensor<float, 1> out(Eigen::array<int, 1>({2}));
-
-        in1.setRandom();
-
-        in2.setRandom();
-
-         std::size_t in1_bytes = in1.size() * sizeof(float);
-
-         std::size_t in2_bytes = in2.size() * sizeof(float);
-
-         std::size_t out_bytes = out.size() * sizeof(float);
-
-         float* d_in1;
-
-         float* d_in2;
-
-         float* d_out;
-
-         cudaMalloc((void**)(&d_in1), in1_bytes);
-
-         cudaMalloc((void**)(&d_in2), in2_bytes);
-
-         cudaMalloc((void**)(&d_out), out_bytes);
-
-         cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
-
-         cudaMemcpy(d_in2, in2.data(), in2_bytes, cudaMemcpyHostToDevice);
-
-         Eigen::CudaStreamDevice stream;
-
-         Eigen::GpuDevice gpu_device(&stream);
-
-         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in1(
-
-         d_in1, Eigen::array<int, 1>(2));
-
-         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in2(
-
-          d_in2, Eigen::array<int, 1>(2));
-
-         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_out(
-
-          d_out, Eigen::array<int, 1>(2));
-
-         gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
-*/
-/*
-        Tensor<type, 2> inputs(3, 2);
-        inputs.setValues({{1, 2}, {3, 4}, {5, 6}});
-
-        cout << inputs << endl;
-
-//        Eigen::array<int, 1> dimension({1});
-
-        Eigen::Tensor<type, 1> sums = inputs.sum(Eigen::array<int, 1>({0}));
-
-        cout << endl;
-
-        cout << sums << endl;
-
-        system("pause");
-*/
-/*
-        int n = omp_get_max_threads();
+        int n = 16;//omp_get_max_threads();
 
         SimpleThreadPool simple_thread_pool(n);
 
@@ -141,9 +74,9 @@ int main(void)
         time(&beginning_time);
         double elapsed_time = 0.0;
 
-        for(int i = 0; i < 1000; i++)
+        for(int i = 0; i < 100; i++)
         {
-            cout << i << endl;
+            //cout << i << endl;
 
             derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions);
 
@@ -161,9 +94,9 @@ int main(void)
         cout << derivatives.dimension(0) << endl;
 
         cout << elapsed_time << endl;
-
-        system("pause");
 */
+//        system("pause");
+
 /*
         Eigen::Tensor<int, 2> a(1, 2);
         a.setValues({{0, 1}});
@@ -182,7 +115,7 @@ int main(void)
 
         DataSet data_set;
 
-        data_set.generate_Rosenbrock_data(1000000, 1001);
+        data_set.generate_Rosenbrock_data(1000, 101);
 
 //        const vector<string> inputs_names = data_set.get_input_variables_names();
 //        const vector<string> targets_names = data_set.get_target_variables_names();
@@ -190,14 +123,14 @@ int main(void)
 //        const vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 //        const vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
-        data_set.set_batch_instances_number(1000);
+        data_set.set_batch_instances_number(100);
 
         data_set.set_training();
 
         // Neural network
 
         const int inputs_number = data_set.get_input_variables_number();
-        const int hidden_neurons_number = 999;
+        const int hidden_neurons_number = 100;
         const int outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
@@ -219,7 +152,7 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(0);
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
 //        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
