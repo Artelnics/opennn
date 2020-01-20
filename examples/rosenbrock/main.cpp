@@ -10,6 +10,8 @@
 #define EIGEN_USE_THREADS
 #endif
 
+//#define EIGEN_USE_BLAS
+
 //#define EIGEN_TEST_NO_LONGDOUBLE
 
 //#define EIGEN_TEST_NO_COMPLEX
@@ -39,6 +41,7 @@
 
 //#include "../eigen/Eigen/Eigen"
 #include "../opennn/config.h"
+#include "../opennn/device.h"
 
 using namespace OpenNN;
 using namespace std;
@@ -52,14 +55,60 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 /*
+        int n = 4;
+
+        SimpleThreadPool* simple_thread_pool;
+
+        simple_thread_pool = new SimpleThreadPool(n);
+
+        ThreadPoolDevice* thread_pool_device;
+
+        thread_pool_device = new ThreadPoolDevice(simple_thread_pool, n);
+
+        Tensor<type, 2> inputs(1000, 1000);
+        inputs.setRandom();
+
+        Tensor<type, 2> deltas(1000, 1000);
+        deltas.setRandom();
+
+        Tensor<type, 2> derivatives(1000, 1000);
+
+        const Eigen::array<IndexPair<int>, 1> dimensions = {IndexPair<int>(1, 0)};
+
+        derivatives.device(*thread_pool_device) = inputs.contract(deltas, dimensions);
+
+        cout << derivatives.dimension(0) << endl;
+
+
+//        ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
+
+    derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions);
+
+    time_t beginning_time, current_time;
+    time(&beginning_time);
+    double elapsed_time = 0.0;
+
+    for(int i = 0; i < 1000; i++)
+    {
+        //cout << i << endl;
+
+        derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions);
+
+//            c.device(thread_pool_device) = a.contract(b, product_dimensions);
+
+//            c.device(thread_pool_device) = a;
+
+        //c.setConstant(1.0);
+
+    }
+  */
+/*
+
         MatrixXf a(1000, 1000);
         MatrixXf b(1000, 1000);
         MatrixXf c(1000, 1000);
 
-        for(size_t iii = 2; iii < 10; iii++)
-        {
-
-        int n = iii+1;//omp_get_max_threads();
+        int n = 8;//omp_get_max_threads();
 
         omp_set_num_threads(n);
         Eigen::setNbThreads(n);
@@ -78,9 +127,9 @@ int main(void)
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        cout << iii << " = " <<  elapsed_time << endl;
+        cout <<  " = " <<  elapsed_time << endl;
 
-        }
+
 
         cout << c.rows() << endl;
         cout << c.cols() << endl;
