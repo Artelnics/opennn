@@ -42,6 +42,7 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 INCLUDEPATH += eigen
 
 HEADERS += \
+    config.h \
     opennn_strings.h \
     statistics.h \
     functions.h \

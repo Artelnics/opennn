@@ -10,6 +10,19 @@
 #define EIGEN_USE_THREADS
 #endif
 
+
+//#define EIGEN_TEST_NO_LONGDOUBLE
+
+//#define EIGEN_TEST_NO_COMPLEX
+
+//#define EIGEN_TEST_FUNC cxx11_tensor_cuda
+
+//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
+
+//#define EIGEN_USE_GPU
+
+
+
 // System includes
 
 #include <cstring>
@@ -28,6 +41,7 @@
 #include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
 
 //#include "../eigen/Eigen/Eigen"
+#include "../opennn/config.h"
 
 using namespace OpenNN;
 using namespace std;
@@ -40,6 +54,69 @@ int main(void)
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
+/*
+        Tensor<float, 1> in1(Eigen::array<int, 1>({2}));
+
+        Tensor<float, 1> in2(Eigen::array<int, 1>({2}));
+
+        Tensor<float, 1> out(Eigen::array<int, 1>({2}));
+
+        in1.setRandom();
+
+        in2.setRandom();
+
+
+
+         std::size_t in1_bytes = in1.size() * sizeof(float);
+
+         std::size_t in2_bytes = in2.size() * sizeof(float);
+
+         std::size_t out_bytes = out.size() * sizeof(float);
+
+
+
+         float* d_in1;
+
+         float* d_in2;
+
+         float* d_out;
+
+         cudaMalloc((void**)(&d_in1), in1_bytes);
+
+         cudaMalloc((void**)(&d_in2), in2_bytes);
+
+         cudaMalloc((void**)(&d_out), out_bytes);
+
+
+
+         cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
+
+         cudaMemcpy(d_in2, in2.data(), in2_bytes, cudaMemcpyHostToDevice);
+
+
+
+         Eigen::CudaStreamDevice stream;
+
+         Eigen::GpuDevice gpu_device(&stream);
+
+
+
+         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in1(
+
+             d_in1, Eigen::array<int, 1>(2));
+
+         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in2(
+
+             d_in2, Eigen::array<int, 1>(2));
+
+         Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_out(
+
+             d_out, Eigen::array<int, 1>(2));
+
+
+
+         gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
+*/
 /*
         Tensor<double, 2> inputs(3, 2);
         inputs.setValues({{1, 2}, {3, 4}, {5, 6}});
@@ -55,7 +132,7 @@ int main(void)
         cout << sums << endl;
 
         system("pause");
-*/
+
         int n = omp_get_max_threads();
 
         SimpleThreadPool simple_thread_pool(n);
@@ -64,13 +141,13 @@ int main(void)
 
 //        Eigen::TensorDevice<> tensor_device(&simple_thread_pool, n);
 
-        Tensor<float, 2> inputs(1000, 1000);
+        Tensor<type, 2> inputs(1000, 1000);
         inputs.setRandom();
 
-        Tensor<float, 2> deltas(1000, 1000);
+        Tensor<type, 2> deltas(1000, 1000);
         deltas.setRandom();
 
-        Tensor<float, 2> derivatives(1000, 1000);
+        Tensor<type, 2> derivatives(1000, 1000);
 
         const Eigen::array<IndexPair<int>, 1> dimensions = {IndexPair<int>(1, 0)};
 
