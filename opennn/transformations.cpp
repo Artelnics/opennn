@@ -16,13 +16,13 @@ namespace OpenNN {
 /// @param descriptives Descriptives structure, which contains the minimum and
 /// maximum values for the scaling.
 
-void scale_minimum_maximum(Tensor<double, 1>& vector, const Descriptives &descriptives)
+void scale_minimum_maximum(Tensor<type, 1>& vector, const Descriptives &descriptives)
 {
   scale_minimum_maximum(vector, descriptives.minimum, descriptives.maximum);
 }
 
 
-void scale_minimum_maximum(Tensor<double, 1>& vector, const double& minimum, const double& maximum)
+void scale_minimum_maximum(Tensor<type, 1>& vector, const double& minimum, const double& maximum)
 {
     const int size = vector.size();
 
@@ -45,7 +45,7 @@ void scale_minimum_maximum(Tensor<double, 1>& vector, const double& minimum, con
 /// It also returns the descriptives from the vector.
 /// @param vector Vector with values to be scaled(inputs,targets).
 
- Descriptives scale_minimum_maximum(Tensor<double, 1>& vector)
+ Descriptives scale_minimum_maximum(Tensor<type, 1>& vector)
  {
   const Descriptives descriptives = OpenNN::descriptives(vector);
 
@@ -61,7 +61,7 @@ void scale_minimum_maximum(Tensor<double, 1>& vector, const double& minimum, con
 /// @param mean Mean value for the scaling.
 /// @param standard_deviation Standard deviation value for the scaling.
 
-void scale_mean_standard_deviation(Tensor<double, 1>& vector, const double &mean, const double &standard_deviation) {
+void scale_mean_standard_deviation(Tensor<type, 1>& vector, const double &mean, const double &standard_deviation) {
 
   if(standard_deviation < 1.0e-99) return;
 
@@ -80,7 +80,7 @@ void scale_mean_standard_deviation(Tensor<double, 1>& vector, const double &mean
 /// @param descriptives Descriptives structure,
 /// which contains the mean and standard deviation values for the scaling.
 
-void scale_mean_standard_deviation(Tensor<double, 1>& vector, const Descriptives &descriptives)
+void scale_mean_standard_deviation(Tensor<type, 1>& vector, const Descriptives &descriptives)
 {
   scale_mean_standard_deviation(vector, descriptives.mean, descriptives.standard_deviation);
 }
@@ -92,7 +92,7 @@ void scale_mean_standard_deviation(Tensor<double, 1>& vector, const Descriptives
 /// The values used are those calculated from the vector.
 /// It also returns the descriptives from the vector.
 
-Descriptives scale_mean_standard_deviation(Tensor<double, 1>& vector)
+Descriptives scale_mean_standard_deviation(Tensor<type, 1>& vector)
 {
   const Descriptives _descriptives = descriptives(vector);
 
@@ -106,7 +106,7 @@ Descriptives scale_mean_standard_deviation(Tensor<double, 1>& vector)
 /// @param vector Vector with values to be scaled(inputs,targets).
 /// @param standard_deviation Standard deviation value for the scaling.
 
-void scale_standard_deviation(Tensor<double, 1>& vector, const double &standard_deviation)
+void scale_standard_deviation(Tensor<type, 1>& vector, const double &standard_deviation)
 {
   if(standard_deviation < 1.0e-99) {
     return;
@@ -125,7 +125,7 @@ void scale_standard_deviation(Tensor<double, 1>& vector, const double &standard_
 /// @param descriptives Descriptives structure,
 /// which contains standard deviation value for the scaling.
 
-void scale_standard_deviation(Tensor<double, 1>& vector, const Descriptives &descriptives)
+void scale_standard_deviation(Tensor<type, 1>& vector, const Descriptives &descriptives)
 {
   scale_standard_deviation(vector, descriptives.standard_deviation);
 }
@@ -136,7 +136,7 @@ void scale_standard_deviation(Tensor<double, 1>& vector, const Descriptives &des
 /// The values used are those calculated from the vector.
 /// It also returns the descriptives from the vector.
 
-Descriptives scale_standard_deviation(Tensor<double, 1>& vector)
+Descriptives scale_standard_deviation(Tensor<type, 1>& vector)
 {
   const Descriptives _descriptives = descriptives(vector);
 
@@ -153,7 +153,7 @@ Descriptives scale_standard_deviation(Tensor<double, 1>& vector)
 /// @param vector Vector with values to be scaled(inputs,targets,...).
 /// @param standard_deviation Standard deviation values.
 
-void scale_standard_deviation(Tensor<double, 1>& vector, const Tensor<double, 1>&standard_deviation)
+void scale_standard_deviation(Tensor<type, 1>& vector, const Tensor<type, 1>&standard_deviation)
 {
   const int this_size = vector.size();
 
@@ -165,8 +165,8 @@ void scale_standard_deviation(Tensor<double, 1>& vector, const Tensor<double, 1>
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Transformations."
-           << "void scale_standard_deviation(const Tensor<double, 1>&, const "
-              "Tensor<double, 1>&) method.\n"
+           << "void scale_standard_deviation(const Tensor<type, 1>&, const "
+              "Tensor<type, 1>&) method.\n"
            << "Size of standard deviation vector must be equal to size.\n";
 
     throw logic_error(buffer.str());
@@ -179,8 +179,8 @@ void scale_standard_deviation(Tensor<double, 1>& vector, const Tensor<double, 1>
   for(int i = 0; i < this_size; i++) {
     if(standard_deviation[i] < 1.0e-99) {
 //      cout << "OpenNN Warning: Vector class.\n"
-//                << "void scale_mean_standard_deviation(const Tensor<double, 1>&, const "
-//                   "Tensor<double, 1>&) method.\n"
+//                << "void scale_mean_standard_deviation(const Tensor<type, 1>&, const "
+//                   "Tensor<type, 1>&) method.\n"
 //                << "Standard deviation of variable " << i << " is zero.\n"
 //                << "Those elements won't be scaled.\n";
 
@@ -200,7 +200,7 @@ void scale_standard_deviation(Tensor<double, 1>& vector, const Tensor<double, 1>
 /// @param minimum Minimum values.
 /// @param maximum Maximum deviation values.
 
-void unscale_minimum_maximum(Tensor<double, 1>& vector, const Tensor<double, 1>&minimum, const Tensor<double, 1>&maximum)
+void unscale_minimum_maximum(Tensor<type, 1>& vector, const Tensor<type, 1>&minimum, const Tensor<type, 1>&maximum)
 {
   const int this_size = vector.size();
 
@@ -212,8 +212,8 @@ void unscale_minimum_maximum(Tensor<double, 1>& vector, const Tensor<double, 1>&
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Transformations."
-           << "void unscale_minimum_maximum(const Tensor<double, 1>&, const "
-              "Tensor<double, 1>&) method.\n"
+           << "void unscale_minimum_maximum(const Tensor<type, 1>&, const "
+              "Tensor<type, 1>&) method.\n"
            << "Size of minimum vector must be equal to size.\n";
 
     throw logic_error(buffer.str());
@@ -225,8 +225,8 @@ void unscale_minimum_maximum(Tensor<double, 1>& vector, const Tensor<double, 1>&
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Transformations."
-           << "void unscale_minimum_maximum(const Tensor<double, 1>&, const "
-              "Tensor<double, 1>&) method.\n"
+           << "void unscale_minimum_maximum(const Tensor<type, 1>&, const "
+              "Tensor<type, 1>&) method.\n"
            << "Size of maximum vector must be equal to size.\n";
 
     throw logic_error(buffer.str());
@@ -237,8 +237,8 @@ void unscale_minimum_maximum(Tensor<double, 1>& vector, const Tensor<double, 1>&
   for(int i = 0; i < this_size; i++) {
     if(maximum[i] - minimum[i] < 1.0e-99) {
       cout << "OpenNN Warning: Transformations.\n"
-                << "void unscale_minimum_maximum(const Tensor<double, 1>&, const "
-                   "Tensor<double, 1>&) method.\n"
+                << "void unscale_minimum_maximum(const Tensor<type, 1>&, const "
+                   "Tensor<type, 1>&) method.\n"
                 << "Minimum and maximum values of variable " << i
                 << " are equal.\n"
                 << "Those elements won't be unscaled.\n";
@@ -259,8 +259,8 @@ void unscale_minimum_maximum(Tensor<double, 1>& vector, const Tensor<double, 1>&
 /// @param mean Mean values.
 /// @param standard_deviation Standard deviation values.
 
-void unscale_mean_standard_deviation(Tensor<double, 1>& vector,
-                                                const Tensor<double, 1>&mean, const Tensor<double, 1>&standard_deviation)
+void unscale_mean_standard_deviation(Tensor<type, 1>& vector,
+                                                const Tensor<type, 1>&mean, const Tensor<type, 1>&standard_deviation)
 {
   const int this_size = vector.size();
 
@@ -272,8 +272,8 @@ void unscale_mean_standard_deviation(Tensor<double, 1>& vector,
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Transformations."
-           << "void unscale_mean_standard_deviation(const Tensor<double, 1>&, const "
-              "Tensor<double, 1>&) method.\n"
+           << "void unscale_mean_standard_deviation(const Tensor<type, 1>&, const "
+              "Tensor<type, 1>&) method.\n"
            << "Size of mean vector must be equal to size.\n";
 
     throw logic_error(buffer.str());
@@ -285,8 +285,8 @@ void unscale_mean_standard_deviation(Tensor<double, 1>& vector,
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Transformations.\n"
-           << "void unscale_mean_standard_deviation(const Tensor<double, 1>&, const "
-              "Tensor<double, 1>&) method.\n"
+           << "void unscale_mean_standard_deviation(const Tensor<type, 1>&, const "
+              "Tensor<type, 1>&) method.\n"
            << "Size of standard deviation vector must be equal to size.\n";
 
     throw logic_error(buffer.str());
@@ -297,8 +297,8 @@ void unscale_mean_standard_deviation(Tensor<double, 1>& vector,
   for(int i = 0; i < this_size; i++) {
     if(standard_deviation[i] < 1.0e-99) {
       cout << "OpenNN Warning: Transformations.\n"
-                << "void unscale_mean_standard_deviation(const Tensor<double, 1>&, "
-                   "const Tensor<double, 1>&) method.\n"
+                << "void unscale_mean_standard_deviation(const Tensor<type, 1>&, "
+                   "const Tensor<type, 1>&) method.\n"
                 << "Standard deviation of variable " << i << " is zero.\n"
                 << "Those elements won't be scaled.\n";
 
@@ -316,7 +316,7 @@ void unscale_mean_standard_deviation(Tensor<double, 1>& vector,
 /// @param descriptives Vector of descriptives structures conatining the mean and standard deviation values for the scaling.
 /// The size of that vector must be equal to the number of columns in this matrix.
 
-void scale_mean_standard_deviation(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives)
+void scale_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -363,7 +363,7 @@ void scale_mean_standard_deviation(Tensor<double, 2>& matrix, const vector<Descr
 /// The size of this vector must be equal to the number of columns.
 /// @param row_indices Indices of rows to be unscaled.
 
-void unscale_rows_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
+void unscale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -399,7 +399,7 @@ void unscale_rows_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descri
 /// @param columns_indices Vector of indices of the columns to be unscaled.
 /// The size of that vector must be equal to the number of columns to be unscaled.
 
-void unscale_columns_minimum_maximum(Tensor<double, 2>& matrix,
+void unscale_columns_minimum_maximum(Tensor<type, 2>& matrix,
                                      const vector<Descriptives>& descriptives,
                                      const vector<int>& columns_indices)
 {
@@ -416,7 +416,7 @@ void unscale_columns_minimum_maximum(Tensor<double, 2>& matrix,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void unscale_columns_minimum_maximum(const Tensor<double, 2>&, const vector<Descriptives>&, const vector<int>&) const method.\n"
+              << "void unscale_columns_minimum_maximum(const Tensor<type, 2>&, const vector<Descriptives>&, const vector<int>&) const method.\n"
               << "Size of descriptives (" << size << ") must be equal to number of columns (" << columns_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -447,7 +447,7 @@ void unscale_columns_minimum_maximum(Tensor<double, 2>& matrix,
 /// @param descriptives Vector of descriptives which contains the minimum and maximum scaling values.
 /// The size of that vector must be equal to the number of columns in this matrix.
 
-void unscale_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives)
+void unscale_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -497,7 +497,7 @@ void unscale_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives>& 
 /// The size of this vector must be equal to the number of columns.
 /// @param row_indices Indices of rows to be unscaled.
 
-void unscale_rows_logarithmic(Tensor<double, 2>& matrix,
+void unscale_rows_logarithmic(Tensor<type, 2>& matrix,
                                                const vector<Descriptives>& descriptives,
                                                const vector<int>& row_indices)
 {
@@ -535,7 +535,7 @@ void unscale_rows_logarithmic(Tensor<double, 2>& matrix,
 /// @param columns_indices Vector of indices of the columns to be unscaled.
 /// The size of that vector must be equal to the number of columns to be unscaled.
 
-void unscale_columns_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& columns_indices)
+void unscale_columns_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& columns_indices)
 {
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
@@ -586,7 +586,7 @@ void unscale_columns_logarithmic(Tensor<double, 2>& matrix, const vector<Descrip
 /// It also returns the descriptives of all the columns.
 /// @param matrix Matrix with values to be scaled(inputs,targets,...).
 
-vector<Descriptives> scale_mean_standard_deviation(Tensor<double, 2>& matrix)
+vector<Descriptives> scale_mean_standard_deviation(Tensor<type, 2>& matrix)
 {
     const vector<Descriptives> _descriptives = descriptives(matrix);
 
@@ -601,7 +601,7 @@ vector<Descriptives> scale_mean_standard_deviation(Tensor<double, 2>& matrix)
 /// @param descriptives Vector of descriptives for all the columns.
 /// @param row_indices Indices of rows to be scaled.
 
-void scale_rows_mean_standard_deviation(Tensor<double, 2>& matrix,
+void scale_rows_mean_standard_deviation(Tensor<type, 2>& matrix,
                                                          const vector<Descriptives>& descriptives,
                                                          const vector<int>& row_indices)
 {
@@ -654,7 +654,7 @@ void scale_rows_mean_standard_deviation(Tensor<double, 2>& matrix,
 /// @param columns_indices Vector of indices with the columns to be scaled.
 /// The size of that vector must be equal to the number of columns to be scaled.
 
-void scale_columns_mean_standard_deviation(Tensor<double, 2>& matrix,
+void scale_columns_mean_standard_deviation(Tensor<type, 2>& matrix,
                                            const vector<Descriptives>& descriptives,
                                            const vector<int>& columns_indices)
 {
@@ -708,7 +708,7 @@ void scale_columns_mean_standard_deviation(Tensor<double, 2>& matrix,
 /// @param descriptives Vector of descriptives structures containing the minimum and maximum values for the scaling.
 /// The size of that vector must be equal to the number of columns in this matrix.
 
-void scale_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives)
+void scale_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -757,7 +757,7 @@ void scale_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptives>
 /// @param minimum Minimum values.
 /// @param maximum Maximum deviation values.
 
-void scale_range(Tensor<double, 2>& matrix,
+void scale_range(Tensor<type, 2>& matrix,
                                   const vector<Descriptives>& descriptives,
                                   const double& minimum, const double& maximum)
 {
@@ -808,7 +808,7 @@ void scale_range(Tensor<double, 2>& matrix,
 /// It also returns the descriptives of all the columns.
 /// @param matrix Matrix with values to be scaled(inputs,targets,...).
 
-vector<Descriptives> scale_minimum_maximum(Tensor<double, 2>& matrix)
+vector<Descriptives> scale_minimum_maximum(Tensor<type, 2>& matrix)
 {
     const vector<Descriptives> _descriptives = OpenNN::descriptives(matrix);
 
@@ -823,7 +823,7 @@ vector<Descriptives> scale_minimum_maximum(Tensor<double, 2>& matrix)
 /// @param minimum Minimum values.
 /// @param maximum Maximum deviation values.
 
-vector<Descriptives> scale_range(Tensor<double, 2>& matrix, const double& minimum, const double& maximum)
+vector<Descriptives> scale_range(Tensor<type, 2>& matrix, const double& minimum, const double& maximum)
 {
     const vector<Descriptives> _descriptives = descriptives(matrix);
 
@@ -838,7 +838,7 @@ vector<Descriptives> scale_range(Tensor<double, 2>& matrix, const double& minimu
 /// @param descriptives Vector of descriptives for all the columns.
 /// @param row_indices Indices of rows to be scaled.
 
-void scale_rows_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
+void scale_rows_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
 {
     const Index columns_number = matrix.dimension(1);
 
@@ -893,7 +893,7 @@ void scale_rows_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descript
 /// @param columns_indices Vector of indices with the columns to be scaled.
 /// The size of that vector must be equal to the number of columns to be scaled.
 
-void scale_columns_minimum_maximum(Tensor<double, 2>& matrix,
+void scale_columns_minimum_maximum(Tensor<type, 2>& matrix,
                                    const vector<Descriptives>& descriptives,
                                    const vector<int>& columns_indices)
 {
@@ -910,7 +910,7 @@ void scale_columns_minimum_maximum(Tensor<double, 2>& matrix,
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Transformations.\n"
-              << "void scale_columns_minimum_maximum(Tensor<double, 2>&, const vector<Descriptives>&, const vector<int>&) method.\n"
+              << "void scale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const vector<int>&) method.\n"
               << "Size of descriptives (" << descriptives_size << ") must be equal to size of columns indices (" << columns_indices_size << ").\n";
 
        throw logic_error(buffer.str());
@@ -945,7 +945,7 @@ void scale_columns_minimum_maximum(Tensor<double, 2>& matrix,
 /// @param descriptives Vector of descriptives structures containing the minimum and maximum values for the scaling.
 /// The size of that vector must be equal to the number of columns in this matrix.
 
-void scale_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives)
+void scale_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -991,7 +991,7 @@ void scale_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives>& de
 /// It also returns the descriptives of all the columns.
 /// @param matrix Matrix with values to be scaled(inputs,targets,...).
 
-vector<Descriptives> scale_logarithmic(Tensor<double, 2>& matrix)
+vector<Descriptives> scale_logarithmic(Tensor<type, 2>& matrix)
 {
     const vector<Descriptives> descriptives = OpenNN::descriptives(matrix);
 
@@ -1006,7 +1006,7 @@ vector<Descriptives> scale_logarithmic(Tensor<double, 2>& matrix)
 /// @param descriptives Vector of descriptives for all the columns.
 /// @param row_indices Indices of rows to be scaled.
 
-void scale_rows_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
+void scale_rows_logarithmic(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
 {
     const Index columns_number = matrix.dimension(1);
 
@@ -1059,7 +1059,7 @@ void scale_rows_logarithmic(Tensor<double, 2>& matrix, const vector<Descriptives
 /// @param columns_indices Vector of indices with the columns to be scaled.
 /// The size of that vector must be equal to the number of columns to be scaled.
 
-void scale_columns_logarithmic(Tensor<double, 2>& matrix,
+void scale_columns_logarithmic(Tensor<type, 2>& matrix,
                                                 const vector<Descriptives>& descriptives,
                                                 const vector<int>& columns_indices)
 {
@@ -1116,7 +1116,7 @@ void scale_columns_logarithmic(Tensor<double, 2>& matrix,
 /// @param descriptives Vector of descriptives structures containing the mean and standard deviations for the unscaling.
 /// The size of that vector must be equal to the number of columns in this matrix.
 
-void unscale_mean_standard_deviation(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives)
+void unscale_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1161,7 +1161,7 @@ void unscale_mean_standard_deviation(Tensor<double, 2>& matrix, const vector<Des
 /// The size of this vector must be equal to the number of columns.
 /// @param row_indices Indices of rows to be unscaled.
 
-void unscale_rows_mean_standard_deviation(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
+void unscale_rows_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& row_indices)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1196,7 +1196,7 @@ void unscale_rows_mean_standard_deviation(Tensor<double, 2>& matrix, const vecto
 /// @param columns_indices Vector of indices with the columns to be unscaled.
 /// The size of that vector must be equal to the number of columns to be scaled.
 
-void unscale_columns_mean_standard_deviation(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& columns_indices)
+void unscale_columns_mean_standard_deviation(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives, const vector<int>& columns_indices)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1239,7 +1239,7 @@ void unscale_columns_mean_standard_deviation(Tensor<double, 2>& matrix, const ve
 /// @param descriptives Vector of descriptives which contains the minimum and maximum scaling values.
 /// The size of that vector must be equal to the number of columns in this matrix.
 
-void unscale_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptives>& descriptives)
+void unscale_minimum_maximum(Tensor<type, 2>& matrix, const vector<Descriptives>& descriptives)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1253,7 +1253,7 @@ void unscale_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptive
       ostringstream buffer;
 
       buffer << "OpenNN Exception: Transformations."
-             << "void unscale_minimum_maximum(Tensor<double, 2>&, const vector<Descriptives>&) method.\n"
+             << "void unscale_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&) method.\n"
              << "Size of descriptives vector(" << size << ") must be equal to number of columns(" << columns_number <<").\n";
 
       throw logic_error(buffer.str());
@@ -1287,9 +1287,9 @@ void unscale_minimum_maximum(Tensor<double, 2>& matrix, const vector<Descriptive
 /// @todo describe what it does.
 /// Note that this method sets new numbers of columns in the matrix.
 
-void transform_association(Tensor<double, 2>& matrix)
+void transform_association(Tensor<type, 2>& matrix)
 {
-    Tensor<double, 2> copy(matrix);
+    Tensor<type, 2> copy(matrix);
 /*
     matrix.set(copy.assemble_columns(copy));
 */
@@ -1301,7 +1301,7 @@ void transform_association(Tensor<double, 2>& matrix)
 /// @param vector Vector to be processed.
 /// @param lower_bound Lower bound value.
 
-void apply_lower_bound(Tensor<double, 1>& vector, const double &lower_bound)
+void apply_lower_bound(Tensor<type, 1>& vector, const double &lower_bound)
 {
   const int this_size = vector.size();
 
@@ -1318,7 +1318,7 @@ void apply_lower_bound(Tensor<double, 1>& vector, const double &lower_bound)
 /// @param vector Vector to be processed.
 /// @param lower_bound Lower bound values.
 
-void apply_lower_bound(Tensor<double, 1>& vector, const Tensor<double, 1>&lower_bound)
+void apply_lower_bound(Tensor<type, 1>& vector, const Tensor<type, 1>&lower_bound)
 {
   const int this_size = vector.size();
 
@@ -1335,7 +1335,7 @@ void apply_lower_bound(Tensor<double, 1>& vector, const Tensor<double, 1>&lower_
 /// @param vector Vector to be processed.
 /// @param upper_bound Upper bound value.
 
-void apply_upper_bound(Tensor<double, 1>& vector, const double&upper_bound)
+void apply_upper_bound(Tensor<type, 1>& vector, const double&upper_bound)
 {
   const int this_size = vector.size();
 
@@ -1352,7 +1352,7 @@ void apply_upper_bound(Tensor<double, 1>& vector, const double&upper_bound)
 /// @param vector Vector to be processed.
 /// @param upper_bound Upper bound values.
 
-void apply_upper_bound(Tensor<double, 1>& vector, const Tensor<double, 1>&upper_bound)
+void apply_upper_bound(Tensor<type, 1>& vector, const Tensor<type, 1>&upper_bound)
 {
   const int this_size = vector.size();
 
@@ -1371,7 +1371,7 @@ void apply_upper_bound(Tensor<double, 1>& vector, const Tensor<double, 1>&upper_
 /// @param lower_bound Lower bound value.
 /// @param upper_bound Upper bound value.
 
-void apply_lower_upper_bounds(Tensor<double, 1>& vector, const double &lower_bound,
+void apply_lower_upper_bounds(Tensor<type, 1>& vector, const double &lower_bound,
                                          const double &upper_bound)
 {
   const int this_size = vector.size();
@@ -1393,8 +1393,8 @@ void apply_lower_upper_bounds(Tensor<double, 1>& vector, const double &lower_bou
 /// @param lower_bound Lower bound values.
 /// @param upper_bound Upper bound values.
 
-void apply_lower_upper_bounds(Tensor<double, 1>& vector, const Tensor<double, 1>&lower_bound,
-                                         const Tensor<double, 1>&upper_bound)
+void apply_lower_upper_bounds(Tensor<type, 1>& vector, const Tensor<type, 1>&lower_bound,
+                                         const Tensor<type, 1>&upper_bound)
 {
   const int this_size = vector.size();
 
@@ -1414,7 +1414,7 @@ void apply_lower_upper_bounds(Tensor<double, 1>& vector, const Tensor<double, 1>
 /// @param steps_ahead_number Number of steps ahead for the prediction.
 /// @param time_index Index of the time column.
 
-void transform_time_series(Tensor<double, 2>& matrix,
+void transform_time_series(Tensor<type, 2>& matrix,
                            const int& lags_number,
                            const int& steps_ahead_number,
                            const int& time_index)
@@ -1424,7 +1424,7 @@ void transform_time_series(Tensor<double, 2>& matrix,
 
     const Index columns_number = matrix.dimension(1);
 
-    const Tensor<double, 1> time = matrix.get_column(time_index);
+    const Tensor<type, 1> time = matrix.get_column(time_index);
 
     matrix = matrix.delete_column(time_index);
     const int new_rows_number = rows_number - lags_number - steps_ahead_number + 1;
@@ -1432,11 +1432,11 @@ void transform_time_series(Tensor<double, 2>& matrix,
 
     const vector<int> indices(0, 1, new_rows_number-1);
 
-    const Tensor<double, 1> new_time = time.get_subvector(indices);
+    const Tensor<type, 1> new_time = time.get_subvector(indices);
 
-    Tensor<double, 2> new_matrix(new_rows_number, new_columns_number);
+    Tensor<type, 2> new_matrix(new_rows_number, new_columns_number);
 
-    Tensor<double, 1> new_row(new_columns_number);
+    Tensor<type, 1> new_row(new_columns_number);
 
     for(int i = 0; i < new_rows_number; i++)
     {
@@ -1458,7 +1458,7 @@ void transform_time_series(Tensor<double, 2>& matrix,
 /// @param lags_number Number of lags for the prediction.
 /// @param steps_ahead_number Number of steps ahead for the prediction.
 
-void transform_time_series(Tensor<double, 2>& matrix,
+void transform_time_series(Tensor<type, 2>& matrix,
                           const int& lags_number,
                           const int& steps_ahead_number)
 {
@@ -1469,9 +1469,9 @@ void transform_time_series(Tensor<double, 2>& matrix,
     const int new_rows_number = rows_number - lags_number - steps_ahead_number + 1;
     const int new_columns_number = columns_number *(lags_number + steps_ahead_number);
 
-    Tensor<double, 2> new_matrix(new_rows_number, new_columns_number);
+    Tensor<type, 2> new_matrix(new_rows_number, new_columns_number);
 
-    Tensor<double, 1> new_row(new_columns_number);
+    Tensor<type, 1> new_row(new_columns_number);
 /*
     for(int i = 0; i < new_rows_number; i++)
     {

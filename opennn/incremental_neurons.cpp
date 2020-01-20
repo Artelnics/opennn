@@ -166,7 +166,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
     double prev_selection_error = 999999;
 
-    Tensor<double, 1> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
     double optimum_training_loss = 0.0;
     double optimum_selection_error = 0.0;
@@ -174,7 +174,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
     double current_training_loss = 0.0;
     double current_selection_error = 0.0;
 
-    Tensor<double, 1> current_parameters;
+    Tensor<type, 1> current_parameters;
 
     // Optimization algorithm stuff
 
@@ -204,7 +204,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
         double optimum_selection_error_trial = 999999;
         double optimum_training_error_trial = 999999;
-        Tensor<double, 1> optimum_parameters_trial;
+        Tensor<type, 1> optimum_parameters_trial;
 
         for(int i = 0; i < trials_number; i++)
         {
@@ -214,7 +214,7 @@ IncrementalNeurons::IncrementalNeuronsResults* IncrementalNeurons::perform_neuro
 
             const double current_training_error_trial = optimization_algorithm_results.final_training_error;
             const double current_selection_error_trial = optimization_algorithm_results.final_selection_error;
-            const Tensor<double, 1> current_parameters_trial = optimization_algorithm_results.final_parameters;
+            const Tensor<type, 1> current_parameters_trial = optimization_algorithm_results.final_parameters;
 
             if(current_selection_error_trial < optimum_selection_error_trial)
             {

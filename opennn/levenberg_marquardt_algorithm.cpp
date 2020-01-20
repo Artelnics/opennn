@@ -750,7 +750,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<double, 1> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
    double parameters_norm = 0.0;
 
@@ -769,10 +769,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
    // Training strategy stuff
 
-   Tensor<double, 1> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
    double parameters_increment_norm;
 
-   Tensor<double, 1> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 0.0;
 
    bool stop_training = false;
@@ -2058,18 +2058,18 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
-Tensor<double, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<double, 2>& A, const Tensor<double, 1>& b) const
+Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b) const
 {
     const int n = A.dimension(0);
 
-    Tensor<double, 1> x(n);
-
+    Tensor<type, 1> x(n);
+/*
     const Map<MatrixXd> A_eigen((double*)A.data(), static_cast<Index>(n), static_cast<Index>(n));
     const Map<VectorXd> b_eigen((double*)b.data(), static_cast<Index>(n));
     Map<VectorXd> x_eigen(x.data(), static_cast<Index>(n));
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-
+*/
     return x;
 }
 

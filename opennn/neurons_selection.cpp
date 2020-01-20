@@ -472,7 +472,7 @@ void NeuronsSelection::set_tolerance(const double& new_tolerance)
 /// Returns the minimum of the loss and selection error in trials_number trainings.
 /// @param order_number Number of neurons in the hidden layer to be trained with.
 
-Tensor<double, 1> NeuronsSelection::calculate_losses(const int& neurons_number, NeuralNetwork& neural_network)
+Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, NeuralNetwork& neural_network)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -481,7 +481,7 @@ Tensor<double, 1> NeuronsSelection::calculate_losses(const int& neurons_number, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "Tensor<double, 1> calculate_losses(int) method.\n"
+               << "Tensor<type, 1> calculate_losses(int) method.\n"
                << "Number of hidden neurons must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -492,7 +492,7 @@ Tensor<double, 1> NeuronsSelection::calculate_losses(const int& neurons_number, 
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "Tensor<double, 1> calculate_losses(int) method.\n"
+               << "Tensor<type, 1> calculate_losses(int) method.\n"
                << "Number of trials must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -510,19 +510,19 @@ Tensor<double, 1> NeuronsSelection::calculate_losses(const int& neurons_number, 
 
     double optimum_selection_error = 999999;
     double optimum_training_error = 999999;
-    Tensor<double, 1> optimum_parameters;
+    Tensor<type, 1> optimum_parameters;
 
     // Optimization algorithm stuff
 
     OptimizationAlgorithm::Results results;
 
-    Tensor<double, 1> final_losses(2);
+    Tensor<type, 1> final_losses(2);
 
     final_losses.setConstant(999999);
 
-    Tensor<double, 1> current_loss(2);
+    Tensor<type, 1> current_loss(2);
 
-    Tensor<double, 1> final_parameters;
+    Tensor<type, 1> final_parameters;
 
     bool flag_training = false;
     bool flag_selection = false;
@@ -561,7 +561,7 @@ Tensor<double, 1> NeuronsSelection::calculate_losses(const int& neurons_number, 
 
         const double current_training_error = optimization_algorithm_results.final_training_error;
         const double current_selection_error = optimization_algorithm_results.final_selection_error;
-        const Tensor<double, 1> current_parameters = optimization_algorithm_results.final_parameters;
+        const Tensor<type, 1> current_parameters = optimization_algorithm_results.final_parameters;
 
         if(current_selection_error < optimum_selection_error)
         {
@@ -600,9 +600,9 @@ Tensor<double, 1> NeuronsSelection::calculate_losses(const int& neurons_number, 
 /// Return final training loss and final selection error depending on the training method.
 /// @param results Results of the perform_training method.
 /*
-Tensor<double, 1> NeuronsSelection::get_final_losses(const OptimizationAlgorithm::Results& results) const
+Tensor<type, 1> NeuronsSelection::get_final_losses(const OptimizationAlgorithm::Results& results) const
 {
-    Tensor<double, 1> losses(2);
+    Tensor<type, 1> losses(2);
 
     switch(training_strategy_pointer->get_optimization_method())
     {
@@ -647,7 +647,7 @@ Tensor<double, 1> NeuronsSelection::get_final_losses(const OptimizationAlgorithm
 //            ostringstream buffer;
 
 //            buffer << "OpenNN Exception: NeuronsSelection class.\n"
-//                   << "Tensor<double, 1> get_final_losses(const OptimizationAlgorithm::Results) method.\n"
+//                   << "Tensor<type, 1> get_final_losses(const OptimizationAlgorithm::Results) method.\n"
 //                   << "Unknown main type method.\n";
 
 //            throw logic_error(buffer.str());
@@ -659,7 +659,7 @@ Tensor<double, 1> NeuronsSelection::get_final_losses(const OptimizationAlgorithm
     ostringstream buffer;
 
     buffer << "OpenNN Exception: NeuronsSelection class.\n"
-           << "Tensor<double, 1> get_final_losses(const OptimizationAlgorithm::Results) method.\n"
+           << "Tensor<type, 1> get_final_losses(const OptimizationAlgorithm::Results) method.\n"
            << "Unknown main type method.\n";
 
     throw logic_error(buffer.str());

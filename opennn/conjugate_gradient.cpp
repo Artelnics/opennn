@@ -801,7 +801,7 @@ void ConjugateGradient::set_save_period(const int& new_save_period)
 /// @param old_gradient Previous error function gradient.
 /// @param gradient: Current error function gradient.
 
-double ConjugateGradient::calculate_FR_parameter(const Tensor<double, 1>& old_gradient, const Tensor<double, 1>& gradient) const
+type ConjugateGradient::calculate_FR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -810,7 +810,7 @@ double ConjugateGradient::calculate_FR_parameter(const Tensor<double, 1>& old_gr
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "double calculate_FR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "double calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
 
               << "Loss index pointer is nullptr.\n";
 
@@ -826,7 +826,7 @@ double ConjugateGradient::calculate_FR_parameter(const Tensor<double, 1>& old_gr
     if(old_gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "double calculate_FR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "double calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -837,7 +837,7 @@ double ConjugateGradient::calculate_FR_parameter(const Tensor<double, 1>& old_gr
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "double calculate_FR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "double calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -871,7 +871,7 @@ double ConjugateGradient::calculate_FR_parameter(const Tensor<double, 1>& old_gr
 
    return FR_parameter;
 */
-   return 0.0;
+   return static_cast<type>(0.0);
 }
 
 
@@ -879,7 +879,7 @@ double ConjugateGradient::calculate_FR_parameter(const Tensor<double, 1>& old_gr
 /// @param old_gradient Previous error function gradient.
 /// @param gradient Current error function gradient.
 
-double ConjugateGradient::calculate_PR_parameter(const Tensor<double, 1>& old_gradient, const Tensor<double, 1>& gradient) const
+type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -888,7 +888,7 @@ double ConjugateGradient::calculate_PR_parameter(const Tensor<double, 1>& old_gr
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "double calculate_PR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "double calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
 
               << "Loss index pointer is nullptr.\n";
 
@@ -904,7 +904,7 @@ double ConjugateGradient::calculate_PR_parameter(const Tensor<double, 1>& old_gr
     if(old_gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "double calculate_PR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "double calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -915,7 +915,7 @@ double ConjugateGradient::calculate_PR_parameter(const Tensor<double, 1>& old_gr
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "double calculate_PR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "double calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -953,7 +953,7 @@ double ConjugateGradient::calculate_PR_parameter(const Tensor<double, 1>& old_gr
 
    return PR_parameter;
 */
-    return 0.0;
+    return static_cast<type>(0.0);
 
 }
 
@@ -963,8 +963,8 @@ double ConjugateGradient::calculate_PR_parameter(const Tensor<double, 1>& old_gr
 /// @param gradient Current error function gradient.
 /// @param old_training_direction Previous training direction vector.
 
-Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
-(const Tensor<double, 1>& old_gradient, const Tensor<double, 1>& gradient, const Tensor<double, 1>& old_training_direction) const
+Tensor<type, 1> ConjugateGradient::calculate_PR_training_direction
+(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 1>& old_training_direction) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -973,7 +973,7 @@ Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_PR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -988,7 +988,7 @@ Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
     if(old_gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_PR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -999,7 +999,7 @@ Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_PR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1010,7 +1010,7 @@ Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
     if(old_training_direction_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_PR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1018,19 +1018,19 @@ Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
 
     #endif
 
-   const double PR_parameter = calculate_PR_parameter(old_gradient, gradient);
+   const type PR_parameter = calculate_PR_parameter(old_gradient, gradient);
 
-   const Tensor<double, 1> gradient_descent_term = calculate_gradient_descent_training_direction(gradient);
-   const Tensor<double, 1> conjugate_direction_term = old_training_direction*PR_parameter;
+   const Tensor<type, 1> gradient_descent_term = calculate_gradient_descent_training_direction(gradient);
+   const Tensor<type, 1> conjugate_direction_term = old_training_direction*PR_parameter;
 
-   const Tensor<double, 1> PR_training_direction = gradient_descent_term + conjugate_direction_term;
+   const Tensor<type, 1> PR_training_direction = gradient_descent_term + conjugate_direction_term;
 /*
    const double PR_training_direction_norm = l2_norm(PR_training_direction);
 
    return(PR_training_direction/PR_training_direction_norm);
 */
 
-   return Tensor<double, 1>();
+   return Tensor<type, 1>();
 }
 
 
@@ -1039,8 +1039,8 @@ Tensor<double, 1> ConjugateGradient::calculate_PR_training_direction
 /// @param gradient Current error function gradient.
 /// @param old_training_direction Previous training direction vector.
 
-Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
-(const Tensor<double, 1>& old_gradient, const Tensor<double, 1>& gradient, const Tensor<double, 1>& old_training_direction) const
+Tensor<type, 1> ConjugateGradient::calculate_FR_training_direction
+(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 1>& old_training_direction) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1049,7 +1049,7 @@ Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_FR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -1064,7 +1064,7 @@ Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
     if(old_gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_FR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1075,7 +1075,7 @@ Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_FR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1086,7 +1086,7 @@ Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
     if(old_training_direction_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_FR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1094,18 +1094,18 @@ Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
 
     #endif
 
-   const double FR_parameter = calculate_FR_parameter(old_gradient, gradient);
+   const type FR_parameter = calculate_FR_parameter(old_gradient, gradient);
 
-   const Tensor<double, 1> gradient_descent_term = calculate_gradient_descent_training_direction(gradient);
-   const Tensor<double, 1> conjugate_direction_term = old_training_direction*FR_parameter;
+   const Tensor<type, 1> gradient_descent_term = calculate_gradient_descent_training_direction(gradient);
+   const Tensor<type, 1> conjugate_direction_term = old_training_direction*FR_parameter;
 
-   const Tensor<double, 1> FR_training_direction = gradient_descent_term + conjugate_direction_term;
+   const Tensor<type, 1> FR_training_direction = gradient_descent_term + conjugate_direction_term;
 /*
    const double FR_training_direction_norm = l2_norm(FR_training_direction);
 
    return(FR_training_direction/FR_training_direction_norm);
 */
-    return Tensor<double, 1>();
+    return Tensor<type, 1>();
 }
 
 
@@ -1114,8 +1114,8 @@ Tensor<double, 1> ConjugateGradient::calculate_FR_training_direction
 /// @param gradient Current gradient vector. 
 /// @param old_training_direction Training direction in the previous iteration. 
 
-Tensor<double, 1> ConjugateGradient::calculate_training_direction
-(const Tensor<double, 1>& old_gradient, const Tensor<double, 1>& gradient, const Tensor<double, 1>& old_training_direction) const
+Tensor<type, 1> ConjugateGradient::calculate_training_direction
+(const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tensor<type, 1>& old_training_direction) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -1128,7 +1128,7 @@ Tensor<double, 1> ConjugateGradient::calculate_training_direction
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -1139,7 +1139,7 @@ Tensor<double, 1> ConjugateGradient::calculate_training_direction
     if(old_gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old gradient(" << old_gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1150,7 +1150,7 @@ Tensor<double, 1> ConjugateGradient::calculate_training_direction
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1161,7 +1161,7 @@ Tensor<double, 1> ConjugateGradient::calculate_training_direction
     if(old_training_direction_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of old training direction(" << old_training_direction_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1184,7 +1184,7 @@ Tensor<double, 1> ConjugateGradient::calculate_training_direction
 
    // Never reach here
 
-   const Tensor<double, 1> training_direction(parameters_number);
+   const Tensor<type, 1> training_direction(parameters_number);
 
    return(training_direction);
 
@@ -1194,7 +1194,7 @@ Tensor<double, 1> ConjugateGradient::calculate_training_direction
 /// Returns the gradient descent training direction, which is the negative of the normalized gradient. 
 /// @param gradient Gradient vector.
 
-Tensor<double, 1> ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<double, 1>& gradient) const
+Tensor<type, 1> ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -1203,7 +1203,7 @@ Tensor<double, 1> ConjugateGradient::calculate_gradient_descent_training_directi
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_gradient_descent_training_direction(const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -1218,7 +1218,7 @@ Tensor<double, 1> ConjugateGradient::calculate_gradient_descent_training_directi
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-              << "Tensor<double, 1> calculate_gradient_descent_training_direction(const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -1226,7 +1226,7 @@ Tensor<double, 1> ConjugateGradient::calculate_gradient_descent_training_directi
 
     #endif
 
-    return normalized(gradient)*(-1.0);
+    return normalized(gradient)*static_cast<type>(-1.0);
 }
 
 
@@ -1262,7 +1262,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<double, 1> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    double parameters_norm = 0.0;
 
    // Loss index stuff
@@ -1271,7 +1271,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
    double old_training_loss = 0.0;
    double training_loss_decrease = 0.0;
       
-   Tensor<double, 1> gradient(parameters_number);
+   Tensor<type, 1> gradient(parameters_number);
    double gradient_norm = 0.0;
 
    double selection_error = 0.0;
@@ -1281,12 +1281,12 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    // Optimization algorithm stuff 
 
-   Tensor<double, 1> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
    double parameters_increment_norm;
 
-   Tensor<double, 1> old_gradient(parameters_number);
-   Tensor<double, 1> training_direction(parameters_number);
-   Tensor<double, 1> old_training_direction(parameters_number);
+   Tensor<type, 1> old_gradient(parameters_number);
+   Tensor<type, 1> training_direction(parameters_number);
+   Tensor<type, 1> old_training_direction(parameters_number);
 
    double training_slope;
 
@@ -1296,7 +1296,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
    pair<double,double> directional_point(2, 0.0);
 
-   Tensor<double, 1> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 0.0;
 
    bool stop_training = false;

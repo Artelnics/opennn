@@ -21,6 +21,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 
 #include "tinyxml2.h"
@@ -95,17 +96,17 @@ public:
 
        /// History of the loss function loss over the training iterations.
 
-       Tensor<double, 1> training_error_history;
+       Tensor<type, 1> training_error_history;
 
        /// History of the selection error over the training iterations.
 
-       Tensor<double, 1> selection_error_history;
+       Tensor<type, 1> selection_error_history;
 
        // Final values
 
        /// Final neural network parameters vector.
 
-       Tensor<double, 1> final_parameters;
+       Tensor<type, 1> final_parameters;
 
        /// Final neural network parameters norm.
 

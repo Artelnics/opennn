@@ -16,6 +16,7 @@
 
 // Eigen includes
 
+#include "config.h"
 #include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
@@ -28,7 +29,7 @@ namespace OpenNN
 
     vector<string> get_tokens(const string&, const char&);
 
-    Tensor<double, 1> to_double_vector(const string&, const char&);
+    Tensor<type, 1> to_double_vector(const string&, const char&);
 
 //    inline bool is_digit_string(const char str) {return std::isdigit(str);}
     bool is_numeric_string(const string&);

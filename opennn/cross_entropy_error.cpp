@@ -100,10 +100,10 @@ check();
 
     // Data set
 
-    const Tensor<double, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double, 2> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 /*
     return cross_entropy_error(outputs, targets);
 */
@@ -112,7 +112,7 @@ check();
 }
 
 
-double CrossEntropyError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<double, 1>& parameters) const
+double CrossEntropyError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -122,10 +122,10 @@ check();
 
     // Data set
 
-    const Tensor<double, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double, 2> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 /*
     return cross_entropy_error(outputs, targets);
 */
@@ -159,11 +159,11 @@ check();
 /*
     const vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
 
-    const Tensor<double, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
+    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets);
 
-    const vector<Tensor<double, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
+    const vector<Tensor<type, 2>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
-    const Tensor<double, 1> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
+    const Tensor<type, 1> batch_error_gradient = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
     first_order_loss.loss = cross_entropy_error(forward_propagation[layers_number-1].activations, batch.targets);
 
@@ -186,7 +186,7 @@ check();
 /// @param outputs Tensor of outputs of the neural network.
 /// @param targets Tensor of targets of the data set.
 
-Tensor<double, 2> CrossEntropyError::calculate_output_gradient(const Tensor<double, 2>& outputs, const Tensor<double, 2>& targets) const
+Tensor<type, 2> CrossEntropyError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -194,7 +194,7 @@ check();
 
 #endif
 
-    return (targets/outputs)*(-1.0) + (targets*(-1.0) + 1.0)/(outputs*(-1.0) + 1.0);
+    return (targets/outputs)*static_cast<type>(-1.0) + (targets*static_cast<type>(-1.0) + static_cast<type>(1.0))/(outputs*static_cast<type>(-1.0) + static_cast<type>(1.0));
 }
 
 

@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "layer.h"
 #include "statistics.h"
 
@@ -74,7 +75,7 @@ public:
 
    vector<Descriptives> get_descriptives() const;
 
-   Tensor<double, 2> get_descriptives_matrix() const;
+   Tensor<type, 2> get_descriptives_matrix() const;
    vector<double> get_minimums() const;
    vector<double> get_maximums() const;
 
@@ -127,15 +128,15 @@ public:
 
    bool is_empty() const;
   
-   Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<double, 2> calculate_minimum_maximum_outputs(const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_mean_standard_deviation_outputs(const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_logarithmic_outputs(const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_logarithmic_outputs(const Tensor<type, 2>&) const;
 
-   void check_range(const Tensor<double, 1>&) const;
+   void check_range(const Tensor<type, 1>&) const;
 
    // Serialization methods
 

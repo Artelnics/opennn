@@ -19,6 +19,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
@@ -67,12 +68,12 @@ public:
    // loss methods
 
    double calculate_training_error() const;
-   double calculate_training_error(const Tensor<double, 1>&) const;
+   double calculate_training_error(const Tensor<type, 1>&) const;
 
    double calculate_selection_error() const;
 
    double calculate_batch_error(const vector<int>&) const;
-   double calculate_batch_error(const vector<int>&, const Tensor<double, 1>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
 
    /// @todo Virtual method not implemented.
 
@@ -83,7 +84,7 @@ public:
 
    }
 
-   Tensor<double, 2> calculate_output_gradient(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,

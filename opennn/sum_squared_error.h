@@ -20,11 +20,10 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "metrics.h"
 #include "loss_index.h"
 #include "data_set.h"
-
-
 
 #include "tinyxml2.h"
 
@@ -69,7 +68,7 @@ public:
    // Error methods
 
    double calculate_batch_error(const vector<int>&) const;
-   double calculate_batch_error(const vector<int>&, const Tensor<double, 1>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -84,8 +83,8 @@ public:
 
    // Terms methods
 
-   Tensor<double, 1> calculate_training_error_terms(const Tensor<double, 1>&) const;
-   Tensor<double, 1> calculate_training_error_terms(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Serialization methods
 
@@ -97,7 +96,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   Tensor<double, 2> calculate_output_gradient(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -126,7 +125,7 @@ private:
 
    // Squared errors methods
 
-   Tensor<double, 1> calculate_squared_errors() const;
+   Tensor<type, 1> calculate_squared_errors() const;
 };
 
 }

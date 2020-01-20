@@ -57,7 +57,7 @@ PoolingLayer::~PoolingLayer()
 /// Returns the output of the pooling layer applied to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_outputs(const Tensor<double, 2>& inputs)
+Tensor<type, 2> PoolingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -68,7 +68,7 @@ Tensor<double, 2> PoolingLayer::calculate_outputs(const Tensor<double, 2>& input
             ostringstream buffer;
 
             buffer << "OpenNN Exception: ConvolutionalLayer class.\n"
-                  << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) method.\n"
+                  << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) method.\n"
                   << "Number of inputs dimensions (" << input_variables_dimensions_number << ") must be 4 (batch, filters, rows, columns).\n";
 
             throw logic_error(buffer.str());
@@ -92,14 +92,14 @@ Tensor<double, 2> PoolingLayer::calculate_outputs(const Tensor<double, 2>& input
         }
     }
 
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
 /// Returns the result of applying average pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_average_pooling_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_average_pooling_outputs(const Tensor<type, 2>& inputs) const
 {
 /*
     const int images_number = inputs.dimension(0);
@@ -114,7 +114,7 @@ Tensor<double, 2> PoolingLayer::calculate_average_pooling_outputs(const Tensor<d
 
     const int outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-    Tensor<double, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
+    Tensor<type, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
     for(int image_index = 0; image_index < images_number; image_index ++)
     {
@@ -146,14 +146,14 @@ Tensor<double, 2> PoolingLayer::calculate_average_pooling_outputs(const Tensor<d
 
     return outputs;
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
 /// Returns the result of applying no pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_no_pooling_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_no_pooling_outputs(const Tensor<type, 2>& inputs) const
 {
     return inputs;
 }
@@ -162,7 +162,7 @@ Tensor<double, 2> PoolingLayer::calculate_no_pooling_outputs(const Tensor<double
 /// Returns the result of applying max pooling to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<type, 2>& inputs) const
 {
 /*
     const int images_number = inputs.dimension(0);
@@ -177,7 +177,7 @@ Tensor<double, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<doubl
 
     const int outputs_columns_number = (inputs_columns_number - pool_columns_number)/column_stride + 1;
 
-    Tensor<double, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
+    Tensor<type, 2> outputs(images_number, channels_number, outputs_rows_number, outputs_columns_number);
 
     for(int image_index = 0; image_index < images_number; image_index ++)
     {
@@ -213,12 +213,12 @@ Tensor<double, 2> PoolingLayer::calculate_max_pooling_outputs(const Tensor<doubl
 
     return outputs;
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 
 }
 
 
-Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tensor<double, 2>& inputs)
+Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     ForwardPropagation layers;
 
@@ -233,7 +233,7 @@ Layer::ForwardPropagation PoolingLayer::calculate_forward_propagation(const Tens
 /// Returns the result of applying the derivative of the previously set activation method to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_activations_derivatives(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_activations_derivatives(const Tensor<type, 2>& inputs) const
 {
     switch(pooling_method)
     {
@@ -251,53 +251,53 @@ Tensor<double, 2> PoolingLayer::calculate_activations_derivatives(const Tensor<d
         }
     }
 
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
 /// Returns the result of applying the no pooling activation method derivative to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_no_pooling_activations_derivatives(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_no_pooling_activations_derivatives(const Tensor<type, 2>& inputs) const
 {
 /*
-    return Tensor<double, 2>(inputs.dimensions(), 1.0);
+    return Tensor<type, 2>(inputs.dimensions(), 1.0);
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
 /// Returns the result of applying the no pooling activation method derivative to a batch of images.
 /// @param inputs The batch of images.
 
-Tensor<double, 2> PoolingLayer::calculate_average_pooling_activations_derivatives(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_average_pooling_activations_derivatives(const Tensor<type, 2>& inputs) const
 {
 /*
-    return Tensor<double, 2>(inputs.dimensions(), 1.0);
+    return Tensor<type, 2>(inputs.dimensions(), 1.0);
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_max_pooling_activations_derivatives(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> PoolingLayer::calculate_max_pooling_activations_derivatives(const Tensor<type, 2>& inputs) const
 {
 /*
-    return Tensor<double, 2>(inputs.dimensions(), 1.0);
+    return Tensor<type, 2>(inputs.dimensions(), 1.0);
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_output_delta(const Tensor<double, 2>&, const Tensor<double, 2>& output_gradient) const
+Tensor<type, 2> PoolingLayer::calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>& output_gradient) const
 {
     return output_gradient;
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                                    const Tensor<double, 2>& activations,
-                                                    const Tensor<double, 2>& activations_derivatives,
-                                                    const Tensor<double, 2>& next_layer_delta) const
+Tensor<type, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer,
+                                                    const Tensor<type, 2>& activations,
+                                                    const Tensor<type, 2>& activations_derivatives,
+                                                    const Tensor<type, 2>& next_layer_delta) const
 {
     if(pooling_method == NoPooling) return next_layer_delta;
     else
@@ -330,14 +330,14 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta(Layer* next_layer_pointer
         }
     }
 
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
-                                                                  const Tensor<double, 2>&,
-                                                                  const Tensor<double, 2>&,
-                                                                  const Tensor<double, 2>& next_layer_delta) const
+Tensor<type, 2> PoolingLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
+                                                                  const Tensor<type, 2>&,
+                                                                  const Tensor<type, 2>&,
+                                                                  const Tensor<type, 2>& next_layer_delta) const
 {
     // Current layer's values
 
@@ -356,11 +356,11 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolution
     const int next_layers_row_stride = next_layer_pointer->get_row_stride();
     const int next_layers_column_stride = next_layer_pointer->get_column_stride();
 
-    const Tensor<double, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+    const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
     // Hidden delta calculation
 /*
-    Tensor<double, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -400,15 +400,15 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_convolutional(Convolution
 
     return hidden_delta;
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
-                                                            const Tensor<double, 2>& activations,
-                                                            const Tensor<double, 2>&,
-                                                            const Tensor<double, 2>& next_layer_delta) const
+Tensor<type, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_layer_pointer,
+                                                            const Tensor<type, 2>& activations,
+                                                            const Tensor<type, 2>&,
+                                                            const Tensor<type, 2>& next_layer_delta) const
 {
 /*
     switch(next_layer_pointer->get_pooling_method())
@@ -438,7 +438,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* nex
 
             // Hidden delta calculation
 
-            Tensor<double, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
 
             const int size = hidden_delta.size();
 
@@ -494,7 +494,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* nex
 
             // Hidden delta calculation
 
-            Tensor<double, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+            Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
 
             const int size = hidden_delta.size();
 
@@ -518,7 +518,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* nex
                 {
                     for(int j = lower_column_index; j < upper_column_index; j++)
                     {
-                        Tensor<double, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
+                        Tensor<type, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
 
                         for(int submatrix_row_index = 0; submatrix_row_index < next_layers_pool_rows; submatrix_row_index++)
                         {
@@ -529,7 +529,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* nex
                             }
                         }
 
-                        Tensor<double, 2> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
+                        Tensor<type, 2> multiply_not_multiply(next_layers_pool_rows, next_layers_pool_columns);
 
                         double max_value = activations_current_submatrix(0,0);
 
@@ -541,7 +541,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* nex
                                 {
                                     max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
 
-                                    multiply_not_multiply = Tensor<double, 2>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
+                                    multiply_not_multiply = Tensor<type, 2>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
                                     multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
                                 }
                             }
@@ -562,14 +562,14 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* nex
         }
     }
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* next_layer_pointer,
-                                                               const Tensor<double, 2>&,
-                                                               const Tensor<double, 2>&,
-                                                               const Tensor<double, 2>& next_layer_delta) const
+Tensor<type, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLayer* next_layer_pointer,
+                                                               const Tensor<type, 2>&,
+                                                               const Tensor<type, 2>&,
+                                                               const Tensor<type, 2>& next_layer_delta) const
 {
 /*
     // Current layer's values
@@ -587,7 +587,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLaye
 
     // Hidden delta calculation
 
-    Tensor<double, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -616,15 +616,15 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_perceptron(PerceptronLaye
 
     return hidden_delta;
  */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 
 }
 
 
-Tensor<double, 2> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
-                                                                  const Tensor<double, 2>&,
-                                                                  const Tensor<double, 2>&,
-                                                                  const Tensor<double, 2>& next_layer_delta) const
+Tensor<type, 2> PoolingLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayer* next_layer_pointer,
+                                                                  const Tensor<type, 2>&,
+                                                                  const Tensor<type, 2>&,
+                                                                  const Tensor<type, 2>& next_layer_delta) const
 {
 /*
     // Current layer's values
@@ -642,7 +642,7 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilist
 
     // Hidden delta calculation
 
-    Tensor<double, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
+    Tensor<type, 2> hidden_delta(vector<int>({images_number, channels_number, output_rows_number, output_columns_number}));
 
     const int size = hidden_delta.size();
 
@@ -671,16 +671,16 @@ Tensor<double, 2> PoolingLayer::calculate_hidden_delta_probabilistic(Probabilist
 
     return hidden_delta;
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 
 }
 
 
-Tensor<double, 1> PoolingLayer::calculate_error_gradient(const Tensor<double, 2>& ,
+Tensor<type, 1> PoolingLayer::calculate_error_gradient(const Tensor<type, 2>& ,
                                                       const Layer::ForwardPropagation&,
-                                                      const Tensor<double, 2>&)
+                                                      const Tensor<type, 2>&)
 {
-    return Tensor<double, 1>();
+    return Tensor<type, 1>();
 }
 
 
@@ -848,9 +848,9 @@ int PoolingLayer::get_parameters_number() const
 
 /// Returns the layer's parameters.
 
-Tensor<double, 1> PoolingLayer::get_parameters() const
+Tensor<type, 1> PoolingLayer::get_parameters() const
 {
-    return Tensor<double, 1>();
+    return Tensor<type, 1>();
 }
 
 

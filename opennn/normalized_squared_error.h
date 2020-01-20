@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
@@ -75,21 +76,21 @@ public:
 
    // Normalization coefficients 
 
-   double calculate_normalization_coefficient(const Tensor<double, 2>&, const Tensor<double, 1>&) const;
+   double calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
    // Error methods
 
    double calculate_training_error() const;
-   double calculate_training_error(const Tensor<double, 1>&) const;
+   double calculate_training_error(const Tensor<type, 1>&) const;
 
    double calculate_selection_error() const;
 
    double calculate_batch_error(const vector<int>&) const;
-   double calculate_batch_error(const vector<int>&, const Tensor<double, 1>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
-   Tensor<double, 2> calculate_output_gradient(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -155,12 +156,12 @@ public:
 
    // Error terms methods
 
-   Tensor<double, 1> calculate_training_error_terms(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-   Tensor<double, 1> calculate_training_error_terms(const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    // Squared errors methods
 
-   Tensor<double, 1> calculate_squared_errors() const;
+   Tensor<type, 1> calculate_squared_errors() const;
 
    vector<int> calculate_maximal_errors(const int& = 10) const;
 
@@ -180,9 +181,9 @@ private:
 
    /// Coefficient of normalization for the calculation of the training error.
 
-   double normalization_coefficient;
+   type normalization_coefficient;
 
-   double selection_normalization_coefficient;
+   type selection_normalization_coefficient;
 };
 
 }

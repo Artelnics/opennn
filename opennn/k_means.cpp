@@ -13,7 +13,7 @@ namespace OpenNN
 
 /// @todo
 
-KMeans::Results KMeans::calculate_k_means(const Tensor<double, 2>& matrix, const int& k) const
+KMeans::Results KMeans::calculate_k_means(const Tensor<type, 2>& matrix, const int& k) const
 {
     Results k_means_results;
 /*
@@ -22,11 +22,11 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<double, 2>& matrix, const
 
     vector<vector<int>> clusters(k);
 
-    Tensor<double, 2> previous_means(k, columns_number);
-    Tensor<double, 2> means(k, columns_number);
+    Tensor<type, 2> previous_means(k, columns_number);
+    Tensor<type, 2> means(k, columns_number);
 
-    const Tensor<double, 1> minimums = OpenNN::columns_minimums(matrix);
-    const Tensor<double, 1> maximums = OpenNN::columns_maximums(matrix);
+    const Tensor<type, 1> minimums = OpenNN::columns_minimums(matrix);
+    const Tensor<type, 1> maximums = OpenNN::columns_maximums(matrix);
 
     int iterations = 0;
 
@@ -43,13 +43,13 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<double, 2>& matrix, const
 
     for(int i = 1; i < k; i++)
     {
-        Tensor<double, 1> minimum_distances(rows_number, 0.0);
+        Tensor<type, 1> minimum_distances(rows_number, 0.0);
 
         for(int j = 0; j < rows_number; j++)
         {
-            Tensor<double, 1> distances(i, 0.0);
+            Tensor<type, 1> distances(i, 0.0);
 
-            const Tensor<double, 1> row_data = matrix.get_row(j);
+            const Tensor<type, 1> row_data = matrix.get_row(j);
 
             for(int l = 0; l < i; l++)
             {
@@ -73,7 +73,7 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<double, 2>& matrix, const
 
             if(random_failures > 5)
             {
-                Tensor<double, 1> new_row(columns_number);
+                Tensor<type, 1> new_row(columns_number);
 
                 new_row.setRandom(minimums, maximums);
 
@@ -100,9 +100,9 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<double, 2>& matrix, const
 
         for(int i = 0; i < rows_number; i++)
         {
-            Tensor<double, 1> distances(k, 0.0);
+            Tensor<type, 1> distances(k, 0.0);
 
-            const Tensor<double, 1> current_row = matrix.get_row(i);
+            const Tensor<type, 1> current_row = matrix.get_row(i);
 
             for(int j = 0; j < k; j++)
             {
@@ -140,12 +140,12 @@ KMeans::Results KMeans::calculate_k_means(const Tensor<double, 2>& matrix, const
 }
 
 
-int KMeans::calculate_sample_index_proportional_probability(const Tensor<double, 1>& vector) const
+int KMeans::calculate_sample_index_proportional_probability(const Tensor<type, 1>& vector) const
 {
 /*
     const int this_size = vector.size();
 
-    Tensor<double, 1> cumulative = OpenNN::cumulative(vector);
+    Tensor<type, 1> cumulative = OpenNN::cumulative(vector);
 
     const double sum = vector.calculate_sum();
 

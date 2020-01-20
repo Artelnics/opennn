@@ -1,14 +1,10 @@
-
-
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
-
+//
 //   P R U N I N G   I N P U T S   C L A S S   H E A D E R                 
-
+//
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
-
-
 
 #ifndef PRUNINGINPUTS_H
 #define PRUNINGINPUTS_H
@@ -25,14 +21,9 @@
 
 // OpenNN includes
 
-
-
-
+#include "config.h"
 #include "training_strategy.h"
-
 #include "inputs_selection.h"
-
-
 
 #include "tinyxml2.h"
 

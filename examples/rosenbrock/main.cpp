@@ -10,7 +10,6 @@
 #define EIGEN_USE_THREADS
 #endif
 
-
 //#define EIGEN_TEST_NO_LONGDOUBLE
 
 //#define EIGEN_TEST_NO_COMPLEX
@@ -20,8 +19,6 @@
 //#define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 
 //#define EIGEN_USE_GPU
-
-
 
 // System includes
 
@@ -65,15 +62,11 @@ int main(void)
 
         in2.setRandom();
 
-
-
          std::size_t in1_bytes = in1.size() * sizeof(float);
 
          std::size_t in2_bytes = in2.size() * sizeof(float);
 
          std::size_t out_bytes = out.size() * sizeof(float);
-
-
 
          float* d_in1;
 
@@ -87,59 +80,50 @@ int main(void)
 
          cudaMalloc((void**)(&d_out), out_bytes);
 
-
-
          cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
 
          cudaMemcpy(d_in2, in2.data(), in2_bytes, cudaMemcpyHostToDevice);
-
-
 
          Eigen::CudaStreamDevice stream;
 
          Eigen::GpuDevice gpu_device(&stream);
 
-
-
          Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in1(
 
-             d_in1, Eigen::array<int, 1>(2));
+         d_in1, Eigen::array<int, 1>(2));
 
          Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in2(
 
-             d_in2, Eigen::array<int, 1>(2));
+          d_in2, Eigen::array<int, 1>(2));
 
          Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_out(
 
-             d_out, Eigen::array<int, 1>(2));
-
-
+          d_out, Eigen::array<int, 1>(2));
 
          gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
 */
 /*
-        Tensor<double, 2> inputs(3, 2);
+        Tensor<type, 2> inputs(3, 2);
         inputs.setValues({{1, 2}, {3, 4}, {5, 6}});
 
         cout << inputs << endl;
 
 //        Eigen::array<int, 1> dimension({1});
 
-        Eigen::Tensor<double, 1> sums = inputs.sum(Eigen::array<int, 1>({0}));
+        Eigen::Tensor<type, 1> sums = inputs.sum(Eigen::array<int, 1>({0}));
 
         cout << endl;
 
         cout << sums << endl;
 
         system("pause");
-
+*/
+/*
         int n = omp_get_max_threads();
 
         SimpleThreadPool simple_thread_pool(n);
 
         ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
-
-//        Eigen::TensorDevice<> tensor_device(&simple_thread_pool, n);
 
         Tensor<type, 2> inputs(1000, 1000);
         inputs.setRandom();
@@ -179,7 +163,7 @@ int main(void)
         cout << elapsed_time << endl;
 
         system("pause");
-
+*/
 /*
         Eigen::Tensor<int, 2> a(1, 2);
         a.setValues({{0, 1}});
@@ -242,9 +226,7 @@ int main(void)
 
         training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
 
-
 //        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
-
 
         cout << "End" << endl;
 

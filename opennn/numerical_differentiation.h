@@ -16,6 +16,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "tinyxml2.h"
 
 #include "../eigen/Eigen/Eigen"
@@ -71,10 +72,10 @@ public:
 
    double calculate_h(const double&) const;
 
-   Tensor<double, 1> calculate_h(const Tensor<double, 1>&) const;
-   Tensor<double, 2> calculate_h(const Tensor<double, 2>&) const;
+   Tensor<type, 1> calculate_h(const Tensor<type, 1>&) const;
+   Tensor<type, 2> calculate_h(const Tensor<type, 2>&) const;
 
-   Tensor<double, 1> calculate_backward_differences_derivatives(const Tensor<double, 1>&, const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    // Serialization methods
 
@@ -153,32 +154,32 @@ public:
    /// @param x Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_derivatives(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> h = calculate_h(x);
+      const Tensor<type, 1> h = calculate_h(x);
 
-	  const Tensor<double, 1> y = (t.*f)(x);
+	  const Tensor<type, 1> y = (t.*f)(x);
 
-      const Tensor<double, 1> x_forward = x + h;     
-	  const Tensor<double, 1> y_forward = (t.*f)(x_forward);
+      const Tensor<type, 1> x_forward = x + h;     
+	  const Tensor<type, 1> y_forward = (t.*f)(x_forward);
 
-	  const Tensor<double, 1> d = (y_forward - y)/h;
+	  const Tensor<type, 1> d = (y_forward - y)/h;
 
       return d;
    }
 
 
    template<class T>
-   Tensor<double, 2> calculate_forward_differences_derivatives(const T& t, Tensor<double, 2>(T::*f)(const Tensor<double, 2>&) const, const Tensor<double, 2>& x) const
+   Tensor<type, 2> calculate_forward_differences_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
    {
-      const Tensor<double, 2> h = calculate_h(x);
+      const Tensor<type, 2> h = calculate_h(x);
 
-      const Tensor<double, 2> y = (t.*f)(x);
+      const Tensor<type, 2> y = (t.*f)(x);
 
-      const Tensor<double, 2> x_forward = x + h;
-      const Tensor<double, 2> y_forward = (t.*f)(x_forward);
+      const Tensor<type, 2> x_forward = x + h;
+      const Tensor<type, 2> y_forward = (t.*f)(x_forward);
 
-      const Tensor<double, 2> d = (y_forward - y)/h;
+      const Tensor<type, 2> d = (y_forward - y)/h;
 
       return d;
    }
@@ -190,38 +191,38 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_derivatives(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> h = calculate_h(x);
+      const Tensor<type, 1> h = calculate_h(x);
      
-      const Tensor<double, 1> x_forward = x + h;
-      const Tensor<double, 1> x_backward = x - h;
+      const Tensor<type, 1> x_forward = x + h;
+      const Tensor<type, 1> x_backward = x - h;
 
-	  const Tensor<double, 1> y_forward = (t.*f)(x_forward);
-	  const Tensor<double, 1> y_backward = (t.*f)(x_backward);
+	  const Tensor<type, 1> y_forward = (t.*f)(x_forward);
+	  const Tensor<type, 1> y_backward = (t.*f)(x_backward);
 
-	  const Tensor<double, 1> y = (t.*f)(x);
+	  const Tensor<type, 1> y = (t.*f)(x);
 
-      const Tensor<double, 1> d = (y_forward - y_backward)/(h*2.0);
+      const Tensor<type, 1> d = (y_forward - y_backward)/(h*2.0);
 
       return d;
    }
 
 
    template<class T>
-   Tensor<double, 2> calculate_central_differences_derivatives(const T& t, Tensor<double, 2>(T::*f)(const Tensor<double, 2>&) const, const Tensor<double, 2>& x) const
+   Tensor<type, 2> calculate_central_differences_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
    {
-      const Tensor<double, 2> h = calculate_h(x);
+      const Tensor<type, 2> h = calculate_h(x);
 
-      const Tensor<double, 2> x_forward = x + h;
-      const Tensor<double, 2> x_backward = x - h;
+      const Tensor<type, 2> x_forward = x + h;
+      const Tensor<type, 2> x_backward = x - h;
 
-      const Tensor<double, 2> y_forward = (t.*f)(x_forward);
-      const Tensor<double, 2> y_backward = (t.*f)(x_backward);
+      const Tensor<type, 2> y_forward = (t.*f)(x_forward);
+      const Tensor<type, 2> y_backward = (t.*f)(x_backward);
 
-      const Tensor<double, 2> y = (t.*f)(x);
+      const Tensor<type, 2> y = (t.*f)(x);
 
-      const Tensor<double, 2> d = (y_forward - y_backward)/(h*2.0);
+      const Tensor<type, 2> d = (y_forward - y_backward)/(h*2.0);
 
       return d;
    }
@@ -233,7 +234,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_derivatives(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -249,12 +250,12 @@ public:
 
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    template<class T>
-   Tensor<double, 2> calculate_derivatives(const T& t, Tensor<double, 2>(T::*f)(const Tensor<double, 2>&) const, const Tensor<double, 2>& x) const
+   Tensor<type, 2> calculate_derivatives(const T& t, Tensor<type, 2>(T::*f)(const Tensor<type, 2>&) const, const Tensor<type, 2>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -270,66 +271,66 @@ public:
 
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    /// Returns the derivatives of a vector function using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_derivatives(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> y = (t.*f)(dummy, x);
+      const Tensor<type, 1> y = (t.*f)(dummy, x);
 
-      const Tensor<double, 1> h = calculate_h(x);     
-      const Tensor<double, 1> x_forward = x + h;     
+      const Tensor<type, 1> h = calculate_h(x);     
+      const Tensor<type, 1> x_forward = x + h;     
 
-	  const Tensor<double, 1> y_forward = (t.*f)(dummy, x_forward);
+	  const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
 
-	  const Tensor<double, 1> d = (y_forward - y)/h;
+	  const Tensor<type, 1> d = (y_forward - y)/h;
 
       return d;
    }
 
 
    /// Returns the derivatives of a vector function using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_derivatives(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_derivatives(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> h = calculate_h(x);     
+      const Tensor<type, 1> h = calculate_h(x);     
 
-      const Tensor<double, 1> x_forward = x + h;
-      const Tensor<double, 1> x_backward = x - h;
+      const Tensor<type, 1> x_forward = x + h;
+      const Tensor<type, 1> x_backward = x - h;
 
-	  const Tensor<double, 1> y_forward = (t.*f)(dummy, x_forward);
-	  const Tensor<double, 1> y_backward = (t.*f)(dummy, x_backward);
+	  const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
+	  const Tensor<type, 1> y_backward = (t.*f)(dummy, x_backward);
 
-      const Tensor<double, 1> d = (y_forward - y_backward)/(h*2.0);
+      const Tensor<type, 1> d = (y_forward - y_backward)/(h*2.0);
 
       return d;
    }
 
 
    /// Returns the derivatives of a vector function according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_derivatives(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_derivatives(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -344,7 +345,7 @@ public:
     	 } 	     
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
@@ -439,17 +440,17 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_second_derivatives(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> y = (t.*f)(x);
+      const Tensor<type, 1> y = (t.*f)(x);
 
-      const Tensor<double, 1> h = calculate_h(x);
+      const Tensor<type, 1> h = calculate_h(x);
 
-      const Tensor<double, 1> x_forward = x + h;
-      const Tensor<double, 1> x_forward_2 = x + h*2.0;
+      const Tensor<type, 1> x_forward = x + h;
+      const Tensor<type, 1> x_forward_2 = x + h*2.0;
 
-      const Tensor<double, 1> y_forward = (t.*f)(x_forward);
-      const Tensor<double, 1> y_forward_2 = (t.*f)(x_forward_2);
+      const Tensor<type, 1> y_forward = (t.*f)(x_forward);
+      const Tensor<type, 1> y_forward_2 = (t.*f)(x_forward_2);
 
       return (y_forward_2 - y_forward*2.0 + y)/(h*h);
    }
@@ -461,23 +462,23 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_second_derivatives(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {      
-      const Tensor<double, 1> h = calculate_h(x);
+      const Tensor<type, 1> h = calculate_h(x);
 
-      const Tensor<double, 1> x_forward = x + h;
-      const Tensor<double, 1> x_forward_2 = x + h*2.0;
+      const Tensor<type, 1> x_forward = x + h;
+      const Tensor<type, 1> x_forward_2 = x + h*2.0;
 
-      const Tensor<double, 1> x_backward = x - h;
-      const Tensor<double, 1> x_backward_2 = x - h*2.0;
+      const Tensor<type, 1> x_backward = x - h;
+      const Tensor<type, 1> x_backward_2 = x - h*2.0;
 
-      const Tensor<double, 1> y = (t.*f)(x);
+      const Tensor<type, 1> y = (t.*f)(x);
 
-      const Tensor<double, 1> y_forward = (t.*f)(x_forward);
-      const Tensor<double, 1> y_forward_2 = (t.*f)(x_forward_2);
+      const Tensor<type, 1> y_forward = (t.*f)(x_forward);
+      const Tensor<type, 1> y_forward_2 = (t.*f)(x_forward_2);
 
-      const Tensor<double, 1> y_backward = (t.*f)(x_backward);
-      const Tensor<double, 1> y_backward_2 = (t.*f)(x_backward_2);
+      const Tensor<type, 1> y_backward = (t.*f)(x_backward);
+      const Tensor<type, 1> y_backward_2 = (t.*f)(x_backward_2);
 
       return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
    }
@@ -489,7 +490,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_second_derivatives(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -504,7 +505,7 @@ public:
     	 }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
@@ -517,23 +518,23 @@ public:
    /// @param x2: Input vector.
 
    template<class T>
-   Tensor<double, 2> calculate_forward_differences_second_derivatives(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&, const int&, const Tensor<double, 1>&) const,
-                                                                  const int& dummy_1, const Tensor<double, 1>& x1, const int& dummy_2,const Tensor<double, 1>& x2) const
+   Tensor<type, 2> calculate_forward_differences_second_derivatives(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&, const int&, const Tensor<type, 1>&) const,
+                                                                  const int& dummy_1, const Tensor<type, 1>& x1, const int& dummy_2,const Tensor<type, 1>& x2) const
    {
        const int n = x1.size();
        const int m = x2.size();
 
-      Tensor<double, 2> M(n, m);
+      Tensor<type, 2> M(n, m);
 
       double y = (t.*f)(dummy_1, x1, dummy_2, x2);
 
       double h1, h2;
 
-      Tensor<double, 1> x1_forward(x1);
-      Tensor<double, 1> x1_forward_2(x1);
+      Tensor<type, 1> x1_forward(x1);
+      Tensor<type, 1> x1_forward_2(x1);
 
-      Tensor<double, 1> x2_forward(x2);
-      Tensor<double, 1> x2_forward_2(x2);
+      Tensor<type, 1> x2_forward(x2);
+      Tensor<type, 1> x2_forward_2(x2);
 
       double y_forward, y_forward_2;
 
@@ -575,70 +576,70 @@ public:
 
 
    /// Returns the second derivatives of a vector function using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_second_derivatives(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> y = (t.*f)(dummy, x);
+      const Tensor<type, 1> y = (t.*f)(dummy, x);
 
-      const Tensor<double, 1> h = calculate_h(x);
+      const Tensor<type, 1> h = calculate_h(x);
 
-      const Tensor<double, 1> x_forward = x + h;
-      const Tensor<double, 1> x_forward_2 = x + h*2.0;
+      const Tensor<type, 1> x_forward = x + h;
+      const Tensor<type, 1> x_forward_2 = x + h*2.0;
 
-      const Tensor<double, 1> y_forward = (t.*f)(dummy, x_forward);
-      const Tensor<double, 1> y_forward_2 = (t.*f)(dummy, x_forward_2);
+      const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
+      const Tensor<type, 1> y_forward_2 = (t.*f)(dummy, x_forward_2);
 
       return (y_forward_2 - y_forward*2.0 + y)/(h*h);
    }
 
 
-   // Tensor<double, 1> calculate_central_differences_second_derivatives(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const method
+   // Tensor<type, 1> calculate_central_differences_second_derivatives(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const method
 
    /// Returns the second derivatives of a vector function using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_second_derivatives(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {      
-      const Tensor<double, 1> h = calculate_h(x);
+      const Tensor<type, 1> h = calculate_h(x);
 
-      const Tensor<double, 1> x_forward = x + h;
-      const Tensor<double, 1> x_forward_2 = x + h*2.0;
+      const Tensor<type, 1> x_forward = x + h;
+      const Tensor<type, 1> x_forward_2 = x + h*2.0;
 
-      const Tensor<double, 1> x_backward = x - h;
-      const Tensor<double, 1> x_backward_2 = x - h*2.0;
+      const Tensor<type, 1> x_backward = x - h;
+      const Tensor<type, 1> x_backward_2 = x - h*2.0;
 
-      const Tensor<double, 1> y = (t.*f)(dummy, x);
+      const Tensor<type, 1> y = (t.*f)(dummy, x);
 
-      const Tensor<double, 1> y_forward = (t.*f)(dummy, x_forward);
-      const Tensor<double, 1> y_forward_2 = (t.*f)(dummy, x_forward_2);
+      const Tensor<type, 1> y_forward = (t.*f)(dummy, x_forward);
+      const Tensor<type, 1> y_forward_2 = (t.*f)(dummy, x_forward_2);
 
-      const Tensor<double, 1> y_backward = (t.*f)(dummy, x_backward);
-      const Tensor<double, 1> y_backward_2 = (t.*f)(dummy, x_backward_2);
+      const Tensor<type, 1> y_backward = (t.*f)(dummy, x_backward);
+      const Tensor<type, 1> y_backward_2 = (t.*f)(dummy, x_backward_2);
 
       return (y_forward_2*-1.0 + y_forward*16.0 + y*-30.0 + y_backward*16.0 + y_backward_2*-1.0)/(h*h*12.0);
    }
 
 
    /// Returns the second derivatives of a vector function acording to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy integer for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_second_derivatives(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_second_derivatives(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -653,20 +654,20 @@ public:
     	 }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    // GRADIENT METHODS
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -674,11 +675,11 @@ public:
 
       double y = (t.*f)(x);
       
-	  Tensor<double, 1> x_forward(x);
+	  Tensor<type, 1> x_forward(x);
   
       double y_forward;
 
-	  Tensor<double, 1> g(n);
+	  Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -696,25 +697,25 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
       double h;
 
-	  Tensor<double, 1> x_forward(x);
-	  Tensor<double, 1> x_backward(x);
+	  Tensor<type, 1> x_forward(x);
+	  Tensor<type, 1> x_backward(x);
   
 	  double y_forward;
       double y_backward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -736,13 +737,13 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -757,18 +758,18 @@ public:
     	 }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&). 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&). 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&), const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&), const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -776,11 +777,11 @@ public:
 
       double y = (t.*f)(x);
       
-	  Tensor<double, 1> x_forward(x);
+	  Tensor<type, 1> x_forward(x);
   
       double y_forward;
 
-	  Tensor<double, 1> g(n);
+	  Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -799,26 +800,26 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&), const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&), const Tensor<type, 1>& x) const
    {      
 
       const int n = x.size();
 
       double h;
 
-	  Tensor<double, 1> x_forward(x);
-	  Tensor<double, 1> x_backward(x);
+	  Tensor<type, 1> x_forward(x);
+	  Tensor<type, 1> x_backward(x);
   
 	  double y_forward;
       double y_backward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -840,13 +841,13 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&), const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&), const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -861,12 +862,12 @@ public:
     	 }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -874,7 +875,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -882,11 +883,11 @@ public:
 
       const double y = (t.*f)(dummy, x);
       
-      Tensor<double, 1> x_forward(x);
+      Tensor<type, 1> x_forward(x);
   
       double y_forward;
 
-	  Tensor<double, 1> g(n);
+	  Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -904,7 +905,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -912,19 +913,19 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {    
       const int n = x.size();
 
       double h;
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
   
       double y_forward;
       double y_backward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -946,7 +947,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -954,7 +955,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -969,12 +970,12 @@ public:
     	 }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    /// Returns the gradient of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -982,7 +983,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -990,11 +991,11 @@ public:
 
       double y = (t.*f)(dummy, x);
       
-	  Tensor<double, 1> x_forward(x);
+	  Tensor<type, 1> x_forward(x);
   
       double y_forward;
 
-	  Tensor<double, 1> g(n);
+	  Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -1012,7 +1013,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the forward differences method.
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const.
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const.
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
    /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
@@ -1020,7 +1021,7 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<double, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const vector<int>&, const Tensor<double, 1>&) const, const vector<int>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_forward_differences_gradient(const T& t, double(T::*f)(const vector<int>&, const Tensor<type, 1>&) const, const vector<int>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
@@ -1028,11 +1029,11 @@ public:
 
       double y = (t.*f)(dummy, x);
 
-      Tensor<double, 1> x_forward(x);
+      Tensor<type, 1> x_forward(x);
 
       double y_forward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -1051,7 +1052,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1059,19 +1060,19 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {      
       const int n = x.size();
 
       double h;
 
-	  Tensor<double, 1> x_forward(x);
-	  Tensor<double, 1> x_backward(x);
+	  Tensor<type, 1> x_forward(x);
+	  Tensor<type, 1> x_backward(x);
   
 	  double y_forward;
       double y_backward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -1093,7 +1094,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the central differences method.
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const.
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const.
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
    /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
@@ -1101,19 +1102,19 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<double, 1> calculate_central_differences_gradient(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 2>&) const, const int& dummy, const Tensor<double, 2>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 2>&) const, const int& dummy, const Tensor<type, 2>& x) const
    {
       const int n = x.size();
 
       double h;
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
       double y_forward;
       double y_backward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -1135,7 +1136,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions using the central differences method.
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const.
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const.
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
    /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
@@ -1143,18 +1144,18 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<double, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const vector<int>&, const Tensor<double, 1>&) const, const vector<int>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_central_differences_gradient(const T& t, double(T::*f)(const vector<int>&, const Tensor<type, 1>&) const, const vector<int>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
       double h;
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
       double y_forward;
       double y_backward;
 
-      Tensor<double, 1> g(n);
+      Tensor<type, 1> g(n);
 
       for(int i = 0; i < n; i++)
       {
@@ -1176,7 +1177,7 @@ public:
 
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1184,7 +1185,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 1> calculate_gradient(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -1199,12 +1200,12 @@ public:
     	 }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    /// Returns the gradient of a function of several dimensions acording to the numerical differentiation method to be used.
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const.
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const.
    /// The first integer argument is used for the function definition, differentiation is performed with respect to the second vector argument.
    /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
@@ -1212,7 +1213,7 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Tensor<double, 1> calculate_gradient(const T& t, double(T::*f)(const vector<int>&, const Tensor<double, 1>&) const, const vector<int>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 1> calculate_gradient(const T& t, double(T::*f)(const vector<int>&, const Tensor<type, 1>&) const, const vector<int>& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -1227,21 +1228,21 @@ public:
          }
       }
 
-      return Tensor<double, 1>();
+      return Tensor<type, 1>();
    }
 
 
    template<class T>
-   Tensor<double, 2> calculate_central_differences_gradient_matrix(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 2>&) const, const int& integer, const Tensor<double, 2>& x) const
+   Tensor<type, 2> calculate_central_differences_gradient_matrix(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 2>&) const, const int& integer, const Tensor<type, 2>& x) const
    {
        const int rows_number = x.dimension(0);
        const int columns_number = x.dimension(1);
 
-      Tensor<double, 2> gradient(rows_number, columns_number);
+      Tensor<type, 2> gradient(rows_number, columns_number);
 
       double h;
-      Tensor<double, 2> x_forward(x);
-      Tensor<double, 2> x_backward(x);
+      Tensor<type, 2> x_forward(x);
+      Tensor<type, 2> x_backward(x);
 
       double y_forward;
       double y_backward;
@@ -1270,27 +1271,27 @@ public:
    // HESSIAN METHODS
 
    /// Returns the hessian matrix of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_hessian(const T& t, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_hessian(const T& t, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
-      Tensor<double, 2> H(n, n);
+      Tensor<type, 2> H(n, n);
 
       double h_i;
       double h_j;
 
       double y = (t.*f)(x);
 
-      Tensor<double, 1> x_forward_2i(x);
-      Tensor<double, 1> x_forward_ij(x);
-      Tensor<double, 1> x_forward_i(x);
-      Tensor<double, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2i(x);
+      Tensor<type, 1> x_forward_ij(x);
+      Tensor<type, 1> x_forward_i(x);
+      Tensor<type, 1> x_forward_j(x);
 
       double y_forward_2i;
       double y_forward_ij;
@@ -1341,37 +1342,37 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_hessian(const T&, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_hessian(const T&, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian matrix of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_hessian(const T& t, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_hessian(const T& t, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
       double y = (t.*f)(x);
 
-      Tensor<double, 2> H(n, n);
+      Tensor<type, 2> H(n, n);
 
       double h_i;
       double h_j;
 
-      Tensor<double, 1> x_backward_2i(x);
-      Tensor<double, 1> x_backward_i(x);
+      Tensor<type, 1> x_backward_2i(x);
+      Tensor<type, 1> x_backward_i(x);
 
-      Tensor<double, 1> x_forward_i(x);
-      Tensor<double, 1> x_forward_2i(x);      
+      Tensor<type, 1> x_forward_i(x);
+      Tensor<type, 1> x_forward_2i(x);      
 
-      Tensor<double, 1> x_backward_ij(x);
-      Tensor<double, 1> x_forward_ij(x);
+      Tensor<type, 1> x_backward_ij(x);
+      Tensor<type, 1> x_forward_ij(x);
 
-      Tensor<double, 1> x_backward_i_forward_j(x);
-      Tensor<double, 1> x_forward_i_backward_j(x);
+      Tensor<type, 1> x_backward_i_forward_j(x);
+      Tensor<type, 1> x_forward_i_backward_j(x);
 
       double y_backward_2i;
       double y_backward_i;
@@ -1452,13 +1453,13 @@ public:
 
 
    /// Returns the hessian matrix of a function of several dimensions acording to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_hessian(const T& t, double(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_hessian(const T& t, double(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -1473,14 +1474,14 @@ public:
          }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
-   // Tensor<double, 2> calculate_forward_differences_hessian(const T&, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const method
+   // Tensor<type, 2> calculate_forward_differences_hessian(const T&, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const method
 
    /// Returns the hessian matrix of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1488,21 +1489,21 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_hessian(const T& t, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_hessian(const T& t, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
-      Tensor<double, 2> H(n, n);
+      Tensor<type, 2> H(n, n);
 
       double h_i;
       double h_j;
 
       double y = (t.*f)(dummy, x);
 
-      Tensor<double, 1> x_forward_2i(x);
-      Tensor<double, 1> x_forward_ij(x);
-      Tensor<double, 1> x_forward_i(x);
-      Tensor<double, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2i(x);
+      Tensor<type, 1> x_forward_ij(x);
+      Tensor<type, 1> x_forward_i(x);
+      Tensor<type, 1> x_forward_j(x);
 
       double y_forward_2i;
       double y_forward_ij;
@@ -1553,10 +1554,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_hessian(const T&, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_hessian(const T&, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian matrix of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1564,28 +1565,28 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_hessian(const T& t, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_hessian(const T& t, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
       double y = (t.*f)(dummy, x);
 
-      Tensor<double, 2> H(n, n);
+      Tensor<type, 2> H(n, n);
 
       double h_i;
       double h_j;
 
-      Tensor<double, 1> x_backward_2i(x);
-      Tensor<double, 1> x_backward_i(x);
+      Tensor<type, 1> x_backward_2i(x);
+      Tensor<type, 1> x_backward_i(x);
 
-      Tensor<double, 1> x_forward_i(x);
-      Tensor<double, 1> x_forward_2i(x);      
+      Tensor<type, 1> x_forward_i(x);
+      Tensor<type, 1> x_forward_2i(x);      
 
-      Tensor<double, 1> x_backward_ij(x);
-      Tensor<double, 1> x_forward_ij(x);
+      Tensor<type, 1> x_backward_ij(x);
+      Tensor<type, 1> x_forward_ij(x);
 
-      Tensor<double, 1> x_backward_i_forward_j(x);
-      Tensor<double, 1> x_forward_i_backward_j(x);
+      Tensor<type, 1> x_backward_i_forward_j(x);
+      Tensor<type, 1> x_forward_i_backward_j(x);
 
       double y_backward_2i;
       double y_backward_i;
@@ -1665,10 +1666,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_hessian(const T&, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_hessian(const T&, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian matrix of a function of several dimensions according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first vector argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1676,7 +1677,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_hessian(const T& t, double(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_hessian(const T& t, double(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -1691,12 +1692,12 @@ public:
          }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    /// Returns the hessian matrix of a function of several dimensions using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1704,21 +1705,21 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_hessian(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_hessian(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
-      Tensor<double, 2> H(n, n);
+      Tensor<type, 2> H(n, n);
 
       double h_i;
       double h_j;
 
       double y = (t.*f)(dummy, x);
 
-      Tensor<double, 1> x_forward_2i(x);
-      Tensor<double, 1> x_forward_ij(x);
-      Tensor<double, 1> x_forward_i(x);
-      Tensor<double, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2i(x);
+      Tensor<type, 1> x_forward_ij(x);
+      Tensor<type, 1> x_forward_i(x);
+      Tensor<type, 1> x_forward_j(x);
 
       double y_forward_2i;
       double y_forward_ij;
@@ -1769,10 +1770,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_hessian(const T&, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_hessian(const T&, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian matrix of a function of several dimensions using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1780,28 +1781,28 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_hessian(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_hessian(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
       double y = (t.*f)(dummy, x);
 
-      Tensor<double, 2> H(n, n);
+      Tensor<type, 2> H(n, n);
 
       double h_i;
       double h_j;
 
-      Tensor<double, 1> x_backward_2i(x);
-      Tensor<double, 1> x_backward_i(x);
+      Tensor<type, 1> x_backward_2i(x);
+      Tensor<type, 1> x_backward_i(x);
 
-      Tensor<double, 1> x_forward_i(x);
-      Tensor<double, 1> x_forward_2i(x);      
+      Tensor<type, 1> x_forward_i(x);
+      Tensor<type, 1> x_forward_2i(x);      
 
-      Tensor<double, 1> x_backward_ij(x);
-	  Tensor<double, 1> x_forward_ij(x);
+      Tensor<type, 1> x_backward_ij(x);
+	  Tensor<type, 1> x_forward_ij(x);
 
-	  Tensor<double, 1> x_backward_i_forward_j(x);
-      Tensor<double, 1> x_forward_i_backward_j(x);
+	  Tensor<type, 1> x_backward_i_forward_j(x);
+      Tensor<type, 1> x_forward_i_backward_j(x);
 
       double y_backward_2i;
       double y_backward_i;
@@ -1881,10 +1882,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_hessian(const T&, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_hessian(const T&, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian matrix of a function of several dimensions according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -1892,7 +1893,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_hessian(const T& t, double(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_hessian(const T& t, double(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -1907,32 +1908,32 @@ public:
     	 }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    // JACOBIAN METHODS
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(x); 
+      Tensor<type, 1> y = (t.*f)(x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> y_forward(n);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> y_forward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	   {
@@ -1952,31 +1953,31 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_Jacobian(const T&, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_Jacobian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(x); 
+      Tensor<type, 1> y = (t.*f)(x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
-	  Tensor<double, 1> y_forward(n);
-	  Tensor<double, 1> y_backward(n);
+	  Tensor<type, 1> y_forward(n);
+	  Tensor<type, 1> y_backward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2001,13 +2002,13 @@ public:
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2022,31 +2023,31 @@ public:
     	 }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// @param t  Object constructor containing the member method to differentiate.  
    /// @param f Pointer to the member method.
    /// @param dummy Dummy vector for the method prototype.
    /// @param x Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy, x); 
+      Tensor<type, 1> y = (t.*f)(dummy, x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> y_forward(n);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> y_forward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	   {
@@ -2066,32 +2067,32 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_Jacobian(const T&, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_Jacobian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy vector for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy, x); 
+      Tensor<type, 1> y = (t.*f)(dummy, x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
-	  Tensor<double, 1> y_forward(n);
-	  Tensor<double, 1> y_backward(n);
+	  Tensor<type, 1> y_forward(n);
+	  Tensor<type, 1> y_backward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2116,14 +2117,14 @@ public:
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param dummy: Dummy vector for the method prototype. 
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2138,12 +2139,12 @@ public:
     	 }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2151,19 +2152,19 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy, x); 
+      Tensor<type, 1> y = (t.*f)(dummy, x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> y_forward(n);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> y_forward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2183,10 +2184,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_Jacobian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const
+   // Tensor<type, 2> calculate_central_differences_Jacobian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2194,22 +2195,22 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy, x); 
+      Tensor<type, 1> y = (t.*f)(dummy, x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
-	  Tensor<double, 1> y_forward(n);
-	  Tensor<double, 1> y_backward(n);
+	  Tensor<type, 1> y_forward(n);
+	  Tensor<type, 1> y_backward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2233,10 +2234,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_Jacobian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_Jacobian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&) const. 
    /// The first integer argument is dummy, differentiation is performed with respect to the second vector argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2244,7 +2245,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_Jacobian(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_Jacobian(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2259,12 +2260,12 @@ public:
     	 }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2273,20 +2274,20 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_Jacobian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_Jacobian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy_int, dummy_vector, x); 
+      Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x); 
 
       double h;
 
       const int n = x.size();
       int m = y.size();
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> y_forward(n);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> y_forward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2306,10 +2307,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_Jacobian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_Jacobian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2318,23 +2319,23 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_Jacobian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_Jacobian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       const int n = x.size();
 
-      const Tensor<double, 1> y = (t.*f)(dummy_int, dummy_vector, x); 
+      const Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x); 
       const int m = y.size();
 
       double h;
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
-	  Tensor<double, 1> y_forward(n);
-	  Tensor<double, 1> y_backward(n);
+	  Tensor<type, 1> y_forward(n);
+	  Tensor<type, 1> y_backward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2358,10 +2359,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_Jacobian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_Jacobian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2370,8 +2371,8 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_Jacobian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_Jacobian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2386,12 +2387,12 @@ public:
     	 }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.  
    /// @param t Object constructor containing the member method to differentiate.  
    /// @param f Pointer to the member method.
@@ -2400,20 +2401,20 @@ public:
    /// @param x Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_forward_differences_Jacobian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const int&, const Tensor<double, 1>&) const, const int& dummy_int_1, const int& dummy_int_2, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_forward_differences_Jacobian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const int&, const Tensor<type, 1>&) const, const int& dummy_int_1, const int& dummy_int_2, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> y = (t.*f)(dummy_int_1, dummy_int_2, x); 
+      const Tensor<type, 1> y = (t.*f)(dummy_int_1, dummy_int_2, x); 
 
       const int n = x.size();
       const int m = y.size();
 
       double h;
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> y_forward(n);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> y_forward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2433,10 +2434,10 @@ public:
    }
 
 
-   // Tensor<double, 2> calculate_central_differences_Jacobian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // Tensor<type, 2> calculate_central_differences_Jacobian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.  
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2445,23 +2446,23 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_central_differences_Jacobian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const int&, const Tensor<double, 1>&) const, const int& dummy_int_1, const int& dummy_int_2, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_central_differences_Jacobian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const int&, const Tensor<type, 1>&) const, const int& dummy_int_1, const int& dummy_int_2, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> y = (t.*f)(dummy_int_1, dummy_int_2, x); 
+      const Tensor<type, 1> y = (t.*f)(dummy_int_1, dummy_int_2, x); 
 
       const int n = x.size();
       const int m = y.size();
 
       double h;
 
-      Tensor<double, 1> x_forward(x);
-      Tensor<double, 1> x_backward(x);
+      Tensor<type, 1> x_forward(x);
+      Tensor<type, 1> x_backward(x);
 
-	  Tensor<double, 1> y_forward(n);
-	  Tensor<double, 1> y_backward(n);
+	  Tensor<type, 1> y_forward(n);
+	  Tensor<type, 1> y_backward(n);
 
-      Tensor<double, 2> J(m,n);
+      Tensor<type, 2> J(m,n);
 
       for(int j = 0; j < n; j++)
 	  {
@@ -2486,7 +2487,7 @@ public:
 
 
    /// Returns the Jacobian matrix of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: double f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.  
    /// @param t Object constructor containing the member method to differentiate.  
    /// @param f Pointer to the member method.
@@ -2495,8 +2496,8 @@ public:
    /// @param x Input vector. 
 
    template<class T> 
-   Tensor<double, 2> calculate_Jacobian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const int&, const Tensor<double, 1>&) const, const int& dummy_int_1, const int& dummy_int_2, const Tensor<double, 1>& x) const
+   Tensor<type, 2> calculate_Jacobian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const int&, const Tensor<type, 1>&) const, const int& dummy_int_1, const int& dummy_int_2, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2511,25 +2512,25 @@ public:
     	 }
       }
 
-      return Tensor<double, 2>();
+      return Tensor<type, 2>();
    }
 
 
    // HESSIAN FORM METHODS
 
 
-   // vector<Tensor<double, 2>> calculate_forward_differences_hessian(const T&, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_forward_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_forward_differences_hessian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_forward_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {      
-      Tensor<double, 1> y = (t.*f)(x);   
+      Tensor<type, 1> y = (t.*f)(x);   
 
       int s = y.size();
       const int n = x.size();
@@ -2537,19 +2538,19 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_forward_j(x);       
-      Tensor<double, 1> x_forward_2j(x);       
+      Tensor<type, 1> x_forward_j(x);       
+      Tensor<type, 1> x_forward_2j(x);       
 
-      Tensor<double, 1> x_forward_k(x);       
-      Tensor<double, 1> x_forward_jk(x);       
+      Tensor<type, 1> x_forward_k(x);       
+      Tensor<type, 1> x_forward_jk(x);       
 
-      Tensor<double, 1> y_forward_j(s);       
-      Tensor<double, 1> y_forward_2j(s);       
+      Tensor<type, 1> y_forward_j(s);       
+      Tensor<type, 1> y_forward_2j(s);       
 
-      Tensor<double, 1> y_forward_k(s);       
-      Tensor<double, 1> y_forward_jk(s);       
+      Tensor<type, 1> y_forward_k(s);       
+      Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
       {
@@ -2600,18 +2601,18 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_central_differences_hessian(const T&, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_central_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_central_differences_hessian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_central_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(x);   
+      Tensor<type, 1> y = (t.*f)(x);   
 
       int s = y.size();
       const int n = x.size();
@@ -2619,31 +2620,31 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_backward_2j(x);
-      Tensor<double, 1> x_backward_j(x);
+      Tensor<type, 1> x_backward_2j(x);
+      Tensor<type, 1> x_backward_j(x);
 
-      Tensor<double, 1> x_forward_j(x);
-      Tensor<double, 1> x_forward_2j(x);      
+      Tensor<type, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2j(x);      
 
-      Tensor<double, 1> x_backward_jk(x);
-	  Tensor<double, 1> x_forward_jk(x);
+      Tensor<type, 1> x_backward_jk(x);
+	  Tensor<type, 1> x_forward_jk(x);
 
-	  Tensor<double, 1> x_backward_j_forward_k(x);
-      Tensor<double, 1> x_forward_j_backward_k(x);
+	  Tensor<type, 1> x_backward_j_forward_k(x);
+      Tensor<type, 1> x_forward_j_backward_k(x);
 
-      Tensor<double, 1> y_backward_2j;
-      Tensor<double, 1> y_backward_j;
+      Tensor<type, 1> y_backward_2j;
+      Tensor<type, 1> y_backward_j;
 
-      Tensor<double, 1> y_forward_j;
-      Tensor<double, 1> y_forward_2j;
+      Tensor<type, 1> y_forward_j;
+      Tensor<type, 1> y_forward_2j;
    
-      Tensor<double, 1> y_backward_jk;
-	  Tensor<double, 1> y_forward_jk;
+      Tensor<type, 1> y_backward_jk;
+	  Tensor<type, 1> y_forward_jk;
 
-	  Tensor<double, 1> y_backward_j_forward_k;
-      Tensor<double, 1> y_forward_j_backward_k;
+	  Tensor<type, 1> y_backward_j_forward_k;
+      Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
 	  {
@@ -2716,16 +2717,16 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_hessian(const T&, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_hessian(const T&, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Tensor<type, 1>&) const. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_hessian(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&) const, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2740,12 +2741,12 @@ public:
          }
       }
 
-      return vector<Tensor<double, 2>>();
+      return vector<Tensor<type, 2>>();
    }
 
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2753,10 +2754,10 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_forward_differences_hessian
-  (const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_forward_differences_hessian
+  (const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {      
-      Tensor<double, 1> y = (t.*f)(dummy_vector, x);   
+      Tensor<type, 1> y = (t.*f)(dummy_vector, x);   
 
       int s = y.size();
       const int n = x.size();
@@ -2764,19 +2765,19 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_forward_j(x);       
-      Tensor<double, 1> x_forward_2j(x);       
+      Tensor<type, 1> x_forward_j(x);       
+      Tensor<type, 1> x_forward_2j(x);       
 
-      Tensor<double, 1> x_forward_k(x);       
-      Tensor<double, 1> x_forward_jk(x);       
+      Tensor<type, 1> x_forward_k(x);       
+      Tensor<type, 1> x_forward_jk(x);       
 
-      Tensor<double, 1> y_forward_j(s);       
-      Tensor<double, 1> y_forward_2j(s);       
+      Tensor<type, 1> y_forward_j(s);       
+      Tensor<type, 1> y_forward_2j(s);       
 
-      Tensor<double, 1> y_forward_k(s);       
-      Tensor<double, 1> y_forward_jk(s);       
+      Tensor<type, 1> y_forward_k(s);       
+      Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
       {
@@ -2827,11 +2828,11 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_central_differences_hessian
-   //(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_central_differences_hessian
+   //(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2839,10 +2840,10 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_central_differences_hessian
-  (const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_central_differences_hessian
+  (const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy_vector, x);   
+      Tensor<type, 1> y = (t.*f)(dummy_vector, x);   
 
       int s = y.size();
       const int n = x.size();
@@ -2850,31 +2851,31 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_backward_2j(x);
-      Tensor<double, 1> x_backward_j(x);
+      Tensor<type, 1> x_backward_2j(x);
+      Tensor<type, 1> x_backward_j(x);
 
-      Tensor<double, 1> x_forward_j(x);
-      Tensor<double, 1> x_forward_2j(x);      
+      Tensor<type, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2j(x);      
 
-      Tensor<double, 1> x_backward_jk(x);
-      Tensor<double, 1> x_forward_jk(x);
+      Tensor<type, 1> x_backward_jk(x);
+      Tensor<type, 1> x_forward_jk(x);
 
-	  Tensor<double, 1> x_backward_j_forward_k(x);
-      Tensor<double, 1> x_forward_j_backward_k(x);
+	  Tensor<type, 1> x_backward_j_forward_k(x);
+      Tensor<type, 1> x_forward_j_backward_k(x);
 
-      Tensor<double, 1> y_backward_2j;
-      Tensor<double, 1> y_backward_j;
+      Tensor<type, 1> y_backward_2j;
+      Tensor<type, 1> y_backward_j;
 
-      Tensor<double, 1> y_forward_j;
-      Tensor<double, 1> y_forward_2j;
+      Tensor<type, 1> y_forward_j;
+      Tensor<type, 1> y_forward_2j;
    
-      Tensor<double, 1> y_backward_jk;
-	  Tensor<double, 1> y_forward_jk;
+      Tensor<type, 1> y_backward_jk;
+	  Tensor<type, 1> y_forward_jk;
 
-	  Tensor<double, 1> y_backward_j_forward_k;
-      Tensor<double, 1> y_forward_j_backward_k;
+	  Tensor<type, 1> y_backward_j_forward_k;
+      Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
 	  {
@@ -2947,11 +2948,11 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_hessian
-   //(const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_hessian
+   //(const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2959,8 +2960,8 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_hessian
-  (const T& t, Tensor<double, 1>(T::*f)(const Tensor<double, 1>&, const Tensor<double, 1>&) const, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_hessian
+  (const T& t, Tensor<type, 1>(T::*f)(const Tensor<type, 1>&, const Tensor<type, 1>&) const, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -2975,12 +2976,12 @@ public:
     	 }
       }
 
-      return vector<Tensor<double, 2>>();
+      return vector<Tensor<type, 2>>();
    }
 
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// The first argument is dummy, differentiation is performed with respect to the second argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -2988,9 +2989,9 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_forward_differences_hessian(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_forward_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {      
-      Tensor<double, 1> y = (t.*f)(dummy, x);   
+      Tensor<type, 1> y = (t.*f)(dummy, x);   
 
       int s = y.size();
       const int n = x.size();
@@ -2998,19 +2999,19 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_forward_j(x);       
-      Tensor<double, 1> x_forward_2j(x);       
+      Tensor<type, 1> x_forward_j(x);       
+      Tensor<type, 1> x_forward_2j(x);       
 
-      Tensor<double, 1> x_forward_k(x);       
-      Tensor<double, 1> x_forward_jk(x);       
+      Tensor<type, 1> x_forward_k(x);       
+      Tensor<type, 1> x_forward_jk(x);       
 
-      Tensor<double, 1> y_forward_j(s);       
-      Tensor<double, 1> y_forward_2j(s);       
+      Tensor<type, 1> y_forward_j(s);       
+      Tensor<type, 1> y_forward_2j(s);       
 
-      Tensor<double, 1> y_forward_k(s);       
-      Tensor<double, 1> y_forward_jk(s);       
+      Tensor<type, 1> y_forward_k(s);       
+      Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
       {
@@ -3061,10 +3062,10 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_central_differences_hessian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_central_differences_hessian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// The first argument is dummy, differentiation is performed with respect to the second argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -3072,9 +3073,9 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_central_differences_hessian(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_central_differences_hessian(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
-      Tensor<double, 1> y = (t.*f)(dummy, x);   
+      Tensor<type, 1> y = (t.*f)(dummy, x);   
 
       int s = y.size();
       const int n = x.size();
@@ -3082,31 +3083,31 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_backward_2j(x);
-      Tensor<double, 1> x_backward_j(x);
+      Tensor<type, 1> x_backward_2j(x);
+      Tensor<type, 1> x_backward_j(x);
 
-      Tensor<double, 1> x_forward_j(x);
-      Tensor<double, 1> x_forward_2j(x);      
+      Tensor<type, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2j(x);      
 
-      Tensor<double, 1> x_backward_jk(x);
-      Tensor<double, 1> x_forward_jk(x);
+      Tensor<type, 1> x_backward_jk(x);
+      Tensor<type, 1> x_forward_jk(x);
 
-	  Tensor<double, 1> x_backward_j_forward_k(x);
-      Tensor<double, 1> x_forward_j_backward_k(x);
+	  Tensor<type, 1> x_backward_j_forward_k(x);
+      Tensor<type, 1> x_forward_j_backward_k(x);
 
-      Tensor<double, 1> y_backward_2j;
-      Tensor<double, 1> y_backward_j;
+      Tensor<type, 1> y_backward_2j;
+      Tensor<type, 1> y_backward_j;
 
-      Tensor<double, 1> y_forward_j;
-      Tensor<double, 1> y_forward_2j;
+      Tensor<type, 1> y_forward_j;
+      Tensor<type, 1> y_forward_2j;
    
-      Tensor<double, 1> y_backward_jk;
-	  Tensor<double, 1> y_forward_jk;
+      Tensor<type, 1> y_backward_jk;
+	  Tensor<type, 1> y_forward_jk;
 
-	  Tensor<double, 1> y_backward_j_forward_k;
-      Tensor<double, 1> y_forward_j_backward_k;
+	  Tensor<type, 1> y_backward_j_forward_k;
+      Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
 	  {
@@ -3179,10 +3180,10 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_hessian(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_hessian(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&) const. 
    /// The first argument is dummy, differentiation is performed with respect to the second argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -3190,7 +3191,7 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_hessian(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&) const, const int& dummy, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_hessian(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&) const, const int& dummy, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -3205,12 +3206,12 @@ public:
     	 }
       }
 
-      return vector<Tensor<double, 2>>();
+      return vector<Tensor<type, 2>>();
    }
 
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the forward differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -3219,10 +3220,10 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_forward_differences_hessian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_forward_differences_hessian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {      
-      Tensor<double, 1> y = (t.*f)(dummy_int, dummy_vector, x);   
+      Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x);   
 
       int s = y.size();
       const int n = x.size();
@@ -3230,19 +3231,19 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_forward_j(x);       
-      Tensor<double, 1> x_forward_2j(x);       
+      Tensor<type, 1> x_forward_j(x);       
+      Tensor<type, 1> x_forward_2j(x);       
 
-      Tensor<double, 1> x_forward_k(x);       
-      Tensor<double, 1> x_forward_jk(x);       
+      Tensor<type, 1> x_forward_k(x);       
+      Tensor<type, 1> x_forward_jk(x);       
 
-      Tensor<double, 1> y_forward_j(s);       
-      Tensor<double, 1> y_forward_2j(s);       
+      Tensor<type, 1> y_forward_j(s);       
+      Tensor<type, 1> y_forward_2j(s);       
 
-      Tensor<double, 1> y_forward_k(s);       
-      Tensor<double, 1> y_forward_jk(s);       
+      Tensor<type, 1> y_forward_k(s);       
+      Tensor<type, 1> y_forward_jk(s);       
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
       {
@@ -3293,11 +3294,11 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_central_differences_hessian
-   //(const T&, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_central_differences_hessian
+   //(const T&, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs using the central differences method. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -3306,10 +3307,10 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_central_differences_hessian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_central_differences_hessian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
-      const Tensor<double, 1> y = (t.*f)(dummy_int, dummy_vector, x);   
+      const Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x);   
 
       int s = y.size();
       const int n = x.size();
@@ -3317,31 +3318,31 @@ public:
       double h_j;
       double h_k;
 
-      Tensor<double, 1> x_backward_2j(x);
-      Tensor<double, 1> x_backward_j(x);
+      Tensor<type, 1> x_backward_2j(x);
+      Tensor<type, 1> x_backward_j(x);
 
-      Tensor<double, 1> x_forward_j(x);
-      Tensor<double, 1> x_forward_2j(x);      
+      Tensor<type, 1> x_forward_j(x);
+      Tensor<type, 1> x_forward_2j(x);      
 
-      Tensor<double, 1> x_backward_jk(x);
-      Tensor<double, 1> x_forward_jk(x);
+      Tensor<type, 1> x_backward_jk(x);
+      Tensor<type, 1> x_forward_jk(x);
 
-	  Tensor<double, 1> x_backward_j_forward_k(x);
-      Tensor<double, 1> x_forward_j_backward_k(x);
+	  Tensor<type, 1> x_backward_j_forward_k(x);
+      Tensor<type, 1> x_forward_j_backward_k(x);
 
-      Tensor<double, 1> y_backward_2j;
-      Tensor<double, 1> y_backward_j;
+      Tensor<type, 1> y_backward_2j;
+      Tensor<type, 1> y_backward_j;
 
-      Tensor<double, 1> y_forward_j;
-      Tensor<double, 1> y_forward_2j;
+      Tensor<type, 1> y_forward_j;
+      Tensor<type, 1> y_forward_2j;
    
-      Tensor<double, 1> y_backward_jk;
-	  Tensor<double, 1> y_forward_jk;
+      Tensor<type, 1> y_backward_jk;
+	  Tensor<type, 1> y_forward_jk;
 
-	  Tensor<double, 1> y_backward_j_forward_k;
-      Tensor<double, 1> y_forward_j_backward_k;
+	  Tensor<type, 1> y_backward_j_forward_k;
+      Tensor<type, 1> y_forward_j_backward_k;
 
-      vector<Tensor<double, 2>> H(s);
+      vector<Tensor<type, 2>> H(s);
 
       for(int i = 0; i < s; i++)
 	  {
@@ -3414,11 +3415,11 @@ public:
    }
 
 
-   // vector<Tensor<double, 2>> calculate_hessian
-   //(const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const method
+   // vector<Tensor<type, 2>> calculate_hessian
+   //(const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const method
 
    /// Returns the hessian form, as a vector of matrices, of a function of many inputs and many outputs according to the numerical differentiation method to be used. 
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const. 
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const. 
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.
@@ -3427,8 +3428,8 @@ public:
    /// @param x: Input vector. 
 
    template<class T> 
-   vector<Tensor<double, 2>> calculate_hessian
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   vector<Tensor<type, 2>> calculate_hessian
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
       switch(numerical_differentiation_method)
       {
@@ -3443,12 +3444,12 @@ public:
     	 }   	         
       }
 
-      return vector<Tensor<double, 2>>();
+      return vector<Tensor<type, 2>>();
    }
 
 
    /// Returns the hessian matrices, as a matrix of matrices, of a function of many inputs and many outputs using the central differences method.
-   /// The function to be differentiated is of the following form: Tensor<double, 1> f(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const.
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const.
    /// The first and second arguments are dummy, differentiation is performed with respect to the third argument.
    /// @param t : Object constructor containing the member method to differentiate.
    /// @param f: Pointer to the member method.
@@ -3457,10 +3458,10 @@ public:
    /// @param x: Input vector.
 
    template<class T>
-   Matrix< Tensor<double, 2>, Dynamic, Dynamic> calculate_central_differences_hessian_matrices
-  (const T& t, Tensor<double, 1>(T::*f)(const int&, const Tensor<double, 1>&, const Tensor<double, 1>&) const, const int& dummy_int, const Tensor<double, 1>& dummy_vector, const Tensor<double, 1>& x) const
+   Matrix< Tensor<type, 2>, Dynamic, Dynamic> calculate_central_differences_hessian_matrices
+  (const T& t, Tensor<type, 1>(T::*f)(const int&, const Tensor<type, 1>&, const Tensor<type, 1>&) const, const int& dummy_int, const Tensor<type, 1>& dummy_vector, const Tensor<type, 1>& x) const
    {
-       const Tensor<double, 1> y = (t.*f)(dummy_int, dummy_vector, x);
+       const Tensor<type, 1> y = (t.*f)(dummy_int, dummy_vector, x);
 
        int s = y.size();
        const int n = x.size();
@@ -3468,31 +3469,31 @@ public:
        double h_j;
        double h_k;
 
-       Tensor<double, 1> x_backward_2j(x);
-       Tensor<double, 1> x_backward_j(x);
+       Tensor<type, 1> x_backward_2j(x);
+       Tensor<type, 1> x_backward_j(x);
 
-       Tensor<double, 1> x_forward_j(x);
-       Tensor<double, 1> x_forward_2j(x);
+       Tensor<type, 1> x_forward_j(x);
+       Tensor<type, 1> x_forward_2j(x);
 
-       Tensor<double, 1> x_backward_jk(x);
-       Tensor<double, 1> x_forward_jk(x);
+       Tensor<type, 1> x_backward_jk(x);
+       Tensor<type, 1> x_forward_jk(x);
 
-       Tensor<double, 1> x_backward_j_forward_k(x);
-       Tensor<double, 1> x_forward_j_backward_k(x);
+       Tensor<type, 1> x_backward_j_forward_k(x);
+       Tensor<type, 1> x_forward_j_backward_k(x);
 
-       Tensor<double, 1> y_backward_2j;
-       Tensor<double, 1> y_backward_j;
+       Tensor<type, 1> y_backward_2j;
+       Tensor<type, 1> y_backward_j;
 
-       Tensor<double, 1> y_forward_j;
-       Tensor<double, 1> y_forward_2j;
+       Tensor<type, 1> y_forward_j;
+       Tensor<type, 1> y_forward_2j;
 
-       Tensor<double, 1> y_backward_jk;
-       Tensor<double, 1> y_forward_jk;
+       Tensor<type, 1> y_backward_jk;
+       Tensor<type, 1> y_forward_jk;
 
-       Tensor<double, 1> y_backward_j_forward_k;
-       Tensor<double, 1> y_forward_j_backward_k;
+       Tensor<type, 1> y_backward_j_forward_k;
+       Tensor<type, 1> y_forward_j_backward_k;
 
-       Matrix< Tensor<double, 2>, Dynamic, Dynamic> H;
+       Matrix< Tensor<type, 2>, Dynamic, Dynamic> H;
 
        H.set(n,s);
 

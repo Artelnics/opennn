@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
 #include "tinyxml2.h"
@@ -68,12 +69,12 @@ public:
    // Error methods
 
    double calculate_training_error() const;
-   double calculate_training_error(const Tensor<double, 1>&) const;
+   double calculate_training_error(const Tensor<type, 1>&) const;
 
    double calculate_selection_error() const;
 
    double calculate_batch_error(const vector<int>&) const;
-   double calculate_batch_error(const vector<int>&, const Tensor<double, 1>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -123,13 +124,13 @@ public:
 
    // Error terms methods
 
-   Tensor<double, 1> calculate_training_error_terms(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-   Tensor<double, 1> calculate_training_error_terms(const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
 
-   Tensor<double, 2> calculate_output_gradient(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -145,7 +146,7 @@ public:
 
         const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-        first_order_loss.output_gradient = (forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d)*(2.0/static_cast<double>(instances_number));
+        first_order_loss.output_gradient = (forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d)*(static_cast<type>(2.0)/static_cast<type>(instances_number));
    }
 
 

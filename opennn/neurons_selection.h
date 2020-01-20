@@ -20,11 +20,8 @@
 
 // OpenNN includes
 
-
-
-
+#include "config.h"
 #include "training_strategy.h"
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -81,15 +78,15 @@ public:
 
        /// Performance of the different neural networks.
 
-       Tensor<double, 1> training_loss_data;
+       Tensor<type, 1> training_loss_data;
 
        /// Selection loss of the different neural networks.
 
-       Tensor<double, 1> selection_error_data;
+       Tensor<type, 1> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection error.
 
-       Tensor<double, 1> minimal_parameters;
+       Tensor<type, 1> minimal_parameters;
 
        /// Value of minimum selection error.
 
@@ -160,7 +157,7 @@ public:
 
     // Loss calculation methods
 
-    Tensor<double, 1> calculate_losses(const int&, NeuralNetwork&);
+    Tensor<type, 1> calculate_losses(const int&, NeuralNetwork&);
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -186,13 +183,13 @@ protected:
 
     /// Selection loss of all the neural networks trained.
 
-    Tensor<double, 1> selection_error_history;
+    Tensor<type, 1> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
-    Tensor<double, 1> training_loss_history;
+    Tensor<type, 1> training_loss_history;
 
-    vector<Tensor<double, 1>> parameters_history;
+    vector<Tensor<type, 1>> parameters_history;
 
     /// Minimum number of hidden neurons.
 

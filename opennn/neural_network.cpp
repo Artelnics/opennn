@@ -887,11 +887,11 @@ int NeuralNetwork::get_trainable_parameters_number() const
 /// Returns the values of the parameters in the neural network as a single vector.
 /// This contains all the neural network parameters(biases and synaptic weights) and preprocessed independent parameters.
 
-Tensor<double, 1> NeuralNetwork::get_parameters() const
+Tensor<type, 1> NeuralNetwork::get_parameters() const
 {
     const int parameters_number = get_parameters_number();
 
-    Tensor<double, 1> parameters(parameters_number);
+    Tensor<type, 1> parameters(parameters_number);
 
     const int trainable_layers_number = get_trainable_layers_number();
 
@@ -902,7 +902,7 @@ Tensor<double, 1> NeuralNetwork::get_parameters() const
     for(int i = 0; i < trainable_layers_number; i++)
     {
 /*
-        const Tensor<double, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
+        const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
 
         parameters.embed(position, layer_parameters);
 
@@ -931,13 +931,13 @@ vector<int> NeuralNetwork::get_trainable_layers_parameters_numbers() const
 }
 
 
-vector<Tensor<double, 1>> NeuralNetwork::get_trainable_layers_parameters(const Tensor<double, 1>& parameters) const
+vector<Tensor<type, 1>> NeuralNetwork::get_trainable_layers_parameters(const Tensor<type, 1>& parameters) const
 {
     const int trainable_layers_number = get_trainable_layers_number();
 
     const vector<int> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
 
-    vector<Tensor<double, 1>> trainable_layers_parameters(trainable_layers_number);
+    vector<Tensor<type, 1>> trainable_layers_parameters(trainable_layers_number);
 
     int index = 0;
 
@@ -957,7 +957,7 @@ vector<Tensor<double, 1>> NeuralNetwork::get_trainable_layers_parameters(const T
 /// Sets all the parameters(neural_network_pointer parameters and independent parameters) from a single vector.
 /// @param new_parameters New set of parameter values. 
 
-void NeuralNetwork::set_parameters(const Tensor<double, 1>& new_parameters)
+void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -970,7 +970,7 @@ void NeuralNetwork::set_parameters(const Tensor<double, 1>& new_parameters)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void set_parameters(const Tensor<double, 1>&) method.\n"
+               << "void set_parameters(const Tensor<type, 1>&) method.\n"
                << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -993,7 +993,7 @@ void NeuralNetwork::set_parameters(const Tensor<double, 1>& new_parameters)
             continue;
         }
 /*
-        const Tensor<double, 1> layer_parameters = new_parameters.get_subvector(position, position+trainable_layers_parameters_number[i]-1);
+        const Tensor<type, 1> layer_parameters = new_parameters.get_subvector(position, position+trainable_layers_parameters_number[i]-1);
 
         trainable_layers_pointers[i]->set_parameters(layer_parameters);
 
@@ -1111,7 +1111,7 @@ void NeuralNetwork::randomize_parameters_normal(const double& mean, const double
 
 double NeuralNetwork::calculate_parameters_norm() const
 {
-    const Tensor<double, 1> parameters = get_parameters();
+    const Tensor<type, 1> parameters = get_parameters();
 /*
     const double parameters_norm = l2_norm(parameters);
 
@@ -1126,7 +1126,7 @@ double NeuralNetwork::calculate_parameters_norm() const
 
 Descriptives NeuralNetwork::calculate_parameters_descriptives() const
 {
-    const Tensor<double, 1> parameters = get_parameters();
+    const Tensor<type, 1> parameters = get_parameters();
 /*
     return descriptives(parameters);
 */
@@ -1140,7 +1140,7 @@ Descriptives NeuralNetwork::calculate_parameters_descriptives() const
 
 Histogram NeuralNetwork::calculate_parameters_histogram(const int& bins_number) const
 {
-    const Tensor<double, 1> parameters = get_parameters();
+    const Tensor<type, 1> parameters = get_parameters();
 /*
     return histogram(parameters, bins_number);
 */
@@ -1168,9 +1168,9 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
 
 #endif
 
-    Tensor<double, 1> parameters = get_parameters();
+    Tensor<type, 1> parameters = get_parameters();
 
-    Tensor<double, 1> parameters_perturbation(parameters);
+    Tensor<type, 1> parameters_perturbation(parameters);
 
     parameters_perturbation.setRandom();
 
@@ -1192,7 +1192,7 @@ void NeuralNetwork::perturbate_parameters(const double& perturbation)
 /// </ul>
 /// @param inputs Set of inputs to the neural network.
 
-Tensor<double, 2> NeuralNetwork::calculate_outputs(const Tensor<double, 2>& inputs)
+Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1203,7 +1203,7 @@ Tensor<double, 2> NeuralNetwork::calculate_outputs(const Tensor<double, 2>& inpu
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) const method.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
 
         throw logic_error(buffer.str());
@@ -1218,7 +1218,7 @@ Tensor<double, 2> NeuralNetwork::calculate_outputs(const Tensor<double, 2>& inpu
 //        ostringstream buffer;
 
 //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) const method.\n"
+//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
 //               << "Dimension of inputs (" <<  << ") must be equal to number of inputs.\n";
 
 //        throw logic_error(buffer.str());
@@ -1230,7 +1230,7 @@ Tensor<double, 2> NeuralNetwork::calculate_outputs(const Tensor<double, 2>& inpu
 
     if(layers_number == 0) return inputs;
 
-    Tensor<double, 2> outputs = layers_pointers[0]->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = layers_pointers[0]->calculate_outputs(inputs);
 
     for(int i = 1; i < layers_number; i++)
     {
@@ -1241,7 +1241,7 @@ Tensor<double, 2> NeuralNetwork::calculate_outputs(const Tensor<double, 2>& inpu
 }
 
 
-Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1254,7 +1254,7 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
 //        ostringstream buffer;
 
 //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "Tensor<double, 2> calculate_trainable_outputs(const Tensor<double, 2>&) const method.\n"
+//               << "Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const method.\n"
 //               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
 
 //        throw logic_error(buffer.str());
@@ -1269,7 +1269,7 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
 //        ostringstream buffer;
 
 //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) const method.\n"
+//               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
 //               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
 
 //        throw logic_error(buffer.str());
@@ -1281,7 +1281,7 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
 
     const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    Tensor<double, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
 
     for(int i = 1; i < trainable_layers_number; i++)
     {
@@ -1292,8 +1292,8 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
 }
 
 
-Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double, 2>& inputs,
-                                                          const Tensor<double, 1>& parameters) const
+Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
+                                                          const Tensor<type, 1>& parameters) const
 {
     const int trainable_layers_number = get_trainable_layers_number();
 
@@ -1304,7 +1304,7 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
             ostringstream buffer;
 
             buffer << "OpenNN Exception: NeuralNetwork class.\n"
-                   << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&, cons Tensor<double, 1>&) const method.\n"
+                   << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, cons Tensor<type, 1>&) const method.\n"
                    << "This neural network has not got any layer.\n";
 
             throw logic_error(buffer.str());
@@ -1314,9 +1314,9 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
 
     const vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    const vector<Tensor<double, 1>> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
+    const vector<Tensor<type, 1>> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
 
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
     {
@@ -1337,29 +1337,6 @@ Tensor<double, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<double
 }
 
 
-MatrixXd NeuralNetwork::calculate_outputs_eigen(const MatrixXd& inputs_eigen)
-{
-    const int points_number = static_cast<int>(inputs_eigen.rows());
-    const int inputs_number = get_inputs_number();
-
-    Tensor<double, 2> inputs(points_number, inputs_number);
-
-    Map<MatrixXd> aux(static_cast<double*>(inputs.data()),
-                                    static_cast<Index>(points_number),
-                                    static_cast<Index>(inputs_number));
-
-    aux = inputs_eigen;
-
-    Tensor<double, 2> outputs = calculate_outputs(inputs);
-
-    const Map<MatrixXd> outputs_eigen(static_cast<double*>(outputs.data()),
-                                                    static_cast<Index>(points_number),
-                                                    static_cast<Index>(outputs.dimension(1)));
-
-    return outputs_eigen;
-}
-
-
 /// Calculates the input data which is necessary to compute the output data from the neural network in some direction.
 /// @param direction Input index(must be between 0 and number of inputs - 1).
 /// @param point Input point through the directional input passes.
@@ -1367,17 +1344,17 @@ MatrixXd NeuralNetwork::calculate_outputs_eigen(const MatrixXd& inputs_eigen)
 /// @param maximum Maximum value of the input with the above index.
 /// @param points_number Number of points in the directional input data set.
 
-Tensor<double, 2> NeuralNetwork::calculate_directional_inputs(const int& direction,
-                                                           const Tensor<double, 1>& point,
+Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const int& direction,
+                                                           const Tensor<type, 1>& point,
                                                            const double& minimum,
                                                            const double& maximum,
                                                            const int& points_number) const
 {
     const int inputs_number = get_inputs_number();
 
-    Tensor<double, 2> directional_inputs(points_number, inputs_number);
+    Tensor<type, 2> directional_inputs(points_number, inputs_number);
 
-    Tensor<double, 1> inputs(inputs_number);
+    Tensor<type, 1> inputs(inputs_number);
 
     inputs = point;
 /*
@@ -1401,7 +1378,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_
 {
     const int inputs_number = get_inputs_number();
 
-    Tensor<double, 2> inputs(points_number, inputs_number);
+    Tensor<type, 2> inputs(points_number, inputs_number);
 /*
     if(scaling_layer_pointer == nullptr)
     {
@@ -1412,7 +1389,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_
 
         for(int i = 0; i < scaling_methods.size(); i++)
         {
-            Tensor<double, 1> input_column(points_number, 0.0);
+            Tensor<type, 1> input_column(points_number, 0.0);
 
             if(scaling_methods[i] == ScalingLayer::NoScaling)
             {
@@ -1444,7 +1421,7 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_
         }
     }
 
-    const Tensor<double, 2> outputs = calculate_outputs(inputs);
+    const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     return histograms(outputs.to_matrix(), bins_number);
 */
@@ -1456,10 +1433,10 @@ vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const int& points_
 /// @param inputs Matrix of the data to evaluate the neural network.
 /// @param bins_number Number of bins for the histograms.
 
-vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Tensor<double, 2>& inputs, const int& bins_number)
+vector<Histogram> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const int& bins_number)
 {
 /*
-   const Tensor<double, 2> outputs = calculate_outputs(inputs);
+   const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
    return histograms(outputs.to_matrix(), bins_number);
 */
@@ -1778,7 +1755,7 @@ void NeuralNetwork::save_parameters(const string& file_name) const
         throw logic_error(buffer.str());
     }
 
-    const Tensor<double, 1> parameters = get_parameters();
+    const Tensor<type, 1> parameters = get_parameters();
 
     file << parameters << endl;
 
@@ -1834,7 +1811,7 @@ void NeuralNetwork::load_parameters(const string& file_name)
 
     const int parameters_number = get_parameters_number();
 
-    Tensor<double, 1> new_parameters(parameters_number);
+    Tensor<type, 1> new_parameters(parameters_number);
 /*
     new_parameters.load(file_name);
 */
@@ -3511,13 +3488,13 @@ void NeuralNetwork::save_data(const string& file_name) const
 
     const int points_number = 101;
 
-    Tensor<double, 2> data(points_number, variables_number);
+    Tensor<type, 2> data(points_number, variables_number);
 
-    Tensor<double, 1> inputs(inputs_number);
-    Tensor<double, 1> outputs(outputs_number);
-    Tensor<double, 1> row(variables_number);
+    Tensor<type, 1> inputs(inputs_number);
+    Tensor<type, 1> outputs(outputs_number);
+    Tensor<type, 1> row(variables_number);
 
-    Tensor<double, 1> increments(inputs_number);
+    Tensor<type, 1> increments(inputs_number);
 
     for(int i = 0; i < inputs_number; i++)
     {
@@ -3541,7 +3518,7 @@ void NeuralNetwork::save_data(const string& file_name) const
 }
 
 
-vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(const Tensor<double, 2>& inputs) const
+vector<Layer::ForwardPropagation> NeuralNetwork::calculate_forward_propagation(const Tensor<type, 2>& inputs) const
 {
     const int trainable_layers_number = get_trainable_layers_number();
 
