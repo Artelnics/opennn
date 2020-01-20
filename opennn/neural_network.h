@@ -386,7 +386,7 @@ public:
        {
             trainable_layers_pointers[i]->calculate_forward_propagation(thread_pool_device,
                                                                         forward_propagation.layers[i-1].activations,
-                                          forward_propagation.layers[i]);
+                                                                        forward_propagation.layers[i]);
        }
 
    }

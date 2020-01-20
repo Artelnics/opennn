@@ -163,9 +163,10 @@ public:
    {
         const Eigen::array<IndexPair<int>, 1> product_dimensions = {IndexPair<int>(1, 0)};
 
+        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
+
         const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
 
-        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
         combinations.device(thread_pool_device) += biases.broadcast(broadcast);
    }
 
