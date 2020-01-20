@@ -1292,7 +1292,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    const int neurons_number = get_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
     // Scaling layer
 
@@ -1308,12 +1308,12 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
-    const vector<string> scaling_methods_string = write_scaling_methods();
+//@todo
+//    const Vector<string> scaling_methods_string = write_scaling_methods();
 
     // Scaling neurons
 
-    for(int i = 0; i < neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         // Scaling neuron
 
@@ -1370,7 +1370,8 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.OpenElement("ScalingMethod");
 
         buffer.str("");
-        buffer << scaling_methods_string[i];
+        //@todo
+//        buffer << scaling_methods_string[i];
 
         file_stream.PushText(buffer.str().c_str());
 
@@ -1418,15 +1419,15 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const int neurons_number = static_cast<int>(atoi(neurons_number_element->GetText()));
+    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
-    unsigned index = 0; // int does not work
+    unsigned index = 0; // size_t does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(int i = 0; i < neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         start_element = scaling_neuron_element;
@@ -1576,6 +1577,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 }
+
 
 }
 

@@ -877,7 +877,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    const int neurons_number = get_neurons_number();
+    const size_t neurons_number = get_neurons_number();
 
     // Unscaling layer
 
@@ -896,7 +896,7 @@ void UnscalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Descriptives
 
-    for(int i = 0; i < neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         file_stream.OpenElement("Descriptives");
 
@@ -997,15 +997,15 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const int neurons_number = static_cast<int>(atoi(neurons_number_element->GetText()));
+    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
-    unsigned index = 0; // int does not work
+    unsigned index = 0; // size_t does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(int i = 0; i < neurons_number; i++)
+    for(size_t i = 0; i < neurons_number; i++)
     {
         const tinyxml2::XMLElement* statistics_element = start_element->NextSiblingElement("Descriptives");
         start_element = statistics_element;
