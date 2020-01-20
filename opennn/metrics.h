@@ -15,14 +15,10 @@
 
 #include <math.h>
 
-<<<<<<< HEAD
 #include "../eigen/Eigen/Eigen"
-=======
 #include "config.h"
 #include <../eigen/unsupported/Eigen/CXX11/Tensor>
 #include <../eigen/unsupported/Eigen/CXX11/ThreadPool>
->>>>>>> bfd0e279faa56a4dc7ad4070d2b342eb100928ae
-
 using namespace std;
 using namespace Eigen;
 
