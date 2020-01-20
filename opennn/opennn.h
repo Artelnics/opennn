@@ -17,6 +17,7 @@
 
 // Neural network
 
+#include "config.h"
 #include "layer.h"
 #include "pooling_layer.h"
 #include "convolutional_layer.h"

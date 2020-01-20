@@ -71,12 +71,12 @@ public:
    vector<Descriptives> get_descriptives() const;
    Descriptives get_descriptives(const int&) const;
 
-   Tensor<double, 2> get_descriptives_matrix() const;
+   Tensor<type, 2> get_descriptives_matrix() const;
 
-   Tensor<double, 1> get_minimums() const;
-   Tensor<double, 1> get_maximums() const;
-   Tensor<double, 1> get_means() const;
-   Tensor<double, 1> get_standard_deviations() const;
+   Tensor<type, 1> get_minimums() const;
+   Tensor<type, 1> get_maximums() const;
+   Tensor<type, 1> get_means() const;
+   Tensor<type, 1> get_standard_deviations() const;
 
    // Variables scaling and unscaling
 
@@ -138,13 +138,13 @@ public:
 
    bool is_empty() const;
 
-   void check_range(const Tensor<double, 1>&) const;
+   void check_range(const Tensor<type, 1>&) const;
 
-   Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<double, 2> calculate_minimum_maximum_outputs(const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_mean_standard_deviation_outputs(const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
 
    // Expression methods
 

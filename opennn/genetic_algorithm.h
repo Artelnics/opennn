@@ -21,11 +21,10 @@
 
 // OpenNN includes
 
-
-
 #include "training_strategy.h"
 #include "inputs_selection.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 namespace OpenNN
 {
@@ -93,28 +92,28 @@ public:
 
         /// Values of the minimum loss in each generation.
 
-        Tensor<double, 1> generation_optimum_loss_history;
+        Tensor<type, 1> generation_optimum_loss_history;
 
         /// Values of the minimum selection error in each generation.
 
-        Tensor<double, 1> generation_minimum_selection_history;
+        Tensor<type, 1> generation_minimum_selection_history;
 
         /// Mean of the selection error in each generation.
 
-        Tensor<double, 1> generation_mean_history;
+        Tensor<type, 1> generation_mean_history;
 
         /// Standard deviation of the selection error in each generation.
 
-        Tensor<double, 1> generation_standard_deviation_history;
+        Tensor<type, 1> generation_standard_deviation_history;
     };
 
     // Get methods
 
     const vector<vector<bool>>& get_population() const;
 
-    const Tensor<double, 2>& get_loss() const;
+    const Tensor<type, 2>& get_loss() const;
 
-    const Tensor<double, 1>& get_fitness() const;
+    const Tensor<type, 1>& get_fitness() const;
 
     const InitializationMethod& get_initialization_method() const;
 
@@ -156,9 +155,9 @@ public:
 
     void set_population(const vector<vector<bool>>&);
 
-    void set_loss(const Tensor<double, 2>&);
+    void set_loss(const Tensor<type, 2>&);
 
-    void set_fitness(const Tensor<double, 1>&);
+    void set_fitness(const Tensor<type, 1>&);
 
     void set_inicialization_method(const InitializationMethod&);
     void set_fitness_assignment_method(const FitnessAssignment&);
@@ -257,11 +256,11 @@ private:
 
     /// Performance of population.
 
-    Tensor<double, 2> loss;
+    Tensor<type, 2> loss;
 
     /// Fitness of population.
 
-    Tensor<double, 1> fitness;
+    Tensor<type, 1> fitness;
 
     // Training operators
 

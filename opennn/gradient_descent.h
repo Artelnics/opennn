@@ -28,6 +28,7 @@
 
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
+#include "config.h"
 
 
 namespace OpenNN
@@ -143,7 +144,7 @@ public:
 
    // Training methods
 
-   Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const;
 
    Results perform_training();
 

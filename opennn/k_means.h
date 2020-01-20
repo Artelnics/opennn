@@ -24,15 +24,8 @@
 
 // OpenNN includes
 
-//#include "opennn.h"
-
-
-
-
 #include "statistics.h"
-
-
-
+#include "config.h"
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -49,9 +42,9 @@ public:
     };
 
 
-    Results calculate_k_means(const Tensor<double, 2>&, const int&) const;
+    Results calculate_k_means(const Tensor<type, 2>&, const int&) const;
 
-    int calculate_sample_index_proportional_probability(const Tensor<double, 1>&) const;
+    int calculate_sample_index_proportional_probability(const Tensor<type, 1>&) const;
 };
 
 }

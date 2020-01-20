@@ -11,11 +11,11 @@
 namespace OpenNN
 {
 
-Tensor<double, 1> sine(const Tensor<double, 1>& x)
+Tensor<type, 1> sine(const Tensor<type, 1>& x)
 {
 const int n = x.size();
 
-Tensor<double, 1> y(n);
+Tensor<type, 1> y(n);
 
 for(int i = 0; i < n; i ++)
    y[i] = sin(x[i]);
@@ -24,13 +24,13 @@ return y;
 }
 
 
-Tensor<double, 2> sine(const Tensor<double, 2>& x)
+Tensor<type, 2> sine(const Tensor<type, 2>& x)
 {
 const int rows_number = x.dimension(0);
 const int columns_number = x.dimension(1);
 const int n = rows_number * columns_number;
 
-Tensor<double, 2> y(rows_number, columns_number);
+Tensor<type, 2> y(rows_number, columns_number);
 /*
 for(int i = 0; i < n; i++)
 {
@@ -41,11 +41,11 @@ return y;
 }
 
 
-Tensor<double, 1> cosine(const Tensor<double, 1>& x)
+Tensor<type, 1> cosine(const Tensor<type, 1>& x)
 {      
 const int n = x.size();
 
-Tensor<double, 1> y(n);
+Tensor<type, 1> y(n);
 
 for(int i = 0; i < n; i ++)
     y[i] = cos(x[i]);
@@ -54,13 +54,13 @@ return y;
 }
 
 
-Tensor<double, 2> cosine(const Tensor<double, 2>& x)
+Tensor<type, 2> cosine(const Tensor<type, 2>& x)
 {
 const int rows_number = x.dimension(0);
 const int columns_number = x.dimension(1);
 const int n = rows_number * columns_number;
 
-Tensor<double, 2> y(rows_number, columns_number);
+Tensor<type, 2> y(rows_number, columns_number);
 /*
 for(int i = 0; i < n; i++)
 {
@@ -71,11 +71,11 @@ return y;
 }
 
 
-Tensor<double, 1> exponential(const Tensor<double, 1>& x)
+Tensor<type, 1> exponential(const Tensor<type, 1>& x)
 {
     const int size = x.size();
 
-    Tensor<double, 1> y(size);
+    Tensor<type, 1> y(size);
 
     for(int i = 0; i < size; i++)
         y[i] = exp(x[i]);
@@ -84,11 +84,11 @@ Tensor<double, 1> exponential(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 1> logarithm(const Tensor<double, 1>& x)
+Tensor<type, 1> logarithm(const Tensor<type, 1>& x)
 {
     const int size = x.size();
 
-    Tensor<double, 1> y(size);
+    Tensor<type, 1> y(size);
 
     for(int i = 0; i < size; i++)
         y[i] = log(x[i]);
@@ -97,11 +97,11 @@ Tensor<double, 1> logarithm(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 1> power(const Tensor<double, 1>& x, const double& a)
+Tensor<type, 1> power(const Tensor<type, 1>& x, const double& a)
 {
     const int size = x.size();
 
-    Tensor<double, 1> y(size);
+    Tensor<type, 1> y(size);
 
     for(int i = 0; i < size; i++)
         y[i] = pow(x[i],a);
@@ -112,25 +112,25 @@ Tensor<double, 1> power(const Tensor<double, 1>& x, const double& a)
 
 // LINEAR
 
-Tensor<double, 2> linear(const Tensor<double, 2>& x)
+Tensor<type, 2> linear(const Tensor<type, 2>& x)
 {
     return x;
 }
 
-Tensor<double, 1> linear(const Tensor<double, 1>& x)
+Tensor<type, 1> linear(const Tensor<type, 1>& x)
 {
     return x;
 }
 
 
-Tensor<double, 2> hyperbolic_tangent(const Tensor<double, 2>& x)
+Tensor<type, 2> hyperbolic_tangent(const Tensor<type, 2>& x)
 {
 
     const int size = x.size();
 
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < size; i++)
     {
@@ -140,11 +140,11 @@ Tensor<double, 2> hyperbolic_tangent(const Tensor<double, 2>& x)
     return y;
 }
 
-Tensor<double, 1> hyperbolic_tangent(const Tensor<double, 1>& x)
+Tensor<type, 1> hyperbolic_tangent(const Tensor<type, 1>& x)
 {
     const int size = x.size();
 
-    Tensor<double, 1> y(size);
+    Tensor<type, 1> y(size);
 
     for(int i = 0; i < size; i++)
     {
@@ -155,11 +155,11 @@ Tensor<double, 1> hyperbolic_tangent(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> logistic(const Tensor<double, 2>& x)
+Tensor<type, 2> logistic(const Tensor<type, 2>& x)
 {
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < x.size(); i++)
     {
@@ -169,11 +169,11 @@ Tensor<double, 2> logistic(const Tensor<double, 2>& x)
     return y;
 }
 
-Tensor<double, 1> logistic(const Tensor<double, 1>& x)
+Tensor<type, 1> logistic(const Tensor<type, 1>& x)
 {
     const int size = x.size();
 
-    Tensor<double, 1> y(size);
+    Tensor<type, 1> y(size);
 
     for(int i = 0; i < size; i++)
     {
@@ -184,11 +184,11 @@ Tensor<double, 1> logistic(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 1> logistic_function(const Tensor<double, 1>& x, const double& a, const double& b)
+Tensor<type, 1> logistic_function(const Tensor<type, 1>& x, const double& a, const double& b)
 {
     const int size = x.size();
 
-    Tensor<double, 1> y(size);
+    Tensor<type, 1> y(size);
 
     for(int i = 0; i < size; i++)
     {
@@ -201,11 +201,11 @@ Tensor<double, 1> logistic_function(const Tensor<double, 1>& x, const double& a,
 
 // THRESHOLD
 
-Tensor<double, 2> threshold(const Tensor<double, 2>& x)
+Tensor<type, 2> threshold(const Tensor<type, 2>& x)
 {
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < x.size(); i++)
 
@@ -215,10 +215,10 @@ Tensor<double, 2> threshold(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> threshold(const Tensor<double, 1>& x)
+Tensor<type, 1> threshold(const Tensor<type, 1>& x)
 {
 
-    Tensor<double, 1> y(x.size());
+    Tensor<type, 1> y(x.size());
 
     for(int i = 0; i < x.size(); i++)
 
@@ -230,13 +230,13 @@ Tensor<double, 1> threshold(const Tensor<double, 1>& x)
 
 // SYMMETRIC THRESHOLD
 
-Tensor<double, 2> symmetric_threshold(const Tensor<double, 2>& x)
+Tensor<type, 2> symmetric_threshold(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
 
      for(int i = 0; i < n; i++)
@@ -246,11 +246,11 @@ Tensor<double, 2> symmetric_threshold(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> symmetric_threshold(const Tensor<double, 1>& x)
+Tensor<type, 1> symmetric_threshold(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 
      for(int i = 0; i < n; i++)
          y[i] = x[i] < 0 ? -1.0 : 1.0;
@@ -260,13 +260,13 @@ Tensor<double, 1> symmetric_threshold(const Tensor<double, 1>& x)
 
 // RECTIFIED LINEAR
 
-Tensor<double, 2> rectified_linear(const Tensor<double, 2>& x)
+Tensor<type, 2> rectified_linear(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < n; i++)
     {
@@ -277,11 +277,11 @@ Tensor<double, 2> rectified_linear(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> rectified_linear(const Tensor<double, 1>& x)
+Tensor<type, 1> rectified_linear(const Tensor<type, 1>& x)
 {
         const int n = x.size();
 
-        Tensor<double, 1> y(n);
+        Tensor<type, 1> y(n);
 
         for(int i = 0; i < n; i++)
         {
@@ -293,7 +293,7 @@ Tensor<double, 1> rectified_linear(const Tensor<double, 1>& x)
 
 // SCALED EXPONENTIAL LINEAR
 
-Tensor<double, 2> scaled_exponential_linear(const Tensor<double, 2>& x)
+Tensor<type, 2> scaled_exponential_linear(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
@@ -302,7 +302,7 @@ Tensor<double, 2> scaled_exponential_linear(const Tensor<double, 2>& x)
     const double lambda =1.0507;
     const double alpha =1.67326;
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < n; i++)
     {
@@ -313,14 +313,14 @@ Tensor<double, 2> scaled_exponential_linear(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> scaled_exponential_linear(const Tensor<double, 1>& x)
+Tensor<type, 1> scaled_exponential_linear(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
     const double lambda =1.0507;
     const double alpha =1.67326;
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 
     for(int i = 0; i < n; i++)
     {
@@ -333,13 +333,13 @@ Tensor<double, 1> scaled_exponential_linear(const Tensor<double, 1>& x)
 
 // SOFT PLUS
 
-Tensor<double, 2> soft_plus(const Tensor<double, 2>& x)
+Tensor<type, 2> soft_plus(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < n; i++)
     {
@@ -350,11 +350,11 @@ Tensor<double, 2> soft_plus(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> soft_plus(const Tensor<double, 1>& x)
+Tensor<type, 1> soft_plus(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 
     for(int i = 0; i < n; i++)
     {
@@ -365,13 +365,13 @@ Tensor<double, 1> soft_plus(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> soft_sign(const Tensor<double, 2>& x)
+Tensor<type, 2> soft_sign(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < n; i++)
     {
@@ -382,11 +382,11 @@ Tensor<double, 2> soft_sign(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> soft_sign(const Tensor<double, 1>& x)
+Tensor<type, 1> soft_sign(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 
     for(int i = 0; i < n; i++)
     {
@@ -398,13 +398,13 @@ Tensor<double, 1> soft_sign(const Tensor<double, 1>& x)
 
 // HARD SIGMOID
 
-Tensor<double, 2> hard_sigmoid(const Tensor<double, 2>& x)
+Tensor<type, 2> hard_sigmoid(const Tensor<type, 2>& x)
 {
    const int n = x.size();
 
    const auto& dimensions = x.dimensions();
 
-   Tensor<double, 2> y(dimensions);
+   Tensor<type, 2> y(dimensions);
 /*
     for(int i = 0; i < n; i++)
     {
@@ -426,13 +426,13 @@ Tensor<double, 2> hard_sigmoid(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> exponential_linear(const Tensor<double, 2>& x)
+Tensor<type, 2> exponential_linear(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
     const auto& dimensions = x.dimensions();
 
-    Tensor<double, 2> y(dimensions);
+    Tensor<type, 2> y(dimensions);
 
     const double alpha = 1.0;
 /*
@@ -445,11 +445,11 @@ Tensor<double, 2> exponential_linear(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> exponential_linear(const Tensor<double, 1>& x)
+Tensor<type, 1> exponential_linear(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 /*
     const double alpha = 1.0;
 
@@ -464,12 +464,12 @@ Tensor<double, 1> exponential_linear(const Tensor<double, 1>& x)
 
 // SOFTMAX
 
-Tensor<double, 2> softmax(const Tensor<double, 2>& x)
+Tensor<type, 2> softmax(const Tensor<type, 2>& x)
 {
     const int rows_number = x.dimension(0);
     const int columns_number = x.dimension(1);
 
-  Tensor<double, 2> softmax(rows_number, columns_number);
+  Tensor<type, 2> softmax(rows_number, columns_number);
 
   for(int j = 0; j < rows_number; j++)
   {
@@ -489,20 +489,20 @@ Tensor<double, 2> softmax(const Tensor<double, 2>& x)
   return softmax;
 }
 
-Tensor<double, 2> softmax_rows(const Tensor<double, 2>&)
+Tensor<type, 2> softmax_rows(const Tensor<type, 2>&)
 {
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 /*
-Tensor<double, 2> hyperbolic_tangent(const Tensor<double, 2>& x)
+Tensor<type, 2> hyperbolic_tangent(const Tensor<type, 2>& x)
 {
     const int rows_number = x.dimension(0);
     const int columns_number = x.dimension(1);
 
     const int n = x.size();
 
-    Tensor<double, 2> y(rows_number, columns_number);
+    Tensor<type, 2> y(rows_number, columns_number);
 
     for(int i = 0; i < n; i ++)
        y[i] = tanh(x[i]);
@@ -511,9 +511,9 @@ Tensor<double, 2> hyperbolic_tangent(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> logistic(const Tensor<double, 2>& x)
+Tensor<type, 2> logistic(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+    Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
     for(int i = 0; i < x.size(); i++)
     {
@@ -524,9 +524,9 @@ Tensor<double, 2> logistic(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> threshold(const Tensor<double, 2>& x)
+Tensor<type, 2> threshold(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+    Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
     for(int i = 0; i < x.size(); i++)
 
@@ -536,11 +536,11 @@ Tensor<double, 2> threshold(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> symmetric_threshold(const Tensor<double, 2>& x)
+Tensor<type, 2> symmetric_threshold(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
   for(int i = 0; i < n; i++)
       y[i] = x[i] < 0 ? -1.0 : 1.0;
@@ -549,11 +549,11 @@ Tensor<double, 2> symmetric_threshold(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> rectified_linear(const Tensor<double, 2>& x)
+Tensor<type, 2> rectified_linear(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
  for(int i = 0; i < n; i++)
  {
@@ -567,14 +567,14 @@ Tensor<double, 2> rectified_linear(const Tensor<double, 2>& x)
 
 // SCALED EXPONENTIAL LINEAR
 
-Tensor<double, 2> scaled_exponential_linear(const Tensor<double, 2>& x)
+Tensor<type, 2> scaled_exponential_linear(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
  const double lambda =1.0507;
  const double alpha =1.67326;
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
 
  for(int i = 0; i < n; i++)
@@ -586,11 +586,11 @@ Tensor<double, 2> scaled_exponential_linear(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> soft_plus(const Tensor<double, 2>& x)
+Tensor<type, 2> soft_plus(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
  for(int i = 0; i < n; i++)
  {
@@ -601,11 +601,11 @@ Tensor<double, 2> soft_plus(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> soft_sign(const Tensor<double, 2>& x)
+Tensor<type, 2> soft_sign(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
  for(int i = 0; i < n; i++)
  {
@@ -616,11 +616,11 @@ Tensor<double, 2> soft_sign(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> hard_sigmoid(const Tensor<double, 2>& x)
+Tensor<type, 2> hard_sigmoid(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1));
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1));
 
  for(int i = 0; i < n; i++)
  {
@@ -642,11 +642,11 @@ Tensor<double, 2> hard_sigmoid(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> hard_sigmoid(const Tensor<double, 1>& x)
+Tensor<type, 1> hard_sigmoid(const Tensor<type, 1>& x)
 {
  const int n = x.size();
 
- Tensor<double, 1> y(x.size());
+ Tensor<type, 1> y(x.size());
 
  for(int i = 0; i < n; i++)
  {
@@ -667,12 +667,12 @@ Tensor<double, 1> hard_sigmoid(const Tensor<double, 1>& x)
  return y;
 }
 
-Tensor<double, 2> exponential_linear(const Tensor<double, 2>& x)
+Tensor<type, 2> exponential_linear(const Tensor<type, 2>& x)
 {
 
  const int n = x.size();
 
- Tensor<double, 2> y(x.dimension(0), x.dimension(1), 0.0);
+ Tensor<type, 2> y(x.dimension(0), x.dimension(1), 0.0);
 
  const double alpha = 1.0;
 
@@ -685,13 +685,13 @@ Tensor<double, 2> exponential_linear(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> linear_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> linear_derivatives(const Tensor<type, 2>& x)
 {
      const int n = x.dimension(0);
 
      const int columns_number = x.dimension(1);
 
-     Tensor<double, 2> y(vector<int>({columns_number, columns_number, n}));
+     Tensor<type, 2> y(vector<int>({columns_number, columns_number, n}));
 
      for(int i = 0; i < n; i++)
      {
@@ -706,18 +706,18 @@ Tensor<double, 2> linear_derivatives(const Tensor<double, 2>& x)
 
 
 
-     Tensor<double, 2> y(x.dimensions());
+     Tensor<type, 2> y(x.dimensions());
      y.setConstant(1.0);
 
      return y;
 }
 
 
-Tensor<double, 2> hyperbolic_tangent_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> hyperbolic_tangent_derivatives(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 2> y(x.dimensions());
+    Tensor<type, 2> y(x.dimensions());
 
     for(int i = 0; i < n; i++)
     {
@@ -730,11 +730,11 @@ Tensor<double, 2> hyperbolic_tangent_derivatives(const Tensor<double, 2>& x)
 }
 */
 
-Tensor<double, 1> linear_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> linear_derivatives(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 
     for(int i = 0; i < n; i++)
     {
@@ -746,11 +746,11 @@ Tensor<double, 1> linear_derivatives(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 1> hyperbolic_tangent_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> hyperbolic_tangent_derivatives(const Tensor<type, 1>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 1> y(n);
+    Tensor<type, 1> y(n);
 
     for(int i = 0; i < n; i++)
     {
@@ -763,9 +763,9 @@ Tensor<double, 1> hyperbolic_tangent_derivatives(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> logistic_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> logistic_derivatives(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimensions());
+    Tensor<type, 2> y(x.dimensions());
 /*
     for(int i = 0; i < x.size(); i++)
     {
@@ -778,9 +778,9 @@ Tensor<double, 2> logistic_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> logistic_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> logistic_derivatives(const Tensor<type, 1>& x)
 {
-    Tensor<double, 1> y(x.size());
+    Tensor<type, 1> y(x.size());
 
     for(int i = 0; i < x.size(); i++)
     {
@@ -793,14 +793,14 @@ Tensor<double, 1> logistic_derivatives(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> logistic_second_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> logistic_second_derivatives(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimensions());
+    Tensor<type, 2> y(x.dimensions());
 /*
     for(int i = 0; i < x.size(); i++)
     {
-        Tensor<double, 2> logistic_normal = logistic(y);
-        Tensor<double, 2> logistic_deriv = logistic_derivatives(y);
+        Tensor<type, 2> logistic_normal = logistic(y);
+        Tensor<type, 2> logistic_deriv = logistic_derivatives(y);
 
        y[i] = logistic_deriv[i]*(1-2*logistic_normal[i]);
     }
@@ -809,9 +809,9 @@ Tensor<double, 2> logistic_second_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> binary(const Tensor<double, 2>& x)
+Tensor<type, 2> binary(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimensions());
+    Tensor<type, 2> y(x.dimensions());
 /*
     for(int i = 0; i < x.size(); i++)
     {
@@ -822,47 +822,47 @@ Tensor<double, 2> binary(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 2> threshold_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> threshold_derivatives(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimensions());
+    Tensor<type, 2> y(x.dimensions());
     y.setZero();
 
   return y;
 }
 
 
-Tensor<double, 1> threshold_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> threshold_derivatives(const Tensor<type, 1>& x)
 {
-    Tensor<double, 1> y(x.size());
+    Tensor<type, 1> y(x.size());
     y.setZero();
 
     return y;
 }
 
 
-Tensor<double, 2> symmetric_threshold_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> symmetric_threshold_derivatives(const Tensor<type, 2>& x)
 {
-    Tensor<double, 2> y(x.dimensions());
+    Tensor<type, 2> y(x.dimensions());
     y.setZero();
 
  return y;
 }
 
 
-Tensor<double, 1> symmetric_threshold_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> symmetric_threshold_derivatives(const Tensor<type, 1>& x)
 {
- Tensor<double, 1> y(x.size());
+ Tensor<type, 1> y(x.size());
  y.setZero();
 
  return y;
 }
 
 
-Tensor<double, 2> rectified_linear_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> rectified_linear_derivatives(const Tensor<type, 2>& x)
 {
      const int n = x.size();
 
-     Tensor<double, 2> derivatives(x.dimensions());
+     Tensor<type, 2> derivatives(x.dimensions());
 /*
      for(int i = 0; i < n; i++)
      {
@@ -873,11 +873,11 @@ Tensor<double, 2> rectified_linear_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> rectified_linear_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> rectified_linear_derivatives(const Tensor<type, 1>& x)
 {
      const int n = x.size();
 
-     Tensor<double, 1> derivatives(n);
+     Tensor<type, 1> derivatives(n);
 
      for(int i = 0; i < n; i++)
      {
@@ -887,14 +887,14 @@ Tensor<double, 1> rectified_linear_derivatives(const Tensor<double, 1>& x)
      return derivatives;
 }
 
-Tensor<double, 2> scaled_exponential_linear_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> scaled_exponential_linear_derivatives(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
  const double lambda =1.0507;
  const double alpha =1.67326;
 
- Tensor<double, 2> derivatives(x.dimensions());
+ Tensor<type, 2> derivatives(x.dimensions());
 /*
  for(int i = 0; i < n; i++)
  {
@@ -904,14 +904,14 @@ Tensor<double, 2> scaled_exponential_linear_derivatives(const Tensor<double, 2>&
  return derivatives;
 }
 
-Tensor<double, 1> scaled_exponential_linear_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> scaled_exponential_linear_derivatives(const Tensor<type, 1>& x)
 {
  const int n = x.size();
 
  const double lambda =1.0507;
  const double alpha =1.67326;
 
- Tensor<double, 1> derivatives(n);
+ Tensor<type, 1> derivatives(n);
 
  for(int i = 0; i < n; i++)
  {
@@ -922,11 +922,11 @@ Tensor<double, 1> scaled_exponential_linear_derivatives(const Tensor<double, 1>&
 }
 
 
-Tensor<double, 2> soft_plus_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> soft_plus_derivatives(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> derivatives(x.dimensions());
+ Tensor<type, 2> derivatives(x.dimensions());
 /*
  for(int i = 0; i < n; i++)
  {
@@ -937,11 +937,11 @@ Tensor<double, 2> soft_plus_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> soft_plus_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> soft_plus_derivatives(const Tensor<type, 1>& x)
 {
  const int n = x.size();
 
- Tensor<double, 1> derivatives(n);
+ Tensor<type, 1> derivatives(n);
 
  for(int i = 0; i < n; i++)
  {
@@ -952,11 +952,11 @@ Tensor<double, 1> soft_plus_derivatives(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> soft_sign_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> soft_sign_derivatives(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> derivatives(x.dimensions());
+ Tensor<type, 2> derivatives(x.dimensions());
 /*
  for(int i = 0; i < n; i++)
  {
@@ -967,11 +967,11 @@ Tensor<double, 2> soft_sign_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> soft_sign_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> soft_sign_derivatives(const Tensor<type, 1>& x)
 {
  const int n = x.size();
 
- Tensor<double, 1> derivatives(n);
+ Tensor<type, 1> derivatives(n);
 
  for(int i = 0; i < n; i++)
  {
@@ -983,11 +983,11 @@ Tensor<double, 1> soft_sign_derivatives(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> hard_sigmoid_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> hard_sigmoid_derivatives(const Tensor<type, 2>& x)
 {
     const int n = x.size();
 
-    Tensor<double, 2> derivatives(x.dimensions());
+    Tensor<type, 2> derivatives(x.dimensions());
 /*
     for(int i = 0; i < n; i++)
     {
@@ -998,11 +998,11 @@ Tensor<double, 2> hard_sigmoid_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> hard_sigmoid_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> hard_sigmoid_derivatives(const Tensor<type, 1>& x)
 {
 const int n = x.size();
 
-    Tensor<double, 1> derivatives(n);
+    Tensor<type, 1> derivatives(n);
 
  for(int i = 0; i < n; i++)
  {
@@ -1013,11 +1013,11 @@ const int n = x.size();
 }
 
 
-Tensor<double, 2> exponential_linear_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> exponential_linear_derivatives(const Tensor<type, 2>& x)
 {
  const int n = x.size();
 
- Tensor<double, 2> derivatives(x.dimensions());
+ Tensor<type, 2> derivatives(x.dimensions());
 
  const double alpha = 1.0;
 /*
@@ -1030,11 +1030,11 @@ Tensor<double, 2> exponential_linear_derivatives(const Tensor<double, 2>& x)
 }
 
 
-Tensor<double, 1> exponential_linear_derivatives(const Tensor<double, 1>& x)
+Tensor<type, 1> exponential_linear_derivatives(const Tensor<type, 1>& x)
 {
  const int n = x.size();
 
- Tensor<double, 1> derivatives(n);
+ Tensor<type, 1> derivatives(n);
 
  const double alpha = 1.0;
 
@@ -1046,11 +1046,11 @@ Tensor<double, 1> exponential_linear_derivatives(const Tensor<double, 1>& x)
  return derivatives;
 }
 
-Tensor<double, 1> softmax(const Tensor<double, 1>& x)
+Tensor<type, 1> softmax(const Tensor<type, 1>& x)
 {
     const int this_size = x.size();
 
-    Tensor<double, 1> softmax(this_size);
+    Tensor<type, 1> softmax(this_size);
 
     double sum = 0;
 
@@ -1066,7 +1066,7 @@ Tensor<double, 1> softmax(const Tensor<double, 1>& x)
 }
 
 
-Tensor<double, 2> softmax_derivatives(const Tensor<double, 2>& x)
+Tensor<type, 2> softmax_derivatives(const Tensor<type, 2>& x)
 {
  const int n = x.dimension(0);
 
@@ -1074,12 +1074,12 @@ Tensor<double, 2> softmax_derivatives(const Tensor<double, 2>& x)
 
 // vector<int> dimensions = {columns_number, columns_number, n};
 
-// Tensor<double, 2> y(columns_number, columns_number, n);
+// Tensor<type, 2> y(columns_number, columns_number, n);
 
  for(int i = 0; i < n; i ++)
  {
 /*
-     const Tensor<double, 1> softmax_values = softmax(x.get_matrix(0).get_row(i));
+     const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).get_row(i));
 
      for(int j = 0; j < columns_number; j++)
      {
@@ -1100,17 +1100,17 @@ Tensor<double, 2> softmax_derivatives(const Tensor<double, 2>& x)
 
 // return y;
 
- return Tensor<double, 2>();
+ return Tensor<type, 2>();
 
 }
 
 
-Tensor<double, 2> competitive(const Tensor<double, 2>& matrix)
+Tensor<type, 2> competitive(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<double, 2> competitive(rows_number, columns_number);
+    Tensor<type, 2> competitive(rows_number, columns_number);
 /*
     for(int i = 0; i < rows_number; i++)
     {
@@ -1123,12 +1123,12 @@ Tensor<double, 2> competitive(const Tensor<double, 2>& matrix)
 }
 
 /*
-Tensor<double, 2> competitive(const Tensor<double, 2>& x)
+Tensor<type, 2> competitive(const Tensor<type, 2>& x)
 {
     const int rows_number = x.dimension(0);
     const int columns_number = x.dimension(1);
 
-    Tensor<double, 2> competitive(rows_number, columns_number);
+    Tensor<type, 2> competitive(rows_number, columns_number);
 
     for(int i = 0; i < rows_number; i++)
     {
@@ -1141,12 +1141,12 @@ Tensor<double, 2> competitive(const Tensor<double, 2>& x)
 }
 */
 /*
-Tensor<double, 2> softmax_rows(const Tensor<double, 2>& matrix)
+Tensor<type, 2> softmax_rows(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<double, 2> softmax(rows_number,columns_number);
+    Tensor<type, 2> softmax(rows_number,columns_number);
 
     for(int i = 0; i < rows_number; i++)
     {
@@ -1157,12 +1157,12 @@ Tensor<double, 2> softmax_rows(const Tensor<double, 2>& matrix)
 }
 */
 
-Tensor<double, 2> softmax_columns(const Tensor<double, 2>& matrix)
+Tensor<type, 2> softmax_columns(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<double, 2> softmax(rows_number,columns_number);
+    Tensor<type, 2> softmax(rows_number,columns_number);
 /*
     for(int i = 0; i < columns_number; i++)
     {
@@ -1176,7 +1176,7 @@ Tensor<double, 2> softmax_columns(const Tensor<double, 2>& matrix)
 /// This method converts the values of the vector to be binary.
 /// The threshold value used is 0.5.
 
-vector<bool> binary(const Tensor<double, 1>& vector)
+vector<bool> binary(const Tensor<type, 1>& vector)
 {
   const int this_size = vector.size();
 
@@ -1196,11 +1196,11 @@ vector<bool> binary(const Tensor<double, 1>& vector)
 
 ///Calculate the square_root of a vector
 
-Tensor<double, 1> square_root(const Tensor<double, 1>& vector)
+Tensor<type, 1> square_root(const Tensor<type, 1>& vector)
 {
     const int this_size = vector.size();
 
-    Tensor<double, 1>square(this_size);
+    Tensor<type, 1>square(this_size);
 
     for(int i = 0; i < this_size; i++) {
 
@@ -1215,11 +1215,11 @@ Tensor<double, 1> square_root(const Tensor<double, 1>& vector)
 /// Return the cumulative vector of this vector,
 /// where each element is summed up with all the previous ones.
 
-Tensor<double, 1> cumulative(const Tensor<double, 1>& vector)
+Tensor<type, 1> cumulative(const Tensor<type, 1>& vector)
 {
   const int this_size = vector.size();
 
-  Tensor<double, 1> cumulative(this_size);
+  Tensor<type, 1> cumulative(this_size);
 
   if(this_size > 0) {
     cumulative[0] = vector[0];
@@ -1236,12 +1236,12 @@ Tensor<double, 1> cumulative(const Tensor<double, 1>& vector)
 /// Returns the softmax vector of this matrix,
 /// whose elements sum one, and can be interpreted as probabilities.
 /*
-Tensor<double, 2> softmax(const Tensor<double, 2>& matrix)
+Tensor<type, 2> softmax(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-  Tensor<double, 2> softmax(rows_number, columns_number);
+  Tensor<type, 2> softmax(rows_number, columns_number);
 
   for(int j = 0; j < rows_number; j++)
   {
@@ -1313,11 +1313,11 @@ int factorial(const int& number)
 /// Returns a vector with the bounded elements from below of the current vector.
 /// @param lower_bound Lower bound values.
 
-Tensor<double, 1> lower_bounded(const Tensor<double, 1>& vector, const double &lower_bound)
+Tensor<type, 1> lower_bounded(const Tensor<type, 1>& vector, const double &lower_bound)
 {
   const int this_size = vector.size();
 
-  Tensor<double, 1> bounded_vector(this_size);
+  Tensor<type, 1> bounded_vector(this_size);
 
   for(int i = 0; i < this_size; i++) {
     if(vector[i] < lower_bound) {
@@ -1334,7 +1334,7 @@ Tensor<double, 1> lower_bounded(const Tensor<double, 1>& vector, const double &l
 /// Returns a vector with the bounded elements from above of the current vector.
 /// @param lower_bound Lower bound values.
 
-Tensor<double, 1> lower_bounded(const Tensor<double, 1>& vector, const Tensor<double, 1>& lower_bound)
+Tensor<type, 1> lower_bounded(const Tensor<type, 1>& vector, const Tensor<type, 1>& lower_bound)
 {
   const int this_size = vector.size();
 
@@ -1355,7 +1355,7 @@ Tensor<double, 1> lower_bounded(const Tensor<double, 1>& vector, const Tensor<do
 
 #endif
 
-  Tensor<double, 1> bounded_vector(this_size);
+  Tensor<type, 1> bounded_vector(this_size);
 
   // Apply lower bound
 
@@ -1375,11 +1375,11 @@ Tensor<double, 1> lower_bounded(const Tensor<double, 1>& vector, const Tensor<do
 /// bound value.
 /// @param upper_bound Upper bound value.
 
-Tensor<double, 1> upper_bounded(const Tensor<double, 1>& vector, const double &upper_bound)
+Tensor<type, 1> upper_bounded(const Tensor<type, 1>& vector, const double &upper_bound)
 {
   const int this_size = vector.size();
 
-  Tensor<double, 1> bounded_vector(this_size);
+  Tensor<type, 1> bounded_vector(this_size);
 
   for(int i = 0; i < this_size; i++) {
     if(vector[i] > upper_bound) {
@@ -1397,7 +1397,7 @@ Tensor<double, 1> upper_bounded(const Tensor<double, 1>& vector, const double &u
 /// corresponding upper bound values.
 /// @param upper_bound Upper bound values.
 
-Tensor<double, 1> upper_bounded(const Tensor<double, 1>& vector, const Tensor<double, 1>&upper_bound)
+Tensor<type, 1> upper_bounded(const Tensor<type, 1>& vector, const Tensor<type, 1>&upper_bound)
 {
   const int this_size = vector.size();
 
@@ -1420,7 +1420,7 @@ Tensor<double, 1> upper_bounded(const Tensor<double, 1>& vector, const Tensor<do
 
 #endif
 
-  Tensor<double, 1> bounded_vector(this_size);
+  Tensor<type, 1> bounded_vector(this_size);
 
   // Apply upper bound
 
@@ -1442,11 +1442,11 @@ Tensor<double, 1> upper_bounded(const Tensor<double, 1>& vector, const Tensor<do
 /// @param lower_bound Lower bound value.
 /// @param upper_bound Upper bound value.
 
-Tensor<double, 1> lower_upper_bounded(const Tensor<double, 1>& vector, const double &lower_bound, const double &upper_bound)
+Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>& vector, const double &lower_bound, const double &upper_bound)
 {
   const int this_size = vector.size();
 
-  Tensor<double, 1> bounded_vector(this_size);
+  Tensor<type, 1> bounded_vector(this_size);
 
   for(int i = 0; i < this_size; i++) {
     if(vector[i] < lower_bound) {
@@ -1469,8 +1469,8 @@ Tensor<double, 1> lower_upper_bounded(const Tensor<double, 1>& vector, const dou
 /// @param upper_bound Upper bound values.
 
 
-Tensor<double, 1> lower_upper_bounded(const Tensor<double, 1>& vector, const Tensor<double, 1>&lower_bound,
-                                         const Tensor<double, 1>&upper_bound)
+Tensor<type, 1> lower_upper_bounded(const Tensor<type, 1>& vector, const Tensor<type, 1>&lower_bound,
+                                         const Tensor<type, 1>&upper_bound)
 {
   const int this_size = vector.size();
 
@@ -1494,7 +1494,7 @@ Tensor<double, 1> lower_upper_bounded(const Tensor<double, 1>& vector, const Ten
 
 #endif
 
-  Tensor<double, 1> bounded_vector(this_size);
+  Tensor<type, 1> bounded_vector(this_size);
 
   // Apply lower and upper bounds
 
@@ -1512,11 +1512,11 @@ Tensor<double, 1> lower_upper_bounded(const Tensor<double, 1>& vector, const Ten
 }
 
 
-Tensor<double, 2> lower_bounded(const Tensor<double, 2>& matrix, const double & lower_bound)
+Tensor<type, 2> lower_bounded(const Tensor<type, 2>& matrix, const double & lower_bound)
 {
     const int this_size = matrix.size();
 
-    Tensor<double, 2> bounded_matrix(matrix);
+    Tensor<type, 2> bounded_matrix(matrix);
 /*
     for(int i = 0; i < this_size; i++)
     {
@@ -1530,11 +1530,11 @@ Tensor<double, 2> lower_bounded(const Tensor<double, 2>& matrix, const double & 
 }
 
 
-Tensor<double, 2> upper_bounded(const Tensor<double, 2>& matrix, const double & upper_bound)
+Tensor<type, 2> upper_bounded(const Tensor<type, 2>& matrix, const double & upper_bound)
 {
     const int this_size = matrix.size();
 
-    Tensor<double, 2> bounded_matrix(matrix);
+    Tensor<type, 2> bounded_matrix(matrix);
 /*
     for(int i = 0; i < this_size; i++)
     {
@@ -1548,9 +1548,9 @@ Tensor<double, 2> upper_bounded(const Tensor<double, 2>& matrix, const double & 
 }
 
 
-Tensor<double, 2> lower_upper_bounded(const Tensor<double, 2>& matrix, const Tensor<double, 1>& lower_bounds, const Tensor<double, 1>& upper_bounds)
+Tensor<type, 2> lower_upper_bounded(const Tensor<type, 2>& matrix, const Tensor<type, 1>& lower_bounds, const Tensor<type, 1>& upper_bounds)
 {
-    Tensor<double, 2> bounded_matrix(matrix);
+    Tensor<type, 2> bounded_matrix(matrix);
 
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
@@ -1568,9 +1568,9 @@ Tensor<double, 2> lower_upper_bounded(const Tensor<double, 2>& matrix, const Ten
 }
 
 /*
-Tensor<double, 2>lower_upper_bounded(const Tensor<double, 2>& tensor, const Tensor<double, 1>& lower_bounds, const Tensor<double, 1>& upper_bounds)
+Tensor<type, 2>lower_upper_bounded(const Tensor<type, 2>& tensor, const Tensor<type, 1>& lower_bounds, const Tensor<type, 1>& upper_bounds)
 {
-    Tensor<double, 2> bounded_tensor(tensor);
+    Tensor<type, 2> bounded_tensor(tensor);
 
     const int rows_number = tensor.dimension(0);
     const int columns_number = tensor.dimension(1);
@@ -1590,11 +1590,11 @@ Tensor<double, 2>lower_upper_bounded(const Tensor<double, 2>& tensor, const Tens
 
 /// Returns the gradient of the vector norm.
 
-Tensor<double, 1> sign(const Tensor<double, 1>& vector)
+Tensor<type, 1> sign(const Tensor<type, 1>& vector)
 {
   const int this_size = vector.size();  
 
-  Tensor<double, 1> sign_vector(this_size);
+  Tensor<type, 1> sign_vector(this_size);
 
   for(int i = 0; i < this_size; i++)
   {
@@ -1618,11 +1618,11 @@ Tensor<double, 1> sign(const Tensor<double, 1>& vector)
 
 /// Returns this vector divided by its norm.
 
-Tensor<double, 1> normalized(const Tensor<double, 1>& vector)
+Tensor<type, 1> normalized(const Tensor<type, 1>& vector)
 {
   const int this_size = vector.size();
 
-  Tensor<double, 1> normalized(this_size);
+  Tensor<type, 1> normalized(this_size);
 /*
   const double norm = l2_norm(vector);
 
@@ -1636,11 +1636,11 @@ Tensor<double, 1> normalized(const Tensor<double, 1>& vector)
 }
 
 
-Tensor<double, 1> absolute_value(const Tensor<double, 1>& vector)
+Tensor<type, 1> absolute_value(const Tensor<type, 1>& vector)
 {
   const int this_size = vector.size();
 
-  Tensor<double, 1> absolute_value(this_size);
+  Tensor<type, 1> absolute_value(this_size);
 
   for(int i = 0; i < this_size; i++) {
     if(vector[i] > 0) {
@@ -1654,12 +1654,12 @@ Tensor<double, 1> absolute_value(const Tensor<double, 1>& vector)
 }
 
 
-Tensor<double, 2> normalized_columns(const Tensor<double, 2>& matrix)
+Tensor<type, 2> normalized_columns(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<double, 2> softmax(rows_number,columns_number);
+    Tensor<type, 2> softmax(rows_number,columns_number);
 /*
     for(int i = 0; i < columns_number; i++)
     {
@@ -1672,12 +1672,12 @@ Tensor<double, 2> normalized_columns(const Tensor<double, 2>& matrix)
 
 /// Returns a matrix with the absolute values of this matrix.
 
-Tensor<double, 2> absolute_value(const Tensor<double, 2>& matrix)
+Tensor<type, 2> absolute_value(const Tensor<type, 2>& matrix)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    Tensor<double, 2> absolute_value(rows_number, columns_number);
+    Tensor<type, 2> absolute_value(rows_number, columns_number);
 /*
     for(int i = 0; i < matrix.size(); i++)
     {
@@ -1695,7 +1695,7 @@ Tensor<double, 2> absolute_value(const Tensor<double, 2>& matrix)
 }
 
 
-void hard_sigmoid(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void hard_sigmoid(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1720,13 +1720,13 @@ void hard_sigmoid(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void hyperbolic_tangent(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     y.device(thread_pool_device) = x.tanh();
 }
 
 
-void logistic(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void logistic(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1740,13 +1740,13 @@ void logistic(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     y = x;
 }
 
 
-void threshold(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1760,7 +1760,7 @@ void threshold(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void symmetric_threshold(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1774,7 +1774,7 @@ void symmetric_threshold(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void rectified_linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1788,7 +1788,7 @@ void rectified_linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void scaled_exponential_linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void scaled_exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 
@@ -1805,7 +1805,7 @@ void scaled_exponential_linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void soft_plus(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void soft_plus(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1819,7 +1819,7 @@ void soft_plus(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void soft_sign(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void soft_sign(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1833,7 +1833,7 @@ void soft_sign(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void exponential_linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 
@@ -1849,7 +1849,7 @@ void exponential_linear(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void logistic_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int n = x.size();
 /*
@@ -1865,31 +1865,31 @@ void logistic_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void threshold_derivatives(const Tensor<double, 2>&, Tensor<double, 2>& y)
+void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
 {
     y.setZero();
 }
 
 
-void symmetric_threshold_derivatives(const Tensor<double, 2>&, Tensor<double, 2>& y)
+void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
 {
     y.setZero();
 }
 
 
-void linear_derivatives(const Tensor<double, 2>&, Tensor<double, 2>& y)
+void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y)
 {
     y.setConstant(1.0);
 }
 
 
-void hyperbolic_tangent_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void hyperbolic_tangent_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     y.device(thread_pool_device) = x.constant(1.0) - x.tanh()*x.tanh();
 }
 
 
-void rectified_linear_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -1904,7 +1904,7 @@ void rectified_linear_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>&
 }
 
 
-void scaled_exponential_linear_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -1922,7 +1922,7 @@ void scaled_exponential_linear_derivatives(const Tensor<double, 2>& x, Tensor<do
 }
 
 
-void soft_plus_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -1937,7 +1937,7 @@ void soft_plus_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void soft_sign_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -1952,7 +1952,7 @@ void soft_sign_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void hard_sigmoid_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -1967,7 +1967,7 @@ void hard_sigmoid_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void exponential_linear_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -1986,7 +1986,7 @@ void exponential_linear_derivatives(const Tensor<double, 2>& x, Tensor<double, 2
 
 /// @todo Fails
 
-void softmax_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1995,7 +1995,7 @@ void softmax_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Functions.\n"
-              << "void softmax_derivatives(const Tensor<double, 2>&, Tensor<double, 2>&) method.\n"
+              << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
               << "Number of rows in x must be equal to number of rows in d.\n";
 
        throw logic_error(buffer.str());
@@ -2012,7 +2012,7 @@ void softmax_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
     for(int i = 0; i < n; i ++)
     {
 /*
-        const Tensor<double, 1> softmax_values = softmax(x.get_matrix(0).get_row(i));
+        const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).get_row(i));
 
         for(int j = 0; j < columns_number; j++)
         {
@@ -2033,7 +2033,7 @@ void softmax_derivatives(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void binary(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void binary(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
 /*
     const int n = x.size();
@@ -2048,7 +2048,7 @@ void binary(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void competitive(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int rows_number = x.dimension(0);
 /*
@@ -2064,7 +2064,7 @@ void competitive(const Tensor<double, 2>& x, Tensor<double, 2>& y)
 }
 
 
-void softmax(const Tensor<double, 2>& x, Tensor<double, 2>& y)
+void softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y)
 {
     const int rows_number = x.dimension(0);
     const int columns_number = x.dimension(1);

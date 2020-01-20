@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
-
 #ifndef QUASINEWTONMETHOD_H
 #define QUASINEWTONMETHOD_H
 
@@ -25,13 +23,12 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "metrics.h"
 #include "loss_index.h"
 
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
-
-
 
 #include "tinyxml2.h"
 
@@ -159,18 +156,18 @@ public:
 
    // Training methods
 
-   Tensor<double, 1> calculate_gradient_descent_training_direction(const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const;
 
-   Tensor<double, 2> calculate_DFP_inverse_hessian
-  (const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_DFP_inverse_hessian
+  (const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_BFGS_inverse_hessian
-  (const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_BFGS_inverse_hessian
+  (const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_inverse_hessian_approximation(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 2>&) const;
-   void update_inverse_hessian_approximation(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const;
+   Tensor<type, 2> calculate_inverse_hessian_approximation(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) const;
+   void update_inverse_hessian_approximation(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&, const Tensor<double, 2>&) const;
+   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 2>&) const;
 
    Results perform_training();
    void perform_training_void();

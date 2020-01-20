@@ -7,8 +7,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                             
 
-
-
 #ifndef PrincipalComponentsLayer_H
 #define PrincipalComponentsLayer_H
 
@@ -23,12 +21,9 @@
 
 // OpenNN includes
 
-
-
+#include "config.h"
 #include "metrics.h"
 #include "layer.h"
-
-
 
 #include "tinyxml2.h"
 
@@ -76,10 +71,10 @@ public:
 
    // Get methods
 
-   Tensor<double, 2> get_principal_components() const;
-   Tensor<double, 1> get_means() const;
+   Tensor<type, 2> get_principal_components() const;
+   Tensor<type, 1> get_means() const;
 
-   Tensor<double, 1> get_explained_variance() const;
+   Tensor<type, 1> get_explained_variance() const;
 
    int get_inputs_number() const;
    int get_principal_components_number() const;
@@ -101,13 +96,13 @@ public:
    void set_inputs_number(const int&);
    void set_principal_components_number(const int&);
 
-   void set_principal_component(const int&, const Tensor<double, 1>&);
-   void set_principal_components(const Tensor<double, 2>&);
+   void set_principal_component(const int&, const Tensor<type, 1>&);
+   void set_principal_components(const Tensor<type, 2>&);
 
-   void set_means(const Tensor<double, 1>&);
+   void set_means(const Tensor<type, 1>&);
    void set_means(const int&, const double&);
 
-   void set_explained_variance(const Tensor<double, 1>&);
+   void set_explained_variance(const Tensor<type, 1>&);
 
    virtual void set_default();
 
@@ -122,7 +117,7 @@ public:
 
    // Inputs principal components function
 
-   Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    // Expression methods
 
@@ -153,16 +148,16 @@ protected:
 
    /// Means of the input variables
 
-   Tensor<double, 1> means;
+   Tensor<type, 1> means;
 
    /// Contains all the principal components getd in rows and sorted
    /// according to their relative explained variance.
 
-   Tensor<double, 2> principal_components;
+   Tensor<type, 2> principal_components;
 
    /// Explained variances for every of the principal components
 
-   Tensor<double, 1> explained_variance;
+   Tensor<type, 1> explained_variance;
 
    /// Principal components layer method
 

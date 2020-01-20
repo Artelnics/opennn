@@ -148,9 +148,9 @@ double MinkowskiError::calculate_training_error() const
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<double, 2> inputs(batch_instances_number, inputs_number);
-    Tensor<double, 2> targets(batch_instances_number, targets_number);
-    Tensor<double, 2> outputs(batch_instances_number, targets_number);
+    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2> targets(batch_instances_number, targets_number);
+    Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
 /*
@@ -172,7 +172,7 @@ double MinkowskiError::calculate_training_error() const
 }
 
 
-double MinkowskiError::calculate_training_error(const Tensor<double, 1>& parameters) const
+double MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
     //Neural network
 
@@ -193,9 +193,9 @@ double MinkowskiError::calculate_training_error(const Tensor<double, 1>& paramet
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<double, 2> inputs(batch_instances_number, inputs_number);
-    Tensor<double, 2> targets(batch_instances_number, targets_number);
-    Tensor<double, 2> outputs(batch_instances_number, targets_number);
+    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2> targets(batch_instances_number, targets_number);
+    Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
 /*
@@ -240,9 +240,9 @@ double MinkowskiError::calculate_selection_error() const
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
 
-    Tensor<double, 2> inputs(batch_instances_number, inputs_number);
-    Tensor<double, 2> targets(batch_instances_number, targets_number);
-    Tensor<double, 2> outputs(batch_instances_number, targets_number);
+    Tensor<type, 2> inputs(batch_instances_number, inputs_number);
+    Tensor<type, 2> targets(batch_instances_number, targets_number);
+    Tensor<type, 2> outputs(batch_instances_number, targets_number);
 
     double training_error = 0.0;
 /*
@@ -278,10 +278,10 @@ check();
 
     // Data set
 
-    const Tensor<double, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double, 2> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 /*
     return minkowski_error(outputs, targets, minkowski_parameter);
 */
@@ -289,7 +289,7 @@ check();
 }
 
 
-double MinkowskiError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<double, 1>& parameters) const
+double MinkowskiError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -299,10 +299,10 @@ check();
 
     // Data set
 
-    const Tensor<double, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double, 2> targets = data_set_pointer->get_target_data(batch_indices);
+    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Tensor<double, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
+    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 /*
     return minkowski_error(outputs, targets, minkowski_parameter);
 */
@@ -316,7 +316,7 @@ check();
 /// @param outputs Tensor with outputs.
 /// @param targets Tensor with targets.
 
-Tensor<double, 2> MinkowskiError::calculate_output_gradient(const Tensor<double, 2>& outputs, const Tensor<double, 2>& targets) const
+Tensor<type, 2> MinkowskiError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -328,7 +328,7 @@ check();
 /*
     return lp_norm_gradient(outputs-targets, minkowski_parameter)/static_cast<double>(training_instances_number);
 */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 

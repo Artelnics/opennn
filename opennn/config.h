@@ -1,6 +1,6 @@
-typedef double type;
+typedef float type;
 
-
+/*
 class Device
 {
     private:
@@ -23,3 +23,4 @@ class Device
             return instance;
         }
 };
+*/

@@ -19,12 +19,9 @@
 
 // OpenNN includes
 
-
-
+#include "config.h"
 #include "correlations.h"
-
 #include "data_set.h"
-
 #include "neural_network.h"
 
 namespace OpenNN
@@ -71,8 +68,8 @@ public:
 
        double slope = 0.0;
 
-       Tensor<double, 1> targets;
-       Tensor<double, 1> outputs;
+       Tensor<type, 1> targets;
+       Tensor<type, 1> outputs;
 
        void save(const string&) const;
     };
@@ -84,7 +81,7 @@ public:
     {
         /// Matrix containing the data of a ROC curve.
 
-        Tensor<double, 2> roc_curve;
+        Tensor<type, 2> roc_curve;
 
         /// Area under a ROC curve.
 
@@ -106,15 +103,15 @@ public:
     {
         /// Matrix containing the data of a positive cumulative gain
 
-        Tensor<double, 2> positive_cumulative_gain;
+        Tensor<type, 2> positive_cumulative_gain;
 
         /// Matrix containing the data of a negative cumulative gain.
 
-        Tensor<double, 2> negative_cumulative_gain;
+        Tensor<type, 2> negative_cumulative_gain;
 
         /// Maximum gain of the cumulative gain analysis
 
-        Tensor<double, 1> maximum_gain;
+        Tensor<type, 1> maximum_gain;
     };
 
 
@@ -161,48 +158,48 @@ public:
 
    // Error data methods
 
-   vector<Tensor<double, 2>> calculate_error_data() const;
-   vector<Tensor<double, 1>> calculate_percentage_error_data() const;
+   vector<Tensor<type, 2>> calculate_error_data() const;
+   vector<Tensor<type, 1>> calculate_percentage_error_data() const;
 
    vector<Descriptives> calculate_absolute_errors_statistics() const;
-   vector<Descriptives> calculate_absolute_errors_statistics(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   vector<Descriptives> calculate_absolute_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    vector<Descriptives> calculate_percentage_errors_statistics() const;
-   vector<Descriptives> calculate_percentage_errors_statistics(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   vector<Descriptives> calculate_percentage_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    vector<vector<Descriptives>> calculate_error_data_statistics() const;
    void print_error_data_statistics() const;
 
-   vector<Tensor<double, 2>> calculate_error_data_statistics_matrices() const;
+   vector<Tensor<type, 2>> calculate_error_data_statistics_matrices() const;
 
    vector<Histogram> calculate_error_data_histograms(const int& = 10) const;
 
    vector<vector<int>> calculate_maximal_errors(const int& = 10) const;
 
-   Tensor<double, 2> calculate_errors() const;
-   Tensor<double, 2> calculate_binary_classification_errors() const;
-   Tensor<double, 2> calculate_multiple_classification_errors() const;
+   Tensor<type, 2> calculate_errors() const;
+   Tensor<type, 2> calculate_binary_classification_errors() const;
+   Tensor<type, 2> calculate_multiple_classification_errors() const;
 
-   Tensor<double, 1> calculate_training_errors() const;
-   Tensor<double, 1> calculate_binary_classification_training_errors() const;
-   Tensor<double, 1> calculate_multiple_classification_training_errors() const;
+   Tensor<type, 1> calculate_training_errors() const;
+   Tensor<type, 1> calculate_binary_classification_training_errors() const;
+   Tensor<type, 1> calculate_multiple_classification_training_errors() const;
 
-   Tensor<double, 1> calculate_selection_errors() const;
-   Tensor<double, 1> calculate_binary_classification_selection_errors() const;
-   Tensor<double, 1> calculate_multiple_classification_selection_errors() const;
+   Tensor<type, 1> calculate_selection_errors() const;
+   Tensor<type, 1> calculate_binary_classification_selection_errors() const;
+   Tensor<type, 1> calculate_multiple_classification_selection_errors() const;
 
-   Tensor<double, 1> calculate_testing_errors() const;
-   Tensor<double, 1> calculate_binary_classification_testing_errors() const;
-   Tensor<double, 1> calculate_multiple_classification_testing_errors() const;
+   Tensor<type, 1> calculate_testing_errors() const;
+   Tensor<type, 1> calculate_binary_classification_testing_errors() const;
+   Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
 
-   double calculate_testing_normalized_squared_error(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-   double calculate_testing_cross_entropy_error(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-   double calculate_testing_weighted_squared_error(const Tensor<double, 2>&, const Tensor<double, 2>&, const Tensor<double, 1>& = Tensor<double, 1>()) const;
+   double calculate_testing_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   double calculate_testing_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   double calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
 
    // Linear regression analysis methods
 
    vector<RegressionResults> linear_regression() const;
-   vector<RegressionResults> linear_regression(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   vector<RegressionResults> linear_regression(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void print_linear_regression_correlations() const;
    vector<double> get_linear_regression_correlations_std() const;
@@ -212,18 +209,18 @@ public:
 
    // Binary classifcation methods
 
-   Tensor<double, 1> calculate_binary_classification_tests() const;
+   Tensor<type, 1> calculate_binary_classification_tests() const;
 
    double calculate_logloss() const;
 
    // Confusion methods
 
-   Matrix<int, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<double, 2>&, const Tensor<double, 2>&, const double&) const;
-   Matrix<int, Dynamic, Dynamic> calculate_confusion_multiple_classification(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Matrix<int, Dynamic, Dynamic> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) const;
+   Matrix<int, Dynamic, Dynamic> calculate_confusion_multiple_classification(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   vector<int> calculate_positives_negatives_rate(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   vector<int> calculate_positives_negatives_rate(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Matrix<int, Dynamic, Dynamic> calculate_confusion(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Matrix<int, Dynamic, Dynamic> calculate_confusion(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Matrix<int, Dynamic, Dynamic> calculate_confusion() const;
 
    // ROC curve
@@ -232,55 +229,55 @@ public:
 
    double calculate_Wilcoxon_parameter(const double&, const double&) const;
 
-   Tensor<double, 2> calculate_roc_curve(const Tensor<double, 2>& ,const Tensor<double, 2>&) const;
-   double calculate_area_under_curve(const Tensor<double, 2>& ,const Tensor<double, 2>&) const;
-   double calculate_area_under_curve_confidence_limit(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-   double calculate_area_under_curve_confidence_limit(const Tensor<double, 2>&, const Tensor<double, 2>&, const double&) const;
-   double calculate_optimal_threshold(const Tensor<double, 2>& ,const Tensor<double, 2>&) const;
-   double calculate_optimal_threshold(const Tensor<double, 2>& ,const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   double calculate_area_under_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   double calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   double calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&) const;
+   double calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   double calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Lift Chart
 
-   Tensor<double, 2> perform_cumulative_gain_analysis() const;
-   Tensor<double, 2> calculate_cumulative_gain(const Tensor<double, 2>& ,const Tensor<double, 2>&) const;
-   Tensor<double, 2> calculate_negative_cumulative_gain(const Tensor<double, 2>&, const Tensor<double, 2>&)const;
+   Tensor<type, 2> perform_cumulative_gain_analysis() const;
+   Tensor<type, 2> calculate_cumulative_gain(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
+   Tensor<type, 2> calculate_negative_cumulative_gain(const Tensor<type, 2>&, const Tensor<type, 2>&)const;
 
-   Tensor<double, 2> perform_lift_chart_analysis() const;
-   Tensor<double, 2> calculate_lift_chart(const Tensor<double, 2>&) const;
+   Tensor<type, 2> perform_lift_chart_analysis() const;
+   Tensor<type, 2> calculate_lift_chart(const Tensor<type, 2>&) const;
 
    KolmogorovSmirnovResults perform_Kolmogorov_Smirnov_analysis() const;
-   Tensor<double, 1> calculate_maximum_gain(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 1> calculate_maximum_gain(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Calibration plot
 
-   Tensor<double, 2> perform_calibration_plot_analysis() const;
+   Tensor<type, 2> perform_calibration_plot_analysis() const;
 
-   Tensor<double, 2> calculate_calibration_plot(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_calibration_plot(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Output histogram
 
-   vector<Histogram> calculate_output_histogram(const Tensor<double, 2>&, const int& = 10) const;
+   vector<Histogram> calculate_output_histogram(const Tensor<type, 2>&, const int& = 10) const;
 
    // Binary classification rates
 
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
-   vector<int> calculate_true_positive_instances(const Tensor<double, 2>&, const Tensor<double, 2>&, const vector<int>&, const double&) const;
-   vector<int> calculate_false_positive_instances(const Tensor<double, 2>&, const Tensor<double, 2>&, const vector<int>&, const double&) const;
-   vector<int> calculate_false_negative_instances(const Tensor<double, 2>&, const Tensor<double, 2>&, const vector<int>&, const double&) const;
-   vector<int> calculate_true_negative_instances(const Tensor<double, 2>&, const Tensor<double, 2>&, const vector<int>&, const double&) const;
+   vector<int> calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<int>&, const double&) const;
+   vector<int> calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<int>&, const double&) const;
+   vector<int> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<int>&, const double&) const;
+   vector<int> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<int>&, const double&) const;
 
    // Multiple classification rates
 
    Matrix<vector<int>, Dynamic, Dynamic> calculate_multiple_classification_rates() const;
 
-   Matrix<vector<int>, Dynamic, Dynamic> calculate_multiple_classification_rates(const Tensor<double, 2>&, const Tensor<double, 2>&, const vector<int>&) const;
+   Matrix<vector<int>, Dynamic, Dynamic> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const vector<int>&) const;
 
    // Forecasting methods
 
-   vector<Tensor<double, 1>> calculate_error_autocorrelation(const int& = 10) const;
+   vector<Tensor<type, 1>> calculate_error_autocorrelation(const int& = 10) const;
 
-   vector<Tensor<double, 1>> calculate_inputs_errors_cross_correlation(const int& = 10) const;
+   vector<Tensor<type, 1>> calculate_inputs_errors_cross_correlation(const int& = 10) const;
 
    // Serialization methods
 

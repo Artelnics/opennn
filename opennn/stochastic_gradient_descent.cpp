@@ -736,7 +736,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Tensor<double, 2>& data = data_set_pointer->get_data();
+   const Tensor<type, 2>& data = data_set_pointer->get_data();
 
    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
 
@@ -754,12 +754,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-   Tensor<double, 1> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<double, 1> parameters_increment(parameters_number);
-   Tensor<double, 1> last_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
+   Tensor<type, 1> last_increment(parameters_number);
 
    double parameters_norm = 0.0;
 
@@ -780,13 +780,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    // Optimization algorithm stuff
 
-   double learning_rate = initial_learning_rate;
+   type learning_rate = initial_learning_rate;
 
    int selection_failures = 0;
 
-   Tensor<double, 1> nesterov_increment(parameters_number);
+   Tensor<type, 1> nesterov_increment(parameters_number);
 
-   Tensor<double, 1> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 999999;
 
    bool stop_training = false;
@@ -852,7 +852,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             initial_decay > 0.0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
-            parameters_increment.device(thread_pool_device) = first_order_loss.gradient*(-learning_rate);
+            parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
 
             if(momentum > 0.0 && !nesterov)
             {

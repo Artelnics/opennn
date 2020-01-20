@@ -106,31 +106,31 @@ string PrincipalComponentsLayer::write_principal_components_method_text() const
 }
 
 
-// Tensor<double, 2> get_principal_components() const method
+// Tensor<type, 2> get_principal_components() const method
 
 /// Returns a matrix containing the principal components.
 
-Tensor<double, 2> PrincipalComponentsLayer::get_principal_components() const
+Tensor<type, 2> PrincipalComponentsLayer::get_principal_components() const
 {
     return principal_components;
 }
 
 
-// Tensor<double, 1> get_means() const method
+// Tensor<type, 1> get_means() const method
 
 /// Returns a vector containing the means of every input variable in the data set.
 
-Tensor<double, 1> PrincipalComponentsLayer::get_means() const
+Tensor<type, 1> PrincipalComponentsLayer::get_means() const
 {
     return means;
 }
 
 
-// Tensor<double, 1> get_explained_variance() const
+// Tensor<type, 1> get_explained_variance() const
 
 /// Returns a vector containing the explained variance of every of the principal components
 
-Tensor<double, 1> PrincipalComponentsLayer::get_explained_variance() const
+Tensor<type, 1> PrincipalComponentsLayer::get_explained_variance() const
 {
     return explained_variance;
 }
@@ -164,7 +164,7 @@ int PrincipalComponentsLayer::get_neurons_number() const
 /// @param inputs Set of inputs to the principal components layer.
 /// @todo
 
-Tensor<double, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<double, 2>& inputs)
+Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 /*
     const int inputs_number = inputs.dimension(1);    
@@ -176,7 +176,7 @@ Tensor<double, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<doubl
     if(principal_components.dimension(0) != inputs_number)
     {
        buffer << "OpenNN Exception: PrincipalComponentsLayer class.\n"
-              << "Tensor<double, 2> calculate_outputs(Matrix Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(Matrix Tensor<type, 1>&) const method.\n"
               << "Size of inputs must be equal to the number of rows of the principal components matrix.\n";
 
        throw logic_error(buffer.str());
@@ -193,9 +193,9 @@ Tensor<double, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<doubl
 
         const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
 
-        const Tensor<double, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
+        const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
-        const Tensor<double, 2> inputs_adjust = inputs.subtract_rows(means);
+        const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
 
         return dot(inputs_adjust, used_principal_components.calculate_transpose());
 
@@ -205,13 +205,13 @@ Tensor<double, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<doubl
 
             const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
 
-            const Tensor<double, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
+            const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
             // Data adjust
 
-            const Tensor<double, 2> inputs_adjust = inputs.subtract_rows(means);
+            const Tensor<type, 2> inputs_adjust = inputs.subtract_rows(means);
 
-//            Tensor<double, 1> inputs_adjust(inputs_number);
+//            Tensor<type, 1> inputs_adjust(inputs_number);
 
 //            for(int j = 0; j < inputs_number; j++)
 //            {
@@ -222,7 +222,7 @@ Tensor<double, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<doubl
 
             const int principal_components_number = used_principal_components.dimension(0);
 
-            Tensor<double, 2> outputs(points_number, principal_components_number);
+            Tensor<type, 2> outputs(points_number, principal_components_number);
 
             for(int j = 0; j < principal_components_number; j++)
             {
@@ -233,7 +233,7 @@ Tensor<double, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<doubl
 
         return outputs;
     */
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }
 
 
@@ -384,7 +384,7 @@ void PrincipalComponentsLayer::set(const PrincipalComponentsLayer& new_principal
 /// Sets a new value of the principal components member.
 /// @param new_principal_components Object to be set.
 
-void PrincipalComponentsLayer::set_principal_components(const Tensor<double, 2>& new_principal_components)
+void PrincipalComponentsLayer::set_principal_components(const Tensor<type, 2>& new_principal_components)
 {
     principal_components = new_principal_components;
 /*
@@ -416,7 +416,7 @@ void PrincipalComponentsLayer::set_principal_components_number(const int& new_pr
 /// @param index Index of the principal component.
 /// @param principal_component Object to be set.
 
-void PrincipalComponentsLayer::set_principal_component(const int& index, const Tensor<double, 1>& principal_component)
+void PrincipalComponentsLayer::set_principal_component(const int& index, const Tensor<type, 1>& principal_component)
 {
 /*
     principal_components.set_row(index, principal_component);
@@ -427,7 +427,7 @@ void PrincipalComponentsLayer::set_principal_component(const int& index, const T
 /// Sets a new value of the means member.
 /// @param new_means Object to be set.
 
-void PrincipalComponentsLayer::set_means(const Tensor<double, 1>& new_means)
+void PrincipalComponentsLayer::set_means(const Tensor<type, 1>& new_means)
 {    
     means = new_means;
 }
@@ -448,7 +448,7 @@ void PrincipalComponentsLayer::set_means(const int& new_size, const double& new_
 /// Sets a new value to the explained variance member.
 /// @param new_explained_variance Object to be set.
 
-void PrincipalComponentsLayer::set_explained_variance(const Tensor<double, 1>& new_explained_variance)
+void PrincipalComponentsLayer::set_explained_variance(const Tensor<type, 1>& new_explained_variance)
 {
     explained_variance = new_explained_variance;
 }
@@ -767,7 +767,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
             if(means_text)
             {
 /*
-                Tensor<double, 1> new_means;
+                Tensor<type, 1> new_means;
                 new_means.parse(means_text);
 
                 try
@@ -801,7 +801,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
             if(explained_variance_text)
             {
 /*
-                Tensor<double, 1> new_explained_variance;
+                Tensor<type, 1> new_explained_variance;
                 new_explained_variance.parse(explained_variance_text);
 
                 try
@@ -856,7 +856,7 @@ void PrincipalComponentsLayer::from_XML(const tinyxml2::XMLDocument& document)
             if(principal_component_text)
             {
 /*
-                Tensor<double, 1> principal_component;
+                Tensor<type, 1> principal_component;
                 principal_component.parse(principal_component_text);
 
                 try

@@ -20,6 +20,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "training_strategy.h"
 #include "incremental_neurons.h"
 #include "growing_inputs.h"

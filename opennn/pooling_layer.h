@@ -21,6 +21,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "layer.h"
 
 #include "statistics.h"
@@ -91,7 +92,7 @@ public:
 
      int get_parameters_number() const;
 
-     Tensor<double, 1> get_parameters() const;
+     Tensor<type, 1> get_parameters() const;
 
      vector<int> get_inputs_indices(const int&) const;
 
@@ -118,36 +119,36 @@ public:
 
     // Outputs
 
-    Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&);
+    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-    void calculate_activations(const Tensor<double, 2>&,  Tensor<double, 2>&) {}
+    void calculate_activations(const Tensor<type, 2>&,  Tensor<type, 2>&) {}
 
-    Tensor<double, 2> calculate_no_pooling_outputs(const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_no_pooling_outputs(const Tensor<type, 2>&) const;
 
-    Tensor<double, 2> calculate_max_pooling_outputs(const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_max_pooling_outputs(const Tensor<type, 2>&) const;
 
-    Tensor<double, 2> calculate_average_pooling_outputs(const Tensor<double, 2>&) const;    
+    Tensor<type, 2> calculate_average_pooling_outputs(const Tensor<type, 2>&) const;    
 
     // Activations derivatives
 
-    Tensor<double, 2> calculate_activations_derivatives(const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
-    void calculate_activations_derivatives(const Tensor<double, 2>&, Tensor<double, 2>&) const
+    void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const
     {
 
     }
 
-    Tensor<double, 2> calculate_no_pooling_activations_derivatives(const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_no_pooling_activations_derivatives(const Tensor<type, 2>&) const;
 
-    Tensor<double, 2> calculate_average_pooling_activations_derivatives(const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_average_pooling_activations_derivatives(const Tensor<type, 2>&) const;
 
-    Tensor<double, 2> calculate_max_pooling_activations_derivatives(const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_max_pooling_activations_derivatives(const Tensor<type, 2>&) const;
 
     // First order activations
 
-    ForwardPropagation calculate_forward_propagation(const Tensor<double, 2>&);
+    ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-    void calculate_forward_propagation(const Tensor<double, 2>& inputs, ForwardPropagation& forward_propagation)
+    void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
     {
 /*
         calculate_activations(inputs, forward_propagation.activations);
@@ -158,18 +159,18 @@ public:
 
     // Delta methods
 
-    Tensor<double, 2> calculate_output_delta(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-    Tensor<double, 2> calculate_hidden_delta(Layer*, const Tensor<double, 2>&, const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-    Tensor<double, 2> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<double, 2>&, const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-    Tensor<double, 2> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<double, 2>&, const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-    Tensor<double, 2> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<double, 2>&, const Tensor<double, 2>&, const Tensor<double, 2>&) const;
-    Tensor<double, 2> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<double, 2>&, const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+    Tensor<type, 2> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+    Tensor<type, 2> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+    Tensor<type, 2> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+    Tensor<type, 2> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
     // Gradient methods
 
-    Tensor<double, 1> calculate_error_gradient(const Tensor<double, 2>&, const Layer::ForwardPropagation&, const Tensor<double, 2>&);
+    Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
 protected:
 

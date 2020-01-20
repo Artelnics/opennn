@@ -350,7 +350,7 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 /// @param initial_learning_rate Initial training rate to start the algorithm. 
 
 pair<double,double> LearningRateAlgorithm::calculate_directional_point(const double& loss,
-                                                                  const Tensor<double, 1>& training_direction,
+                                                                  const Tensor<type, 1>& training_direction,
                                                                   const double& initial_learning_rate) const
 {
    #ifdef __OPENNN_DEBUG__ 
@@ -360,7 +360,7 @@ pair<double,double> LearningRateAlgorithm::calculate_directional_point(const dou
       ostringstream buffer;
 
       buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-             << "Tensor<double, 1> calculate_directional_point(const double&, const Tensor<double, 1>&, const double&) const method.\n"
+             << "Tensor<type, 1> calculate_directional_point(const double&, const Tensor<type, 1>&, const double&) const method.\n"
              << "Pointer to loss index is nullptr.\n";
 
       throw logic_error(buffer.str());
@@ -373,7 +373,7 @@ pair<double,double> LearningRateAlgorithm::calculate_directional_point(const dou
       ostringstream buffer;
 
       buffer << "OpenNN Error: LearningRateAlgorithm class.\n"
-             << "Tensor<double, 1> calculate_directional_point(const double&, const Tensor<double, 1>&, const double&) const method.\n"
+             << "Tensor<type, 1> calculate_directional_point(const double&, const Tensor<type, 1>&, const double&) const method.\n"
              << "Pointer to neural network is nullptr.\n";
 
       throw logic_error(buffer.str());
@@ -411,7 +411,7 @@ pair<double,double> LearningRateAlgorithm::calculate_directional_point(const dou
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
         const double& loss,
-        const Tensor<double, 1>& training_direction,
+        const Tensor<type, 1>& training_direction,
         const double& initial_learning_rate) const
 {    
     Triplet triplet;
@@ -491,7 +491,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 /// @param training_direction Training direction for the directional point.
 /// @param initial_learning_rate Training rate for the directional point.
 
-pair<double,double> LearningRateAlgorithm::calculate_fixed_directional_point(const double&, const Tensor<double, 1>& training_direction, const double& initial_learning_rate) const
+pair<double,double> LearningRateAlgorithm::calculate_fixed_directional_point(const double&, const Tensor<type, 1>& training_direction, const double& initial_learning_rate) const
 {
    pair<double,double> directional_point;
 
@@ -509,7 +509,7 @@ pair<double,double> LearningRateAlgorithm::calculate_fixed_directional_point(con
 /// @param initial_learning_rate Initial training rate in line minimization.
 
 pair<double,double> LearningRateAlgorithm:: calculate_golden_section_directional_point(const double& loss,
-                                                                                 const Tensor<double, 1>& training_direction,
+                                                                                 const Tensor<type, 1>& training_direction,
                                                                                  const double& initial_learning_rate) const
 {
    ostringstream buffer;
@@ -564,7 +564,7 @@ pair<double,double> LearningRateAlgorithm:: calculate_golden_section_directional
          else if(abs(V.first - triplet.U.first) < 1.0e-99)
 		 {
             buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                   << "Tensor<double, 1> calculate_golden_section_directional_point(double, const Tensor<double, 1>, double) const method.\n"
+                   << "Tensor<type, 1> calculate_golden_section_directional_point(double, const Tensor<type, 1>, double) const method.\n"
                    << "Both interior points have the same ordinate.\n";
 
             cout << buffer.str() << endl;
@@ -574,7 +574,7 @@ pair<double,double> LearningRateAlgorithm:: calculate_golden_section_directional
 	     else
 	     {
             buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                   << "Tensor<double, 1> calculate_golden_section_directional_point(double, const Tensor<double, 1>, double) const method.\n" 
+                   << "Tensor<type, 1> calculate_golden_section_directional_point(double, const Tensor<type, 1>, double) const method.\n" 
                    << "Unknown set:\n" 
                      << "A = (" << triplet.A.first << "," << triplet.A.second << ")\n"
                      << "B = (" << triplet.B.first << "," << triplet.B.second << ")\n"
@@ -618,7 +618,7 @@ pair<double,double> LearningRateAlgorithm:: calculate_golden_section_directional
 /// @param initial_learning_rate Initial training rate in line minimization.
 
 pair<double, double> LearningRateAlgorithm::calculate_Brent_method_directional_point(const double& loss,
-                                                                               const Tensor<double, 1>& training_direction,
+                                                                               const Tensor<type, 1>& training_direction,
                                                                                const double& initial_learning_rate) const
 {
    ostringstream buffer;
@@ -685,7 +685,7 @@ pair<double, double> LearningRateAlgorithm::calculate_Brent_method_directional_p
 	     else
 	     {
             buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-                   << "Tensor<double, 1> calculate_Brent_method_directional_point(double, const Tensor<double, 1>, double) const method.\n" 
+                   << "Tensor<type, 1> calculate_Brent_method_directional_point(double, const Tensor<type, 1>, double) const method.\n" 
                    << "Unknown set:\n" 
                      << "A = (" << triplet.A.first << "," << triplet.A.second << ")\n"
                      << "B = (" << triplet.B.first << "," << triplet.B.second << ")\n"
@@ -791,7 +791,7 @@ double LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-             << "double calculate__method_learning_rate(Tensor<double, 1>&, Tensor<double, 1>&, Tensor<double, 1>&) const method.\n"
+             << "double calculate__method_learning_rate(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
              << "Parabola cannot be constructed.\n";
 
       throw logic_error(buffer.str());
@@ -801,7 +801,7 @@ double LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-             << "double calculate_Brent_method_learning_rate(Tensor<double, 1>&, Tensor<double, 1>&, Tensor<double, 1>&) const method.\n"
+             << "double calculate_Brent_method_learning_rate(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
              << "Parabola does not have a minimum but a maximum.\n";
 
       throw logic_error(buffer.str());
@@ -818,7 +818,7 @@ double LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
-             << "double calculate_parabola_minimal_learning_rate(Tensor<double, 1>&, Tensor<double, 1>&, Tensor<double, 1>&) const method.\n"
+             << "double calculate_parabola_minimal_learning_rate(Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const method.\n"
              << "Brent method training rate is not inside interval.\n"
              << "Interval:(" << triplet.A.first << "," << triplet.B.first << ")\n"
 	         << "Brent method training rate: " << Brent_method_learning_rate << endl;

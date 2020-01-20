@@ -1155,7 +1155,7 @@ vector<NeuralNetwork> ModelSelection::perform_k_fold_cross_validation(const int&
 
     data_set_pointer->split_instances_random(1,0,0);
 
-    Tensor<double, 1> minimum_error_parameters;
+    Tensor<type, 1> minimum_error_parameters;
     double minimum_error = 1.0;
 
     vector<NeuralNetwork> neural_network_ensemble(k);
@@ -1260,7 +1260,7 @@ vector<NeuralNetwork> ModelSelection::perform_random_cross_validation(const int&
 
     data_set_pointer->split_instances_random(1,0,0);
 
-    Tensor<double, 1> minimum_error_parameters;
+    Tensor<type, 1> minimum_error_parameters;
     double minimum_error = 1.0;
 
     vector<NeuralNetwork> neural_network_ensemble(k);
@@ -1355,7 +1355,7 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     data_set_pointer->split_instances_random(1,0,0);
 
-    Tensor<double, 1> minimum_error_parameters;
+    Tensor<type, 1> minimum_error_parameters;
     double minimum_error = 1.0;
 
     vector<NeuralNetwork> neural_network_ensemble(positives_instances_number);
@@ -1364,9 +1364,9 @@ vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
     for(int i = 0; i < positives_instances_number; i++)
     {
         const int current_selection_instance_index = positives_instances_indices[i];
-        const Tensor<double, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
+        const Tensor<type, 1> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
         const double targets = current_selection_instance[target_index];
-        const Tensor<double, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
+        const Tensor<type, 1> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
 
         data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
         neural_network_pointer->randomize_parameters_normal();

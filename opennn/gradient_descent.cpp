@@ -692,7 +692,7 @@ void GradientDescent::set_display_period(const int& new_display_period)
 /// which is the negative of the normalized gradient.
 /// @param gradient Performance function gradient.
 
-Tensor<double, 1> GradientDescent::calculate_training_direction(const Tensor<double, 1>& gradient) const
+Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradient) const
 {
     
 
@@ -703,7 +703,7 @@ Tensor<double, 1> GradientDescent::calculate_training_direction(const Tensor<dou
     if(!loss_index_pointer)
     {
        buffer << "OpenNN Exception: GradientDescent class.\n"
-              << "Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Loss index pointer is nullptr.\n";
 
        throw logic_error(buffer.str());
@@ -718,7 +718,7 @@ Tensor<double, 1> GradientDescent::calculate_training_direction(const Tensor<dou
     if(gradient_size != parameters_number)
     {
        buffer << "OpenNN Exception: GradientDescent class.\n"
-              << "Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -726,7 +726,7 @@ Tensor<double, 1> GradientDescent::calculate_training_direction(const Tensor<dou
 
     #endif
 
-   return normalized(gradient)*(-1.0);
+   return normalized(gradient)*static_cast<type>(-1.0);
 }
 
 
@@ -764,10 +764,10 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<double, 1> parameters(parameters_number);
+   Tensor<type, 1> parameters(parameters_number);
    double parameters_norm = 0.0;
 
-   Tensor<double, 1> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters_increment(parameters_number);
    double parameters_increment_norm = 0.0;
 
    // Loss index stuff
@@ -779,14 +779,14 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    double old_training_loss = 0.0;
    double training_loss_decrease = -999999;
 
-   Tensor<double, 1> gradient(parameters_number);
+   Tensor<type, 1> gradient(parameters_number);
    double gradient_norm = 0.0;
 
    // Optimization algorithm stuff 
 
    int selection_failures = 0;
 
-   Tensor<double, 1> training_direction(parameters_number);
+   Tensor<type, 1> training_direction(parameters_number);
 
    const double first_learning_rate = 0.01;
 
@@ -796,7 +796,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    pair<double,double> directional_point(2, 0.0);
 
-   Tensor<double, 1> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 999999;
 
    bool stop_training = false;

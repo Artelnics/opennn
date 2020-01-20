@@ -24,6 +24,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "mean_squared_error.h"
 #include "optimization_algorithm.h"
@@ -152,15 +153,15 @@ private:
 
    /// Initial learning rate
 
-   double initial_learning_rate;
+   type initial_learning_rate;
 
    /// Learning rate decay over each update.
 
-   double initial_decay;
+   type initial_decay;
 
    /// Parameter that accelerates SGD in the relevant direction and dampens oscillations.
 
-   double momentum;
+   type momentum;
 
    /// Boolean. Whether to apply Nesterov momentum.
 

@@ -97,11 +97,11 @@ vector<Descriptives> UnscalingLayer::get_descriptives() const
 /// The number of rows is the number of unscaling neurons,
 /// and the number of columns is 4(minimum, maximum, mean and standard deviation).
 
-Tensor<double, 2> UnscalingLayer::get_descriptives_matrix() const
+Tensor<type, 2> UnscalingLayer::get_descriptives_matrix() const
 {
     const int neurons_number = get_neurons_number();
 
-    Tensor<double, 2> statistics_matrix(neurons_number, 4);
+    Tensor<type, 2> statistics_matrix(neurons_number, 4);
 /*
     for(int i = 0; i < neurons_number; i++)
     {
@@ -507,7 +507,7 @@ void UnscalingLayer::prune_neuron(const int& index)
 /// It displays a warning message if they are outside.
 /// @param outputs Set of outptus from the unscaling layer.
 
-void UnscalingLayer::check_range(const Tensor<double, 1>& outputs) const
+void UnscalingLayer::check_range(const Tensor<type, 1>& outputs) const
 {
     const int neurons_number = get_neurons_number();
 
@@ -522,7 +522,7 @@ void UnscalingLayer::check_range(const Tensor<double, 1>& outputs) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "void check_range(const Tensor<double, 1>&) const method.\n"
+               << "void check_range(const Tensor<type, 1>&) const method.\n"
                << "Size of outputs must be equal to number of unscaling neurons.\n";
 
         throw logic_error(buffer.str());
@@ -539,14 +539,14 @@ void UnscalingLayer::check_range(const Tensor<double, 1>& outputs) const
             if(outputs[i] < descriptives[i].minimum)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "void check_range(const Tensor<double, 1>&) const method.\n"
+                          << "void check_range(const Tensor<type, 1>&) const method.\n"
                           << "Output variable " << i << " is less than outputs.\n";
             }
 
             if(outputs[i] > descriptives[i].maximum)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "void check_range(const Tensor<double, 1>&) const method.\n"
+                          << "void check_range(const Tensor<type, 1>&) const method.\n"
                           << "Output variable " << i << " is greater than maximum.\n";
             }
         }
@@ -574,7 +574,7 @@ bool UnscalingLayer::is_empty() const
 /// Calculates the outputs from the unscaling layer for a given set of inputs to that layer.  
 /// @param inputs Set of inputs to the unscaling layer.
 
-Tensor<double, 2> UnscalingLayer::calculate_outputs(const Tensor<double, 2>& inputs)
+Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {    
 
 #ifdef __OPENNN_DEBUG__
@@ -588,7 +588,7 @@ Tensor<double, 2> UnscalingLayer::calculate_outputs(const Tensor<double, 2>& inp
         ostringstream buffer;
 
         buffer << "OpenNN Exception: UnscalingLayer class.\n"
-               << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) const method.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
                << "Size must be equal to number of unscaling neurons.\n";
 
         throw logic_error(buffer.str());
@@ -621,19 +621,19 @@ Tensor<double, 2> UnscalingLayer::calculate_outputs(const Tensor<double, 2>& inp
         }
     }
 
-    return Tensor<double, 2>();
+    return Tensor<type, 2>();
 }  
 
 
 /// Calculates the outputs from the unscaling layer with the minimum and maximum method for a set of inputs.
 /// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons. 
 
-Tensor<double, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor<type, 2>& inputs) const
 {
     const int points_number = inputs.dimension(0);
     const int neurons_number = get_neurons_number();
 
-    Tensor<double, 2> outputs(points_number, neurons_number);
+    Tensor<type, 2> outputs(points_number, neurons_number);
 
     for(int i = 0; i < points_number; i++)
     {
@@ -644,7 +644,7 @@ Tensor<double, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor
             if(display)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Tensor<double, 1> calculate_minimum_maximum_outputs(Tensor<double, 1>&) const method.\n"
+                          << "Tensor<type, 1> calculate_minimum_maximum_outputs(Tensor<type, 1>&) const method.\n"
                           << "Minimum and maximum values of output variable " << i << " are equal.\n"
                           << "Those outputs won't be unscaled.\n";
             }
@@ -665,12 +665,12 @@ Tensor<double, 2> UnscalingLayer::calculate_minimum_maximum_outputs(const Tensor
 /// Calculates the outputs from the unscaling layer with the mean and standard deviation method for a set of inputs.
 /// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons. 
 
-Tensor<double, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<type, 2>& inputs) const
 {
     const int points_number = inputs.dimension(0);
     const int neurons_number = get_neurons_number();
 
-    Tensor<double, 2> outputs(points_number, neurons_number);
+    Tensor<type, 2> outputs(points_number, neurons_number);
 /*
     for(int i = 0; i < points_number; i++)
     {
@@ -681,7 +681,7 @@ Tensor<double, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(cons
             if(display)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Tensor<double, 1> calculate_mean_standard_deviation_outputs(const Tensor<double, 1>&) const method.\n"
+                          << "Tensor<type, 1> calculate_mean_standard_deviation_outputs(const Tensor<type, 1>&) const method.\n"
                           << "Standard deviation of output variable " << j << " is zero.\n"
                           << "Those outputs won't be unscaled.\n";
             }
@@ -702,13 +702,13 @@ Tensor<double, 2> UnscalingLayer::calculate_mean_standard_deviation_outputs(cons
 /// Calculates the outputs from the unscaling layer with the logarithmic method for a set of inputs.
 /// @param inputs Vector of input values to the unscaling layer. The size must be equal to the number of unscaling neurons.
 
-Tensor<double, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<double, 2>& inputs) const
+Tensor<type, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<type, 2>& inputs) const
 {
     const int points_number = inputs.dimension(0);
 
     const int neurons_number = get_neurons_number();
 
-    Tensor<double, 2> outputs(points_number, neurons_number);
+    Tensor<type, 2> outputs(points_number, neurons_number);
 
     for(int i = 0; i < points_number; i++)
     {
@@ -719,7 +719,7 @@ Tensor<double, 2> UnscalingLayer::calculate_logarithmic_outputs(const Tensor<dou
             if(display)
             {
                 cout << "OpenNN Warning: UnscalingLayer class.\n"
-                          << "Tensor<double, 1> calculate_logarithmic_outputs(Tensor<double, 1>&) const method.\n"
+                          << "Tensor<type, 1> calculate_logarithmic_outputs(Tensor<type, 1>&) const method.\n"
                           << "Minimum and maximum values of output variable " << j << " are equal.\n"
                           << "Those outputs won't be unscaled.\n";
             }

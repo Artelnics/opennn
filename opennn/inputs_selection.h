@@ -21,10 +21,8 @@
 
 // OpenNN includes
 
-
-
-
 #include "training_strategy.h"
+#include "config.h"
 
 #include "tinyxml2.h"
 
@@ -83,15 +81,15 @@ public:
        
        /// Performance of the different neural networks.
 
-       Tensor<double, 1> loss_data;
+       Tensor<type, 1> loss_data;
 
        /// Selection loss of the different neural networks.
 
-       Tensor<double, 1> selection_error_data;
+       Tensor<type, 1> selection_error_data;
 
        /// Vector of parameters for the neural network with minimum selection error.
 
-       Tensor<double, 1> minimal_parameters;
+       Tensor<type, 1> minimal_parameters;
 
        /// Value of minimum selection error.
 
@@ -170,11 +168,11 @@ public:
 
     // Performances calculation methods
 
-    Tensor<double, 1> calculate_losses(const vector<bool>&);
+    Tensor<type, 1> calculate_losses(const vector<bool>&);
 
-    Tensor<double, 1> perform_mean_model_evaluation(const vector<bool>&);
+    Tensor<type, 1> perform_mean_model_evaluation(const vector<bool>&);
 
-    Tensor<double, 1> get_parameters_inputs(const vector<bool>&) const;
+    Tensor<type, 1> get_parameters_inputs(const vector<bool>&) const;
 
     string write_stopping_condition(const OptimizationAlgorithm::Results&) const;
 
@@ -207,15 +205,15 @@ protected:
 
     /// Selection loss of all the neural networks trained.
 
-    Tensor<double, 1> selection_error_history;
+    Tensor<type, 1> selection_error_history;
 
     /// Performance of all the neural networks trained.
 
-    Tensor<double, 1> training_error_history;
+    Tensor<type, 1> training_error_history;
 
     /// Parameters of all the neural network trained.
 
-    vector<Tensor<double, 1>> parameters_history;
+    vector<Tensor<type, 1>> parameters_history;
 
     /// Number of trials for each neural network.
 

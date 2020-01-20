@@ -181,13 +181,13 @@ double NumericalDifferentiation::calculate_h(const double& x) const
 /// Calculates a vector of step sizes for computing the derivatives, as a function of a vector of inputs. 
 /// @param x Input vector. 
 
-Tensor<double, 1> NumericalDifferentiation::calculate_h(const Tensor<double, 1>& x) const
+Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) const
 {
    const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
 
    const int n = x.size();
 
-   Tensor<double, 1> h(n);
+   Tensor<type, 1> h(n);
 
    for(int i = 0; i < n; i++)
    {
@@ -201,7 +201,7 @@ Tensor<double, 1> NumericalDifferentiation::calculate_h(const Tensor<double, 1>&
 /// Calculates a tensor of step sizes for computing the derivatives, as a function of a vector of inputs.
 /// @param x Input tensor.
 
-Tensor<double, 2> NumericalDifferentiation::calculate_h(const Tensor<double, 2>& x) const
+Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) const
 {
 /*
    const double eta = pow(10.0,-1*static_cast<int>(precision_digits));
@@ -210,7 +210,7 @@ Tensor<double, 2> NumericalDifferentiation::calculate_h(const Tensor<double, 2>&
 
    const auto& dimensions = x.dimensions();
 
-   Tensor<double, 2> h(dimensions);
+   Tensor<type, 2> h(dimensions);
 
    for(int i = 0; i < n; i++)
    {
@@ -219,12 +219,12 @@ Tensor<double, 2> NumericalDifferentiation::calculate_h(const Tensor<double, 2>&
 
    return(h);
 */
-   return Tensor<double, 2>();
+   return Tensor<type, 2>();
 }
 
 
-Tensor<double, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<double, 1>& x,
-                                                                                    const Tensor<double, 1>& y) const
+Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivatives(const Tensor<type, 1>& x,
+                                                                                    const Tensor<type, 1>& y) const
 {
     
 
@@ -238,7 +238,7 @@ Tensor<double, 1> NumericalDifferentiation::calculate_backward_differences_deriv
        ostringstream buffer;
 
        buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-              << "Tensor<double, 1> calculate_backward_differences_derivatives(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+              << "Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
               << "Size of independent variable must be equal to size of dependent variable.\n";
 
        throw logic_error(buffer.str());
@@ -248,7 +248,7 @@ Tensor<double, 1> NumericalDifferentiation::calculate_backward_differences_deriv
 
     const int size = x.size();
 
-    Tensor<double, 1> derivatives(size);
+    Tensor<type, 1> derivatives(size);
     derivatives[0] = 0.0;
 
     for(int i = 1; i < size; i++)
@@ -265,7 +265,7 @@ Tensor<double, 1> NumericalDifferentiation::calculate_backward_differences_deriv
             ostringstream buffer;
 
             buffer << "OpenNN Exception: NumericalDifferentiation class.\n"
-                   << "Tensor<double, 1> calculate_backward_differences_derivatives(const Tensor<double, 1>&, const Tensor<double, 1>&) const method.\n"
+                   << "Tensor<type, 1> calculate_backward_differences_derivatives(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
                    << "Denominator is equal to 0.\n";
 
             throw logic_error(buffer.str());

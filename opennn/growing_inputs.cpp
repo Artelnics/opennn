@@ -210,9 +210,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const vector<string> used_columns_names = data_set_pointer->get_used_columns_names();
 
-    const Tensor<double, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
+    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
-    const Tensor<double, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
+    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
     const vector<int> correlations_descending_indices = total_correlations.sort_descending_indices();
 
@@ -227,13 +227,13 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     double current_training_error = 0.0;
     double current_selection_error = 0.0;
 
-    Tensor<double, 1> current_parameters;
+    Tensor<type, 1> current_parameters;
 
     vector<int> current_columns_indices;
 
     vector<int> optimal_columns_indices;
 
-    Tensor<double, 1> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
     int selection_failures = 0;
 
@@ -268,7 +268,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         double optimum_selection_error_trial = 999999;
         double optimum_training_error_trial = 999999;
-        Tensor<double, 1> optimum_parameters_trial;
+        Tensor<type, 1> optimum_parameters_trial;
 
         for(int i = 0; i < trials_number; i++)
         {
@@ -276,7 +276,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             double current_training_error_trial = training_results.final_training_error;
             double current_selection_error_trial = training_results.final_selection_error;
-            Tensor<double, 1> current_parameters_trial = training_results.final_parameters;
+            Tensor<type, 1> current_parameters_trial = training_results.final_parameters;
 
             if(display)
             {
@@ -441,10 +441,10 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     vector<bool> inputs_selection(inputs_number, true);
 
     vector<bool> optimal_inputs;
-    Tensor<double, 1> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
-    Tensor<double, 1> selection_parameters(2);
-    Tensor<double, 1> history_row;
+    Tensor<type, 1> selection_parameters(2);
+    Tensor<type, 1> history_row;
 
     double current_training_error;
     double current_selection_error;

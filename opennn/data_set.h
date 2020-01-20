@@ -35,6 +35,7 @@
 #include "correlations.h"
 #include "opennn_strings.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 // Eigen includes
 
@@ -71,7 +72,7 @@ public:
 
    explicit DataSet(const MatrixXd&);
 
-   explicit DataSet(const Tensor<double, 2>&);
+   explicit DataSet(const Tensor<type, 2>&);
 
    explicit DataSet(const int&, const int&);
 
@@ -205,8 +206,8 @@ public:
            const vector<int> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
            const vector<int> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
 
-           inputs_2d = Tensor<double, 2>(batch_instances_number, input_variables_number);
-           targets_2d = Tensor<double, 2>(batch_instances_number, target_variables_number);
+           inputs_2d = Tensor<type, 2>(batch_instances_number, input_variables_number);
+           targets_2d = Tensor<type, 2>(batch_instances_number, target_variables_number);
        }
 
        void print()
@@ -230,7 +231,7 @@ public:
            const size_t inputs_number = inputs.size();
            const size_t targets_number = targets.size();
 
-           const Tensor<double, 2>& data = data_set_pointer->get_data();
+           const Tensor<type, 2>& data = data_set_pointer->get_data();
 
            for(size_t i = 0; i < rows_number; i++)
            {
@@ -249,8 +250,8 @@ public:
 
        DataSet* data_set_pointer = nullptr;
 
-       Tensor<double, 2> inputs_2d;
-       Tensor<double, 2> targets_2d;
+       Tensor<type, 2> inputs_2d;
+       Tensor<type, 2> targets_2d;
    };
 
    // Instances get methods
@@ -275,7 +276,7 @@ public:
    const vector<InstanceUse>& get_instances_uses() const;
 
    vector<int> get_instances_uses_numbers() const;
-   Tensor<double, 1> get_instances_uses_percentages() const;
+   Tensor<type, 1> get_instances_uses_percentages() const;
 
    int get_batch_instances_number() const {return batch_instances_number;}
 
@@ -348,46 +349,46 @@ public:
 
    // Data get methods
 
-   const Tensor<double, 2>& get_data() const;
+   const Tensor<type, 2>& get_data() const;
 
-   const Tensor<double, 2>& get_time_series_data() const;
+   const Tensor<type, 2>& get_time_series_data() const;
 
-   Tensor<double, 2> get_training_data() const;
-   Tensor<double, 2> get_selection_data() const;
-   Tensor<double, 2> get_testing_data() const;
+   Tensor<type, 2> get_training_data() const;
+   Tensor<type, 2> get_selection_data() const;
+   Tensor<type, 2> get_testing_data() const;
 
-   Tensor<double, 2> get_input_data() const;
-   Tensor<double, 2> get_target_data() const;
+   Tensor<type, 2> get_input_data() const;
+   Tensor<type, 2> get_target_data() const;
 
-   Tensor<double, 2> get_input_data(const vector<int>&) const;
-   Tensor<double, 2> get_target_data(const vector<int>&) const;
+   Tensor<type, 2> get_input_data(const vector<int>&) const;
+   Tensor<type, 2> get_target_data(const vector<int>&) const;
 
    Matrix<float, Dynamic, Dynamic> get_input_data_float(const vector<int>&) const;
    Matrix<float, Dynamic, Dynamic> get_target_data_float(const vector<int>&) const;
 
-   Tensor<double, 2> get_training_input_data() const;
-   Tensor<double, 2> get_training_target_data() const;
+   Tensor<type, 2> get_training_input_data() const;
+   Tensor<type, 2> get_training_target_data() const;
 
-   Tensor<double, 2> get_selection_input_data() const;
-   Tensor<double, 2> get_selection_target_data() const;
+   Tensor<type, 2> get_selection_input_data() const;
+   Tensor<type, 2> get_selection_target_data() const;
 
-   Tensor<double, 2> get_testing_input_data() const;
-   Tensor<double, 2> get_testing_target_data() const;
+   Tensor<type, 2> get_testing_input_data() const;
+   Tensor<type, 2> get_testing_target_data() const;
 
-   Tensor<double, 1> get_instance_data(const int&) const;
-   Tensor<double, 1> get_instance_data(const int&, const vector<int>&) const;
-   Tensor<double, 2> get_instance_input_data(const int&) const;
-   Tensor<double, 2> get_instance_target_data(const int&) const;
+   Tensor<type, 1> get_instance_data(const int&) const;
+   Tensor<type, 1> get_instance_data(const int&, const vector<int>&) const;
+   Tensor<type, 2> get_instance_input_data(const int&) const;
+   Tensor<type, 2> get_instance_target_data(const int&) const;
 
-   Tensor<double, 2> get_column_data(const int&) const;
-   Tensor<double, 2> get_column_data(const vector<int>&) const;
-   Tensor<double, 2> get_column_data(const string&) const;
+   Tensor<type, 2> get_column_data(const int&) const;
+   Tensor<type, 2> get_column_data(const vector<int>&) const;
+   Tensor<type, 2> get_column_data(const string&) const;
 
-   Tensor<double, 1> get_variable_data(const int&) const;
-   Tensor<double, 1> get_variable_data(const string&) const;
+   Tensor<type, 1> get_variable_data(const int&) const;
+   Tensor<type, 1> get_variable_data(const string&) const;
 
-   Tensor<double, 1> get_variable_data(const int&, const vector<int>&) const;
-   Tensor<double, 1> get_variable_data(const string&, const vector<int>&) const;
+   Tensor<type, 1> get_variable_data(const int&, const vector<int>&) const;
+   Tensor<type, 1> get_variable_data(const string&, const vector<int>&) const;
 
    // Members get methods
 
@@ -419,7 +420,7 @@ public:
    // Set methods
 
    void set();
-   void set(const Tensor<double, 2>&);
+   void set(const Tensor<type, 2>&);
    void set(const MatrixXd&);
    void set(const int&, const int&);
    void set(const int&, const int&, const int&);
@@ -491,9 +492,9 @@ public:
 
    // Data set methods
 
-   void set_data(const Tensor<double, 2>&);
+   void set_data(const Tensor<type, 2>&);
 
-   void set_instance(const int&, const Tensor<double, 1>&);
+   void set_instance(const int&, const Tensor<type, 1>&);
 
    // Members set methods
 
@@ -562,7 +563,7 @@ public:
 
    vector<Descriptives> calculate_columns_descriptives() const;
 
-   Tensor<double, 2> calculate_columns_descriptives_matrix() const;
+   Tensor<type, 2> calculate_columns_descriptives_matrix() const;
 
    vector<Descriptives> calculate_columns_descriptives_positive_instances() const;
    vector<Descriptives> calculate_columns_descriptives_negative_instances() const;
@@ -575,13 +576,13 @@ public:
    vector<Descriptives> calculate_input_variables_descriptives() const;
    vector<Descriptives> calculate_target_variables_descriptives() const;
 
-   Tensor<double, 1> calculate_variables_means(const vector<int>&) const;
+   Tensor<type, 1> calculate_variables_means(const vector<int>&) const;
 
    Descriptives calculate_inputs_descriptives(const int&) const;
 
-   Tensor<double, 1> calculate_training_targets_mean() const;
-   Tensor<double, 1> calculate_selection_targets_mean() const;
-   Tensor<double, 1> calculate_testing_targets_mean() const;
+   Tensor<type, 1> calculate_training_targets_mean() const;
+   Tensor<type, 1> calculate_selection_targets_mean() const;
+   Tensor<type, 1> calculate_testing_targets_mean() const;
 
    int calculate_training_negatives(const int&) const;
    int calculate_selection_negatives(const int&) const;
@@ -597,7 +598,7 @@ public:
 
    // Inputs correlations
 
-   Tensor<double, 2> calculate_inputs_correlations() const;
+   Tensor<type, 2> calculate_inputs_correlations() const;
 
    void print_inputs_correlations() const;
 
@@ -606,7 +607,7 @@ public:
    // Inputs-targets correlations
 
    Matrix<CorrelationResults, Dynamic, Dynamic> calculate_input_target_columns_correlations() const;
-   Tensor<double, 2> calculate_input_target_columns_correlations_double() const;
+   Tensor<type, 2> calculate_input_target_columns_correlations_double() const;
 
    void print_input_target_columns_correlations() const;
 
@@ -614,13 +615,13 @@ public:
 
    // Principal components
 
-   Tensor<double, 2> calculate_covariance_matrix() const;
+   Tensor<type, 2> calculate_covariance_matrix() const;
 
-   Tensor<double, 2> perform_principal_components_analysis(const double& = 0.0);
+   Tensor<type, 2> perform_principal_components_analysis(const double& = 0.0);
 
-   Tensor<double, 2> perform_principal_components_analysis(const Tensor<double, 2>&, const Tensor<double, 1>&, const double& = 0.0);
+   Tensor<type, 2> perform_principal_components_analysis(const Tensor<type, 2>&, const Tensor<type, 1>&, const double& = 0.0);
 
-   void transform_principal_components_data(const Tensor<double, 2>&);
+   void transform_principal_components_data(const Tensor<type, 2>&);
 
    void subtract_inputs_mean();
 
@@ -629,7 +630,7 @@ public:
    vector<int> filter_column(const int&, const double&, const double&);
    vector<int> filter_column(const string&, const double&, const double&);
 
-   vector<int> filter_data(const Tensor<double, 1>&, const Tensor<double, 1>&);
+   vector<int> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
    // Data scaling
 
@@ -711,11 +712,11 @@ public:
 
    void transform_columns_time_series();
 
-   Tensor<double, 2> calculate_autocorrelations(const int& = 10) const;
-   Matrix<Tensor<double, 1>, Dynamic, Dynamic> calculate_cross_correlations(const int& = 10) const;
+   Tensor<type, 2> calculate_autocorrelations(const int& = 10) const;
+   Matrix<Tensor<type, 1>, Dynamic, Dynamic> calculate_cross_correlations(const int& = 10) const;
 
-   Tensor<double, 2> calculate_lag_plot() const;
-   Tensor<double, 2> calculate_lag_plot(const int&);
+   Tensor<type, 2> calculate_lag_plot() const;
+   Tensor<type, 2> calculate_lag_plot(const int&);
 
    // Data generation
 
@@ -786,7 +787,7 @@ public:
 
    vector<string> unuse_columns_missing_values(const double&);
 
-   void get_tensor_2_d(const vector<int>&, const vector<int>&, Tensor<double, 2>&);
+   void get_tensor_2_d(const vector<int>&, const vector<int>&, Tensor<type, 2>&);
 
 private:
 
@@ -814,13 +815,13 @@ private:
    /// The number of rows is the number of instances.
    /// The number of columns is the number of variables.
 
-   Tensor<double, 2> data;
+   Tensor<type, 2> data;
 
    /// Time series data matrix.
    /// The number of rows is the number of instances before time series transfomration.
    /// The number of columns is the number of variables before time series transformation.
 
-   Tensor<double, 2> time_series_data;
+   Tensor<type, 2> time_series_data;
 
    vector<Column> time_series_columns;
 

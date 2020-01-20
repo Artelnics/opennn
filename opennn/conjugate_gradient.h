@@ -26,9 +26,7 @@
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
-
-
-
+#include "config.h"
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -158,15 +156,15 @@ public:
 
    // Training direction methods
 
-   double calculate_PR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const;
-   double calculate_FR_parameter(const Tensor<double, 1>&, const Tensor<double, 1>&) const;
+   type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   Tensor<double, 1> calculate_PR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const;
-   Tensor<double, 1> calculate_FR_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   Tensor<double, 1> calculate_gradient_descent_training_direction(const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_gradient_descent_training_direction(const Tensor<type, 1>&) const;
 
-   Tensor<double, 1> calculate_training_direction(const Tensor<double, 1>&, const Tensor<double, 1>&, const Tensor<double, 1>&) const;
+   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
    // Training methods
 

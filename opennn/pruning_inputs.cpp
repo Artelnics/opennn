@@ -216,9 +216,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const vector<string> used_columns_names = data_set_pointer->get_used_columns_names();
 
-    const Tensor<double, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
+    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
-    const Tensor<double, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
+    const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
     const vector<int> correlations_ascending_indices = total_correlations.sort_ascending_indices();
 
@@ -234,7 +234,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     vector<int> optimal_columns_indices;
 
-    Tensor<double, 1> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
     int selection_failures = 0;
 
@@ -255,7 +255,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         double current_training_error;
         double current_selection_error;
-        Tensor<double, 1> current_parameters;
+        Tensor<type, 1> current_parameters;
 
         int column_index;
         string column_name;

@@ -21,8 +21,8 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "data_set.h"
-
 #include "layer.h"
 #include "perceptron_layer.h"
 #include "scaling_layer.h"
@@ -34,7 +34,6 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
-
 #include "tinyxml2.h"
 
 #ifdef __OPENNN_CUDA__
@@ -137,9 +136,9 @@ public:
 
                    const int neurons_number = recurrent_layer->get_neurons_number();
 
-                   layers[i].combinations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations_derivatives = Tensor<double, 2>(batch_instances_number, neurons_number);
+                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
 
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::LongShortTermMemory)
@@ -148,9 +147,9 @@ public:
 
                    const int neurons_number = long_short_term_memory_layer->get_neurons_number();
 
-                   layers[i].combinations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations_derivatives = Tensor<double, 2>(batch_instances_number, neurons_number);
+                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
                }
                else if(trainable_layers_pointers[i]->get_type() == Layer::Perceptron)
                {
@@ -158,9 +157,9 @@ public:
 
                    const int neurons_number = perceptron_layer->get_neurons_number();
 
-                   layers[i].combinations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations_derivatives = Tensor<double, 2>(batch_instances_number, neurons_number);
+                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
 
                    layers[i].combinations.setRandom();
                    layers[i].activations.setRandom();
@@ -172,10 +171,10 @@ public:
 
                    const int neurons_number = probabilistic_layer->get_neurons_number();
 
-                   layers[i].combinations = Tensor<double, 2>(batch_instances_number, neurons_number);
-                   layers[i].activations = Tensor<double, 2>(batch_instances_number, neurons_number);
+                   layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+                   layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
                    /*
-                   layers[i].activations_derivatives_3d = Tensor<double, 3>(batch_instances_number, neurons_number, neurons_number);
+                   layers[i].activations_derivatives_3d = Tensor<type, 3>(batch_instances_number, neurons_number, neurons_number);
                    */
                }
                else
@@ -292,13 +291,13 @@ public:
 
    int get_parameters_number() const;
    int get_trainable_parameters_number() const;
-   Tensor<double, 1> get_parameters() const;
+   Tensor<type, 1> get_parameters() const;
 
    vector<int> get_trainable_layers_parameters_numbers() const;
 
-   vector<Tensor<double, 1>> get_trainable_layers_parameters(const Tensor<double, 1>&) const;
+   vector<Tensor<type, 1>> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
-   void set_parameters(const Tensor<double, 1>&);
+   void set_parameters(const Tensor<type, 1>&);
 
    // Parameters initialization methods
 
@@ -318,19 +317,18 @@ public:
 
    // Output 
 
-   Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&);
-   MatrixXd calculate_outputs_eigen(const MatrixXd&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<double, 2> calculate_trainable_outputs(const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_trainable_outputs(const Tensor<double, 2>&, const Tensor<double, 1>&) const;
+   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
-   Tensor<double, 2> calculate_directional_inputs(const int&, const Tensor<double, 1>&, const double&, const double&, const int& = 101) const;
+   Tensor<type, 2> calculate_directional_inputs(const int&, const Tensor<type, 1>&, const double&, const double&, const int& = 101) const;
 
    vector<Histogram> calculate_outputs_histograms(const int& = 1000, const int& = 10);
-   vector<Histogram> calculate_outputs_histograms(const Tensor<double, 2>&, const int& = 10);
+   vector<Histogram> calculate_outputs_histograms(const Tensor<type, 2>&, const int& = 10);
 
-   Tensor<double, 1> calculate_outputs_std(const Tensor<double, 1>&);
+   Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
    // Serialization methods
 
@@ -368,7 +366,7 @@ public:
 
    /// Calculate de forward propagation in the neural network
 
-   vector<Layer::ForwardPropagation> calculate_forward_propagation(const Tensor<double, 2>&) const;
+   vector<Layer::ForwardPropagation> calculate_forward_propagation(const Tensor<type, 2>&) const;
 
    void calculate_forward_propagation(const ThreadPoolDevice& thread_pool_device,
                                       const DataSet::Batch& batch,

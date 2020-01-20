@@ -110,13 +110,13 @@ vector<string> get_tokens(const string& str, const char& separator)
 
 /// Returns a new vector with the elements of this string vector casted to double.
 
-Tensor<double, 1> to_double_vector(const string& str, const char& separator)
+Tensor<type, 1> to_double_vector(const string& str, const char& separator)
 {
     const vector<string> tokens = get_tokens(str, separator);
 
   const int tokens_size = tokens.size();
 
-  Tensor<double, 1> double_vector(tokens_size);
+  Tensor<type, 1> double_vector(tokens_size);
 
   for(int i = 0; i < tokens_size; i++)
   {

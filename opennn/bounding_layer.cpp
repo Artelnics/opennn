@@ -131,7 +131,7 @@ int BoundingLayer::get_neurons_number() const
 
 /// Returns the lower bounds values of all the bounding neurons in the layer.
 
-const Tensor<double, 1>& BoundingLayer::get_lower_bounds() const
+const Tensor<type, 1>& BoundingLayer::get_lower_bounds() const
 {
    return(lower_bounds);               
 }
@@ -167,7 +167,7 @@ double BoundingLayer::get_lower_bound(const int& i) const
 
 /// Returns the upper bounds values of all the bounding neurons in the layer.
 
-const Tensor<double, 1>& BoundingLayer::get_upper_bounds() const
+const Tensor<type, 1>& BoundingLayer::get_upper_bounds() const
 {
    return(upper_bounds);               
 }
@@ -216,7 +216,7 @@ double BoundingLayer::get_upper_bound(const int& i) const
 /// The first element contains the lower bound values.
 /// The second element contains the upper bound values.
 
-vector<Tensor<double, 1>> BoundingLayer::get_bounds()
+vector<Tensor<type, 1>> BoundingLayer::get_bounds()
 {
    return {lower_bounds, upper_bounds};
 }
@@ -334,7 +334,7 @@ void BoundingLayer::set_bounding_method(const string& new_method_string)
 /// Sets new lower bounds for all the neurons in the layer.
 /// @param new_lower_bounds New set of lower bounds for the bounding neurons. 
 
-void BoundingLayer::set_lower_bounds(const Tensor<double, 1>& new_lower_bounds)
+void BoundingLayer::set_lower_bounds(const Tensor<type, 1>& new_lower_bounds)
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -345,7 +345,7 @@ void BoundingLayer::set_lower_bounds(const Tensor<double, 1>& new_lower_bounds)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_lower_bounds(const Tensor<double, 1>&) method.\n"
+             << "void set_lower_bounds(const Tensor<type, 1>&) method.\n"
              << "Size must be equal to number of bounding neurons number.\n";
 
 	  throw logic_error(buffer.str());
@@ -398,7 +398,7 @@ void BoundingLayer::set_lower_bound(const int& index, const double& new_lower_bo
 /// These values are used for unscaling variables so that they are not greater than the upper bounds. 
 /// @param new_upper_bounds New set of upper bounds for the layer.
 
-void BoundingLayer::set_upper_bounds(const Tensor<double, 1>& new_upper_bounds)
+void BoundingLayer::set_upper_bounds(const Tensor<type, 1>& new_upper_bounds)
 {
    
 
@@ -411,7 +411,7 @@ void BoundingLayer::set_upper_bounds(const Tensor<double, 1>& new_upper_bounds)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_upper_bound(const Tensor<double, 1>&) method.\n"
+             << "void set_upper_bound(const Tensor<type, 1>&) method.\n"
              << "Size must be equal to number of bounding neurons.\n";
 
 	  throw logic_error(buffer.str());
@@ -468,7 +468,7 @@ void BoundingLayer::set_upper_bound(const int& index, const double& new_upper_bo
 /// These values are used for unscaling variables so that they are neither less than the lower bounds nor greater than the upper bounds. 
 /// @param new_bounds New set of lower and upper bounds.
 
-void BoundingLayer::set_bounds(const vector<Tensor<double, 1>>& new_bounds)
+void BoundingLayer::set_bounds(const vector<Tensor<type, 1>>& new_bounds)
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -481,7 +481,7 @@ void BoundingLayer::set_bounds(const vector<Tensor<double, 1>>& new_bounds)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_bounds(const vector<Tensor<double, 1>>&) method.\n"
+             << "void set_bounds(const vector<Tensor<type, 1>>&) method.\n"
              << "Number of rows must be 2.\n";
 
 	  throw logic_error(buffer.str());
@@ -492,7 +492,7 @@ void BoundingLayer::set_bounds(const vector<Tensor<double, 1>>& new_bounds)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: BoundingLayer class.\n"
-             << "void set_bounds(const vector<Tensor<double, 1>>&) method.\n"
+             << "void set_bounds(const vector<Tensor<type, 1>>&) method.\n"
              << "Number of columns("<< new_bounds[0].size() <<") must be equal to number of bounding neurons(" << neurons_number << ").\n";
 
 	  throw logic_error(buffer.str());
@@ -564,7 +564,7 @@ void BoundingLayer::prune_neuron(const int& index)
 /// Calculates the outputs from the bounding layer for a set of inputs to that layer.
 /// @param inputs Set of inputs to the bounding layer.
 
-Tensor<double, 2> BoundingLayer::calculate_outputs(const Tensor<double, 2>& inputs)
+Tensor<type, 2> BoundingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
    #ifdef __OPENNN_DEBUG__
 
@@ -575,7 +575,7 @@ Tensor<double, 2> BoundingLayer::calculate_outputs(const Tensor<double, 2>& inpu
        ostringstream buffer;
 
        buffer << "OpenNN Exception: BoundingLayer class.\n"
-              << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
               << "Number of dimensions (" << inputs_dimensions_number << ") must be 2.\n";
 
        throw logic_error(buffer.str());
@@ -590,7 +590,7 @@ Tensor<double, 2> BoundingLayer::calculate_outputs(const Tensor<double, 2>& inpu
        ostringstream buffer;
 
        buffer << "OpenNN Exception: BoundingLayer class.\n"
-              << "Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&) const method.\n"
+              << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -611,7 +611,7 @@ Tensor<double, 2> BoundingLayer::calculate_outputs(const Tensor<double, 2>& inpu
       }
    }
 
-   return Tensor<double, 2>();
+   return Tensor<type, 2>();
 }  
 
 
@@ -1027,7 +1027,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //        if(lower_bounds_text)
 //        {
-//           Tensor<double, 1> new_lower_bounds;
+//           Tensor<type, 1> new_lower_bounds;
 //           new_lower_bounds.parse(lower_bounds_text);
 
 //           try
@@ -1052,7 +1052,7 @@ void BoundingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
 //        if(upper_bounds_text)
 //        {
-//           Tensor<double, 1> new_upper_bounds;
+//           Tensor<type, 1> new_upper_bounds;
 //           new_upper_bounds.parse(upper_bounds_text);
 
 //           try

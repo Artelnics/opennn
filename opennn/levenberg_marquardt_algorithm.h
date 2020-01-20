@@ -23,6 +23,7 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "optimization_algorithm.h"
 #include "tinyxml2.h"
 
@@ -92,7 +93,7 @@ public:
    const double& get_minimum_damping_parameter() const;
    const double& get_maximum_damping_parameter() const;
 
-   const Tensor<double, 1>& get_damping_parameter_history() const;
+   const Tensor<type, 1>& get_damping_parameter_history() const;
 
    // Set methods
 
@@ -160,7 +161,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    
-   Tensor<double, 1> perform_Householder_QR_decomposition(const Tensor<double, 2>&, const Tensor<double, 1>&) const;
+   Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
 private:
 

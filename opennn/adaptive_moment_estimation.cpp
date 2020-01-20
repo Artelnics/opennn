@@ -675,7 +675,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const Tensor<double, 2>& data = data_set_pointer->get_data();
+   const Tensor<type, 2>& data = data_set_pointer->get_data();
 
    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
@@ -695,8 +695,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const int parameters_number = neural_network_pointer->get_parameters_number();
 
-   Tensor<double, 1> parameters = neural_network_pointer->get_parameters();
-   Tensor<double, 1> parameters_increment(parameters_number);
+   Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+   Tensor<type, 1> parameters_increment(parameters_number);
 
    double parameters_norm = 0.0;
 
@@ -720,7 +720,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    int selection_failures = 0;
 
-   Tensor<double, 1> minimum_selection_error_parameters(parameters_number);
+   Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
    double minimum_selection_error = 999999;
 
    bool stop_training = false;
@@ -731,11 +731,11 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    results.resize_training_history(maximum_epochs_number + 1);
 
-   Tensor<double, 1> gradient_exponential_decay(parameters_number);
-   Tensor<double, 1> square_gradient_exponential_decay(parameters_number);
+   Tensor<type, 1> gradient_exponential_decay(parameters_number);
+   Tensor<type, 1> square_gradient_exponential_decay(parameters_number);
 
-   Tensor<double, 1> last_gradient_exponential_decay(parameters_number);
-   Tensor<double, 1> last_square_gradient_exponential_decay(parameters_number);
+   Tensor<type, 1> last_gradient_exponential_decay(parameters_number);
+   Tensor<type, 1> last_square_gradient_exponential_decay(parameters_number);
 
    int iteration_count = 0;
 

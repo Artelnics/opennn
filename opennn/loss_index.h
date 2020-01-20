@@ -20,11 +20,10 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "data_set.h"
-
 #include "neural_network.h"
 #include "numerical_differentiation.h"
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -114,16 +113,16 @@ public:
 
        }
 
-       Tensor<double, 2> output_gradient;
+       Tensor<type, 2> output_gradient;
 
-       vector<Tensor<double, 2>> layers_delta;
-       vector<Tensor<double, 1>> layers_error_gradient;
+       vector<Tensor<type, 2>> layers_delta;
+       vector<Tensor<type, 1>> layers_error_gradient;
 
        double loss;
 
-       Tensor<double, 1> error_gradient;
-       Tensor<double, 1> regularization_gradient;
-       Tensor<double, 1> gradient;
+       Tensor<type, 1> error_gradient;
+       Tensor<type, 1> regularization_gradient;
+       Tensor<type, 1> gradient;
    };
 
 
@@ -142,13 +141,13 @@ public:
        SecondOrderLoss(const int& parameters_number)
        {
            loss = 0.0;
-           gradient = Tensor<double, 1>(parameters_number);
-           hessian = Tensor<double, 2>(parameters_number, parameters_number);
+           gradient = Tensor<type, 1>(parameters_number);
+           hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }
 
        double loss;
-       Tensor<double, 1> gradient;
-       Tensor<double, 2> hessian;
+       Tensor<type, 1> gradient;
+       Tensor<type, 2> hessian;
    };
 
 
@@ -234,39 +233,39 @@ public:
    // Loss methods
 
    double calculate_training_loss() const;
-   double calculate_training_loss(const Tensor<double, 1>&) const;
-   double calculate_training_loss(const Tensor<double, 1>&, const double&) const;
+   double calculate_training_loss(const Tensor<type, 1>&) const;
+   double calculate_training_loss(const Tensor<type, 1>&, const type&) const;
 
    // Loss gradient methods
 
-   Tensor<double, 1> calculate_training_loss_gradient() const;
+   Tensor<type, 1> calculate_training_loss_gradient() const;
 
    // ERROR METHODS
 
    virtual double calculate_training_error() const;
-   virtual double calculate_training_error(const Tensor<double, 1>&) const;
+   virtual double calculate_training_error(const Tensor<type, 1>&) const;
 
    virtual double calculate_selection_error() const;
 
    virtual double calculate_batch_error(const vector<int>&) const = 0;
-   virtual double calculate_batch_error(const vector<int>&, const Tensor<double, 1>&) const = 0;
+   virtual double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const = 0;
 
    // GRADIENT METHODS
 
-   virtual Tensor<double, 2> calculate_output_gradient(const Tensor<double, 2>&, const Tensor<double, 2>&) const = 0;
+   virtual Tensor<type, 2> calculate_output_gradient(const Tensor<type, 2>&, const Tensor<type, 2>&) const = 0;
 
    virtual void calculate_output_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const = 0;
 
-   virtual Tensor<double, 1> calculate_batch_error_gradient(const vector<int>&) const;
+   virtual Tensor<type, 1> calculate_batch_error_gradient(const vector<int>&) const;
 
-   Tensor<double, 1> calculate_training_error_gradient() const;
+   Tensor<type, 1> calculate_training_error_gradient() const;
 
-   Tensor<double, 1> calculate_training_error_gradient_numerical_differentiation() const;
+   Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
    // ERROR TERMS METHODS
 
-   virtual Tensor<double, 1> calculate_batch_error_terms(const vector<int>&) const {return Tensor<double, 1>();}
-   virtual Tensor<double, 2> calculate_batch_error_terms_Jacobian(const vector<int>&) const {return Tensor<double, 2>();}
+   virtual Tensor<type, 1> calculate_batch_error_terms(const vector<int>&) const {return Tensor<type, 1>();}
+   virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const vector<int>&) const {return Tensor<type, 2>();}
 
    virtual FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const = 0;
 
@@ -278,16 +277,16 @@ public:
    // Regularization methods
 
    double calculate_regularization() const;
-   Tensor<double, 1> calculate_regularization_gradient() const;
-   Tensor<double, 2> calculate_regularization_hessian() const;
+   Tensor<type, 1> calculate_regularization_gradient() const;
+   Tensor<type, 2> calculate_regularization_hessian() const;
 
-   double calculate_regularization(const Tensor<double, 1>&) const;
-   Tensor<double, 1> calculate_regularization_gradient(const Tensor<double, 1>&) const;
-   Tensor<double, 2> calculate_regularization_hessian(const Tensor<double, 1>&) const;
+   double calculate_regularization(const Tensor<type, 1>&) const;
+   Tensor<type, 1> calculate_regularization_gradient(const Tensor<type, 1>&) const;
+   Tensor<type, 2> calculate_regularization_hessian(const Tensor<type, 1>&) const;
 
    // Delta methods
 
-   vector<Tensor<double, 2>> calculate_layers_delta(const vector<Layer::ForwardPropagation>&, const Tensor<double, 2>&) const;
+   vector<Tensor<type, 2>> calculate_layers_delta(const vector<Layer::ForwardPropagation>&, const Tensor<type, 2>&) const;
 
    void calculate_layers_delta(const ThreadPoolDevice& thread_pool_device, const NeuralNetwork::ForwardPropagation& forward_propagation, FirstOrderLoss& first_order_loss) const
    {
@@ -321,7 +320,7 @@ public:
       }
    }
 
-   Tensor<double, 1> calculate_error_gradient(const Tensor<double, 2>&, const vector<Layer::ForwardPropagation>&, const vector<Tensor<double, 2>>&) const;
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const vector<Layer::ForwardPropagation>&, const vector<Tensor<type, 2>>&) const;
 
    void calculate_error_gradient(const ThreadPoolDevice& thread_pool_device,
                                  const DataSet::Batch& batch,
@@ -387,9 +386,9 @@ public:
        }
    }
 
-   Tensor<double, 2> calculate_layer_error_terms_Jacobian(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
+   Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<double, 2> calculate_error_terms_Jacobian(const Tensor<double, 2>&, const vector<Layer::ForwardPropagation>&, const vector<Tensor<double, 2>>&) const;
+   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&, const vector<Layer::ForwardPropagation>&, const vector<Tensor<type, 2>>&) const;
 
    // Serialization methods
 
@@ -429,7 +428,7 @@ protected:
 
    /// Regularization weight value.
 
-   double regularization_weight = 0.01;
+   type regularization_weight = 0.01;
 
    /// Display messages to screen. 
 

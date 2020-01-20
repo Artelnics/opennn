@@ -23,6 +23,7 @@
 #include "layer.h"
 #include "functions.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 namespace OpenNN
 {
@@ -70,13 +71,13 @@ public:
 
    string write_bounding_method() const;
 
-   const Tensor<double, 1>& get_lower_bounds() const;
+   const Tensor<type, 1>& get_lower_bounds() const;
    double get_lower_bound(const int&) const;
 
-   const Tensor<double, 1>& get_upper_bounds() const;
+   const Tensor<type, 1>& get_upper_bounds() const;
    double get_upper_bound(const int&) const;
 
-   vector<Tensor<double, 1>> get_bounds();
+   vector<Tensor<type, 1>> get_bounds();
 
    // Variables bounds
 
@@ -92,13 +93,13 @@ public:
    void set_bounding_method(const BoundingMethod&);
    void set_bounding_method(const string&);
 
-   void set_lower_bounds(const Tensor<double, 1>&);
+   void set_lower_bounds(const Tensor<type, 1>&);
    void set_lower_bound(const int&, const double&);
 
-   void set_upper_bounds(const Tensor<double, 1>&);
+   void set_upper_bounds(const Tensor<type, 1>&);
    void set_upper_bound(const int&, const double&);
 
-   void set_bounds(const vector<Tensor<double, 1>>&);
+   void set_bounds(const vector<Tensor<type, 1>>&);
 
    void set_display(const bool&);
 
@@ -110,7 +111,7 @@ public:
 
    // Lower and upper bounds
 
-   Tensor<double, 2> calculate_outputs(const Tensor<double, 2>&);
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
    // Expression methods
 
@@ -137,11 +138,11 @@ protected:
 
    /// Lower bounds of output variables
 
-   Tensor<double, 1> lower_bounds;
+   Tensor<type, 1> lower_bounds;
 
    /// Upper bounds of output variables
 
-   Tensor<double, 1> upper_bounds;
+   Tensor<type, 1> upper_bounds;
 
    /// Display messages to screen. 
 

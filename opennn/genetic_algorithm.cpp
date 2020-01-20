@@ -68,7 +68,7 @@ const vector<vector<bool>>& GeneticAlgorithm::get_population() const
 
 /// Returns the training and selection losses of the population.
 
-const Tensor<double, 2>& GeneticAlgorithm::get_loss() const
+const Tensor<type, 2>& GeneticAlgorithm::get_loss() const
 {
     return(loss);
 }
@@ -76,7 +76,7 @@ const Tensor<double, 2>& GeneticAlgorithm::get_loss() const
 
 /// Returns the fitness of the population.
 
-const Tensor<double, 1>& GeneticAlgorithm::get_fitness() const
+const Tensor<type, 1>& GeneticAlgorithm::get_fitness() const
 {
     return(fitness);
 }
@@ -375,7 +375,7 @@ void GeneticAlgorithm::set_population(const vector<vector<bool>>& new_population
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_population(const Tensor<double, 2>&) method.\n"
+               << "void set_population(const Tensor<type, 2>&) method.\n"
                << "Population columns("<<new_population[0].size()<< ") must be equal to inputs number("<<inputs_number<<").\n";
 
         throw logic_error(buffer.str());
@@ -386,7 +386,7 @@ void GeneticAlgorithm::set_population(const vector<vector<bool>>& new_population
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_population(const Tensor<double, 2>&) method.\n"
+               << "void set_population(const Tensor<type, 2>&) method.\n"
                << "Population rows("<<new_population.size()<< ") must be equal to population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
@@ -402,7 +402,7 @@ void GeneticAlgorithm::set_population(const vector<vector<bool>>& new_population
 /// Sets a new training losses of the population.
 /// @param new_loss New training losses.
 
-void GeneticAlgorithm::set_loss(const Tensor<double, 2>& new_loss)
+void GeneticAlgorithm::set_loss(const Tensor<type, 2>& new_loss)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -411,7 +411,7 @@ void GeneticAlgorithm::set_loss(const Tensor<double, 2>& new_loss)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_loss(const Tensor<double, 2>&&) method.\n"
+               << "void set_loss(const Tensor<type, 2>&&) method.\n"
                << "Performance columns must be equal to 2.\n";
 
         throw logic_error(buffer.str());
@@ -422,7 +422,7 @@ void GeneticAlgorithm::set_loss(const Tensor<double, 2>& new_loss)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_loss(const Tensor<double, 2>&&) method.\n"
+               << "void set_loss(const Tensor<type, 2>&&) method.\n"
                << "Performance rows("<<new_loss.dimension(0)<< ") must be equal to population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
@@ -438,7 +438,7 @@ void GeneticAlgorithm::set_loss(const Tensor<double, 2>& new_loss)
 /// Sets a new fitness for the population.
 /// @param new_fitness New fitness values.
 
-void GeneticAlgorithm::set_fitness(const Tensor<double, 1>& new_fitness)
+void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -447,7 +447,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<double, 1>& new_fitness)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-               << "void set_fitness(const Tensor<double, 2>&&) method.\n"
+               << "void set_fitness(const Tensor<type, 2>&&) method.\n"
                << "Fitness size("<<new_fitness.size()<< ") must be equal to population size("<<population_size<<").\n";
 
         throw logic_error(buffer.str());
@@ -460,7 +460,7 @@ void GeneticAlgorithm::set_fitness(const Tensor<double, 1>& new_fitness)
             ostringstream buffer;
 
             buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
-                   << "void set_fitness(const Tensor<double, 2>&&) method.\n"
+                   << "void set_fitness(const Tensor<type, 2>&&) method.\n"
                    << "Fitness must be greater than 0.\n";
 
             throw logic_error(buffer.str());
@@ -917,9 +917,9 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     const DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    Tensor<double, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
+    Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
-    Tensor<double, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
+    Tensor<type, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
 
     // Neural network stuff
 
@@ -933,7 +933,7 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     double sum;
 
-    Tensor<double, 1> correlations_sum;
+    Tensor<type, 1> correlations_sum;
 
     int zero_ocurrences;
 
@@ -1050,7 +1050,7 @@ void GeneticAlgorithm::evaluate_population()
 
     int index;
 
-    Tensor<double, 1> errors(2);
+    Tensor<type, 1> errors(2);
 /*
     loss.set(population_size,2);
 
@@ -1229,7 +1229,7 @@ void GeneticAlgorithm::perform_selection()
 
     int selected_index = 0;
 
-    Tensor<double, 1> fitness_sum = cumulative(fitness);
+    Tensor<type, 1> fitness_sum = cumulative(fitness);
 /*
     double sum = fitness.calculate_sum();
 
@@ -1237,7 +1237,7 @@ void GeneticAlgorithm::perform_selection()
 
     int random_loops = 0;
 
-    Tensor<double, 1> fitness_copy(fitness);
+    Tensor<type, 1> fitness_copy(fitness);
 
     population_copy.set();
 
@@ -1723,7 +1723,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
     double optimum_training_error = 0.0;
 
     vector<bool> optimal_inputs;
-    Tensor<double, 1> optimal_parameters;
+    Tensor<type, 1> optimal_parameters;
 
     int optimal_generation = 0;
 
@@ -1742,7 +1742,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 /*
     optimal_inputs.set(original_uses.count_equal_to(DataSet::Input),0);
 
-    Tensor<double, 2>  test(100,4);
+    Tensor<type, 2>  test(100,4);
 
     time(&beginning_time);
 

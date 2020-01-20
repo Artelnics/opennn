@@ -25,6 +25,7 @@
 #include "neural_network.h"
 #include "loss_index.h"
 #include "tinyxml2.h"
+#include "config.h"
 
 namespace OpenNN
 {
@@ -269,13 +270,13 @@ public:
    double calculate_golden_section_learning_rate(const Triplet&) const;
    double calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const double&, const Tensor<double, 1>&, const double&) const;
+   Triplet calculate_bracketing_triplet(const double&, const Tensor<type, 1>&, const double&) const;
 
-   pair<double, double> calculate_fixed_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
-   pair<double, double> calculate_golden_section_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
-   pair<double, double> calculate_Brent_method_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
+   pair<double, double> calculate_fixed_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
+   pair<double, double> calculate_golden_section_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
+   pair<double, double> calculate_Brent_method_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
 
-   pair<double, double> calculate_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
+   pair<double, double> calculate_directional_point(const double&, const Tensor<type, 1>&, const double&) const;
 
    // Serialization methods
 
