@@ -64,10 +64,7 @@
 // Utilities
 
 #include "math.h"
-#include "matrix.h"
-#include "tensor.h"
 #include "numerical_differentiation.h"
-#include "vector.h"
 #include "tinyxml2.h"
 #include "correlations.h"
 #include "functions.h"

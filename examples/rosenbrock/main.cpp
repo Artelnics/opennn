@@ -6,7 +6,9 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// This is an approximation application.
+#ifndef EIGEN_USE_THREADS
+#define EIGEN_USE_THREADS
+#endif
 
 // System includes
 
@@ -21,62 +23,120 @@
 
 #include "../../opennn/opennn.h"
 
+#include <../eigen/unsupported/Eigen/CXX11/Tensor>
+
+#include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
+
+
+
+//#include "../eigen/Eigen/Eigen"
+
 using namespace OpenNN;
+using namespace std;
+using namespace Eigen;
+
 
 int main(void)
 {
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-
-        srand(static_cast<unsigned>(time(nullptr)));
 /*
-        int n = 1000;
+        Tensor<double, 2> inputs(3, 2);
+        inputs.setValues({{1, 2}, {3, 4}, {5, 6}});
 
-        Matrix<double> m1(n,n);
-        m1.randomize_normal();
+        cout << inputs << endl;
 
-        Matrix<double> m2(n,n);
-        m2.randomize_normal();
+//        Eigen::array<int, 1> dimension({1});
 
-        Matrix<double> m3(n,n);
+        Eigen::Tensor<double, 1> sums = inputs.sum(Eigen::array<int, 1>({0}));
 
-        Eigen::MatrixXd e1(n,n);
-        e1.setRandom();
-        Eigen::MatrixXd e2(n,n);
-        e2.setRandom();
+        cout << endl;
 
-        Eigen::MatrixXd e3(n,n);
+        cout << sums << endl;
+
+        system("pause");
+*/
+/*
+
+        int n = omp_get_max_threads();
+
+
+        SimpleThreadPool simple_thread_pool(n);
+
+        ThreadPoolDevice thread_pool_device(&simple_thread_pool, n);
+
+        Tensor<double, 2> inputs(100000, 100000);
+        inputs.setRandom();
+
+        Tensor<double, 2> deltas(100000, 100000);
+        deltas.setRandom();
+
+        Tensor<double, 2> derivatives(100000, 100000);
+
+        const Eigen::array<IndexPair<int>, 1> dimensions = {IndexPair<int>(1, 0)};
+
+        derivatives.device(thread_pool_device) = inputs.contract(deltas, dimensions);
+
+        cout << derivatives.dimension(0) << endl;
+        cout << derivatives.dimension(1) << endl;
+        system("pause");
+*/
+/*
+        Tensor<double, 2> c(1000, 1000);
+        const Eigen::array<IndexPair<int>, 1> product_dimensions = {IndexPair<int>(1, 0)};
+
 
         time_t beginning_time, current_time;
         time(&beginning_time);
         double elapsed_time = 0.0;
 
-        dot(m1,m2,m3);
+        for(int i = 0; i < 10000; i++)
+        {
 
-//        e3 = e1*e2;
+//            cout << i << endl;
+//            c.device(thread_pool_device) = a.contract(b, product_dimensions);
+
+            c.device(thread_pool_device) = a;
+
+            //c.setConstant(1.0);
+
+        }
 
         time(&current_time);
         elapsed_time = difftime(current_time, beginning_time);
 
-        cout << m3.calculate_sum() << endl;
-        cout << e3.rows() << endl;
+        cout << c.dimension(0) << endl;
 
-        cout << "Elapsed time: " << elapsed_time << " seconds" << endl;
+        cout << elapsed_time << endl;
+
+        system("pause");
 */
 /*
+        Eigen::Tensor<int, 2> a(1, 2);
+        a.setValues({{0, 1}});
 
+        cout << "a" << endl << a << endl;
+
+        Eigen::array<int, 2> bcast;
+        bcast[0] = 5;
+        bcast[1] = 1;
+        //({3, 2});
+        Eigen::Tensor<int, 2> b = a.broadcast(bcast);
+
+        cout << "b" << endl << b << endl;
+*/
         // Data set
 
         DataSet data_set;
 
-        data_set.generate_Rosenbrock_data(1000000, 1000);
+        data_set.generate_Rosenbrock_data(1000000, 1001);
 
-        const Vector<string> inputs_names = data_set.get_input_variables_names();
-        const Vector<string> targets_names = data_set.get_target_variables_names();
+//        const vector<string> inputs_names = data_set.get_input_variables_names();
+//        const vector<string> targets_names = data_set.get_target_variables_names();
 
-        const Vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
+//        const vector<Descriptives> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+//        const vector<Descriptives> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         data_set.set_batch_instances_number(1000);
 
@@ -84,22 +144,22 @@ int main(void)
 
         // Neural network
 
-        const size_t inputs_number = data_set.get_input_variables_number();
-        const size_t hidden_neurons_number = 1000;
-        const size_t outputs_number = data_set.get_target_variables_number();
+        const int inputs_number = data_set.get_input_variables_number();
+        const int hidden_neurons_number = 999;
+        const int outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
+//        neural_network.set_inputs_names(inputs_names);
+//        neural_network.set_outputs_names(targets_names);
 
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+//        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+//        scaling_layer_pointer->set_descriptives(inputs_descriptives);
 
-        UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
+//        UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
 
-        unscaling_layer_pointer->set_descriptives(targets_descriptives);
+//        unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
         // Training strategy object
 
@@ -107,13 +167,17 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(0);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
-        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
+//        const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
+
+        training_strategy.get_stochastic_gradient_descent_pointer()->perform_training();
+
 
 //        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
-*/
+
+
         cout << "End" << endl;
 
         return 0;

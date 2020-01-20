@@ -78,7 +78,7 @@ public:
    const double& get_maximum_time() const;
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
-   const size_t& get_maximum_selection_failures() const;
+   const int& get_maximum_selection_failures() const;
 
    // Reserve training history
 
@@ -106,7 +106,7 @@ public:
    void set_warning_gradient_norm(const double&);
    void set_error_parameters_norm(const double&);
    void set_error_gradient_norm(const double&);
-   void set_maximum_epochs_number(const size_t&);
+   void set_maximum_epochs_number(const int&);
 
    // Stopping criteria
 
@@ -114,7 +114,7 @@ public:
    void set_minimum_loss_increase(const double&);
    void set_loss_goal(const double&);
    void set_gradient_norm_goal(const double&);
-   void set_maximum_selection_error_increases(const size_t&);
+   void set_maximum_selection_error_increases(const int&);
    void set_maximum_time(const double&);
    void set_return_minimum_selection_error_neural_network(const bool&);
    void set_apply_early_stopping(const bool&);
@@ -126,7 +126,7 @@ public:
 
    // Utilities
 
-   void set_display_period(const size_t&);
+   void set_display_period(const int&);
 
    // Training methods
 
@@ -138,7 +138,7 @@ public:
 
    // Serialization methods
 
-   Matrix<string> to_string_matrix() const;
+   Tensor<string, 2> to_string_matrix() const;
 
    tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
@@ -205,11 +205,11 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   size_t maximum_selection_failures;
+   int maximum_selection_failures;
 
    /// Maximum epochs number
 
-   size_t maximum_epochs_number;
+   int maximum_epochs_number;
 
    /// Maximum training time. It is used as a stopping criterion.
 

@@ -67,12 +67,12 @@ public:
    // loss methods
 
    double calculate_training_error() const;
-   double calculate_training_error(const Vector<double>&) const;
+   double calculate_training_error(const Tensor<double, 1>&) const;
 
    double calculate_selection_error() const;
 
-   double calculate_batch_error(const Vector<size_t>&) const;
-   double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
+   double calculate_batch_error(const vector<int>&) const;
+   double calculate_batch_error(const vector<int>&, const Tensor<double, 1>&) const;
 
    /// @todo Virtual method not implemented.
 
@@ -83,7 +83,7 @@ public:
 
    }
 
-   Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+   Tensor<double, 2> calculate_output_gradient(const Tensor<double, 2>&, const Tensor<double, 2>&) const;
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -95,11 +95,12 @@ public:
 
         #endif
 
-        const size_t training_instances_number = data_set_pointer->get_training_instances_number();
+        const int training_instances_number = data_set_pointer->get_training_instances_number();
 
-        const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-        first_order_loss.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations - batch.targets, minkowski_parameter)/static_cast<double>(training_instances_number);
+        const int trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+/*
+        first_order_loss.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations - batch.targets_2d, minkowski_parameter)/static_cast<double>(training_instances_number);
+*/
    }
 
 

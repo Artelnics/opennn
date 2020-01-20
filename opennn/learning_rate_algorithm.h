@@ -106,13 +106,16 @@ public:
 
        inline pair<double,double> minimum() const
        {
-           const Vector<double> losses({A.second, U.second, B.second});
+           /*
+           const vector<double> losses({A.second, U.second, B.second});
 
-           const size_t minimal_index = OpenNN::minimal_index(losses);
+           const int minimal_index = OpenNN::minimal_index(losses);
 
            if(minimal_index == 0) return A;
            else if(minimal_index == 1) return U;
            else return B;
+           */
+           return A;
        }
 
        /// Returns true if the length of the interval(A,B) is zero,
@@ -121,7 +124,7 @@ public:
        inline bool has_length_zero() const
        {
            /*
-           if(abs(A.first - B.first) < numeric_limits<double>::min())
+           if(abs(A.first - B.first) < 1.0e-99)
            {
               return true;
            }
@@ -138,7 +141,7 @@ public:
 
        inline bool is_constant() const
        {
-           /*if(abs(A.second - B.second) < numeric_limits<double>::min())
+           /*if(abs(A.second - B.second) < 1.0e-99)
            {
               return true;
            }
@@ -266,13 +269,13 @@ public:
    double calculate_golden_section_learning_rate(const Triplet&) const;
    double calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const double&, const Vector<double>&, const double&) const;
+   Triplet calculate_bracketing_triplet(const double&, const Tensor<double, 1>&, const double&) const;
 
-   pair<double, double> calculate_fixed_directional_point(const double&, const Vector<double>&, const double&) const;
-   pair<double, double> calculate_golden_section_directional_point(const double&, const Vector<double>&, const double&) const;
-   pair<double, double> calculate_Brent_method_directional_point(const double&, const Vector<double>&, const double&) const;
+   pair<double, double> calculate_fixed_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
+   pair<double, double> calculate_golden_section_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
+   pair<double, double> calculate_Brent_method_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
 
-   pair<double, double> calculate_directional_point(const double&, const Vector<double>&, const double&) const;
+   pair<double, double> calculate_directional_point(const double&, const Tensor<double, 1>&, const double&) const;
 
    // Serialization methods
 

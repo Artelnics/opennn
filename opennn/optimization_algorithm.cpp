@@ -100,7 +100,7 @@ const bool& OptimizationAlgorithm::get_display() const
 
 /// Returns the number of iterations between the training showing progress.
 
-const size_t& OptimizationAlgorithm::get_display_period() const
+const int& OptimizationAlgorithm::get_display_period() const
 {
    return(display_period);
 }
@@ -108,7 +108,7 @@ const size_t& OptimizationAlgorithm::get_display_period() const
 
 /// Returns the number of iterations between the training saving progress.
 
-const size_t& OptimizationAlgorithm::get_save_period() const
+const int& OptimizationAlgorithm::get_save_period() const
 {
    return(save_period);
 }
@@ -169,7 +169,7 @@ void OptimizationAlgorithm::set_display(const bool& new_display)
 /// @param new_display_period
 /// Number of iterations between the training showing progress.
 
-void OptimizationAlgorithm::set_display_period(const size_t& new_display_period)
+void OptimizationAlgorithm::set_display_period(const int& new_display_period)
 {
    
 
@@ -180,7 +180,7 @@ void OptimizationAlgorithm::set_display_period(const size_t& new_display_period)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_display_period(const size_t&) method.\n"
+             << "void set_display_period(const int&) method.\n"
              << "Display period must be greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -196,7 +196,7 @@ void OptimizationAlgorithm::set_display_period(const size_t& new_display_period)
 /// @param new_save_period
 /// Number of iterations between the training saving progress.
 
-void OptimizationAlgorithm::set_save_period(const size_t& new_save_period)
+void OptimizationAlgorithm::set_save_period(const int& new_save_period)
 {
    
 
@@ -207,7 +207,7 @@ void OptimizationAlgorithm::set_save_period(const size_t& new_save_period)
       ostringstream buffer;
 
       buffer << "OpenNN Exception: ConjugateGradient class.\n"
-             << "void set_save_period(const size_t&) method.\n"
+             << "void set_save_period(const int&) method.\n"
              << "Save period must be greater than 0.\n";
 
       throw logic_error(buffer.str());
@@ -389,9 +389,9 @@ string OptimizationAlgorithm::object_to_string() const
 /// Returns a default(empty) string matrix containing the members
 /// of the optimization algorithm object.
 
-Matrix<string> OptimizationAlgorithm::to_string_matrix() const
+Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 {
-    Matrix<string> string_matrix;
+    Tensor<string, 2> string_matrix;
 
     return string_matrix;
 }
@@ -486,7 +486,7 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 /// Resizes all the training history variables.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_training_history(const size_t& new_size)
+void OptimizationAlgorithm::Results::resize_training_history(const int& new_size)
 {
     training_error_history.resize(new_size);
     selection_error_history.resize(new_size);
@@ -503,7 +503,7 @@ string OptimizationAlgorithm::Results::object_to_string() const
 
    // Loss history
 
-   if(!training_error_history.empty())
+   if(training_error_history.dimension(0) != 0)
    {
        buffer << "% Training error history:\n"
               << training_error_history << "\n";
@@ -511,7 +511,7 @@ string OptimizationAlgorithm::Results::object_to_string() const
 
    // Selection loss history
 
-   if(!selection_error_history.empty())
+   if(selection_error_history.dimension(0) != 0)
    {
        buffer << "% Selection loss history:\n"
               << selection_error_history << "\n";
@@ -530,17 +530,17 @@ void OptimizationAlgorithm::Results::save(const string&) const
 
 
 
-Matrix<string> OptimizationAlgorithm::Results::write_final_results(const int& precision) const
+Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const int& precision) const
 {
    ostringstream buffer;
 
-   Vector<string> names;
-   Vector<string> values;
+   vector<string> names;
+   vector<string> values;
 
    // Final parameters norm
 
    names.push_back("Final parameters norm");
-
+/*
    buffer.str("");
    buffer << setprecision(precision) << final_parameters_norm;
 
@@ -611,15 +611,17 @@ Matrix<string> OptimizationAlgorithm::Results::write_final_results(const int& pr
 
    values.push_back(write_stopping_condition());
 
-   const size_t rows_number = names.size();
-   const size_t columns_number = 2;
+   const int rows_number = names.size();
+   const int columns_number = 2;
 
-   Matrix<string> final_results(rows_number, columns_number);
+   Tensor<string, 2> final_results(rows_number, columns_number);
 
    final_results.set_column(0, names, "name");
    final_results.set_column(1, values, "value");
 
-   return(final_results);
+   return final_results;
+*/
+   return Tensor<string, 2>();
 }
 
 }

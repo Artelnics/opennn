@@ -45,6 +45,8 @@ else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$OUT_PW
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$OUT_PWD/../../opennn/debug/opennn.lib
 else:unix: PRE_TARGETDEPS += $$OUT_PWD/../../opennn/libopennn.a
 
+INCLUDEPATH += D:/OpenNN/eigen
+
 # OpenMP library
 
 win32:!win32-g++{
